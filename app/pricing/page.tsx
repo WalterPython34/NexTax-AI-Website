@@ -2,6 +2,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { CheckCircle, X, Zap, Crown, Building2, ArrowRight, Shield, Clock, Star } from "lucide-react"
 import { StripeCheckoutButton } from "@/components/stripe-checkout-button"
+import Link from "next/link"
+import Button from "@/components/ui/button"
 
 export default function PricingPage() {
   const packages = [
@@ -195,6 +197,31 @@ export default function PricingPage() {
                 </CardContent>
               </Card>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Typeform Section for After Purchase */}
+      <section className="py-20 bg-gradient-to-r from-emerald-600 to-cyan-600">
+        <div className="container mx-auto px-4">
+          <div className="max-w-4xl mx-auto text-center">
+            {/* StartSmart Logo - Black Version */}
+            <div className="flex justify-center mb-8">
+              <img src="/images/startsmart-logo-black.png" alt="StartSmart by NexTax.AI" className="h-28 w-auto" />
+            </div>
+
+            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">Ready to Start Your Business?</h2>
+            <p className="text-xl text-white/90 max-w-2xl mx-auto mb-8">
+              After purchase, you'll complete our simple questionnaire and we'll handle the rest. Your business will be
+              legally formed and ready to operate within 48 hours.
+            </p>
+
+            <Link href="/startsmart">
+              <Button size="lg" className="bg-white text-emerald-600 hover:bg-slate-100 px-8 py-4 text-lg">
+                View Questionnaire
+                <ArrowRight className="ml-2 w-5 h-5" />
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
