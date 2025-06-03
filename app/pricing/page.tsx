@@ -9,7 +9,7 @@ export default function PricingPage() {
       name: "Essential Launch",
       icon: Zap,
       price: "$299",
-      priceId: "price_1RSVRm9BRJVw3je6ON5LibDY", // ✅ UPDATED with test price ID
+      priceId: "price_1RVxBWGA3ir6ndSxlzwF0aXk", // ✅ UPDATED with LIVE price ID
       period: "",
       description: "Perfect for simple business formation",
       features: [
@@ -28,7 +28,7 @@ export default function PricingPage() {
       name: "StartSmart Complete",
       icon: Crown,
       price: "$499",
-      priceId: "price_1RSVHF9BRJVw3je6azcU61is", // ✅ UPDATED with test price ID
+      priceId: "price_1RVxDBGA3ir6ndSxWWPxWX0Y", // ✅ UPDATED with LIVE price ID
       period: "",
       description: "Our most popular complete business launch",
       features: [
@@ -50,7 +50,7 @@ export default function PricingPage() {
       name: "Premium Launch",
       icon: Building2,
       price: "$699",
-      priceId: "price_1RSVSv9BRJVw3je6pv4GMmne", // ✅ UPDATED with test price ID
+      priceId: "price_1RUgSNGA3ir6ndSxbI53k3dB", // ✅ UPDATED with LIVE price ID
       period: "",
       description: "Everything you need plus premium services",
       features: [
@@ -262,7 +262,7 @@ export default function PricingPage() {
               Join 2,847+ entrepreneurs who have successfully launched their businesses with StartSmart.
             </p>
             <StripeCheckoutButton
-              priceId="price_1RSVHF9BRJVw3je6azcU61is" // ✅ UPDATED with test price ID
+              priceId="price_1RVxDBGA3ir6ndSxWWPxWX0Y" // ✅ UPDATED with LIVE price ID for StartSmart Complete
               productName="StartSmart Complete"
               className="bg-emerald-500 hover:bg-emerald-600 text-white px-8 py-4 text-lg"
             >
