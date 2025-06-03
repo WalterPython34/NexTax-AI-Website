@@ -201,6 +201,181 @@ export default function PricingPage() {
         </div>
       </section>
 
+      {/* Additional Services */}
+      <section className="py-20 bg-slate-900/50">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">Individual Service Offerings</h2>
+            <p className="text-xl text-slate-300 max-w-2xl mx-auto">
+              Enhance your business with these additional services and tools
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
+            {[
+              {
+                name: "Tax Optimization Consultation",
+                price: "$199",
+                priceId: "price_tax_optimization_consultation",
+                description: "One-on-one consultation with a tax expert to identify tax-saving opportunities",
+                features: [
+                  "60-minute video consultation",
+                  "Personalized tax strategy",
+                  "Industry-specific deductions",
+                  "Written summary and action plan",
+                  "30-day email follow-up support",
+                ],
+                cta: "Book Consultation",
+              },
+              {
+                name: "Compliance Monitoring",
+                price: "$49",
+                period: "/month",
+                priceId: "price_compliance_monitoring_monthly",
+                description: "Ongoing compliance monitoring and alerts for your business",
+                features: [
+                  "Real-time compliance tracking",
+                  "Automated filing reminders",
+                  "Multi-state monitoring",
+                  "Regulatory updates",
+                  "Monthly compliance report",
+                ],
+                cta: "Start Monitoring",
+              },
+              {
+                name: "Virtual Business Address",
+                price: "$99",
+                period: "/year",
+                priceId: "price_virtual_address_yearly",
+                description: "Professional business address with mail forwarding",
+                features: [
+                  "Physical street address (not a P.O. box)",
+                  "Mail scanning and forwarding",
+                  "Package receiving",
+                  "Use on business documents",
+                  "Available in 50+ US cities",
+                ],
+                cta: "Get Address",
+              },
+              {
+                name: "Accounting Setup",
+                price: "$249",
+                priceId: "price_accounting_setup",
+                description: "Complete accounting system setup for your new business",
+                features: [
+                  "QuickBooks or Xero setup",
+                  "Chart of accounts customization",
+                  "Bank account integration",
+                  "Initial bookkeeping training",
+                  "Tax category configuration",
+                ],
+                cta: "Setup Accounting",
+              },
+              {
+                name: "Website & Email Setup",
+                price: "$349",
+                priceId: "price_website_email_setup",
+                description: "Professional website and business email configuration",
+                features: [
+                  "Domain registration (1 year)",
+                  "5-page business website",
+                  "Professional email accounts",
+                  "Basic SEO setup",
+                  "Contact form integration",
+                ],
+                cta: "Get Online",
+              },
+              {
+                name: "Legal Document Package",
+                price: "$199",
+                priceId: "price_legal_document_package",
+                description: "Essential legal documents for your business operations",
+                features: [
+                  "Privacy policy",
+                  "Terms of service",
+                  "Client contract template",
+                  "NDA template",
+                  "Independent contractor agreement",
+                ],
+                cta: "Get Documents",
+              },
+              {
+                name: "AI Tax Assistant",
+                price: "$99",
+                period: "/month",
+                priceId: "price_ai_tax_assistant_monthly",
+                description: "24/7 AI-powered tax assistant for your business questions",
+                features: [
+                  "Unlimited tax questions",
+                  "Document analysis",
+                  "Deduction finder",
+                  "Compliance checks",
+                  "Human expert backup",
+                ],
+                cta: "Get AI Assistant",
+              },
+              {
+                name: "Business Credit Building",
+                price: "$499",
+                priceId: "price_business_credit_building",
+                description: "Establish and build business credit separate from personal credit",
+                features: [
+                  "Business credit profile setup",
+                  "Vendor credit line applications",
+                  "Credit building strategy",
+                  "Monthly progress tracking",
+                  "6-month program",
+                ],
+                cta: "Build Credit",
+              },
+              {
+                name: "Tax Return Preparation",
+                price: "$399",
+                priceId: "price_tax_return_preparation",
+                description: "Professional preparation of your business tax returns",
+                features: [
+                  "Federal & state returns",
+                  "Schedule C preparation",
+                  "Business deduction optimization",
+                  "Electronic filing",
+                  "Audit support",
+                ],
+                cta: "Prepare Taxes",
+              },
+            ].map((product, i) => (
+              <Card key={i} className="bg-slate-800/50 border-slate-700">
+                <CardHeader className="text-center pb-6">
+                  <CardTitle className="text-xl text-white">{product.name}</CardTitle>
+                  <p className="text-slate-400 text-sm">{product.description}</p>
+                  <div className="mt-4">
+                    <span className="text-3xl font-bold text-white">{product.price}</span>
+                    <span className="text-slate-400">{product.period || ""}</span>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="space-y-3">
+                    {product.features.map((feature, j) => (
+                      <div key={j} className="flex items-center gap-3">
+                        <CheckCircle className="w-5 h-5 text-emerald-400 flex-shrink-0" />
+                        <span className="text-slate-300 text-sm">{feature}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <StripeCheckoutButton
+                    priceId={product.priceId}
+                    productName={product.name}
+                    className="w-full bg-slate-700 hover:bg-slate-600 text-white"
+                  >
+                    {product.cta}
+                    <ArrowRight className="ml-2 w-4 h-4" />
+                  </StripeCheckoutButton>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Typeform Section for After Purchase */}
       <section className="py-20 bg-gradient-to-r from-emerald-600 to-cyan-600">
         <div className="container mx-auto px-4">
@@ -276,29 +451,6 @@ export default function PricingPage() {
                 </Card>
               ))}
             </div>
-          </div>
-        </div>
-      </section>
-
-      {/* CTA Section */}
-      <section className="py-20">
-        <div className="container mx-auto px-4 text-center">
-          <div className="max-w-3xl mx-auto">
-            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">Ready to Launch Your Business?</h2>
-            <p className="text-xl text-slate-300 mb-8">
-              Join 2,847+ entrepreneurs who have successfully launched their businesses with StartSmart.
-            </p>
-            <StripeCheckoutButton
-              priceId="price_1RVxDBGA3ir6ndSxWWPxWX0Y" // ✅ UPDATED with LIVE price ID for StartSmart Complete
-              productName="StartSmart Complete"
-              className="bg-emerald-500 hover:bg-emerald-600 text-white px-8 py-4 text-lg"
-            >
-              Start My Business Now
-              <ArrowRight className="ml-2 w-5 h-5" />
-            </StripeCheckoutButton>
-            <p className="text-slate-400 mt-4">
-              ✓ Secure payment ✓ 48-hour guarantee ✓ Money-back promise ✓ Expert support
-            </p>
           </div>
         </div>
       </section>
