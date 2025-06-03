@@ -3,7 +3,7 @@ import { Badge } from "@/components/ui/badge"
 import { CheckCircle, X, Zap, Crown, Building2, ArrowRight, Shield, Clock, Star } from "lucide-react"
 import { StripeCheckoutButton } from "@/components/stripe-checkout-button"
 import Link from "next/link"
-import Button from "@/components/ui/button"
+import { Button } from "@/components/ui/button"
 
 export default function PricingPage() {
   const packages = [
