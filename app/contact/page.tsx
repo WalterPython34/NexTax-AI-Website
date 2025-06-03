@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { Mail, Phone, MapPin, Clock, Send, MessageCircle, Calendar } from "lucide-react"
+import { Mail, Phone, MapPin, Clock, Send, MessageCircle, Calendar, Loader2, CheckCircle } from "lucide-react"
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -21,11 +21,53 @@ export default function ContactPage() {
     message: "",
     inquiryType: "",
   })
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitStatus, setSubmitStatus] = useState<"idle" | "success" | "error">("idle")
+  const [errorMessage, setErrorMessage] = useState("")
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    console.log("Form submitted:", formData)
-    // Handle form submission
+
+    try {
+      setIsSubmitting(true)
+      setSubmitStatus("idle")
+      setErrorMessage("")
+
+      console.log("Submitting form:", formData)
+
+      const response = await fetch("/api/contact", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(formData),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to submit form")
+      }
+
+      console.log("Form submitted successfully:", data)
+      setSubmitStatus("success")
+
+      // Reset form after successful submission
+      setFormData({
+        name: "",
+        email: "",
+        company: "",
+        subject: "",
+        message: "",
+        inquiryType: "",
+      })
+    } catch (error: any) {
+      console.error("Form submission error:", error)
+      setSubmitStatus("error")
+      setErrorMessage(error.message || "Something went wrong. Please try again.")
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const contactMethods = [
@@ -132,103 +174,139 @@ export default function ContactPage() {
                 <p className="text-slate-400">Fill out the form below and we'll get back to you within 24 hours.</p>
               </CardHeader>
               <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  <div className="grid md:grid-cols-2 gap-4">
+                {submitStatus === "success" ? (
+                  <div className="bg-emerald-500/20 border border-emerald-500/30 rounded-lg p-6 text-center">
+                    <CheckCircle className="w-12 h-12 text-emerald-400 mx-auto mb-4" />
+                    <h3 className="text-xl font-semibold text-white mb-2">Message Sent!</h3>
+                    <p className="text-slate-300 mb-4">
+                      Thank you for reaching out. We'll get back to you within 24 hours.
+                    </p>
+                    <Button
+                      onClick={() => setSubmitStatus("idle")}
+                      variant="outline"
+                      className="border-emerald-500/50 text-emerald-300 hover:bg-emerald-500/10"
+                    >
+                      Send Another Message
+                    </Button>
+                  </div>
+                ) : (
+                  <form onSubmit={handleSubmit} className="space-y-6">
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="name" className="text-white">
+                          Full Name
+                        </Label>
+                        <Input
+                          id="name"
+                          value={formData.name}
+                          onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                          placeholder="Your full name"
+                          className="bg-slate-900 border-slate-600 text-white"
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="email" className="text-white">
+                          Email Address
+                        </Label>
+                        <Input
+                          id="email"
+                          type="email"
+                          value={formData.email}
+                          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                          placeholder="your@email.com"
+                          className="bg-slate-900 border-slate-600 text-white"
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="company" className="text-white">
+                          Company (Optional)
+                        </Label>
+                        <Input
+                          id="company"
+                          value={formData.company}
+                          onChange={(e) => setFormData({ ...formData, company: e.target.value })}
+                          placeholder="Your company name"
+                          className="bg-slate-900 border-slate-600 text-white"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="inquiryType" className="text-white">
+                          Inquiry Type
+                        </Label>
+                        <Select onValueChange={(value) => setFormData({ ...formData, inquiryType: value })}>
+                          <SelectTrigger className="bg-slate-900 border-slate-600 text-white">
+                            <SelectValue placeholder="Select inquiry type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="general">General Question</SelectItem>
+                            <SelectItem value="sales">Sales Inquiry</SelectItem>
+                            <SelectItem value="support">Technical Support</SelectItem>
+                            <SelectItem value="partnership">Partnership</SelectItem>
+                            <SelectItem value="media">Media/Press</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+
                     <div className="space-y-2">
-                      <Label htmlFor="name" className="text-white">
-                        Full Name
+                      <Label htmlFor="subject" className="text-white">
+                        Subject
                       </Label>
                       <Input
-                        id="name"
-                        value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        placeholder="Your full name"
+                        id="subject"
+                        value={formData.subject}
+                        onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
+                        placeholder="Brief subject line"
                         className="bg-slate-900 border-slate-600 text-white"
                         required
                       />
                     </div>
+
                     <div className="space-y-2">
-                      <Label htmlFor="email" className="text-white">
-                        Email Address
+                      <Label htmlFor="message" className="text-white">
+                        Message
                       </Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        value={formData.email}
-                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                        placeholder="your@email.com"
+                      <Textarea
+                        id="message"
+                        value={formData.message}
+                        onChange={(e) => setFormData({ ...formData, message: e.target.value })}
+                        placeholder="Tell us how we can help you..."
                         className="bg-slate-900 border-slate-600 text-white"
+                        rows={6}
                         required
                       />
                     </div>
-                  </div>
 
-                  <div className="grid md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="company" className="text-white">
-                        Company (Optional)
-                      </Label>
-                      <Input
-                        id="company"
-                        value={formData.company}
-                        onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                        placeholder="Your company name"
-                        className="bg-slate-900 border-slate-600 text-white"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="inquiryType" className="text-white">
-                        Inquiry Type
-                      </Label>
-                      <Select onValueChange={(value) => setFormData({ ...formData, inquiryType: value })}>
-                        <SelectTrigger className="bg-slate-900 border-slate-600 text-white">
-                          <SelectValue placeholder="Select inquiry type" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="general">General Question</SelectItem>
-                          <SelectItem value="sales">Sales Inquiry</SelectItem>
-                          <SelectItem value="support">Technical Support</SelectItem>
-                          <SelectItem value="partnership">Partnership</SelectItem>
-                          <SelectItem value="media">Media/Press</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
+                    {submitStatus === "error" && (
+                      <div className="bg-red-500/20 border border-red-500/30 rounded-lg p-4 text-red-200">
+                        <p>{errorMessage || "Something went wrong. Please try again."}</p>
+                      </div>
+                    )}
 
-                  <div className="space-y-2">
-                    <Label htmlFor="subject" className="text-white">
-                      Subject
-                    </Label>
-                    <Input
-                      id="subject"
-                      value={formData.subject}
-                      onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
-                      placeholder="Brief subject line"
-                      className="bg-slate-900 border-slate-600 text-white"
-                      required
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="message" className="text-white">
-                      Message
-                    </Label>
-                    <Textarea
-                      id="message"
-                      value={formData.message}
-                      onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                      placeholder="Tell us how we can help you..."
-                      className="bg-slate-900 border-slate-600 text-white"
-                      rows={6}
-                      required
-                    />
-                  </div>
-
-                  <Button type="submit" className="w-full bg-emerald-500 hover:bg-emerald-600 text-white">
-                    Send Message
-                    <Send className="ml-2 w-4 h-4" />
-                  </Button>
-                </form>
+                    <Button
+                      type="submit"
+                      className="w-full bg-emerald-500 hover:bg-emerald-600 text-white"
+                      disabled={isSubmitting}
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <Loader2 className="mr-2 w-4 h-4 animate-spin" />
+                          Sending...
+                        </>
+                      ) : (
+                        <>
+                          Send Message
+                          <Send className="ml-2 w-4 h-4" />
+                        </>
+                      )}
+                    </Button>
+                  </form>
+                )}
               </CardContent>
             </Card>
 
