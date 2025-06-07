@@ -132,9 +132,12 @@ export default function ContactPage() {
       {/* Contact Methods */}
       <section className="py-16 bg-slate-900/50">
         <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="flex flex-wrap justify-center gap-8 max-w-4xl mx-auto">
             {contactMethods.map((method, i) => (
-              <Card key={i} className="bg-slate-800/50 border-slate-700 hover:border-emerald-500/50 transition-colors">
+              <Card
+                key={i}
+                className="bg-slate-800/50 border-slate-700 hover:border-emerald-500/50 transition-colors w-full sm:w-80 flex-shrink-0"
+              >
                 <CardContent className="p-6 text-center">
                   <div className="w-12 h-12 mx-auto mb-4 rounded-lg bg-emerald-500/20 flex items-center justify-center">
                     <method.icon className="w-6 h-6 text-emerald-400" />
@@ -415,4 +418,3 @@ export default function ContactPage() {
     </div>
   )
 }
-
