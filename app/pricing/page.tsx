@@ -1,6 +1,20 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { CheckCircle, X, Zap, Crown, Building2, ArrowRight, Shield, Clock, Star } from "lucide-react"
+import {
+  CheckCircle,
+  X,
+  Zap,
+  Crown,
+  Building2,
+  ArrowRight,
+  Shield,
+  Clock,
+  Star,
+  FileText,
+  Globe,
+  DollarSign,
+  Calculator,
+} from "lucide-react"
 import { StripeCheckoutButton } from "@/components/stripe-checkout-button"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -8,12 +22,12 @@ import { Button } from "@/components/ui/button"
 export default function PricingPage() {
   const packages = [
     {
-      name: "Essential Launch",
+      name: "StartSmart Essential",
       icon: Zap,
       price: "$299",
       priceId: "price_1RVxBWGA3ir6ndSxlzwF0aXk", // ✅ UPDATED with LIVE price ID
       period: "",
-      description: "Perfect for simple business formation",
+      description: "Simple business formation for straightforward LLCs",
       features: [
         "Priority 48-Hour LLC Formation",
         "Business Registration in your State",
@@ -32,7 +46,7 @@ export default function PricingPage() {
       price: "$499",
       priceId: "price_1RVxDBGA3ir6ndSxWWPxWX0Y", // ✅ UPDATED with LIVE price ID
       period: "",
-      description: "Our most popular complete business launch",
+      description: "Complete business formation in 48 hours",
       features: [
         "EIN Filing (Employer ID Number)",
         "Priority 48-Hour LLC Formation",
@@ -49,12 +63,12 @@ export default function PricingPage() {
       savings: "Save $147",
     },
     {
-      name: "Premium Launch",
+      name: "StartSmart Premium",
       icon: Building2,
       price: "$699",
       priceId: "price_1RUgSNGA3ir6ndSxbI53k3dB", // ✅ UPDATED with LIVE price ID
       period: "",
-      description: "Everything you need plus premium services",
+      description: "The complete business launch experience",
       features: [
         "Everything in StartSmart Complete",
         "U.S. Business Bank Account Setup",
@@ -69,6 +83,185 @@ export default function PricingPage() {
       popular: false,
       cta: "Go Premium",
       savings: "Save $296",
+    },
+  ]
+
+  // Individual services with real price IDs
+  const individualServices = [
+    {
+      name: "EIN Filing",
+      icon: FileText,
+      price: "$149",
+      priceId: "price_1RVxG4GA3ir6ndSxWgrZhf9U",
+      description: "Fast Employer Identification Number (EIN) filing with the IRS",
+      features: [
+        "Required for business banking",
+        "Needed for hiring employees",
+        "Essential for tax filings",
+        "Completed within 24-48 hours",
+        "Confirmation documentation provided",
+      ],
+      cta: "Get EIN Filing",
+    },
+    {
+      name: "Priority LLC Formation",
+      icon: Zap,
+      price: "$299",
+      priceId: "price_1RSVUy9BRJVw3je6CjlqWoKQ",
+      description: "48-hour business entity formation service",
+      features: [
+        "Articles of organization filing",
+        "State registration",
+        "Registered agent service",
+        "Compliance documentation",
+        "Fast business formation",
+      ],
+      cta: "Form My LLC",
+    },
+    {
+      name: "Virtual U.S. Address",
+      icon: Globe,
+      price: "$99",
+      period: "/year",
+      priceId: "price_1RVxJ9GA3ir6ndSxsy8lgErB",
+      description: "Professional business address for mail forwarding",
+      features: [
+        "Mail scanning services",
+        "Mail forwarding services",
+        "Business presence in the US",
+        "Use for business registration",
+        "Perfect for remote businesses",
+      ],
+      cta: "Get Virtual Address",
+    },
+    {
+      name: "Bank Account Setup",
+      icon: DollarSign,
+      price: "$99",
+      priceId: "price_1RVxKbGA3ir6ndSxbBK3T2uf",
+      description: "Business banking assistance and setup support",
+      features: [
+        "Documentation preparation",
+        "Account opening guidance",
+        "Major U.S. banks support",
+        "Completed in 3-5 business days",
+        "Banking relationship setup",
+      ],
+      cta: "Setup Bank Account",
+    },
+    {
+      name: "LLC Agreement",
+      icon: FileText,
+      price: "$199",
+      priceId: "price_1RVxMUGA3ir6ndSx7JzW1uqS",
+      description: "Custom operating agreement tailored to your business",
+      features: [
+        "Member rights documentation",
+        "Profit distribution terms",
+        "Management structure",
+        "Legal protections",
+        "Delivered within 24-48 hours",
+      ],
+      cta: "Get LLC Agreement",
+    },
+    {
+      name: "Accounting Setup",
+      icon: Calculator,
+      price: "$299",
+      priceId: "price_1RVxNyGA3ir6ndSx6eR59qi0",
+      description: "Complete QuickBooks setup and training for your business",
+      features: [
+        "Chart of accounts configuration",
+        "Initial transaction setup",
+        "Basic bookkeeping training",
+        "Ongoing support resources",
+        "Financial systems setup",
+      ],
+      cta: "Setup Accounting",
+    },
+  ]
+
+  // Monthly subscription services with real price IDs
+  const subscriptionServices = [
+    {
+      name: "Tax Compliance Support",
+      icon: Shield,
+      price: "$199",
+      period: "/month",
+      priceId: "price_1RVxPVGA3ir6ndSxwCSWV2rC",
+      description: "Ongoing tax filing and compliance management",
+      features: [
+        "Monthly tax review",
+        "Quarterly filings",
+        "Annual returns",
+        "Tax planning consultations",
+        "Proactive compliance monitoring",
+      ],
+      cta: "Start Tax Support",
+    },
+    {
+      name: "Business Support",
+      icon: Building2,
+      price: "$99",
+      period: "/month",
+      priceId: "price_1RVxR5GA3ir6ndSxZCYWvDbI",
+      description: "Ongoing business consultation and support",
+      features: [
+        "Monthly consultation calls",
+        "Email support",
+        "Document updates",
+        "Compliance monitoring",
+        "Business resource library access",
+      ],
+      cta: "Get Business Support",
+    },
+    {
+      name: "Basic Bookkeeping",
+      icon: Calculator,
+      price: "$149",
+      period: "/month",
+      priceId: "price_1RVxSKGA3ir6ndSxQ5rrc58j",
+      description: "Essential monthly bookkeeping for small businesses",
+      features: [
+        "Transaction categorization",
+        "Bank reconciliation",
+        "Monthly financial statements",
+        "Expense tracking",
+        "Quarterly business review",
+      ],
+      cta: "Start Basic Bookkeeping",
+    },
+    {
+      name: "Full-Service Accounting",
+      icon: Calculator,
+      price: "$299",
+      period: "/month",
+      priceId: "price_1RVxTqGA3ir6ndSxoXGXLC9f",
+      description: "Complete accounting and financial management",
+      features: [
+        "All Basic Bookkeeping features",
+        "Accounts payable/receivable",
+        "Payroll processing",
+        "Tax preparation and planning",
+        "CFO-level insights",
+      ],
+      cta: "Start Full Accounting",
+    },
+    {
+      name: "Enterprise Accounting",
+      icon: Building2,
+      price: "$599",
+      period: "/month",
+      priceId: "price_1RVxV3GA3ir6ndSxyFhrc8QI",
+      description: "Advanced accounting for complex businesses",
+      features: [
+        "Multi-entity accounting",
+        "Advanced financial modeling",
+        "Investor reporting",
+        "Audit preparation",
+        "Dedicated account manager",
+      ],
+      cta: "Get Enterprise Accounting",
     },
   ]
 
@@ -152,7 +345,7 @@ export default function PricingPage() {
                   <p className="text-slate-400">{pkg.description}</p>
                   <div className="mt-6">
                     <span className="text-4xl font-bold text-white">{pkg.price}</span>
-                    <span className="text-slate-400">{pkg.period}</span>
+                    <span className="text-slate-400">{pkg.period || ""}</span>
                   </div>
                   {pkg.savings && <Badge className="bg-emerald-500/20 text-emerald-300 mt-2">{pkg.savings}</Badge>}
                 </CardHeader>
@@ -201,160 +394,33 @@ export default function PricingPage() {
         </div>
       </section>
 
-      {/* Additional Services */}
+      {/* Individual Services - One-time payments */}
       <section className="py-20 bg-slate-900/50">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">Individual Service Offerings</h2>
+            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">Individual Services</h2>
             <p className="text-xl text-slate-300 max-w-2xl mx-auto">
-              Enhance your business with these additional services and tools
+              One-time services to help establish your business
             </p>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
-            {[
-              {
-                name: "Tax Optimization Consultation",
-                price: "$199",
-                priceId: "price_tax_optimization_consultation",
-                description: "One-on-one consultation with a tax expert to identify tax-saving opportunities",
-                features: [
-                  "60-minute video consultation",
-                  "Personalized tax strategy",
-                  "Industry-specific deductions",
-                  "Written summary and action plan",
-                  "30-day email follow-up support",
-                ],
-                cta: "Book Consultation",
-              },
-              {
-                name: "Compliance Monitoring",
-                price: "$49",
-                period: "/month",
-                priceId: "price_compliance_monitoring_monthly",
-                description: "Ongoing compliance monitoring and alerts for your business",
-                features: [
-                  "Real-time compliance tracking",
-                  "Automated filing reminders",
-                  "Multi-state monitoring",
-                  "Regulatory updates",
-                  "Monthly compliance report",
-                ],
-                cta: "Start Monitoring",
-              },
-              {
-                name: "Virtual Business Address",
-                price: "$99",
-                period: "/year",
-                priceId: "price_virtual_address_yearly",
-                description: "Professional business address with mail forwarding",
-                features: [
-                  "Physical street address (not a P.O. box)",
-                  "Mail scanning and forwarding",
-                  "Package receiving",
-                  "Use on business documents",
-                  "Available in 50+ US cities",
-                ],
-                cta: "Get Address",
-              },
-              {
-                name: "Accounting Setup",
-                price: "$249",
-                priceId: "price_accounting_setup",
-                description: "Complete accounting system setup for your new business",
-                features: [
-                  "QuickBooks or Xero setup",
-                  "Chart of accounts customization",
-                  "Bank account integration",
-                  "Initial bookkeeping training",
-                  "Tax category configuration",
-                ],
-                cta: "Setup Accounting",
-              },
-              {
-                name: "Website & Email Setup",
-                price: "$349",
-                priceId: "price_website_email_setup",
-                description: "Professional website and business email configuration",
-                features: [
-                  "Domain registration (1 year)",
-                  "5-page business website",
-                  "Professional email accounts",
-                  "Basic SEO setup",
-                  "Contact form integration",
-                ],
-                cta: "Get Online",
-              },
-              {
-                name: "Legal Document Package",
-                price: "$199",
-                priceId: "price_legal_document_package",
-                description: "Essential legal documents for your business operations",
-                features: [
-                  "Privacy policy",
-                  "Terms of service",
-                  "Client contract template",
-                  "NDA template",
-                  "Independent contractor agreement",
-                ],
-                cta: "Get Documents",
-              },
-              {
-                name: "AI Tax Assistant",
-                price: "$99",
-                period: "/month",
-                priceId: "price_ai_tax_assistant_monthly",
-                description: "24/7 AI-powered tax assistant for your business questions",
-                features: [
-                  "Unlimited tax questions",
-                  "Document analysis",
-                  "Deduction finder",
-                  "Compliance checks",
-                  "Human expert backup",
-                ],
-                cta: "Get AI Assistant",
-              },
-              {
-                name: "Business Credit Building",
-                price: "$499",
-                priceId: "price_business_credit_building",
-                description: "Establish and build business credit separate from personal credit",
-                features: [
-                  "Business credit profile setup",
-                  "Vendor credit line applications",
-                  "Credit building strategy",
-                  "Monthly progress tracking",
-                  "6-month program",
-                ],
-                cta: "Build Credit",
-              },
-              {
-                name: "Tax Return Preparation",
-                price: "$399",
-                priceId: "price_tax_return_preparation",
-                description: "Professional preparation of your business tax returns",
-                features: [
-                  "Federal & state returns",
-                  "Schedule C preparation",
-                  "Business deduction optimization",
-                  "Electronic filing",
-                  "Audit support",
-                ],
-                cta: "Prepare Taxes",
-              },
-            ].map((product, i) => (
+            {individualServices.map((service, i) => (
               <Card key={i} className="bg-slate-800/50 border-slate-700">
                 <CardHeader className="text-center pb-6">
-                  <CardTitle className="text-xl text-white">{product.name}</CardTitle>
-                  <p className="text-slate-400 text-sm">{product.description}</p>
+                  <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                    <service.icon className="w-8 h-8 text-emerald-400" />
+                  </div>
+                  <CardTitle className="text-xl text-white">{service.name}</CardTitle>
+                  <p className="text-slate-400 text-sm">{service.description}</p>
                   <div className="mt-4">
-                    <span className="text-3xl font-bold text-white">{product.price}</span>
-                    <span className="text-slate-400">{product.period || ""}</span>
+                    <span className="text-3xl font-bold text-white">{service.price}</span>
+                    <span className="text-slate-400">{service.period || ""}</span>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <div className="space-y-3">
-                    {product.features.map((feature, j) => (
+                    {service.features.map((feature, j) => (
                       <div key={j} className="flex items-center gap-3">
                         <CheckCircle className="w-5 h-5 text-emerald-400 flex-shrink-0" />
                         <span className="text-slate-300 text-sm">{feature}</span>
@@ -362,11 +428,59 @@ export default function PricingPage() {
                     ))}
                   </div>
                   <StripeCheckoutButton
-                    priceId={product.priceId}
-                    productName={product.name}
+                    priceId={service.priceId}
+                    productName={service.name}
                     className="w-full bg-slate-700 hover:bg-slate-600 text-white"
                   >
-                    {product.cta}
+                    {service.cta}
+                    <ArrowRight className="ml-2 w-4 h-4" />
+                  </StripeCheckoutButton>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Subscription Services */}
+      <section className="py-20">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">Ongoing Support Services</h2>
+            <p className="text-xl text-slate-300 max-w-2xl mx-auto">
+              Monthly subscription services to help your business thrive
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
+            {subscriptionServices.map((service, i) => (
+              <Card key={i} className="bg-slate-800/50 border-slate-700">
+                <CardHeader className="text-center pb-6">
+                  <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                    <service.icon className="w-8 h-8 text-emerald-400" />
+                  </div>
+                  <CardTitle className="text-xl text-white">{service.name}</CardTitle>
+                  <p className="text-slate-400 text-sm">{service.description}</p>
+                  <div className="mt-4">
+                    <span className="text-3xl font-bold text-white">{service.price}</span>
+                    <span className="text-slate-400">{service.period || ""}</span>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="space-y-3">
+                    {service.features.map((feature, j) => (
+                      <div key={j} className="flex items-center gap-3">
+                        <CheckCircle className="w-5 h-5 text-emerald-400 flex-shrink-0" />
+                        <span className="text-slate-300 text-sm">{feature}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <StripeCheckoutButton
+                    priceId={service.priceId}
+                    productName={service.name}
+                    className="w-full bg-slate-700 hover:bg-slate-600 text-white"
+                  >
+                    {service.cta}
                     <ArrowRight className="ml-2 w-4 h-4" />
                   </StripeCheckoutButton>
                 </CardContent>
