@@ -2,15 +2,19 @@
 
 import type React from "react"
 import { useState } from "react"
+import { Button } from "@/components/ui/button"
+import { Loader2 } from "lucide-react"
 
 interface StripeCheckoutButtonProps {
   priceId: string
   productName: string
+  children: React.ReactNode
+  className?: string
 }
 
-const StripeCheckoutButton: React.FC<StripeCheckoutButtonProps> = ({ priceId, productName }) => {
+export function StripeCheckoutButton({ priceId, productName, children, className }: StripeCheckoutButtonProps) {
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [loading, setLoading] = useState<boolean>(false)
 
   const handleCheckout = async () => {
     setLoading(true)
@@ -22,7 +26,7 @@ const StripeCheckoutButton: React.FC<StripeCheckoutButtonProps> = ({ priceId, pr
       console.log("💰 Price ID:", priceId)
 
       // Check if Stripe is loaded
-      if (!window.Stripe) {
+      if (typeof window !== "undefined" && !window.Stripe) {
         throw new Error("Stripe is not loaded. Please refresh the page and try again.")
       }
 
@@ -41,51 +45,44 @@ const StripeCheckoutButton: React.FC<StripeCheckoutButtonProps> = ({ priceId, pr
 
       console.log("📡 API Response status:", response.status)
 
-      // Get the response text first for better debugging
-      const responseText = await response.text()
-      console.log("📡 Raw API response:", responseText)
-
-      let data
-      try {
-        data = JSON.parse(responseText)
-      } catch (e) {
-        console.error("❌ Failed to parse response as JSON:", e)
-        throw new Error(`Invalid response from server: ${responseText.substring(0, 100)}...`)
-      }
-
       if (!response.ok) {
-        console.error("❌ API Error response:", data)
-        throw new Error(data.error || `Server error: ${response.status}`)
+        const errorText = await response.text()
+        console.error("❌ API Error response:", errorText)
+        throw new Error(`Server error: ${response.status} - ${errorText}`)
       }
 
-      if (data.error) {
-        console.error("❌ API returned error:", data.error)
-        throw new Error(data.error)
+      const { sessionId, error: apiError } = await response.json()
+
+      if (apiError) {
+        console.error("❌ API returned error:", apiError)
+        throw new Error(apiError)
       }
 
-      if (!data.sessionId) {
+      if (!sessionId) {
         throw new Error("No session ID returned from server")
       }
 
-      console.log("✅ Session created:", data.sessionId)
+      console.log("✅ Session created:", sessionId)
 
       // Initialize Stripe
-      const stripe = window.Stripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY)
+      if (typeof window !== "undefined") {
+        const stripe = window.Stripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "")
 
-      if (!stripe) {
-        throw new Error("Failed to initialize Stripe. Please check your configuration.")
-      }
+        if (!stripe) {
+          throw new Error("Failed to initialize Stripe. Please check your configuration.")
+        }
 
-      console.log("🔄 Redirecting to Stripe Checkout...")
+        console.log("🔄 Redirecting to Stripe Checkout...")
 
-      // Redirect to Stripe Checkout
-      const { error: stripeError } = await stripe.redirectToCheckout({
-        sessionId: data.sessionId,
-      })
+        // Redirect to Stripe Checkout
+        const { error: stripeError } = await stripe.redirectToCheckout({
+          sessionId,
+        })
 
-      if (stripeError) {
-        console.error("❌ Stripe redirect error:", stripeError)
-        throw new Error(stripeError.message || "Failed to redirect to Stripe Checkout")
+        if (stripeError) {
+          console.error("❌ Stripe redirect error:", stripeError)
+          throw new Error(stripeError.message || "Failed to redirect to Stripe Checkout")
+        }
       }
     } catch (error: any) {
       console.error("❌ Checkout error:", error)
@@ -97,12 +94,20 @@ const StripeCheckoutButton: React.FC<StripeCheckoutButtonProps> = ({ priceId, pr
 
   return (
     <div>
-      {error && <p style={{ color: "red" }}>Error: {error}</p>}
-      <button onClick={handleCheckout} disabled={loading}>
-        {loading ? "Loading..." : "Checkout with Stripe"}
-      </button>
+      <Button onClick={handleCheckout} disabled={loading} className={className}>
+        {loading ? (
+          <>
+            <Loader2 className="mr-2 w-4 h-4 animate-spin" />
+            Processing...
+          </>
+        ) : (
+          children
+        )}
+      </Button>
+      {error && (
+        <div className="mt-2 text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded p-2">{error}</div>
+      )}
     </div>
   )
 }
 
-export default StripeCheckoutButton
