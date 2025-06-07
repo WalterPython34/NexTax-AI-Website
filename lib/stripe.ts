@@ -1,9 +1,11 @@
 import Stripe from "stripe"
 
+// Check if STRIPE_SECRET_KEY is defined
 if (!process.env.STRIPE_SECRET_KEY) {
-  throw new Error("STRIPE_SECRET_KEY is not defined")
+  console.warn("Warning: STRIPE_SECRET_KEY is not defined")
 }
 
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+// Initialize Stripe with the API key
+export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
   apiVersion: "2024-06-20",
 })
