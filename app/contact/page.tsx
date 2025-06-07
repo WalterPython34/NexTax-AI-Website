@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { Mail, Phone, MapPin, Clock, Send, MessageCircle, Calendar, Loader2, CheckCircle } from "lucide-react"
+import { Mail, MapPin, Clock, Send, MessageCircle, Calendar, Loader2, CheckCircle } from "lucide-react"
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -75,15 +75,8 @@ export default function ContactPage() {
       icon: Mail,
       title: "Email Support",
       description: "Get help via email",
-      contact: "hello@nextax.ai",
+      contact: "support@nextax.ai",
       availability: "24/7 response within 4 hours",
-    },
-    {
-      icon: Phone,
-      title: "Phone Support",
-      description: "Speak with our team",
-      contact: "1-800-NEXTAX",
-      availability: "Mon-Fri 9AM-6PM PST",
     },
     {
       icon: MessageCircle,
@@ -103,22 +96,16 @@ export default function ContactPage() {
 
   const offices = [
     {
-      city: "San Francisco",
-      address: "123 Market Street, Suite 500",
-      zipcode: "San Francisco, CA 94105",
-      phone: "(415) 555-0123",
+      city: "Metro Detroit",
+      address: "121 W Main St",
+      zipcode: "Brighton, MI 48116",
+      phone: "Steven.Morello@NexTax.AI",
     },
     {
-      city: "New York",
-      address: "456 Broadway, Floor 20",
-      zipcode: "New York, NY 10013",
-      phone: "(212) 555-0456",
-    },
-    {
-      city: "Austin",
-      address: "789 Congress Ave, Suite 300",
-      zipcode: "Austin, TX 78701",
-      phone: "(512) 555-0789",
+      city: "Chicago",
+      address: "342 W Armitage Ave",
+      zipcode: "Chicago, IL 60614",
+      phone: "(312) 841-3388",
     },
   ]
 
@@ -428,3 +415,4 @@ export default function ContactPage() {
     </div>
   )
 }
+
