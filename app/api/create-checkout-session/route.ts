@@ -56,7 +56,9 @@ export async function POST(request: NextRequest) {
       console.log(`🔄 Using checkout mode: ${mode} based on price type`)
 
       console.log("🛒 Creating checkout session...")
-      const session = await stripe.checkout.sessions.create({
+
+      // Base session configuration
+      const sessionConfig: any = {
         payment_method_types: ["card"],
         line_items: [
           {
@@ -64,10 +66,9 @@ export async function POST(request: NextRequest) {
             quantity: 1,
           },
         ],
-        mode: mode, // Dynamically set based on price type
+        mode: mode,
         success_url: `${request.headers.get("origin")}/success?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${request.headers.get("origin")}/pricing`,
-        customer_creation: "always",
         billing_address_collection: "required",
         phone_number_collection: {
           enabled: true,
@@ -75,7 +76,15 @@ export async function POST(request: NextRequest) {
         metadata: {
           product_name: productName,
         },
-      })
+      }
+
+      // Add customer_creation only for payment mode (one-time payments)
+      if (mode === "payment") {
+        sessionConfig.customer_creation = "always"
+      }
+      // For subscription mode, Stripe automatically creates customers
+
+      const session = await stripe.checkout.sessions.create(sessionConfig)
 
       console.log("✅ Session created successfully:", session.id)
 
