@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { Mail, MapPin, Clock, Send, MessageCircle, Calendar, Loader2, CheckCircle } from "lucide-react"
+import { CalendlyPopup } from "@/components/calendly-popup"
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -89,8 +90,12 @@ export default function ContactPage() {
       icon: Calendar,
       title: "Schedule Consultation",
       description: "Book a strategy session",
-      contact: "calendly.com/nextax",
-      availability: "30-min free consultation",
+      contact: (
+        <CalendlyPopup className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded text-sm">
+          Book Now
+        </CalendlyPopup>
+      ),
+      availability: "30-minute consultation",
     },
   ]
 
