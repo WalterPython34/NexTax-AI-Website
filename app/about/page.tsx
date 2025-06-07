@@ -9,44 +9,17 @@ export default function AboutPage() {
     {
       name: "Steve Morello",
       role: "CEO & Founder",
-      bio: "Seasoned tax executive with 20+ years of experience across Big 4 firms, investment banking, and technology. Former Tax Manager at Morgan Stanley Private Equity and Head of Tax at leading cybersecurity and fintech companies. CPA with deep expertise in complex business structures, M&A tax planning, and regulatory compliance.",
+      bio: "Seasoned tax executive with 20+ years of experience across Big 4 firms, investment banking, and technology. Former Tax Manager at Morgan Stanley Private Equity and Head of Tax at leading cybersecurity and fintech companies. Registered Agent with deep expertise in complex business structures, M&A tax planning, and regulatory compliance.",
       image: "/images/steve-morello-headshot.jpg",
       credentials: [
-        "CPA (Certified Public Accountant)",
+        "Registered Agent",
         "Former Morgan Stanley Private Equity",
-        "Big 4 Tax Experience (PwC, Deloitte)",
-        "20+ Years Wall Street Experience",
+        "Big 4 Tax Experience (PwC, KPMG)",
+        "20+ Years Tax & Wall Street Experience",
         "M&A Tax Structuring Expert",
         "Fintech & Cybersecurity Tax Leader",
       ],
       linkedin: "https://www.linkedin.com/in/steve-morello-95b468365/",
-      achievements: [
-        "Structured $2B+ in M&A transactions",
-        "Saved clients $50M+ in tax optimization",
-        "Led tax teams at 3 unicorn startups",
-        "Expert in multi-state compliance",
-      ],
-    },
-    {
-      name: "Emily Watson",
-      role: "Head of AI",
-      bio: "Former OpenAI researcher specializing in legal and financial AI applications. Leading our development of custom tax GPTs and automated compliance systems with deep expertise in machine learning and natural language processing.",
-      image: "/placeholder.svg?height=300&width=300",
-      credentials: [
-        "Former OpenAI Research Team",
-        "PhD Computer Science (Stanford)",
-        "AI/ML Expert - Legal Applications",
-        "Published Researcher (20+ papers)",
-        "Former Google AI Engineer",
-        "Specialized in Financial AI",
-      ],
-      linkedin: "#",
-      achievements: [
-        "Built AI systems processing $1B+ transactions",
-        "Developed GPT models for legal compliance",
-        "Led AI teams at Fortune 500 companies",
-        "Expert in regulatory AI applications",
-      ],
     },
   ]
 
@@ -129,7 +102,7 @@ export default function AboutPage() {
             </p>
           </div>
 
-          <div className="grid lg:grid-cols-2 gap-12 max-w-6xl mx-auto">
+          <div className="grid lg:grid-cols-1 gap-12 max-w-4xl mx-auto">
             {team.map((member, i) => (
               <Card key={i} className="bg-slate-800/50 border-slate-700">
                 <CardContent className="p-8">
@@ -172,19 +145,6 @@ export default function AboutPage() {
                             <div key={j} className="flex items-center gap-2">
                               <Award className="w-4 h-4 text-emerald-400 flex-shrink-0" />
                               <span className="text-slate-300 text-sm">{credential}</span>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Key Achievements */}
-                      <div>
-                        <h4 className="font-semibold text-white mb-3">Key Achievements</h4>
-                        <div className="grid grid-cols-1 gap-2">
-                          {member.achievements.map((achievement, j) => (
-                            <div key={j} className="flex items-center gap-2">
-                              <TrendingUp className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-                              <span className="text-slate-300 text-sm">{achievement}</span>
                             </div>
                           ))}
                         </div>
