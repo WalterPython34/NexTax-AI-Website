@@ -91,17 +91,10 @@ export default function ContactPage() {
       title: "Schedule Consultation",
       description: "Book a strategy session",
       contact: (
-         <Calendar className="w-6 h-6 text-emerald-400" />
-                </div>
-                <h3 className="text-xl font-semibold text-white mb-2">Schedule Consultation</h3>
-                <p className="text-slate-300 mb-4">Book a strategy session</p>
-                <a
-                  href="https://calendly.com/steven-morello-nextax"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded text-sm inline-block transition-colors"
-                >
-                  Book Now
+         <CalendlyPopup className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded text-sm">
+          Book Now
+        </CalendlyPopup>
+
       ),
       availability: "30-minute consultation",
     },
@@ -431,4 +424,6 @@ export default function ContactPage() {
     </div>
   )
 }
+
+
 
