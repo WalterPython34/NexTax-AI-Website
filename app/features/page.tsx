@@ -133,7 +133,7 @@ export default function FeaturesPage() {
       <section className="py-20 bg-slate-900/50">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">AI-Powered Integrations & Automation Consulting</h2>
-          <p className="text-xl text-slate-300 mb-12 max-w-2xl mx-auto">
+          <p className="text-xl text-emerald-300 mb-12 max-w-2xl mx-auto">
             Unify your tools, automate your workflow, and scale smarter.
           </p> 
           <p className="text-lg text-slate-400 mb-12 max-w-3xl mx-auto">
