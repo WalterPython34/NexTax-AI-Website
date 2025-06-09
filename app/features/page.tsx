@@ -52,7 +52,7 @@ export default function FeaturesPage() {
   const stats = [
     { icon: Clock, value: "48hrs", label: "Average Business Launch Time" },
     { icon: CheckCircle, value: "99%", label: "Document Accuracy Rate" },
-    { icon: DollarSign, value: "$127K", label: "Average Tax Savings" },
+    { icon: DollarSign, value: "$331", label: "Average Startup Savings" },
     { icon: Globe, value: "50+", label: "States Supported" },
   ]
 
