@@ -530,28 +530,24 @@ export default function PricingPage() {
               {[
                 {
                   step: "1",
-                  icon: Shield,
                   title: "Safely Secure Payment",
                   description: "Complete your purchase with our secure, bank-level encrypted payment system.",
                   time: "2 minutes",
                 },
                 {
                   step: "2",
-                  icon: MessageSquare,
                   title: "Tell Us About Your Business",
                   description: "Answer a simple questionnaire about your business needs and structure.",
                   time: "5 minutes",
                 },
                 {
                   step: "3",
-                  icon: Zap,
                   title: "AI Powered Setup",
                   description: "Our AI analyzes your information instantly and prepares all required legal documents.",
                   time: "2 hours",
                 },
                 {
                   step: "4",
-                  icon: Rocket,
                   title: "Launch Your Business",
                   description: "Complete entity formation, receive EIN filing, and all compliance documentation.",
                   time: "48 hours",
