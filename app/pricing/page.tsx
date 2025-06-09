@@ -519,7 +519,6 @@ export default function PricingPage() {
       <section className="py-20 bg-slate-900/50">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16"> 
-            <Badge className="bg-orange-500 text-white px-4 py-1 mb-4">Start Today and Launch in 48 Hours!</Badge>
             <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">What Happens After You Purchase?</h2>
             <p className="text-xl text-slate-300 max-w-2xl mx-auto">
               Our streamlined process gets your business legally formed and ready to operate in just 48 hours.
