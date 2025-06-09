@@ -132,19 +132,22 @@ export default function FeaturesPage() {
       {/* Integration Section */}
       <section className="py-20 bg-slate-900/50">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">Seamless Integrations</h2>
+          <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">AI-Powered Integrations & Automation Consulting</h2>
           <p className="text-xl text-slate-300 mb-12 max-w-2xl mx-auto">
-            Connect with your existing tools and workflows for a unified experience.
-          </p>
+            Unify your tools, automate your workflow, and scale smarter.
+          </p> 
+          <p className="text-lg text-slate-400 mb-12 max-w-3xl mx-auto">
+  Let NexTax.AI handle your integration strategy. We consult, configure, and deploy seamless automations across your tech stack — so you can focus on growing your business.
+</p>
 
           <div className="grid md:grid-cols-3 gap-8">
             {[
-              { name: "QuickBooks", description: "Sync financial data automatically" },
-              { name: "DocuSign", description: "Digital signature integration" },
-              { name: "Slack", description: "Team notifications and updates" },
-              { name: "Salesforce", description: "CRM data synchronization" },
-              { name: "Microsoft 365", description: "Document collaboration" },
-              { name: "Zapier", description: "Connect 5000+ apps" },
+              { name: "QuickBooks", description: "AI-powered sync of financial records, bookkeeping triggers, and automated tax categorization" },
+              { name: "DocuSign", description: "Integrated signature workflows for EIN filings, agreements, and compliance docs" },
+              { name: "Slack", description: "Real-time updates from tax filings, document approvals, and team alerts" },
+              { name: "Salesforce", description: "Sync client data for compliance workflows and onboarding automation" },
+              { name: "Microsoft 365", description: "Intelligent document collaboration + calendar-based tax reminders" },
+              { name: "Zapier", description: "5,000+ integrations with tailored GPT flows for finance, CRM, HR & more" },
             ].map((integration, i) => (
               <Card key={i} className="bg-slate-800/50 border-slate-700">
                 <CardContent className="p-6 text-center">
