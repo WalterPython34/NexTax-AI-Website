@@ -186,23 +186,23 @@ export default function ResourcesPage() {
             {[
               {
                 title: "Choosing the Right Business Structure",
-                presenter: "Steve Morello, CPA",
+                presenter: "Steve Morello, Founder & CEO",
                 duration: "45 minutes",
-                date: "Available On-Demand",
+                date: "Coming Soon",
                 image: "/placeholder.svg?height=200&width=400",
               },
               {
                 title: "Tax Strategies for Startups",
-                presenter: "Emily Watson, Tax Specialist",
+                presenter: "Steve Morello, Founder & CEO",
                 duration: "60 minutes",
-                date: "Available On-Demand",
+                date: "Coming Soon",
                 image: "/placeholder.svg?height=200&width=400",
               },
               {
                 title: "Multi-State Compliance Made Simple",
-                presenter: "David Chen, Compliance Expert",
+                presenter: "Steve Morello, Founder & CEO",
                 duration: "50 minutes",
-                date: "Available On-Demand",
+                date: "Coming Soon",
                 image: "/placeholder.svg?height=200&width=400",
               },
             ].map((webinar, i) => (
