@@ -518,7 +518,8 @@ export default function PricingPage() {
       {/* Process Explanation */}
       <section className="py-20 bg-slate-900/50">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
+          <div className="text-center mb-16"> 
+            <Badge className="bg-orange-500 text-white px-4 py-1 mb-4">Start Today and Launch in 48 Hours!</Badge>
             <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">What Happens After You Purchase?</h2>
             <p className="text-xl text-slate-300 max-w-2xl mx-auto">
               Our streamlined process gets your business legally formed and ready to operate in just 48 hours.
@@ -530,26 +531,30 @@ export default function PricingPage() {
               {[
                 {
                   step: "1",
-                  title: "Secure Payment",
-                  description: "Complete your purchase with our secure, encrypted payment system.",
+                  icon: Shield,
+                  title: "Safely Secure Payment",
+                  description: "Complete your purchase with our secure, bank-level encrypted payment system.",
                   time: "2 minutes",
                 },
                 {
                   step: "2",
-                  title: "Business Questionnaire",
-                  description: "Fill out our detailed questionnaire about your business needs and structure.",
+                  icon: MessageSquare,
+                  title: "Tell Us About Your Business",
+                  description: "Answer a simple questionnaire about your business needs and structure.",
                   time: "5 minutes",
                 },
                 {
                   step: "3",
-                  title: "AI Processing",
-                  description: "Our AI analyzes your information and prepares all required legal documents.",
+                  icon: Zap,
+                  title: "AI Powered Setup",
+                  description: "Our AI analyzes your information instantly and prepares all required legal documents.",
                   time: "2 hours",
                 },
                 {
                   step: "4",
-                  title: "Business Launch",
-                  description: "Complete entity formation, EIN filing, and all compliance documentation delivered.",
+                  icon: Rocket,
+                  title: "Launch Your Business",
+                  description: "Complete entity formation, receive EIN filing, and all compliance documentation.",
                   time: "48 hours",
                 },
               ].map((step, i) => (
