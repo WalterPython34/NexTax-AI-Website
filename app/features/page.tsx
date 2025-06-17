@@ -328,7 +328,7 @@ export default function FeaturesPage() {
             {[
               { name: "QuickBooks", description: "AI-powered sync of financial records, bookkeeping triggers, and automated tax categorization" },
               { name: "DocuSign", description: "Integrated signature workflows for EIN filings, agreements, and compliance docs" },
-              { name: "Slack", description: "Real-time updates from tax filings, document approvals, and team alerts" " },
+              { name: "Slack", description: "Real-time updates from tax filings, document approvals, and team alerts" },
               { name: "Salesforce", description: "Sync client data for compliance workflows and onboarding automation" },
               { name: "Microsoft 365", description: "Intelligent document collaboration + calendar-based tax reminders" },
               { name: "Zapier", description: "5,000+ integrations with tailored GPT flows for finance, CRM, HR & more" },
