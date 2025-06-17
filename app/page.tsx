@@ -14,6 +14,7 @@ import {
   Calculator,
   Clock,
   DollarSign,
+  MessageSquare,
 } from "lucide-react"
 import Link from "next/link"
 import { ChatBot } from "@/components/chat-bot"
@@ -28,8 +29,8 @@ export default function HomePage() {
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div className="space-y-8">
               {/* Powered by NexTax.AI Badge */}
-              <Badge className="bg-slate-800/50 text-slate-300 border-slate-600">
-                <Bot className="w-4 h-4 mr-2" />
+              <Badge className="bg-gradient-to-r from-purple-500/20 to-blue-500/20 text-purple-300 border-purple-500/30 text-lg px-4 py-2">
+                <Bot className="w-5 h-5 mr-2" />
                 Powered by NexTax.AI
               </Badge>
 
@@ -40,88 +41,210 @@ export default function HomePage() {
 
               <div className="space-y-6">
                 <h1 className="text-4xl lg:text-6xl font-bold text-white leading-tight">
-                  Launch Your Business in
-                  <span className="block text-emerald-400">48 Hours</span>
-                  <span className="block text-white">Guaranteed</span>
+                  Start Smart.
+                  <span className="block text-emerald-400">Scale Smarter.</span>
+                  <span className="block text-white text-3xl lg:text-4xl mt-4">With Your AI Business Copilot</span>
                 </h1>
 
                 <p className="text-xl text-slate-300 leading-relaxed max-w-lg">
-                  From idea to legally operating business in 2 days. Our AI handles entity formation, tax setup,
-                  compliance, and everything else - so you can focus on building your dream.
+                  The only business formation service that includes a custom-trained AI advisor. Get your business
+                  launched in 48 hours PLUS ongoing AI guidance for growth, compliance, and strategy.
                 </p>
               </div>
 
-              {/* Primary CTA */}
-              <div className="space-y-4">
+             {/* NEW: Unique AI Value Props */}
+              <div className="space-y-3">
+                {[
+                  "Custom AI trained on 20+ years Big 4 tax expertise",
+                  "24/7 business advisor that knows YOUR company",
+                  "From formation to IPO - your AI grows with you",
+                ].map((feature, i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <CheckCircle className="w-5 h-5 text-emerald-400 flex-shrink-0" />
+                    <span className="text-slate-300">{feature}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Enhanced CTAs */}
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Link href="/startsmart-gpt-demo">
+                  <Button
+                    size="lg"
+                    className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white px-8 py-6 text-xl font-semibold w-full sm:w-auto"
+                  >
+                    <Bot className="mr-3 w-6 h-6" />
+                    Try StartSmartGPT Demo
+                  </Button>
+                </Link>
                 <Link href="/pricing">
                   <Button
                     size="lg"
-                    className="bg-emerald-500 hover:bg-emerald-600 text-white px-12 py-6 text-xl font-semibold w-full sm:w-auto"
+                    className="bg-emerald-500 hover:bg-emerald-600 text-white px-8 py-6 text-xl font-semibold w-full sm:w-auto"
                   >
-                    Start My Business Now
+                    Launch My Business
                     <Rocket className="ml-3 w-6 h-6" />
                   </Button>
                 </Link>
-                <p className="text-sm text-slate-400">✓ No hidden fees ✓ Money-back guarantee ✓ 48-hour delivery</p>
               </div>
 
-              {/* Social Proof */}
+              <p className="text-sm text-slate-400">✓ AI-powered formation ✓ 48-hour delivery ✓ Lifetime AI support</p>
+
+              {/* Updated Social Proof */}
               <div className="flex items-center gap-8 pt-4">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-emerald-400">Ready</div>
-                  <div className="text-sm text-slate-400">To Launch</div>
+                  <div className="text-2xl font-bold text-purple-400">AI-Powered</div>
+                  <div className="text-sm text-slate-400">Formation</div>
                 </div>
                 <div className="text-center">
                   <div className="text-2xl font-bold text-emerald-400">48hrs</div>
                   <div className="text-sm text-slate-400">Guaranteed</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-emerald-400">AI-Powered</div>
-                  <div className="text-sm text-slate-400">Accuracy</div>
+                  <div className="text-2xl font-bold text-cyan-400">24/7</div>
+                  <div className="text-sm text-slate-400">AI Support</div>
                 </div>
               </div>
             </div>
 
-            {/* Right Side - Process Visualization */}
+            {/* NEW: AI Demo Preview */}
             <div className="relative">
               <div className="relative bg-slate-800/50 backdrop-blur-sm rounded-2xl p-8 border border-slate-700">
-                <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-cyan-500/10 rounded-2xl" />
+                <div className="absolute inset-0 bg-gradient-to-br from-purple-500/10 to-blue-500/10 rounded-2xl" />
                 <div className="relative space-y-6">
-                  <div className="text-center mb-6">
-                    <h3 className="text-xl font-semibold text-white mb-2">Your Business Launch Timeline</h3>
-                    <Badge className="bg-emerald-500/20 text-emerald-300">AI-Automated Process</Badge>
+                  <div className="flex items-center gap-3 mb-6">
+                    <div className="w-12 h-12 rounded-lg bg-gradient-to-r from-purple-500/20 to-blue-500/20 flex items-center justify-center">
+                      <Bot className="w-6 h-6 text-purple-400" />
+                    </div>
+                    <div>
+                      <h3 className="text-xl font-semibold text-white">StartSmartGPT</h3>
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                        <Badge className="bg-green-500/20 text-green-300 text-xs">Online & Ready</Badge>
+                      </div>
+                    </div>
                   </div>
 
-                  {/* Timeline Steps */}
+                  {/* Sample AI Conversation */}
                   <div className="space-y-4">
-                    {[
-                      { time: "Hour 1", task: "AI analyzes your business needs", status: "complete" },
-                      { time: "Hour 6", task: "Entity formation filed with state", status: "complete" },
-                      { time: "Hour 24", task: "EIN obtained from IRS", status: "complete" },
-                      { time: "Hour 36", task: "Operating agreements generated", status: "complete" },
-                      { time: "Hour 48", task: "Business ready to operate!", status: "active" },
-                    ].map((step, i) => (
-                      <div key={i} className="flex items-center gap-4 p-4 bg-slate-900/30 rounded-lg">
-                        <div
-                          className={`w-3 h-3 rounded-full ${
-                            step.status === "complete"
-                              ? "bg-emerald-400"
-                              : step.status === "active"
-                                ? "bg-cyan-400 animate-pulse"
-                                : "bg-slate-600"
-                          }`}
-                        />
-                        <div className="flex-1">
-                          <div className="flex justify-between items-center">
-                            <span className="text-white font-medium">{step.task}</span>
-                            <span className="text-emerald-400 text-sm font-semibold">{step.time}</span>
-                          </div>
-                        </div>
-                        {step.status === "complete" && <CheckCircle className="w-5 h-5 text-emerald-400" />}
-                      </div>
-                    ))}
+                    <div className="bg-slate-900/30 rounded-lg p-4">
+                      <p className="text-slate-300 text-sm">
+                        <strong className="text-emerald-400">You:</strong> "Should I elect S-Corp status for my new
+                        LLC?"
+                      </p>
+                    </div>
+                    <div className="bg-gradient-to-r from-purple-500/10 to-blue-500/10 rounded-lg p-4 border border-purple-500/20">
+                      <p className="text-slate-300 text-sm">
+                        <strong className="text-purple-400">StartSmartGPT:</strong> "Based on your projected $85K
+                        revenue and single-member structure, S-Corp election could save you ~$6,500 annually in
+                        self-employment taxes. However, you'll need to run payroll. Let me show you the breakeven
+                        analysis..."
+                      </p>
+                    </div>
+                    <div className="bg-slate-900/30 rounded-lg p-4">
+                      <p className="text-slate-300 text-sm">
+                        <strong className="text-emerald-400">You:</strong> "What about multi-state tax implications?"
+                      </p>
+                    </div>
+                    <div className="bg-gradient-to-r from-purple-500/10 to-blue-500/10 rounded-lg p-4 border border-purple-500/20">
+                      <p className="text-slate-300 text-sm">
+                        <strong className="text-purple-400">StartSmartGPT:</strong> "Great question! Since you mentioned
+                        clients in NY and CA, you'll need to consider nexus thresholds..."
+                      </p>
+                    </div>
                   </div>
+
+                  <Link href="/startsmart-gpt-demo">
+                    <Button className="w-full bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white">
+                      <MessageSquare className="mr-2 w-4 h-4" />
+                      Try StartSmartGPT Now
+                    </Button>
+                  </Link>
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* NEW: AI Differentiator Section */}
+      <section className="py-20 bg-slate-900/50">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">Why StartSmartGPT Changes Everything</h2>
+            <p className="text-xl text-slate-300 max-w-3xl mx-auto">
+              Other services stop at paperwork. We give you an AI business partner trained on decades of real-world
+              experience.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8 mb-12">
+            {[
+              {
+                icon: Bot,
+                title: "Custom-Trained on Your Business",
+                description:
+                  "Not generic ChatGPT. StartSmartGPT knows your entity type, industry, state requirements, and growth plans.",
+                color: "purple",
+              },
+              {
+                icon: Shield,
+                title: "Big 4 Tax Expertise Built-In",
+                description:
+                  "Trained on 20+ years of Morgan Stanley, PwC, and KPMG tax strategies. Get enterprise-level advice instantly.",
+                color: "emerald",
+              },
+              {
+                icon: TrendingUp,
+                title: "Grows With Your Business",
+                description:
+                  "From startup questions to scaling challenges. Your AI advisor evolves as your business grows.",
+                color: "cyan",
+              },
+            ].map((feature, i) => (
+              <Card key={i} className="bg-slate-800/50 border-slate-700 hover:border-emerald-500/50 transition-colors">
+                <CardContent className="p-8 text-center">
+                  <div
+                    className={`w-16 h-16 mx-auto mb-6 rounded-full ${
+                      feature.color === "purple"
+                        ? "bg-purple-500/20"
+                        : feature.color === "emerald"
+                          ? "bg-emerald-500/20"
+                          : "bg-cyan-500/20"
+                    } flex items-center justify-center`}
+                  >
+                    <feature.icon
+                      className={`w-8 h-8 ${
+                        feature.color === "purple"
+                          ? "text-purple-400"
+                          : feature.color === "emerald"
+                            ? "text-emerald-400"
+                            : "text-cyan-400"
+                      }`}
+                    />
+                  </div>
+                  <h3 className="text-xl font-semibold text-white mb-4">{feature.title}</h3>
+                  <p className="text-slate-300">{feature.description}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* Competitive Comparison */}
+          <div className="bg-slate-800/30 rounded-2xl p-8 border border-slate-700">
+            <h3 className="text-2xl font-bold text-white mb-8 text-center">What Makes Us Different</h3>
+            <div className="grid md:grid-cols-3 gap-8 text-center">
+              <div className="space-y-4">
+                <div className="text-red-400 font-semibold">❌ LegalZoom</div>
+                <p className="text-slate-400">"File your LLC" → Done. Good luck!</p>
+              </div>
+              <div className="space-y-4">
+                <div className="text-red-400 font-semibold">❌ Incfile</div>
+                <p className="text-slate-400">"Here's your paperwork" → You're on your own.</p>
+              </div>
+              <div className="space-y-4">
+                <div className="text-emerald-400 font-semibold">✅ StartSmart</div>
+                <p className="text-emerald-300">"Meet your AI business advisor" → Lifetime guidance.</p>
               </div>
             </div>
           </div>
