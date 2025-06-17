@@ -96,7 +96,7 @@ export default function FeaturesPage() {
           <div className="text-center mb-16">
             {/* Large NexTax Logo */}
             <div className="flex justify-center mb-8">
-              <img src="/images/nextax-logo-large-new.png" alt="NexTax.AI" className="h-64 w-auto" />
+              <img src="/images/nextax-logo-large.png" alt="NexTax.AI" className="h-64 w-auto" />
             </div>
 
             <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">
@@ -346,42 +346,7 @@ export default function FeaturesPage() {
             ))}
           </div>
         </div>
-      </section>
-
-      {/* Customer Journey CTA */}
-      <section className="py-20">
-        <div className="container mx-auto px-4">
-          <div className="text-center">
-            <div className="bg-gradient-to-r from-emerald-600 to-cyan-600 rounded-2xl p-8">
-              {/* Centered StartSmart White Logo */}
-              <div className="flex justify-center mb-8">
-                <img
-                  src="/images/startsmart-logo-white-new.png"
-                  alt="StartSmart by NexTax.AI"
-                  className="h-28 w-auto"
-                />
-              </div>
-
-              <h3 className="text-2xl font-bold text-white mb-4">Ready to Transform Your Tax Processes?</h3>
-              <p className="text-emerald-100 mb-6 max-w-2xl mx-auto">
-                Start your journey towards efficient and intelligent tax management today.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link href="/startsmart">
-                  <Button size="lg" className="bg-white text-emerald-600 hover:bg-slate-100 px-8 py-4">
-                    Start with Business Launch
-                  </Button>
-                </Link>
-                <Link href="/contact">
-                  <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10 px-8 py-4">
-                    Explore Enterprise Solutions
-                  </Button>
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+      </section>    
     </div>
   )
 }
