@@ -13,6 +13,12 @@ import {
   DollarSign,
   Globe,
   TrendingUp,
+  BookOpen,
+  PenTool,
+  MessageSquare,
+  Users,
+  FileSpreadsheet,
+  ZapIcon as ZapierIcon,
 } from "lucide-react"
 import Link from "next/link"
 
@@ -71,7 +77,7 @@ export default function FeaturesPage() {
   ]
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-900 pt-16">
+    <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black pt-16">
       {/* Hero Section */}
       <section className="py-20">
         <div className="container mx-auto px-4 text-center">
@@ -326,13 +332,39 @@ export default function FeaturesPage() {
 </p>
           <div className="grid md:grid-cols-3 gap-8">
             {[
-              { name: "QuickBooks", description: "AI-powered sync of financial records, bookkeeping triggers, and automated tax categorization" },
-              { name: "DocuSign", description: "Integrated signature workflows for EIN filings, agreements, and compliance docs" },
-              { name: "Slack", description: "Real-time updates from tax filings, document approvals, and team alerts" },
-              { name: "Salesforce", description: "Sync client data for compliance workflows and onboarding automation" },
-              { name: "Microsoft 365", description: "Intelligent document collaboration + calendar-based tax reminders" },
-              { name: "Zapier", description: "5,000+ integrations with tailored GPT flows for finance, CRM, HR & more" },
+                            {
+                name: "QuickBooks",
+                description:
+                  "AI-powered sync of financial records, bookkeeping triggers, and automated tax categorization",
+                icon: BookOpen,
+              },
+              {
+                name: "DocuSign",
+                description: "Integrated signature workflows for EIN filings, agreements, and compliance docs",
+                icon: PenTool,
+              },
+              {
+                name: "Slack",
+                description: "Real-time updates from tax filings, document approvals, and team alerts",
+                icon: MessageSquare,
+              },
+              {
+                name: "Salesforce",
+                description: "Sync client data for compliance workflows and onboarding automation",
+                icon: Users,
+              },
+              {
+                name: "Microsoft 365",
+                description: "Intelligent document collaboration + calendar-based tax reminders",
+                icon: FileSpreadsheet,
+              },
+              {
+                name: "Zapier",
+                description: "5,000+ integrations with tailored GPT flows for finance, CRM, HR & more",
+                icon: ZapierIcon,
+              },
             ].map((integration, i) => (
+
               <Card key={i} className="bg-slate-800/50 border-slate-700">
                 <CardContent className="p-6 text-center">
                   <div className="w-16 h-16 bg-slate-700 rounded-lg mx-auto mb-4 flex items-center justify-center">
