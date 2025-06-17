@@ -53,7 +53,7 @@ export default function PricingPage() {
         "Priority 48-Hour LLC Formation",
         "Business Registration in your State",
         "LLC Agreement Preparation",
-        "StartSmartGPT access for New Businesses",
+        "🤖 AI Business Copilot (StartSmartGPT)",
         "Complete compliance setup",
         "Priority phone & email support",
         "Digital document vault",
@@ -74,7 +74,7 @@ export default function PricingPage() {
       description: "The complete business launch experience",
       features: [
         "Everything in StartSmart Complete",
-        "StartSmartGPT access for New Businesses",
+        "🤖 AI Business Copilot (StartSmartGPT)",
         "U.S. Business Bank Account Setup",
         "Virtual U.S. Address (1 year)",
         "Accounting/Bookkeeping Setup",
