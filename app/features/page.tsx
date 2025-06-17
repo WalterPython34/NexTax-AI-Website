@@ -287,16 +287,44 @@ export default function FeaturesPage() {
         </div>
       </section>
 
-      {/* Features Grid */}
+     {/* Features Grid */}
       <section className="py-20">
         <div className="container mx-auto px-4">
           <div className="grid lg:grid-cols-2 gap-8">
             {features.map((feature, i) => (
-              <Card key={i} className="bg-slate-800/50 border-slate-700 hover:border-emerald-500/50 transition-colors">
+              <Card key={i} className="bg-gray-900/50 border-gray-700 hover:border-emerald-500/50 transition-colors">
                 <CardHeader>
                   <div className="flex items-center gap-4">
-                    <div className={`w-12 h-12 rounded-lg bg-${feature.color}-500/20 flex items-center justify-center`}>
-                      <feature.icon className={`w-6 h-6 text-${feature.color}-400`} />
+                    <div
+                      className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+                        feature.color === "emerald"
+                          ? "bg-emerald-500/20"
+                          : feature.color === "cyan"
+                            ? "bg-cyan-500/20"
+                            : feature.color === "violet"
+                              ? "bg-violet-500/20"
+                              : feature.color === "orange"
+                                ? "bg-orange-500/20"
+                                : feature.color === "blue"
+                                  ? "bg-blue-500/20"
+                                  : "bg-green-500/20"
+                      }`}
+                    >
+                      <feature.icon
+                        className={`w-6 h-6 ${
+                          feature.color === "emerald"
+                            ? "text-emerald-400"
+                            : feature.color === "cyan"
+                              ? "text-cyan-400"
+                              : feature.color === "violet"
+                                ? "text-violet-400"
+                                : feature.color === "orange"
+                                  ? "text-orange-400"
+                                  : feature.color === "blue"
+                                    ? "text-blue-400"
+                                    : "text-green-400"
+                        }`}
+                      />
                     </div>
                     <div>
                       <CardTitle className="text-white text-xl">{feature.title}</CardTitle>
