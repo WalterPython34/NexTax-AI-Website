@@ -703,20 +703,38 @@ export default function HomePage() {
             ))}
           </div>
 
-          {/* Credibility Footer */}
+               {/* Customer Journey CTA */}
           <div className="text-center">
-            <Card className="bg-slate-800/30 border-slate-600 max-w-3xl mx-auto">
-              <CardContent className="p-6">
-                <p className="text-slate-300 text-sm">
-                  <strong className="text-white">Based on Real Experience:</strong> These insights come from Steve
-                  Morello's 20+ years structuring businesses across Big 4 firms, Wall Street, and high-growth technology
-                  companies. Every scenario reflects actual challenges we've solved.
-                </p>
-              </CardContent>
-            </Card>
+            <div className="bg-gradient-to-r from-emerald-600 to-cyan-600 rounded-2xl p-8">
+              {/* Centered StartSmart White Logo */}
+              <div className="flex justify-center mb-8">
+                <img src="/images/startsmart-logo-white.png" alt="StartSmart by NexTax.AI" className="h-28 w-auto" />
+              </div>
+
+              <h3 className="text-2xl font-bold text-white mb-4">Start Simple, Scale Smart</h3>
+              <p className="text-emerald-100 mb-6 max-w-2xl mx-auto">
+                Begin with StartSmart to launch your business, then add advanced AI tools as you grow. Our platform
+                scales with your needs.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Link href="/startsmart">
+                  <Button size="lg" className="bg-white text-emerald-600 hover:bg-slate-100 px-8 py-4">
+                    Start with Business Launch
+                    <Rocket className="ml-2 w-5 h-5" />
+                  </Button>
+                </Link>
+                <Link href="/contact">
+                  <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10 px-8 py-4">
+                    Explore Enterprise Solutions
+                    <ArrowRight className="ml-2 w-5 h-5" />
+                  </Button>
+                </Link>
+              </div>
+            </div>
           </div>
         </div>
       </section>
+
 
       {/* Chatbot */}
       <ChatBot />
