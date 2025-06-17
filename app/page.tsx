@@ -29,7 +29,7 @@ export default function HomePage() {
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div className="space-y-8">
               {/* NEW: AI-Powered Badge */}
-              <Badge className="bg-gradient-to-r from-purple-500/20 to-blue-500/20 text-purple-300 border-purple-500/30 text-lg px-4 py-2">
+              <Badge className="bg-gradient-to-r from-emerald-500/20 to-blue-500/20 text-emerald-300 border-blue-500/30 text-lg px-4 py-2">
                 <Bot className="w-5 h-5 mr-2" />
                 Powered by StartSmartGPT AI
               </Badge>
@@ -71,7 +71,7 @@ export default function HomePage() {
                 <Link href="/startsmart-gpt-demo">
                   <Button
                     size="lg"
-                    className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white px-8 py-6 text-xl font-semibold w-full sm:w-auto"
+                    className="bg-gradient-to-r from-emerald-500 to-blue-500 hover:from-emerald-600 hover:to-blue-600 text-white px-8 py-6 text-xl font-semibold w-full sm:w-auto"
                   >
                     <Bot className="mr-3 w-6 h-6" />
                     Try StartSmartGPT Demo
