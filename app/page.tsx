@@ -10,8 +10,6 @@ import {
   Bot,
   Building2,
   TrendingUp,
-  Globe,
-  Calculator,
   Clock,
   DollarSign,
   MessageSquare,
@@ -88,7 +86,7 @@ export default function HomePage() {
                 </Link>
               </div>
 
-              {/* Updated Social Proof */}
+            {/* Updated Social Proof */}
               <div className="bg-slate-800/30 rounded-lg p-4 border border-emerald-500/30">
                 <p className="text-emerald-300 font-medium text-center mb-2">🔒 100% Transparent Pricing Promise</p>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm text-slate-300">
@@ -109,7 +107,7 @@ export default function HomePage() {
 
               <div className="flex items-center gap-8 pt-4">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-blue-400">AI-Powered</div>
+                  <div className="text-2xl font-bold text-purple-400">AI-Powered</div>
                   <div className="text-sm text-slate-400">Formation</div>
                 </div>
                 <div className="text-center">
@@ -716,210 +714,6 @@ export default function HomePage() {
                 </p>
               </CardContent>
             </Card>
-          </div>
-        </div>
-      </section>
-
-      {/* NexTax.AI Product Suite */}
-      <section className="py-20">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            {/* Large NexTax Logo */}
-            <div className="flex justify-center mb-8">
-              <img src="/images/nextax-logo-large.png" alt="NexTax.AI" className="h-64 w-auto" />
-            </div>
-
-            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">
-              Scale Your Business with Advanced AI Tax Solutions
-            </h2>
-            <p className="text-xl text-slate-300 max-w-3xl mx-auto">
-              As your business grows, access our full suite of specialized AI-powered tax and compliance tools designed
-              for complex business needs.
-            </p>
-          </div>
-
-          <div className="grid lg:grid-cols-2 gap-8 mb-12">
-            {/* Transfer Pricing GPT */}
-            <Card className="bg-slate-800/50 border-slate-700 hover:border-emerald-500/50 transition-colors">
-              <CardContent className="p-8">
-                <div className="flex items-start gap-4 mb-6">
-                  <div className="w-12 h-12 rounded-lg bg-violet-500/20 flex items-center justify-center flex-shrink-0">
-                    <TrendingUp className="w-6 h-6 text-violet-400" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-semibold text-white mb-2">Transfer Pricing Compliance GPT</h3>
-                    <Badge className="bg-violet-500/20 text-violet-300 text-xs">Enterprise</Badge>
-                  </div>
-                </div>
-                <p className="text-slate-300 mb-6">
-                  AI-powered benchmark studies and transfer pricing documentation for multinational corporations.
-                  Automated compliance with OECD guidelines and local regulations.
-                </p>
-                <ul className="space-y-2 mb-6">
-                  {[
-                    "Automated benchmark studies",
-                    "OECD compliance documentation",
-                    "Economic analysis reports",
-                    "Multi-jurisdiction support",
-                  ].map((item, i) => (
-                    <li key={i} className="flex items-center gap-2 text-slate-300">
-                      <CheckCircle className="w-4 h-4 text-violet-400 flex-shrink-0" />
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-400">Starting at $2,999/month</span>
-                  <Button variant="outline" className="border-violet-500/50 text-violet-300 hover:bg-violet-500/10">
-                    Learn More
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* State Tax Nexus GPT */}
-            <Card className="bg-slate-800/50 border-slate-700 hover:border-emerald-500/50 transition-colors">
-              <CardContent className="p-8">
-                <div className="flex items-start gap-4 mb-6">
-                  <div className="w-12 h-12 rounded-lg bg-cyan-500/20 flex items-center justify-center flex-shrink-0">
-                    <Globe className="w-6 h-6 text-cyan-400" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-semibold text-white mb-2">State Tax Nexus GPT</h3>
-                    <Badge className="bg-cyan-500/20 text-cyan-300 text-xs">Multi-State</Badge>
-                  </div>
-                </div>
-                <p className="text-slate-300 mb-6">
-                  Navigate complex state tax obligations with AI that monitors nexus thresholds, filing requirements,
-                  and compliance deadlines across all 50 states.
-                </p>
-                <ul className="space-y-2 mb-6">
-                  {[
-                    "Real-time nexus monitoring",
-                    "50-state compliance tracking",
-                    "Automated filing alerts",
-                    "Economic nexus analysis",
-                  ].map((item, i) => (
-                    <li key={i} className="flex items-center gap-2 text-slate-300">
-                      <CheckCircle className="w-4 h-4 text-cyan-400 flex-shrink-0" />
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-400">Starting at $799/month</span>
-                  <Button variant="outline" className="border-cyan-500/50 text-cyan-300 hover:bg-cyan-500/10">
-                    Learn More
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Sales Tax GPT */}
-            <Card className="bg-slate-800/50 border-slate-700 hover:border-emerald-500/50 transition-colors">
-              <CardContent className="p-8">
-                <div className="flex items-start gap-4 mb-6">
-                  <div className="w-12 h-12 rounded-lg bg-orange-500/20 flex items-center justify-center flex-shrink-0">
-                    <Calculator className="w-6 h-6 text-orange-400" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-semibold text-white mb-2">Sales Tax Compliance GPT</h3>
-                    <Badge className="bg-orange-500/20 text-orange-300 text-xs">E-commerce</Badge>
-                  </div>
-                </div>
-                <p className="text-slate-300 mb-6">
-                  Automated sales tax calculation, filing, and remittance for e-commerce and retail businesses. Handles
-                  complex product taxability and exemption certificates.
-                </p>
-                <ul className="space-y-2 mb-6">
-                  {[
-                    "Automated tax calculation",
-                    "Product taxability analysis",
-                    "Exemption certificate management",
-                    "Multi-channel integration",
-                  ].map((item, i) => (
-                    <li key={i} className="flex items-center gap-2 text-slate-300">
-                      <CheckCircle className="w-4 h-4 text-orange-400 flex-shrink-0" />
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-400">Starting at $299/month</span>
-                  <Button variant="outline" className="border-orange-500/50 text-orange-300 hover:bg-orange-500/10">
-                    Learn More
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Custom AI Solutions */}
-            <Card className="bg-slate-800/50 border-slate-700 hover:border-emerald-500/50 transition-colors">
-              <CardContent className="p-8">
-                <div className="flex items-start gap-4 mb-6">
-                  <div className="w-12 h-12 rounded-lg bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
-                    <Bot className="w-6 h-6 text-emerald-400" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-semibold text-white mb-2">Custom AI Tax Solutions</h3>
-                    <Badge className="bg-emerald-500/20 text-emerald-300 text-xs">Bespoke</Badge>
-                  </div>
-                </div>
-                <p className="text-slate-300 mb-6">
-                  Need something specific? Our AI experts can build custom GPTs tailored to your unique tax challenges,
-                  industry requirements, or compliance needs.
-                </p>
-                <ul className="space-y-2 mb-6">
-                  {[
-                    "Industry-specific solutions",
-                    "Custom workflow automation",
-                    "Integration with existing systems",
-                    "Dedicated support team",
-                  ].map((item, i) => (
-                    <li key={i} className="flex items-center gap-2 text-slate-300">
-                      <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-                      {item}
-                    </li>
-                  ))}
-                </ul>
-                <div className="flex items-center justify-between">
-                  <span className="text-slate-400">Custom pricing</span>
-                  <Button variant="outline" className="border-emerald-500/50 text-emerald-300 hover:bg-emerald-500/10">
-                    Contact Sales
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Customer Journey CTA */}
-          <div className="text-center">
-            <div className="bg-gradient-to-r from-emerald-600 to-cyan-600 rounded-2xl p-8">
-              {/* Centered StartSmart White Logo */}
-              <div className="flex justify-center mb-8">
-                <img src="/images/startsmart-logo-white.png" alt="StartSmart by NexTax.AI" className="h-28 w-auto" />
-              </div>
-
-              <h3 className="text-2xl font-bold text-white mb-4">Start Simple, Scale Smart</h3>
-              <p className="text-emerald-100 mb-6 max-w-2xl mx-auto">
-                Begin with StartSmart to launch your business, then add advanced AI tools as you grow. Our platform
-                scales with your needs.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link href="/startsmart">
-                  <Button size="lg" className="bg-white text-emerald-600 hover:bg-slate-100 px-8 py-4">
-                    Start with Business Launch
-                    <Rocket className="ml-2 w-5 h-5" />
-                  </Button>
-                </Link>
-                <Link href="/contact">
-                  <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10 px-8 py-4">
-                    Explore Enterprise Solutions
-                    <ArrowRight className="ml-2 w-5 h-5" />
-                  </Button>
-                </Link>
-              </div>
-            </div>
           </div>
         </div>
       </section>
