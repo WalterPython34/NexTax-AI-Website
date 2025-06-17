@@ -321,9 +321,9 @@ export default function FeaturesPage() {
       <section className="py-20 bg-slate-900/50">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">Seamless Integrations</h2>
-          <p className="text-xl text-slate-300 mb-12 max-w-2xl mx-auto">Let NexTax.AI handle your integration strategy. We consult, configure, and deploy seamless automations across your tech stack — so you can focus on growing your business.
-          </p>
-
+          <p className="text-lg text-slate-400 mb-12 max-w-3xl mx-auto">
+  Let NexTax.AI handle your integration strategy. We consult, configure, and deploy seamless automations across your tech stack — so you can focus on growing your business.
+</p>
           <div className="grid md:grid-cols-3 gap-8">
             {[
               { name: "QuickBooks", description: "AI-powered sync of financial records, bookkeeping triggers, and automated tax categorization" },
