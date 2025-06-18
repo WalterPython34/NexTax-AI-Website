@@ -577,9 +577,9 @@ export default function HomePage() {
                     className="w-16 h-16 rounded-full object-cover"
                   />
                   <div className="text-left">
-                    <div className="font-semibold text-white">Steve Morello, CPA</div>
+                    <div className="font-semibold text-white">Steve Morello</div>
                     <div className="text-emerald-400 text-sm">Founder & CEO</div>
-                    <div className="text-slate-400 text-xs">Former Morgan Stanley, 20+ Years Big 4</div>
+                    <div className="text-slate-400 text-xs">Former Morgan Stanley Private Equity, Head of Corporate Tax Department, with 20+ Years of Big 4 and Tax experience</div>
                   </div>
                 </div>
                 <p className="text-slate-300 italic">
