@@ -69,7 +69,7 @@ export default function HomePage() {
                 <Link href="/startsmart-gpt-demo">
                   <Button
                     size="lg"
-                    className="bg-gradient-to-r from-emerald-500 to-blue-500 hover:from-emerald-600 hover:to-blue-500 text-white px-8 py-6 text-xl font-semibold w-full sm:w-auto"
+                    className="bg-gradient-to-r from-emerald-500 to-blue-400 hover:from-emerald-600 hover:to-blue-500 text-white px-8 py-6 text-xl font-semibold w-full sm:w-auto"
                   >
                     <Bot className="mr-3 w-6 h-6" />
                     Try StartSmartGPT Demo
