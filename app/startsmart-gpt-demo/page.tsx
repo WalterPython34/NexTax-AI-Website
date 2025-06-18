@@ -114,10 +114,21 @@ export default function StartSmartGPTDemo() {
       const lastSessionTime = new Date(lastSession)
       const now = new Date()
       const hoursSinceLastSession = (now.getTime() - lastSessionTime.getTime()) / (1000 * 60 * 60)
+      const storedQuestionCount = Number.parseInt(questionsCount)
 
-      if (hoursSinceLastSession < DEMO_LIMITS.cooldownHours) {
+      // Only set as expired if user has used all questions AND within cooldown period
+      if (storedQuestionCount >= DEMO_LIMITS.maxQuestions && hoursSinceLastSession < DEMO_LIMITS.cooldownHours) {
         setSessionExpired(true)
-        setQuestionsAsked(Number.parseInt(questionsCount))
+        setQuestionsAsked(storedQuestionCount)
+      } else if (storedQuestionCount < DEMO_LIMITS.maxQuestions) {
+        // If user hasn't used all questions, restore their progress
+        setQuestionsAsked(storedQuestionCount)
+      } else if (hoursSinceLastSession >= DEMO_LIMITS.cooldownHours) {
+        // If cooldown period has passed, reset everything
+        localStorage.removeItem("demo-last-session")
+        localStorage.removeItem("demo-questions-count")
+        setQuestionsAsked(0)
+        setSessionExpired(false)
       }
     }
   }, [])
@@ -485,4 +496,3 @@ Based on my extensive training, here are the key considerations...
     </div>
   )
 }
-
