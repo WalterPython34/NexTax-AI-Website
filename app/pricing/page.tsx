@@ -501,7 +501,7 @@ export default function PricingPage() {
           <div className="max-w-4xl mx-auto text-center">
             {/* StartSmart Logo - Black Version */}
             <div className="flex justify-center mb-8">
-              <img src="/images/startsmart-logo-new-business-launch.jpg" alt="StartSmart by NexTax.AI" className="h-40 w-auto" />
+              <img src="/images/startsmart-logo-new-business-launch.png" alt="StartSmart by NexTax.AI" className="h-40 w-auto" />
             </div>
 
             <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">Ready to Start Your Business?</h2>
