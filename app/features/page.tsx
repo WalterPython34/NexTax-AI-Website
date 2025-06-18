@@ -72,12 +72,12 @@ export default function FeaturesPage() {
   const stats = [
     { icon: Clock, value: "48hrs", label: "Average Business Launch Time" },
     { icon: CheckCircle, value: "99%", label: "Document Accuracy Rate" },
-    { icon: DollarSign, value: "$127K", label: "Average Tax Savings" },
+    { icon: DollarSign, value: "Zero", label: "Hidden Fees or Add-on Charges" },
     { icon: Globe, value: "50+", label: "States Supported" },
   ]
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black pt-16">
+    <div className="min-h-screen bg-gradient-to-br from-black via-gray-800 to-black pt-16">
       {/* Hero Section */}
       <section className="py-20">
         <div className="container mx-auto px-4 text-center">
