@@ -460,16 +460,16 @@ export default function HomePage() {
                   <tbody className="text-slate-300">
                     <tr className="border-b border-slate-700">
                       <td className="py-3 font-medium">Tailor Brands</td>
-                      <td className="text-center py-3">$49</td>
-                      <td className="text-center py-3 text-red-400">+$199 agent +$50 EIN</td>
-                      <td className="text-center py-3 text-red-400">$298+</td>
+                      <td className="text-center py-3">$199</td>
+                      <td className="text-center py-3 text-red-400">+$199 agent +$99 EIN +$200 State registration</td>
+                      <td className="text-center py-3 text-red-400">$697+</td>
                       <td className="text-center py-3 text-xs">No AI, poor support</td>
                     </tr>
                     <tr className="border-b border-slate-700">
                       <td className="py-3 font-medium">LegalZoom</td>
                       <td className="text-center py-3">$79</td>
-                      <td className="text-center py-3 text-red-400">+$299 agent +$79 EIN</td>
-                      <td className="text-center py-3 text-red-400">$457+</td>
+                      <td className="text-center py-3 text-red-400">+$299 agent +$79 EIN +$200 State registration</td>
+                      <td className="text-center py-3 text-red-400">$657+</td>
                       <td className="text-center py-3 text-xs">No ongoing support</td>
                     </tr>
                     <tr className="bg-emerald-500/10 border border-emerald-500/30">
