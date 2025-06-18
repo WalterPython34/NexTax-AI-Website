@@ -201,7 +201,7 @@ Based on my extensive training, here are the key considerations...
   const remainingQuestions = DEMO_LIMITS.maxQuestions - questionsAsked
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-900">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-900 pt-8">
       <div className="container mx-auto px-4 py-12">
         {/* Header */}
         <div className="text-center mb-12">
@@ -485,3 +485,4 @@ Based on my extensive training, here are the key considerations...
     </div>
   )
 }
+
