@@ -27,7 +27,7 @@ export default function HomePage() {
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div className="space-y-8">
               {/* NEW: AI-Powered Badge */}
-              <Badge className="bg-gradient-to-r from-emerald-500/20 to-blue-500/20 text-blue-300 border-blue-500/30 text-lg px-4 py-2">
+              <Badge className="bg-gradient-to-r from-emerald-500/20 to-blue-500/20 text-blue-400 border-blue-500/30 text-lg px-4 py-2">
                 <Bot className="w-5 h-5 mr-2" />
                 Powered by StartSmartGPT AI
               </Badge>
@@ -107,7 +107,7 @@ export default function HomePage() {
 
               <div className="flex items-center gap-8 pt-4">
                 <div className="text-center">
-                  <div className="text-2xl font-bold text-purple-400">AI-Powered</div>
+                  <div className="text-2xl font-bold text-blue-400">AI-Powered</div>
                   <div className="text-sm text-slate-400">Formation</div>
                 </div>
                 <div className="text-center">
