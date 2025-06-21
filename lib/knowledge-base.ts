@@ -1,4 +1,4 @@
-// Updated knowledge base with better error handling
+// Simple knowledge base without AI SDK
 import { generateText } from "ai"
 import { openai } from "@ai-sdk/openai"
 
@@ -37,7 +37,7 @@ export function getSimpleResponse(userMessage: string): string {
   return "Thanks for your question! I can help you with information about our services, pricing, business formation, and tax solutions. For specific questions, I'd recommend booking a consultation with our expert team through our website."
 }
 
-export async function generateCustomerServiceResponse(userMessage: string) {
+export async function generateCustomerServiceResponse(userMessage: string): Promise<string> {
   // First check if we have an API key
   if (!process.env.OPENAI_API_KEY) {
     console.log("No OpenAI API key found, using simple responses")
@@ -48,7 +48,7 @@ export async function generateCustomerServiceResponse(userMessage: string) {
     console.log("Attempting to use OpenAI API...")
 
     const { text } = await generateText({
-      model: openai("gpt-4o-mini"), // Using cheaper model for testing
+      model: openai("gpt-4o-mini"),
       system: `You are the NexTax.AI customer service assistant. 
 
 Company Information:
@@ -75,10 +75,6 @@ Guidelines:
     return text
   } catch (error) {
     console.error("OpenAI API error:", error)
-    // Fallback to simple responses if API fails
     return getSimpleResponse(userMessage)
   }
-}
-
-  return text
 }
