@@ -40,8 +40,9 @@ export default function HomePage() {
               <div className="space-y-6">
                 <h1 className="text-4xl lg:text-6xl font-bold text-white leading-tight">
                   Start Smart.
-                  <span className="block text-emerald-400">Scale Smarter.</span>
+                  <span className="block text-cyan-400">Scale Smarter.</span>
                   <span className="block text-white text-3xl lg:text-4xl mt-4">With Your AI Business Copilot</span>
+                  <span className="block text-emerald-400">Launch Your Business in Less Than 48 Hours.</span>
                 </h1>
 
                 <p className="text-xl text-slate-300 leading-relaxed max-w-lg">
