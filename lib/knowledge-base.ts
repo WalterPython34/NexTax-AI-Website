@@ -1,4 +1,4 @@
-// Simple knowledge base with AI SDK integration - Updated
+// Simple knowledge base with AI SDK integration - Force rebuild
 import { generateText } from "ai"
 import { openai } from "@ai-sdk/openai"
 
@@ -38,8 +38,9 @@ export function getSimpleResponse(userMessage: string): string {
 }
 
 export async function generateCustomerServiceResponse(userMessage: string): Promise<string> {
-  // Debug logging to help troubleshoot
+  // Enhanced debug logging
   console.log("🔍 Checking for OpenAI API key...")
+  console.log("🔍 All environment variables:", Object.keys(process.env))
   console.log("🔍 API Key exists:", !!process.env.OPENAI_API_KEY)
   console.log("🔍 API Key length:", process.env.OPENAI_API_KEY?.length || 0)
   console.log("🔍 Environment check:", process.env.NODE_ENV)
