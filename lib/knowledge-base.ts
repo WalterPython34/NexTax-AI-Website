@@ -1,4 +1,4 @@
-// Simple knowledge base with AI SDK integration
+// Simple knowledge base with AI SDK integration - Updated
 import { generateText } from "ai"
 import { openai } from "@ai-sdk/openai"
 
@@ -42,6 +42,7 @@ export async function generateCustomerServiceResponse(userMessage: string): Prom
   console.log("🔍 Checking for OpenAI API key...")
   console.log("🔍 API Key exists:", !!process.env.OPENAI_API_KEY)
   console.log("🔍 API Key length:", process.env.OPENAI_API_KEY?.length || 0)
+  console.log("🔍 Environment check:", process.env.NODE_ENV)
 
   // First check if we have an API key
   if (!process.env.OPENAI_API_KEY) {
