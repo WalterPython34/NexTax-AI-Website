@@ -12,7 +12,6 @@ export const metadata: Metadata = {
   title: "NexTax.AI - AI Copilot for Modern Tax Teams",
   description:
     "Automate entity formation, streamline tax workflows, and launch confidently with AI-powered services for startups and modern tax teams.",
-    generator: 'v0.dev'
 }
 
 export default function RootLayout({
@@ -27,6 +26,16 @@ export default function RootLayout({
         <main>{children}</main>
         <Footer />
         <Script src="https://js.stripe.com/v3/" strategy="afterInteractive" />
+        {/* Add Google Analytics */}
+        <Script src="https://www.googletagmanager.com/gtag/js?id=G-5VHGTSGCCN" strategy="afterInteractive" />
+        <Script id="google-analytics" strategy="afterInteractive">
+          {`
+            window.dataLayer = window.dataLayer || [];
+            function gtag(){dataLayer.push(arguments);}
+            gtag('js', new Date());
+            gtag('config', 'G-5VHGTSGCCN');
+          `}
+        </Script>
       </body>
     </html>
   )
