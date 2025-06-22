@@ -366,32 +366,32 @@ export default function FeaturesPage() {
                 name: "QuickBooks",
                 description:
                   "AI-powered sync of financial records, bookkeeping triggers, and automated tax categorization",
-                iconName: "Book",                              
+                icon: "Book",                              
               },
               {
                 name: "DocuSign",
                 description: "Integrated signature workflows for EIN filings, agreements, and compliance docs",
-                iconName: "Edit3",                
+                icon: "Edit3",                
               },
               {
                 name: "Slack",
                 description: "Real-time updates from tax filings, document approvals, and team alerts",
-                iconName: "MessageSquare",                
+                icon: "MessageSquare",                
               },
               {
                 name: "Salesforce",
                 description: "Sync client data for compliance workflows and onboarding automation",
-                iconName: "Users",                
+                icon: "Users",                
               },
               {
                 name: "Microsoft 365",
                 description: "Intelligent document collaboration + calendar-based tax reminders",
-                iconName: "FileSpreadsheet",                
+                icon: "FileSpreadsheet",                
               },
               {
                 name: "Zapier",
                 description: "5,000+ integrations with tailored GPT flows for finance, CRM, HR & more",
-                iconName: "ZapIcon",                
+                icon: "ZapIcon",                
               },
             ].map((integration, i) => (
               <Card key={i} className="bg-gray-900/50 border-gray-700">
