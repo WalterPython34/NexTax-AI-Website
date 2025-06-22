@@ -22,9 +22,6 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 
-// Import icons individually to avoid bundling issues
-import * as LucideIcons from "lucide-react"
-
 export default function FeaturesPage() {
   const features = [
     {
