@@ -22,6 +22,9 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 
+// Import icons individually to avoid bundling issues
+import * as LucideIcons from "lucide-react"
+
 export default function FeaturesPage() {
   const features = [
     {
@@ -359,44 +362,70 @@ export default function FeaturesPage() {
   Let NexTax.AI handle your integration strategy. We consult, configure, and deploy seamless automations across your tech stack — so you can focus on growing your business.
 </p>
           <div className="grid md:grid-cols-3 gap-8">
+           
+            
             {[
                             {
                 name: "QuickBooks",
                 description:
                   "AI-powered sync of financial records, bookkeeping triggers, and automated tax categorization",
-                icon: Book,
+                iconName: "Book",
+                fallbackIcon: "📚",              
               },
               {
                 name: "DocuSign",
                 description: "Integrated signature workflows for EIN filings, agreements, and compliance docs",
-                icon: Edit3,
+                iconName: "Edit3",
+                fallbackIcon: "✍️",
               },
               {
                 name: "Slack",
                 description: "Real-time updates from tax filings, document approvals, and team alerts",
-                icon: MessageSquare,
+                iconName: "MessageSquare",
+                fallbackIcon: "💬",
               },
               {
                 name: "Salesforce",
                 description: "Sync client data for compliance workflows and onboarding automation",
-                icon: Users,
+                iconName: "Users",
+                fallbackIcon: "👥",
               },
               {
                 name: "Microsoft 365",
                 description: "Intelligent document collaboration + calendar-based tax reminders",
-                icon: FileSpreadsheet,
+                iconName: "FileSpreadsheet",
+                fallbackIcon: "📊",
               },
               {
                 name: "Zapier",
                 description: "5,000+ integrations with tailored GPT flows for finance, CRM, HR & more",
-                icon: ZapIcon,
+                iconName: "ZapIcon",
+                fallbackIcon: "⚡",
               },
             ].map((integration, i) => (
 
-              <Card key={i} className="bg-slate-800/50 border-slate-700">
+            // Function to render icon with fallback
+  const renderIcon = (iconName: string, fallbackIcon: string, className = "w-8 h-8") => {
+    try {
+      // Try to get the icon from Lucide
+      const IconComponent = (LucideIcons as any)[iconName]
+      if (IconComponent) {
+        return <IconComponent className={className} />
+      }
+    } catch (error) {
+      console.log(`Icon ${iconName} not found, using fallback`)
+    }
+
+    // Fallback to emoji
+    return <span className="text-2xl">{fallbackIcon}</span>
+  }
+              
+          <div className="grid md:grid-cols-3 gap-8">
+            {integrations.map((integration, i) => (
+              <Card key={i} className="bg-gray-900/50 border-gray-700">
                 <CardContent className="p-6 text-center">
-                  <div className="w-16 h-16 bg-slate-700 rounded-lg mx-auto mb-4 flex items-center justify-center">
-                    <span className="text-2xl font-bold text-emerald-400">{integration.name[0]}</span>
+                 <div className="w-16 h-16 bg-gray-800 rounded-lg mx-auto mb-4 flex items-center justify-center">
+                    {renderIcon(integration.iconName, integration.fallbackIcon, "w-8 h-8 text-emerald-400")}
                   </div>
                   <h3 className="font-semibold text-white mb-2">{integration.name}</h3>
                   <p className="text-slate-400 text-sm">{integration.description}</p>
