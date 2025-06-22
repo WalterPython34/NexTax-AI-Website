@@ -403,13 +403,10 @@ export default function FeaturesPage() {
                 fallbackIcon: "⚡",
               },
             ].map((integration, i) => (
-             
-          <div className="grid md:grid-cols-3 gap-8">
-            {integrations.map((integration, i) => (
               <Card key={i} className="bg-gray-900/50 border-gray-700">
                 <CardContent className="p-6 text-center">
                  <div className="w-16 h-16 bg-gray-800 rounded-lg mx-auto mb-4 flex items-center justify-center">
-                    {renderIcon(integration.iconName, integration.fallbackIcon, "w-8 h-8 text-emerald-400")}
+                    <integration.icon className="w-8 h-8 text-emerald-400" />
                   </div>
                   <h3 className="font-semibold text-white mb-2">{integration.name}</h3>
                   <p className="text-slate-400 text-sm">{integration.description}</p>
