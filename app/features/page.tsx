@@ -366,38 +366,32 @@ export default function FeaturesPage() {
                 name: "QuickBooks",
                 description:
                   "AI-powered sync of financial records, bookkeeping triggers, and automated tax categorization",
-                iconName: "Book",
-                fallbackIcon: "📚",              
+                iconName: "Book",                              
               },
               {
                 name: "DocuSign",
                 description: "Integrated signature workflows for EIN filings, agreements, and compliance docs",
-                iconName: "Edit3",
-                fallbackIcon: "✍️",
+                iconName: "Edit3",                
               },
               {
                 name: "Slack",
                 description: "Real-time updates from tax filings, document approvals, and team alerts",
-                iconName: "MessageSquare",
-                fallbackIcon: "💬",
+                iconName: "MessageSquare",                
               },
               {
                 name: "Salesforce",
                 description: "Sync client data for compliance workflows and onboarding automation",
-                iconName: "Users",
-                fallbackIcon: "👥",
+                iconName: "Users",                
               },
               {
                 name: "Microsoft 365",
                 description: "Intelligent document collaboration + calendar-based tax reminders",
-                iconName: "FileSpreadsheet",
-                fallbackIcon: "📊",
+                iconName: "FileSpreadsheet",                
               },
               {
                 name: "Zapier",
                 description: "5,000+ integrations with tailored GPT flows for finance, CRM, HR & more",
-                iconName: "ZapIcon",
-                fallbackIcon: "⚡",
+                iconName: "ZapIcon",                
               },
             ].map((integration, i) => (
               <Card key={i} className="bg-gray-900/50 border-gray-700">
