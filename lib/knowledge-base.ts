@@ -1,4 +1,4 @@
-// Simple knowledge base without AI SDK
+// Simple knowledge base with AI SDK integration
 import { generateText } from "ai"
 import { openai } from "@ai-sdk/openai"
 
@@ -38,14 +38,19 @@ export function getSimpleResponse(userMessage: string): string {
 }
 
 export async function generateCustomerServiceResponse(userMessage: string): Promise<string> {
+  // Debug logging to help troubleshoot
+  console.log("🔍 Checking for OpenAI API key...")
+  console.log("🔍 API Key exists:", !!process.env.OPENAI_API_KEY)
+  console.log("🔍 API Key length:", process.env.OPENAI_API_KEY?.length || 0)
+
   // First check if we have an API key
   if (!process.env.OPENAI_API_KEY) {
-    console.log("No OpenAI API key found, using simple responses")
+    console.log("❌ No OpenAI API key found, using simple responses")
     return getSimpleResponse(userMessage)
   }
 
   try {
-    console.log("Attempting to use OpenAI API...")
+    console.log("✅ Attempting to use OpenAI API...")
 
     const { text } = await generateText({
       model: openai("gpt-4o-mini"),
@@ -71,10 +76,10 @@ Guidelines:
       prompt: userMessage,
     })
 
-    console.log("OpenAI API call successful")
+    console.log("🎉 OpenAI API call successful!")
     return text
   } catch (error) {
-    console.error("OpenAI API error:", error)
+    console.error("❌ OpenAI API error:", error)
     return getSimpleResponse(userMessage)
   }
 }
