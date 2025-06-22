@@ -13,12 +13,12 @@ import {
   DollarSign,
   Globe,
   TrendingUp,
-  BookOpen,
-  PenTool,
+  Book,
+  Edit3,
   MessageSquare,
   Users,
   FileSpreadsheet,
-  ZapIcon as ZapierIcon,
+  ZapIcon,
 } from "lucide-react"
 import Link from "next/link"
 
@@ -364,12 +364,12 @@ export default function FeaturesPage() {
                 name: "QuickBooks",
                 description:
                   "AI-powered sync of financial records, bookkeeping triggers, and automated tax categorization",
-                icon: BookOpen,
+                icon: Book,
               },
               {
                 name: "DocuSign",
                 description: "Integrated signature workflows for EIN filings, agreements, and compliance docs",
-                icon: PenTool,
+                icon: Edit3,
               },
               {
                 name: "Slack",
@@ -389,7 +389,7 @@ export default function FeaturesPage() {
               {
                 name: "Zapier",
                 description: "5,000+ integrations with tailored GPT flows for finance, CRM, HR & more",
-                icon: ZapierIcon,
+                icon: ZapIcon,
               },
             ].map((integration, i) => (
 
