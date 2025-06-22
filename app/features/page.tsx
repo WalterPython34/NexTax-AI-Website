@@ -403,23 +403,7 @@ export default function FeaturesPage() {
                 fallbackIcon: "⚡",
               },
             ].map((integration, i) => (
-
-            // Function to render icon with fallback
-  const renderIcon = (iconName: string, fallbackIcon: string, className = "w-8 h-8") => {
-    try {
-      // Try to get the icon from Lucide
-      const IconComponent = (LucideIcons as any)[iconName]
-      if (IconComponent) {
-        return <IconComponent className={className} />
-      }
-    } catch (error) {
-      console.log(`Icon ${iconName} not found, using fallback`)
-    }
-
-    // Fallback to emoji
-    return <span className="text-2xl">{fallbackIcon}</span>
-  }
-              
+             
           <div className="grid md:grid-cols-3 gap-8">
             {integrations.map((integration, i) => (
               <Card key={i} className="bg-gray-900/50 border-gray-700">
