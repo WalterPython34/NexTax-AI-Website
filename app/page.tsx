@@ -42,7 +42,7 @@ export default function HomePage() {
                   Start Smart.
                   <span className="block text-cyan-400">Scale Smarter.</span>
                   <span className="block text-white text-3xl lg:text-4xl mt-4">With Your AI Business Copilot</span>
-                  <span className="block text-emerald-400 text-xl lg:text-2xl mt-3">Launch Your Business in Less Than 48 Hours.</span>
+                  <span className="block text-emerald-400 text-xl lg:text-2xl mt-6">Launch Your Business in Less Than 48 Hours.</span>
                 </h1>
 
                 <p className="text-xl text-slate-300 leading-relaxed max-w-lg">
