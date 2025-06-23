@@ -58,6 +58,8 @@
     "resend": "latest",
     "sonner": "^1.7.1",
     "stripe": "latest",
+    "@supabase/auth-helpers-nextjs": "^0.10.0",
+    "@supabase/supabase-js": "^2.39.3",
     "tailwind-merge": "^2.5.5",
     "tailwindcss-animate": "^1.0.7",
     "vaul": "^0.9.6",
