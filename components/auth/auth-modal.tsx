@@ -12,10 +12,11 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 interface AuthModalProps {
   isOpen: boolean
   onClose: () => void
-  mode: "signin" | "signup"
+  initialMode?: "signin" | "signup"
 }
 
-export function AuthModal({ isOpen, onClose, mode }: AuthModalProps) {
+export function AuthModal({ isOpen, onClose, initialMode = "signin" }: AuthModalProps) {
+  const [mode, setMode] = useState<"signin" | "signup">(initialMode)
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [loading, setLoading] = useState(false)
@@ -52,6 +53,13 @@ export function AuthModal({ isOpen, onClose, mode }: AuthModalProps) {
     }
   }
 
+  const toggleMode = () => {
+    setMode(mode === "signin" ? "signup" : "signin")
+    setError(null)
+    setEmail("")
+    setPassword("")
+  }
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]">
@@ -76,13 +84,23 @@ export function AuthModal({ isOpen, onClose, mode }: AuthModalProps) {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
+              minLength={6}
             />
           </div>
           {error && <div className="text-red-500 text-sm">{error}</div>}
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Loading..." : mode === "signin" ? "Sign In" : "Sign Up"}
+            {loading ? "Loading..." : mode === "signin" ? "Sign In" : "Create Account"}
           </Button>
         </form>
+
+        <div className="text-center text-sm">
+          <span className="text-gray-600">
+            {mode === "signin" ? "Don't have an account? " : "Already have an account? "}
+          </span>
+          <button type="button" onClick={toggleMode} className="text-blue-600 hover:text-blue-800 font-medium">
+            {mode === "signin" ? "Sign up" : "Sign in"}
+          </button>
+        </div>
       </DialogContent>
     </Dialog>
   )
