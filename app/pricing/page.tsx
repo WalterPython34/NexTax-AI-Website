@@ -229,8 +229,8 @@ export default function PricingPage() {
       description: "AI-Powered business collaboration & backend support",
       features: [
         "Answering all new business related questions",
-        "Brainstorming & Delevoping Branding, Logo, and Product offerings",
-        "Companion for Accounting, Tax, and Payroll setup"
+        "Brainstorming & Developing Branding, Logo, and Product offerings",
+        "Companion for Accounting, Tax, and Payroll setup",
         "Assists with website setup / development",
         "Collaboration on Sales & Marketing materials",
         "Custom Business setup step plan for all 50 States",
