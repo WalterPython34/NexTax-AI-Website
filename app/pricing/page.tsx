@@ -226,7 +226,7 @@ export default function PricingPage() {
       price: "$29",
       period: "/month",
       priceId: "price_1Re7HcGA3ir6ndSxjvAcK4XN",
-      description: "AI-Powered business collaboration & backend support",
+      description: "AI-Powered business collaboration & support",
       features: [
         "Answering all new business related questions",
         "Brainstorming & Developing Branding, Logo, and Product offerings",
