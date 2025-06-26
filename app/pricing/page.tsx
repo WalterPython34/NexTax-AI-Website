@@ -219,6 +219,23 @@ export default function PricingPage() {
         "Business resource library access",
       ],
       cta: "Get Business Support",
+     },
+    {
+      name: "StartSmartGPT",
+      icon: Building2,
+      price: "$29",
+      period: "/month",
+      priceId: "price_1Re7HcGA3ir6ndSxjvAcK4XN",
+      description: "AI-Powered business collaboration & backend support",
+      features: [
+        "Answering all new business related questions",
+        "Brainstorming & Delevoping Branding, Logo, and Product offerings",
+        "Companion for Accounting, Tax, and Payroll setup"
+        "Assists with website setup / development",
+        "Collaboration on Sales & Marketing materials",
+        "Custom Business setup step plan for all 50 States",
+      ],
+      cta: "StartSmart",  
     },
     {
       name: "Basic Bookkeeping",
