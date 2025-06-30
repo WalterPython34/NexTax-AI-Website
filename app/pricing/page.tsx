@@ -223,7 +223,7 @@ export default function PricingPage() {
     {
       name: "StartSmartGPT",
       icon: Building2,
-      price: "$39",
+      price: "$29",
       period: "/month",
       priceId: "price_1Re7HcGA3ir6ndSxjvAcK4XN",
       description: "AI-Powered business collaboration & support",
