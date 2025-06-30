@@ -57,12 +57,8 @@ export function Navigation() {
     { href: "/resources", label: "Resources" },
     { href: "/about", label: "About" },
     { href: "/contact", label: "Contact" },
+    { href: "/startsmart-gpt", label: "StartSmart GPT", highlight: true }, // Always show, but highlight for premium users
   ]
-
-  // Add StartSmartGPT tab for users with access
-  if (user && hasAccess) {
-    navItems.push({ href: "/startsmart-dashboard", label: "StartSmartGPT" })
-  }
 
   return (
     <>
@@ -81,7 +77,7 @@ export function Navigation() {
                   key={item.href}
                   href={item.href}
                   className={`text-slate-300 hover:text-emerald-400 transition-colors ${
-                    item.label === "StartSmartGPT" ? "bg-emerald-500/20 px-3 py-1 rounded-md" : ""
+                    item.highlight ? "bg-emerald-500/20 px-3 py-1 rounded-md font-semibold" : ""
                   }`}
                 >
                   {item.label}
@@ -123,7 +119,7 @@ export function Navigation() {
                     key={item.href}
                     href={item.href}
                     className={`text-slate-300 hover:text-emerald-400 transition-colors ${
-                      item.label === "StartSmartGPT" ? "bg-emerald-500/20 px-3 py-1 rounded-md w-fit" : ""
+                      item.highlight ? "bg-emerald-500/20 px-3 py-1 rounded-md w-fit font-semibold" : ""
                     }`}
                     onClick={() => setIsOpen(false)}
                   >
