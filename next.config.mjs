@@ -8,11 +8,17 @@ const nextConfig = {
   },
   experimental: {
     serverActions: {
-      allowedOrigins: ['localhost:3000', 'nextax.ai', '*.nextax.ai']
+      allowedOrigins: ['localhost:3000', 'nextax.ai', '*.vercel.app']
     }
   },
   images: {
-    domains: ['images.unsplash.com', 'via.placeholder.com'],
+    domains: ['nextax.ai', 'vercel.com'],
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '**',
+      },
+    ],
     unoptimized: true,
   },
   async headers() {
