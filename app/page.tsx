@@ -1,3 +1,6 @@
+"use client"
+
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -16,8 +19,14 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 import { EnhancedChatBot } from "@/components/enhanced-chat-bot"
+import { AuthModal } from "@/components/auth/auth-modal"
 
 export default function HomePage() {
+  const [authModal, setAuthModal] = useState<{ isOpen: boolean; mode: "signin" | "signup" }>({
+    isOpen: false,
+    mode: "signin",
+  })  
+  
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black">
       {/* Hero Section - AI-Powered StartSmart */}
@@ -67,15 +76,14 @@ export default function HomePage() {
 
               {/* Enhanced CTAs */}
               <div className="flex flex-col sm:flex-row gap-4">
-                <Link href="/startsmart-gpt-demo">
-                  <Button
-                    size="lg"
-                    className="bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-blue-500 text-white px-8 py-6 text-xl font-semibold w-full sm:w-auto"
-                  >
-                    <Bot className="mr-3 w-6 h-6" />
-                    Try StartSmartGPT Demo
-                  </Button>
-                </Link>
+                <Button
+                  size="lg"
+                  className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white px-8 py-6 text-xl font-semibold w-full sm:w-auto"
+                  onClick={() => setAuthModal({ isOpen: true, mode: "signup" })}
+                >
+                  <Bot className="mr-3 w-6 h-6" />
+                  Try StartSmartGPT Free
+                </Button>              
                 <Link href="/pricing">
                   <Button
                     size="lg"
@@ -169,12 +177,13 @@ export default function HomePage() {
                     </div>
                   </div>
 
-                  <Link href="/startsmart-gpt-demo">
-                    <Button className="w-full bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white">
-                      <MessageSquare className="mr-2 w-4 h-4" />
-                      Try StartSmartGPT Now
-                    </Button>
-                  </Link>
+                  <Button
+                    className="w-full bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white"
+                    onClick={() => setAuthModal({ isOpen: true, mode: "signup" })}
+                  >
+                    <MessageSquare className="mr-2 w-4 h-4" />
+                    Try StartSmartGPT Now
+                  </Button>                  
                 </div>
               </div>
             </div>
@@ -739,6 +748,13 @@ export default function HomePage() {
 
       {/* Enhanced Chatbot */}
       <EnhancedChatBot />
+
+      {/* Auth Modal */}
+      <AuthModal
+        isOpen={authModal.isOpen}
+        onClose={() => setAuthModal({ ...authModal, isOpen: false })}
+        mode={authModal.mode}
+      />      
     </div>
   )
 }
