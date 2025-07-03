@@ -2,148 +2,115 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Label } from "@/components/ui/label"
 import { Input } from "@/components/ui/input"
-import { Textarea } from "@/components/ui/textarea"
-import { CheckCircle, ArrowRight, ArrowLeft } from "lucide-react"
 
 interface QuizData {
   businessType: string
-  businessName: string
-  state: string
-  owners: string
   revenue: string
   employees: string
-  industry: string
-  goals: string
-  timeline: string
+  location: string
   email: string
-  phone: string
-  additionalInfo: string
+  name: string
 }
 
-const questions = [
-  {
-    id: "businessType",
-    title: "What type of business are you starting?",
-    type: "radio",
-    options: [
-      "Service-based business",
-      "Product-based business",
-      "E-commerce/Online business",
-      "Consulting/Professional services",
-      "Restaurant/Food service",
-      "Retail store",
-      "Technology/Software",
-      "Other",
-    ],
-  },
-  {
-    id: "businessName",
-    title: "What is your business name?",
-    type: "text",
-    placeholder: "Enter your business name",
-  },
-  {
-    id: "state",
-    title: "In which state will you operate?",
-    type: "text",
-    placeholder: "Enter state name",
-  },
-  {
-    id: "owners",
-    title: "How many owners will the business have?",
-    type: "radio",
-    options: ["1 (Just me)", "2", "3-5", "More than 5"],
-  },
-  {
-    id: "revenue",
-    title: "What is your expected annual revenue?",
-    type: "radio",
-    options: [
-      "Less than $50,000",
-      "$50,000 - $100,000",
-      "$100,000 - $500,000",
-      "$500,000 - $1,000,000",
-      "More than $1,000,000",
-    ],
-  },
-  {
-    id: "employees",
-    title: "Do you plan to hire employees?",
-    type: "radio",
-    options: ["No employees planned", "1-5 employees", "6-20 employees", "More than 20 employees"],
-  },
-  {
-    id: "industry",
-    title: "What industry best describes your business?",
-    type: "radio",
-    options: [
-      "Professional Services",
-      "Healthcare",
-      "Technology",
-      "Retail/E-commerce",
-      "Food & Beverage",
-      "Construction",
-      "Manufacturing",
-      "Education",
-      "Other",
-    ],
-  },
-  {
-    id: "goals",
-    title: "What are your primary business goals?",
-    type: "textarea",
-    placeholder: "Describe your main business objectives...",
-  },
-  {
-    id: "timeline",
-    title: "When do you want to launch your business?",
-    type: "radio",
-    options: ["Within 1 month", "1-3 months", "3-6 months", "6-12 months", "More than 1 year"],
-  },
-  {
-    id: "email",
-    title: "What is your email address?",
-    type: "email",
-    placeholder: "your@email.com",
-  },
-  {
-    id: "phone",
-    title: "What is your phone number?",
-    type: "tel",
-    placeholder: "(555) 123-4567",
-  },
-  {
-    id: "additionalInfo",
-    title: "Any additional information or specific questions?",
-    type: "textarea",
-    placeholder: "Tell us anything else that might help us provide better recommendations...",
-  },
-]
-
-export function SimpleQuiz() {
-  const [currentQuestion, setCurrentQuestion] = useState(0)
-  const [answers, setAnswers] = useState<Partial<QuizData>>({})
+export default function SimpleQuiz() {
+  const [currentStep, setCurrentStep] = useState(0)
+  const [quizData, setQuizData] = useState<QuizData>({
+    businessType: "",
+    revenue: "",
+    employees: "",
+    location: "",
+    email: "",
+    name: "",
+  })
   const [isSubmitting, setIsSubmitting] = useState(false)
-  const [isCompleted, setIsCompleted] = useState(false)
+  const [isComplete, setIsComplete] = useState(false)
 
-  const handleAnswer = (questionId: string, value: string) => {
-    setAnswers((prev) => ({ ...prev, [questionId]: value }))
-  }
+  const questions = [
+    {
+      id: "name",
+      title: "What's your name?",
+      type: "input",
+      placeholder: "Enter your full name",
+    },
+    {
+      id: "email",
+      title: "What's your email address?",
+      type: "input",
+      placeholder: "Enter your email",
+    },
+    {
+      id: "businessType",
+      title: "What type of business are you starting?",
+      type: "radio",
+      options: [
+        { value: "llc", label: "LLC (Limited Liability Company)" },
+        { value: "corporation", label: "Corporation" },
+        { value: "partnership", label: "Partnership" },
+        { value: "sole-proprietorship", label: "Sole Proprietorship" },
+        { value: "not-sure", label: "Not sure yet" },
+      ],
+    },
+    {
+      id: "revenue",
+      title: "What's your expected annual revenue?",
+      type: "radio",
+      options: [
+        { value: "under-50k", label: "Under $50,000" },
+        { value: "50k-100k", label: "$50,000 - $100,000" },
+        { value: "100k-500k", label: "$100,000 - $500,000" },
+        { value: "over-500k", label: "Over $500,000" },
+        { value: "not-sure", label: "Not sure yet" },
+      ],
+    },
+    {
+      id: "employees",
+      title: "How many employees will you have?",
+      type: "radio",
+      options: [
+        { value: "just-me", label: "Just me" },
+        { value: "1-5", label: "1-5 employees" },
+        { value: "6-20", label: "6-20 employees" },
+        { value: "over-20", label: "Over 20 employees" },
+      ],
+    },
+    {
+      id: "location",
+      title: "Where will your business be located?",
+      type: "radio",
+      options: [
+        { value: "california", label: "California" },
+        { value: "new-york", label: "New York" },
+        { value: "texas", label: "Texas" },
+        { value: "florida", label: "Florida" },
+        { value: "other", label: "Other state" },
+      ],
+    },
+  ]
 
   const handleNext = () => {
-    if (currentQuestion < questions.length - 1) {
-      setCurrentQuestion((prev) => prev + 1)
+    if (currentStep < questions.length - 1) {
+      setCurrentStep(currentStep + 1)
+    } else {
+      handleSubmit()
     }
   }
 
-  const handlePrevious = () => {
-    if (currentQuestion > 0) {
-      setCurrentQuestion((prev) => prev - 1)
+  const handleBack = () => {
+    if (currentStep > 0) {
+      setCurrentStep(currentStep - 1)
     }
+  }
+
+  const handleInputChange = (value: string) => {
+    const currentQuestion = questions[currentStep]
+    setQuizData((prev) => ({
+      ...prev,
+      [currentQuestion.id]: value,
+    }))
   }
 
   const handleSubmit = async () => {
@@ -155,118 +122,86 @@ export function SimpleQuiz() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(answers),
+        body: JSON.stringify(quizData),
       })
 
       if (response.ok) {
-        setIsCompleted(true)
+        setIsComplete(true)
       } else {
-        throw new Error("Failed to submit quiz")
+        console.error("Failed to submit quiz")
       }
     } catch (error) {
       console.error("Error submitting quiz:", error)
-      alert("There was an error submitting your quiz. Please try again.")
     } finally {
       setIsSubmitting(false)
     }
   }
 
-  if (isCompleted) {
+  const currentQuestion = questions[currentStep]
+  const currentValue = quizData[currentQuestion.id as keyof QuizData]
+  const isCurrentStepValid = currentValue && currentValue.trim() !== ""
+
+  if (isComplete) {
     return (
       <Card className="w-full max-w-2xl mx-auto">
-        <CardContent className="text-center py-12">
-          <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold mb-4">Thank You!</h2>
-          <p className="text-gray-600 mb-6">
-            Your business assessment has been submitted successfully. We'll analyze your responses and send you
-            personalized recommendations within 24 hours.
-          </p>
-          <Button onClick={() => window.location.reload()}>Take Another Assessment</Button>
+        <CardHeader>
+          <CardTitle className="text-center text-green-600">Thank You!</CardTitle>
+        </CardHeader>
+        <CardContent className="text-center space-y-4">
+          <p>Your business assessment has been submitted successfully.</p>
+          <p>We'll send you a personalized business formation guide within 24 hours.</p>
+          <Button onClick={() => window.location.reload()} className="mt-4">
+            Take Quiz Again
+          </Button>
         </CardContent>
       </Card>
     )
   }
 
-  const currentQ = questions[currentQuestion]
-  const currentAnswer = answers[currentQ.id as keyof QuizData] || ""
-  const progress = ((currentQuestion + 1) / questions.length) * 100
-
   return (
     <Card className="w-full max-w-2xl mx-auto">
       <CardHeader>
-        <div className="w-full bg-gray-200 rounded-full h-2 mb-4">
-          <div className="bg-blue-600 h-2 rounded-full transition-all duration-300" style={{ width: `${progress}%` }} />
+        <CardTitle>Business Formation Assessment</CardTitle>
+        <div className="w-full bg-gray-200 rounded-full h-2">
+          <div
+            className="bg-blue-600 h-2 rounded-full transition-all duration-300"
+            style={{ width: `${((currentStep + 1) / questions.length) * 100}%` }}
+          />
         </div>
-        <CardTitle className="text-xl">
-          Question {currentQuestion + 1} of {questions.length}
-        </CardTitle>
-        <CardDescription>{currentQ.title}</CardDescription>
+        <p className="text-sm text-gray-600">
+          Question {currentStep + 1} of {questions.length}
+        </p>
       </CardHeader>
       <CardContent className="space-y-6">
-        {currentQ.type === "radio" && (
-          <RadioGroup value={currentAnswer} onValueChange={(value) => handleAnswer(currentQ.id, value)}>
-            {currentQ.options?.map((option, index) => (
-              <div key={index} className="flex items-center space-x-2">
-                <RadioGroupItem value={option} id={`option-${index}`} />
-                <Label htmlFor={`option-${index}`} className="cursor-pointer">
-                  {option}
-                </Label>
-              </div>
-            ))}
-          </RadioGroup>
-        )}
+        <div>
+          <h3 className="text-lg font-medium mb-4">{currentQuestion.title}</h3>
 
-        {currentQ.type === "text" && (
-          <Input
-            value={currentAnswer}
-            onChange={(e) => handleAnswer(currentQ.id, e.target.value)}
-            placeholder={currentQ.placeholder}
-          />
-        )}
-
-        {currentQ.type === "email" && (
-          <Input
-            type="email"
-            value={currentAnswer}
-            onChange={(e) => handleAnswer(currentQ.id, e.target.value)}
-            placeholder={currentQ.placeholder}
-          />
-        )}
-
-        {currentQ.type === "tel" && (
-          <Input
-            type="tel"
-            value={currentAnswer}
-            onChange={(e) => handleAnswer(currentQ.id, e.target.value)}
-            placeholder={currentQ.placeholder}
-          />
-        )}
-
-        {currentQ.type === "textarea" && (
-          <Textarea
-            value={currentAnswer}
-            onChange={(e) => handleAnswer(currentQ.id, e.target.value)}
-            placeholder={currentQ.placeholder}
-            rows={4}
-          />
-        )}
-
-        <div className="flex justify-between pt-6">
-          <Button variant="outline" onClick={handlePrevious} disabled={currentQuestion === 0}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Previous
-          </Button>
-
-          {currentQuestion === questions.length - 1 ? (
-            <Button onClick={handleSubmit} disabled={!currentAnswer || isSubmitting}>
-              {isSubmitting ? "Submitting..." : "Submit Assessment"}
-            </Button>
+          {currentQuestion.type === "input" ? (
+            <Input
+              value={currentValue}
+              onChange={(e) => handleInputChange(e.target.value)}
+              placeholder={currentQuestion.placeholder}
+              type={currentQuestion.id === "email" ? "email" : "text"}
+            />
           ) : (
-            <Button onClick={handleNext} disabled={!currentAnswer}>
-              Next
-              <ArrowRight className="h-4 w-4 ml-2" />
-            </Button>
+            <RadioGroup value={currentValue} onValueChange={handleInputChange}>
+              {currentQuestion.options?.map((option) => (
+                <div key={option.value} className="flex items-center space-x-2">
+                  <RadioGroupItem value={option.value} id={option.value} />
+                  <Label htmlFor={option.value}>{option.label}</Label>
+                </div>
+              ))}
+            </RadioGroup>
           )}
+        </div>
+
+        <div className="flex justify-between">
+          <Button variant="outline" onClick={handleBack} disabled={currentStep === 0}>
+            Back
+          </Button>
+          <Button onClick={handleNext} disabled={!isCurrentStepValid || isSubmitting}>
+            {isSubmitting ? "Submitting..." : currentStep === questions.length - 1 ? "Submit" : "Next"}
+          </Button>
         </div>
       </CardContent>
     </Card>
