@@ -1,6 +1,7 @@
 "use client"
 
 import type React from "react"
+
 import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -10,7 +11,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Loader2, Send, User, Bot, AlertCircle } from "lucide-react"
 import { getBusinessAdvice } from "@/lib/knowledge-base"
-import { supabase, getUser, getUserSubscription } from "@/lib/supabase"
 
 interface Message {
   id: string
@@ -23,7 +23,7 @@ interface EnhancedChatBotProps {
   className?: string
 }
 
-export default function EnhancedChatBot({ className }: EnhancedChatBotProps) {
+export function EnhancedChatBot({ className }: EnhancedChatBotProps) {
   const [messages, setMessages] = useState<Message[]>([
     {
       id: "1",
@@ -35,14 +35,8 @@ export default function EnhancedChatBot({ className }: EnhancedChatBotProps) {
   ])
   const [input, setInput] = useState("")
   const [isLoading, setIsLoading] = useState(false)
-  const [user, setUser] = useState<any>(null)
-  const [subscription, setSubscription] = useState<any>(null)
   const [questionsUsed, setQuestionsUsed] = useState(0)
   const scrollAreaRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    checkUserAuth()
-  }, [])
 
   useEffect(() => {
     if (scrollAreaRef.current) {
@@ -50,33 +44,8 @@ export default function EnhancedChatBot({ className }: EnhancedChatBotProps) {
     }
   }, [messages])
 
-  const checkUserAuth = async () => {
-    try {
-      const currentUser = await getUser()
-      setUser(currentUser)
-
-      if (currentUser) {
-        const userSub = await getUserSubscription(currentUser.id)
-        setSubscription(userSub)
-        setQuestionsUsed(userSub?.questions_used || 0)
-      }
-    } catch (error) {
-      console.error("Error checking auth:", error)
-    }
-  }
-
   const canAskQuestion = () => {
-    if (!subscription) return true // Free tier gets 10 questions
-    if (subscription.tier === "premium") return true // Unlimited
-    if (subscription.tier === "pro") return questionsUsed < 150
-    return questionsUsed < 10 // Free tier
-  }
-
-  const getQuestionLimit = () => {
-    if (!subscription) return 10
-    if (subscription.tier === "premium") return -1 // Unlimited
-    if (subscription.tier === "pro") return 150
-    return 10
+    return questionsUsed < 10 // Free tier gets 10 questions
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -118,15 +87,7 @@ export default function EnhancedChatBot({ className }: EnhancedChatBotProps) {
       }
 
       setMessages((prev) => [...prev, assistantMessage])
-
-      // Update question count if user is logged in
-      if (user && subscription) {
-        const newCount = questionsUsed + 1
-        setQuestionsUsed(newCount)
-
-        // Update in database
-        await supabase.from("user_subscriptions").update({ questions_used: newCount }).eq("user_id", user.id)
-      }
+      setQuestionsUsed((prev) => prev + 1)
     } catch (error) {
       console.error("Error getting response:", error)
       const errorMessage: Message = {
@@ -141,19 +102,7 @@ export default function EnhancedChatBot({ className }: EnhancedChatBotProps) {
     }
   }
 
-  const getTierBadgeColor = (tier: string) => {
-    switch (tier) {
-      case "premium":
-        return "bg-purple-500"
-      case "pro":
-        return "bg-blue-500"
-      default:
-        return "bg-gray-500"
-    }
-  }
-
-  const questionLimit = getQuestionLimit()
-  const remainingQuestions = questionLimit === -1 ? "Unlimited" : Math.max(0, questionLimit - questionsUsed)
+  const remainingQuestions = Math.max(0, 10 - questionsUsed)
 
   return (
     <Card className={`w-full max-w-4xl mx-auto h-[600px] flex flex-col ${className}`}>
@@ -164,9 +113,7 @@ export default function EnhancedChatBot({ className }: EnhancedChatBotProps) {
             StartSmart GPT
           </CardTitle>
           <div className="flex items-center gap-2">
-            {subscription && (
-              <Badge className={getTierBadgeColor(subscription.tier)}>{subscription.tier.toUpperCase()}</Badge>
-            )}
+            <Badge className="bg-gray-500">FREE</Badge>
             <Badge variant="outline">{remainingQuestions} questions left</Badge>
           </div>
         </div>
