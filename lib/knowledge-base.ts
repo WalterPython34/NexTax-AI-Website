@@ -4,81 +4,6 @@ interface Message {
 }
 
 export async function getBusinessAdvice(question: string, previousMessages: Message[] = []): Promise<string> {
-  // Business formation knowledge base
-  const businessFormationAdvice = {
-    llc: {
-      benefits: [
-        "Limited liability protection for personal assets",
-        "Tax flexibility - can choose how to be taxed",
-        "Simple management structure",
-        "Credibility with customers and vendors",
-        "Easier to get business loans and credit",
-      ],
-      process: [
-        "Choose a unique business name",
-        "File Articles of Organization with your state",
-        "Create an Operating Agreement",
-        "Get an EIN from the IRS",
-        "Open a business bank account",
-        "Get required licenses and permits",
-      ],
-      costs: "Typically $50-$500 depending on your state, plus registered agent fees if needed",
-    },
-    corporation: {
-      benefits: [
-        "Strong liability protection",
-        "Easier to raise capital through stock sales",
-        "Perpetual existence",
-        "Tax advantages for certain situations",
-        "Enhanced credibility",
-      ],
-      process: [
-        "Choose a corporate name",
-        "File Articles of Incorporation",
-        "Create corporate bylaws",
-        "Hold initial board meeting",
-        "Issue stock certificates",
-        "Get EIN and open business accounts",
-      ],
-    },
-    partnership: {
-      types: ["General Partnership", "Limited Partnership", "Limited Liability Partnership"],
-      considerations: [
-        "Shared liability among partners",
-        "Pass-through taxation",
-        "Partnership agreement is crucial",
-        "Easier formation than corporations",
-      ],
-    },
-  }
-
-  // Tax advice knowledge base
-  const taxAdvice = {
-    deductions: [
-      "Home office expenses (if you work from home)",
-      "Business meals (50% deductible)",
-      "Travel expenses for business",
-      "Office supplies and equipment",
-      "Professional development and training",
-      "Marketing and advertising costs",
-      "Professional services (legal, accounting)",
-      "Business insurance premiums",
-    ],
-    quarterly: [
-      "Estimated taxes are due quarterly",
-      "Due dates: April 15, June 15, September 15, January 15",
-      "Use Form 1040ES for calculations",
-      "Pay online through EFTPS or IRS Direct Pay",
-    ],
-    recordKeeping: [
-      "Keep all business receipts",
-      "Maintain separate business bank accounts",
-      "Track mileage for business travel",
-      "Document business meals and entertainment",
-      "Keep records for at least 3-7 years",
-    ],
-  }
-
   // Analyze the question and provide relevant advice
   const lowerQuestion = question.toLowerCase()
 
@@ -87,7 +12,11 @@ export async function getBusinessAdvice(question: string, previousMessages: Mess
     if (lowerQuestion.includes("benefit") || lowerQuestion.includes("advantage")) {
       return `Here are the key benefits of forming an LLC:
 
-${businessFormationAdvice.llc.benefits.map((benefit) => `• ${benefit}`).join("\n")}
+• **Limited liability protection** - Your personal assets are protected from business debts
+• **Tax flexibility** - Choose how you want to be taxed (sole proprietorship, partnership, S-Corp, or C-Corp)
+• **Simple management structure** - No board of directors or complex corporate formalities required
+• **Credibility** - Professional appearance to customers and vendors
+• **Easier access to business credit** - Banks prefer lending to established entities
 
 The main advantage is that an LLC combines the liability protection of a corporation with the tax flexibility and operational simplicity of a partnership. This makes it an excellent choice for most small businesses.
 
@@ -97,9 +26,14 @@ Would you like me to explain the LLC formation process or discuss specific aspec
     if (lowerQuestion.includes("form") || lowerQuestion.includes("start") || lowerQuestion.includes("create")) {
       return `Here's the step-by-step process to form an LLC:
 
-${businessFormationAdvice.llc.process.map((step, index) => `${index + 1}. ${step}`).join("\n")}
+1. **Choose a unique business name** - Must include "LLC" and be available in your state
+2. **File Articles of Organization** - Submit to your state's Secretary of State office
+3. **Create an Operating Agreement** - Outlines how your LLC will be managed
+4. **Get an EIN from the IRS** - Required for tax purposes and opening business accounts
+5. **Open a business bank account** - Keep business and personal finances separate
+6. **Get required licenses and permits** - Varies by business type and location
 
-**Estimated costs:** ${businessFormationAdvice.llc.costs}
+**Estimated costs:** Typically $50-$500 depending on your state, plus registered agent fees if needed
 
 **Timeline:** Most states process LLC filings within 1-2 weeks, though you can often pay for expedited processing.
 
@@ -133,10 +67,19 @@ What specific aspect of LLCs would you like to know more about?`
 • **S-Corporation:** Pass-through taxation but restrictions on ownership
 
 **Key Benefits:**
-${businessFormationAdvice.corporation.benefits.map((benefit) => `• ${benefit}`).join("\n")}
+• Strong liability protection for owners
+• Easier to raise capital through stock sales
+• Perpetual existence (continues even if owners change)
+• Tax advantages for certain situations
+• Enhanced credibility with customers and investors
 
 **Formation Process:**
-${businessFormationAdvice.corporation.process.map((step, index) => `${index + 1}. ${step}`).join("\n")}
+1. Choose a corporate name
+2. File Articles of Incorporation with your state
+3. Create corporate bylaws
+4. Hold initial board meeting
+5. Issue stock certificates
+6. Get EIN and open business accounts
 
 Corporations require more ongoing compliance (annual meetings, board resolutions, detailed record-keeping) but offer the most protection and growth potential.
 
@@ -149,10 +92,14 @@ Are you considering a C-Corp or S-Corp election? I can explain the differences i
       return `Here are the most common business tax deductions:
 
 **Fully Deductible:**
-${taxAdvice.deductions
-  .filter((d) => !d.includes("50%"))
-  .map((deduction) => `• ${deduction}`)
-  .join("\n")}
+• Home office expenses (if you work from home)
+• Office supplies and equipment
+• Professional development and training
+• Marketing and advertising costs
+• Professional services (legal, accounting)
+• Business insurance premiums
+• Travel expenses for business
+• Software and subscriptions
 
 **Partially Deductible:**
 • Business meals (50% deductible)
@@ -164,7 +111,11 @@ ${taxAdvice.deductions
 • Vehicle expenses can be deducted using actual costs or standard mileage rate
 
 **Record Keeping Tips:**
-${taxAdvice.recordKeeping.map((tip) => `• ${tip}`).join("\n")}
+• Keep all business receipts
+• Maintain separate business bank accounts
+• Track mileage for business travel
+• Document business meals and entertainment
+• Keep records for at least 3-7 years
 
 Would you like me to explain any specific deduction in more detail?`
     }
@@ -172,7 +123,10 @@ Would you like me to explain any specific deduction in more detail?`
     if (lowerQuestion.includes("quarterly") || lowerQuestion.includes("estimated")) {
       return `**Quarterly Estimated Tax Payments:**
 
-${taxAdvice.quarterly.map((info) => `• ${info}`).join("\n")}
+• Estimated taxes are due quarterly if you expect to owe $1,000+ in taxes
+• Due dates: April 15, June 15, September 15, January 15
+• Use Form 1040ES for calculations
+• Pay online through EFTPS or IRS Direct Pay
 
 **Who Needs to Pay:**
 • Self-employed individuals
@@ -260,94 +214,6 @@ What specific tax topic would you like to explore further?`
 Would you like me to dive deeper into any specific section of business planning?`
   }
 
-  // Licensing and permits
-  if (lowerQuestion.includes("license") || lowerQuestion.includes("permit") || lowerQuestion.includes("registration")) {
-    return `Business licenses and permits vary by location and industry. Here's a general guide:
-
-**Federal Requirements:**
-• EIN (Employer Identification Number) - Free from IRS
-• Industry-specific licenses (e.g., transportation, firearms, alcohol)
-
-**State Requirements:**
-• Business registration/license
-• Professional licenses (if applicable)
-• Sales tax permit (if selling products)
-• Workers' compensation insurance
-
-**Local Requirements:**
-• Business license from city/county
-• Zoning permits
-• Building permits (if renovating)
-• Signage permits
-
-**Industry-Specific Examples:**
-• Food service: Health department permits, liquor license
-• Construction: Contractor's license, building permits
-• Retail: Sales tax permit, possibly special product licenses
-• Professional services: Professional licensing (law, medicine, etc.)
-
-**How to Research Requirements:**
-1. Check with your city/county clerk's office
-2. Visit your state's business portal website
-3. Consult the SBA's licensing guide
-4. Consider hiring a business attorney for complex situations
-
-The cost and timeline vary widely, so start this process early in your business formation.
-
-What type of business are you starting? I can provide more specific guidance.`
-  }
-
-  // Funding and financing
-  if (
-    lowerQuestion.includes("funding") ||
-    lowerQuestion.includes("loan") ||
-    lowerQuestion.includes("capital") ||
-    lowerQuestion.includes("investor")
-  ) {
-    return `There are several ways to fund your business:
-
-**Self-Funding Options:**
-• Personal savings
-• Credit cards (use cautiously)
-• Home equity loans
-• Retirement account rollovers (ROBS)
-
-**Traditional Financing:**
-• SBA loans (government-backed, favorable terms)
-• Bank loans and lines of credit
-• Equipment financing
-• Invoice factoring
-
-**Alternative Financing:**
-• Online lenders (faster but higher rates)
-• Peer-to-peer lending
-• Merchant cash advances
-• Revenue-based financing
-
-**Equity Financing:**
-• Angel investors
-• Venture capital
-• Crowdfunding (Kickstarter, Indiegogo)
-• Friends and family
-
-**Grants:**
-• Federal and state small business grants
-• Industry-specific grants
-• Minority/women-owned business grants
-• Local economic development grants
-
-**Preparation Tips:**
-• Develop a solid business plan
-• Prepare financial projections
-• Maintain good personal credit
-• Document your business experience
-• Consider what you're willing to give up (equity vs. debt)
-
-**SBA Loans** are often the best option for established businesses - they offer lower rates and longer terms than conventional loans.
-
-What stage is your business in? I can provide more targeted funding advice.`
-  }
-
   // General business advice
   if (lowerQuestion.includes("start") || lowerQuestion.includes("begin") || lowerQuestion.includes("launch")) {
     return `Starting a business involves several key steps. Here's a comprehensive roadmap:
@@ -389,73 +255,9 @@ What stage is your business in? I can provide more targeted funding advice.`
 • Network with other businesses
 • Focus on customer service
 
-**Common First-Year Challenges:**
-• Cash flow management
-• Finding customers
-• Balancing growth with resources
-• Regulatory compliance
-
-The key is to start with a solid foundation and be prepared to adapt as you learn.
+**Timeline: Most businesses can launch in 2-4 weeks**
 
 What type of business are you considering? I can provide more specific guidance based on your industry.`
-  }
-
-  // Compliance and ongoing requirements
-  if (
-    lowerQuestion.includes("compliance") ||
-    lowerQuestion.includes("requirement") ||
-    lowerQuestion.includes("maintain")
-  ) {
-    return `Ongoing business compliance requirements vary by structure and location:
-
-**All Business Types:**
-• File annual tax returns
-• Maintain business licenses (renew as required)
-• Keep accurate financial records
-• Comply with employment laws (if you have employees)
-• Maintain required insurance coverage
-
-**LLC Requirements:**
-• File annual reports with the state
-• Pay annual fees/franchise taxes
-• Maintain registered agent
-• Keep operating agreement updated
-• Hold member meetings (recommended)
-
-**Corporation Requirements:**
-• File annual reports
-• Hold annual shareholder meetings
-• Maintain corporate bylaws
-• Keep meeting minutes and resolutions
-• Issue stock certificates properly
-
-**Employment Compliance (if you have employees):**
-• Payroll taxes and reporting
-• Workers' compensation insurance
-• Unemployment insurance
-• OSHA safety requirements
-• Equal employment opportunity compliance
-
-**Industry-Specific Requirements:**
-• Professional license renewals
-• Health department inspections
-• Environmental compliance
-• Industry association memberships
-
-**Best Practices:**
-• Set up a compliance calendar
-• Use business management software
-• Work with professionals (accountant, attorney)
-• Stay informed about law changes
-• Document everything properly
-
-**Consequences of Non-Compliance:**
-• Fines and penalties
-• Loss of liability protection
-• Business license suspension
-• Legal liability
-
-Would you like me to elaborate on requirements for your specific business type?`
   }
 
   // Default response for general questions
@@ -481,11 +283,6 @@ Would you like me to elaborate on requirements for your specific business type?`
 • Funding and financing options
 • Growth strategies and scaling
 
-**Operations:**
-• Accounting and bookkeeping setup
-• Insurance requirements
-• Contract and legal considerations
-
 Please ask me a specific question about any of these topics, and I'll provide detailed, actionable advice tailored to your situation.
 
 For example, you could ask:
@@ -495,4 +292,39 @@ For example, you could ask:
 • "What's the difference between C-Corp and S-Corp?"
 
 What would you like to know more about?`
+}
+
+export function getSimpleResponse(userMessage: string): string {
+  const message = userMessage.toLowerCase()
+
+  const knowledgeBase = [
+    {
+      keywords: ["pricing", "cost", "price", "how much"],
+      response:
+        "Our StartSmart package costs $299 and includes business formation in 48 hours, EIN acquisition, and ongoing AI guidance. We also offer advanced packages like Transfer Pricing GPT ($2,999/month) and State Tax Nexus GPT ($799/month).",
+    },
+    {
+      keywords: ["services", "what do you do", "help", "nextax"],
+      response:
+        "NexTax.AI provides AI-powered business formation, tax compliance, and multi-state nexus management. We combine 20+ years of Big 4 tax expertise with cutting-edge AI to help businesses launch and scale efficiently.",
+    },
+    {
+      keywords: ["business formation", "llc", "corporation", "entity"],
+      response:
+        "We help form LLCs, S-Corps, and C-Corps in all 50 states. Our AI analyzes your business needs to recommend the optimal entity structure and state of formation. Everything is completed in 48 hours.",
+    },
+    {
+      keywords: ["contact", "consultation", "talk", "speak"],
+      response:
+        "You can book a consultation through our website, use this chat, or contact our expert team directly. For complex tax situations, we recommend scheduling a consultation with our specialists.",
+    },
+  ]
+
+  for (const item of knowledgeBase) {
+    if (item.keywords.some((keyword) => message.includes(keyword))) {
+      return item.response
+    }
+  }
+
+  return "Thanks for your question! I can help you with information about our services, pricing, business formation, and tax solutions. For specific questions, I'd recommend booking a consultation with our expert team through our website."
 }
