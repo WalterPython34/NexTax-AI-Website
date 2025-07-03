@@ -1,7 +1,8 @@
 "use client"
 
+import { useEffect } from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { AlertTriangle } from "lucide-react"
 
 export default function Error({
@@ -11,20 +12,20 @@ export default function Error({
   error: Error & { digest?: string }
   reset: () => void
 }) {
+  useEffect(() => {
+    console.error(error)
+  }, [error])
+
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-900 flex items-center justify-center p-4">
-      <Card className="bg-slate-800/50 border-slate-700 max-w-md w-full">
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-red-500/20 flex items-center justify-center">
-            <AlertTriangle className="w-8 h-8 text-red-400" />
-          </div>
-          <CardTitle className="text-white">Something went wrong!</CardTitle>
+          <AlertTriangle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+          <CardTitle>Something went wrong!</CardTitle>
+          <CardDescription>We encountered an unexpected error. Please try again.</CardDescription>
         </CardHeader>
-        <CardContent className="text-center space-y-4">
-          <p className="text-slate-300">We're sorry, but something unexpected happened. Please try again.</p>
-          <Button onClick={reset} className="bg-emerald-500 hover:bg-emerald-600 text-white">
-            Try Again
-          </Button>
+        <CardContent className="text-center">
+          <Button onClick={reset}>Try again</Button>
         </CardContent>
       </Card>
     </div>
