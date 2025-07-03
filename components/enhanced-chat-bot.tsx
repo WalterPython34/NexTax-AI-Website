@@ -13,11 +13,12 @@ export function EnhancedChatBot() {
     {
       role: "assistant",
       content:
-        "Hi! I'm your NexTax.AI assistant. I can help you with questions about our services, pricing, business formation, and tax solutions. How can I assist you today?",
+        "Hello! I'm your AI assistant. I can help you with business formation, tax questions, and compliance matters. What would you like to know?",
     },
   ])
   const [input, setInput] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const scrollAreaRef = useRef<HTMLDivElement>(null)
 
   const handleSend = async () => {
     if (!input.trim() || isLoading) return
