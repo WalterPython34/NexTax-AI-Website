@@ -53,11 +53,10 @@ export function Navigation() {
   const navItems = [
     { href: "/features", label: "Features" },
     { href: "/pricing", label: "Pricing" },
-    { href: "/services", label: "Services" },
     { href: "/resources", label: "Resources" },
     { href: "/about", label: "About" },
     { href: "/contact", label: "Contact" },
-    { href: "/startsmart-gpt", label: "StartSmart GPT", highlight: true }, // Always show, but highlight for premium users
+    { href: "/startsmart-gpt", label: "StartSmart GPT", highlight: true },
   ]
 
   return (
