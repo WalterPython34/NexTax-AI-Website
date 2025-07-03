@@ -1,73 +1,54 @@
-// StartSmart GPT Integration Utilities
-import { supabase } from "./supabase"
-
+// StartSmart GPT Integration utilities
 export interface StartSmartUser {
   id: string
   email: string
-  firstName: string
-  lastName: string
-  subscriptionTier: "free" | "starter" | "growth"
-  hasAccess: boolean
+  subscription_tier: "free" | "pro" | "premium"
+  created_at: string
+  last_active: string
 }
 
-export async function getStartSmartUserData(userId: string): Promise<StartSmartUser | null> {
+export interface StartSmartSession {
+  user_id: string
+  session_token: string
+  expires_at: string
+}
+
+// Check if user has access to StartSmart features
+export async function checkStartSmartAccess(userId: string): Promise<boolean> {
   try {
-    // Get user profile
-    const { data: profile, error: profileError } = await supabase.from("profiles").select("*").eq("id", userId).single()
-
-    if (profileError) throw profileError
-
-    // Check subscription status
-    const { data: subscription, error: subError } = await supabase
-      .from("user_subscriptions")
-      .select("*")
-      .eq("user_id", userId)
-      .eq("product_type", "startsmart")
-      .eq("status", "active")
-      .single()
-
-    const subscriptionTier = subscription?.price_tier || "free"
-    const hasAccess = true // Everyone gets at least free access
-
-    return {
-      id: userId,
-      email: profile.email,
-      firstName: profile.first_name || "",
-      lastName: profile.last_name || "",
-      subscriptionTier,
-      hasAccess,
-    }
+    // This will integrate with your Supabase user table
+    // For now, return true for authenticated users
+    return !!userId
   } catch (error) {
-    console.error("Error fetching StartSmart user data:", error)
-    return null
+    console.error("Error checking StartSmart access:", error)
+    return false
   }
 }
 
-export async function createStartSmartSession(userId: string) {
+// Get user's subscription tier
+export async function getUserSubscriptionTier(userId: string): Promise<"free" | "pro" | "premium"> {
   try {
-    const userData = await getStartSmartUserData(userId)
-    if (!userData) throw new Error("User not found")
+    // This will check the user's subscription in Supabase
+    // For now, default to free
+    return "free"
+  } catch (error) {
+    console.error("Error getting subscription tier:", error)
+    return "free"
+  }
+}
 
-    // Create a secure session token for the embedded app
-    const sessionToken = btoa(
-      JSON.stringify({
-        userId,
-        tier: userData.subscriptionTier,
-        timestamp: Date.now(),
-        // Add any other data your Replit app needs
-      }),
-    )
+// Create session for embedded app
+export async function createStartSmartSession(userId: string): Promise<string | null> {
+  try {
+    // Generate session token for embedded app authentication
+    const sessionToken = `ss_${userId}_${Date.now()}`
 
-    return {
-      success: true,
-      sessionToken,
-      userData,
-    }
+    // Store session in database with expiration
+    // This would integrate with your Supabase sessions table
+
+    return sessionToken
   } catch (error) {
     console.error("Error creating StartSmart session:", error)
-    return {
-      success: false,
-      error: "Failed to create session",
-    }
+    return null
   }
 }
