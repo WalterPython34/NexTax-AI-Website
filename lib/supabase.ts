@@ -35,6 +35,18 @@ export const hasStartSmartAccess = async (userId: string) => {
   return !error && data && (data.tier === "pro" || data.tier === "premium")
 }
 
+// Get user subscription details
+export const getUserSubscription = async (userId: string) => {
+  const { data, error } = await supabaseAdmin.from("user_subscriptions").select("*").eq("user_id", userId).single()
+
+  if (error && error.code !== "PGRST116") {
+    console.error("Error fetching subscription:", error)
+    return null
+  }
+
+  return data
+}
+
 // Database types
 export interface User {
   id: string
