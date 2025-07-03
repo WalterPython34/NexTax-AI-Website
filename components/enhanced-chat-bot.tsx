@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { MessageCircle, X, Send, Bot } from "lucide-react"
-import { generateCustomerServiceResponse } from "@/lib/knowledge-base"
+import { getSimpleResponse } from "@/lib/knowledge-base"
 
 export function EnhancedChatBot() {
   const [isOpen, setIsOpen] = useState(false)
@@ -13,12 +13,11 @@ export function EnhancedChatBot() {
     {
       role: "assistant",
       content:
-        "Hello! I'm your AI assistant. I can help you with business formation, tax questions, and compliance matters. What would you like to know?",
+        "Hi! I'm your NexTax.AI assistant. I can help you with questions about our services, pricing, business formation, and tax solutions. How can I assist you today?",
     },
   ])
   const [input, setInput] = useState("")
   const [isLoading, setIsLoading] = useState(false)
-  const scrollAreaRef = useRef<HTMLDivElement>(null)
 
   const handleSend = async () => {
     if (!input.trim() || isLoading) return
@@ -29,7 +28,8 @@ export function EnhancedChatBot() {
     setIsLoading(true)
 
     try {
-      const response = await generateCustomerServiceResponse(userMessage)
+      // Use simple response instead of AI
+      const response = getSimpleResponse(userMessage)
       setMessages((prev) => [...prev, { role: "assistant", content: response }])
     } catch (error) {
       setMessages((prev) => [
