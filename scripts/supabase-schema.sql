@@ -1,64 +1,130 @@
--- Enable RLS
-ALTER TABLE IF EXISTS public.users ENABLE ROW LEVEL SECURITY;
-ALTER TABLE IF EXISTS public.subscriptions ENABLE ROW LEVEL SECURITY;
-ALTER TABLE IF EXISTS public.chat_sessions ENABLE ROW LEVEL SECURITY;
+-- Enable Row Level Security
+ALTER DATABASE postgres SET "app.jwt_secret" TO 'your-jwt-secret-here';
 
--- Create users table
+-- Create users table (extends Supabase auth.users)
 CREATE TABLE IF NOT EXISTS public.users (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  id UUID REFERENCES auth.users(id) PRIMARY KEY,
   email TEXT UNIQUE NOT NULL,
   full_name TEXT,
   avatar_url TEXT,
-  subscription_tier TEXT DEFAULT 'free' CHECK (subscription_tier IN ('free', 'basic', 'professional', 'premium')),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Create user_subscriptions table
+CREATE TABLE IF NOT EXISTS public.user_subscriptions (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES public.users(id) ON DELETE CASCADE NOT NULL,
   stripe_customer_id TEXT,
-  questions_used INTEGER DEFAULT 0,
-  questions_limit INTEGER DEFAULT 3,
+  stripe_subscription_id TEXT,
+  tier TEXT NOT NULL DEFAULT 'free' CHECK (tier IN ('free', 'pro', 'premium')),
+  questions_limit INTEGER NOT NULL DEFAULT 10,
+  questions_used INTEGER NOT NULL DEFAULT 0,
+  status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'canceled', 'past_due', 'incomplete')),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE(user_id)
 );
 
--- Create subscriptions table
-CREATE TABLE IF NOT EXISTS public.subscriptions (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID REFERENCES public.users(id) ON DELETE CASCADE,
-  stripe_subscription_id TEXT UNIQUE,
-  stripe_price_id TEXT,
-  status TEXT NOT NULL CHECK (status IN ('active', 'canceled', 'incomplete', 'incomplete_expired', 'past_due', 'trialing', 'unpaid')),
-  current_period_start TIMESTAMP WITH TIME ZONE,
-  current_period_end TIMESTAMP WITH TIME ZONE,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Create chat sessions table
+-- Create chat_sessions table
 CREATE TABLE IF NOT EXISTS public.chat_sessions (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID REFERENCES public.users(id) ON DELETE CASCADE,
-  messages JSONB DEFAULT '[]'::jsonb,
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES public.users(id) ON DELETE CASCADE NOT NULL,
+  title TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- RLS Policies
+-- Create chat_messages table
+CREATE TABLE IF NOT EXISTS public.chat_messages (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  session_id UUID REFERENCES public.chat_sessions(id) ON DELETE CASCADE NOT NULL,
+  user_id UUID REFERENCES public.users(id) ON DELETE CASCADE NOT NULL,
+  role TEXT NOT NULL CHECK (role IN ('user', 'assistant', 'system')),
+  content TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Create business_profiles table
+CREATE TABLE IF NOT EXISTS public.business_profiles (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  user_id UUID REFERENCES public.users(id) ON DELETE CASCADE NOT NULL,
+  business_name TEXT,
+  business_type TEXT,
+  industry TEXT,
+  state TEXT,
+  formation_status TEXT NOT NULL DEFAULT 'planning',
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  UNIQUE(user_id)
+);
+
+-- Enable Row Level Security on all tables
+ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.user_subscriptions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.chat_sessions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.chat_messages ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.business_profiles ENABLE ROW LEVEL SECURITY;
+
+-- Create RLS policies for users table
 CREATE POLICY "Users can view own profile" ON public.users
   FOR SELECT USING (auth.uid() = id);
 
 CREATE POLICY "Users can update own profile" ON public.users
   FOR UPDATE USING (auth.uid() = id);
 
-CREATE POLICY "Users can view own subscriptions" ON public.subscriptions
-  FOR SELECT USING (user_id = auth.uid());
+CREATE POLICY "Users can insert own profile" ON public.users
+  FOR INSERT WITH CHECK (auth.uid() = id);
 
+-- Create RLS policies for user_subscriptions table
+CREATE POLICY "Users can view own subscription" ON public.user_subscriptions
+  FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own subscription" ON public.user_subscriptions
+  FOR UPDATE USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert own subscription" ON public.user_subscriptions
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+-- Create RLS policies for chat_sessions table
 CREATE POLICY "Users can view own chat sessions" ON public.chat_sessions
-  FOR SELECT USING (user_id = auth.uid());
+  FOR SELECT USING (auth.uid() = user_id);
 
-CREATE POLICY "Users can insert own chat sessions" ON public.chat_sessions
-  FOR INSERT WITH CHECK (user_id = auth.uid());
+CREATE POLICY "Users can create own chat sessions" ON public.chat_sessions
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
 
 CREATE POLICY "Users can update own chat sessions" ON public.chat_sessions
-  FOR UPDATE USING (user_id = auth.uid());
+  FOR UPDATE USING (auth.uid() = user_id);
 
--- Functions
+CREATE POLICY "Users can delete own chat sessions" ON public.chat_sessions
+  FOR DELETE USING (auth.uid() = user_id);
+
+-- Create RLS policies for chat_messages table
+CREATE POLICY "Users can view own chat messages" ON public.chat_messages
+  FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can create own chat messages" ON public.chat_messages
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+-- Create RLS policies for business_profiles table
+CREATE POLICY "Users can view own business profile" ON public.business_profiles
+  FOR SELECT USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can update own business profile" ON public.business_profiles
+  FOR UPDATE USING (auth.uid() = user_id);
+
+CREATE POLICY "Users can insert own business profile" ON public.business_profiles
+  FOR INSERT WITH CHECK (auth.uid() = user_id);
+
+-- Create indexes for better performance
+CREATE INDEX IF NOT EXISTS idx_user_subscriptions_user_id ON public.user_subscriptions(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_subscriptions_stripe_customer ON public.user_subscriptions(stripe_customer_id);
+CREATE INDEX IF NOT EXISTS idx_chat_sessions_user_id ON public.chat_sessions(user_id);
+CREATE INDEX IF NOT EXISTS idx_chat_messages_session_id ON public.chat_messages(session_id);
+CREATE INDEX IF NOT EXISTS idx_chat_messages_user_id ON public.chat_messages(user_id);
+CREATE INDEX IF NOT EXISTS idx_business_profiles_user_id ON public.business_profiles(user_id);
+
+-- Create function to handle user creation
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -69,17 +135,22 @@ BEGIN
     NEW.raw_user_meta_data->>'full_name',
     NEW.raw_user_meta_data->>'avatar_url'
   );
+  
+  -- Create default subscription
+  INSERT INTO public.user_subscriptions (user_id, tier, questions_limit, questions_used, status)
+  VALUES (NEW.id, 'free', 10, 0, 'active');
+  
   RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Trigger for new user creation
+-- Create trigger for new user creation
 DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 
--- Update function
+-- Create function to update updated_at timestamp
 CREATE OR REPLACE FUNCTION public.update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -88,12 +159,15 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- Triggers for updated_at
+-- Create triggers for updated_at
 CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON public.users
   FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
-CREATE TRIGGER update_subscriptions_updated_at BEFORE UPDATE ON public.subscriptions
+CREATE TRIGGER update_user_subscriptions_updated_at BEFORE UPDATE ON public.user_subscriptions
   FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
 CREATE TRIGGER update_chat_sessions_updated_at BEFORE UPDATE ON public.chat_sessions
+  FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+
+CREATE TRIGGER update_business_profiles_updated_at BEFORE UPDATE ON public.business_profiles
   FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
