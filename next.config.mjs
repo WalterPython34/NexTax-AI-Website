@@ -8,11 +8,11 @@ const nextConfig = {
   },
   experimental: {
     serverActions: {
-      allowedOrigins: ['localhost:3000', 'nextax.ai', '*.vercel.app']
+      allowedOrigins: ['localhost:3000', 'nextax.ai', '*.nextax.ai']
     }
   },
   images: {
-    domains: ['nextax.ai', 'vercel.com'],
+    domains: ['images.unsplash.com', 'via.placeholder.com'],
     remotePatterns: [
       {
         protocol: 'https',
