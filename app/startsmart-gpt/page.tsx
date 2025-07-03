@@ -54,26 +54,42 @@ export default function StartSmartGPTPage() {
           </div>
 
           {/* Web App Access */}
-          <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-8 max-w-4xl mx-auto">
-            <h3 className="text-2xl font-bold mb-4">🌐 Access Web Version</h3>
+          <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-8 max-w-6xl mx-auto">
+            <h3 className="text-2xl font-bold mb-4">🌐 Launch StartSmart GPT</h3>
             <p className="text-slate-300 mb-6">
-              Get started immediately with our web-based platform. No download required!
+              Your complete AI-powered business management platform is ready to use!
             </p>
 
-            {/* Embedded App Container */}
-            <div className="bg-slate-900 border border-slate-600 rounded-xl p-4 mb-6">
-              <div className="text-center text-slate-400 py-12">
-                <Zap className="w-16 h-16 mx-auto mb-4 text-emerald-400" />
-                <h4 className="text-xl font-semibold mb-2">StartSmart GPT Web App</h4>
-                <p className="mb-4">Your comprehensive business management platform</p>
-                <div className="text-sm text-slate-500">🔄 App will be embedded here when ready for deployment</div>
+            {/* Embedded App Container - Ready for your Replit app */}
+            <div
+              className="bg-slate-900 border border-slate-600 rounded-xl overflow-hidden"
+              style={{ height: "800px" }}
+            >
+              {/* Replace this div with your actual Replit app iframe when ready */}
+              <div className="w-full h-full flex items-center justify-center text-slate-400">
+                <div className="text-center">
+                  <Zap className="w-16 h-16 mx-auto mb-4 text-emerald-400" />
+                  <h4 className="text-xl font-semibold mb-2">StartSmart GPT Ready for Integration</h4>
+                  <p className="mb-4">Replace this container with your Replit app iframe</p>
+                  <div className="text-sm text-slate-500 bg-slate-800 rounded p-4 max-w-md mx-auto">
+                    <code>{`<iframe 
+  src="https://your-replit-app-url.com" 
+  width="100%" 
+  height="800px"
+  frameBorder="0"
+  allow="camera; microphone; geolocation"
+></iframe>`}</code>
+                  </div>
+                </div>
               </div>
             </div>
 
-            <Button size="lg" className="bg-emerald-500 hover:bg-emerald-600 text-white px-8 py-4">
-              Launch Web App
-              <ArrowRight className="ml-2 w-5 h-5" />
-            </Button>
+            <div className="mt-6 text-center">
+              <Button size="lg" className="bg-emerald-500 hover:bg-emerald-600 text-white px-8 py-4">
+                Launch Full Screen App
+                <ArrowRight className="ml-2 w-5 h-5" />
+              </Button>
+            </div>
           </div>
         </div>
       </section>
