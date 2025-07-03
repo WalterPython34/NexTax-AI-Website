@@ -1,43 +1,17 @@
-import { supabase } from "./supabase"
-
-export interface UserSubscription {
-  id?: string
-  user_id: string
-  stripe_customer_id?: string
-  stripe_subscription_id?: string
-  tier: "free" | "pro" | "premium"
-  questions_limit: number
-  questions_used: number
-  status: "active" | "canceled" | "past_due" | "incomplete"
-  created_at?: string
-  updated_at?: string
-}
-
-export interface StartSmartSession {
-  subscription: UserSubscription
-  canUseAI: boolean
-  questionsRemaining: number | "unlimited"
-}
+import { supabaseAdmin } from "./supabase"
+import type { UserSubscription } from "./supabase"
 
 export class StartSmartIntegration {
   static async getUserSubscription(userId: string): Promise<UserSubscription | null> {
     try {
-      const { data, error } = await supabase.from("user_subscriptions").select("*").eq("user_id", userId).single()
+      const { data, error } = await supabaseAdmin.from("user_subscriptions").select("*").eq("user_id", userId).single()
 
       if (error && error.code !== "PGRST116") {
         console.error("Error fetching subscription:", error)
         return null
       }
 
-      return (
-        data || {
-          user_id: userId,
-          tier: "free",
-          questions_limit: 10,
-          questions_used: 0,
-          status: "active",
-        }
-      )
+      return data || null
     } catch (error) {
       console.error("Error in getUserSubscription:", error)
       return null
@@ -46,7 +20,7 @@ export class StartSmartIntegration {
 
   static async createOrUpdateSubscription(subscription: Partial<UserSubscription>): Promise<UserSubscription | null> {
     try {
-      const { data, error } = await supabase
+      const { data, error } = await supabaseAdmin
         .from("user_subscriptions")
         .upsert(
           {
@@ -74,10 +48,10 @@ export class StartSmartIntegration {
 
   static async incrementQuestionUsage(userId: string): Promise<boolean> {
     try {
-      const { error } = await supabase
+      const { error } = await supabaseAdmin
         .from("user_subscriptions")
         .update({
-          questions_used: supabase.raw("questions_used + 1"),
+          questions_used: supabaseAdmin.raw("questions_used + 1"),
           updated_at: new Date().toISOString(),
         })
         .eq("user_id", userId)
@@ -96,7 +70,7 @@ export class StartSmartIntegration {
 
   static async resetMonthlyUsage(userId: string): Promise<boolean> {
     try {
-      const { error } = await supabase
+      const { error } = await supabaseAdmin
         .from("user_subscriptions")
         .update({
           questions_used: 0,
