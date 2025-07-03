@@ -1,124 +1,253 @@
 "use client"
 
-import { useState } from "react"
+import type React from "react"
+import { useState, useRef, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
-import { MessageCircle, X, Send, Bot } from "lucide-react"
-import { getSimpleResponse } from "@/lib/knowledge-base"
+import { ScrollArea } from "@/components/ui/scroll-area"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Badge } from "@/components/ui/badge"
+import { Loader2, Send, User, Bot, AlertCircle } from "lucide-react"
+import { getBusinessAdvice } from "@/lib/knowledge-base"
+import { supabase, getUser, getUserSubscription } from "@/lib/supabase"
 
-export function EnhancedChatBot() {
-  const [isOpen, setIsOpen] = useState(false)
-  const [messages, setMessages] = useState([
+interface Message {
+  id: string
+  role: "user" | "assistant"
+  content: string
+  timestamp: Date
+}
+
+interface EnhancedChatBotProps {
+  className?: string
+}
+
+export default function EnhancedChatBot({ className }: EnhancedChatBotProps) {
+  const [messages, setMessages] = useState<Message[]>([
     {
+      id: "1",
       role: "assistant",
       content:
-        "Hi! I'm your NexTax.AI assistant. I can help you with questions about our services, pricing, business formation, and tax solutions. How can I assist you today?",
+        "Hello! I'm StartSmart GPT, your AI business advisor. I can help you with business formation, tax strategies, compliance, and growth planning. What would you like to know?",
+      timestamp: new Date(),
     },
   ])
   const [input, setInput] = useState("")
   const [isLoading, setIsLoading] = useState(false)
+  const [user, setUser] = useState<any>(null)
+  const [subscription, setSubscription] = useState<any>(null)
+  const [questionsUsed, setQuestionsUsed] = useState(0)
+  const scrollAreaRef = useRef<HTMLDivElement>(null)
 
-  const handleSend = async () => {
+  useEffect(() => {
+    checkUserAuth()
+  }, [])
+
+  useEffect(() => {
+    if (scrollAreaRef.current) {
+      scrollAreaRef.current.scrollTop = scrollAreaRef.current.scrollHeight
+    }
+  }, [messages])
+
+  const checkUserAuth = async () => {
+    try {
+      const currentUser = await getUser()
+      setUser(currentUser)
+
+      if (currentUser) {
+        const userSub = await getUserSubscription(currentUser.id)
+        setSubscription(userSub)
+        setQuestionsUsed(userSub?.questions_used || 0)
+      }
+    } catch (error) {
+      console.error("Error checking auth:", error)
+    }
+  }
+
+  const canAskQuestion = () => {
+    if (!subscription) return true // Free tier gets 10 questions
+    if (subscription.tier === "premium") return true // Unlimited
+    if (subscription.tier === "pro") return questionsUsed < 150
+    return questionsUsed < 10 // Free tier
+  }
+
+  const getQuestionLimit = () => {
+    if (!subscription) return 10
+    if (subscription.tier === "premium") return -1 // Unlimited
+    if (subscription.tier === "pro") return 150
+    return 10
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
     if (!input.trim() || isLoading) return
 
-    const userMessage = input
-    setMessages((prev) => [...prev, { role: "user", content: userMessage }])
+    if (!canAskQuestion()) {
+      const newMessage: Message = {
+        id: Date.now().toString(),
+        role: "assistant",
+        content:
+          "You've reached your question limit. Please upgrade your subscription to continue using StartSmart GPT.",
+        timestamp: new Date(),
+      }
+      setMessages((prev) => [...prev, newMessage])
+      return
+    }
+
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      role: "user",
+      content: input,
+      timestamp: new Date(),
+    }
+
+    setMessages((prev) => [...prev, userMessage])
     setInput("")
     setIsLoading(true)
 
     try {
-      // Use simple response instead of AI
-      const response = getSimpleResponse(userMessage)
-      setMessages((prev) => [...prev, { role: "assistant", content: response }])
+      // Get AI response
+      const response = await getBusinessAdvice(input, messages)
+
+      const assistantMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: "assistant",
+        content: response,
+        timestamp: new Date(),
+      }
+
+      setMessages((prev) => [...prev, assistantMessage])
+
+      // Update question count if user is logged in
+      if (user && subscription) {
+        const newCount = questionsUsed + 1
+        setQuestionsUsed(newCount)
+
+        // Update in database
+        await supabase.from("user_subscriptions").update({ questions_used: newCount }).eq("user_id", user.id)
+      }
     } catch (error) {
-      setMessages((prev) => [
-        ...prev,
-        {
-          role: "assistant",
-          content:
-            "I apologize, but I'm having trouble right now. Please try again or contact our support team directly.",
-        },
-      ])
+      console.error("Error getting response:", error)
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: "assistant",
+        content: "I apologize, but I encountered an error. Please try again.",
+        timestamp: new Date(),
+      }
+      setMessages((prev) => [...prev, errorMessage])
     } finally {
       setIsLoading(false)
     }
   }
 
+  const getTierBadgeColor = (tier: string) => {
+    switch (tier) {
+      case "premium":
+        return "bg-purple-500"
+      case "pro":
+        return "bg-blue-500"
+      default:
+        return "bg-gray-500"
+    }
+  }
+
+  const questionLimit = getQuestionLimit()
+  const remainingQuestions = questionLimit === -1 ? "Unlimited" : Math.max(0, questionLimit - questionsUsed)
+
   return (
-    <>
-      {/* Chat Button */}
-      <Button
-        onClick={() => setIsOpen(true)}
-        className="fixed bottom-6 right-6 w-14 h-14 rounded-full bg-emerald-500 hover:bg-emerald-600 shadow-lg z-50"
-        size="icon"
-      >
-        <MessageCircle className="w-6 h-6" />
-      </Button>
+    <Card className={`w-full max-w-4xl mx-auto h-[600px] flex flex-col ${className}`}>
+      <CardHeader className="flex-shrink-0 border-b">
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2">
+            <Bot className="h-6 w-6 text-green-600" />
+            StartSmart GPT
+          </CardTitle>
+          <div className="flex items-center gap-2">
+            {subscription && (
+              <Badge className={getTierBadgeColor(subscription.tier)}>{subscription.tier.toUpperCase()}</Badge>
+            )}
+            <Badge variant="outline">{remainingQuestions} questions left</Badge>
+          </div>
+        </div>
+      </CardHeader>
 
-      {/* Chat Window */}
-      {isOpen && (
-        <Card className="fixed bottom-24 right-6 w-80 h-96 bg-slate-900 border-slate-700 shadow-2xl z-50">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 bg-emerald-500">
-            <CardTitle className="text-white flex items-center gap-2">
-              <Bot className="w-5 h-5" />
-              NexTax.AI Assistant
-            </CardTitle>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setIsOpen(false)}
-              className="text-white hover:bg-emerald-600"
-            >
-              <X className="w-4 h-4" />
-            </Button>
-          </CardHeader>
+      <CardContent className="flex-1 flex flex-col p-0">
+        <ScrollArea className="flex-1 p-4" ref={scrollAreaRef}>
+          <div className="space-y-4">
+            {messages.map((message) => (
+              <div
+                key={message.id}
+                className={`flex gap-3 ${message.role === "user" ? "justify-end" : "justify-start"}`}
+              >
+                {message.role === "assistant" && (
+                  <Avatar className="h-8 w-8 flex-shrink-0">
+                    <AvatarImage src="/images/startsmart-logo.png" />
+                    <AvatarFallback>
+                      <Bot className="h-4 w-4" />
+                    </AvatarFallback>
+                  </Avatar>
+                )}
 
-          <CardContent className="flex flex-col h-full p-0">
-            {/* Messages */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
-              {messages.map((message, i) => (
-                <div key={i} className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}>
-                  <div
-                    className={`max-w-[80%] p-3 rounded-lg text-sm ${
-                      message.role === "user" ? "bg-emerald-500 text-white" : "bg-slate-800 text-slate-200"
-                    }`}
-                  >
-                    {message.content}
-                  </div>
-                </div>
-              ))}
-              {isLoading && (
-                <div className="flex justify-start">
-                  <div className="bg-slate-800 text-slate-200 p-3 rounded-lg text-sm">Thinking...</div>
-                </div>
-              )}
-            </div>
-
-            {/* Input */}
-            <div className="p-4 border-t border-slate-700">
-              <div className="flex gap-2">
-                <Input
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  placeholder="Ask about our services, pricing, or tax solutions..."
-                  className="bg-slate-800 border-slate-600 text-white"
-                  onKeyPress={(e) => e.key === "Enter" && handleSend()}
-                  disabled={isLoading}
-                />
-                <Button
-                  onClick={handleSend}
-                  size="icon"
-                  className="bg-emerald-500 hover:bg-emerald-600"
-                  disabled={isLoading}
+                <div
+                  className={`max-w-[80%] rounded-lg px-4 py-2 ${
+                    message.role === "user" ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-900"
+                  }`}
                 >
-                  <Send className="w-4 h-4" />
-                </Button>
+                  <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                  <p className="text-xs opacity-70 mt-1">{message.timestamp.toLocaleTimeString()}</p>
+                </div>
+
+                {message.role === "user" && (
+                  <Avatar className="h-8 w-8 flex-shrink-0">
+                    <AvatarFallback>
+                      <User className="h-4 w-4" />
+                    </AvatarFallback>
+                  </Avatar>
+                )}
               </div>
+            ))}
+
+            {isLoading && (
+              <div className="flex gap-3 justify-start">
+                <Avatar className="h-8 w-8 flex-shrink-0">
+                  <AvatarImage src="/images/startsmart-logo.png" />
+                  <AvatarFallback>
+                    <Bot className="h-4 w-4" />
+                  </AvatarFallback>
+                </Avatar>
+                <div className="bg-gray-100 rounded-lg px-4 py-2">
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                </div>
+              </div>
+            )}
+          </div>
+        </ScrollArea>
+
+        <div className="border-t p-4">
+          {!canAskQuestion() && (
+            <div className="mb-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg flex items-center gap-2">
+              <AlertCircle className="h-4 w-4 text-yellow-600" />
+              <p className="text-sm text-yellow-800">
+                You've reached your question limit. Upgrade to continue chatting!
+              </p>
             </div>
-          </CardContent>
-        </Card>
-      )}
-    </>
+          )}
+
+          <form onSubmit={handleSubmit} className="flex gap-2">
+            <Input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Ask me about business formation, taxes, compliance..."
+              disabled={isLoading || !canAskQuestion()}
+              className="flex-1"
+            />
+            <Button type="submit" disabled={isLoading || !input.trim() || !canAskQuestion()} size="icon">
+              {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+            </Button>
+          </form>
+        </div>
+      </CardContent>
+    </Card>
   )
 }
