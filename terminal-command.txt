@@ -1,1 +1,1 @@
-npm install resend
+npm install @google-cloud/sheets googleapis resend
