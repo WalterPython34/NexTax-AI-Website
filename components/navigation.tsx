@@ -2,48 +2,38 @@
 
 import { useState, useEffect } from "react"
 import Link from "next/link"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
-import { Menu, X, LogOut } from "lucide-react"
-import { supabase, hasStartSmartAccess } from "@/lib/supabase"
+import { Menu, X, User } from "lucide-react"
 import { AuthModal } from "@/components/auth/auth-modal"
+import { supabase } from "@/lib/supabase"
 import type { User as SupabaseUser } from "@supabase/supabase-js"
 
 export function Navigation() {
   const [isOpen, setIsOpen] = useState(false)
+  const [showAuthModal, setShowAuthModal] = useState(false)
+  const [authMode, setAuthMode] = useState<"signin" | "signup">("signin")
   const [user, setUser] = useState<SupabaseUser | null>(null)
-  const [hasAccess, setHasAccess] = useState(false)
-  const [authModal, setAuthModal] = useState<{ isOpen: boolean; mode: "signin" | "signup" }>({
-    isOpen: false,
-    mode: "signin",
-  })
 
   useEffect(() => {
     // Get initial user
     supabase.auth.getUser().then(({ data: { user } }) => {
       setUser(user)
-      if (user) {
-        checkAccess(user.id)
-      }
     })
 
     // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event, session) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
       setUser(session?.user ?? null)
-      if (session?.user) {
-        checkAccess(session.user.id)
-      } else {
-        setHasAccess(false)
-      }
     })
 
     return () => subscription.unsubscribe()
   }, [])
 
-  const checkAccess = async (userId: string) => {
-    const access = await hasStartSmartAccess(userId)
-    setHasAccess(!!access)
+  const handleAuthClick = (mode: "signin" | "signup") => {
+    setAuthMode(mode)
+    setShowAuthModal(true)
   }
 
   const handleSignOut = async () => {
@@ -51,62 +41,94 @@ export function Navigation() {
   }
 
   const navItems = [
-    { href: "/features", label: "Features" },
-    { href: "/pricing", label: "Pricing" },
-    { href: "/resources", label: "Resources" },
-    { href: "/about", label: "About" },
-    { href: "/contact", label: "Contact" },
-    { href: "/startsmart-gpt", label: "StartSmart GPT", highlight: true },
+    { name: "Features", href: "/features" },
+    { name: "Pricing", href: "/pricing" },
+    { name: "Resources", href: "/resources" },
+    { name: "About", href: "/about" },
+    { name: "Contact", href: "/contact" },
   ]
 
   return (
     <>
-      <nav className="fixed top-0 w-full z-50 bg-slate-900/95 backdrop-blur-sm border-b border-slate-800">
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-slate-900/95 backdrop-blur-sm border-b border-slate-800">
         <div className="container mx-auto px-4">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
-            <Link href="/" className="flex items-center space-x-3">
-              <img src="/images/nextax-logo.png" alt="NexTax.AI" className="h-12 w-auto" />
+            <Link href="/" className="flex items-center space-x-2">
+              <Image src="/images/nextax-logo.png" alt="NexTax.AI" width={40} height={40} className="rounded-lg" />
+              <span className="text-xl font-bold text-white">NexTax.AI</span>
             </Link>
 
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-8">
               {navItems.map((item) => (
                 <Link
-                  key={item.href}
+                  key={item.name}
                   href={item.href}
-                  className={`text-slate-300 hover:text-emerald-400 transition-colors ${
-                    item.highlight ? "bg-emerald-500/20 px-3 py-1 rounded-md font-semibold" : ""
-                  }`}
+                  className="text-slate-300 hover:text-white transition-colors duration-200"
                 >
-                  {item.label}
+                  {item.name}
                 </Link>
               ))}
+
+              {/* StartSmart GPT - Highlighted */}
+              <Link
+                href="/startsmart-gpt"
+                className="bg-gradient-to-r from-emerald-500 to-cyan-500 text-white px-4 py-2 rounded-lg font-semibold hover:from-emerald-600 hover:to-cyan-600 transition-all duration-200 shadow-lg"
+              >
+                StartSmart GPT
+              </Link>
             </div>
 
             {/* Auth Section */}
             <div className="hidden md:flex items-center space-x-4">
               {user ? (
-                <div className="flex items-center space-x-2">
-                  <span className="text-slate-300 text-sm">{user.email}</span>
-                  <Button variant="ghost" size="sm" onClick={handleSignOut} className="text-slate-300 hover:text-white">
-                    <LogOut className="w-4 h-4" />
+                <div className="flex items-center space-x-4">
+                  <div className="flex items-center space-x-2 text-slate-300">
+                    <User className="w-4 h-4" />
+                    <span className="text-sm">{user.email}</span>
+                  </div>
+                  <Button
+                    onClick={handleSignOut}
+                    variant="outline"
+                    size="sm"
+                    className="border-slate-600 text-slate-300 hover:bg-slate-800 bg-transparent"
+                  >
+                    Sign Out
                   </Button>
                 </div>
               ) : (
-                <Button
-                  className="bg-emerald-500 hover:bg-emerald-600 text-white"
-                  onClick={() => setAuthModal({ isOpen: true, mode: "signin" })}
-                >
-                  Sign In
-                </Button>
+                <div className="flex items-center space-x-2">
+                  <Button
+                    onClick={() => handleAuthClick("signin")}
+                    variant="ghost"
+                    size="sm"
+                    className="text-slate-300 hover:text-white hover:bg-slate-800"
+                  >
+                    Sign In
+                  </Button>
+                  <Button
+                    onClick={() => handleAuthClick("signup")}
+                    size="sm"
+                    className="bg-emerald-500 hover:bg-emerald-600 text-white"
+                  >
+                    Try StartSmart Free
+                  </Button>
+                </div>
               )}
             </div>
 
-            {/* Mobile Menu Button */}
-            <button className="md:hidden text-slate-300" onClick={() => setIsOpen(!isOpen)}>
-              {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-            </button>
+            {/* Mobile menu button */}
+            <div className="md:hidden">
+              <Button
+                onClick={() => setIsOpen(!isOpen)}
+                variant="ghost"
+                size="sm"
+                className="text-slate-300 hover:text-white"
+              >
+                {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+              </Button>
+            </div>
           </div>
 
           {/* Mobile Navigation */}
@@ -115,27 +137,53 @@ export function Navigation() {
               <div className="flex flex-col space-y-4">
                 {navItems.map((item) => (
                   <Link
-                    key={item.href}
+                    key={item.name}
                     href={item.href}
-                    className={`text-slate-300 hover:text-emerald-400 transition-colors ${
-                      item.highlight ? "bg-emerald-500/20 px-3 py-1 rounded-md w-fit font-semibold" : ""
-                    }`}
+                    className="text-slate-300 hover:text-white transition-colors duration-200 px-2 py-1"
                     onClick={() => setIsOpen(false)}
                   >
-                    {item.label}
+                    {item.name}
                   </Link>
                 ))}
+
+                <Link
+                  href="/startsmart-gpt"
+                  className="bg-gradient-to-r from-emerald-500 to-cyan-500 text-white px-4 py-2 rounded-lg font-semibold text-center"
+                  onClick={() => setIsOpen(false)}
+                >
+                  StartSmart GPT
+                </Link>
+
                 {user ? (
-                  <Button variant="ghost" onClick={handleSignOut} className="text-slate-300 hover:text-white w-fit">
-                    Sign Out
-                  </Button>
+                  <div className="flex flex-col space-y-2 pt-4 border-t border-slate-800">
+                    <div className="text-slate-300 text-sm px-2">{user.email}</div>
+                    <Button
+                      onClick={handleSignOut}
+                      variant="outline"
+                      size="sm"
+                      className="border-slate-600 text-slate-300 hover:bg-slate-800 bg-transparent"
+                    >
+                      Sign Out
+                    </Button>
+                  </div>
                 ) : (
-                  <Button
-                    className="bg-emerald-500 hover:bg-emerald-600 text-white w-fit"
-                    onClick={() => setAuthModal({ isOpen: true, mode: "signin" })}
-                  >
-                    Sign In
-                  </Button>
+                  <div className="flex flex-col space-y-2 pt-4 border-t border-slate-800">
+                    <Button
+                      onClick={() => handleAuthClick("signin")}
+                      variant="ghost"
+                      size="sm"
+                      className="text-slate-300 hover:text-white hover:bg-slate-800 justify-start"
+                    >
+                      Sign In
+                    </Button>
+                    <Button
+                      onClick={() => handleAuthClick("signup")}
+                      size="sm"
+                      className="bg-emerald-500 hover:bg-emerald-600 text-white"
+                    >
+                      Try StartSmart Free
+                    </Button>
+                  </div>
                 )}
               </div>
             </div>
@@ -143,11 +191,7 @@ export function Navigation() {
         </div>
       </nav>
 
-      <AuthModal
-        isOpen={authModal.isOpen}
-        onClose={() => setAuthModal({ ...authModal, isOpen: false })}
-        mode={authModal.mode}
-      />
+      <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} mode={authMode} />
     </>
   )
 }
