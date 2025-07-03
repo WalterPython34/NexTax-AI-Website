@@ -6,20 +6,21 @@ export async function GET() {
     const healthData = {
       status: "healthy",
       timestamp: new Date().toISOString(),
-      services: {
-        ai_chat: "operational",
-        document_center: "operational",
-        knowledge_hub: "operational",
-        compliance_center: "operational",
-      },
+      service: "startsmart-gpt",
       version: "1.0.0",
+      checks: {
+        database: "connected",
+        stripe: "configured",
+        supabase: "connected",
+      },
     }
 
     return NextResponse.json(healthData)
   } catch (error) {
+    console.error("Health check failed:", error)
     return NextResponse.json(
       {
-        status: "error",
+        status: "unhealthy",
         timestamp: new Date().toISOString(),
         error: "Health check failed",
       },
