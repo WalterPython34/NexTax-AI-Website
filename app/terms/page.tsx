@@ -1,37 +1,49 @@
-import { Card, CardContent } from "@/components/ui/card"
-
 export default function TermsPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-900 pt-16">
-      <div className="container mx-auto px-4 py-20">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-4xl font-bold text-white mb-8">Terms of Service</h1>
-          <Card className="bg-slate-800/50 border-slate-700">
-            <CardContent className="p-8 prose prose-invert max-w-none">
-              <div className="text-slate-300 space-y-6">
-                <p>
-                  <strong>Last updated:</strong> {new Date().toLocaleDateString()}
-                </p>
+    <div className="container mx-auto py-12 px-4 max-w-4xl">
+      <h1 className="text-4xl font-bold mb-8">Terms of Service</h1>
 
-                <h2 className="text-2xl font-semibold text-white">Acceptance of Terms</h2>
-                <p>
-                  By accessing and using this website, you accept and agree to be bound by the terms and provision of
-                  this agreement.
-                </p>
+      <div className="prose prose-lg max-w-none">
+        <p className="text-gray-600 mb-8">Last updated: {new Date().toLocaleDateString()}</p>
 
-                <h2 className="text-2xl font-semibold text-white">Services</h2>
-                <p>
-                  NexTax.AI provides AI-powered business formation and tax services. All services are subject to
-                  availability and our current pricing.
-                </p>
+        <section className="mb-8">
+          <h2 className="text-2xl font-semibold mb-4">Acceptance of Terms</h2>
+          <p>
+            By accessing and using NextAx services, you accept and agree to be bound by the terms and provision of this
+            agreement.
+          </p>
+        </section>
 
-                <h2 className="text-2xl font-semibold text-white">Contact Information</h2>
-                <p>For questions about these Terms of Service, please contact us at hello@nextax.ai.</p>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        <section className="mb-8">
+          <h2 className="text-2xl font-semibold mb-4">Use License</h2>
+          <p>
+            Permission is granted to temporarily use NextAx services for personal, non-commercial transitory viewing
+            only.
+          </p>
+        </section>
+
+        <section className="mb-8">
+          <h2 className="text-2xl font-semibold mb-4">Disclaimer</h2>
+          <p>
+            The information on NextAx is provided on an 'as is' basis. To the fullest extent permitted by law, NextAx
+            excludes all representations, warranties, conditions and terms.
+          </p>
+        </section>
+
+        <section className="mb-8">
+          <h2 className="text-2xl font-semibold mb-4">Limitations</h2>
+          <p>
+            In no event shall NextAx or its suppliers be liable for any damages arising out of the use or inability to
+            use the materials on NextAx's website.
+          </p>
+        </section>
+
+        <section className="mb-8">
+          <h2 className="text-2xl font-semibold mb-4">Contact Information</h2>
+          <p>If you have any questions about these Terms of Service, please contact us at legal@nextax.ai</p>
+        </section>
       </div>
     </div>
   )
 }
+
