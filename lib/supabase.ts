@@ -2,44 +2,48 @@ import { createClient } from "@supabase/supabase-js"
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
 
-// Client-side Supabase client
+// Client for browser usage
 export const supabase = createClient(supabaseUrl, supabaseAnonKey)
 
-// Server-side Supabase client with service role key
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
-export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false,
-  },
-})
+// Admin client for server-side operations
+export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey)
 
-// Client-side auth helper
-export const getUser = async () => {
+// Auth helpers
+export async function getUser() {
   const {
     data: { user },
   } = await supabase.auth.getUser()
   return user
 }
 
-// Check if user has StartSmartGPT access
-export const hasStartSmartAccess = async (userId: string) => {
-  const { data, error } = await supabaseAdmin
-    .from("user_subscriptions")
-    .select("*")
-    .eq("user_id", userId)
-    .eq("status", "active")
-    .single()
-
-  return !error && data && (data.tier === "pro" || data.tier === "premium")
+export async function signUp(email: string, password: string) {
+  const { data, error } = await supabase.auth.signUp({
+    email,
+    password,
+  })
+  return { data, error }
 }
 
-// Get user subscription details
-export const getUserSubscription = async (userId: string) => {
-  const { data, error } = await supabaseAdmin.from("user_subscriptions").select("*").eq("user_id", userId).single()
+export async function signIn(email: string, password: string) {
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  })
+  return { data, error }
+}
 
-  if (error && error.code !== "PGRST116") {
+export async function signOut() {
+  const { error } = await supabase.auth.signOut()
+  return { error }
+}
+
+// User subscription helpers
+export async function getUserSubscription(userId: string) {
+  const { data, error } = await supabase.from("user_subscriptions").select("*").eq("user_id", userId).single()
+
+  if (error) {
     console.error("Error fetching subscription:", error)
     return null
   }
@@ -47,54 +51,39 @@ export const getUserSubscription = async (userId: string) => {
   return data
 }
 
-// Database types
-export interface User {
-  id: string
-  email: string
-  full_name?: string
-  avatar_url?: string
-  created_at: string
-  updated_at: string
+export async function createUserSubscription(userId: string, tier = "free") {
+  const { data, error } = await supabase
+    .from("user_subscriptions")
+    .insert({
+      user_id: userId,
+      tier,
+      status: "active",
+      questions_used: 0,
+      questions_limit: tier === "free" ? 10 : tier === "pro" ? 150 : -1,
+    })
+    .select()
+    .single()
+
+  if (error) {
+    console.error("Error creating subscription:", error)
+    return null
+  }
+
+  return data
 }
 
-export interface UserSubscription {
-  id: string
-  user_id: string
-  stripe_customer_id?: string
-  stripe_subscription_id?: string
-  tier: "free" | "pro" | "premium"
-  questions_limit: number
-  questions_used: number
-  status: "active" | "canceled" | "past_due" | "incomplete"
-  created_at: string
-  updated_at: string
-}
+export async function updateUserSubscription(userId: string, updates: any) {
+  const { data, error } = await supabase
+    .from("user_subscriptions")
+    .update(updates)
+    .eq("user_id", userId)
+    .select()
+    .single()
 
-export interface ChatSession {
-  id: string
-  user_id: string
-  title?: string
-  created_at: string
-  updated_at: string
-}
+  if (error) {
+    console.error("Error updating subscription:", error)
+    return null
+  }
 
-export interface ChatMessage {
-  id: string
-  session_id: string
-  user_id: string
-  role: "user" | "assistant" | "system"
-  content: string
-  created_at: string
-}
-
-export interface BusinessProfile {
-  id: string
-  user_id: string
-  business_name?: string
-  business_type?: string
-  industry?: string
-  state?: string
-  formation_status: string
-  created_at: string
-  updated_at: string
+  return data
 }
