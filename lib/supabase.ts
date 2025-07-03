@@ -1,89 +1,120 @@
 import { createClient } from "@supabase/supabase-js"
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
+// Safe environment variable access with fallbacks
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || ""
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ""
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || ""
 
-// Client for browser usage
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+// Only create clients if we have the required environment variables
+let supabase: any = null
+let supabaseAdmin: any = null
 
-// Admin client for server-side operations
-export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey)
+try {
+  if (supabaseUrl && supabaseAnonKey) {
+    supabase = createClient(supabaseUrl, supabaseAnonKey)
+  }
+} catch (error) {
+  console.warn("Failed to initialize Supabase client:", error)
+}
 
-// Auth helpers
+try {
+  if (supabaseUrl && supabaseServiceKey) {
+    supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey)
+  }
+} catch (error) {
+  console.warn("Failed to initialize Supabase admin client:", error)
+}
+
+export { supabase, supabaseAdmin }
+
+// Helper functions with safety checks
 export async function getUser() {
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  return user
+  if (!supabase) {
+    console.warn("Supabase client not initialized")
+    return null
+  }
+
+  try {
+    const {
+      data: { user },
+      error,
+    } = await supabase.auth.getUser()
+    if (error) throw error
+    return user
+  } catch (error) {
+    console.error("Error getting user:", error)
+    return null
+  }
 }
 
-export async function signUp(email: string, password: string) {
-  const { data, error } = await supabase.auth.signUp({
-    email,
-    password,
-  })
-  return { data, error }
-}
-
-export async function signIn(email: string, password: string) {
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  })
-  return { data, error }
-}
-
-export async function signOut() {
-  const { error } = await supabase.auth.signOut()
-  return { error }
-}
-
-// User subscription helpers
 export async function getUserSubscription(userId: string) {
-  const { data, error } = await supabase.from("user_subscriptions").select("*").eq("user_id", userId).single()
-
-  if (error) {
-    console.error("Error fetching subscription:", error)
+  if (!supabaseAdmin) {
+    console.warn("Supabase admin client not initialized")
     return null
   }
 
-  return data
+  try {
+    const { data, error } = await supabaseAdmin.from("user_subscriptions").select("*").eq("user_id", userId).single()
+
+    if (error && error.code !== "PGRST116") throw error
+    return data
+  } catch (error) {
+    console.error("Error getting user subscription:", error)
+    return null
+  }
 }
 
-export async function createUserSubscription(userId: string, tier = "free") {
-  const { data, error } = await supabase
-    .from("user_subscriptions")
-    .insert({
-      user_id: userId,
-      tier,
-      status: "active",
-      questions_used: 0,
-      questions_limit: tier === "free" ? 10 : tier === "pro" ? 150 : -1,
-    })
-    .select()
-    .single()
-
-  if (error) {
-    console.error("Error creating subscription:", error)
+export async function createUserSubscription(userId: string, email: string) {
+  if (!supabaseAdmin) {
+    console.warn("Supabase admin client not initialized")
     return null
   }
 
-  return data
+  try {
+    const { data, error } = await supabaseAdmin
+      .from("user_subscriptions")
+      .insert({
+        user_id: userId,
+        email: email,
+        tier: "free",
+        status: "active",
+        questions_used: 0,
+        questions_limit: 10,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .select()
+      .single()
+
+    if (error) throw error
+    return data
+  } catch (error) {
+    console.error("Error creating user subscription:", error)
+    return null
+  }
 }
 
 export async function updateUserSubscription(userId: string, updates: any) {
-  const { data, error } = await supabase
-    .from("user_subscriptions")
-    .update(updates)
-    .eq("user_id", userId)
-    .select()
-    .single()
-
-  if (error) {
-    console.error("Error updating subscription:", error)
+  if (!supabaseAdmin) {
+    console.warn("Supabase admin client not initialized")
     return null
   }
 
-  return data
+  try {
+    const { data, error } = await supabaseAdmin
+      .from("user_subscriptions")
+      .update({
+        ...updates,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("user_id", userId)
+      .select()
+      .single()
+
+    if (error) throw error
+    return data
+  } catch (error) {
+    console.error("Error updating user subscription:", error)
+    return null
+  }
 }
