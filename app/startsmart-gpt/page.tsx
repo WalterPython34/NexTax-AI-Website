@@ -1,153 +1,213 @@
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import {
+  Bot,
   Smartphone,
+  Monitor,
   Download,
   CheckCircle,
-  Zap,
-  FileText,
-  MessageSquare,
-  BarChart3,
-  Shield,
   ArrowRight,
+  Shield,
+  FileText,
+  BarChart3,
+  Users,
+  Clock,
 } from "lucide-react"
+import Link from "next/link"
 
 export default function StartSmartGPTPage() {
+  const features = [
+    {
+      icon: Bot,
+      title: "AI Business Advisor",
+      description: "24/7 AI assistant trained on 20+ years of Big 4 tax expertise",
+      tier: "Free",
+    },
+    {
+      icon: FileText,
+      title: "Document Generation",
+      description: "AI-powered legal documents, contracts, and compliance forms",
+      tier: "Pro",
+    },
+    {
+      icon: BarChart3,
+      title: "Compliance Tracking",
+      description: "Automated compliance monitoring with state-specific deadlines",
+      tier: "Pro",
+    },
+    {
+      icon: Shield,
+      title: "Tax Optimization",
+      description: "Real-time tax strategy recommendations and deduction finder",
+      tier: "Premium",
+    },
+    {
+      icon: Users,
+      title: "Multi-Entity Management",
+      description: "Manage multiple businesses and entities from one dashboard",
+      tier: "Premium",
+    },
+    {
+      icon: Clock,
+      title: "Priority Support",
+      description: "Direct access to CPA experts and priority response times",
+      tier: "Premium",
+    },
+  ]
+
+  const pricingTiers = [
+    {
+      name: "Free",
+      price: "$0",
+      period: "/month",
+      description: "Perfect for getting started",
+      features: [
+        "Basic AI chat assistance",
+        "Business formation guidance",
+        "Free document templates",
+        "Community support",
+      ],
+      cta: "Get Started Free",
+      popular: false,
+    },
+    {
+      name: "Pro",
+      price: "$29",
+      period: "/month",
+      description: "For growing businesses",
+      features: [
+        "Everything in Free",
+        "AI document generation",
+        "Compliance tracking",
+        "State-specific guidance",
+        "Email support",
+      ],
+      cta: "Start Pro Trial",
+      popular: true,
+    },
+    {
+      name: "Premium",
+      price: "$79",
+      period: "/month",
+      description: "For established businesses",
+      features: [
+        "Everything in Pro",
+        "Advanced tax optimization",
+        "Multi-entity management",
+        "Priority CPA support",
+        "Custom integrations",
+      ],
+      cta: "Go Premium",
+      popular: false,
+    },
+  ]
+
   return (
-    <div className="min-h-screen bg-slate-900 text-white pt-20">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-900 pt-16">
       {/* Hero Section */}
-      <section className="py-16 text-center">
-        <div className="container mx-auto px-4">
-          <Badge className="bg-emerald-500 text-white px-4 py-2 mb-6 text-lg">🚀 Now Available - StartSmart GPT</Badge>
-          <h1 className="text-5xl lg:text-6xl font-bold mb-6">
-            Your AI Business
-            <span className="text-emerald-400"> Copilot</span>
+      <section className="py-20">
+        <div className="container mx-auto px-4 text-center">
+          <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/30 mb-6">
+            <Bot className="w-4 h-4 mr-2" />
+            Now Available
+          </Badge>
+          <h1 className="text-4xl lg:text-6xl font-bold text-white mb-6">
+            Meet Your AI
+            <span className="block text-emerald-400">Business Copilot</span>
           </h1>
-          <p className="text-xl text-slate-300 max-w-3xl mx-auto mb-8">
-            The complete AI-powered platform to launch, manage, and scale your business. From idea validation to
-            compliance tracking - all in one place.
+          <p className="text-xl text-slate-300 max-w-3xl mx-auto mb-12">
+            StartSmartGPT is your 24/7 AI business advisor, trained on decades of Big 4 tax expertise. Get instant
+            answers, generate documents, and stay compliant - all in one platform.
           </p>
 
-          {/* App Store Buttons */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-12">
-            <Button
-              size="lg"
-              className="bg-black hover:bg-gray-800 text-white px-8 py-4 rounded-xl flex items-center gap-3"
-            >
-              <Download className="w-6 h-6" />
-              <div className="text-left">
-                <div className="text-xs text-gray-300">Download on the</div>
-                <div className="text-lg font-semibold">App Store</div>
-              </div>
-            </Button>
-            <Button
-              size="lg"
-              className="bg-black hover:bg-gray-800 text-white px-8 py-4 rounded-xl flex items-center gap-3"
-            >
-              <Download className="w-6 h-6" />
-              <div className="text-left">
-                <div className="text-xs text-gray-300">Get it on</div>
-                <div className="text-lg font-semibold">Google Play</div>
-              </div>
-            </Button>
-          </div>
-
-          {/* Web App Access */}
-          <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-8 max-w-6xl mx-auto">
-            <h3 className="text-2xl font-bold mb-4">🌐 Launch StartSmart GPT</h3>
-            <p className="text-slate-300 mb-6">
-              Your complete AI-powered business management platform is ready to use!
-            </p>
-
-            {/* Embedded App Container - Ready for your Replit app */}
-            <div
-              className="bg-slate-900 border border-slate-600 rounded-xl overflow-hidden"
-              style={{ height: "800px" }}
-            >
-              {/* Replace this div with your actual Replit app iframe when ready */}
-              <div className="w-full h-full flex items-center justify-center text-slate-400">
+          {/* App Preview */}
+          <div className="max-w-4xl mx-auto mb-12">
+            <div className="bg-slate-800/50 rounded-2xl p-8 border border-slate-700">
+              <div className="aspect-video bg-gradient-to-br from-emerald-500/20 to-cyan-500/20 rounded-lg flex items-center justify-center">
                 <div className="text-center">
-                  <Zap className="w-16 h-16 mx-auto mb-4 text-emerald-400" />
-                  <h4 className="text-xl font-semibold mb-2">StartSmart GPT Ready for Integration</h4>
-                  <p className="mb-4">Replace this container with your Replit app iframe</p>
-                  <div className="text-sm text-slate-500 bg-slate-800 rounded p-4 max-w-md mx-auto">
-                    <code>{`<iframe 
-  src="https://your-replit-app-url.com" 
-  width="100%" 
-  height="800px"
-  frameBorder="0"
-  allow="camera; microphone; geolocation"
-></iframe>`}</code>
-                  </div>
+                  <Bot className="w-16 h-16 text-emerald-400 mx-auto mb-4" />
+                  <h3 className="text-2xl font-bold text-white mb-2">StartSmartGPT Web App</h3>
+                  <p className="text-slate-300">Coming Soon - Full Integration</p>
                 </div>
               </div>
             </div>
+          </div>
 
-            <div className="mt-6 text-center">
-              <Button size="lg" className="bg-emerald-500 hover:bg-emerald-600 text-white px-8 py-4">
-                Launch Full Screen App
-                <ArrowRight className="ml-2 w-5 h-5" />
-              </Button>
-            </div>
+          {/* Platform Availability */}
+          <div className="grid md:grid-cols-3 gap-6 max-w-3xl mx-auto">
+            <Card className="bg-slate-800/50 border-slate-700">
+              <CardContent className="p-6 text-center">
+                <Monitor className="w-12 h-12 text-emerald-400 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-white mb-2">Web Platform</h3>
+                <p className="text-slate-300 text-sm mb-4">Access from any browser</p>
+                <Button className="w-full bg-emerald-500 hover:bg-emerald-600">Launch Web App</Button>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-slate-800/50 border-slate-700">
+              <CardContent className="p-6 text-center">
+                <Smartphone className="w-12 h-12 text-emerald-400 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-white mb-2">iOS App</h3>
+                <p className="text-slate-300 text-sm mb-4">Download from App Store</p>
+                <Button variant="outline" className="w-full border-slate-600 text-slate-300 bg-transparent">
+                  <Download className="w-4 h-4 mr-2" />
+                  Coming Soon
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-slate-800/50 border-slate-700">
+              <CardContent className="p-6 text-center">
+                <Smartphone className="w-12 h-12 text-emerald-400 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-white mb-2">Android App</h3>
+                <p className="text-slate-300 text-sm mb-4">Download from Play Store</p>
+                <Button variant="outline" className="w-full border-slate-600 text-slate-300 bg-transparent">
+                  <Download className="w-4 h-4 mr-2" />
+                  Coming Soon
+                </Button>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </section>
 
-      {/* Features Overview */}
-      <section className="py-16 bg-slate-900/50">
+      {/* Features Section */}
+      <section className="py-20 bg-slate-900/50">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl lg:text-4xl font-bold mb-4">Everything You Need to Succeed</h2>
-            <p className="text-xl text-slate-300 max-w-3xl mx-auto">
-              Four powerful modules working together to accelerate your business journey
+          <div className="text-center mb-16">
+            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">Powerful Features for Every Business</h2>
+            <p className="text-xl text-slate-300 max-w-2xl mx-auto">
+              From startup to enterprise, StartSmartGPT grows with your business needs
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {[
-              {
-                icon: MessageSquare,
-                title: "AI Sidekick",
-                description: "24/7 AI business advisor for instant guidance and strategic insights",
-                features: ["Business validation", "Market research", "Strategic planning"],
-              },
-              {
-                icon: FileText,
-                title: "Document Center",
-                description: "AI-powered legal documents and templates for your startup",
-                features: ["Operating agreements", "Articles of incorporation", "Tax forms"],
-              },
-              {
-                icon: BarChart3,
-                title: "Knowledge Hub",
-                description: "Comprehensive guides and resources for every business stage",
-                features: ["Step-by-step guides", "Best practices", "Industry insights"],
-              },
-              {
-                icon: Shield,
-                title: "Compliance Center",
-                description: "Automated compliance tracking with state-specific deadlines",
-                features: ["Tax deadlines", "Filing reminders", "Compliance scoring"],
-              },
-            ].map((feature, i) => (
-              <Card key={i} className="bg-slate-800/50 border-slate-700 hover:border-emerald-500/50 transition-colors">
-                <CardHeader>
-                  <div className="w-12 h-12 rounded-full bg-emerald-500/20 flex items-center justify-center mb-4">
-                    <feature.icon className="w-6 h-6 text-emerald-400" />
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {features.map((feature, i) => (
+              <Card key={i} className="bg-slate-800/50 border-slate-700">
+                <CardContent className="p-6">
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-lg bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
+                      <feature.icon className="w-6 h-6 text-emerald-400" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2 mb-2">
+                        <h3 className="text-lg font-semibold text-white">{feature.title}</h3>
+                        <Badge
+                          className={`text-xs ${
+                            feature.tier === "Free"
+                              ? "bg-green-500/20 text-green-300"
+                              : feature.tier === "Pro"
+                                ? "bg-blue-500/20 text-blue-300"
+                                : "bg-purple-500/20 text-purple-300"
+                          }`}
+                        >
+                          {feature.tier}
+                        </Badge>
+                      </div>
+                      <p className="text-slate-300 text-sm">{feature.description}</p>
+                    </div>
                   </div>
-                  <CardTitle className="text-white">{feature.title}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-slate-300 mb-4">{feature.description}</p>
-                  <ul className="space-y-2">
-                    {feature.features.map((item, j) => (
-                      <li key={j} className="flex items-center text-sm text-slate-400">
-                        <CheckCircle className="w-4 h-4 mr-2 text-emerald-400" />
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
                 </CardContent>
               </Card>
             ))}
@@ -155,91 +215,51 @@ export default function StartSmartGPTPage() {
         </div>
       </section>
 
-      {/* Pricing Tiers */}
-      <section className="py-16">
+      {/* Pricing Section */}
+      <section className="py-20">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl lg:text-4xl font-bold mb-4">Choose Your Plan</h2>
-            <p className="text-xl text-slate-300 max-w-3xl mx-auto">Start free and upgrade as your business grows</p>
+          <div className="text-center mb-16">
+            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">Choose Your Plan</h2>
+            <p className="text-xl text-slate-300 max-w-2xl mx-auto">Start free and upgrade as your business grows</p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
-            {[
-              {
-                name: "Free",
-                price: "$0",
-                period: "/month",
-                description: "Perfect for exploring and getting started",
-                features: [
-                  "Basic AI Chat access",
-                  "Free knowledge base articles",
-                  "Basic document templates",
-                  "Community support",
-                ],
-                cta: "Get Started Free",
-                popular: false,
-              },
-              {
-                name: "Starter",
-                price: "$29",
-                period: "/month",
-                description: "For entrepreneurs ready to launch",
-                features: [
-                  "Unlimited AI Chat",
-                  "AI document generation",
-                  "Premium templates",
-                  "Compliance tracking",
-                  "Priority support",
-                ],
-                cta: "Start Free Trial",
-                popular: true,
-              },
-              {
-                name: "Growth",
-                price: "$79",
-                period: "/month",
-                description: "For scaling businesses",
-                features: [
-                  "Everything in Starter",
-                  "Advanced compliance automation",
-                  "Custom document creation",
-                  "Multi-state support",
-                  "Dedicated account manager",
-                ],
-                cta: "Contact Sales",
-                popular: false,
-              },
-            ].map((plan, i) => (
+            {pricingTiers.map((tier, i) => (
               <Card
                 key={i}
-                className={`relative bg-slate-800/50 border-slate-700 ${plan.popular ? "border-emerald-500 scale-105" : ""}`}
+                className={`bg-slate-800/50 border-slate-700 relative ${tier.popular ? "ring-2 ring-emerald-500" : ""}`}
               >
-                {plan.popular && (
-                  <Badge className="absolute -top-3 left-1/2 transform -translate-x-1/2 bg-emerald-500 text-white">
-                    Most Popular
-                  </Badge>
-                )}
-                <CardHeader className="text-center">
-                  <CardTitle className="text-2xl text-white">{plan.name}</CardTitle>
-                  <div className="text-4xl font-bold text-white">
-                    {plan.price}
-                    <span className="text-lg text-slate-400">{plan.period}</span>
+                {tier.popular && (
+                  <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                    <Badge className="bg-emerald-500 text-white">Most Popular</Badge>
                   </div>
-                  <p className="text-slate-300">{plan.description}</p>
+                )}
+                <CardHeader className="text-center pb-6">
+                  <CardTitle className="text-xl text-white">{tier.name}</CardTitle>
+                  <p className="text-slate-400 text-sm">{tier.description}</p>
+                  <div className="mt-4">
+                    <span className="text-4xl font-bold text-white">{tier.price}</span>
+                    <span className="text-slate-400">{tier.period}</span>
+                  </div>
                 </CardHeader>
-                <CardContent>
-                  <ul className="space-y-3 mb-6">
-                    {plan.features.map((feature, j) => (
-                      <li key={j} className="flex items-center text-slate-300">
-                        <CheckCircle className="w-4 h-4 mr-3 text-emerald-400" />
-                        {feature}
-                      </li>
+                <CardContent className="space-y-6">
+                  <div className="space-y-3">
+                    {tier.features.map((feature, j) => (
+                      <div key={j} className="flex items-center gap-3">
+                        <CheckCircle className="w-5 h-5 text-emerald-400 flex-shrink-0" />
+                        <span className="text-slate-300 text-sm">{feature}</span>
+                      </div>
                     ))}
-                  </ul>
+                  </div>
                   <Button
-                    className={`w-full ${plan.popular ? "bg-emerald-500 hover:bg-emerald-600" : "bg-slate-700 hover:bg-slate-600"} text-white`}
+                    className={`w-full ${
+                      tier.popular
+                        ? "bg-emerald-500 hover:bg-emerald-600 text-white"
+                        : "bg-slate-700 hover:bg-slate-600 text-white"
+                    }`}
                   >
-                    {plan.cta}
+                    {tier.cta}
+                    <ArrowRight className="ml-2 w-4 h-4" />
                   </Button>
                 </CardContent>
               </Card>
@@ -248,74 +268,31 @@ export default function StartSmartGPTPage() {
         </div>
       </section>
 
-      {/* Mobile Benefits */}
-      <section className="py-16 bg-slate-900/50">
-        <div className="container mx-auto px-4">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div>
-              <h2 className="text-3xl lg:text-4xl font-bold mb-6">
-                Take Your Business
-                <span className="text-emerald-400"> Anywhere</span>
-              </h2>
-              <p className="text-xl text-slate-300 mb-8">
-                Access your AI business copilot on any device. Get instant answers, generate documents, and stay
-                compliant - whether you're in the office or on the go.
-              </p>
-
-              <div className="space-y-4 mb-8">
-                {[
-                  "Offline document access",
-                  "Push notifications for deadlines",
-                  "Sync across all devices",
-                  "Mobile-optimized AI chat",
-                ].map((benefit, i) => (
-                  <div key={i} className="flex items-center">
-                    <CheckCircle className="w-5 h-5 mr-3 text-emerald-400" />
-                    <span className="text-slate-300">{benefit}</span>
-                  </div>
-                ))}
-              </div>
-
-              <div className="flex gap-4">
-                <Button className="bg-emerald-500 hover:bg-emerald-600 text-white">
-                  <Smartphone className="w-4 h-4 mr-2" />
-                  Download App
-                </Button>
-                <Button variant="outline" className="border-slate-600 text-slate-300 hover:bg-slate-800 bg-transparent">
-                  Try Web Version
-                </Button>
-              </div>
-            </div>
-
-            <div className="text-center">
-              <div className="bg-slate-800 rounded-3xl p-8 inline-block">
-                <Smartphone className="w-32 h-32 text-emerald-400 mx-auto" />
-                <p className="text-slate-400 mt-4">Mobile App Preview</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* CTA Section */}
-      <section className="py-24 text-center">
+      <section className="py-20 bg-gradient-to-r from-emerald-600 to-cyan-600">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl lg:text-4xl font-bold mb-6">Ready to Launch Your Business?</h2>
-          <p className="text-xl text-slate-300 max-w-3xl mx-auto mb-8">
-            Join thousands of entrepreneurs who've accelerated their business journey with StartSmart GPT
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button size="lg" className="bg-emerald-500 hover:bg-emerald-600 text-white px-8 py-4">
-              Start Free Today
-              <ArrowRight className="ml-2 w-5 h-5" />
-            </Button>
-            <Button
-              size="lg"
-              variant="outline"
-              className="border-slate-600 text-slate-300 hover:bg-slate-800 px-8 py-4 bg-transparent"
-            >
-              Schedule Demo
-            </Button>
+          <div className="max-w-4xl mx-auto text-center">
+            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">Ready to Start Smart?</h2>
+            <p className="text-xl text-white/90 max-w-2xl mx-auto mb-8">
+              Join thousands of entrepreneurs who trust StartSmartGPT to guide their business journey.
+            </p>
+
+            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+              <Button size="lg" className="bg-white text-emerald-600 hover:bg-slate-100 px-8 py-4 text-lg">
+                <Bot className="mr-2 w-5 h-5" />
+                Try StartSmartGPT Free
+              </Button>
+              <Link href="/pricing">
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="border-white text-white hover:bg-white/10 px-8 py-4 text-lg bg-transparent"
+                >
+                  View All Services
+                  <ArrowRight className="ml-2 w-5 h-5" />
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </section>
