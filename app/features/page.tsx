@@ -74,32 +74,26 @@ export default function FeaturesPage() {
     {
       name: "QuickBooks",
       description: "AI-powered sync of financial records, bookkeeping triggers, and automated tax categorization",
-      logo: "/images/quickbooks-logo.png",
     },
     {
       name: "DocuSign",
       description: "Integrated signature workflows for EIN filings, agreements, and compliance docs",
-      logo: "/images/docusign-logo.png",
     },
     {
       name: "Slack",
       description: "Real-time updates from tax filings, document approvals, and team alerts",
-      logo: "/images/slack-logo.png",
     },
     {
       name: "Salesforce",
       description: "Sync client data for compliance workflows and onboarding automation",
-      logo: "/images/salesforce-logo.png",
     },
     {
       name: "Microsoft 365",
       description: "Intelligent document collaboration + calendar-based tax reminders",
-      logo: "/images/microsoft-365-logo.png",
     },
     {
       name: "Zapier",
       description: "5,000+ integrations with tailored GPT flows for finance, CRM, HR & more",
-      logo: "/images/zapier-logo.png",
     },
   ]
 
@@ -127,7 +121,7 @@ export default function FeaturesPage() {
       <section className="py-20">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            {/* Large NexTax Logo */}
+            {/* Large NexTax Logo - THIS IS STILL HERE! */}
             <div className="flex justify-center mb-8">
               <img src="/images/nextax-logo-large.png" alt="NexTax.AI" className="h-64 w-auto" />
             </div>
@@ -402,15 +396,15 @@ export default function FeaturesPage() {
             {integrations.map((integration, i) => (
               <Card key={i} className="bg-gray-900/50 border-gray-700">
                 <CardContent className="p-6 text-center">
-                  <div className="w-16 h-16 bg-gray-800 rounded-lg mx-auto mb-4 flex items-center justify-center overflow-hidden">
-                    <img
-                      src={integration.logo || "/placeholder.svg"}
-                      alt={`${integration.name} logo`}
-                      className="w-12 h-12 object-contain filter brightness-0 invert"
-                      onError={(e) => {
-                        e.currentTarget.style.display = "none"
-                      }}
-                    />
+                  <div className="w-16 h-16 bg-gray-800 rounded-lg mx-auto mb-4 flex items-center justify-center">
+                    <div className="text-2xl">
+                      {integration.name === "QuickBooks" && "📚"}
+                      {integration.name === "DocuSign" && "✍️"}
+                      {integration.name === "Slack" && "💬"}
+                      {integration.name === "Salesforce" && "👥"}
+                      {integration.name === "Microsoft 365" && "📊"}
+                      {integration.name === "Zapier" && "⚡"}
+                    </div>
                   </div>
                   <h3 className="font-semibold text-white mb-2">{integration.name}</h3>
                   <p className="text-slate-400 text-sm">{integration.description}</p>
