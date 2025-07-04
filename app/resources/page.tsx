@@ -1,250 +1,275 @@
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import {
   Download,
   FileText,
   Calculator,
   CheckSquare,
-  BookOpen,
+  Calendar,
   Users,
   Play,
-  Calendar,
   Clock,
-  ArrowRight,
+  TrendingUp,
+  BookOpen,
+  Mic,
 } from "lucide-react"
-
-const resources = [
-  {
-    title: "Business Formation Guide",
-    description: "Complete guide to choosing the right business structure for your needs.",
-    icon: FileText,
-    type: "PDF Guide",
-    downloadUrl: "/resources/business-formation-guide.pdf",
-    featured: true,
-  },
-  {
-    title: "Tax Planning Checklist",
-    description: "Essential tax planning strategies for new businesses.",
-    icon: CheckSquare,
-    type: "Checklist",
-    downloadUrl: "/resources/tax-planning-checklist.pdf",
-    featured: true,
-  },
-  {
-    title: "Startup Cost Calculator",
-    description: "Calculate your initial business expenses and funding needs.",
-    icon: Calculator,
-    type: "Tool",
-    downloadUrl: "/resources/startup-cost-calculator.xlsx",
-    featured: true,
-  },
-  {
-    title: "Compliance Calendar",
-    description: "Never miss important deadlines with our compliance calendar.",
-    icon: BookOpen,
-    type: "Calendar",
-    downloadUrl: "/resources/compliance-calendar.pdf",
-    featured: false,
-  },
-  {
-    title: "Employee Handbook Template",
-    description: "Professional employee handbook template for growing businesses.",
-    icon: Users,
-    type: "Template",
-    downloadUrl: "/resources/employee-handbook-template.docx",
-    featured: false,
-  },
-  {
-    title: "FinTech Compliance Guide",
-    description: "Navigate financial technology regulations with confidence.",
-    icon: FileText,
-    type: "PDF Guide",
-    downloadUrl: "/resources/fintech-compliance-guide.pdf",
-    featured: false,
-  },
-]
-
-const upcomingWebinars = [
-  {
-    title: "AI-Powered Business Formation: The Future is Now",
-    date: "January 15, 2025",
-    time: "2:00 PM EST",
-    description: "Learn how AI is revolutionizing business formation and tax planning.",
-    registrationUrl: "/webinar-registration",
-    featured: true,
-  },
-  {
-    title: "Tax Strategies for Tech Startups",
-    date: "January 22, 2025",
-    time: "1:00 PM EST",
-    description: "Maximize your tax savings with proven strategies for technology companies.",
-    registrationUrl: "/webinar-registration",
-    featured: false,
-  },
-  {
-    title: "Scaling Your FinTech: Compliance & Growth",
-    date: "February 5, 2025",
-    time: "3:00 PM EST",
-    description: "Navigate regulatory requirements while scaling your financial technology business.",
-    registrationUrl: "/webinar-registration",
-    featured: false,
-  },
-]
-
-const featuredVideos = [
-  {
-    title: "StartSmart GPT Demo: Launch Your Business in 48 Hours",
-    duration: "12:34",
-    thumbnail: "/placeholder.svg?height=200&width=350",
-    videoUrl: "/videos/startsmart-demo",
-    views: "2.1K",
-  },
-  {
-    title: "Tax Planning Masterclass for Entrepreneurs",
-    duration: "28:15",
-    thumbnail: "/placeholder.svg?height=200&width=350",
-    videoUrl: "/videos/tax-masterclass",
-    views: "5.3K",
-  },
-  {
-    title: "FinTech Regulatory Landscape 2025",
-    duration: "18:42",
-    thumbnail: "/placeholder.svg?height=200&width=350",
-    videoUrl: "/videos/fintech-regulations",
-    views: "1.8K",
-  },
-]
+import Link from "next/link"
 
 export default function ResourcesPage() {
-  const featuredResources = resources.filter((r) => r.featured)
-  const otherResources = resources.filter((r) => !r.featured)
+  const featuredResources = [
+    {
+      icon: FileText,
+      title: "Business Formation Guide",
+      description: "Complete guide to choosing the right business structure for your needs.",
+      type: "PDF Guide",
+      color: "emerald",
+      featured: true,
+    },
+    {
+      icon: CheckSquare,
+      title: "Tax Planning Checklist",
+      description: "Essential tax planning strategies for new businesses.",
+      type: "Checklist",
+      color: "blue",
+      featured: true,
+    },
+    {
+      icon: Calculator,
+      title: "Startup Cost Calculator",
+      description: "Calculate your initial business expenses and funding needs.",
+      type: "Interactive Tool",
+      color: "violet",
+      featured: true,
+    },
+  ]
+
+  const additionalResources = [
+    {
+      icon: Calendar,
+      title: "Tax Calendar 2024",
+      description: "Important tax deadlines and filing dates.",
+      type: "Calendar",
+      color: "orange",
+    },
+    {
+      icon: FileText,
+      title: "LLC Operating Agreement Template",
+      description: "Professional template for LLC operating agreements.",
+      type: "Template",
+      color: "cyan",
+    },
+    {
+      icon: BookOpen,
+      title: "Entity Comparison Chart",
+      description: "Side-by-side comparison of business entity types.",
+      type: "Reference",
+      color: "green",
+    },
+  ]
+
+  const upcomingWebinars = [
+    {
+      title: "Tax Strategies for New Businesses",
+      date: "January 15, 2025",
+      time: "2:00 PM EST",
+      presenter: "Steve Morello, CPA",
+      description: "Learn essential tax planning strategies for your new business launch.",
+      registrationLink: "#",
+    },
+    {
+      title: "Choosing the Right Business Structure",
+      date: "January 22, 2025",
+      time: "1:00 PM EST",
+      presenter: "NexTax.AI Expert Team",
+      description: "Deep dive into LLC vs. Corporation decisions with real-world examples.",
+      registrationLink: "#",
+    },
+    {
+      title: "Multi-State Business Compliance",
+      date: "January 29, 2025",
+      time: "3:00 PM EST",
+      presenter: "Steve Morello, CPA",
+      description: "Navigate complex multi-state tax obligations and nexus requirements.",
+      registrationLink: "#",
+    },
+  ]
+
+  const videoContent = [
+    {
+      title: "5-Minute Business Formation Basics",
+      duration: "5:23",
+      thumbnail: "/placeholder.svg?height=200&width=300",
+      description: "Quick overview of business entity types and formation process.",
+      views: "2.1K",
+    },
+    {
+      title: "Tax Deductions Every Startup Should Know",
+      duration: "8:45",
+      thumbnail: "/placeholder.svg?height=200&width=300",
+      description: "Maximize your tax savings with these essential deduction strategies.",
+      views: "3.7K",
+    },
+    {
+      title: "EIN Application Walkthrough",
+      duration: "4:12",
+      thumbnail: "/placeholder.svg?height=200&width=300",
+      description: "Step-by-step guide to obtaining your Employer Identification Number.",
+      views: "1.8K",
+    },
+  ]
+
+  const stats = [
+    { value: "50K+", label: "Downloads" },
+    { value: "98%", label: "Success Rate" },
+    { value: "24/7", label: "AI Support" },
+    { value: "Free", label: "Always" },
+  ]
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+    <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black pt-16">
       {/* Hero Section */}
-      <div className="relative overflow-hidden bg-gradient-to-r from-emerald-600 to-teal-600 py-24">
-        <div className="absolute inset-0 bg-black/20"></div>
-        <div className="relative container mx-auto px-4">
-          <div className="text-center text-white">
-            <h1 className="text-5xl font-bold mb-6">Business Resources & Learning Center</h1>
-            <p className="text-xl max-w-3xl mx-auto mb-8 text-emerald-100">
-              Access our comprehensive library of business tools, expert webinars, and educational content designed
-              specifically for modern entrepreneurs and FinTech innovators.
-            </p>
-            <div className="flex flex-wrap justify-center gap-4">
-              <Badge variant="secondary" className="bg-white/20 text-white border-white/30 px-4 py-2">
-                <FileText className="h-4 w-4 mr-2" />
-                50+ Resources
-              </Badge>
-              <Badge variant="secondary" className="bg-white/20 text-white border-white/30 px-4 py-2">
-                <Play className="h-4 w-4 mr-2" />
-                Expert Webinars
-              </Badge>
-              <Badge variant="secondary" className="bg-white/20 text-white border-white/30 px-4 py-2">
-                <Users className="h-4 w-4 mr-2" />
-                10K+ Downloads
-              </Badge>
-            </div>
+      <section className="py-20">
+        <div className="container mx-auto px-4 text-center">
+          <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/30 mb-6">
+            <BookOpen className="w-4 h-4 mr-2" />
+            Business Resources
+          </Badge>
+          <h1 className="text-4xl lg:text-6xl font-bold text-white mb-6">
+            Everything You Need to
+            <span className="block text-emerald-400">Launch & Scale</span>
+          </h1>
+          <p className="text-xl text-slate-300 max-w-3xl mx-auto mb-12">
+            Access our comprehensive collection of business tools, templates, guides, and expert content designed
+            specifically for modern entrepreneurs and growing businesses.
+          </p>
+
+          {/* Stats */}
+          <div className="grid md:grid-cols-4 gap-8 mb-16">
+            {stats.map((stat, i) => (
+              <div key={i} className="text-center">
+                <div className="text-3xl font-bold text-emerald-400 mb-2">{stat.value}</div>
+                <div className="text-slate-400">{stat.label}</div>
+              </div>
+            ))}
           </div>
         </div>
-      </div>
+      </section>
 
-      <div className="container mx-auto px-4 py-16">
-        {/* Featured Resources */}
-        <section className="mb-20">
+      {/* Featured Resources */}
+      <section className="py-16">
+        <div className="container mx-auto px-4">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-white mb-4">Featured Resources</h2>
-            <p className="text-slate-400 text-lg">Essential tools to launch and grow your business</p>
+            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">Featured Resources</h2>
+            <p className="text-xl text-slate-300">Our most popular tools and guides</p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
-            {featuredResources.map((resource, index) => {
-              const IconComponent = resource.icon
-              return (
-                <Card
-                  key={index}
-                  className="bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 transition-all duration-300 hover:scale-105"
-                >
-                  <CardHeader>
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="p-3 bg-emerald-600/20 rounded-lg">
-                        <IconComponent className="h-6 w-6 text-emerald-400" />
-                      </div>
-                      <Badge variant="outline" className="border-emerald-600 text-emerald-400">
-                        {resource.type}
-                      </Badge>
-                    </div>
-                    <CardTitle className="text-xl text-white">{resource.title}</CardTitle>
-                    <CardDescription className="text-slate-400">{resource.description}</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white" asChild>
-                      <a href={resource.downloadUrl} download>
-                        <Download className="h-4 w-4 mr-2" />
-                        Download Free
-                      </a>
-                    </Button>
-                  </CardContent>
-                </Card>
-              )
-            })}
-          </div>
-        </section>
-
-        {/* Upcoming Webinars */}
-        <section className="mb-20">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-white mb-4">Upcoming Expert Webinars</h2>
-            <p className="text-slate-400 text-lg">Join our live sessions with industry experts</p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            {upcomingWebinars.map((webinar, index) => (
-              <Card
-                key={index}
-                className={`bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 transition-all duration-300 ${webinar.featured ? "ring-2 ring-emerald-600" : ""}`}
-              >
+          <div className="grid lg:grid-cols-3 gap-8 mb-16">
+            {featuredResources.map((resource, i) => (
+              <Card key={i} className="bg-gray-900/50 border-gray-700 hover:border-emerald-500/50 transition-colors">
                 <CardHeader>
-                  {webinar.featured && <Badge className="w-fit mb-2 bg-emerald-600 text-white">Featured</Badge>}
-                  <CardTitle className="text-lg text-white">{webinar.title}</CardTitle>
-                  <div className="flex items-center gap-4 text-sm text-slate-400">
-                    <div className="flex items-center gap-1">
-                      <Calendar className="h-4 w-4" />
-                      {webinar.date}
+                  <div className="flex items-center gap-4 mb-4">
+                    <div
+                      className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+                        resource.color === "emerald"
+                          ? "bg-emerald-500/20"
+                          : resource.color === "blue"
+                            ? "bg-blue-500/20"
+                            : "bg-violet-500/20"
+                      }`}
+                    >
+                      <resource.icon
+                        className={`w-6 h-6 ${
+                          resource.color === "emerald"
+                            ? "text-emerald-400"
+                            : resource.color === "blue"
+                              ? "text-blue-400"
+                              : "text-violet-400"
+                        }`}
+                      />
                     </div>
-                    <div className="flex items-center gap-1">
-                      <Clock className="h-4 w-4" />
-                      {webinar.time}
-                    </div>
+                    <Badge
+                      className={`${
+                        resource.color === "emerald"
+                          ? "bg-emerald-500/20 text-emerald-300"
+                          : resource.color === "blue"
+                            ? "bg-blue-500/20 text-blue-300"
+                            : "bg-violet-500/20 text-violet-300"
+                      }`}
+                    >
+                      {resource.type}
+                    </Badge>
                   </div>
-                  <CardDescription className="text-slate-400">{webinar.description}</CardDescription>
+                  <CardTitle className="text-white text-xl">{resource.title}</CardTitle>
                 </CardHeader>
-                <CardContent>
-                  <Button className="w-full bg-teal-600 hover:bg-teal-700 text-white" asChild>
-                    <a href={webinar.registrationUrl}>
-                      Register Now
-                      <ArrowRight className="h-4 w-4 ml-2" />
-                    </a>
+                <CardContent className="space-y-6">
+                  <p className="text-slate-300">{resource.description}</p>
+                  <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white">
+                    <Download className="w-4 h-4 mr-2" />
+                    Download Free
                   </Button>
                 </CardContent>
               </Card>
             ))}
           </div>
-        </section>
+        </div>
+      </section>
 
-        {/* Featured Videos */}
-        <section className="mb-20">
+      {/* Upcoming Webinars */}
+      <section className="py-16 bg-black/50">
+        <div className="container mx-auto px-4">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-white mb-4">Featured Video Content</h2>
-            <p className="text-slate-400 text-lg">Watch our expert-led tutorials and insights</p>
+            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">Upcoming Expert Webinars</h2>
+            <p className="text-xl text-slate-300">Learn from industry experts and get your questions answered live</p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8">
-            {featuredVideos.map((video, index) => (
+          <div className="grid lg:grid-cols-3 gap-8">
+            {upcomingWebinars.map((webinar, i) => (
+              <Card key={i} className="bg-gray-900/50 border-gray-700 hover:border-emerald-500/50 transition-colors">
+                <CardHeader>
+                  <div className="flex items-center gap-2 mb-2">
+                    <Mic className="w-5 h-5 text-emerald-400" />
+                    <Badge className="bg-emerald-500/20 text-emerald-300">Live Webinar</Badge>
+                  </div>
+                  <CardTitle className="text-white text-lg">{webinar.title}</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 text-slate-300">
+                      <Calendar className="w-4 h-4 text-emerald-400" />
+                      {webinar.date}
+                    </div>
+                    <div className="flex items-center gap-2 text-slate-300">
+                      <Clock className="w-4 h-4 text-emerald-400" />
+                      {webinar.time}
+                    </div>
+                    <div className="flex items-center gap-2 text-slate-300">
+                      <Users className="w-4 h-4 text-emerald-400" />
+                      {webinar.presenter}
+                    </div>
+                  </div>
+                  <p className="text-slate-400 text-sm">{webinar.description}</p>
+                  <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white">Register Free</Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Video Content */}
+      <section className="py-16">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">Video Learning Center</h2>
+            <p className="text-xl text-slate-300">Quick, actionable videos to help you succeed</p>
+          </div>
+
+          <div className="grid lg:grid-cols-3 gap-8">
+            {videoContent.map((video, i) => (
               <Card
-                key={index}
-                className="bg-slate-800/50 border-slate-700 hover:bg-slate-800/70 transition-all duration-300 overflow-hidden"
+                key={i}
+                className="bg-gray-900/50 border-gray-700 hover:border-emerald-500/50 transition-colors overflow-hidden"
               >
                 <div className="relative">
                   <img
@@ -252,113 +277,123 @@ export default function ResourcesPage() {
                     alt={video.title}
                     className="w-full h-48 object-cover"
                   />
-                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
-                    <Button size="lg" className="bg-emerald-600 hover:bg-emerald-700">
-                      <Play className="h-5 w-5 mr-2" />
-                      Watch Now
-                    </Button>
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center group-hover:bg-black/20 transition-colors">
+                    <div className="w-16 h-16 bg-emerald-600 rounded-full flex items-center justify-center hover:bg-emerald-700 transition-colors cursor-pointer">
+                      <Play className="w-8 h-8 text-white ml-1" />
+                    </div>
                   </div>
-                  <div className="absolute bottom-2 right-2 bg-black/80 text-white text-xs px-2 py-1 rounded">
+                  <div className="absolute bottom-2 right-2 bg-black/80 text-white text-sm px-2 py-1 rounded">
                     {video.duration}
                   </div>
                 </div>
+                <CardContent className="p-6">
+                  <h3 className="font-semibold text-white mb-2">{video.title}</h3>
+                  <p className="text-slate-400 text-sm mb-3">{video.description}</p>
+                  <div className="flex items-center justify-between text-slate-500 text-sm">
+                    <span>{video.views} views</span>
+                    <Button variant="ghost" size="sm" className="text-emerald-400 hover:text-emerald-300">
+                      Watch Now
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Additional Resources */}
+      <section className="py-16 bg-black/50">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">Additional Resources</h2>
+            <p className="text-xl text-slate-300">More tools and templates to support your business journey</p>
+          </div>
+
+          <div className="grid lg:grid-cols-3 gap-8">
+            {additionalResources.map((resource, i) => (
+              <Card key={i} className="bg-gray-900/50 border-gray-700 hover:border-emerald-500/50 transition-colors">
                 <CardHeader>
-                  <CardTitle className="text-lg text-white">{video.title}</CardTitle>
-                  <div className="text-sm text-slate-400">{video.views} views</div>
+                  <div className="flex items-center gap-4 mb-4">
+                    <div
+                      className={`w-10 h-10 rounded-lg flex items-center justify-center ${
+                        resource.color === "orange"
+                          ? "bg-orange-500/20"
+                          : resource.color === "cyan"
+                            ? "bg-cyan-500/20"
+                            : "bg-green-500/20"
+                      }`}
+                    >
+                      <resource.icon
+                        className={`w-5 h-5 ${
+                          resource.color === "orange"
+                            ? "text-orange-400"
+                            : resource.color === "cyan"
+                              ? "text-cyan-400"
+                              : "text-green-400"
+                        }`}
+                      />
+                    </div>
+                    <Badge
+                      className={`text-xs ${
+                        resource.color === "orange"
+                          ? "bg-orange-500/20 text-orange-300"
+                          : resource.color === "cyan"
+                            ? "bg-cyan-500/20 text-cyan-300"
+                            : "bg-green-500/20 text-green-300"
+                      }`}
+                    >
+                      {resource.type}
+                    </Badge>
+                  </div>
+                  <CardTitle className="text-white text-lg">{resource.title}</CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="space-y-4">
+                  <p className="text-slate-300 text-sm">{resource.description}</p>
                   <Button
                     variant="outline"
-                    className="w-full border-slate-600 text-slate-300 hover:bg-slate-700 bg-transparent"
-                    asChild
+                    className="w-full border-gray-600 text-gray-300 hover:bg-gray-800 bg-transparent"
                   >
-                    <a href={video.videoUrl}>
-                      <Play className="h-4 w-4 mr-2" />
-                      Watch Video
-                    </a>
+                    <Download className="w-4 h-4 mr-2" />
+                    Download
                   </Button>
                 </CardContent>
               </Card>
             ))}
           </div>
-        </section>
+        </div>
+      </section>
 
-        {/* Additional Resources */}
-        <section className="mb-20">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-white mb-4">Additional Resources</h2>
-            <p className="text-slate-400 text-lg">More tools and templates for your business journey</p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-6">
-            {otherResources.map((resource, index) => {
-              const IconComponent = resource.icon
-              return (
-                <Card
-                  key={index}
-                  className="bg-slate-800/30 border-slate-700 hover:bg-slate-800/50 transition-all duration-300"
-                >
-                  <CardHeader>
-                    <div className="flex items-center gap-3 mb-2">
-                      <div className="p-2 bg-slate-700 rounded-lg">
-                        <IconComponent className="h-5 w-5 text-slate-300" />
-                      </div>
-                      <Badge variant="outline" className="border-slate-600 text-slate-400 text-xs">
-                        {resource.type}
-                      </Badge>
-                    </div>
-                    <CardTitle className="text-lg text-white">{resource.title}</CardTitle>
-                    <CardDescription className="text-slate-400 text-sm">{resource.description}</CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <Button
-                      variant="outline"
-                      className="w-full border-slate-600 text-slate-300 hover:bg-slate-700 bg-transparent"
-                      asChild
-                    >
-                      <a href={resource.downloadUrl} download>
-                        <Download className="h-4 w-4 mr-2" />
-                        Download
-                      </a>
-                    </Button>
-                  </CardContent>
-                </Card>
-              )
-            })}
-          </div>
-        </section>
-
-        {/* CTA Section */}
-        <section className="text-center">
-          <Card className="bg-gradient-to-r from-emerald-600/20 to-teal-600/20 border-emerald-600/30 p-8">
-            <CardHeader>
-              <CardTitle className="text-2xl text-white mb-4">Ready to Launch Your Business?</CardTitle>
-              <CardDescription className="text-slate-300 text-lg mb-6">
-                Get personalized guidance from our AI-powered business formation platform
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
+      {/* CTA Section */}
+      <section className="py-20">
+        <div className="container mx-auto px-4">
+          <div className="text-center">
+            <div className="bg-gradient-to-r from-emerald-600 to-cyan-600 rounded-2xl p-8">
+              <h3 className="text-3xl font-bold text-white mb-4">Ready to Launch Your Business?</h3>
+              <p className="text-emerald-100 mb-6 max-w-2xl mx-auto">
+                Get personalized guidance from our AI business advisor and launch your business in 48 hours.
+              </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Button size="lg" className="bg-emerald-600 hover:bg-emerald-700 text-white" asChild>
-                  <a href="/startsmart-gpt">
-                    Try StartSmart GPT
-                    <ArrowRight className="h-5 w-5 ml-2" />
-                  </a>
-                </Button>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="border-slate-600 text-slate-300 hover:bg-slate-700 bg-transparent"
-                  asChild
-                >
-                  <a href="/contact">Schedule Consultation</a>
-                </Button>
+                <Link href="/startsmart">
+                  <Button size="lg" className="bg-white text-emerald-600 hover:bg-slate-100 px-8 py-4">
+                    <TrendingUp className="w-5 h-5 mr-2" />
+                    Start Your Business
+                  </Button>
+                </Link>
+                <Link href="/contact">
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="border-white text-white hover:bg-white/10 px-8 py-4 bg-transparent"
+                  >
+                    Get Expert Help
+                  </Button>
+                </Link>
               </div>
-            </CardContent>
-          </Card>
-        </section>
-      </div>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   )
 }
-
