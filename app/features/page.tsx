@@ -13,13 +13,7 @@ import {
   DollarSign,
   Globe,
   TrendingUp,
-  Book,
-  Edit3,
-  MessageSquare,
-  Users,
-  FileSpreadsheet,
-  ZapIcon,
-} from "lucide-react"
+ } from "lucide-react"
 import Link from "next/link"
 
 export default function FeaturesPage() {
@@ -74,6 +68,38 @@ export default function FeaturesPage() {
     { icon: CheckCircle, value: "99%", label: "Document Accuracy Rate" },
     { icon: DollarSign, value: "Zero", label: "Hidden Fees or Add-on Charges" },
     { icon: Globe, value: "50+", label: "States Supported" },
+  ]
+const integrations = [
+    {
+      name: "QuickBooks",
+      description: "AI-powered sync of financial records, bookkeeping triggers, and automated tax categorization",
+      logo: "/images/quickbooks-logo.png",
+    },
+    {
+      name: "DocuSign",
+      description: "Integrated signature workflows for EIN filings, agreements, and compliance docs",
+      logo: "/images/docusign-logo.png",
+    },
+    {
+      name: "Slack",
+      description: "Real-time updates from tax filings, document approvals, and team alerts",
+      logo: "/images/slack-logo.png",
+    },
+    {
+      name: "Salesforce",
+      description: "Sync client data for compliance workflows and onboarding automation",
+      logo: "/images/salesforce-logo.png",
+    },
+    {
+      name: "Microsoft 365",
+      description: "Intelligent document collaboration + calendar-based tax reminders",
+      logo: "/images/microsoft-365-logo.png",
+    },
+    {
+      name: "Zapier",
+      description: "5,000+ integrations with tailored GPT flows for finance, CRM, HR & more",
+      logo: "/images/zapier-logo.png",
+    },
   ]
 
   return (
@@ -349,64 +375,46 @@ export default function FeaturesPage() {
             ))}
           </div>
         </div>
-      </section>
+        </section>
 
-      {/* Integration Section */}
-      <section className="py-20 bg-slate-900/50">
-        <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">Seamless Integrations</h2>
-          <p className="text-lg text-slate-400 mb-12 max-w-3xl mx-auto">
-  Let NexTax.AI handle your integration strategy. We consult, configure, and deploy seamless automations across your tech stack — so you can focus on growing your business.
-</p>
-          <div className="grid md:grid-cols-3 gap-8">
-           
-            
-            {[
-                            {
-                name: "QuickBooks",
-                description:
-                  "AI-powered sync of financial records, bookkeeping triggers, and automated tax categorization",
-                icon: "Book",                              
-              },
-              {
-                name: "DocuSign",
-                description: "Integrated signature workflows for EIN filings, agreements, and compliance docs",
-                icon: "Edit3",                
-              },
-              {
-                name: "Slack",
-                description: "Real-time updates from tax filings, document approvals, and team alerts",
-                icon: "MessageSquare",                
-              },
-              {
-                name: "Salesforce",
-                description: "Sync client data for compliance workflows and onboarding automation",
-                icon: "Users",                
-              },
-              {
-                name: "Microsoft 365",
-                description: "Intelligent document collaboration + calendar-based tax reminders",
-                icon: "FileSpreadsheet",                
-              },
-              {
-                name: "Zapier",
-                description: "5,000+ integrations with tailored GPT flows for finance, CRM, HR & more",
-                icon: "ZapIcon",                
-              },
-            ].map((integration, i) => (
-              <Card key={i} className="bg-gray-900/50 border-gray-700">
-                <CardContent className="p-6 text-center">
-                 <div className="w-16 h-16 bg-gray-800 rounded-lg mx-auto mb-4 flex items-center justify-center">
-                    <integration.icon className="w-8 h-8 text-emerald-400" />
-                  </div>
-                  <h3 className="font-semibold text-white mb-2">{integration.name}</h3>
-                  <p className="text-slate-400 text-sm">{integration.description}</p>
-                </CardContent>
-              </Card>
-            ))}
+      {/* Customer Journey CTA */}
+      <section className="py-20">
+        <div className="container mx-auto px-4">
+          <div className="text-center">
+            <div className="bg-gradient-to-r from-emerald-600 to-cyan-600 rounded-2xl p-8">
+              {/* Centered StartSmart White Logo */}
+              <div className="flex justify-center mb-8">
+                <img
+                  src="/images/startsmart-logo-white-new.png"
+                  alt="StartSmart by NexTax.AI"
+                  className="h-28 w-auto"
+                />
+              </div>
+
+              <h3 className="text-2xl font-bold text-white mb-4">Ready to Transform Your Tax Processes?</h3>
+              <p className="text-emerald-100 mb-6 max-w-2xl mx-auto">
+                Start your journey towards efficient and intelligent tax management today.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Link href="/startsmart">
+                  <Button size="lg" className="bg-white text-emerald-600 hover:bg-slate-100 px-8 py-4">
+                    Start with Business Launch
+                  </Button>
+                </Link>
+                <Link href="/contact">
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="border-white text-white hover:bg-white/10 px-8 py-4 bg-transparent"
+                  >
+                    Explore Enterprise Solutions
+                  </Button>
+                </Link>
+              </div>
+            </div>
           </div>
         </div>
-      </section>    
+      </section>   
     </div>
   )
 }
