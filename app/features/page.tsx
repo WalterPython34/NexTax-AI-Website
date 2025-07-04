@@ -406,7 +406,10 @@ export default function FeaturesPage() {
                     <img
                       src={integration.logo || "/placeholder.svg"}
                       alt={`${integration.name} logo`}
-                      className="w-12 h-12 object-contain"
+                      className="w-12 h-12 object-contain filter brightness-0 invert"
+                      onError={(e) => {
+                        e.currentTarget.style.display = "none"
+                      }}
                     />
                   </div>
                   <h3 className="font-semibold text-white mb-2">{integration.name}</h3>
@@ -459,4 +462,3 @@ export default function FeaturesPage() {
     </div>
   )
 }
-
