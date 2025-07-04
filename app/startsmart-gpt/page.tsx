@@ -1,330 +1,214 @@
 "use client"
 
-import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import {
-  Check,
-  Star,
-  Zap,
-  Shield,
-  Smartphone,
-  Globe,
-  ArrowRight,
-  MessageSquare,
+  Bot,
   FileText,
-  BookOpen,
-  Calendar,
-  Users,
+  Calculator,
+  Shield,
+  Zap,
+  CheckCircle,
+  ArrowRight,
+  Globe,
+  BarChart3,
+  Target,
+  Lightbulb,
 } from "lucide-react"
-import { AuthModal } from "@/components/auth/auth-modal"
+import Link from "next/link"
 
-export default function StartSmartGPTPage() {
-  const [showAuthModal, setShowAuthModal] = useState(false)
-
-  const features = [
+export default function FeaturesPage() {
+  const coreFeatures = [
     {
-      icon: MessageSquare,
-      title: "AI Business Sidekick",
-      description: "Get expert guidance on business formation, compliance, and growth strategies",
-      tiers: ["10 questions/month", "150 questions/month", "Unlimited questions"],
+      icon: Bot,
+      title: "AI-Powered Tax Copilot",
+      description: "Advanced AI assistant trained on 20+ years of Big 4 tax expertise",
+      features: [
+        "Natural language queries",
+        "Context-aware responses",
+        "Multi-jurisdictional knowledge",
+        "Real-time updates",
+      ],
+      color: "emerald",
     },
     {
       icon: FileText,
-      title: "Smart Document Center",
-      description: "Generate legal documents, tax forms, and business plans with AI assistance",
-      tiers: ["Download templates", "AI-generated docs", "Premium templates + AI"],
+      title: "Automated Document Generation",
+      description: "Generate complex tax documents and compliance forms instantly",
+      features: ["Smart form filling", "Multi-state compliance", "Version control", "Audit trails"],
+      color: "blue",
     },
     {
-      icon: BookOpen,
-      title: "Knowledge Hub",
-      description: "Access comprehensive guides, resources, and AI-powered business tools",
-      tiers: ["Basic resources", "Advanced guides + 100 AI prompts", "Everything + 250 AI prompts"],
+      icon: Calculator,
+      title: "Advanced Tax Calculations",
+      description: "Sophisticated calculation engines for complex tax scenarios",
+      features: ["Multi-entity structures", "International tax", "Transfer pricing", "State nexus analysis"],
+      color: "purple",
     },
     {
-      icon: Calendar,
-      title: "Smart Compliance Center",
-      description: "Never miss a deadline with personalized tax and compliance tracking",
-      tiers: ["Basic tracking", "Advanced notifications", "Full automation + alerts"],
-    },
-  ]
-
-  const pricingTiers = [
-    {
-      name: "Free",
-      price: "$0",
-      period: "forever",
-      description: "Perfect for exploring your business idea",
-      features: [
-        "10 AI questions per month",
-        "Basic document templates",
-        "Essential business guides",
-        "Progress roadmap",
-        "Community support",
-      ],
-      cta: "Start Free",
-      popular: false,
-      color: "border-gray-200",
-    },
-    {
-      name: "Pro",
-      price: "$29",
-      period: "per month",
-      description: "Ideal for serious entrepreneurs ready to launch",
-      features: [
-        "150 AI questions per month",
-        "AI-generated documents",
-        "Advanced business guides",
-        "Smart compliance tracking",
-        "100+ AI prompt templates",
-        "Priority email support",
-        "30-day money-back guarantee",
-      ],
-      cta: "Start Pro Trial",
-      popular: true,
-      color: "border-emerald-500",
-    },
-    {
-      name: "Premium",
-      price: "$79",
-      period: "per month",
-      description: "For ambitious founders building scalable businesses",
-      features: [
-        "Unlimited AI questions",
-        "Premium document suite",
-        "Executive business plans",
-        "Full compliance automation",
-        "250+ AI prompt templates",
-        "1-on-1 expert consultations",
-        "White-glove onboarding",
-        "Custom integrations",
-      ],
-      cta: "Start Premium Trial",
-      popular: false,
-      color: "border-purple-500",
+      icon: Shield,
+      title: "Compliance Management",
+      description: "Never miss a deadline with intelligent compliance tracking",
+      features: ["Automated reminders", "Regulatory updates", "Risk assessment", "Audit preparation"],
+      color: "orange",
     },
   ]
 
-  const documentTypes = [
+  const integrations = [
     {
-      category: "Legal Documents",
-      items: [
-        { name: "Operating Agreement", free: "Template", pro: "AI Generated", premium: "AI + Expert Review" },
-        { name: "Articles of Incorporation", free: "Template", pro: "AI Generated", premium: "AI + Expert Review" },
-        { name: "Corporate Bylaws", free: "Template", pro: "AI Generated", premium: "AI + Expert Review" },
-      ],
+      name: "QuickBooks",
+      description: "AI-powered sync of financial records, bookkeeping triggers, and automated tax categorization",
+      logo: "📊",
     },
     {
-      category: "Tax & Finance",
-      items: [
-        { name: "SS-4 EIN Form", free: "Blank Form", pro: "AI Questionnaire", premium: "Full Service" },
-        { name: "Chart of Accounts", free: "Template", pro: "AI Generated", premium: "Industry Specific" },
-        { name: "Budget Template", free: "Basic Template", pro: "AI Customized", premium: "Advanced Forecasting" },
-      ],
+      name: "DocuSign",
+      description: "Integrated signature workflows for EIN filings, agreements, and compliance docs",
+      logo: "✍️",
     },
     {
-      category: "Business Plans",
-      items: [
-        { name: "Executive Summary", free: "Template", pro: "Basic AI", premium: "AI Generated" },
-        { name: "Lean Canvas", free: "Template", pro: "Basic AI", premium: "AI Generated" },
-        { name: "Full Business Plan", free: "Template", pro: "Basic AI", premium: "AI Generated" },
-      ],
+      name: "Slack",
+      description: "Real-time updates from tax filings, document approvals, and team alerts",
+      logo: "💬",
+    },
+    {
+      name: "Salesforce",
+      description: "Sync client data for compliance workflows and onboarding automation",
+      logo: "☁️",
+    },
+    {
+      name: "Microsoft 365",
+      description: "Intelligent document collaboration + calendar-based tax reminders",
+      logo: "📅",
+    },
+    {
+      name: "Zapier",
+      description: "5,000+ integrations with tailored GPT flows for finance, CRM, HR & more",
+      logo: "⚡",
+    },
+  ]
+
+  const advancedFeatures = [
+    {
+      icon: BarChart3,
+      title: "Transfer Pricing Compliance GPT",
+      description: "AI-powered transfer pricing documentation and compliance management",
+      badge: "Enterprise",
+    },
+    {
+      icon: Globe,
+      title: "State Tax Nexus GPT",
+      description: "Intelligent multi-state tax nexus analysis and compliance tracking",
+      badge: "Pro",
+    },
+    {
+      icon: Target,
+      title: "Tax Planning Optimizer",
+      description: "Advanced AI-driven tax planning and optimization strategies",
+      badge: "Pro",
+    },
+    {
+      icon: Lightbulb,
+      title: "Research Assistant GPT",
+      description: "AI-powered tax research with real-time regulatory updates",
+      badge: "Enterprise",
     },
   ]
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       {/* Hero Section */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-emerald-50 via-white to-blue-50 py-20">
-        <div className="absolute inset-0 bg-grid-slate-100 [mask-image:linear-gradient(0deg,white,rgba(255,255,255,0.6))]" />
+      <section className="relative overflow-hidden py-20">
+        <div className="absolute inset-0 bg-gradient-to-br from-emerald-900/20 via-transparent to-blue-900/20" />
         <div className="relative mx-auto max-w-7xl px-6 lg:px-8">
           <div className="mx-auto max-w-4xl text-center">
-            <Badge className="mb-4 bg-emerald-100 text-emerald-800 hover:bg-emerald-200">
-              <Star className="mr-1 h-3 w-3" />
-              Trusted by 10,000+ entrepreneurs
+            <Badge className="mb-6 bg-emerald-500/20 text-emerald-300 border-emerald-500/30">
+              <Zap className="mr-2 h-4 w-4" />
+              Advanced AI Features
             </Badge>
-            <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl lg:text-7xl">
-              Your AI Business
-              <span className="bg-gradient-to-r from-emerald-600 to-blue-600 bg-clip-text text-transparent">
-                {" "}
-                Success Partner
+            <h1 className="text-4xl font-bold tracking-tight text-white sm:text-6xl lg:text-7xl">
+              Powerful Features for
+              <span className="block bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
+                Modern Tax Teams
               </span>
             </h1>
-            <p className="mt-6 text-xl leading-8 text-gray-600 max-w-3xl mx-auto">
-              From idea to IPO - StartSmart GPT guides you through every step of building a successful business. Get
-              expert advice, generate documents, and stay compliant with AI-powered precision.
+            <p className="mt-6 text-xl leading-8 text-slate-300 max-w-3xl mx-auto">
+              Discover how our AI-powered platform revolutionizes tax workflows, business formation, and compliance
+              management with cutting-edge technology.
             </p>
-            <div className="mt-10 flex items-center justify-center gap-x-6">
-              <Button
-                size="lg"
-                className="bg-emerald-600 hover:bg-emerald-700 text-white px-8 py-4 text-lg"
-                onClick={() => setShowAuthModal(true)}
-              >
-                Try StartSmart GPT Free
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-              <Button variant="outline" size="lg" className="px-8 py-4 text-lg bg-transparent">
-                Watch Demo
-              </Button>
-            </div>
-            <div className="mt-8 flex items-center justify-center gap-8 text-sm text-gray-500">
-              <div className="flex items-center gap-2">
-                <Shield className="h-4 w-4 text-emerald-600" />
-                <span>Big 4 Expertise</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Zap className="h-4 w-4 text-emerald-600" />
-                <span>AI-Powered</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <Users className="h-4 w-4 text-emerald-600" />
-                <span>10,000+ Users</span>
-              </div>
-            </div>
           </div>
         </div>
       </section>
 
-      {/* Features Overview */}
-      <section className="py-20 bg-white">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="mx-auto max-w-2xl text-center">
-            <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-              Everything you need to build a successful business
-            </h2>
-            <p className="mt-4 text-lg text-gray-600">
-              Four powerful tools working together to accelerate your entrepreneurial journey
+      {/* NexTax Logo Section */}
+      <section className="py-20 bg-slate-800/50">
+        <div className="mx-auto max-w-4xl px-6 lg:px-8 text-center">
+          <div className="mb-12">
+            <img src="/images/nextax-logo-large-new.png" alt="NexTax.AI" className="h-64 w-auto mx-auto mb-8" />
+            <h2 className="text-3xl font-bold text-white mb-4">Scale Your Business with Advanced AI Tax Solutions</h2>
+            <p className="text-xl text-slate-300 max-w-2xl mx-auto">
+              As your business grows, access our full suite of specialized AI-powered tax and compliance tools designed
+              for complex business needs.
             </p>
           </div>
-          <div className="mx-auto mt-16 grid max-w-6xl grid-cols-1 gap-8 lg:grid-cols-2">
-            {features.map((feature, index) => (
+        </div>
+      </section>
+
+      {/* Core Features */}
+      <section className="py-20">
+        <div className="mx-auto max-w-7xl px-6 lg:px-8">
+          <div className="mx-auto max-w-2xl text-center mb-16">
+            <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">Core AI Features</h2>
+            <p className="mt-4 text-lg text-slate-300">
+              Powerful AI-driven tools that transform how you handle tax and compliance work
+            </p>
+          </div>
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+            {coreFeatures.map((feature, index) => (
               <Card
                 key={index}
-                className="relative overflow-hidden border-0 shadow-lg hover:shadow-xl transition-shadow"
+                className="bg-slate-800/50 border-slate-700 hover:border-emerald-500/50 transition-colors"
               >
                 <CardHeader className="pb-4">
                   <div className="flex items-center gap-4">
-                    <div className="rounded-lg bg-emerald-100 p-3">
-                      <feature.icon className="h-6 w-6 text-emerald-600" />
+                    <div
+                      className={`rounded-lg p-3 ${
+                        feature.color === "emerald"
+                          ? "bg-emerald-500/20"
+                          : feature.color === "blue"
+                            ? "bg-blue-500/20"
+                            : feature.color === "purple"
+                              ? "bg-purple-500/20"
+                              : "bg-orange-500/20"
+                      }`}
+                    >
+                      <feature.icon
+                        className={`h-8 w-8 ${
+                          feature.color === "emerald"
+                            ? "text-emerald-400"
+                            : feature.color === "blue"
+                              ? "text-blue-400"
+                              : feature.color === "purple"
+                                ? "text-purple-400"
+                                : "text-orange-400"
+                        }`}
+                      />
                     </div>
                     <div>
-                      <CardTitle className="text-xl">{feature.title}</CardTitle>
-                      <CardDescription className="mt-1">{feature.description}</CardDescription>
+                      <CardTitle className="text-xl text-white">{feature.title}</CardTitle>
+                      <CardDescription className="mt-1 text-slate-300">{feature.description}</CardDescription>
                     </div>
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-3 gap-2 text-sm">
-                    {feature.tiers.map((tier, tierIndex) => (
-                      <div
-                        key={tierIndex}
-                        className={`rounded-lg p-3 text-center ${
-                          tierIndex === 0
-                            ? "bg-gray-50 text-gray-600"
-                            : tierIndex === 1
-                              ? "bg-emerald-50 text-emerald-700 font-medium"
-                              : "bg-purple-50 text-purple-700 font-medium"
-                        }`}
-                      >
-                        {tier}
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Document Center Showcase */}
-      <section className="py-20 bg-slate-50">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="mx-auto max-w-2xl text-center mb-16">
-            <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">Smart Document Generation</h2>
-            <p className="mt-4 text-lg text-gray-600">
-              From templates to AI-generated documents, we've got every business document you need
-            </p>
-          </div>
-
-          <div className="space-y-12">
-            {documentTypes.map((category, categoryIndex) => (
-              <div key={categoryIndex}>
-                <h3 className="text-xl font-semibold text-gray-900 mb-6 flex items-center gap-2">
-                  <FileText className="h-5 w-5 text-emerald-600" />
-                  {category.category}
-                </h3>
-                <div className="grid gap-4">
-                  {category.items.map((item, itemIndex) => (
-                    <Card key={itemIndex} className="overflow-hidden">
-                      <CardContent className="p-6">
-                        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-center">
-                          <div className="font-medium text-gray-900">{item.name}</div>
-                          <div className="text-center">
-                            <Badge variant="outline" className="text-gray-600">
-                              {item.free}
-                            </Badge>
-                          </div>
-                          <div className="text-center">
-                            <Badge className="bg-emerald-100 text-emerald-800">{item.pro}</Badge>
-                          </div>
-                          <div className="text-center">
-                            <Badge className="bg-purple-100 text-purple-800">{item.premium}</Badge>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Pricing Section */}
-      <section className="py-20 bg-white">
-        <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="mx-auto max-w-2xl text-center">
-            <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">Choose your success plan</h2>
-            <p className="mt-4 text-lg text-gray-600">Start free and upgrade as your business grows</p>
-          </div>
-          <div className="mx-auto mt-16 grid max-w-6xl grid-cols-1 gap-8 lg:grid-cols-3">
-            {pricingTiers.map((tier, index) => (
-              <Card
-                key={index}
-                className={`relative ${tier.color} ${tier.popular ? "ring-2 ring-emerald-500 scale-105" : ""}`}
-              >
-                {tier.popular && (
-                  <div className="absolute -top-4 left-1/2 -translate-x-1/2">
-                    <Badge className="bg-emerald-600 text-white px-4 py-1">Most Popular</Badge>
-                  </div>
-                )}
-                <CardHeader className="text-center pb-8">
-                  <CardTitle className="text-2xl">{tier.name}</CardTitle>
-                  <div className="mt-4">
-                    <span className="text-4xl font-bold">{tier.price}</span>
-                    <span className="text-gray-600">/{tier.period}</span>
-                  </div>
-                  <CardDescription className="mt-2">{tier.description}</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <ul className="space-y-3">
-                    {tier.features.map((feature, featureIndex) => (
-                      <li key={featureIndex} className="flex items-start gap-3">
-                        <Check className="h-5 w-5 text-emerald-600 mt-0.5 flex-shrink-0" />
-                        <span className="text-sm text-gray-600">{feature}</span>
+                  <ul className="space-y-2">
+                    {feature.features.map((item, itemIndex) => (
+                      <li key={itemIndex} className="flex items-center gap-2">
+                        <CheckCircle className="h-4 w-4 text-emerald-400 flex-shrink-0" />
+                        <span className="text-sm text-slate-300">{item}</span>
                       </li>
                     ))}
                   </ul>
-                  <Button
-                    className={`w-full mt-8 ${tier.popular ? "bg-emerald-600 hover:bg-emerald-700" : ""}`}
-                    variant={tier.popular ? "default" : "outline"}
-                    onClick={() => setShowAuthModal(true)}
-                  >
-                    {tier.cta}
-                  </Button>
                 </CardContent>
               </Card>
             ))}
@@ -332,141 +216,110 @@ export default function StartSmartGPTPage() {
         </div>
       </section>
 
-      {/* Compliance Center Preview */}
-      <section className="py-20 bg-gradient-to-br from-slate-50 to-emerald-50">
+      {/* Advanced Features */}
+      <section className="py-20 bg-slate-800/30">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <div className="mx-auto max-w-2xl text-center mb-16">
-            <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">Never Miss a Deadline Again</h2>
-            <p className="mt-4 text-lg text-gray-600">
-              Smart Compliance Center tracks all your business obligations automatically
+            <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">Specialized AI Tools</h2>
+            <p className="mt-4 text-lg text-slate-300">
+              Advanced AI assistants for complex tax and compliance scenarios
             </p>
           </div>
-
-          <Card className="max-w-4xl mx-auto overflow-hidden shadow-2xl">
-            <CardHeader className="bg-gradient-to-r from-emerald-600 to-blue-600 text-white">
-              <CardTitle className="text-xl flex items-center gap-2">
-                <Calendar className="h-5 w-5" />
-                Smart Compliance Center
-              </CardTitle>
-              <CardDescription className="text-emerald-100">
-                Automated compliance tracking with state-specific deadlines
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="p-6">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-emerald-600">0</div>
-                  <div className="text-sm text-gray-600">Completed</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-blue-600">2</div>
-                  <div className="text-sm text-gray-600">In Progress</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-orange-600">11</div>
-                  <div className="text-sm text-gray-600">Pending</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-red-600">0</div>
-                  <div className="text-sm text-gray-600">Overdue</div>
-                </div>
-              </div>
-
-              <div className="space-y-3">
-                <div className="flex items-center justify-between p-3 bg-orange-50 rounded-lg border border-orange-200">
-                  <div>
-                    <div className="font-medium text-gray-900">Federal Estimated Tax Payment - Q3</div>
-                    <div className="text-sm text-gray-600">Due 9/14/2025</div>
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            {advancedFeatures.map((feature, index) => (
+              <Card
+                key={index}
+                className="bg-slate-800/50 border-slate-700 hover:border-emerald-500/50 transition-colors"
+              >
+                <CardHeader>
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-emerald-500/20 rounded-lg">
+                        <feature.icon className="h-6 w-6 text-emerald-400" />
+                      </div>
+                      <div>
+                        <CardTitle className="text-lg text-white">{feature.title}</CardTitle>
+                        <CardDescription className="text-slate-400">{feature.description}</CardDescription>
+                      </div>
+                    </div>
+                    <Badge
+                      className={
+                        feature.badge === "Enterprise"
+                          ? "bg-purple-500/20 text-purple-300 border-purple-500/30"
+                          : "bg-blue-500/20 text-blue-300 border-blue-500/30"
+                      }
+                    >
+                      {feature.badge}
+                    </Badge>
                   </div>
-                  <Badge className="bg-orange-100 text-orange-800">Pending</Badge>
-                </div>
-                <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg border border-blue-200">
-                  <div>
-                    <div className="font-medium text-gray-900">Articles of Organization Filing</div>
-                    <div className="text-sm text-gray-600">State registration</div>
-                  </div>
-                  <Badge className="bg-blue-100 text-blue-800">In Progress</Badge>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+                </CardHeader>
+              </Card>
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* Platform Availability */}
-      <section className="py-20 bg-white">
+      {/* Integrations */}
+      <section className="py-20">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
-          <div className="mx-auto max-w-2xl text-center">
-            <h2 className="text-3xl font-bold tracking-tight text-gray-900 sm:text-4xl">
-              Available Everywhere You Work
-            </h2>
-            <p className="mt-4 text-lg text-gray-600">Access StartSmart GPT on web, iOS, and Android</p>
+          <div className="mx-auto max-w-2xl text-center mb-16">
+            <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">Seamless Integrations</h2>
+            <p className="mt-4 text-lg text-slate-300">
+              Connect with your existing tools and workflows for maximum efficiency
+            </p>
           </div>
-          <div className="mx-auto mt-16 grid max-w-4xl grid-cols-1 gap-8 lg:grid-cols-3">
-            <Card className="text-center">
-              <CardHeader>
-                <Globe className="h-12 w-12 text-emerald-600 mx-auto" />
-                <CardTitle>Web App</CardTitle>
-                <CardDescription>Full-featured web application</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button className="w-full" onClick={() => setShowAuthModal(true)}>
-                  Launch Web App
-                </Button>
-              </CardContent>
-            </Card>
-            <Card className="text-center">
-              <CardHeader>
-                <Smartphone className="h-12 w-12 text-blue-600 mx-auto" />
-                <CardTitle>iOS App</CardTitle>
-                <CardDescription>Coming soon to App Store</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button variant="outline" className="w-full bg-transparent" disabled>
-                  Download iOS App
-                </Button>
-              </CardContent>
-            </Card>
-            <Card className="text-center">
-              <CardHeader>
-                <Smartphone className="h-12 w-12 text-green-600 mx-auto" />
-                <CardTitle>Android App</CardTitle>
-                <CardDescription>Coming soon to Google Play</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button variant="outline" className="w-full bg-transparent" disabled>
-                  Download Android App
-                </Button>
-              </CardContent>
-            </Card>
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {integrations.map((integration, index) => (
+              <Card
+                key={index}
+                className="bg-slate-800/50 border-slate-700 hover:border-emerald-500/50 transition-colors"
+              >
+                <CardHeader>
+                  <div className="flex items-center gap-3">
+                    <div className="text-3xl">{integration.logo}</div>
+                    <div>
+                      <CardTitle className="text-lg text-white">{integration.name}</CardTitle>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <p className="text-sm text-slate-300">{integration.description}</p>
+                </CardContent>
+              </Card>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* Final CTA */}
-      <section className="py-20 bg-gradient-to-br from-emerald-600 to-blue-600">
+      {/* CTA Section */}
+      <section className="py-20 bg-gradient-to-r from-emerald-600 to-cyan-600">
         <div className="mx-auto max-w-4xl px-6 lg:px-8 text-center">
           <h2 className="text-3xl font-bold tracking-tight text-white sm:text-4xl">
-            Ready to build your dream business?
+            Ready to Transform Your Tax Workflow?
           </h2>
           <p className="mt-4 text-xl text-emerald-100">
-            Join thousands of entrepreneurs who trust StartSmart GPT to guide their success
+            Experience the power of AI-driven tax and compliance management
           </p>
           <div className="mt-10 flex items-center justify-center gap-x-6">
-            <Button
-              size="lg"
-              className="bg-white text-emerald-600 hover:bg-gray-100 px-8 py-4 text-lg font-semibold"
-              onClick={() => setShowAuthModal(true)}
-            >
-              Start Your Free Trial
-              <ArrowRight className="ml-2 h-5 w-5" />
-            </Button>
+            <Link href="/startsmart-gpt">
+              <Button size="lg" className="bg-white text-emerald-600 hover:bg-gray-100 px-8 py-4 text-lg font-semibold">
+                Try StartSmart GPT
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+            </Link>
+            <Link href="/pricing">
+              <Button
+                size="lg"
+                variant="outline"
+                className="border-white text-white hover:bg-white/10 px-8 py-4 text-lg bg-transparent"
+              >
+                View Pricing
+              </Button>
+            </Link>
           </div>
-          <p className="mt-4 text-sm text-emerald-200">No credit card required • 30-day money-back guarantee</p>
+          <p className="mt-4 text-sm text-emerald-200">Start your free trial • No credit card required</p>
         </div>
       </section>
-
-      <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} mode="signup" source="startsmart-gpt" />
     </div>
   )
 }
