@@ -13,7 +13,7 @@ import {
   DollarSign,
   Globe,
   TrendingUp,
- } from "lucide-react"
+} from "lucide-react"
 import Link from "next/link"
 
 export default function FeaturesPage() {
@@ -69,7 +69,8 @@ export default function FeaturesPage() {
     { icon: DollarSign, value: "Zero", label: "Hidden Fees or Add-on Charges" },
     { icon: Globe, value: "50+", label: "States Supported" },
   ]
-const integrations = [
+
+  const integrations = [
     {
       name: "QuickBooks",
       description: "AI-powered sync of financial records, bookkeeping triggers, and automated tax categorization",
@@ -103,7 +104,7 @@ const integrations = [
   ]
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-black via-gray-800 to-black pt-16">
+    <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black pt-16">
       {/* Hero Section */}
       <section className="py-20">
         <div className="container mx-auto px-4 text-center">
@@ -142,7 +143,7 @@ const integrations = [
 
           <div className="grid lg:grid-cols-2 gap-8 mb-12">
             {/* Transfer Pricing GPT */}
-            <Card className="bg-slate-800/50 border-slate-700 hover:border-emerald-500/50 transition-colors">
+            <Card className="bg-gray-900/50 border-gray-700 hover:border-emerald-500/50 transition-colors">
               <CardContent className="p-8">
                 <div className="flex items-start gap-4 mb-6">
                   <div className="w-12 h-12 rounded-lg bg-violet-500/20 flex items-center justify-center flex-shrink-0">
@@ -172,7 +173,10 @@ const integrations = [
                 </ul>
                 <div className="flex items-center justify-between">
                   <span className="text-slate-400">Starting at $2,999/month</span>
-                  <Button variant="outline" className="border-violet-500/50 text-violet-300 hover:bg-violet-500/10">
+                  <Button
+                    variant="outline"
+                    className="border-violet-500/50 text-violet-300 hover:bg-violet-500/10 bg-transparent"
+                  >
                     Learn More
                   </Button>
                 </div>
@@ -180,7 +184,7 @@ const integrations = [
             </Card>
 
             {/* State Tax Nexus GPT */}
-            <Card className="bg-slate-800/50 border-slate-700 hover:border-emerald-500/50 transition-colors">
+            <Card className="bg-gray-900/50 border-gray-700 hover:border-emerald-500/50 transition-colors">
               <CardContent className="p-8">
                 <div className="flex items-start gap-4 mb-6">
                   <div className="w-12 h-12 rounded-lg bg-cyan-500/20 flex items-center justify-center flex-shrink-0">
@@ -210,7 +214,10 @@ const integrations = [
                 </ul>
                 <div className="flex items-center justify-between">
                   <span className="text-slate-400">Starting at $799/month</span>
-                  <Button variant="outline" className="border-cyan-500/50 text-cyan-300 hover:bg-cyan-500/10">
+                  <Button
+                    variant="outline"
+                    className="border-cyan-500/50 text-cyan-300 hover:bg-cyan-500/10 bg-transparent"
+                  >
                     Learn More
                   </Button>
                 </div>
@@ -218,7 +225,7 @@ const integrations = [
             </Card>
 
             {/* Sales Tax GPT */}
-            <Card className="bg-slate-800/50 border-slate-700 hover:border-emerald-500/50 transition-colors">
+            <Card className="bg-gray-900/50 border-gray-700 hover:border-emerald-500/50 transition-colors">
               <CardContent className="p-8">
                 <div className="flex items-start gap-4 mb-6">
                   <div className="w-12 h-12 rounded-lg bg-orange-500/20 flex items-center justify-center flex-shrink-0">
@@ -248,7 +255,10 @@ const integrations = [
                 </ul>
                 <div className="flex items-center justify-between">
                   <span className="text-slate-400">Starting at $299/month</span>
-                  <Button variant="outline" className="border-orange-500/50 text-orange-300 hover:bg-orange-500/10">
+                  <Button
+                    variant="outline"
+                    className="border-orange-500/50 text-orange-300 hover:bg-orange-500/10 bg-transparent"
+                  >
                     Learn More
                   </Button>
                 </div>
@@ -256,7 +266,7 @@ const integrations = [
             </Card>
 
             {/* Custom AI Solutions */}
-            <Card className="bg-slate-800/50 border-slate-700 hover:border-emerald-500/50 transition-colors">
+            <Card className="bg-gray-900/50 border-gray-700 hover:border-emerald-500/50 transition-colors">
               <CardContent className="p-8">
                 <div className="flex items-start gap-4 mb-6">
                   <div className="w-12 h-12 rounded-lg bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
@@ -286,7 +296,10 @@ const integrations = [
                 </ul>
                 <div className="flex items-center justify-between">
                   <span className="text-slate-400">Custom pricing</span>
-                  <Button variant="outline" className="border-emerald-500/50 text-emerald-300 hover:bg-emerald-500/10">
+                  <Button
+                    variant="outline"
+                    className="border-emerald-500/50 text-emerald-300 hover:bg-emerald-500/10 bg-transparent"
+                  >
                     Contact Sales
                   </Button>
                 </div>
@@ -297,11 +310,11 @@ const integrations = [
       </section>
 
       {/* Stats Section */}
-      <section className="py-16 bg-slate-900/50">
+      <section className="py-16 bg-black/50">
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-4 gap-8">
             {stats.map((stat, i) => (
-              <Card key={i} className="bg-slate-800/50 border-slate-700 text-center">
+              <Card key={i} className="bg-gray-900/50 border-gray-700 text-center">
                 <CardContent className="p-8">
                   <stat.icon className="w-12 h-12 text-emerald-400 mx-auto mb-4" />
                   <div className="text-3xl font-bold text-white mb-2">{stat.value}</div>
@@ -313,7 +326,7 @@ const integrations = [
         </div>
       </section>
 
-     {/* Features Grid */}
+      {/* Features Grid */}
       <section className="py-20">
         <div className="container mx-auto px-4">
           <div className="grid lg:grid-cols-2 gap-8">
@@ -375,7 +388,35 @@ const integrations = [
             ))}
           </div>
         </div>
-        </section>
+      </section>
+
+      {/* Integration Section */}
+      <section className="py-20 bg-black/50">
+        <div className="container mx-auto px-4 text-center">
+          <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">Seamless Integrations</h2>
+          <p className="text-xl text-slate-300 mb-12 max-w-2xl mx-auto">
+            Connect with your existing tools and workflows for a unified experience.
+          </p>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            {integrations.map((integration, i) => (
+              <Card key={i} className="bg-gray-900/50 border-gray-700">
+                <CardContent className="p-6 text-center">
+                  <div className="w-16 h-16 bg-gray-800 rounded-lg mx-auto mb-4 flex items-center justify-center overflow-hidden">
+                    <img
+                      src={integration.logo || "/placeholder.svg"}
+                      alt={`${integration.name} logo`}
+                      className="w-12 h-12 object-contain"
+                    />
+                  </div>
+                  <h3 className="font-semibold text-white mb-2">{integration.name}</h3>
+                  <p className="text-slate-400 text-sm">{integration.description}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
 
       {/* Customer Journey CTA */}
       <section className="py-20">
@@ -414,7 +455,8 @@ const integrations = [
             </div>
           </div>
         </div>
-      </section>   
+      </section>
     </div>
   )
 }
+
