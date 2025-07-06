@@ -3,10 +3,44 @@
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
-import { Rocket, ExternalLink, ArrowRight } from "lucide-react"
+import { Rocket, ExternalLink, ArrowRight, Loader2 } from "lucide-react"
 import Link from "next/link"
+import { useEffect, useState } from "react"
 
 export default function StartSmartPage() {
+  const [isRedirecting, setIsRedirecting] = useState(false)
+
+  useEffect(() => {
+    // Show loading state briefly, then redirect
+    const timer = setTimeout(() => {
+      setIsRedirecting(true)
+      window.location.href = "https://startsmart-gpt.replit.app"
+    }, 2000)
+
+    return () => clearTimeout(timer)
+  }, [])
+
+  if (isRedirecting) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-900 flex items-center justify-center">
+        <div className="text-center">
+          <div className="flex justify-center mb-6">
+            <img src="/images/startsmart-logo-white.png" alt="StartSmart by NexTax.AI" className="h-16 w-auto" />
+          </div>
+          <Loader2 className="w-8 h-8 animate-spin text-emerald-500 mx-auto mb-4" />
+          <h1 className="text-2xl font-bold text-white mb-2">Launching StartSmart GPT</h1>
+          <p className="text-slate-400 mb-4">Redirecting you to the application...</p>
+          <p className="text-slate-500 text-sm">
+            If you're not redirected automatically,{" "}
+            <a href="https://startsmart-gpt.replit.app" className="text-emerald-400 hover:text-emerald-300">
+              click here
+            </a>
+          </p>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-900 pt-16">
       {/* Hero Section */}
@@ -17,7 +51,7 @@ export default function StartSmartPage() {
             StartSmart by NexTax.AI
           </Badge>
 
-          {/* StartSmart Logo - BIGGER */}
+          {/* StartSmart Logo */}
           <div className="flex justify-center mb-8">
             <img src="/images/startsmart-logo-white.png" alt="StartSmart by NexTax.AI" className="h-32 w-auto" />
           </div>
@@ -30,6 +64,12 @@ export default function StartSmartPage() {
             Complete our questionnaire and our AI will handle entity formation, tax setup, compliance, and everything
             you need to start operating legally.
           </p>
+
+          {/* Loading indicator */}
+          <div className="flex items-center justify-center space-x-3 mb-8">
+            <Loader2 className="w-5 h-5 animate-spin text-emerald-500" />
+            <span className="text-emerald-400 font-medium">Preparing your StartSmart GPT experience...</span>
+          </div>
         </div>
       </section>
 
@@ -80,15 +120,13 @@ export default function StartSmartPage() {
             ].map((step, i) => (
               <Card key={i} className="bg-slate-800/50 border-slate-700 text-center">
                 <CardContent className="p-6">
-                  <div
-                    className={`w-12 h-12 mx-auto mb-4 rounded-full bg-${step.color}-500/20 flex items-center justify-center`}
-                  >
-                    <span className={`text-${step.color}-400 font-bold text-lg`}>{step.step}</span>
+                  <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                    <span className="text-emerald-400 font-bold text-lg">{step.step}</span>
                   </div>
                   <h3 className="font-semibold text-white mb-2">{step.title}</h3>
                   <p className="text-slate-300 text-sm mb-3">{step.description}</p>
-                  <Badge className={`bg-${step.color}-500/20 text-${step.color}-300 text-xs mb-2`}>{step.time}</Badge>
-                  <div className={`text-${step.color}-400 text-xs font-medium`}>{step.action}</div>
+                  <Badge className="bg-emerald-500/20 text-emerald-300 text-xs mb-2">{step.time}</Badge>
+                  <div className="text-emerald-400 text-xs font-medium">{step.action}</div>
                 </CardContent>
               </Card>
             ))}
@@ -134,7 +172,6 @@ export default function StartSmartPage() {
             </div>
 
             <div className="text-center mb-8">
-              {/* NEXTAX BLUE COLOR */}
               <h2 className="text-3xl lg:text-4xl font-bold mb-4" style={{ color: "#00B9F1" }}>
                 Step 2: Complete Your Business Questionnaire
               </h2>
@@ -161,7 +198,10 @@ export default function StartSmartPage() {
             {/* Backup Link */}
             <div className="text-center">
               <Link href="https://form.typeform.com/to/hybbpz1Z" target="_blank" rel="noopener noreferrer">
-                <Button variant="outline" className="border-emerald-500/50 text-emerald-300 hover:bg-emerald-500/10">
+                <Button
+                  variant="outline"
+                  className="border-emerald-500/50 text-emerald-300 hover:bg-emerald-500/10 bg-transparent"
+                >
                   <ExternalLink className="mr-2 w-4 h-4" />
                   Open in New Tab
                 </Button>
@@ -173,3 +213,4 @@ export default function StartSmartPage() {
     </div>
   )
 }
+
