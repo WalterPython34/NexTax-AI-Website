@@ -71,9 +71,11 @@ export function Navigation() {
                 </Link>
               ))}
 
-              {/* StartSmart GPT - Highlighted */}
+              {/* StartSmart GPT - Points to subdomain */}
               <Link
-                href="/startsmart-gpt"
+                href="https://startsmart.nextax.ai"
+                target="_blank"
+                rel="noopener noreferrer"
                 className="bg-gradient-to-r from-emerald-500 to-cyan-500 text-white px-4 py-2 rounded-lg font-semibold hover:from-emerald-600 hover:to-cyan-600 transition-all duration-200 shadow-lg"
               >
                 StartSmart GPT
@@ -146,8 +148,11 @@ export function Navigation() {
                   </Link>
                 ))}
 
+                {/* Mobile StartSmart GPT Link */}
                 <Link
-                  href="/startsmart-gpt"
+                  href="https://startsmart.nextax.ai"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="bg-gradient-to-r from-emerald-500 to-cyan-500 text-white px-4 py-2 rounded-lg font-semibold text-center"
                   onClick={() => setIsOpen(false)}
                 >
