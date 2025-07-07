@@ -87,7 +87,7 @@ export default function HomePage() {
                 <Link href="/pricing">
                   <Button
                     size="lg"
-                    className="bg-emerald-500 hover:bg-emerald-600 text-white px-8 py-6 text-xl font-semibold w-full sm:w-auto"
+                    className="bg-emerald-500 hover:bg-emerald-600 text-white px-8 py-6 text-xl font-semibold w-full sm:w-auto mt-4"
                   >
                     Launch My Business
                     <Rocket className="ml-3 w-6 h-6" />
