@@ -78,7 +78,7 @@ export default function HomePage() {
               <div className="flex flex-col sm:flex-row gap-4">
                 <Button
                   size="lg"
-                  className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white px-8 py-6 text-xl font-semibold w-full sm:w-auto"
+                  className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white px-8 py-6 text-xl font-semibold w-full sm:w-auto mt-4"
                   onClick={() => setAuthModal({ isOpen: true, mode: "signup" })}
                 >
                   <Bot className="mr-3 w-6 h-6" />
