@@ -51,7 +51,7 @@ export default function HomePage() {
                   Start Smart.
                   <span className="block text-cyan-400">Scale Smarter.</span>
                   <span className="block text-white text-3xl lg:text-4xl mt-4">With Your AI Business Copilot</span>
-                  <span className="block text-emerald-400 text-xl lg:text-2xl mt-6">Launch Your Business in Less Than 48 Hours.</span>
+                  <span className="block text-emerald-400 text-xl lg:text-2xl mt-8">Launch Your Business in Less Than 48 Hours.</span>
                 </h1>
 
                 <p className="text-xl text-slate-300 leading-relaxed max-w-lg">
@@ -78,7 +78,7 @@ export default function HomePage() {
               <div className="flex flex-col sm:flex-row gap-4">
                 <Button
                   size="lg"
-                  className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white px-8 py-6 text-xl font-semibold w-full sm:w-auto"
+                  className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white px-8 py-6 text-xl font-semibold w-full sm:w-auto"
                   onClick={() => setAuthModal({ isOpen: true, mode: "signup" })}
                 >
                   <Bot className="mr-3 w-6 h-6" />
