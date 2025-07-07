@@ -78,7 +78,7 @@ export default function HomePage() {
               <div className="flex flex-col sm:flex-row gap-4">
                 <Button
                   size="lg"
-                  className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white px-8 py-6 text-xl font-semibold w-full sm:w-auto mt-4"
+                  className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white px-8 py-6 text-xl font-semibold w-full sm:w-auto mt-6"
                   onClick={() => setAuthModal({ isOpen: true, mode: "signup" })}
                 >
                   <Bot className="mr-3 w-6 h-6" />
@@ -87,7 +87,7 @@ export default function HomePage() {
                 <Link href="/pricing">
                   <Button
                     size="lg"
-                    className="bg-emerald-500 hover:bg-emerald-600 text-white px-8 py-6 text-xl font-semibold w-full sm:w-auto mt-4"
+                    className="bg-emerald-500 hover:bg-emerald-600 text-white px-8 py-6 text-xl font-semibold w-full sm:w-auto mt-6"
                   >
                     Launch My Business
                     <Rocket className="ml-3 w-6 h-6" />
