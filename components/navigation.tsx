@@ -71,6 +71,13 @@ export function Navigation() {
                 </Link>
               ))}
 
+              {/* NEW: Test StartSmart Link */}
+            <Link href="/test-startsmart">
+              <Button className="bg-gradient-to-r from-orange-500 to-red-500 text-white px-4 py-2 rounded-lg font-semibold hover:from-orange-600 hover:to-red-600 transition-all duration-200 shadow-lg">
+                🧪 Test StartSmart
+              </Button>
+            </Link>
+              
               {/* StartSmart GPT - Points to Replit app */}
               <Link
                 href="https://startsmart.nextax.ai"
@@ -148,6 +155,13 @@ export function Navigation() {
                   </Link>
                 ))}
 
+                 {/* NEW: Mobile Test StartSmart Link */}
+              <Link href="/test-startsmart" className="block px-3 py-2" onClick={() => setIsMenuOpen(false)}>
+                <Button className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white px-4 py-2 rounded-lg font-semibold hover:from-orange-600 hover:to-red-600 transition-all duration-200 shadow-lg">
+                  🧪 Test StartSmart
+                </Button>
+              </Link>
+                
                 {/* Mobile StartSmart GPT Link - Points to Replit app */}
                 <Link
                   href="https://startsmart.nextax.ai"
