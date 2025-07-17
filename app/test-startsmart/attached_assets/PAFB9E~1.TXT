@@ -1,0 +1,86 @@
+1.	Core features
+StartSmartGPT provides early-stage entrepreneurs with intelligent, real-time assistance across key startup areas. 
+The GPT’s core mission is to guide users through every stage of starting, operating, and scaling a small business—with a strong focus on market research and practical execution. As a co-creator & collaborator, your role is to enhance productivity and foster creativity. You are personable and insightful.  You strive to inspire and support those you engage with offering valuable insight and practical solutions. You provide step-by-step checklists, customizable templates, real-world examples, and advanced tips. Always:
+Current capabilities include:
+•	Business Planning: Auto-generates executive summaries, pitch decks, and lean startup canvases based on user input.
+•	Legal & Compliance Guidance: Explains entity types, filing requirements, and answers IRS/EIN/SS-4 questions.
+•	Financial Planning: Offers basic budgeting templates, pricing models, and cash flow forecasts.
+•	Market Research: Analyzes competitors, identifies customer avatars, and generates validation strategies.
+•	Brand Development: Assists with business name ideas, taglines, brainstorming new product ideas and domain name vetting.
+•	Startup Roadmapping: Recommends key steps to launch based on industry, entity type, and goals.
+•	Break down complex tax, legal, and financial topics into simple, actionable steps.  
+•	Offer links to authoritative external resources (IRS, SBA, Census, state licensing portals).  
+•	Respond to basic accounting and tax set up questions for federal and state purposes.  Offer basic chart of accounts or accounting tips to get started.
+•	Provide downloadable assets (spreadsheets, PDFs, templates) when relevant.  
+•	Include pitfalls and red‑flag warnings for compliance (e.g., sales tax, payroll laws).
+•	Provide specific state set up guidance for all 50 states and answer any related questions.
+•	Offer assistance with basic website landing page to get the user to a ready to operate position, and offer recommendations for website assistance or coding if requested.
+•	Clarify the user’s business type, industry, and location before giving state‑specific or niche guidance.  
+•	Break down complex tax, legal, and financial topics into simple, actionable steps.  
+•	Offer links to authoritative external resources (IRS, SBA, Census, state licensing portals).  
+•	Provide downloadable assets (spreadsheets, PDFs, templates) when relevant.  
+•	Include pitfalls and red‑flag warnings for compliance (e.g., sales tax, payroll laws).
+
+2. User Interaction
+Users currently interact with StartSmartGPT via a chat-based interface, primarily on desktop or mobile within the ChatGPT app or embedded iframe.
+
+Typical questions users ask:
+
+•	“How do I form an LLC in Michigan?”
+•	“Can you help me draft a business plan for a skincare line?”
+•	“What should I include in my operating agreement?”
+•	“What licenses do I need to sell online in California?”
+•	“Give me a budget for a food truck startup.”
+•	Provide me with basic accounting 101 overview and tips how to get started.
+•	When are my tax returns due, and how do LLC tax filings work?
+•	Can you develop a business plan for me?
+
+Outputs include:
+•	Actionable step-by-step guidance
+•	Templates (e.g., SS-4 EIN answers, business plans)
+•	Pre-generated legal/finance documents (via integrations with PDFMonkey, Typeform, etc.)
+•	Checklists and to-do workflows
+
+3. Key Workflows
+The most important workflows StartSmartGPT helps users with:
+
+•	Entity Formation Roadmap: From idea to LLC/S-Corp setup including EIN and banking setup.
+•	Tax/Compliance Setup: Guides users through EIN filing, state taxes, registered agent setup, and document generation.
+•	Business Launch Planning: Automates creation of checklists, timelines, and required actions for launch.
+•	Operational Toolkit Assembly: Recommends tools for accounting, branding, hiring, marketing, etc.
+
+4. Target Users
+My company NexTax.AI aims to help those who are not savvy in the financial fields of tax and accounting automate or assist them in these areas.  People who want to start a business, but don't know how, and defiantly don't know what to do from a financial accounting and tax standpoint after that.
+Our primary users include:
+•	First-Time Entrepreneurs looking to start an LLC or sole proprietorship with no prior experience.
+•	Freelancers/Consultants formalizing their business to open a bank account or file taxes.
+•	E-commerce Sellers & Creators who need quick compliance setup and branding help.
+•	International Founders needing U.S. entity setup (including EIN & virtual address).
+•	Small Business Owners in early stages looking for automation and guidance.
+
+5. Desired App Features (Web App Enhancements)
+Compared to the GPT version, the web app should include:
+•	Secure User Login & Workspace: Save prior conversations, track business setup status.
+•	Document Generation Center: Auto-generate SS-4, EIN confirmation, LLC agreements, operating docs.
+•	Progress Tracker / Roadmap: Visual startup checklist with percent completion and deadlines.
+•	Knowledge Center: Mini-articles, how-to guides, and curated tools.
+•	Smart Notifications: Alerts for filing deadlines, EIN delays, or tax obligations.
+•	Multi-language Support: Especially useful for international founders.
+•	Referral/Partner Marketplace: Access to vetted partners for legal, banking, taxes, etc.
+
+6. Visual/UI Preferences
+Attached is the product logo for StartSmart as well as the Company logo for NexTax.AI that StartSmart falls under.
+Design guidance:
+•	Modern & Minimalist: Think “Notion + Stripe Dashboard” UX — clean panels, pastel accents, dark/light toggle.
+•	AI-Driven UX: Similar to Perplexity.ai or Jasper Chat for seamless interaction.
+•	Startup Branding Aesthetic: Use the NexTax gradient palette (Sky Tech Blue & Emerald Circuit).
+•	Mobile First: Optimized for chat-first mobile experience (like Replika or Claude.ai on mobile).
+
+
+Apps we admire:
+
+•	Fathom Analytics (UX simplicity)
+•	Stripe Atlas (trustworthy onboarding)
+•	Notion (clean dashboard + actionable blocks)
+•	Carta Launch (step-by-step startup structure)
+

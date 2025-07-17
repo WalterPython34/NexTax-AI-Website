@@ -1,0 +1,83 @@
+💼 Pro Tier ($29/month)
+Prompts: Unlock full set of 100 categorized prompts.
+
+Features:
+
+Interactive list with filters/tags: Startup, Marketing, Legal, Finance, Productivity, etc.
+
+Search bar to find prompts by keyword.
+
+Star/favorite prompts (store in user metadata).
+
+Interactions:
+
+Click “Use Prompt” → Auto-loads into AI Chat window (pre-filled).
+
+“Copy Prompt” → Copies prompt text to clipboard.
+
+“Favorite” icon toggle → Saves prompt to user’s prompt library.
+
+UI Details:
+
+Tabs by category.
+
+“Pro” badge with active status.
+
+Download Pro PDF as backup.
+
+🏆 Premium Tier ($79/month)
+Prompts: Unlock full set of 250 curated prompts (Pro + Premium extras).
+
+Features:
+
+Everything in Pro, plus:
+
+AI playground area to edit & test prompts live.
+
+Save edited prompts as “Custom Prompts”.
+
+Create folders to organize prompts.
+
+Advanced Features:
+
+“Launch Prompt with Variables” → Injects prompt into AI Chat with smart fill-ins (like dynamic placeholders: [industry], [product], [audience]).
+
+“Run Prompt” button → Opens AI chat panel on the right and sends the prompt live.
+
+UI Details:
+
+“Premium” badge with checkmark.
+
+Prompt Stats (use count, likes, saves).
+
+Download full Premium PDF.
+
+🧠 Developer Integration Notes
+Prompt Storage: Use backend JSON to manage categorized prompt libraries by tier. Load dynamically via API or local cache.
+
+User Metadata Hook: Validate user’s subscription level (free, pro, premium) and only unlock UI elements allowed at that tier.
+
+Routing:
+
+“Use Prompt” → /chat?prefill=[encoded_prompt_text]
+
+“Save Prompt” → Add to user.customPrompts[] in backend
+
+Component Framework: Modal or embedded pane with:
+
+Tabs: Free | Pro | Premium
+
+Prompt display area
+
+Interactive buttons (Use, Copy, Favorite)
+
+Search + Filter sidebar
+
+Optional Bonus:
+
+“Prompt of the Day” feature at the top.
+
+Analytics on top-used prompts for dashboard insights.
+
+💡 Summary For Replit
+"We need the Prompt Playground to transition from static PDFs to an interactive in-app tool. Based on tier (Free, Pro, Premium), users should be able to browse, copy, favorite, and run prompts directly into the AI Chat. Premium users should also be able to edit and save their own custom prompts. Let’s use a tab-based layout with tier gating and backend prompt libraries per tier."

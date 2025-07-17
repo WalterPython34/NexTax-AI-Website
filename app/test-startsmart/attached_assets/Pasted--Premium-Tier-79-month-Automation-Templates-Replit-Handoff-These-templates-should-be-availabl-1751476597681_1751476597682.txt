@@ -1,0 +1,107 @@
+🥇 Premium Tier ($79/month) Automation Templates – Replit Handoff
+These templates should be available only to active Premium plan subscribers and designed to feel high-value, integrated, and investor/strategy focused.
+
+1. Investor One-Pager Generator
+Description: Automatically compiles key business info into a one-page investor pitch document (PDF)
+
+User Input: Company name, funding ask, team, traction highlights, product, market size, use of funds
+
+Output: Downloadable PDF, branded and structured for investor review
+
+Dev Notes:
+
+Use business profile and/or AI-prompted form to pre-fill sections
+
+Apply sleek visual layout with optional logo upload
+
+Export as PDF (recommend A4 or US Letter)
+
+2. Grant Application Writer
+Description: Assists users in filling out startup grant applications using preloaded questions and business data
+
+User Input: Select from popular grant templates (e.g., Small Business Innovation Grant, State Grants), upload business summary
+
+Output: Pre-filled Word/PDF document or .zip with all sections
+
+Dev Notes:
+
+Include a dropdown of preloaded grant templates
+
+Generate answers from AI based on user's business profile
+
+Add download/export or “copy section” functionality
+
+3. Due Diligence Document Pack Builder
+Description: Exports a .ZIP file of investor-readiness documents using AI and saved user data
+
+User Input: Business name, raise amount, stage, upload cap table (optional)
+
+Output: ZIP with Operating Agreement, Pitch Deck, One-Pager, Bios, etc.
+
+Dev Notes:
+
+Pull from already generated documents in user’s Document Center
+
+If unavailable, generate AI placeholders
+
+Label documents clearly (e.g., NexTax_Operating_Agreement.pdf)
+
+4. KPI Dashboard Blueprint
+Description: Creates a KPI tracker spreadsheet customized by industry and stage
+
+User Input: Business model (B2B, SaaS, ecommerce, etc.), goals, revenue model
+
+Output: Downloadable Excel or Google Sheets template with defined metrics and formulas
+
+Dev Notes:
+
+Include input sheet for actuals vs targets
+
+Prepopulate example KPIs: CAC, churn, MRR, LTV, engagement rate
+
+Suggest linking to Airtable/Sheets or future dashboard export
+
+5. Sales CRM Email Scripts & Templates
+Description: Generates CSV-ready scripts for uploading to HubSpot, Pipedrive, or Mailchimp
+
+User Input: Product type, audience, sales strategy (cold outreach, warm nurture, upsell)
+
+Output: Downloadable .CSV or .DOCX file with subject lines, preview text, and message copy
+
+Dev Notes:
+
+Include toggle: “Cold Email,” “Nurture Series,” “Follow-Up Sequence”
+
+Format for common CRMs: “Subject,” “Body,” “Call-to-Action”
+
+Include brief instructions for uploading to major CRMs
+
+6. AI Marketing Plan Creator
+Description: Builds a complete 12-month marketing strategy tailored to the user's niche and goals
+
+User Input: Industry, monthly budget, channels (email, social, paid, etc.), audience goals
+
+Output: PDF plan + editable version (Word/Google Doc)
+
+Dev Notes:
+
+Include calendar outline (monthly focus) + high-level strategies per channel
+
+Use conditional AI logic for industry-specific adjustments
+
+Allow versioning: “Starter,” “Aggressive Growth,” “Lean Budget”
+
+7. AI-Powered Launch Plan Timeline (Gantt Roadmap)
+Description: Translates launch inputs into a visual Gantt-style launch roadmap with key milestones
+
+User Input: Launch date, steps (MVP, beta, marketing, legal), team size, dependencies
+
+Output: Gantt-style graphic (PNG/PDF) + downloadable project tracker (Excel/Sheets)
+
+Dev Notes:
+
+Visually display phases: Planning → Build → Launch → Scale
+
+Offer “Export Gantt View” or “Open in Sheets” options
+
+Generate milestones and estimate time based on inputs

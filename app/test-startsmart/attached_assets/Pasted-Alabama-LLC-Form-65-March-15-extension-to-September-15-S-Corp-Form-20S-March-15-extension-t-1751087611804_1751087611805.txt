@@ -1,0 +1,269 @@
+Alabama:
+LLC: Form 65; March 15; extension to September 15
+S-Corp: Form 20S; March 15; extension to September 15
+Corporation: Form 20C; April 15; extension to October 15
+Sole Proprietor: Form 1040, Schedule C (federal); April 15; extension to October 15  
+Alaska:
+LLC: No state income tax; federal Form 1065; March 15; extension to September 15
+S-Corp: No state income tax; federal Form 1120-S; March 15; extension to September 15
+Corporation: Form 6000 (Corporate Income Tax); April 15; extension to October 15
+Sole Proprietor: No state income tax; federal Form 1040, Schedule C; April 15; extension to October 15  
+Arizona:
+LLC: Form 165; March 15; extension to September 15
+S-Corp: Form 120S; March 15; extension to September 15
+Corporation: Form 120; April 15; extension to October 15
+Sole Proprietor: Form 1040, Schedule C (federal); April 15; extension to October 15  
+Arkansas:
+LLC: Form AR1050; March 15; extension to September 15
+S-Corp: Form AR1100S; March 15; extension to September 15
+Corporation: Form AR1100CT; April 15; extension to October 15
+Sole Proprietor: Form AR1000F; April 15; extension to October 15  
+California:
+LLC: Form 568; April 15; extension to October 15
+S-Corp: Form 100S; March 15; extension to September 15
+Corporation: Form 100; April 15; extension to October 15
+Sole Proprietor: Form 540; April 15; extension to October 15  
+Colorado:
+LLC: Form 106; March 15; extension to September 15
+S-Corp: Form 105; March 15; extension to September 15
+Corporation: Form 112; April 15; extension to October 15
+Sole Proprietor: Form 104; April 15; extension to October 15  
+Connecticut:
+LLC: Form CT-1065/CT-1120SI; March 15; extension to September 15
+S-Corp: Form CT-1065/CT-1120SI; March 15; extension to September 15
+Corporation: Form CT-1120; April 15; extension to October 15
+Sole Proprietor: Form CT-1040; April 15; extension to October 15  
+Delaware:
+LLC: No state income tax; federal Form 1065; March 15; Franchise Tax due June 1
+S-Corp: No state income tax; federal Form 1120-S; March 15; Franchise Tax due June 1
+Corporation: Form 1100; April 15; extension to October 15
+Sole Proprietor: No state income tax; federal Form 1040, Schedule C; April 15; extension to October 15  
+Florida:
+LLC: No state income tax; federal Form 1065; March 15; extension to September 15
+S-Corp: No state income tax; federal Form 1120-S; March 15; extension to September 15
+Corporation: Form F-1120; April 15; extension to October 15
+Sole Proprietor: No state income tax; federal Form 1040, Schedule C; April 15; extension to October 15  
+Georgia:
+LLC: Form 700; March 15; extension to September 15
+S-Corp: Form 600S; March 15; extension to September 15
+Corporation: Form 600; April 15; extension to October 15
+Sole Proprietor: Form 500; April 15; extension to October 15  
+Hawaii:
+LLC: Form N-20; April 20; extension to October 20
+S-Corp: Form N-35; April 20; extension to October 20
+Corporation: Form N-30; April 20; extension to October 20
+Sole Proprietor: Form N-11; April 20; extension to October 20  
+Idaho:
+LLC: Form 65; March 15; extension to September 15
+S-Corp: Form 41S; March 15; extension to September 15
+Corporation: Form 41; April 15; extension to October 15
+Sole Proprietor: Form 40; April 15; extension to October 15  
+Illinois:
+LLC: Form IL-1065; March 15; extension to September 15
+S-Corp: Form IL-1120-ST; March 15; extension to September 15
+Corporation: Form IL-1120; April 15; extension to October 15
+Sole Proprietor: Form IL-1040; April 15; extension to October 15  
+Indiana:
+LLC: Form IT-65; March 15; extension to September 15
+S-Corp: Form IT-20S; March 15; extension to September 15
+Corporation: Form IT-20; April 15; extension to October 15
+Sole Proprietor: Form IT-40; April 15; extension to October 15  
+Iowa:
+LLC: Form IA 1065; April 30; extension to October 30
+S-Corp: Form IA 1120S; April 30; extension to October 30
+Corporation: Form IA 1120; April 30; extension to October 30
+Sole Proprietor: Form IA 1040; April 30; extension to October 30  
+Kansas:
+LLC: Form K-65; March 15; extension to September 15
+S-Corp: Form K-120S; March 15; extension to September 15
+Corporation: Form K-120; April 15; extension to October 15
+Sole Proprietor: Form K-40; April 15; extension to October 15  
+Kentucky:
+LLC: Form 725; March 15; extension to September 15
+S-Corp: Form 720S; March 15; extension to September 15
+Corporation: Form 720; April 15; extension to October 15
+Sole Proprietor: Form 740; April 15; extension to October 15  
+Louisiana:
+LLC: Form IT-565; May 15; extension to November 15
+S-Corp: Form CIFT-620; May 15; extension to November 15
+Corporation: Form CIFT-620; May 15; extension to November 15
+Sole Proprietor: Form IT-540; May 15; extension to November 15  
+Maine:
+LLC: Form 1065ME; March 15; extension to September 15
+S-Corp: Form 1120S-ME; March 15; extension to September 15
+Corporation: Form 1120ME; April 15; extension to October 15
+Sole Proprietor: Form 1040ME; April 15; extension to October 15  
+Maryland:
+LLC: Form 510; March 15; extension to September 15
+S-Corp: Form 510; March 15; extension to September 15
+Corporation: Form 500; April 15; extension to October 15
+Sole Proprietor: Form 502; April 15; extension to October 15  
+Massachusetts:
+LLC: Form 3; March 15; extension to September 15
+S-Corp: Form 355S; March 15; extension to September 15
+Corporation: Form 355; April 15; extension to October 15
+Sole Proprietor: Form 1; April 15; extension to October 15  
+Michigan:
+LLC: Form 165; March 15; extension to September 15
+S-Corp: Form 4891; April 15; extension to October 15
+Corporation: Form 4891; April 15; extension to October 15
+Sole Proprietor: Form MI-1040; April 15; extension to October 15  
+Minnesota:
+LLC: Form M3; March 15; extension to September 15
+S-Corp: Form M8; March 15; extension to September 15
+Corporation: Form M4; April 15; extension to October 15
+Sole Proprietor: Form M1; April 15; extension to October 15  
+Mississippi:
+LLC: Form 86-100; March 15; extension to September 15
+S-Corp: Form 84-105; March 15; extension to September 15
+Corporation: Form 83-105; April 15; extension to October 15
+Sole Proprietor: Form 80-105; April 15; extension to October 15  
+Missouri:
+LLC: Form MO-1065; March 15; extension to September 15
+S-Corp: Form MO-1120S; March 15; extension to September 15
+Corporation: Form MO-1120; April 15; extension to October 15
+Sole Proprietor: Form MO-1040; April 15; extension to October 15  
+Montana:
+LLC: Form PR-1; March 15; extension to September 15
+S-Corp: Form CIT; March 15; extension to September 15
+Corporation: Form CIT; April 15; extension to October 15
+Sole Proprietor: Form 2; April 15; extension to October 15  
+Nebraska:
+LLC: Form 1065N; March 15; extension to September 15
+S-Corp: Form 1120-SN; March 15; extension to September 15
+Corporation: Form 1120N; April 15; extension to October 15
+Sole Proprietor: Form 1040N; April 15; extension to October 15  
+Nevada:
+LLC: No state income tax; federal Form 1065; March 15; Business License due April 1
+S-Corp: No state income tax; federal Form 1120-S; March 15; Business License due April 1
+Corporation: No state income tax; federal Form 1120; April 15; Business License due April 1
+Sole Proprietor: No state income tax; federal Form 1040, Schedule C; April 15; extension to October 15  
+New Hampshire:
+LLC: Form NH-1065; March 15; extension to September 15
+S-Corp: Form NH-1120; March 15; extension to September 15
+Corporation: Form NH-1120; April 15; extension to October 15
+Sole Proprietor: Form 1040, Schedule C (federal); April 15; extension to October 15  
+New Jersey:
+LLC: Form NJ-1065; March 15; extension to September 15
+S-Corp: Form CBT-100S; March 15; extension to September 15
+Corporation: Form CBT-100; April 15; extension to October 15
+Sole Proprietor: Form NJ-1040; April 15; extension to October 15  
+New Mexico:
+LLC: Form PTE; March 15; extension to September 15
+S-Corp: Form S-Corp; March 15; extension to September 15
+Corporation: Form CIT-1; April 15; extension to October 15
+Sole Proprietor: Form PIT-1; April 15; extension to October 15  
+New York:
+LLC: Form IT-204; March 15; extension to September 15
+S-Corp: Form CT-3-S; March 15; extension to September 15
+Corporation: Form CT-3; April 15; extension to October 15
+Sole Proprietor: Form IT-201; April 15; extension to October 15  
+North Carolina:
+LLC: Form D-403; March 15; extension to September 15
+S-Corp: Form CD-401S; March 15; extension to September 15
+Corporation: Form CD-405; April 15; extension to October 15
+Sole Proprietor: Form D-400; April 15; extension to October 15  
+North Dakota:
+LLC: Form 58; March 15; extension to September 15
+S-Corp: Form 60; March 15; extension to September 15
+Corporation: Form 40; April 15; extension to October 15
+Sole Proprietor: Form ND-1; April 15; extension to October 15  
+Ohio:
+LLC: Form IT 1140; April 15; extension to October 15
+S-Corp: Form IT 1140; April 15; extension to October 15
+Corporation: Form IT 1120; April 15; extension to October 15
+Sole Proprietor: Form IT 1040; April 15; extension to October 15  
+Oklahoma:
+LLC: Form 514; March 15; extension to September 15
+S-Corp: Form 512-S; March 15; extension to September 15
+Corporation: Form 512; April 15; extension to October 15
+Sole Proprietor: Form 511; April 15; extension to October 15  
+Oregon:
+LLC: Form OR-65; March 15; extension to September 15
+S-Corp: Form OR-20-S; March 15; extension to September 15
+Corporation: Form OR-20; April 15; extension to October 15
+Sole Proprietor: Form OR-40; April 15; extension to October 15  
+Pennsylvania:
+LLC: Form PA-65; March 15; extension to September 15
+S-Corp: Form PA-20S/PA-65; March 15; extension to September 15
+Corporation: Form RCT-101; April 15; extension to October 15
+Sole Proprietor: Form PA-40; April 15; extension to October 15  
+Rhode Island:
+LLC: Form RI-1065; March 15; extension to September 15
+S-Corp: Form RI-1120S; March 15; extension to September 15
+Corporation: Form RI-1120C; April 15; extension to October 15
+Sole Proprietor: Form RI-1040; April 15; extension to October 15  
+South Carolina:
+LLC: Form SC1065; March 15; extension to September 15
+S-Corp: Form SC1120S; March 15; extension to September 15
+Corporation: Form SC1120; April 15; extension to October 15
+Sole Proprietor: Form SC1040; April 15; extension to October 15  
+South Dakota:
+LLC: No state income tax; federal Form 1065; March 15; extension to September 15
+S-Corp: No state income tax; federal Form 1120-S; March 15; extension to September 15
+Corporation: No state income tax; federal Form 1120; April 15; extension to October 15
+Sole Proprietor: No state income tax; federal Form 1040, Schedule C; April 15; extension to October 15  
+Tennessee:
+LLC: Form FAE170; April 15; extension to October 15
+S-Corp: Form FAE170; April 15; extension to October 15
+Corporation: Form FAE170; April 15; extension to October 15
+Sole Proprietor: No state income tax; federal Form 1040, Schedule C; April 15; extension to October 15  
+Texas:
+LLC: Form 05-102 (Franchise Tax); May 15
+S-Corp: Form 05-102 (Franchise Tax); May 15
+Corporation: Form 05-102 (Franchise Tax); May 15
+Sole Proprietor: No state income tax; federal Form 1040, Schedule C; April 15; extension to October 15  
+Utah:
+LLC: Form TC-65; March 15; extension to September 15
+S-Corp: Form TC-20S; March 15; extension to September 15
+Corporation: Form TC-20; April 15; extension to October 15
+Sole Proprietor: Form TC-40; April 15; extension to October 15  
+Vermont:
+LLC: Form BI-471; March 15; extension to September 15
+S-Corp: Form BI-471; March 15; extension to September 15
+Corporation: Form CO-411; April 15; extension to October 15
+Sole Proprietor: Form IN-111; April 15; extension to October 15  
+Virginia:
+LLC: Form 502; March 15; extension to September 15
+S-Corp: Form 502; March 15; extension to September 15
+Corporation: Form 500; April 15; extension to October 15
+Sole Proprietor: Form 760; April 15; extension to October 15  
+Washington:
+LLC: No state income tax; federal Form 1065; March 15; B&O tax varies
+S-Corp: No state income tax; federal Form 1120-S; March 15; B&O tax varies
+Corporation: No state income tax; federal Form 1120; April 15; B&O tax varies
+Sole Proprietor: No state income tax; federal Form 1040, Schedule C; April 15; extension to October 15  
+West Virginia:
+LLC: Form WV/IT-141; March 15; extension to September 15
+S-Corp: Form WV/CIT-120; March 15; extension to September 15
+Corporation: Form WV/CIT-120; April 15; extension to October 15
+Sole Proprietor: Form IT-140; April 15; extension to October 15  
+Wisconsin:
+LLC: Form 3; March 15; extension to September 15
+S-Corp: Form 5S; March 15; extension to September 15
+Corporation: Form 4; April 15; extension to October 15
+Sole Proprietor: Form 1; April 15; extension to October 15  
+Wyoming:
+LLC: No state income tax; federal Form 1065; March 15; Annual Report due on anniversary
+S-Corp: No state income tax; federal Form 1120-S; March 15; Annual Report due on anniversary
+Corporation: No state income tax; federal Form 1120; April 15; Annual Report due on anniversary
+Sole Proprietor: No state income tax; federal Form 1040, Schedule C; April 15; extension to October 15  
+Additional Notes:
+Federal Forms: LLCs taxed as partnerships file Form 1065 (March 15, extendable to September 15). S corporations file Form 1120-S (March 15, extendable to September 15). C corporations file Form 1120 (April 15, extendable to October 15). Sole proprietors/single-member LLCs file Form 1040, Schedule C (April 15, extendable to October 15).
+
+State-Specific Taxes: States like California (LLC/S-Corp franchise tax), Texas (Franchise Tax), and Tennessee (franchise/excise tax) impose entity-level taxes with specific forms and due dates. Annual reports or fees (e.g., Delaware’s Franchise Tax, Wyoming’s Annual Report) are noted where applicable.
+
+Verification: Tax requirements vary based on entity activities, multi-state operations, or tax elections. Consult state revenue departments or a tax professional for precise details, especially for complex structures.
+To put this into Excel, you can:
+Copy and Paste: Copy the text above into a text editor, then paste into Excel and use “Text to Columns” (Data > Text to Columns > Delimited > Colon or Semicolon) to split into columns for State, LLC, S-Corp, Corporation, and Sole Proprietor.
+
+Create a CSV: Save the text as a CSV file with commas separating fields and import into Excel (Data > From Text/CSV).
+
+Manual Entry: Set up columns for State, LLC, S-Corp, Corporation, and Sole Proprietor, and manually enter the data from the text above.
+If you need help with a specific Excel import method or further customization, let me know!
+Explain California rules
+
+State sales tax laws
+
+More concise formatting
+

@@ -1,0 +1,119 @@
+StartSmart Compliance Center Enhancement Specification
+
+Objective:
+Improve the utility and automation of the Compliance Center by adding logic-driven task generation, state-specific due dates, smarter completion tracking, and AI/document integration.
+
+1. Onboarding Enhancements (for All Users)
+
+Add onboarding questions:
+
+State of formation (dropdown)
+
+Fiscal year-end month (default: December)
+
+Store these values to calculate:
+
+Annual report due dates
+
+Income tax deadlines
+
+State filing reminders
+
+2. Auto-Generated Compliance Tasks (Based on Entity Type + State)
+
+Business Registration
+
+Articles of Organization → Mark complete if downloaded or generated in Doc Center
+
+Registered Agent Appointed → Manual check or auto-check if answered in onboarding
+
+Annual Report → Auto-created annually based on state rules
+
+Tax Compliance
+
+Federal EIN Obtained → Auto-check if EIN Assistant used
+
+State Tax Registration → Trigger if onboarding includes retail/sales activity
+
+Federal Income Tax Return (Form 1120/1065/Schedule C) → Based on entity type
+
+Federal Estimated Payments → Auto-create 4 tasks: April, June, Sept, Jan
+
+State Sales Tax Returns → Recurring (monthly or quarterly) depending on state logic or user preference
+
+Licenses & Permits
+
+General Business License → Manual or city-specific autofill suggestion
+
+Professional License → Trigger based on onboarding role/industry
+
+Health Department Permit → Trigger if NAICS or onboarding indicates food/health
+
+Employment Compliance
+
+Workers' Compensation → Manual check + state law tooltip
+
+Employment Posters → Download button + mark when posted
+
+941 Payroll Tax Returns → Auto-create 4 deadlines: April, July, October, January (for W-2 businesses)
+
+3. Smart Sync Logic with Other Modules
+
+Document Center:
+
+Mark related tasks "Generated with AI" when user creates documents (e.g., Operating Agreement, EIN)
+
+AI Chat:
+
+Allow chat to add, check, or explain compliance tasks
+
+Examples:
+
+"What filings are due this month?"
+
+"Remind me to file 941 next quarter"
+
+Roadmap:
+
+Sync compliance tasks into the Progress Roadmap
+
+Add labels: "Tax", "Legal", "State", etc.
+
+4. User Controls and Flexibility
+
+All tasks should be editable:
+
+Due date override
+
+Mark complete manually
+
+Add custom reminders
+
+5. UI Enhancements
+
+Color-coded task chips: Complete / In Progress / Overdue
+
+Add percentage by category (Tax, Legal, Employment, etc.)
+
+Tooltips or links for each state requirement (Annual Report, Sales Tax)
+
+Implementation Suggestion:
+Phase 1:
+
+Add state/FY onboarding inputs
+
+Auto-create federal tasks + allow user editing
+
+Phase 2:
+
+Add state-level logic + recurring task engine
+
+Phase 3:
+
+Sync with Doc Center and Chat
+
+Launch notification engine (email or push)
+
+Goal:
+Transform the Compliance Center from a static checklist into a dynamic, intelligent assistant that keeps new business owners ahead of deadlines automatically.
+

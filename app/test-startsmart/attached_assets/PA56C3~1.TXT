@@ -1,0 +1,38 @@
+chunk-WERSD76P.js?v=fe71ff2e:521 Warning: Encountered two children with the same key, `Prompt Playground`. Keys should be unique so that components maintain their identity across updates. Non-unique keys may cause children to be duplicated and/or omitted — the behavior is unsupported and could change in a future version.
+    at div
+    at div
+    at _c9 (https://89c940af-8b32-4fc9-81c0-f4e571924056-00-ean17kbdh45e.riker.replit.dev/src/components/ui/card.tsx:114:12)
+    at div
+    at _c (https://89c940af-8b32-4fc9-81c0-f4e571924056-00-ean17kbdh45e.riker.replit.dev/src/components/ui/card.tsx:20:11)
+    at div
+    at div
+    at div
+    at div
+    at KnowledgeHub (https://89c940af-8b32-4fc9-81c0-f4e571924056-00-ean17kbdh45e.riker.replit.dev/src/components/KnowledgeHub.tsx:1542:21)
+    at main
+    at div
+    at div
+    at Home (https://89c940af-8b32-4fc9-81c0-f4e571924056-00-ean17kbdh45e.riker.replit.dev/src/pages/home.tsx:150:48)
+    at Route (https://89c940af-8b32-4fc9-81c0-f4e571924056-00-ean17kbdh45e.riker.replit.d…/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=fe71ff2e:323:16)
+    at Switch (https://89c940af-8b32-4fc9-81c0-f4e571924056-00-ean17kbdh45e.riker.replit.d…/home/runner/workspace/node_modules/.vite/deps/wouter.js?v=fe71ff2e:379:17)
+    at Router (https://89c940af-8b32-4fc9-81c0-f4e571924056-00-ean17kbdh45e.riker.replit.dev/src/App.tsx?v=y3y8qWRKtNkKZ580XIY95:30:42)
+    at Provider (https://89c940af-8b32-4fc9-81c0-f4e571924056-00-ean17kbdh45e.riker.replit.d…unner/workspace/node_modules/.vite/deps/chunk-PLT6GTVM.js?v=fe71ff2e:38:15)
+    at TooltipProvider (https://89c940af-8b32-4fc9-81c0-f4e571924056-00-ean17kbdh45e.riker.replit.d…rkspace/node_modules/.vite/deps/@radix-ui_react-tooltip.js?v=fe71ff2e:63:5)
+    at ThemeProvider (https://89c940af-8b32-4fc9-81c0-f4e571924056-00-ean17kbdh45e.riker.replit.dev/src/components/ui/theme-provider.tsx:25:3)
+    at QueryClientProvider (https://89c940af-8b32-4fc9-81c0-f4e571924056-00-ean17kbdh45e.riker.replit.d…rkspace/node_modules/.vite/deps/@tanstack_react-query.js?v=fe71ff2e:2805:3)
+    at App
+printWarning	@	chunk-WERSD76P.js?v=fe71ff2e:521
+error	@	chunk-WERSD76P.js?v=fe71ff2e:505
+warnOnInvalidKey	@	chunk-WERSD76P.js?v=fe71ff2e:10219
+reconcileChildrenArray	@	chunk-WERSD76P.js?v=fe71ff2e:10235
+reconcileChildFibers2	@	chunk-WERSD76P.js?v=fe71ff2e:10559
+reconcileChildren	@	chunk-WERSD76P.js?v=fe71ff2e:14292
+updateHostComponent	@	chunk-WERSD76P.js?v=fe71ff2e:14807
+beginWork	@	chunk-WERSD76P.js?v=fe71ff2e:15935
+beginWork$1	@	chunk-WERSD76P.js?v=fe71ff2e:19753
+performUnitOfWork	@	chunk-WERSD76P.js?v=fe71ff2e:19198
+workLoopSync	@	chunk-WERSD76P.js?v=fe71ff2e:19137
+renderRootSync	@	chunk-WERSD76P.js?v=fe71ff2e:19116
+performSyncWorkOnRoot	@	chunk-WERSD76P.js?v=fe71ff2e:18874
+flushSyncCallbacks	@	chunk-WERSD76P.js?v=fe71ff2e:9119
+(anonymous)	@	chunk-WERSD76P.js?v=fe71ff2e:18627

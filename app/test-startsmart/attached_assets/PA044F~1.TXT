@@ -1,0 +1,72 @@
+
+C:\Users\Steve Work\OneDrive\Desktop\SJM Documents\startsmart-ios\startsmart-ios-package>git init
+Reinitialized existing Git repository in C:/Users/Steve Work/OneDrive/Desktop/SJM Documents/startsmart-ios/startsmart-ios-package/.git/
+
+C:\Users\Steve Work\OneDrive\Desktop\SJM Documents\startsmart-ios\startsmart-ios-package>git add .
+warning: in the working copy of 'capacitor.config.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'dist/index.html', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'ios/.gitignore', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'ios/App/App.xcodeproj/project.pbxproj', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'ios/App/App.xcworkspace/contents.xcworkspacedata', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'ios/App/App.xcworkspace/xcshareddata/IDEWorkspaceChecks.plist', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'ios/App/App/AppDelegate.swift', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'ios/App/App/Assets.xcassets/AppIcon.appiconset/Contents.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'ios/App/App/Assets.xcassets/Contents.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'ios/App/App/Assets.xcassets/Splash.imageset/Contents.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'ios/App/App/Base.lproj/LaunchScreen.storyboard', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'ios/App/App/Base.lproj/Main.storyboard', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'ios/App/App/Info.plist', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'ios/App/Podfile', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'ios/App/Podfile.lock', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'metadata/app-store-info.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'package.json', LF will be replaced by CRLF the next time Git touches it
+
+C:\Users\Steve Work\OneDrive\Desktop\SJM Documents\startsmart-ios\startsmart-ios-package>git commit -m "Initial iOS project for StartSmart"
+[master (root-commit) 5859af2] Initial iOS project for StartSmart
+ 21 files changed, 876 insertions(+)
+ create mode 100644 capacitor.config.js
+ create mode 100644 dist/index.html
+ create mode 100644 ios/.gitignore
+ create mode 100644 ios/App/App.xcodeproj/project.pbxproj
+ create mode 100644 ios/App/App.xcworkspace/contents.xcworkspacedata
+ create mode 100644 ios/App/App.xcworkspace/xcshareddata/IDEWorkspaceChecks.plist
+ create mode 100644 ios/App/App/AppDelegate.swift
+ create mode 100644 ios/App/App/Assets.xcassets/AppIcon.appiconset/AppIcon-512@2x.png
+ create mode 100644 ios/App/App/Assets.xcassets/AppIcon.appiconset/Contents.json
+ create mode 100644 ios/App/App/Assets.xcassets/Contents.json
+ create mode 100644 ios/App/App/Assets.xcassets/Splash.imageset/Contents.json
+ create mode 100644 ios/App/App/Assets.xcassets/Splash.imageset/splash-2732x2732-1.png
+ create mode 100644 ios/App/App/Assets.xcassets/Splash.imageset/splash-2732x2732-2.png
+ create mode 100644 ios/App/App/Assets.xcassets/Splash.imageset/splash-2732x2732.png
+ create mode 100644 ios/App/App/Base.lproj/LaunchScreen.storyboard
+ create mode 100644 ios/App/App/Base.lproj/Main.storyboard
+ create mode 100644 ios/App/App/Info.plist
+ create mode 100644 ios/App/Podfile
+ create mode 100644 ios/App/Podfile.lock
+ create mode 100644 metadata/app-store-info.md
+ create mode 100644 package.json
+
+C:\Users\Steve Work\OneDrive\Desktop\SJM Documents\startsmart-ios\startsmart-ios-package>git branch -M main
+
+C:\Users\Steve Work\OneDrive\Desktop\SJM Documents\startsmart-ios\startsmart-ios-package>git remote add origin https://github.com/YOUR_USERNAME/startsmart-ios-xcode-cloud.git
+
+C:\Users\Steve Work\OneDrive\Desktop\SJM Documents\startsmart-ios\startsmart-ios-package>git push -u origin main
+remote: Repository not found.
+fatal: repository 'https://github.com/YOUR_USERNAME/startsmart-ios-xcode-cloud.git/' not found
+
+C:\Users\Steve Work\OneDrive\Desktop\SJM Documents\startsmart-ios\startsmart-ios-package>git remote add origin https://github.com/WalterPython34/startsmart-ios-xcode-cloud.git
+error: remote origin already exists.
+
+C:\Users\Steve Work\OneDrive\Desktop\SJM Documents\startsmart-ios\startsmart-ios-package>git push -u origin main
+remote: Repository not found.
+fatal: repository 'https://github.com/YOUR_USERNAME/startsmart-ios-xcode-cloud.git/' not found
+
+C:\Users\Steve Work\OneDrive\Desktop\SJM Documents\startsmart-ios\startsmart-ios-package>git push -u origin main
+
+
+
+
+
+
+
+

@@ -1,0 +1,277 @@
+Great — I’ll generate structured prompt lists for Free (10), Pro (100), and Premium (150) tiers, carefully balancing usefulness and perceived value. These will include your existing examples and be organized by category (e.g., Tax, Branding, Strategy, etc.) for Pro and Premium users. I’ll let you know once the list is complete and ready for your review.
+
+
+## Free Tier (10 Prompts)
+
+| Prompt                                                                                 | Access Tier | Category                   |
+| -------------------------------------------------------------------------------------- | ----------- | -------------------------- |
+| What are the key steps to start a new \[type of business] from scratch?                | Free        | Business Formation & Legal |
+| Help me brainstorm a catchy name for my \[business description].                       | Free        | Branding & Naming          |
+| What licenses and permits do I need to start a \[industry] business in \[Location]?    | Free        | Business Formation & Legal |
+| Describe the ideal target customer for a \[business type].                             | Free        | Market Research & Planning |
+| List some cost-effective marketing ideas to promote my new business.                   | Free        | Marketing & Sales          |
+| How can I validate that my business idea will be profitable before investing too much? | Free        | Market Research & Planning |
+| What common mistakes should I avoid when starting my first business?                   | Free        | Growth Strategy            |
+| What business expenses can I write off on my taxes as a small business owner?          | Free        | Tax & Compliance           |
+| What's a simple one-page business plan outline I can use for my idea?                  | Free        | Market Research & Planning |
+| What are my options for funding my new business idea?                                  | Free        | Funding & Financials       |
+
+## Pro Tier (100 Prompts)
+
+| Prompt                                                                                                            | Access Tier | Category                   |
+| ----------------------------------------------------------------------------------------------------------------- | ----------- | -------------------------- |
+| Which business structure (sole proprietorship, LLC, S-Corp, etc.) is best for a new \[type of business] and why?  | Pro         | Business Formation & Legal |
+| What are the required steps to legally register a new business in \[State/Country]?                               | Pro         | Business Formation & Legal |
+| What licenses or permits are required to start a \[industry] business in \[Location]?                             | Pro         | Business Formation & Legal |
+| How can I check if my desired business name is available and not trademarked?                                     | Pro         | Business Formation & Legal |
+| What's the best way to protect my business idea or brand (trademarks, copyrights, patents)?                       | Pro         | Business Formation & Legal |
+| What should I include in a basic client contract for my freelance \[service] business?                            | Pro         | Business Formation & Legal |
+| What should I include in the Terms of Service for my \[online business]?                                          | Pro         | Business Formation & Legal |
+| What are common legal mistakes new business owners should avoid?                                                  | Pro         | Business Formation & Legal |
+| Do I need business insurance, and if so, what types are recommended for a \[industry] startup?                    | Pro         | Business Formation & Legal |
+| What's the difference between hiring an employee vs. an independent contractor, and how do I decide which to use? | Pro         | Business Formation & Legal |
+| What is a registered agent, and do I need one for my business?                                                    | Pro         | Business Formation & Legal |
+| What is an LLC operating agreement and do I need one for my company?                                              | Pro         | Business Formation & Legal |
+| Should I have a co-founder (partnership) agreement, and what key terms should it cover?                           | Pro         | Business Formation & Legal |
+| What clauses should I watch out for when signing a commercial lease for my business space?                        | Pro         | Business Formation & Legal |
+| When should I consider patenting a product idea, and what's involved in the process?                              | Pro         | Business Formation & Legal |
+| What is a DBA (Doing Business As) and when might I need one for my business?                                      | Pro         | Business Formation & Legal |
+| What local zoning or home business regulations should I check if I run my business from home?                     | Pro         | Business Formation & Legal |
+| At what point should I consult a lawyer when starting my business?                                                | Pro         | Business Formation & Legal |
+| How can I minimize the risk of legal disputes in my business (e.g., through contracts or policies)?               | Pro         | Business Formation & Legal |
+| How do I file a trademark for my business name or logo?                                                           | Pro         | Business Formation & Legal |
+| What taxes (income, sales, etc.) do I need to file as a new business owner?                                       | Pro         | Tax & Compliance           |
+| How do I register for an Employer Identification Number (EIN) for my business?                                    | Pro         | Tax & Compliance           |
+| What business expenses are tax-deductible for a small business?                                                   | Pro         | Tax & Compliance           |
+| How often and how do I pay estimated taxes for my business?                                                       | Pro         | Tax & Compliance           |
+| What is the process for collecting and remitting sales tax if I sell products in \[Location]?                     | Pro         | Tax & Compliance           |
+| What records should I keep throughout the year to make tax filing easier?                                         | Pro         | Tax & Compliance           |
+| What is self-employment tax and how does it affect my income?                                                     | Pro         | Tax & Compliance           |
+| Are there any small business tax credits or incentives I should know about?                                       | Pro         | Tax & Compliance           |
+| What annual filings or reports does my LLC/corporation need to submit to stay compliant?                          | Pro         | Tax & Compliance           |
+| How can I make sure my website is compliant with privacy laws like GDPR or CCPA?                                  | Pro         | Tax & Compliance           |
+| Suggest a creative business name for a \[business description or industry].                                       | Pro         | Branding & Naming          |
+| Propose a tagline that highlights \[unique selling point] for my \[business].                                     | Pro         | Branding & Naming          |
+| Write a mission statement for my company that conveys \[core value or purpose].                                   | Pro         | Branding & Naming          |
+| What should I consider when designing a logo or choosing brand colors for my business?                            | Pro         | Branding & Naming          |
+| How can I define a brand voice for my business (e.g., fun, professional, etc.)?                                   | Pro         | Branding & Naming          |
+| How do I check if a brand name I like has an available domain and social media handles?                           | Pro         | Branding & Naming          |
+| Give me 3 slogan ideas that emphasize the \[unique selling proposition] of my product.                            | Pro         | Branding & Naming          |
+| Help me come up with a brief brand story or origin story for my business.                                         | Pro         | Branding & Naming          |
+| What are the key elements of a strong brand identity for a \[industry] company?                                   | Pro         | Branding & Naming          |
+| How can I build my personal brand as an entrepreneur in the \[industry] space?                                    | Pro         | Branding & Naming          |
+| What are some ways to make my brand stand out against competitors in \[industry]?                                 | Pro         | Branding & Naming          |
+| Generate a name for my new \[product/service] that conveys \[desired image or benefit].                           | Pro         | Branding & Naming          |
+| What should I consider when naming my business to appeal to \[target audience]?                                   | Pro         | Branding & Naming          |
+| List 5 core brand values that would resonate with \[target audience] for my \[business].                          | Pro         | Branding & Naming          |
+| How can I create a memorable tagline or catchphrase for my brand?                                                 | Pro         | Branding & Naming          |
+| Who are the top competitors in the \[industry/market] and what makes them successful?                             | Pro         | Market Research & Planning |
+| What unique features or services do competitors in \[industry] offer that I should consider?                      | Pro         | Market Research & Planning |
+| Given my product/service \[brief description], who is the ideal target audience and why?                          | Pro         | Market Research & Planning |
+| Describe the typical behaviors and lifestyle of my target customer (a \[target audience]).                        | Pro         | Market Research & Planning |
+| What does my target audience value most when choosing a \[product/service]?                                       | Pro         | Market Research & Planning |
+| What are the biggest pain points for \[target audience] that my \[product/service] could solve?                   | Pro         | Market Research & Planning |
+| How does my \[product/service] solve the top problems or pain points for \[target audience]?                      | Pro         | Market Research & Planning |
+| Create a simple customer persona for a potential user of my \[product/service].                                   | Pro         | Market Research & Planning |
+| What pricing models do successful companies in \[industry] use for similar products or services?                  | Pro         | Market Research & Planning |
+| What are some market gaps or opportunities in the \[industry] that my startup could fill?                         | Pro         | Market Research & Planning |
+| List the top 5 keywords or search terms my target customers might use to find a \[product/service] like mine.     | Pro         | Market Research & Planning |
+| What current market trends in the \[industry] should I be aware of as I plan my business?                         | Pro         | Market Research & Planning |
+| How can I validate that there's demand for my business idea before a full launch?                                 | Pro         | Market Research & Planning |
+| What key sections should I include in a basic business plan for my startup?                                       | Pro         | Market Research & Planning |
+| Can you perform a simple SWOT analysis for a \[business type] entering the \[industry]?                           | Pro         | Market Research & Planning |
+| What are the best marketing channels to reach my target audience (\[audience]) for my \[product/service]?         | Pro         | Marketing & Sales          |
+| Suggest effective low-budget marketing ideas to promote my \[type of business].                                   | Pro         | Marketing & Sales          |
+| Write a cold email introducing my \[product/service] to a potential client.                                       | Pro         | Marketing & Sales          |
+| Give me 5 social media post ideas to promote my \[product/service] on \[platform].                                | Pro         | Marketing & Sales          |
+| How can I improve my website's SEO to attract more customers searching for \[keyword or service]?                 | Pro         | Marketing & Sales          |
+| Help me craft a unique value proposition message to attract customers to my business.                             | Pro         | Marketing & Sales          |
+| Outline a basic marketing plan for launching my \[product/service] in \[target market].                           | Pro         | Marketing & Sales          |
+| What are some effective ways to get the first 100 customers for a new \[business type]?                           | Pro         | Marketing & Sales          |
+| Provide key points for a 60-second elevator pitch about my business.                                              | Pro         | Marketing & Sales          |
+| List 5 content ideas (blog posts, videos, etc.) that would engage \[target audience] and relate to my business.   | Pro         | Marketing & Sales          |
+| How can I encourage customer referrals and word-of-mouth marketing for my business?                               | Pro         | Marketing & Sales          |
+| What copywriting tips can help increase conversions on my product landing page?                                   | Pro         | Marketing & Sales          |
+| Give an example of a social media post that highlights \[product benefit] for \[target audience].                 | Pro         | Marketing & Sales          |
+| How can I use email marketing to nurture leads without spamming them?                                             | Pro         | Marketing & Sales          |
+| What should I include in a press release to announce the launch of my company?                                    | Pro         | Marketing & Sales          |
+| What are the common funding options for a new business (e.g., loans, investors, crowdfunding)?                    | Pro         | Funding & Financials       |
+| How can I bootstrap my business with limited funds?                                                               | Pro         | Funding & Financials       |
+| What's a simple way to create a first-year budget for my business?                                                | Pro         | Funding & Financials       |
+| How do I project my business's sales and expenses for the next year?                                              | Pro         | Funding & Financials       |
+| What financial statements should I be familiar with as a small business owner?                                    | Pro         | Funding & Financials       |
+| How can I improve cash flow management for my small business?                                                     | Pro         | Funding & Financials       |
+| What is a break-even analysis and how do I calculate it for my business?                                          | Pro         | Funding & Financials       |
+| How should I set prices for my product/service to ensure I'm making a profit?                                     | Pro         | Funding & Financials       |
+| What key financial metrics (KPIs) should I track to measure my business's health?                                 | Pro         | Funding & Financials       |
+| How can I determine how much capital I need to start my business?                                                 | Pro         | Funding & Financials       |
+| How can I manage my time effectively as a solo entrepreneur juggling multiple roles?                              | Pro         | Productivity & Automation  |
+| What are the top productivity tools or apps for small business owners?                                            | Pro         | Productivity & Automation  |
+| How do I prioritize tasks when everything feels urgent in my startup?                                             | Pro         | Productivity & Automation  |
+| Suggest ways to automate repetitive tasks in my business to save time.                                            | Pro         | Productivity & Automation  |
+| What strategies can help me avoid burnout and maintain work-life balance as a business owner?                     | Pro         | Productivity & Automation  |
+| How can I increase my customer base quickly without a huge budget?                                                | Pro         | Growth Strategy            |
+| What are some effective customer retention strategies for a new business?                                         | Pro         | Growth Strategy            |
+| How can I leverage partnerships or collaborations to grow my business?                                            | Pro         | Growth Strategy            |
+| When and how should I consider expanding my product line or services?                                             | Pro         | Growth Strategy            |
+| What are key signs that it's time to scale up my business operations?                                             | Pro         | Growth Strategy            |
+| How do I set growth goals and key performance indicators (KPIs) for my startup?                                   | Pro         | Growth Strategy            |
+| What are some growth hacking techniques for a \[type of business]?                                                | Pro         | Growth Strategy            |
+| Should I consider franchising or opening new locations? What factors should I evaluate?                           | Pro         | Growth Strategy            |
+| How can I improve my customer onboarding process to encourage repeat business and referrals?                      | Pro         | Growth Strategy            |
+| What's the best way to get feedback from customers to fuel product improvements and growth?                       | Pro         | Growth Strategy            |
+
+## Premium Tier (150 Prompts)
+
+| Prompt                                                                                                                                                 | Access Tier | Category                   |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------- | -------------------------- |
+| Outline a step-by-step plan to incorporate a business in \[Country/State], including timeline and costs.                                               | Premium     | Business Formation & Legal |
+| Draft a basic independent contractor agreement that I can use when hiring freelancers.                                                                 | Premium     | Business Formation & Legal |
+| Advise on an intellectual property strategy: should I use patents, trade secrets, or trademarks for my product, and what are the steps for each?       | Premium     | Business Formation & Legal |
+| Provide a checklist of legal and compliance steps to follow when hiring my first employee (e.g., registrations, taxes, labor laws).                    | Premium     | Business Formation & Legal |
+| How should co-founders split equity fairly, and what terms (vesting, etc.) should be in a founders' agreement?                                         | Premium     | Business Formation & Legal |
+| Draft a Privacy Policy for my \[online business] that covers data collection, use, and user rights (GDPR compliant).                                   | Premium     | Business Formation & Legal |
+| What are the pros and cons of incorporating my business in Delaware or Nevada versus my home state?                                                    | Premium     | Business Formation & Legal |
+| List the legal steps to expand my business to another state or country (e.g., foreign entity registration, permits).                                   | Premium     | Business Formation & Legal |
+| How do I convert my sole proprietorship or LLC into a corporation, and what legal requirements are involved?                                           | Premium     | Business Formation & Legal |
+| What key clauses should I include in a contract with a manufacturer or supplier to protect my business?                                                | Premium     | Business Formation & Legal |
+| How can I set up an employee stock ownership plan (ESOP) or other equity compensation for my team?                                                     | Premium     | Business Formation & Legal |
+| What legal precautions should I take to protect the business if a co-founder leaves (e.g., buy-sell agreements)?                                       | Premium     | Business Formation & Legal |
+| How do I comply with employment laws when building a remote team across different states or countries?                                                 | Premium     | Business Formation & Legal |
+| Walk me through the process of filing a patent for an invention related to my business (steps, considerations).                                        | Premium     | Business Formation & Legal |
+| How can I license my product or technology to other companies? What should a licensing agreement include?                                              | Premium     | Business Formation & Legal |
+| What should I be aware of when signing contracts with international clients or partners (jurisdiction, arbitration, etc.)?                             | Premium     | Business Formation & Legal |
+| What should I include in a Non-Disclosure Agreement (NDA) to protect my business's confidential information?                                           | Premium     | Business Formation & Legal |
+| Help me develop a legal risk management plan identifying potential risks (lawsuits, compliance issues) and mitigation strategies.                      | Premium     | Business Formation & Legal |
+| What legal considerations apply if I run an online business serving customers globally (international laws, taxes, etc.)?                              | Premium     | Business Formation & Legal |
+| How can I ensure my business is compliant with ADA and accessibility requirements (for my website or physical store)?                                  | Premium     | Business Formation & Legal |
+| What is the proper process to dissolve or wind down my business, and what legal steps do I need to take?                                               | Premium     | Business Formation & Legal |
+| What terms should I pay attention to when negotiating a term sheet or investment agreement with potential investors?                                   | Premium     | Business Formation & Legal |
+| What refund, return, or warranty policies should I establish to avoid legal issues and keep customers satisfied?                                       | Premium     | Business Formation & Legal |
+| What internal company policies (e.g., employee handbook, code of conduct) should I create to ensure legal compliance and clarity for my team?          | Premium     | Business Formation & Legal |
+| How should I handle a client who refuses to pay an invoice? What legal options do I have to recover the payment?                                       | Premium     | Business Formation & Legal |
+| What strategies can I use to minimize my business taxes while staying fully compliant with the law?                                                    | Premium     | Tax & Compliance           |
+| Compare the tax advantages of an S-Corp versus an LLC for a \[type of business] and \[scenario].                                                       | Premium     | Tax & Compliance           |
+| What are the tax implications of hiring employees vs. using independent contractors for my business?                                                   | Premium     | Tax & Compliance           |
+| How can I use depreciation of equipment or assets to save on taxes for my business?                                                                    | Premium     | Tax & Compliance           |
+| Help me create a calendar of all tax deadlines and compliance filings I need to track for my business (federal, state, quarterly taxes, etc.).         | Premium     | Tax & Compliance           |
+| Outline the key regulatory compliance requirements for a \[industry] business and how to meet them.                                                    | Premium     | Tax & Compliance           |
+| How do I handle sales tax for online sales or customers in multiple states (sales tax nexus considerations)?                                           | Premium     | Tax & Compliance           |
+| What steps can I take to prepare for a potential IRS audit and ensure my records are audit-ready?                                                      | Premium     | Tax & Compliance           |
+| Which types of insurance are legally required or highly recommended for my business (e.g., workers' comp, liability) and why?                          | Premium     | Tax & Compliance           |
+| What certifications or licenses might my \[industry] business need, and how do I obtain them?                                                          | Premium     | Tax & Compliance           |
+| How can I ensure my business's data security and privacy practices comply with regulations (like GDPR, HIPAA, etc.)?                                   | Premium     | Tax & Compliance           |
+| If I start selling internationally, what tax or VAT obligations should I be aware of for overseas sales?                                               | Premium     | Tax & Compliance           |
+| Which accounting method (cash vs. accrual) is best for my business, and how does that choice affect my taxes?                                          | Premium     | Tax & Compliance           |
+| How should I handle payroll taxes and setup when I hire my first employee?                                                                             | Premium     | Tax & Compliance           |
+| How do quarterly tax estimates work and how can I accurately calculate them to avoid penalties?                                                        | Premium     | Tax & Compliance           |
+| Perform a brand SWOT analysis comparing my brand with a key competitor.                                                                                | Premium     | Branding & Naming          |
+| Analyze \[Competitor]'s branding and suggest ways I can differentiate my brand effectively.                                                            | Premium     | Branding & Naming          |
+| Outline a comprehensive brand strategy for a new \[industry] business, including vision, values, voice, and positioning.                               | Premium     | Branding & Naming          |
+| Help me craft a compelling brand story that will engage customers and reflect our values \[value1], \[value2], etc.                                    | Premium     | Branding & Naming          |
+| I need to rebrand my \[existing business] – what steps should I follow and what factors should I consider?                                             | Premium     | Branding & Naming          |
+| How can I use storytelling in my branding to connect with customers on an emotional level?                                                             | Premium     | Branding & Naming          |
+| Suggest a naming strategy for a line of products under my brand to maintain brand consistency.                                                         | Premium     | Branding & Naming          |
+| What techniques can I use to test potential brand names with my target market before deciding?                                                         | Premium     | Branding & Naming          |
+| How can I build strong brand loyalty and a community around my brand among my customers?                                                               | Premium     | Branding & Naming          |
+| Develop a powerful brand tagline that communicates \[unique benefit] to \[target audience].                                                            | Premium     | Branding & Naming          |
+| What should my brand messaging focus on to attract and resonate with \[ideal customer persona]?                                                        | Premium     | Branding & Naming          |
+| How do I create a brand style guide and what key elements should it include?                                                                           | Premium     | Branding & Naming          |
+| Advise on choosing a color scheme and typography that convey \[desired brand attribute] for my brand.                                                  | Premium     | Branding & Naming          |
+| What steps should I take to trademark and legally protect my brand name and logo?                                                                      | Premium     | Branding & Naming          |
+| How can I ensure consistent branding across my website, social media, and marketing materials?                                                         | Premium     | Branding & Naming          |
+| Create a personal branding strategy for me as the founder of a \[industry] business to build credibility.                                              | Premium     | Branding & Naming          |
+| What brand positioning strategies can I use to differentiate a premium brand versus a budget brand in \[industry]?                                     | Premium     | Branding & Naming          |
+| Plan a brand launch campaign to introduce my new brand to the market successfully.                                                                     | Premium     | Branding & Naming          |
+| How should I manage a situation where my brand faces negative publicity? (Brand reputation management)                                                 | Premium     | Branding & Naming          |
+| How can I leverage influencer partnerships to strengthen my brand image and reach new audiences?                                                       | Premium     | Branding & Naming          |
+| Provide a detailed SWOT analysis for my business idea \[brief description of business].                                                                | Premium     | Market Research & Planning |
+| Use Porter's Five Forces to analyze the competitive landscape of the \[industry] I'm entering.                                                         | Premium     | Market Research & Planning |
+| Outline a detailed market research plan to validate demand for my \[product/service] including methods and timeline.                                   | Premium     | Market Research & Planning |
+| Help me segment my target market: identify 3-4 distinct customer segments for my business and their characteristics.                                   | Premium     | Market Research & Planning |
+| Create a competitor analysis matrix comparing my business with \[Competitor A] and \[Competitor B] across key factors.                                 | Premium     | Market Research & Planning |
+| Estimate the market size and growth rate for \[industry or product category] in \[target region].                                                      | Premium     | Market Research & Planning |
+| Identify emerging trends in \[industry] over the next 5 years and suggest how my business can leverage them.                                           | Premium     | Market Research & Planning |
+| Analyze the potential risks and challenges of entering the \[industry] and suggest strategies to mitigate them.                                        | Premium     | Market Research & Planning |
+| Draft a go-to-market strategy outline for launching my \[product/service] in \[target market].                                                         | Premium     | Market Research & Planning |
+| Create a business model canvas for my business, including key partners, activities, value propositions, customer segments, and revenue streams.        | Premium     | Market Research & Planning |
+| What key performance indicators (KPIs) should be in my business plan to measure success for a \[industry] startup?                                     | Premium     | Market Research & Planning |
+| How can I forecast sales for my new product or service without historical data to work from?                                                           | Premium     | Market Research & Planning |
+| Help me identify a strong unique selling proposition (USP) for my business to stand out in the market.                                                 | Premium     | Market Research & Planning |
+| What factors should I consider when choosing the best location (or online platform) for my \[business type]?                                           | Premium     | Market Research & Planning |
+| Conduct a break-even analysis with scenario planning: if sales are 20% lower or higher than expected, how does it affect my profitability?             | Premium     | Market Research & Planning |
+| Outline a contingency plan for my business if a major risk (e.g., supplier failure, economic downturn) occurs.                                         | Premium     | Market Research & Planning |
+| Create a customer journey map for a typical customer of my \[product/service], highlighting touchpoints and opportunities to improve their experience. | Premium     | Market Research & Planning |
+| Identify potential strategic partners or collaborators that could help grow my \[business type] and how to approach them.                              | Premium     | Market Research & Planning |
+| Evaluate my business idea’s viability: what criteria (market size, competition, cost) should I assess to decide if it's worth pursuing?                | Premium     | Market Research & Planning |
+| Outline a 12-month roadmap with major milestones to go from concept to launch for my startup.                                                          | Premium     | Market Research & Planning |
+| Develop a comprehensive 6-month digital marketing strategy for my \[business], including SEO, content, social media, and email.                        | Premium     | Marketing & Sales          |
+| Using the PASTOR framework, write an email campaign addressing \[customer pain point] for \[Ideal Client Profile] offering \[solution].                | Premium     | Marketing & Sales          |
+| Plan a 3-month social media content calendar for my business, with themes or ideas for each week.                                                      | Premium     | Marketing & Sales          |
+| Write a sales call script for pitching my product to a major client, emphasizing \[key benefits] and handling potential objections.                    | Premium     | Marketing & Sales          |
+| How can I optimize my marketing funnel from online ads to website to increase conversion rates? (Awareness -> Consideration -> Purchase steps)         | Premium     | Marketing & Sales          |
+| Suggest 3 elements to A/B test on my landing page to improve conversion (and what changes to test for each).                                           | Premium     | Marketing & Sales          |
+| How can I leverage influencer marketing to boost brand awareness and sales for my \[product/service]?                                                  | Premium     | Marketing & Sales          |
+| Outline a webinar that I can host to educate my audience and generate leads for my \[product/service].                                                 | Premium     | Marketing & Sales          |
+| Provide a step-by-step guide to implementing a CRM system to manage leads and sales in my business.                                                    | Premium     | Marketing & Sales          |
+| Which key marketing metrics should I monitor (e.g., CAC, ROI, conversion rate) and how can I use them to improve my strategy?                          | Premium     | Marketing & Sales          |
+| Craft a 3-email follow-up sequence for leads who signed up on my site but haven't made a purchase.                                                     | Premium     | Marketing & Sales          |
+| What upselling and cross-selling strategies can I implement to increase revenue from existing customers?                                               | Premium     | Marketing & Sales          |
+| Write a script for a 2-minute promotional video showcasing the top features and benefits of my product.                                                | Premium     | Marketing & Sales          |
+| Help me design a customer referral program, including incentives and how to promote it to customers.                                                   | Premium     | Marketing & Sales          |
+| How should I structure my pricing or packages to maximize revenue and appeal to different customer segments?                                           | Premium     | Marketing & Sales          |
+| Give me best practices for running a successful crowdfunding campaign for my product (marketing message, rewards, outreach).                           | Premium     | Marketing & Sales          |
+| Plan a community event or pop-up to promote my business locally, including engagement ideas and marketing tactics.                                     | Premium     | Marketing & Sales          |
+| Propose 5 promotional offers or discount ideas I can run this quarter to boost sales, and how to execute them.                                         | Premium     | Marketing & Sales          |
+| How can I improve my sales process to handle common customer objections in the \[industry] (provide examples of objection and response)?               | Premium     | Marketing & Sales          |
+| Provide tips for optimizing my Google Ads or Facebook Ads campaigns to achieve a better ROI on a small budget.                                         | Premium     | Marketing & Sales          |
+| Create detailed 3-year financial projections for my business (income statement, cash flow, balance sheet) based on given assumptions.                  | Premium     | Funding & Financials       |
+| How do I determine a valuation for my startup for potential investors or sale?                                                                         | Premium     | Funding & Financials       |
+| Prepare an investor pitch deck outline, focusing on the financial projections and growth story.                                                        | Premium     | Funding & Financials       |
+| What financial metrics and ratios do investors look at when evaluating a startup, and how can I improve them?                                          | Premium     | Funding & Financials       |
+| How can I reduce my business's burn rate without significantly impacting growth?                                                                       | Premium     | Funding & Financials       |
+| Help me compare two investment options for my business (e.g., buy equipment vs lease, or marketing campaign A vs B) by calculating ROI for each.       | Premium     | Funding & Financials       |
+| What should I consider when applying for a small business loan, and how can I improve my chances of approval?                                          | Premium     | Funding & Financials       |
+| Explain key financial ratios (like current ratio, profit margin, debt-to-equity) and what they indicate about my business health.                      | Premium     | Funding & Financials       |
+| Suggest cost-cutting and efficiency measures to improve my company's profit margins.                                                                   | Premium     | Funding & Financials       |
+| What is the process to seek venture capital funding, and what do VCs typically require from startups?                                                  | Premium     | Funding & Financials       |
+| How should I structure equity and ownership if I bring on an investor (to ensure fair terms for both sides)?                                           | Premium     | Funding & Financials       |
+| Provide a scenario analysis: If my sales are 20% below forecast, how does it impact my cash flow and how long my funds will last (runway)?             | Premium     | Funding & Financials       |
+| Recommend financial software or tools to automate my accounting, invoicing, and financial tracking.                                                    | Premium     | Funding & Financials       |
+| How can I improve my business credit score or financial standing to prepare for future financing needs?                                                | Premium     | Funding & Financials       |
+| Explain the concept of unit economics (e.g., CAC, LTV) for my business and how to optimize them for profitability.                                     | Premium     | Funding & Financials       |
+| Help me set up an automation to send a welcome email to new customers using \[specific tool or platform].                                              | Premium     | Productivity & Automation  |
+| Develop an optimal daily and weekly schedule for a \[role, e.g., freelance designer] to maximize productivity.                                         | Premium     | Productivity & Automation  |
+| How can I implement project management methods (like Agile or Kanban) to improve my team's productivity?                                               | Premium     | Productivity & Automation  |
+| Identify routine processes in my business that I can automate, and suggest tools for each.                                                             | Premium     | Productivity & Automation  |
+| Create a template or checklist for delegating tasks effectively to virtual assistants or team members.                                                 | Premium     | Productivity & Automation  |
+| How can I integrate my CRM, email marketing, and accounting software to streamline workflows?                                                          | Premium     | Productivity & Automation  |
+| Suggest a plan for documenting and systematizing my business operations so it's easier to scale or hand off tasks.                                     | Premium     | Productivity & Automation  |
+| What advanced Excel or Google Sheets techniques can I use to automate financial tracking or data analysis for my business?                             | Premium     | Productivity & Automation  |
+| How can I set up a dashboard that automatically tracks and visualizes my key business metrics?                                                         | Premium     | Productivity & Automation  |
+| Recommend AI tools or chatbots I could use to automate customer service or marketing tasks in my business.                                             | Premium     | Productivity & Automation  |
+| Create a 5-year strategic growth plan for my business with key milestones and required resources.                                                      | Premium     | Growth Strategy            |
+| How can I scale my business nationally or internationally? Outline considerations like legal, distribution, and localization.                          | Premium     | Growth Strategy            |
+| Develop a strategy to expand into a new market or customer segment for my business.                                                                    | Premium     | Growth Strategy            |
+| If my current business model isn't yielding the growth I want, how can I identify if and how I should pivot?                                           | Premium     | Growth Strategy            |
+| Analyze my business model and suggest new revenue streams or business model innovations to drive growth.                                               | Premium     | Growth Strategy            |
+| How can I build a scalable business model that can handle a 10x increase in demand?                                                                    | Premium     | Growth Strategy            |
+| Propose a plan to increase my user base (or revenue) by 200% in the next year and what resources that would require.                                   | Premium     | Growth Strategy            |
+| How can I prepare my business for a future acquisition or exit? (What should I do now to make it attractive to buyers?)                                | Premium     | Growth Strategy            |
+| Outline a strategy for building a strong management team and company culture that can support rapid growth.                                            | Premium     | Growth Strategy            |
+| How can I implement OKRs (Objectives and Key Results) or similar frameworks to align my team with growth objectives?                                   | Premium     | Growth Strategy            |
+| Identify potential risks of scaling up quickly (e.g., quality issues, burnout) and how to mitigate them.                                               | Premium     | Growth Strategy            |
+| Should I introduce a subscription or recurring revenue model to drive growth? What are the pros and cons?                                              | Premium     | Growth Strategy            |
+| What strategies can ensure continuous innovation in my company so we stay ahead of competitors as we grow?                                             | Premium     | Growth Strategy            |
+| Help me plan entry into an international market (e.g., expanding to Europe), including market entry strategy and compliance considerations.            | Premium     | Growth Strategy            |
+| Evaluate the trade-offs between seeking external funding (VC, loans) vs. growing organically for my business's growth goals.                           | Premium     | Growth Strategy            |
+| How can I increase my company's valuation in the next 2 years to attract potential investors or buyers?                                                | Premium     | Growth Strategy            |
+| Outline how I could franchise my business model – what would that entail and how would I maintain quality?                                             | Premium     | Growth Strategy            |
+| What steps can I take to build an exit strategy (such as selling the company) while maximizing the business's value?                                   | Premium     | Growth Strategy            |
+| How do I identify and prioritize the high-impact projects or features that will drive the most growth?                                                 | Premium     | Growth Strategy            |
+| Suggest ways to improve customer lifetime value (LTV) and reduce churn to fuel sustainable growth.                                                     | Premium     | Growth Strategy            |
+| How can I leverage data analytics to inform and refine my growth strategy (what data to collect and how to use it)?                                    | Premium     | Growth Strategy            |
+| What approaches can I take to form strategic alliances or partnerships to accelerate growth?                                                           | Premium     | Growth Strategy            |
+| If market conditions change dramatically, how can I pivot or adjust my strategy quickly to keep growing?                                               | Premium     | Growth Strategy            |
+| Design a scalable organizational structure (teams, processes) to support the business as it doubles or triples in size.                                | Premium     | Growth Strategy            |
+| How do I maintain product/service quality and customer satisfaction during periods of rapid growth?                                                    | Premium     | Growth Strategy            |

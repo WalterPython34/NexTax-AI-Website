@@ -1,0 +1,70 @@
+1. Social Media Launch Calendar
+•	Purpose: Create a 30-day content calendar for business launch
+•	User Input: Industry, launch date, product/service type
+•	Output: Calendar with recommended post topics, hashtags, and media ideas
+•	Dev Notes:
+o	Integrate with GPT to generate plan
+o	Export as PDF or Google Sheet
+________________________________________
+2. Startup Checklist Builder
+•	Purpose: Interactive checklist based on state, entity type, and timeline
+•	User Input: Business state, LLC or Corp, planned launch date
+•	Output: Task list with estimated due dates
+•	Dev Notes:
+o	Sync tasks to Roadmap tab if active
+o	Option to export as PDF or embed
+________________________________________
+3. Founder's Equity Split Calculator
+•	Purpose: Guide early-stage equity division
+•	User Input: Number of founders, contribution breakdown (skills, capital, time, IP)
+•	Output: Suggested equity split with reasoning
+•	Dev Notes:
+o	Use weighted scoring system
+o	Display via summary card + chart (Pie chart optional)
+________________________________________
+4. Email Welcome Series Generator
+•	Purpose: Generate 3–5 automated onboarding emails
+•	User Input: Company name, product/service, tone (formal/casual/friendly)
+•	Output: Editable email sequence with subject lines and body content
+•	Dev Notes:
+o	Include preview + copy-to-clipboard feature
+o	Format for Mailchimp, ConvertKit, etc.
+________________________________________
+5. Pitch Deck Outline Writer
+•	Purpose: Generate a slide-by-slide structure for investor presentations
+•	User Input: Business name, industry, funding goal
+•	Output: Outline (10-slide deck with notes), exportable as .pptx or PDF
+•	Dev Notes:
+o	Offer slide titles, speaker notes, and visual tips
+o	Save output in user’s document center
+________________________________________
+6. Business Policy Generator
+•	Purpose: Draft basic policies for HR, privacy, and returns
+•	User Input: Business type, eCommerce/service model, location
+•	Output: Policy templates tailored by business profile
+•	Dev Notes:
+o	Generate downloadable Word or PDF
+o	Use simple toggle logic for eCom vs. physical vs. B2B
+________________________________________
+✅ 7. Automated Email Campaign + Zapier Instructions
+•	Purpose: Generate a full cold outreach campaign with automation steps
+•	User Input: Target audience, product/service, tone (direct/value-add), platform (Gmail, Outlook)
+•	Output:
+o	1 intro + 2 follow-up emails
+o	Instructions to automate via Zapier or Make using Google Sheets as trigger
+•	Pro Tip: Includes link to tutorial or prebuilt Zap templates
+•	Dev Notes:
+o	Use toggle: “Manual” (copy/paste) vs. “Automated” (setup flow)
+o	Format output for email + instruction guide
+________________________________________
+✅ 8. Sales Outreach Script Generator
+•	Purpose: Build 3 sales call/email scripts tailored to user’s offering
+•	User Input: Industry, product, target audience, pain points
+•	Output:
+o	Elevator pitch
+o	Discovery call opener
+o	Cold outreach email
+•	Dev Notes: Allow user to choose tone (conversational, consultative, high-pressure)
+•	Optional: Add “Save to CRM” format toggle (e.g., HubSpot fields)
+
+

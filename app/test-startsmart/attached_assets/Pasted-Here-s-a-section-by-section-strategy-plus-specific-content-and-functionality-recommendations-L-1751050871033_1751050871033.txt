@@ -1,0 +1,97 @@
+Here's a section-by-section strategy, plus specific content and functionality recommendations:
+
+📄 LEGAL DOCUMENTS
+✅ 1. Operating Agreement
+Option A (Free Tier): Offer a downloadable Word or PDF template with a disclaimer:
+
+"This document is for educational purposes only and does not constitute legal advice."
+
+Option B (Pro/Premium):
+
+Let users generate a customized version using AI (pre-filled with profile info).
+
+Add button: “Unlock Editable Agreement” → Link to /pricing.
+
+✅ 2. Articles of Incorporation
+Free: Provide sample articles as a reference doc.
+
+Paid Option: Include a call-to-action like:
+
+“Need help filing with your state? Learn more [link to pricing].”
+
+✅ 3. Corporate Bylaws
+Same logic as above: free downloadable outline, AI-aided generation for paid users.
+
+💼 TAX & FINANCE
+✅ 1. SS-4 EIN Form
+Free:
+
+Link to IRS Form SS-4 (PDF) and EIN instructions.
+
+Pro Feature: AI-guided walkthrough:
+
+“Answer a few questions and we’ll pre-fill your SS-4.”
+
+✅ 2. Chart of Accounts
+Offer a free, downloadable starter version in Excel (based on QuickBooks).
+
+Add AI suggestion tool for paid tiers:
+
+“Tell us about your business, and we’ll tailor your Chart of Accounts.”
+
+✅ 3. Budget Template
+✅ Embed an editable template in-browser using Airtable or Notion-style grid, OR
+
+✅ Offer downloadable Excel version with formulas (great lead magnet or feature-lock for paid tier).
+
+📊 BUSINESS PLANS
+✅ 1. Executive Summary
+Offer a simple AI-powered wizard:
+
+“Ask GPT to generate your Executive Summary — tell us your industry, mission, and goals.”
+
+Or: basic editable outline (free), GPT integration (Pro+).
+
+✅ 2. Lean Canvas
+A Lean Canvas is a one-page business model format (problem, solution, key metrics, etc.)
+
+Use this structure: Lean Canvas format
+
+Offer:
+
+Free template (Google Docs/Sheets).
+
+GPT-powered fill tool for Pro users.
+
+Visual drag/drop tool in Premium (optional future feature).
+
+✅ 3. Pitch Deck Template
+Provide:
+
+Basic downloadable PowerPoint or Google Slides template.
+
+AI-suggested slide content based on business profile (for Premium tier).
+
+⚙️ Functionality Recommendations
+Feature	Free Plan	Pro	Premium
+View templates	✅	✅	✅
+Download static templates	✅	✅	✅
+AI-generated custom documents	❌	✅	✅
+Editable roadmap & saved docs	❌	✅	✅
+Full GPT-guided workflows	❌	Limited	✅
+
+🔖 Final Recommendations
+✅ All users see all documents, but only Pro/Premium can:
+
+Generate customized versions
+
+Save outputs
+
+Access GPT drafting
+
+✅ Use modal previews or tooltips to upsell Pro/Premium on click:
+
+“This feature is available with Pro. Upgrade now to unlock document drafting and customization.”
+
+✅ Include “Create with AI” or “Customize” buttons next to templates.
+

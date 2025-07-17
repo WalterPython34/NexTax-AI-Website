@@ -1,0 +1,65 @@
+To automate the Lean Canvas generation, we’ll treat it as a structured one-page business model and use these 9 standard blocks:
+
+✅ Lean Canvas - Section Breakdown for AI Generation
+Here are the 9 Lean Canvas blocks we need to collect from the user:
+
+Problem – What top 1–3 problems does your startup solve?
+
+Customer Segments – Who are your target customers (personas)?
+
+Unique Value Proposition (UVP) – Your clear, compelling statement of differentiation.
+
+Solution – Outline of the core solution to each problem.
+
+Channels – How you reach your customers (marketing/sales).
+
+Revenue Streams – How do you make money?
+
+Cost Structure – What are the main fixed and variable costs?
+
+Key Metrics – What are the critical metrics that define success?
+
+Unfair Advantage – What can’t easily be copied or bought?
+
+🧑‍💻 AI Chat Prompt Script (Lean Canvas)
+Intro: “Let’s fill in your Lean Canvas—an essential one-page startup blueprint. Answer these short questions and we’ll build your model.”
+
+What are the top 1–3 problems your startup solves?
+
+Who are your key customer segments?
+
+What is your unique value proposition?
+
+How does your product/service solve those problems?
+
+What channels do you use to acquire customers?
+
+How does your business make money (revenue streams)?
+
+What are your biggest costs (fixed/variable)?
+
+What are your key success metrics?
+
+What is your ‘unfair advantage’—something competitors can't replicate?
+
+Wrap-up: “Great work. I’m generating a Lean Canvas with your inputs. You’ll be able to download it or save it in your NexTax Document Center.”
+
+📄 Output Format Options
+Visual Template (PDF/PNG) – Generated via HTML-to-PDF with a modern design grid.
+
+Text Summary – Structured text format with headings (for accessibility/export).
+
+Download + Save to Roadmap – Optional integration for roadmap or document tracker.
+
+🔧 Dev Instructions for Replit
+Present one chat question per block (9 total).
+
+Store responses in a simple JSON object.
+
+After form completion, trigger:
+
+HTML/Canvas to PNG (grid layout mimicking Lean Canvas)
+
+PDF generation for download
+
+Optional: Save metadata (date created, revision tag) to user profile

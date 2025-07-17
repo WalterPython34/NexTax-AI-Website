@@ -1,0 +1,141 @@
+Run mkdir -p ~/private_keys
+/opt/homebrew/lib/ruby/gems/3.3.0/gems/highline-2.0.3/lib/highline/import.rb:10: warning: abbrev was loaded from the standard library, but will no longer be part of the default gems starting from Ruby 3.4.0.
+You can add abbrev to your Gemfile or gemspec to silence this warning.
+[20:43:05]: Sending anonymous analytics information
+[20:43:05]: Learn more at https://docs.fastlane.tools/#metrics
+[20:43:05]: No personal or sensitive data is sent.
+[20:43:05]: You can disable this by adding `opt_out_usage` at the top of your Fastfile
+[20:43:05]: ------------------------------
+[20:43:05]: --- Step: default_platform ---
+[20:43:05]: ------------------------------
+[20:43:05]: Driving the lane 'ios beta' 🚀
+[20:43:05]: -----------------------
+[20:43:05]: --- Step: build_app ---
+[20:43:05]: -----------------------
+[20:43:05]: Resolving Swift Package Manager dependencies...
+[20:43:05]: $ xcodebuild -resolvePackageDependencies -workspace App.xcworkspace -scheme App -configuration Release
+[20:43:07]: ▸ Command line invocation:
+[20:43:07]: ▸     /Applications/Xcode_15.4.app/Contents/Developer/usr/bin/xcodebuild -resolvePackageDependencies -workspace App.xcworkspace -scheme App -configuration Release
+[20:43:07]: ▸ User defaults from command line:
+[20:43:07]: ▸     IDEPackageSupportUseBuiltinSCM = YES
+[20:43:09]: ▸ resolved source packages: 
+[20:43:09]: $ xcodebuild -showBuildSettings -workspace App.xcworkspace -scheme App -configuration Release 2>&1
+[20:43:12]: Command timed out after 3 seconds on try 1 of 4, trying again with a 6 second timeout...
+
++--------------------------------------------------------------------------------------------------+
+|                                     Summary for gym 2.228.0                                      |
++--------------------------------------+-----------------------------------------------------------+
+| workspace                            | App.xcworkspace                                           |
+| scheme                               | App                                                       |
+| configuration                        | Release                                                   |
+| export_method                        | app-store                                                 |
+| export_options.signingStyle          | automatic                                                 |
+| xcargs                               | -allowProvisioningUpdates                                 |
+| clean                                | false                                                     |
+| output_directory                     | .                                                         |
+| output_name                          | App                                                       |
+| silent                               | false                                                     |
+| skip_package_ipa                     | false                                                     |
+| skip_package_pkg                     | false                                                     |
+| build_path                           | /Users/runner/Library/Developer/Xcode/Archives/2025-07-08 |
+| result_bundle                        | false                                                     |
+| buildlog_path                        | ~/Library/Logs/gym                                        |
+| destination                          | generic/platform=iOS                                      |
+| xcodebuild_formatter                 | xcbeautify                                                |
+| build_timing_summary                 | false                                                     |
+| skip_profile_detection               | false                                                     |
+| xcodebuild_command                   | xcodebuild                                                |
+| skip_package_dependencies_resolution | false                                                     |
+| disable_package_automatic_updates    | false                                                     |
+| use_system_scm                       | false                                                     |
+| xcode_path                           | /Applications/Xcode_15.4.app                              |
++--------------------------------------+-----------------------------------------------------------+
+
+[20:43:17]: $ set -o pipefail && xcodebuild -workspace App.xcworkspace -scheme App -configuration Release -destination 'generic/platform=iOS' -archivePath /Users/runner/Library/Developer/Xcode/Archives/2025-07-08/App\ 2025-07-08\ 20.43.17.xcarchive -allowProvisioningUpdates archive | tee /Users/runner/Library/Logs/gym/App-App.log | xcbeautify
+[20:43:17]: ▸ ----- xcbeautify -----
+[20:43:17]: ▸ Version: 2.28.0
+[20:43:17]: ▸ ----------------------
+[20:43:20]: ▸ note: Building targets in dependency order
+[20:43:20]: ▸ note: Target dependency graph (4 targets)
+[20:43:30]: ▸ ::error file=/Users/runner/work/startsmart-ios-app-fix/startsmart-ios-app-fix/ios/App/App.xcodeproj::No Accounts: Add a new account in Accounts settings. (in target 'App' from project 'App')
+[20:43:30]: ▸ /Users/runner/work/startsmart-ios-app-fix/startsmart-ios-app-fix/ios/App/App.xcodeproj: error: No profiles for 'ai.nextax.startsmart' were found: Xcode couldn't find any iOS App Development provisioning profiles matching 'ai.nextax.startsmart'. (in target 'App' from project 'App')
+[20:43:30]: ▸ warning: Run script build phase '[CP] Embed Pods Frameworks' will be run during every build because it does not specify any outputs. To address this warning, either add output dependencies to the script phase, or configure it to run in every build by unchecking "Based on dependency analysis" in the script phase. (in target 'App' from project 'App')
+[20:43:30]: ▸ ** ARCHIVE FAILED **
+[20:43:30]: Exit status: 65
+[20:43:30]: 
+[20:43:30]: Maybe the error shown is caused by using the wrong version of Xcode
+[20:43:30]: Found multiple versions of Xcode in '/Applications/'
+[20:43:30]: Make sure you selected the right version for your project
+[20:43:30]: This build process was executed using '/Applications/Xcode_15.4.app'
+[20:43:30]: If you want to update your Xcode path, either
+[20:43:30]: 
+[20:43:30]: - Specify the Xcode version in your Fastfile
+[20:43:30]: ▸ xcversion(version: "8.1") # Selects Xcode 8.1.0
+[20:43:30]: 
+
+[20:43:30]: - Specify an absolute path to your Xcode installation in your Fastfile
+[!] Error building the application - see the log above
+[20:43:30]: ▸ xcode_select "/Applications/Xcode8.app"
+[20:43:30]: 
+[20:43:30]: - Manually update the path using
+[20:43:30]: ▸ sudo xcode-select -s /Applications/Xcode.app
+[20:43:30]: 
+
++----------------------------------------------+
+|              Build environment               |
++---------------+------------------------------+
+| xcode_path    | /Applications/Xcode_15.4.app |
+| gym_version   | 2.228.0                      |
+| export_method | app-store                    |
+| sdk           | iPhoneOS17.5.sdk             |
++---------------+------------------------------+
+
+[20:43:30]: ▸ Build description signature: fd652a866d984c6839ec0a9e56002b25
+[20:43:30]: ▸ Build description path: /Users/runner/Library/Developer/Xcode/DerivedData/App-fnusszuxkqgpddereyasheezyvjh/Build/Intermediates.noindex/ArchiveIntermediates/App/IntermediateBuildFilesPath/XCBuildData/fd652a866d984c6839ec0a9e56002b25.xcbuilddata
+[20:43:30]: ▸ /Users/runner/work/startsmart-ios-app-fix/startsmart-ios-app-fix/ios/App/App.xcodeproj: error: No Accounts: Add a new account in Accounts settings. (in target 'App' from project 'App')
+[20:43:30]: ▸ /Users/runner/work/startsmart-ios-app-fix/startsmart-ios-app-fix/ios/App/App.xcodeproj: error: No profiles for 'ai.nextax.startsmart' were found: Xcode couldn't find any iOS App Development provisioning profiles matching 'ai.nextax.startsmart'. (in target 'App' from project 'App')
+[20:43:30]: ▸ warning: Run script build phase '[CP] Embed Pods Frameworks' will be run during every build because it does not specify any outputs. To address this warning, either add output dependencies to the script phase, or configure it to run in every build by unchecking "Based on dependency analysis" in the script phase. (in target 'App' from project 'App')
+[20:43:30]: 
+[20:43:30]: ⬆️  Check out the few lines of raw `xcodebuild` output above for potential hints on how to solve this error
+[20:43:30]: 📋  For the complete and more detailed error log, check the full log at:
+[20:43:30]: 📋  /Users/runner/Library/Logs/gym/App-App.log
+[20:43:30]: 
+[20:43:30]: Looks like fastlane ran into a build/archive error with your project
+[20:43:30]: It's hard to tell what's causing the error, so we wrote some guides on how
+[20:43:30]: to troubleshoot build and signing issues: https://docs.fastlane.tools/codesigning/getting-started/
+[20:43:30]: Before submitting an issue on GitHub, please follow the guide above and make
+[20:43:30]: sure your project is set up correctly.
+[20:43:30]: fastlane uses `xcodebuild` commands to generate your binary, you can see the
+[20:43:30]: the full commands printed out in yellow in the above log.
+[20:43:30]: Make sure to inspect the output above, as usually you'll find more error information there
+[20:43:30]: 
++-----------------------------+
+|        Lane Context         |
++------------------+----------+
+| DEFAULT_PLATFORM | ios      |
+| PLATFORM_NAME    | ios      |
+| LANE_NAME        | ios beta |
++------------------+----------+
+[20:43:30]: Called from Fastfile at line 5
+[20:43:30]: ```
+[20:43:30]:     3:	platform :ios do
+[20:43:30]:     4:	  lane :beta do
+[20:43:30]:  => 5:	    build_app(
+[20:43:30]:     6:	      workspace: "App.xcworkspace",
+[20:43:30]:     7:	      scheme: "App",
+[20:43:30]: ```
+[20:43:30]: Error building the application - see the log above
+
++---------------------------------------+
+|           fastlane summary            |
++------+------------------+-------------+
+| Step | Action           | Time (in s) |
++------+------------------+-------------+
+| 1    | default_platform | 0           |
+| 💥   | build_app        | 24          |
++------+------------------+-------------+
+
+[20:43:30]: fastlane finished with errors
+Error: Process completed with exit code 1.
+0s
+2s

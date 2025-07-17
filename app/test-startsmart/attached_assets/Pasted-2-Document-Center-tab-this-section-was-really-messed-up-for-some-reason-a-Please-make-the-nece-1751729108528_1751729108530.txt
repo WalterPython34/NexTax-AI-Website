@@ -1,0 +1,21 @@
+2.	Document Center tab: (this section was really messed up for some reason)
+a.	Please make the necessary corrections to fix the below issues:
+i.	SS-4 EIN Form (Under Tax & Finance section): I want to change the tier to Premium ($79/mo) for access to the “Create with AI” button, with no time limit, so that they will get EIN preparation for $79 (at a discount from NexTax Website price special benefit for Premium tier members).  
+1.	Also please make sure that a link to my Typeform quiz appears for them to fill out and note above the link, “That by filling out the below questionnaire, your form will be auto generated, sent to you via email with instructions for you to review and sign, and a copy will then be provided to NexTax.AI where we will proceed to get your EIN for you from the IRS and provide you with a final copy of your SS-4 form complete with your new EIN number at the top of the form.”
+ii.	Chart of Accounts (Under Tax & Finance section): 
+1.	Under “Create with AI” when the “Generate Chart” button is clicked after the questions are answered, I get a Red error message stating that” Generation Failed – Failed to generate chart of accounts. Please try again.” Please fix so that the excel file generates as it was during testing.
+2.	The “Create with AI” button is currently unlocked (free), when it should be locked for only Pro or Premium members to access. Please update.
+iii.	Budget Template (Under Tax & Finance section):
+1.	Under “Create with AI” when the “Generate Chart” button is clicked at the end, I get a Red error message stating that” Generation Failed – Failed to generate chart of accounts. Please try again.” Please fix so that the excel file generates as it was during testing.
+2.	The “Create with AI” button is currently unlocked (free), when it should be locked for only Pro or Premium members to access. Please update.
+iv.	Operating Agreement (Under Legal Documents):
+1.	Under “Create with AI” after completing the questions, the documents all generate, but the Word doc will not open after it is downloaded and get an error due to unreadable content.
+2.	The “Create with AI” button is currently unlocked (free), when it should be locked for only Pro or Premium members to access. Please update.
+v.	Articles of Incorporation (Under Legal Documents):
+1.	Under “Create with AI” after completing the questions, the documents all generate, but the Word doc will not open after it is downloaded and get an error due to unreadable content.
+2.	The “Create with AI” button is currently unlocked (free), when it should be locked for only Pro or Premium members to access. Please update.
+vi.	Corporate Bylaws (Under Legal Documents):
+1.	Under “Create with AI” after completing the questions, the documents all generate, but the Word doc will not open after it is downloaded and get an error due to unreadable content.
+2.	The “Create with AI” button is currently unlocked (free), when it should be locked for only Pro or Premium members to access. Please update.
+b.	Please also check that the Word documents are being properly generated under the Business Plans section for the Executive Summary, Lean Canvas, and the Business Plan for Startups)
+

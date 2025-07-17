@@ -1,0 +1,70 @@
+✅ 1. Templates for Free Users
+Yes — offering templates is critical for:
+
+Lead generation
+
+Goodwill and trial of your ecosystem
+
+Serving DIYers who may later upgrade
+
+📁 Templates You’ll Need:
+Document	Type	File Suggestions
+Operating Agreement	Word + PDF	Pre-filled sample LLC agreement
+Articles of Incorporation	PDF	Sample filing w/ placeholder text
+Corporate Bylaws	Word + PDF	Startup-friendly outline
+SS-4 EIN Form	Link + PDF	IRS SS-4 Form
+Chart of Accounts	Excel	Based on QB default chart
+Budget Template	Excel + optional embedded editor	
+Executive Summary	Word outline	+ prompt for AI
+Lean Canvas	PDF	1-pager with labeled sections
+Pitch Deck Template	PPT/Slides	Include a 10-slide investor deck layout
+
+I can help create or source all of these if needed.
+
+🚀 2. “Create with AI” = Pro Plan (✅ Good)
+That button is working as it should. Here’s how to enhance:
+
+Add Tooltip or Label:
+“Let our AI draft your document with your business profile.”
+
+✅ Smart feature to lock behind Pro, as it provides real-time productivity.
+
+👑 3. “Premium” Button — Needs Rethinking
+Right now it duplicates the Pro button and adds no unique value, so here's what you should do:
+
+🔄 Replace “Premium” Button with:
+🛎 “Let NexTax Help” → Link to your https://www.nexTax.ai/pricing
+
+Label:
+
+“Need expert help completing this document? Let NexTax assist you directly.”
+
+This is your white-glove upsell path — Premium tier users may want:
+
+Legal/accounting help
+
+Filing services
+
+Pitch deck review
+
+💡 Bonus Improvements
+🧠 Smart Personalization on Popup:
+When user clicks “Create with AI,” ask:
+
+“Want to use your business profile details to pre-fill this?”
+
+[Yes, pre-fill] [No, start fresh]
+
+🧭 Add Path to Roadmap:
+Let users save created docs directly to Progress Tracker:
+
+“Add this task to your Business Launch Roadmap?”
+
+🛠 Suggested Tiered Access Model
+Feature	Free	Pro ($29/mo)	NexTax Help (Premium CTA)
+Download static templates	✅	✅	✅
+GPT-generated documents	❌	✅	✅ (w/ human oversight)
+Save/edit documents	❌	✅	✅
+Legal/tax professional review	❌	❌	✅
+State filing / doc submission	❌	❌	✅
+

@@ -1,0 +1,96 @@
+Ok, so I want to deploy to my website first, but also want to deploy to Apple/Android stores (I'm terrified that something is going to get messed up so please make sure you have this final version saved somewhere incase we need it).              
+## **🔧 Essential Technical Requirements:**
+ 
+### 1. Supabase Integration (verify)
+ 
+- Same Supabase project/database as NexTax.AI
+- Shared user authentication system
+- User subscription status checking
+ 
+ 
+### 2. Subscription Tier Integration (Verify)
+ 
+
+### 3. Web Embedding Capabilities**
+ 
+- **iFrame-friendly design** - No X-Frame-Options restrictions
+- **Responsive design** that works in embedded containers
+- **Cross-origin communication** for seamless integration
+- **Authentication passthrough** from parent site
+ 
+ 
+### **4. API Endpoints for Integration**
+ 
+```javascript
+// Your NexTax.AI site will need these endpoints:
+POST /api/auth/verify-user     // Check if user has access
+GET  /api/user/subscription    // Get subscription tier
+POST /api/user/sync           // Sync user data
+```
+                                                                                                                                                                                             If the user purchases on one platform, the website for example, I'd like them to be able to log into the app as well with the same password (shared user authentication system), so will need supabase like my website has. Make sure app is s Also, will need cross-platform Deployment (Web, iOS, Android) all pointing to the same core app:                                                                                                                            🔹 1. Web Version
+Already running on: https://nextax.ai/startsmart-gpt
+
+Replit to-do:
+
+-	Finalize web version as a responsive PWA (Progressive Web App)
+
+-	Ensure login system works across devices
+
+-	Embed in your website cleanly inside an <iframe> or redirect button
+
+-	Support Stripe/Gumroad,ect. for plan-based access, and user subscription status checking
+
+🔹 2. iOS App Version (Apple)
+Wrap the web app using CapacitorJS or Expo → then deploy through Xcode to the Apple App Store
+
+Replit to-do:
+
+Build native iOS wrapper that points to your Replit app URL
+
+Add splash screen, app icon, navigation UI (if needed)
+
+Configure .plist permissions, webview, and test using TestFlight
+
+Package .ipa file for App Store submission
+
+🔹 3. Android App Version (Google Play)
+Same web app, wrapped using CapacitorJS, React Native, or Expo, but deployed through Android Studio or Play Console.
+
+Replit to-do:
+
+Wrap and export .apk or .aab file for upload to Play Console
+
+Set up Android permissions, icons, and splash screen
+
+Test on various Android devices
+
+Follow Google Play guidelines (privacy, account sign-in, permissions)
+
+💡 Shared Tips for All Platforms:
+Single codebase: Web-based logic remains centralized
+
+Deep linking support: Allow nextax.ai links to open in-app
+
+Unified login: All versions should support the same Supabase login
+
+Responsive UI: Ensure mobile-first design looks good on iOS/Android
+
+Plan sync: Stripe plans should grant access across all platforms
+
+“Please wrap my app using CapacitorJS or Expo for iOS and Android deployment. I will be deploying to:
+
+Web (nextax.ai/startsmart-gpt)
+
+Apple App Store
+
+Google Play Store
+
+Please ensure:
+
+-	The iOS build is submitted via Xcode and includes splash screen, icons, privacy links, and onboarding
+
+-	The Android version meets Google Play requirements (aab format, support URL, privacy links)
+
+-	All versions share a unified login and point to the live app URL
+
+-	Stripe integration is compatible across all versions.”
