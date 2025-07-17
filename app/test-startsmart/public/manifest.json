@@ -1,0 +1,43 @@
+{
+  "name": "StartSmart GPT - Business Launch Assistant",
+  "short_name": "StartSmart GPT",
+  "description": "Your AI Business Copilot - Complete platform to launch, manage, and scale your business",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1e293b",
+  "theme_color": "#10b981",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable any"
+    },
+    {
+      "src": "/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable any"
+    }
+  ],
+  "categories": ["business", "productivity", "finance"],
+  "lang": "en-US",
+  "dir": "ltr",
+  "scope": "/",
+  "prefer_related_applications": false,
+  "screenshots": [
+    {
+      "src": "/screenshot-mobile-1.png",
+      "sizes": "390x844",
+      "type": "image/png",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "/screenshot-desktop-1.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide"
+    }
+  ]
+}
