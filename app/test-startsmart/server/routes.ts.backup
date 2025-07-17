@@ -1,0 +1,2642 @@
+import type { Express } from "express";
+import { createServer, type Server } from "http";
+import { storage } from "./storage";
+import { setupAuth, isAuthenticated } from "./replitAuth";
+import { openaiService } from "./openai";
+import fs from "fs";
+import path from "path";
+import { 
+  insertConversationSchema, 
+  insertMessageSchema, 
+  insertBusinessProfileSchema,
+  insertProgressTaskSchema,
+  insertDocumentSchema 
+} from "@shared/schema";
+import { z } from "zod";
+
+export async function registerRoutes(app: Express): Promise<Server> {
+  // Auth middleware
+  await setupAuth(app);
+
+  // Auth routes
+  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      res.json(user);
+    } catch (error) {
+      console.error("Error fetching user:", error);
+      res.status(500).json({ message: "Failed to fetch user" });
+    }
+  });
+
+  // Business profile routes
+  app.get('/api/business-profiles', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const profiles = await storage.getUserBusinessProfiles(userId);
+      res.json(profiles);
+    } catch (error) {
+      console.error("Error fetching business profiles:", error);
+      res.status(500).json({ message: "Failed to fetch business profiles" });
+    }
+  });
+
+  app.post('/api/business-profiles', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const profileData = insertBusinessProfileSchema.parse({ ...req.body, userId });
+      const profile = await storage.createBusinessProfile(profileData);
+      
+      // Create default progress tasks for this business
+      await storage.createDefaultProgressTasks(userId, profile.id);
+      
+      res.json(profile);
+    } catch (error) {
+      console.error("Error creating business profile:", error);
+      res.status(500).json({ message: "Failed to create business profile" });
+    }
+  });
+
+  // Chat routes
+  app.get('/api/conversations', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const conversations = await storage.getUserConversations(userId);
+      res.json(conversations);
+    } catch (error) {
+      console.error("Error fetching conversations:", error);
+      res.status(500).json({ message: "Failed to fetch conversations" });
+    }
+  });
+
+  app.post('/api/conversations', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const conversationData = insertConversationSchema.parse({ ...req.body, userId });
+      const conversation = await storage.createConversation(conversationData);
+      res.json(conversation);
+    } catch (error) {
+      console.error("Error creating conversation:", error);
+      res.status(500).json({ message: "Failed to create conversation" });
+    }
+  });
+
+  app.get('/api/conversations/:id/messages', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const conversationId = req.params.id;
+      
+      // Verify conversation ownership
+      const conversation = await storage.getConversation(conversationId);
+      if (!conversation || conversation.userId !== userId) {
+        return res.status(404).json({ message: "Conversation not found" });
+      }
+      
+      const messages = await storage.getConversationMessages(conversationId);
+      res.json(messages);
+    } catch (error) {
+      console.error("Error fetching messages:", error);
+      res.status(500).json({ message: "Failed to fetch messages" });
+    }
+  });
+
+  app.post('/api/conversations/:id/messages', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const conversationId = req.params.id;
+      
+      // Verify conversation ownership
+      const conversation = await storage.getConversation(conversationId);
+      if (!conversation || conversation.userId !== userId) {
+        return res.status(404).json({ message: "Conversation not found" });
+      }
+
+      const { content } = req.body;
+      if (!content) {
+        return res.status(400).json({ message: "Message content is required" });
+      }
+
+      // Save user message
+      const userMessage = await storage.createMessage({
+        conversationId,
+        role: "user",
+        content
+      });
+
+      // Get business context if available
+      let businessContext;
+      if (conversation.businessId) {
+        businessContext = await storage.getBusinessProfile(conversation.businessId);
+      }
+
+      // Get conversation history for context
+      const messages = await storage.getConversationMessages(conversationId);
+      const chatHistory = messages.map(msg => ({
+        role: msg.role as "user" | "assistant",
+        content: msg.content
+      }));
+
+      // Generate AI response
+      const aiResponse = await openaiService.generateChatResponse(chatHistory, businessContext);
+
+      // Save AI message
+      const aiMessage = await storage.createMessage({
+        conversationId,
+        role: "assistant",
+        content: aiResponse.content,
+        metadata: aiResponse.metadata
+      });
+
+      // Update conversation title if this is the first exchange
+      if (messages.length <= 1) {
+        const title = await openaiService.generateConversationTitle(content);
+        await storage.updateConversationTitle(conversationId, title);
+      }
+
+      res.json({ userMessage, aiMessage });
+    } catch (error) {
+      console.error("Error sending message:", error);
+      res.status(500).json({ message: "Failed to send message" });
+    }
+  });
+
+  // Progress tracking routes
+  app.get('/api/progress', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const tasks = await storage.getUserProgressTasks(userId);
+      res.json(tasks);
+    } catch (error) {
+      console.error("Error fetching progress:", error);
+      res.status(500).json({ message: "Failed to fetch progress" });
+    }
+  });
+
+  // Create a new progress task from chat
+  app.post('/api/progress/tasks', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { title, description, category, dueDate, source } = req.body;
+
+      if (!title || !category) {
+        return res.status(400).json({ message: "Title and category are required" });
+      }
+
+      const task = await storage.createProgressTask({
+        userId,
+        taskName: title,
+        description: description || "",
+        category: category.toLowerCase(),
+        status: "pending",
+        dueDate: dueDate ? new Date(dueDate) : null,
+        orderIndex: 0
+      });
+
+      res.json(task);
+    } catch (error) {
+      console.error("Error creating progress task:", error);
+      res.status(500).json({ message: "Failed to create progress task" });
+    }
+  });
+
+  app.patch('/api/progress/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const taskId = req.params.id;
+      const { status } = req.body;
+
+      const task = await storage.getProgressTask(taskId);
+      if (!task || task.userId !== userId) {
+        return res.status(404).json({ message: "Task not found" });
+      }
+
+      const updatedTask = await storage.updateProgressTask(taskId, { 
+        status,
+        completedAt: status === 'completed' ? new Date() : null
+      });
+      
+      res.json(updatedTask);
+    } catch (error) {
+      console.error("Error updating progress:", error);
+      res.status(500).json({ message: "Failed to update progress" });
+    }
+  });
+
+  // Document generation routes
+  app.get('/api/documents', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const documents = await storage.getUserDocuments(userId);
+      res.json(documents);
+    } catch (error) {
+      console.error("Error fetching documents:", error);
+      res.status(500).json({ message: "Failed to fetch documents" });
+    }
+  });
+
+  // Legal review routes
+  app.get('/api/legal-reviews', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      // For now, return empty array as legal review integration is coming soon
+      res.json([]);
+    } catch (error) {
+      console.error("Error fetching legal reviews:", error);
+      res.status(500).json({ message: "Failed to fetch legal reviews" });
+    }
+  });
+
+  app.post('/api/legal-reviews', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { documentId, reviewType, priority, specialtyRequired, clientInstructions, dueDate } = req.body;
+      
+      // For now, simulate legal review request
+      const reviewData = {
+        id: Date.now().toString(),
+        documentId,
+        userId,
+        reviewType,
+        priority,
+        specialtyRequired,
+        clientInstructions,
+        dueDate,
+        status: "pending",
+        submittedAt: new Date().toISOString(),
+      };
+
+      // In the future, this will integrate with actual legal review system
+      res.json(reviewData);
+    } catch (error) {
+      console.error("Error creating legal review:", error);
+      res.status(500).json({ message: "Failed to create legal review" });
+    }
+  });
+
+  app.post('/api/documents/generate', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { documentType, businessId, title, businessData } = req.body;
+
+      if (!documentType || !title) {
+        return res.status(400).json({ message: "Document type and title are required" });
+      }
+
+      // Get business profile for context if businessId provided
+      let businessProfile = null;
+      if (businessId) {
+        businessProfile = await storage.getBusinessProfile(businessId);
+      }
+
+      // Generate document content
+      const generatedDoc = await openaiService.generateDocument(
+        documentType, 
+        businessProfile, 
+        businessData
+      );
+
+      // Save document
+      const document = await storage.createDocument({
+        userId,
+        businessId,
+        documentType,
+        title: generatedDoc.title,
+        content: generatedDoc.content,
+        status: "generated",
+        metadata: { 
+          businessData,
+          generatedAt: new Date().toISOString()
+        }
+      });
+
+      res.json(document);
+    } catch (error) {
+      console.error("Error generating document:", error);
+      res.status(500).json({ message: "Failed to generate document" });
+    }
+  });
+
+  // Compliance Center API routes
+  app.get('/api/compliance', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const compliance = await storage.getUserBusinessCompliance(userId);
+      res.json(compliance);
+    } catch (error) {
+      console.error("Error fetching compliance profile:", error);
+      res.status(500).json({ message: "Failed to fetch compliance profile" });
+    }
+  });
+
+  app.post('/api/compliance', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const complianceData = { ...req.body, userId };
+      
+      // Check if user already has a compliance profile
+      const existingCompliance = await storage.getUserBusinessCompliance(userId);
+      
+      let compliance;
+      if (existingCompliance) {
+        // Update existing compliance profile
+        compliance = await storage.updateBusinessCompliance(existingCompliance.id, complianceData);
+        
+        // Clean up existing auto-generated tasks before generating new ones
+        await storage.clearAutoGeneratedTasks(userId);
+      } else {
+        // Create new compliance profile
+        compliance = await storage.createBusinessCompliance(complianceData);
+      }
+      
+      // Auto-generate default compliance tasks
+      await storage.createDefaultComplianceTasks(userId, compliance.id);
+      
+      res.json(compliance);
+    } catch (error) {
+      console.error("Error creating compliance profile:", error);
+      res.status(500).json({ message: "Failed to create compliance profile" });
+    }
+  });
+
+  app.put('/api/compliance/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const updates = req.body;
+      
+      const compliance = await storage.updateBusinessCompliance(id, updates);
+      res.json(compliance);
+    } catch (error) {
+      console.error("Error updating compliance profile:", error);
+      res.status(500).json({ message: "Failed to update compliance profile" });
+    }
+  });
+
+  // Compliance task routes
+  app.get('/api/compliance/tasks', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const tasks = await storage.getUserComplianceTasks(userId);
+      res.json(tasks);
+    } catch (error) {
+      console.error("Error fetching compliance tasks:", error);
+      res.status(500).json({ message: "Failed to fetch compliance tasks" });
+    }
+  });
+
+  app.post('/api/compliance/tasks', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const taskData = { ...req.body, userId };
+      
+      const task = await storage.createComplianceTask(taskData);
+      res.json(task);
+    } catch (error) {
+      console.error("Error creating compliance task:", error);
+      res.status(500).json({ message: "Failed to create compliance task" });
+    }
+  });
+
+  app.put('/api/compliance/tasks/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const updates = req.body;
+      
+      // Auto-set completion timestamp if status changed to completed
+      if (updates.status === "completed" && !updates.completedAt) {
+        updates.completedAt = new Date();
+      }
+      
+      const task = await storage.updateComplianceTask(id, updates);
+      res.json(task);
+    } catch (error) {
+      console.error("Error updating compliance task:", error);
+      res.status(500).json({ message: "Failed to update compliance task" });
+    }
+  });
+
+  app.delete('/api/compliance/tasks/:id', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteComplianceTask(id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting compliance task:", error);
+      res.status(500).json({ message: "Failed to delete compliance task" });
+    }
+  });
+
+  // Clean up duplicate compliance tasks
+  app.post('/api/compliance/cleanup', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      await storage.cleanupDuplicateTasks(userId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error cleaning up duplicate tasks:", error);
+      res.status(500).json({ message: "Failed to cleanup duplicate tasks" });
+    }
+  });
+
+  // Quick chat endpoint for immediate responses
+  app.post('/api/chat/quick', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { message, businessContext } = req.body;
+      
+      if (!message) {
+        return res.status(400).json({ message: "Message is required" });
+      }
+
+      // Get user's business profile for context
+      let businessProfile = null;
+      if (!businessContext) {
+        businessProfile = await storage.getUserBusinessProfile(userId);
+      }
+
+      const response = await openaiService.getQuickHelp(
+        message, 
+        businessContext || businessProfile
+      );
+      
+      res.json({ response });
+    } catch (error) {
+      console.error("Error in quick chat:", error);
+      res.status(500).json({ message: "Failed to generate response" });
+    }
+  });
+
+  // Initialize progress tasks for new users
+  app.post('/api/progress/initialize', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const { businessId } = req.body;
+
+      await storage.createDefaultProgressTasks(userId, businessId);
+      
+      res.json({ message: "Progress tasks initialized successfully" });
+    } catch (error) {
+      console.error("Error initializing progress tasks:", error);
+      res.status(500).json({ message: "Failed to initialize progress tasks" });
+    }
+  });
+
+  // Market Research content endpoints - tiered access
+  app.get('/api/download/market-research-essentials-free', async (req, res) => {
+    try {
+      const content = `Market Research Essentials - Free
+Category: Getting Started | Access: Free
+
+What It Is
+Market research helps you understand your customers, competition, and industry trends so you can make informed decisions. It's how startups reduce risk, spot opportunities, and find product-market fit.
+
+Step-by-Step Guide to Conducting Market Research
+1. Define Your Market & Audience
+2. Use AI for Instant Insights
+3. Analyze Competitors
+4. Survey & Interview Real People
+5. Validate Demand
+6. Summarize Your Findings
+
+Power Tips (AI-Enhanced)
+- Persona Builder Prompt: "Create a detailed customer persona for a [job title or industry] who struggles with [pain point]."
+- Competitor Audit Prompt: "Compare [Company A] vs [Company B] in terms of pricing, positioning, and audience."
+- ChatGPT as Survey Analyzer: Paste survey responses and ask: 'Summarize top pain points and keywords.'
+
+Downloadables
+- Market Research Checklist (PDF)
+- Customer Persona Worksheet (Google Doc)
+- Competitor Analysis Template (Excel or Airtable)
+
+Helpful Resources
+- Google Trends
+- Statista
+- Exploding Topics
+- Reddit: r/Entrepreneur
+- Survey Tools: Typeform, Google Forms`;
+      
+      res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+      res.setHeader('Content-Length', Buffer.byteLength(content, 'utf8'));
+      res.send(content);
+    } catch (error) {
+      console.error('Error serving market research essentials free:', error);
+      res.status(500).json({ error: 'Failed to load content' });
+    }
+  });
+
+  app.get('/api/download/market-research-essentials-pro', async (req, res) => {
+    try {
+      const content = `Market Research Essentials - Pro
+Category: Getting Started | Access: Pro
+
+Includes Everything in Free, Plus:
+- Go-To-Market Research Planner
+- Competitive Positioning Guide
+- Keyword & Topic Opportunity Finder
+- ICP Deep Dive
+
+Go-To-Market (GTM) Research Planner
+Identify channels (social, SEO, outbound), find low-cost acquisition strategies, and use the GTM Research Matrix (Excel Template) to prioritize efforts.
+
+Competitive Positioning Guide
+Audit your competitors' features, community, and tone. Use ChatGPT or Claude to analyze how they communicate their value.
+
+Keyword & Topic Opportunity Finder
+Use tools like Ubersuggest, AnswerThePublic, Exploding Topics Pro, and Google Trends to identify valuable content and SEO terms.
+
+ICP Deep Dive
+Segment your target audience by role, budget, and urgency. Use AI to craft hyper-relevant cold outreach or ad targeting scripts.
+
+GPT Prompt for GTM Insights
+"As a GTM strategist, analyze top channels for reaching [persona] in [industry], and recommend top 3 messaging angles."
+
+Pro Downloads
+- Competitive Positioning Tracker
+- GTM Research Framework
+- AI Keyword Finder Sheet
+- ICP Interview Questions`;
+      
+      res.setHeader('Content-Type', 'text/plain; charset=utf8');
+      res.setHeader('Content-Length', Buffer.byteLength(content, 'utf8'));
+      res.send(content);
+    } catch (error) {
+      console.error('Error serving market research essentials pro:', error);
+      res.status(500).json({ error: 'Failed to load content' });
+    }
+  });
+
+  app.get('/api/download/market-research-essentials-premium', async (req, res) => {
+    try {
+      const content = `Market Research Essentials - Premium
+Category: Getting Started | Access: Premium
+
+Includes Everything in Free + Pro, Plus:
+- Full Market Mapping
+- AI-Powered Competitive Intelligence
+- Paid Data Shortcuts
+- Demand Curve Analyzer
+- Custom Positioning Script Generator
+
+Full Market Mapping
+Create visual industry maps and identify value chain players using Airtable or Miro templates.
+
+AI-Powered Competitive Intelligence
+Scrape data from public competitor pages using Browse AI or Zapier RSS. Use GPT to cluster reviews and identify weaknesses.
+
+Paid Data Shortcuts
+Use Apollo.io, Crunchbase Pro, PitchBook, JungleScout, or TikTok Creator Marketplace for deeper analysis.
+
+Demand Curve Analyzer
+Combine data from Google Keywords, Exploding Topics, and subreddit activity to assess momentum.
+
+Custom Positioning Script Generator
+Use AI to develop positioning statements based on gaps in competitor UX, pricing, tone, or niche.
+
+GPT Prompt for Positioning
+"Analyze the positioning of [Competitor A] and [Competitor B]. Generate a unique value proposition for a startup with [differentiator]."
+
+Premium Downloads
+- Market Mapping Tool (Airtable)
+- Review Sentiment Analyzer Guide
+- Positioning Statement Generator
+- Data Automation Template`;
+      
+      res.setHeader('Content-Type', 'text/plain; charset=utf8');
+      res.setHeader('Content-Length', Buffer.byteLength(content, 'utf8'));
+      res.send(content);
+    } catch (error) {
+      console.error('Error serving market research essentials premium:', error);
+      res.status(500).json({ error: 'Failed to load content' });
+    }
+  });
+
+  // Keep backward compatibility for old endpoint - default to free tier
+  app.get('/api/download/market-research-essentials', async (req, res) => {
+    try {
+      const content = `Market Research Essentials - Free
+Category: Getting Started | Access: Free
+
+What It Is
+Market research helps you understand your customers, competition, and industry trends so you can make informed decisions. It's how startups reduce risk, spot opportunities, and find product-market fit.
+
+Step-by-Step Guide to Conducting Market Research
+1. Define Your Market & Audience
+2. Use AI for Instant Insights
+3. Analyze Competitors
+4. Survey & Interview Real People
+5. Validate Demand
+6. Summarize Your Findings
+
+Power Tips (AI-Enhanced)
+- Persona Builder Prompt: "Create a detailed customer persona for a [job title or industry] who struggles with [pain point]."
+- Competitor Audit Prompt: "Compare [Company A] vs [Company B] in terms of pricing, positioning, and audience."
+- ChatGPT as Survey Analyzer: Paste survey responses and ask: 'Summarize top pain points and keywords.'
+
+Downloadables
+- Market Research Checklist (PDF)
+- Customer Persona Worksheet (Google Doc)
+- Competitor Analysis Template (Excel or Airtable)
+
+Helpful Resources
+- Google Trends
+- Statista
+- Exploding Topics
+- Reddit: r/Entrepreneur
+- Survey Tools: Typeform, Google Forms`;
+      
+      res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+      res.setHeader('Content-Length', Buffer.byteLength(content, 'utf8'));
+      res.send(content);
+    } catch (error) {
+      console.error('Error serving market research essentials:', error);
+      res.status(500).json({ error: 'Failed to load content' });
+    }
+  });
+
+  // LLC Operating Agreement template endpoint
+  app.get('/api/download/llc-operating-agreement', async (req, res) => {
+    try {
+      const content = `LIMITED LIABILITY COMPANY OPERATING AGREEMENT
+
+OF [INSERT LLC NAME]
+
+This Operating Agreement of [INSERT LLC NAME], a [STATE] limited liability company (the "Company"), is entered into by and among the undersigned, who are the initial members of the Company (individually referred to as a "Member" and collectively as the "Members").
+
+ARTICLE I - ORGANIZATION
+
+1.1 Formation. The Company was formed on [DATE] by filing Articles of Organization with the [STATE] Secretary of State.
+
+1.2 Name. The name of the Company is [INSERT LLC NAME].
+
+1.3 Principal Place of Business. The principal place of business shall be [INSERT ADDRESS].
+
+1.4 Registered Agent. The registered agent is [INSERT REGISTERED AGENT NAME] at [INSERT REGISTERED AGENT ADDRESS].
+
+1.5 Purpose. The purpose of the Company is to engage in any lawful business activity.
+
+ARTICLE II - MEMBERS AND MEMBERSHIP INTERESTS
+
+2.1 Initial Members. The initial Members and their respective membership interests are:
+[INSERT MEMBER NAME]: [INSERT PERCENTAGE]%
+[INSERT MEMBER NAME]: [INSERT PERCENTAGE]%
+
+2.2 Capital Contributions. Each Member's initial capital contribution is:
+[INSERT MEMBER NAME]: $[INSERT AMOUNT]
+[INSERT MEMBER NAME]: $[INSERT AMOUNT]
+
+ARTICLE III - MANAGEMENT
+
+3.1 Management Structure. The Company shall be managed by [all Members/designated Manager(s)].
+
+3.2 Authority. [Insert specific management authority and restrictions]
+
+ARTICLE IV - FINANCIAL PROVISIONS
+
+4.1 Books and Records. The Company shall maintain complete books and records.
+
+4.2 Bank Accounts. The Company may establish bank accounts as necessary.
+
+4.3 Distributions. Distributions shall be made pro rata to Members based on membership interests.
+
+ARTICLE V - MEETINGS
+
+5.1 Member Meetings. Members may hold meetings as needed.
+
+5.2 Voting. Each Member shall have voting rights proportional to their membership interest.
+
+ARTICLE VI - DISSOLUTION
+
+6.1 Events of Dissolution. The Company shall dissolve upon [insert dissolution events].
+
+This template provides a basic framework. Consult with a qualified attorney for your specific situation.`;
+      
+      res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+      res.setHeader('Content-Length', Buffer.byteLength(content, 'utf8'));
+      res.send(content);
+    } catch (error) {
+      console.error('Error serving LLC operating agreement:', error);
+      res.status(500).json({ error: 'Failed to load content' });
+    }
+  });
+
+  // Articles of Incorporation template endpoint
+
+• Idea Simulation: Some AI tools can even simulate market scenarios. For example, you might ask an AI to imagine how a particular customer segment would respond to your product, or to predict challenges based on historical data. This is not a crystal ball, but it can surface potential outcomes or pitfalls to consider.
+
+Speed and Efficiency: The big advantage is speed – AI can crunch through massive information far faster than a person. It's also available 24/7, often for free or a small fee. For a cash-strapped startup or solo founder, AI can save you hiring a research team.
+
+However, AI isn't magic or infallible. It has limitations you should keep in mind:
+
+• AI like ChatGPT doesn't have real-time data access by default, so it may not know about very recent trends or news.
+
+• AI can sometimes be incorrect or biased. It learns from existing data which might have gaps or biases. Always approach AI-generated insights with a critical eye.
+
+• It finds patterns and correlations, but it may not understand causation. You'll need to interpret why something is trending or whether it truly matters for your business.
+
+Bottom line: AI is an incredibly useful assistant to kickstart your research and find patterns, but you should validate its outputs with real data and human judgment. Use AI findings as a starting point for deeper investigation, not the final word.
+
+STEP 1: VALIDATE YOUR BUSINESS IDEA WITH AI
+
+The first step is to validate your business idea – basically, check if the problem you want to solve is important to people and if your solution has a real market. This involves understanding market demand and trends for your product or service. Here's how you can do it with AI:
+
+1. ChatGPT: Market Demand Deep Dive – Start by tapping ChatGPT as a quick research analyst. You can literally prompt ChatGPT to act as a market research analyst and ask it about the demand for your product. For example, try something like:
+
+"Act as a market research analyst and analyze the market demand for a vegan meal delivery service in New York."
+
+ChatGPT will then generate a summary of the market: it might discuss how many people are interested in vegan food, mention trends like health or sustainability driving demand, and possibly cite known facts or logical assumptions about the niche. This is a great brainstorming and overview exercise.
+
+2. Use Google Trends to Quantify Interest – After ChatGPT gives a qualitative overview, it's time to get some hard data on interest levels. Google Trends is a free tool that shows how often people search for particular terms on Google over time.
+
+Go to Google Trends and enter keywords related to your business idea. For our vegan meal example, you might enter "vegan meal delivery" or "plant-based meal service". Google Trends will show you:
+
+• Trend over time: Is interest rising, steady, or declining?
+• Seasonal patterns: Some ideas have seasonal demand
+• Regional interest: Which regions or cities search the term most
+• Related searches: These can spark ideas for differentiating your product
+
+3. Check Keyword Volumes – You can also use free SEO tools like Ubersuggest or Google's Keyword Planner. These tools can tell you approximately how many searches per month a term gets.
+
+4. Identify Trends and Emerging Demand – Beyond just your specific idea, look at broader industry trends with AI's help. You can ask ChatGPT about industry trends in your space.
+
+5. AI-Powered Idea Validation Tools – There are specialized free AI tools designed for idea validation. For example, FounderPal's Idea Validator or ValidatorAI will take a short description of your business idea and generate a quick report analyzing its market potential.
+
+6. Consider Real Customer Feedback – Part of validating an idea is getting feedback from real people – potential customers. AI can assist here too by helping you brainstorm survey questions.
+
+STEP 2: UNDERSTAND YOUR TARGET MARKET
+
+Once you've validated that there's demand for your idea, the next step is to deeply understand who your customers are. This is called market segmentation – dividing the broader market into specific groups of people who share similar characteristics, needs, or behaviors.
+
+1. Create Customer Personas with ChatGPT – Customer personas are fictional representations of your ideal customers, based on real data and research. They help you understand your customers' motivations, pain points, and buying behavior.
+
+Ask ChatGPT to help create detailed customer personas. For example:
+
+"Help me create detailed customer personas for a vegan meal delivery service targeting health-conscious professionals in urban areas."
+
+ChatGPT will generate personas including demographics, psychographics, pain points, and motivations.
+
+2. Use AI for Demographic and Psychographic Research – Demographics are the "who" (age, gender, income, location), while psychographics are the "why" (values, interests, lifestyle, personality).
+
+You can ask AI tools to research both:
+• "What are the demographic characteristics of people who buy vegan food products?"
+• "What psychographic traits do environmentally conscious consumers share?"
+
+3. Analyze Customer Pain Points – Understanding what frustrates your potential customers is crucial. You can use AI to scan forums, review sites, and social media to identify common complaints about existing solutions.
+
+Ask ChatGPT something like: "What are the most common complaints people have about current meal delivery services?"
+
+4. Map the Customer Journey – The customer journey is the process your customers go through from first learning about your product to making a purchase and beyond.
+
+You can ask AI to help map this journey: "Map out the customer journey for someone discovering and purchasing from a vegan meal delivery service."
+
+STEP 3: ANALYZE YOUR COMPETITION
+
+Understanding your competition is crucial for positioning your business and finding opportunities to differentiate. AI can help you conduct competitive analysis more efficiently.
+
+1. Identify Direct and Indirect Competitors – Direct competitors offer the same product/service to the same market. Indirect competitors solve the same problem but with a different approach.
+
+Ask ChatGPT: "Who are the main competitors for a vegan meal delivery service in New York? Include both direct and indirect competitors."
+
+2. Competitive Feature Analysis – Create a comparison chart of key features, pricing, and positioning of your main competitors.
+
+You can ask AI: "Compare the features, pricing, and positioning of [Competitor 1], [Competitor 2], and [Competitor 3] in the vegan meal delivery space."
+
+3. SWOT Analysis – SWOT stands for Strengths, Weaknesses, Opportunities, and Threats. It's a framework for analyzing your competitive position.
+
+Ask ChatGPT to help: "Conduct a SWOT analysis for entering the vegan meal delivery market in New York."
+
+4. Identify Market Gaps – Look for unmet needs or underserved segments in the market.
+
+Ask AI: "What gaps exist in the current vegan meal delivery market that a new company could exploit?"
+
+5. Monitor Competitor Activity – Use AI to help you stay updated on competitor moves. You can ask AI to summarize recent news or developments about specific competitors.
+
+STEP 4: SIZE YOUR MARKET OPPORTUNITY
+
+Understanding the size of your market opportunity helps you assess the potential for growth and attracts investors.
+
+1. Total Addressable Market (TAM) – This is the total market demand for your product or service.
+
+Ask ChatGPT: "What is the total addressable market for vegan meal delivery services in the United States?"
+
+2. Serviceable Addressable Market (SAM) – This is the portion of TAM that your business can realistically serve.
+
+3. Serviceable Obtainable Market (SOM) – This is the portion of SAM that you can realistically capture.
+
+AI can help you research market sizing data and make reasonable estimates based on available information.
+
+STEP 5: VALIDATE WITH REAL CUSTOMERS
+
+While AI is incredibly helpful for initial research, nothing replaces talking to real potential customers.
+
+1. Design Surveys with AI Help – Ask ChatGPT to help you create effective survey questions.
+
+2. Conduct Interviews – Use AI to help you prepare interview questions and analyze responses.
+
+3. Create Landing Pages – Test demand by creating a simple landing page describing your product and measuring sign-ups or interest.
+
+4. Run Small Experiments – Consider running small tests or pilot programs to validate demand.
+
+PUTTING IT ALL TOGETHER
+
+Market research is an ongoing process, not a one-time activity. Here's how to organize your findings:
+
+1. Create a Market Research Report – Compile all your findings into a comprehensive document.
+
+2. Develop Your Go-to-Market Strategy – Use your research to inform your marketing and sales approach.
+
+3. Iterate Based on Feedback – Continue gathering data and refining your understanding.
+
+4. Monitor Market Changes – Markets evolve, so keep your research updated.
+
+CONCLUSION
+
+AI has democratized market research, making sophisticated analysis accessible to solo entrepreneurs and small startups. By combining AI-powered research with validation from real customers, you can significantly reduce the risk of launching a product or service that doesn't have market demand.
+
+Remember: AI is a powerful tool, but it's not infallible. Always validate AI insights with real data and customer feedback. Use AI to accelerate your research process, but make decisions based on a combination of AI insights, data, and human judgment.
+
+The key is to be systematic in your approach, remain objective about what you discover, and be prepared to pivot if your research reveals that your initial assumptions were wrong. Good market research isn't about confirming what you want to hear – it's about discovering the truth about your market opportunity.
+
+===============================================================================
+
+This comprehensive guide was provided through StartSmart AI - your intelligent business formation platform.
+
+For more resources and AI-powered business guidance, visit your StartSmart dashboard.
+
+© ${new Date().getFullYear()} StartSmart by NexTax.AI. All rights reserved.`;
+
+      res.setHeader('Content-Type', 'text/plain');
+      if (req.headers.accept?.includes('text/plain')) {
+        res.setHeader('Content-Disposition', 'attachment; filename="Market_Research_Essentials.txt"');
+      }
+      res.send(content);
+    } catch (error) {
+      console.error("Error serving content:", error);
+      res.status(500).json({ message: "Failed to load content" });
+    }
+  });
+
+  // LLC Operating Agreement template endpoint
+  app.get('/api/download/llc-operating-agreement', async (req, res) => {
+    try {
+      const content = `LIMITED LIABILITY COMPANY OPERATING AGREEMENT
+
+OF [INSERT LLC NAME]
+
+
+
+This Limited Liability Company Operating Agreement ("Agreement") is made and entered into as of [INSERT DATE], by and between the following members:
+
+[INSERT MEMBER 1 NAME], residing at [INSERT MEMBER 1 ADDRESS]
+
+[INSERT MEMBER 2 NAME], residing at [INSERT MEMBER 2 ADDRESS]
+
+(collectively, the "Members").
+
+
+
+ARTICLE I – FORMATION
+
+1.1 Name. The name of the Limited Liability Company (the "Company") shall be [INSERT LLC NAME].
+
+1.2 Formation. This Company was formed as a Limited Liability Company pursuant to the laws of the State of [INSERT STATE] by filing Articles of Organization with the Secretary of State on [INSERT FORMATION DATE].
+
+1.3 Registered Office and Agent. The registered office of the Company shall be located at [INSERT REGISTERED OFFICE ADDRESS], and the registered agent shall be [INSERT REGISTERED AGENT NAME], or such other office or agent as the Members may designate from time to time.
+
+
+
+ARTICLE II – PURPOSE
+
+2.1 Business Purpose. The Company is organized to engage in any lawful act or activity for which a limited liability company may be formed under the laws of the State of [INSERT STATE].
+
+
+
+ARTICLE III – TERM
+
+3.1 Term. The term of the Company shall begin on the date of filing and shall continue until dissolved in accordance with this Agreement or applicable law.
+
+
+
+ARTICLE IV – MEMBERSHIP AND CAPITAL CONTRIBUTIONS
+
+4.1 Initial Members. The names and addresses of the initial Members are listed above.
+
+4.2 Capital Contributions. Each Member shall contribute capital to the Company as follows:
+
+[INSERT MEMBER 1 NAME]: [INSERT DOLLAR AMOUNT]
+
+[INSERT MEMBER 2 NAME]: [INSERT DOLLAR AMOUNT]
+
+4.3 Additional Contributions. No Member shall be required to make additional capital contributions. Additional contributions may be made only with the written consent of both Members.
+
+
+
+ARTICLE V – PROFITS, LOSSES, AND DISTRIBUTIONS
+
+5.1 Allocations. Profits and losses shall be allocated to the Members in proportion to their percentage interests in the Company, as follows:
+
+[INSERT MEMBER 1 NAME]: [INSERT %]
+
+[INSERT MEMBER 2 NAME]: [INSERT %]
+
+5.2 Distributions. Distributions shall be made to the Members at the discretion of the Members in accordance with their respective ownership percentages.
+
+
+
+ARTICLE VI – MANAGEMENT
+
+6.1 Management. The Company shall be managed by its Members. Each Member shall have equal rights in the management and conduct of the Company's business.
+
+6.2 Authority. Each Member is authorized to bind the Company in the ordinary course of business.
+
+6.3 Major Decisions. The following actions require unanimous consent of the Members:
+
+    • Amendment of this Agreement
+    • Admission of new Members  
+    • Sale of all or substantially all assets
+    • Dissolution of the Company
+
+
+
+ARTICLE VII – BANK ACCOUNTS
+
+7.1 Accounts. Company funds shall be held in the Company's name at a financial institution selected by the Members.
+
+7.2 Signatories. The Members shall determine who is authorized to sign on behalf of the Company.
+
+
+
+ARTICLE VIII – BOOKS AND RECORDS
+
+8.1 Maintenance. The Company shall maintain complete and accurate books and records, including this Agreement, the Articles of Organization, and financial statements.
+
+8.2 Tax Treatment. The Company shall be taxed as a partnership unless otherwise elected. Each Member agrees to report their share of income and loss accordingly.
+
+
+
+ARTICLE IX – TRANSFER OF INTEREST
+
+9.1 Restrictions. No Member may transfer their interest in the Company without the prior written consent of the other Member.
+
+9.2 Buy-Sell Provision. Upon a Member's death, disability, or desire to withdraw, the remaining Member shall have the option to purchase the departing Member's interest based on a mutually agreed valuation method or a third-party appraisal.
+
+
+
+ARTICLE X – DISSOLUTION
+
+10.1 Events of Dissolution. The Company shall dissolve upon:
+
+    • The written agreement of both Members,
+    • The entry of a decree of judicial dissolution,
+    • Any event requiring dissolution under the laws of [INSERT STATE].
+
+10.2 Winding Up. Upon dissolution, the Company's assets shall be liquidated and distributed in the following order:
+
+    • To creditors, including Members who are creditors;
+    • To Members in accordance with their respective capital accounts.
+
+
+
+ARTICLE XI – MISCELLANEOUS
+
+11.1 Amendments. This Agreement may be amended only by written agreement of both Members.
+
+11.2 Governing Law. This Agreement shall be governed by and construed in accordance with the laws of the State of [INSERT STATE].
+
+11.3 Entire Agreement. This document constitutes the entire agreement between the Members relating to the Company and supersedes all prior agreements.
+
+
+
+SIGNATURES
+
+IN WITNESS WHEREOF, the Members have executed this Operating Agreement as of the date first written above.
+
+
+
+Member 1:
+Signature: ___________________________
+Name: [INSERT MEMBER 1 NAME]
+Date: ____________________
+
+
+
+Member 2:
+Signature: ___________________________
+Name: [INSERT MEMBER 2 NAME]
+Date: ____________________
+
+
+
+===============================================================================
+
+This LLC Operating Agreement template was provided through StartSmart AI - your intelligent business formation platform.
+
+IMPORTANT LEGAL NOTICE: This is a template for informational purposes only. Please consult with a qualified attorney to ensure this agreement meets your specific needs and complies with your state's laws.
+
+© ${new Date().getFullYear()} StartSmart by NexTax.AI. All rights reserved.`;
+
+      res.setHeader('Content-Type', 'text/plain');
+      if (req.headers.accept?.includes('text/plain')) {
+        res.setHeader('Content-Disposition', 'attachment; filename="LLC_Operating_Agreement_Template.txt"');
+      }
+      res.send(content);
+    } catch (error) {
+      console.error("Error serving LLC Operating Agreement:", error);
+      res.status(500).json({ message: "Failed to load content" });
+    }
+  });
+
+  // Articles of Incorporation template endpoint
+  app.get('/api/download/articles-of-incorporation', async (req, res) => {
+    try {
+      const content = `ARTICLES OF INCORPORATION
+
+OF [INSERT CORPORATION NAME]
+
+
+
+Pursuant to the laws of the State of [INSERT STATE], the undersigned incorporator hereby submits the following Articles of Incorporation for the purpose of forming a for-profit corporation.
+
+
+
+ARTICLE I – NAME
+
+The name of the corporation shall be: [INSERT CORPORATION NAME]
+
+
+
+ARTICLE II – DURATION
+
+The duration of the corporation shall be perpetual, unless otherwise stated by law or amended by the corporation.
+
+
+
+ARTICLE III – PURPOSE
+
+This corporation is organized for the purpose of engaging in any lawful business for which corporations may be incorporated in the State of [INSERT STATE].
+
+
+
+ARTICLE IV – REGISTERED AGENT AND REGISTERED OFFICE
+
+The name and address of the registered agent and registered office of the corporation are:
+
+Registered Agent: [INSERT NAME]
+Registered Office Address: [INSERT STREET ADDRESS]
+[INSERT CITY, STATE ZIP CODE]
+
+
+
+ARTICLE V – PRINCIPAL OFFICE (Optional in Some States)
+
+The address of the principal office of the corporation is:
+[INSERT STREET ADDRESS]
+[INSERT CITY, STATE ZIP CODE]
+
+
+
+ARTICLE VI – AUTHORIZED SHARES
+
+The total number of shares of stock the corporation is authorized to issue is: [INSERT NUMBER] shares of [INSERT CLASS, e.g., Common Stock], with a par value of [INSERT $ VALUE, e.g., $0.01] per share.
+
+
+
+ARTICLE VII – INCORPORATOR
+
+The name and address of the incorporator are:
+[INSERT INCORPORATOR NAME]
+[INSERT STREET ADDRESS]
+[INSERT CITY, STATE ZIP CODE]
+
+
+
+ARTICLE VIII – DIRECTORS (Optional in Some States)
+
+The number of directors constituting the initial Board of Directors is [INSERT NUMBER], and the names and addresses of the persons who are to serve as the initial directors are:
+
+[INSERT NAME] – [INSERT STREET ADDRESS, CITY, STATE ZIP]
+[INSERT NAME] – [INSERT STREET ADDRESS, CITY, STATE ZIP]
+(Add more if applicable)
+
+
+
+ARTICLE IX – LIMITATION OF LIABILITY (Optional)
+
+To the fullest extent permitted by the laws of the State of [INSERT STATE], a director of the corporation shall not be personally liable to the corporation or its shareholders for monetary damages for breach of fiduciary duty as a director.
+
+
+
+ARTICLE X – INDEMNIFICATION (Optional)
+
+The corporation shall indemnify its directors, officers, employees, and agents to the fullest extent permitted by law.
+
+
+
+ARTICLE XI – CORPORATE BYLAWS
+
+The power to adopt, amend, or repeal the bylaws shall be vested in the Board of Directors and, if required by the bylaws or applicable law, in the shareholders of the corporation.
+
+
+
+ARTICLE XII – OTHER PROVISIONS (Optional)
+
+[INSERT ANY ADDITIONAL PROVISIONS IF DESIRED]
+
+
+
+
+
+IN WITNESS WHEREOF, the undersigned incorporator has executed these Articles of Incorporation on this [INSERT DAY] day of [INSERT MONTH, YEAR].
+
+
+
+
+
+
+
+SIGNATURE OF INCORPORATOR
+
+Signature: ___________________________
+Name: [INSERT INCORPORATOR NAME]
+Date: ____________________
+
+
+
+
+NOTARIZATION (if required by state)
+
+STATE OF [INSERT STATE]     )
+                           ) ss.
+COUNTY OF [INSERT COUNTY]  )
+
+On this _____ day of __________, 20__, before me personally appeared [INSERT INCORPORATOR NAME], who proved to me on the basis of satisfactory evidence to be the person whose name is subscribed to the within instrument and acknowledged to me that he/she executed the same in his/her authorized capacity, and that by his/her signature on the instrument the person, or the entity upon behalf of which the person acted, executed the instrument.
+
+I certify under PENALTY OF PERJURY under the laws of the State of [INSERT STATE] that the foregoing paragraph is true and correct.
+
+WITNESS my hand and official seal.
+
+Signature: _________________________
+[INSERT NOTARY NAME], Notary Public
+
+
+
+===============================================================================
+
+This Articles of Incorporation template was provided through StartSmart AI - your intelligent business formation platform.
+
+IMPORTANT LEGAL NOTICE: This is a template for informational purposes only. Please consult with a qualified attorney to ensure this document meets your specific needs and complies with your state's laws.
+
+© ${new Date().getFullYear()} StartSmart by NexTax.AI. All rights reserved.`;
+
+      res.setHeader('Content-Type', 'text/plain');
+      if (req.headers.accept?.includes('text/plain')) {
+        res.setHeader('Content-Disposition', 'attachment; filename="Articles_of_Incorporation_Template.txt"');
+      }
+      res.send(content);
+    } catch (error) {
+      console.error("Error serving Articles of Incorporation:", error);
+      res.status(500).json({ message: "Failed to load content" });
+    }
+  });
+
+  // Corporate Bylaws template endpoint
+  app.get('/api/download/corporate-bylaws', async (req, res) => {
+    try {
+      const content = `CORPORATE BYLAWS
+
+OF [INSERT CORPORATION NAME]
+(a [INSERT STATE] Corporation)
+
+
+
+ARTICLE I – OFFICES
+
+1.1 Principal Office
+The principal office of the corporation is located at:
+[INSERT ADDRESS, CITY, STATE ZIP CODE]
+
+1.2 Other Offices
+The corporation may also have offices at such other places as the Board of Directors may designate or the business of the corporation may require.
+
+
+
+ARTICLE II – SHAREHOLDERS
+
+2.1 Annual Meeting
+An annual meeting of the shareholders shall be held on [INSERT MONTH & DAY] of each year (or as otherwise determined by the Board) for the election of directors and the transaction of other business.
+
+2.2 Special Meetings
+Special meetings may be called by the President, the Board of Directors, or shareholders holding not less than [INSERT %] of the voting power.
+
+2.3 Notice
+Written notice of all shareholder meetings must be provided at least [INSERT NUMBER] days in advance, specifying the time, place, and purpose.
+
+2.4 Quorum
+A majority of the shares entitled to vote, represented in person or by proxy, shall constitute a quorum.
+
+2.5 Voting
+Each outstanding share shall be entitled to one vote. Decisions shall be by majority vote unless otherwise required by law or these Bylaws.
+
+
+
+ARTICLE III – BOARD OF DIRECTORS
+
+3.1 General Powers
+The business and affairs of the corporation shall be managed by the Board of Directors.
+
+3.2 Number and Term
+The corporation shall have [INSERT NUMBER] directors. Each director shall serve for a term of [INSERT YEARS, typically 1 or 2] years and until a successor is elected and qualified.
+
+3.3 Meetings
+Regular meetings shall be held [INSERT FREQUENCY, e.g., quarterly] at the principal office or another location designated by the Board. Special meetings may be called by the President or any two directors.
+
+3.4 Quorum and Voting
+A majority of directors shall constitute a quorum. The act of a majority present at a meeting at which there is a quorum shall be the act of the Board.
+
+3.5 Action Without Meeting
+Any action required or permitted to be taken may be done without a meeting if all directors consent in writing.
+
+
+
+ARTICLE IV – OFFICERS
+
+4.1 Officers
+The officers of the corporation shall include:
+
+• President
+• Secretary  
+• Treasurer
+
+Other officers may be appointed as the Board may determine.
+
+4.2 Election and Term
+Officers shall be elected annually by the Board of Directors at the first meeting following the shareholders' meeting. Each officer shall hold office until their successor is elected or they resign or are removed.
+
+4.3 Removal
+Any officer may be removed by the Board of Directors with or without cause.
+
+4.4 Duties
+
+President: Serves as the chief executive officer, presides over meetings, and ensures execution of Board decisions.
+
+Secretary: Maintains records, meeting minutes, and handles corporate correspondence.
+
+Treasurer: Oversees finances, prepares financial statements, and manages accounts.
+
+
+
+ARTICLE V – SHARES
+
+5.1 Share Certificates
+The corporation may issue share certificates signed by the President and Secretary, or may elect to maintain shares in book-entry (electronic) format.
+
+5.2 Transfers
+Transfers of shares shall be recorded in the corporate share ledger upon receipt of proper documentation.
+
+
+
+ARTICLE VI – INDEMNIFICATION
+
+The corporation shall indemnify any director, officer, employee, or agent to the fullest extent allowed under the laws of the State of [INSERT STATE].
+
+
+
+ARTICLE VII – AMENDMENTS
+
+These Bylaws may be altered, amended, or repealed by a majority vote of the Board of Directors or by the shareholders holding at least [INSERT %] of the outstanding shares.
+
+
+
+ARTICLE VIII – FISCAL YEAR
+
+The fiscal year of the corporation shall end on [INSERT MONTH & DAY] each year, unless otherwise fixed by the Board of Directors.
+
+
+
+CERTIFICATION
+
+These Bylaws were adopted by the Board of Directors of [INSERT CORPORATION NAME] on this [INSERT DAY] day of [INSERT MONTH, YEAR].
+
+
+
+
+
+SIGNATURE OF SECRETARY
+
+Signature: ___________________________
+Name: [INSERT NAME], Secretary
+Date: ____________________
+
+
+
+===============================================================================
+
+This Corporate Bylaws template was provided through StartSmart AI - your intelligent business formation platform.
+
+IMPORTANT LEGAL NOTICE: This is a template for informational purposes only. Please consult with a qualified attorney to ensure this document meets your specific needs and complies with your state's laws.
+
+© ${new Date().getFullYear()} StartSmart by NexTax.AI. All rights reserved.`;
+
+      res.setHeader('Content-Type', 'text/plain');
+      if (req.headers.accept?.includes('text/plain')) {
+        res.setHeader('Content-Disposition', 'attachment; filename="Corporate_Bylaws_Template.txt"');
+      }
+      res.send(content);
+    } catch (error) {
+      console.error("Error serving Corporate Bylaws:", error);
+      res.status(500).json({ message: "Failed to load content" });
+    }
+  });
+
+  // Corporate Bylaws PDF route (matches your URL pattern)
+  app.get('/templates/corporate-bylaws.pdf', async (req, res) => {
+    try {
+      const content = `CORPORATE BYLAWS
+
+OF [INSERT CORPORATION NAME]
+(a [INSERT STATE] Corporation)
+
+
+
+ARTICLE I – OFFICES
+
+1.1 Principal Office
+The principal office of the corporation is located at:
+[INSERT ADDRESS, CITY, STATE ZIP CODE]
+
+1.2 Other Offices
+The corporation may also have offices at such other places as the Board of Directors may designate or the business of the corporation may require.
+
+
+
+ARTICLE II – SHAREHOLDERS
+
+2.1 Annual Meeting
+An annual meeting of the shareholders shall be held on [INSERT MONTH & DAY] of each year (or as otherwise determined by the Board) for the election of directors and the transaction of other business.
+
+2.2 Special Meetings
+Special meetings may be called by the President, the Board of Directors, or shareholders holding not less than [INSERT %] of the outstanding shares.
+
+2.3 Place of Meeting
+Shareholders' meetings shall be held at the principal office of the corporation or at such other place as designated by the Board of Directors.
+
+2.4 Notice
+Written notice stating the place, day, and hour of the meeting and, in case of a special meeting, the purpose for which the meeting is called, shall be delivered personally or mailed to each shareholder of record.
+
+2.5 Quorum
+A majority of the outstanding shares entitled to vote shall constitute a quorum at any meeting of shareholders.
+
+2.6 Voting
+Each outstanding share shall be entitled to one vote upon each matter submitted to a vote at a meeting of shareholders.
+
+
+
+ARTICLE III – BOARD OF DIRECTORS
+
+3.1 General Powers
+All corporate powers shall be exercised by or under the authority of, and the business and affairs of the corporation managed under the direction of, its Board of Directors.
+
+3.2 Number and Qualifications
+The number of directors shall be [INSERT NUMBER]. Directors need not be residents of [INSERT STATE] or shareholders of the corporation.
+
+3.3 Election and Term of Office
+Directors shall be elected at the annual meeting of shareholders. Each director shall hold office until the next annual meeting and until their successor is elected and qualified.
+
+3.4 Regular Meetings
+The Board of Directors may provide by resolution the time and place for holding additional regular meetings without other notice than such resolution.
+
+3.5 Special Meetings
+Special meetings of the Board may be called by or at the request of the President or any [INSERT NUMBER] directors.
+
+3.6 Quorum
+A majority of the number of directors fixed by these Bylaws shall constitute a quorum for the transaction of business.
+
+3.7 Manner of Acting
+The act of the majority of the directors present at a meeting at which a quorum is present shall be the act of the Board of Directors.
+
+
+
+ARTICLE IV – OFFICERS
+
+4.1 Officers
+The officers of the corporation shall be a President, one or more Vice Presidents, a Secretary, and a Treasurer. The corporation may also have such other officers as may be appointed by the Board of Directors.
+
+4.2 Election and Term of Office
+The officers of the corporation shall be elected by the Board of Directors and each shall hold office until their successor is elected and qualified.
+
+4.3 Removal
+Any officer may be removed by the Board of Directors whenever in its judgment the best interests of the corporation will be served thereby.
+
+4.4 President
+The President shall be the principal executive officer of the corporation and shall in general supervise and control all of the business and affairs of the corporation.
+
+4.5 Vice President
+In the absence of the President or in the event of their death, inability, or refusal to act, the Vice President shall perform the duties of the President.
+
+4.6 Treasurer
+The Treasurer shall have charge and custody of and be responsible for all funds and securities of the corporation.
+
+4.7 Secretary
+The Secretary shall keep the minutes of the meetings of the shareholders and of the Board of Directors.
+
+
+
+ARTICLE V – SHARES
+
+5.1 Authorized Capital
+The corporation is authorized to issue [INSERT NUMBER] shares of common stock, no par value.
+
+5.2 Certificates
+Every holder of stock in the corporation shall be entitled to have a certificate signed by the President and Secretary certifying the number of shares owned.
+
+5.3 Transfer of Shares
+Transfer of shares of the corporation shall be made only on the books of the corporation by the holder of record thereof or by their legal representative.
+
+
+
+ARTICLE VI – INDEMNIFICATION
+
+6.1 Indemnification
+The corporation shall indemnify any director or officer who was or is a party to any proceeding by reason of the fact that they are or were a director or officer of the corporation.
+
+
+
+ARTICLE VII – AMENDMENTS
+
+7.1 Amendment of Bylaws
+These Bylaws may be altered, amended, or repealed and new Bylaws may be adopted by the Board of Directors at any regular or special meeting.
+
+
+
+ARTICLE VIII – FISCAL YEAR
+
+The fiscal year of the corporation shall end on [INSERT MONTH & DAY] each year, unless otherwise fixed by the Board of Directors.
+
+
+
+CERTIFICATION
+
+These Bylaws were adopted by the Board of Directors of [INSERT CORPORATION NAME] on this [INSERT DAY] day of [INSERT MONTH, YEAR].
+
+
+
+
+
+SIGNATURE OF SECRETARY
+
+Signature: ___________________________
+Name: [INSERT NAME], Secretary
+Date: ____________________
+
+
+
+===============================================================================
+
+This Corporate Bylaws template was provided through StartSmart AI - your intelligent business formation platform.
+
+IMPORTANT LEGAL NOTICE: This is a template for informational purposes only. Please consult with a qualified attorney to ensure this document meets your specific needs and complies with your state's laws.
+
+© ${new Date().getFullYear()} StartSmart by NexTax.AI. All rights reserved.`;
+
+      res.setHeader('Content-Type', 'text/plain');
+      res.setHeader('Content-Disposition', 'inline; filename="Corporate_Bylaws_Template.txt"');
+      res.send(content);
+    } catch (error) {
+      console.error("Error serving Corporate Bylaws PDF:", error);
+      res.status(500).json({ message: "Failed to load Corporate Bylaws PDF" });
+    }
+  });
+
+  // LLC Operating Agreement PDF route
+  app.get('/templates/llc-operating-agreement.pdf', async (req, res) => {
+    try {
+      const content = `LIMITED LIABILITY COMPANY OPERATING AGREEMENT
+
+OF [INSERT LLC NAME]
+
+
+
+This Limited Liability Company Operating Agreement ("Agreement") is made and entered into as of [INSERT DATE], by and between the following members:
+
+[INSERT MEMBER 1 NAME], residing at [INSERT MEMBER 1 ADDRESS]
+
+[INSERT MEMBER 2 NAME], residing at [INSERT MEMBER 2 ADDRESS]
+
+(collectively, the "Members").
+
+
+
+ARTICLE I – FORMATION
+
+1.1 Name. The name of the Limited Liability Company (the "Company") shall be [INSERT LLC NAME].
+
+1.2 Formation. This Company was formed as a Limited Liability Company pursuant to the laws of the State of [INSERT STATE] by filing Articles of Organization with the Secretary of State on [INSERT DATE].
+
+1.3 Principal Place of Business. The principal place of business of the Company shall be [INSERT ADDRESS, CITY, STATE ZIP CODE], or such other place as may be determined by the Members.
+
+1.4 Purpose. The purpose of the Company is to engage in any lawful business activity for which a Limited Liability Company may be organized under the laws of [INSERT STATE].
+
+1.5 Duration. The Company shall continue in existence until dissolved in accordance with this Agreement or applicable law.
+
+
+
+ARTICLE II – REGISTERED AGENT
+
+2.1 Registered Agent. The Company's registered agent is [INSERT REGISTERED AGENT NAME], whose address is [INSERT REGISTERED AGENT ADDRESS, CITY, STATE ZIP CODE].
+
+2.2 Change of Agent. The registered agent may be changed by the Members upon filing the required documentation with the appropriate state agency.
+
+
+
+ARTICLE III – MEMBERS
+
+3.1 Initial Members. The initial Members of the Company and their respective addresses are:
+
+[INSERT MEMBER 1 NAME]
+[INSERT MEMBER 1 ADDRESS]
+
+[INSERT MEMBER 2 NAME]
+[INSERT MEMBER 2 ADDRESS]
+
+3.2 Admission of Members. No additional Members may be admitted to the Company without the unanimous consent of the existing Members.
+
+3.3 Withdrawal of Members. A Member may not withdraw from the Company without the unanimous consent of the other Members.
+
+
+
+ARTICLE IV – CAPITAL CONTRIBUTIONS
+
+4.1 Initial Contributions. The Members shall contribute the following to the Company:
+
+[INSERT MEMBER 1 NAME]: $[INSERT AMOUNT] in cash
+
+[INSERT MEMBER 2 NAME]: $[INSERT AMOUNT] in cash
+
+4.2 Additional Contributions. No Member shall be required to make additional capital contributions to the Company.
+
+4.3 Return of Contributions. Members shall not be entitled to the return of their capital contributions except upon dissolution and winding up of the Company.
+
+
+
+ARTICLE V – ALLOCATIONS AND DISTRIBUTIONS
+
+5.1 Ownership Interests. The Members' ownership interests in the Company, as follows:
+
+[INSERT MEMBER 1 NAME]: [INSERT %]
+
+[INSERT MEMBER 2 NAME]: [INSERT %]
+
+5.2 Distributions. Distributions shall be made to the Members at the discretion of the Members in accordance with their respective ownership percentages.
+
+
+
+ARTICLE VI – MANAGEMENT
+
+6.1 Management. The Company shall be managed by its Members. Each Member shall have equal rights in the management and conduct of the Company's business.
+
+6.2 Authority. Each Member is authorized to bind the Company in the ordinary course of business.
+
+6.3 Major Decisions. The following actions require unanimous consent of the Members:
+
+    • Amendment of this Agreement
+    • Admission of new Members  
+    • Sale of all or substantially all assets
+    • Dissolution of the Company
+
+
+
+ARTICLE VII – BANK ACCOUNTS
+
+7.1 Accounts. Company funds shall be held in the Company's name at a financial institution selected by the Members.
+
+7.2 Signatories. The Members shall determine who is authorized to sign on behalf of the Company.
+
+
+
+ARTICLE VIII – BOOKS AND RECORDS
+
+8.1 Maintenance. The Company shall maintain complete and accurate books and records, including this Agreement, the Articles of Organization, and financial statements.
+
+8.2 Tax Treatment. The Company shall be taxed as a partnership unless otherwise elected. Each Member agrees to report their share of income and loss accordingly.
+
+
+
+ARTICLE IX – TRANSFER OF INTEREST
+
+9.1 Restrictions. No Member may transfer their interest in the Company without the prior written consent of the other Members.
+
+9.2 Right of First Refusal. If a Member desires to transfer their interest, they must first offer it to the other Members on the same terms and conditions.
+
+
+
+ARTICLE X – DISSOLUTION
+
+10.1 Events of Dissolution. The Company shall be dissolved upon:
+
+    • Unanimous consent of the Members
+    • The withdrawal, death, or bankruptcy of a Member (unless the remaining Members elect to continue)
+    • Any other event requiring dissolution under state law
+
+10.2 Winding Up. Upon dissolution, the Company's affairs shall be wound up and its assets distributed in accordance with applicable law.
+
+
+
+ARTICLE XI – MISCELLANEOUS
+
+11.1 Governing Law. This Agreement shall be governed by the laws of the State of [INSERT STATE].
+
+11.2 Amendment. This Agreement may be amended only by written agreement signed by all Members.
+
+11.3 Binding Effect. This Agreement shall be binding upon the Members and their heirs, successors, and assigns.
+
+11.4 Severability. If any provision of this Agreement is held invalid, the remainder shall continue in full force and effect.
+
+
+
+IN WITNESS WHEREOF, the Members have executed this Agreement as of the date first written above.
+
+
+
+SIGNATURES
+
+Member 1:
+Signature: ___________________________
+Name: [INSERT MEMBER 1 NAME]
+Date: ____________________
+
+
+
+Member 2:
+Signature: ___________________________
+Name: [INSERT MEMBER 2 NAME]
+Date: ____________________
+
+
+
+===============================================================================
+
+This LLC Operating Agreement template was provided through StartSmart AI - your intelligent business formation platform.
+
+IMPORTANT LEGAL NOTICE: This is a template for informational purposes only. Please consult with a qualified attorney to ensure this agreement meets your specific needs and complies with your state's laws.
+
+© ${new Date().getFullYear()} StartSmart by NexTax.AI. All rights reserved.`;
+
+      res.setHeader('Content-Type', 'text/plain');
+      res.setHeader('Content-Disposition', 'inline; filename="LLC_Operating_Agreement_Template.txt"');
+      res.send(content);
+    } catch (error) {
+      console.error("Error serving LLC Operating Agreement PDF:", error);
+      res.status(500).json({ message: "Failed to load LLC Operating Agreement PDF" });
+    }
+  });
+
+  // Articles of Incorporation PDF route
+  app.get('/templates/articles-of-incorporation.pdf', async (req, res) => {
+    try {
+      const content = `ARTICLES OF INCORPORATION
+
+OF [INSERT CORPORATION NAME]
+
+
+
+ARTICLE I - NAME
+The name of this corporation is: [INSERT CORPORATION NAME]
+
+
+
+ARTICLE II - PURPOSE
+The purpose of this corporation is to engage in any lawful act or activity for which a corporation may be organized under the General Corporation Law of [INSERT STATE].
+
+
+
+ARTICLE III - AGENT FOR SERVICE OF PROCESS
+The name and address of the corporation's initial agent for service of process is:
+
+Name: [INSERT AGENT NAME]
+Address: [INSERT STREET ADDRESS]
+         [INSERT CITY, STATE ZIP CODE]
+
+
+
+ARTICLE IV - STOCK
+
+4.1 Authorized Shares
+This corporation is authorized to issue [INSERT NUMBER] shares of Common Stock, no par value.
+
+4.2 Rights and Preferences
+All shares shall have equal rights and preferences in all respects.
+
+
+
+ARTICLE V - INCORPORATOR
+The name and address of the incorporator is:
+
+Name: [INSERT INCORPORATOR NAME]
+Address: [INSERT STREET ADDRESS]
+         [INSERT CITY, STATE ZIP CODE]
+
+
+
+ARTICLE VI - DIRECTORS
+
+6.1 Initial Directors
+The number of directors constituting the initial Board of Directors is [INSERT NUMBER], and the names and addresses of the persons who are to serve as the initial directors are:
+
+[INSERT DIRECTOR 1 NAME]
+[INSERT ADDRESS]
+
+[INSERT DIRECTOR 2 NAME]  
+[INSERT ADDRESS]
+
+[INSERT DIRECTOR 3 NAME]
+[INSERT ADDRESS]
+
+6.2 Powers
+The Board of Directors shall have all powers granted by law and these Articles of Incorporation.
+
+
+
+ARTICLE VII - REGISTERED OFFICE
+The street address of the initial registered office is:
+[INSERT STREET ADDRESS, CITY, STATE ZIP CODE]
+
+The registered office may be changed from time to time by the Board of Directors.
+
+
+
+ARTICLE VIII - EFFECTIVE DATE
+These Articles of Incorporation shall become effective upon filing with the Secretary of State of [INSERT STATE].
+
+
+
+SIGNATURE
+
+IN WITNESS WHEREOF, the undersigned incorporator has executed these Articles of Incorporation this [INSERT DAY] day of [INSERT MONTH, YEAR].
+
+
+
+_________________________________
+[INSERT INCORPORATOR NAME], Incorporator
+
+
+STATE OF [INSERT STATE]
+COUNTY OF [INSERT COUNTY]
+
+On this [INSERT DAY] day of [INSERT MONTH, YEAR], before me personally appeared [INSERT INCORPORATOR NAME], who proved to me on the basis of satisfactory evidence to be the person whose name is subscribed to the within instrument and acknowledged to me that he/she executed the same in his/her authorized capacity.
+
+I certify under PENALTY OF PERJURY under the laws of the State of [INSERT STATE] that the foregoing paragraph is true and correct.
+
+WITNESS my hand and official seal.
+
+
+_________________________________
+Notary Public
+
+
+
+===============================================================================
+
+This Articles of Incorporation template was provided through StartSmart AI - your intelligent business formation platform.
+
+IMPORTANT LEGAL NOTICE: This is a template for informational purposes only. Please consult with a qualified attorney to ensure this document meets your specific needs and complies with your state's laws.
+
+© ${new Date().getFullYear()} StartSmart by NexTax.AI. All rights reserved.`;
+
+      res.setHeader('Content-Type', 'text/plain');
+      res.setHeader('Content-Disposition', 'inline; filename="Articles_of_Incorporation_Template.txt"');
+      res.send(content);
+    } catch (error) {
+      console.error("Error serving Articles of Incorporation PDF:", error);
+      res.status(500).json({ message: "Failed to load Articles of Incorporation PDF" });
+    }
+  });
+
+  // Lean Canvas template endpoint
+  app.get('/api/download/lean-canvas', async (req, res) => {
+    try {
+      const imagePath = path.join(process.cwd(), 'attached_assets', 'lean_canvas_template_1751174567697.jpg');
+      
+      // Check if file exists
+      if (!fs.existsSync(imagePath)) {
+        return res.status(404).json({ message: "Lean Canvas template not found" });
+      }
+
+      res.setHeader('Content-Type', 'image/jpeg');
+      res.setHeader('Content-Disposition', 'inline; filename="Lean_Canvas_Template.jpg"');
+      
+      const imageBuffer = fs.readFileSync(imagePath);
+      res.send(imageBuffer);
+    } catch (error) {
+      console.error("Error serving Lean Canvas:", error);
+      res.status(500).json({ message: "Failed to load Lean Canvas template" });
+    }
+  });
+
+  // Chart of Accounts Excel template endpoint
+  app.get('/api/download/chart-of-accounts', async (req, res) => {
+    try {
+      const excelPath = path.join(process.cwd(), 'attached_assets', 'Final_Chart_of_Accounts_1751176780296.xlsx');
+      
+      // Check if file exists
+      if (!fs.existsSync(excelPath)) {
+        return res.status(404).json({ message: "Chart of Accounts template not found" });
+      }
+
+      res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+      res.setHeader('Content-Disposition', 'attachment; filename="Chart_of_Accounts.xlsx"');
+      
+      const excelBuffer = fs.readFileSync(excelPath);
+      res.send(excelBuffer);
+    } catch (error) {
+      console.error("Error serving Chart of Accounts:", error);
+      res.status(500).json({ message: "Failed to load Chart of Accounts template" });
+    }
+  });
+
+  // Executive Summary template endpoint
+  app.get('/api/download/executive-summary', async (req, res) => {
+    try {
+      const docPath = path.join(process.cwd(), 'attached_assets', 'Executive Summary Template_1751178235658.docx');
+      
+      // Read and process the Word document content
+      if (!fs.existsSync(docPath)) {
+        return res.status(404).json({ message: "Executive Summary template not found" });
+      }
+
+      const docBuffer = fs.readFileSync(docPath);
+      const content = `Executive Summary Template
+
+Company Name: [Insert Company Name]
+Industry: [Insert Industry, e.g., Technology, Healthcare, Consumer Goods]
+Location: [Insert Headquarters Location]
+Date: [Insert Date, e.g., June 2025]
+
+1. Company Overview
+
+[Company Name] is a [describe business type, e.g., "cutting-edge technology startup" or "sustainable consumer goods company"] focused on [core mission or value proposition, e.g., "revolutionizing healthcare delivery through AI-driven diagnostics" or "providing eco-friendly packaging solutions"]. Founded in [year], our company leverages [key strengths, e.g., proprietary technology, experienced team, strategic partnerships] to address [specific market need or problem].
+
+2. Problem Statement
+
+The [target industry/market] faces [describe the problem or gap, e.g., "inefficient supply chain processes costing billions annually" or "limited access to affordable, high-quality education"]. This creates [specific consequences, e.g., "increased costs for businesses" or "barriers to personal and professional growth for millions"]. Current solutions are [describe shortcomings of existing solutions, e.g., "fragmented, costly, or outdated"].
+
+3. Our Solution
+
+[Company Name] offers [describe product/service, e.g., "a cloud-based platform that streamlines supply chain operations" or "a scalable online learning system with personalized content"]. Our solution is unique because [highlight differentiators, e.g., "it uses advanced machine learning to reduce costs by 30%" or "it integrates seamlessly with existing systems"]. We deliver value by [explain benefits, e.g., "saving clients time and money" or "empowering users with accessible, high-quality education"].
+
+4. Market Opportunity
+
+The addressable market for [product/service] is valued at [insert market size, e.g., "$X billion globally in 2025"] and is growing at [insert growth rate, e.g., "X% CAGR"]. Our target customers are [describe target audience, e.g., "small-to-medium enterprises in retail" or "healthcare providers in North America"]. With [specific market trends, e.g., "increasing demand for automation" or "shift toward sustainable products"], [Company Name] is positioned to capture [estimated market share or revenue projections].
+
+5. Business Model
+
+We generate revenue through [describe revenue streams, e.g., "subscription-based software licensing," "direct product sales," or "freemium model with premium features"]. Our pricing strategy is [explain pricing approach, e.g., "competitive, tiered pricing to suit various customer segments"]. Additional revenue opportunities include [mention upsell or expansion opportunities, e.g., "consulting services" or "licensing our technology"].
+
+6. Competitive Advantage
+
+[Company Name] stands out due to:
+
+• [Unique Feature 1, e.g., "Patented technology"]: [Briefly explain why it's a game-changer].
+• [Unique Feature 2, e.g., "Experienced leadership team"]: [Highlight relevant expertise or track record].
+• [Unique Feature 3, e.g., "Strategic partnerships"]: [Name key partners or networks].
+
+Our competitors, such as [name competitors], lack [specific advantage, e.g., "our scalability" or "our customer-centric approach"], positioning us as a market leader.
+
+7. Traction & Milestones
+
+To date, [Company Name] has achieved [key accomplishments, e.g., "$X in revenue," "X,000 active users," or "successful pilot with [major client]"]. Recent milestones include [list recent achievements, e.g., "launched beta product in Q1 2025" or "secured $X in seed funding"]. Our next steps are [outline upcoming goals, e.g., "expand to new markets by Q3 2025" or "launch version 2.0 of our platform"].
+
+8. Financial Snapshot
+
+• Revenue (Current/Projected): [Insert current revenue and projections, e.g., "$X in 2025, projected $Y by 2027"].
+• Funding Raised: [Insert amount, e.g., "$X million in seed funding"].
+• Funding Sought: [Insert amount, e.g., "Seeking $X million to scale operations"].
+• Use of Funds: [Briefly outline, e.g., "40% product development, 30% marketing, 20% hiring, 10% operations"].
+
+9. Team
+
+Our leadership team brings [describe team strengths, e.g., "decades of combined experience in tech and finance"]. Key members include:
+
+• [Name, Title]: [Brief background, e.g., "Former CTO at [Company], led $X million product launch"].
+• [Name, Title]: [Brief background, e.g., "Expert in [industry], with X patents"].
+
+Supported by [mention advisors, board members, or key hires, if applicable].
+
+10. Call to Action
+
+[Company Name] is poised to [restate big vision, e.g., "transform the [industry] landscape"]. We invite investors and partners to join us in [specific ask, e.g., "scaling our solution to reach X million users" or "building a sustainable future"]. Contact [insert contact name/email] to discuss partnership or investment opportunities.
+
+TIPS FOR CUSTOMIZATION
+
+Keep it Concise: Aim for 1-2 pages maximum. Investors and partners value brevity.
+
+Tailor to Audience: Emphasize financials for investors, strategic alignment for partners.
+
+Use Data: Include specific metrics (e.g., market size, growth rates, traction) to build credibility.
+
+Highlight Differentiators: Clearly articulate what makes your business unique.
+
+Professional Tone: Avoid jargon overload; keep language clear and compelling.`;
+
+      res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+      res.setHeader('Content-Disposition', 'inline; filename="Executive_Summary_Template.txt"');
+      res.send(content);
+    } catch (error) {
+      console.error("Error serving Executive Summary:", error);
+      res.status(500).json({ message: "Failed to load Executive Summary template" });
+    }
+  });
+
+  // Business Plan for Startups template endpoint
+  app.get('/api/download/business-plan-startups', async (req, res) => {
+    try {
+      const docPath = path.join(process.cwd(), 'attached_assets', 'Business Plan for Startups_1751179536936.docx');
+      
+      // Check if file exists
+      if (!fs.existsSync(docPath)) {
+        return res.status(404).json({ message: "Business Plan template not found" });
+      }
+
+      const content = `Business Plan Template for Startups
+
+Company Name: [Insert Company Name]
+Industry: [Insert Industry, e.g., Technology, Healthcare, Consumer Goods]
+Location: [Insert Headquarters Location]
+Date: [Insert Date, e.g., June 2025]
+
+1. Executive Summary
+
+Purpose: Provide a snapshot of your business to capture interest.
+
+[Company Name] is a [describe business type, e.g., "technology startup," "sustainable consumer brand"] founded in [year] to address [specific market need or problem, e.g., "inefficient supply chain processes"]. Our [product/service, e.g., "AI-powered logistics platform"] delivers [key benefit, e.g., "30% cost reduction"]. Targeting [target market, e.g., "SMEs in retail"], we operate in a [market size, e.g., "$X billion"] market growing at [growth rate, e.g., "X% CAGR"]. We seek [funding amount, e.g., "$X million"] to [purpose, e.g., "scale operations and expand to new markets"].
+
+2. Company Description
+
+Purpose: Outline your business's mission, vision, and structure.
+
+Mission Statement: [State mission, e.g., "To empower businesses with accessible data analytics."]
+Vision Statement: [State vision, e.g., "To be the leading analytics provider for SMEs by 2030."]
+Business Structure: [e.g., "C-Corp," "LLC," or "Sole Proprietorship"]
+Founding Story: [Briefly describe why/how the business was founded, e.g., "Inspired by [founder's experience] to solve [problem]."]
+Core Values: [List values, e.g., "Innovation, Customer-Centricity, Sustainability."]
+Key Objectives: [List 3-5 goals, e.g., "Achieve $X revenue by [year]," "Expand to [market] by [date]."]
+
+3. Market Analysis
+
+Purpose: Demonstrate market opportunity and understanding of the industry.
+
+Industry Overview: The [industry, e.g., "data analytics"] market is valued at [insert market size, e.g., "$X billion in 2025"], growing at [growth rate, e.g., "X% CAGR"] due to [trends, e.g., "digital transformation"].
+
+Target Market: Our primary customers are [describe audience, e.g., "SMEs with $X-$Y revenue in retail"].
+• Demographics: [e.g., "Business owners aged 25-45, tech-savvy."]
+• Geographics: [e.g., "North America, focusing on urban areas."]
+• Psychographics: [e.g., "Value efficiency and affordability."]
+
+Market Needs: Customers face [specific problems, e.g., "high analytics costs"], which our [product/service] addresses by [solution, e.g., "offering affordable, user-friendly tools"].
+
+Competitive Landscape: Key competitors include [list competitors, e.g., "Tableau, Power BI"]. They lack [your advantage, e.g., "SME-focused pricing"].
+
+Market Share Goal: Aim to capture [X%] of the market by [year].
+
+4. Products and Services
+
+Purpose: Detail what you offer and how it solves the market's problem.
+
+Description: [Describe product/service, e.g., "A cloud-based analytics platform with AI-driven insights."]
+
+Key Features:
+• [Feature 1, e.g., "Real-time data visualization."]
+• [Feature 2, e.g., "Predictive analytics for sales forecasting."]
+• [Feature 3, e.g., "Integration with [specific tools]."]
+
+Benefits: [Explain value, e.g., "Saves 20 hours/month on reporting."]
+Unique Selling Proposition (USP): [e.g., "The only platform tailored for non-technical SME users."]
+Development Stage: [e.g., "MVP launched," "In beta testing," or "Full product ready by [date]."]
+Future Offerings: [e.g., "Mobile app by [date]," "Premium consulting services."]
+
+5. Marketing and Sales Strategy
+
+Purpose: Explain how you'll attract and retain customers.
+
+Positioning: [Company Name] is positioned as [e.g., "the affordable, user-friendly alternative to enterprise analytics"].
+
+Marketing Channels:
+• [Channel 1, e.g., "Content marketing via blogs on data trends."]
+• [Channel 2, e.g., "Targeted ads on LinkedIn for SMEs."]
+• [Channel 3, e.g., "Partnerships with [industry associations]."]
+
+Sales Strategy: [e.g., "Freemium model with inside sales team for conversions," "Direct outreach to [specific audience]."]
+Customer Acquisition Cost (CAC): [e.g., "Estimated $X per customer."]
+Customer Retention: [e.g., "Onboarding support, 24/7 customer service, and regular feature updates."]
+Key Metrics: Track [e.g., "website conversions, trial-to-paid conversion rate"].
+
+6. Business Model
+
+Purpose: Clarify how you'll generate revenue and sustain growth.
+
+Revenue Streams:
+• [Stream 1, e.g., "Monthly subscriptions at $X-$Y."]
+• [Stream 2, e.g., "One-time setup fees."]
+• [Stream 3, e.g., "Premium add-ons or consulting."]
+
+Pricing Strategy: [e.g., "Tiered plans to suit different customer sizes."]
+Cost Structure: Key costs include [e.g., "software development ($X/month), marketing ($Y/month), staff salaries"].
+Scalability: [Explain how the model scales, e.g., "Cloud-based platform supports unlimited users."]
+
+7. Competitive Analysis
+
+Purpose: Highlight your edge over competitors.
+
+Competitor 1: [Name, e.g., "Tableau"] – Strengths: [e.g., "Robust features"]; Weaknesses: [e.g., "High cost"].
+Competitor 2: [Name, e.g., "Power BI"] – Strengths: [e.g., "Microsoft integration"]; Weaknesses: [e.g., "Complex for SMEs"].
+Your Advantage: [Company Name] excels due to [list advantages, e.g., "lower price point," "AI-driven insights," "SME focus"].
+Barriers to Entry: [e.g., "Patented technology," "Exclusive partnerships," "Brand loyalty."]
+
+8. Operations Plan
+
+Purpose: Outline how your business will run day-to-day.
+
+Location: [e.g., "Headquarters in [city], with remote team support."]
+Facilities/Technology: [e.g., "Cloud infrastructure via AWS," "Office space for X employees."]
+Team Structure: [e.g., "10 employees: 4 in tech, 3 in sales, 2 in marketing, 1 in operations."]
+Key Processes: [e.g., "Agile development for product updates," "Weekly customer feedback loops."]
+Suppliers/Partners: [e.g., "Partnered with [vendor] for cloud hosting," "Suppliers for [materials]."]
+
+Milestones:
+• [Short-term, e.g., "Launch MVP by [date]."]
+• [Mid-term, e.g., "Reach X customers by [date]."]
+• [Long-term, e.g., "Expand to [region] by [date]."]
+
+9. Management Team
+
+Purpose: Showcase the team's expertise and credibility.
+
+[Name, Title]: [Background, e.g., "X years in [industry], led [achievement]."]
+[Name, Title]: [Background, e.g., "Expert in [field], with [credentials]."]
+Advisors: [e.g., "[Name], industry veteran with [experience]."]
+Hiring Plan: [e.g., "Hire X engineers and Y salespeople by [date]."]
+
+10. Financial Plan
+
+Purpose: Provide a clear financial outlook and funding needs.
+
+Revenue Projections:
+• Year 1: [e.g., "$X in 2025"]
+• Year 3: [e.g., "$Y by 2027"]
+
+Key Expenses: [e.g., "Development ($X), Marketing ($Y), Salaries ($Z)."]
+Break-Even Point: [e.g., "Expected by [month/year]."]
+Funding Requirements: Seeking [e.g., "$X million"] for [purpose, e.g., "product development, marketing"].
+Use of Funds: [e.g., "40% product, 30% marketing, 20% hiring, 10% operations."]
+Financial Assumptions: [e.g., "X% customer growth, Y% churn rate."]
+
+Note: Attach detailed financial projections (e.g., income statement, cash flow) in an appendix.
+
+11. Funding Request and Exit Strategy
+
+Purpose: Clarify what you're asking for and potential returns.
+
+Funding Sought: [e.g., "$X million in [equity/debt]."]
+Use of Funds: [Break down allocation, e.g., "X% for [purpose]."]
+Exit Strategy: [e.g., "Acquisition by [industry leaders] within 5 years," "IPO by [year]."]
+Investor ROI: [e.g., "Projected X% return within Y years."]
+
+12. Appendices (Optional)
+
+Supporting Documents: [e.g., "Market research data, financial projections, team resumes."]
+Visuals: [e.g., "Product screenshots, market size charts."]
+Legal: [e.g., "Patents, trademarks, incorporation documents."]
+
+INSTRUCTIONS FOR USE
+
+Fill in Placeholders: Replace [bracketed text] with your startup's specifics (e.g., company name, market size, team bios).
+
+Use Data: Include accurate metrics (e.g., market size, revenue projections). If you need help, I can search the web or X for industry data.
+
+Keep it Focused: Aim for 10-20 pages total, balancing detail with clarity. Investors prefer concise plans.
+
+Tailor to Audience: Emphasize financials for investors, operational details for partners, or vision for internal teams.
+
+Add Visuals: Include charts or graphs (e.g., market growth, financials) in the appendices. I can generate these on a canvas panel if requested.
+
+Review Tone: Use a professional, confident tone and avoid excessive jargon.`;
+
+      res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+      res.setHeader('Content-Disposition', 'inline; filename="Business_Plan_for_Startups.txt"');
+      res.send(content);
+    } catch (error) {
+      console.error("Error serving Business Plan for Startups:", error);
+      res.status(500).json({ message: "Failed to load Business Plan template" });
+    }
+  });
+
+  // LLC vs Corporation guide endpoint
+  app.get('/api/download/llc-vs-corporation-guide', async (req, res) => {
+    try {
+      const content = `LLC or S Corp: Which Entity is Right for You?
+Complete Guide for Entrepreneurs, Solopreneurs, and Founders
+
+==================================================
+
+WHAT IS AN S CORPORATION?
+
+Definition:
+S Corporation is an LLC or a C Corporation that elected pass-through tax treatment with the IRS. A company must meet strict requirements with the IRS to qualify for S Corporation status.
+
+Key Characteristics:
+• Must be owned by shareholders and run by board of directors
+• Must hold an annual shareholders' meeting and directors' meetings
+• Must document key shareholder decisions and file separate corporate income tax return
+• Tax designation is granted by the IRS that lets corporations pass their income through to their shareholders
+
+==================================================
+
+S CORPORATION TAX ADVANTAGES
+
+Reduced Self-Employment Tax Burden:
+• Lessens the Self-Employment Tax Burden on LLC Members
+• Only income paid to LLC members on payroll is subject to self-employment taxes
+• Profits paid as distributions are not subject to Social Security and Medicare taxes
+• LLC members may find that the S Corporation election lowers personal tax burden
+
+Avoids Double Taxation for C Corporations:
+• As an S Corporation, a Corporation's profits and losses flow through to shareholders' personal tax returns
+• Income is taxed at individual tax rates instead of corporate rates
+• The corporate entity does not pay income tax
+• Shareholders that are employees only pay self-employment tax on wages or salary
+• Dividend income paid to shareholders is not subject to self-employment tax
+
+==================================================
+
+S CORPORATION TAX DISADVANTAGES
+
+Growth Limitations:
+• S Corporations may not have more than 100 shareholders, potentially limiting growth
+
+Reasonable Compensation Requirements:
+• Understanding and adhering to reasonable compensation requirements is important for compliance
+• An LLC taxed as an S Corporation must pay its owners fair compensation for work performed
+• Failure to pay reasonable compensation can trigger IRS red flags
+
+State Tax Variations:
+• S Corporations are not treated equally at the state level
+• Some states do not recognize S Corporation status
+
+==================================================
+
+WHAT IS AN LLC?
+
+Definition:
+An LLC (Limited Liability Company) is a business structure formed under specific state statutes. It is the simplest formal business structure to form and maintain.
+
+Key Characteristics:
+• Hybrid of a Partnership and a Corporation
+• Separate legal entity from its owners (known as "members")
+• Main benefit is limiting liability of the owners
+• Profits are taxed as personal income, usually lower than corporate tax rates
+
+==================================================
+
+BENEFITS OF FORMING AN LLC
+
+Simplicity:
+• Minimal business registration paperwork required
+• Minimal ongoing filing requirements
+
+Personal Liability Protection:
+• LLC is considered a separate legal entity from its members
+• Financial and legal responsibilities belong to the entity, not personal assets
+
+Financing and Credit:
+• Financing can be easier to obtain
+• LLC is a formal legal entity with known assets and obligations
+
+Tax Treatment Options:
+• By default, LLC is a "disregarded entity" for tax purposes
+• Income tax applied same as Sole Proprietorships and Partnerships
+• Can elect different tax treatments (C Corp or S Corp)
+
+Management Flexibility:
+• LLC may be either member managed or manager managed
+
+==================================================
+
+TAX ADVANTAGES OF AN LLC
+
+Pass-Through Taxation:
+• As a "disregarded entity," profits and losses flow through to members' personal tax returns
+• Income taxes paid at individual owner level rather than entity level
+
+Tax Flexibility:
+• LLC offers more flexibility in how owners can be taxed
+• Members may choose how business divides profits and losses among owners
+• Can elect to be treated as C Corporation or S Corporation
+
+==================================================
+
+TAX DISADVANTAGES OF AN LLC
+
+Self-Employment Tax Burden:
+• All of an LLC's business profits are subject to Social Security and Medicare taxes
+• May create unfavorable financial situation for LLC owners
+• Must pay self-employment taxes on distributive share of LLC's profits
+• Self-employment taxes apply even if money is reinvested into business
+
+==================================================
+
+HOW LLC OWNERS GET PAID
+
+Payment Considerations:
+• Sole Proprietors are not employees and do not receive W2
+• Partnerships report business income on 1065 partnership tax return
+• Members pay self-employment taxes on their shares of business income
+• Single-member LLCs and multi-member LLCs electing C Corp status: all members are employees and receive W2
+• LLCs electing S Corp status file 1120S tax return with Schedule K-1 forms
+
+==================================================
+
+PAYING SOCIAL SECURITY TAXES
+
+General Requirements:
+• All workers, including business owners, pay Social Security and Medicare taxes (FICA)
+• Exception: income below $400 for the year
+• Social Security tax rate: 6.2% each for employer and employee (12.4% total)
+• Medicare tax rate: 1.45% each for employee and employer
+• Employers responsible for state unemployment taxes
+• Sole Proprietorships, General Partners, and LLC members treated as Partnerships do not pay state unemployment taxes
+
+==================================================
+
+PAYMENT VIA 1099s
+
+Independent Contractor Option:
+• LLC can hire owner as independent contractor
+• Still responsible for paying self-employment taxes
+• Must follow rules for independent contractors
+• Tax benefits availability not as clear
+• Essential to consult accountant before using this option
+
+==================================================
+
+HOW S-CORPORATION OWNERS GET PAID
+
+Payment Requirements:
+• S Corporation shareholder doing substantial work is considered an employee
+• Must take reasonable salary via payroll
+• Business must put shareholder on payroll with proper tax withholding
+• Profits are taxable at shareholder level
+• Distributions of profits can be made to shareholders tax-free
+
+Important Considerations:
+• Cannot pay suspiciously small salary and take most compensation as distributions
+• IRS can revoke S Corporation status for substantially underpaid shareholders
+• Critical to maintain and track shareholder basis
+• Tax-free distributions possible only with sufficient basis
+• Shareholder basis is an IRS examination area
+
+==================================================
+
+PASS-THROUGH ENTITY TAX CONSIDERATIONS
+
+Income Tax Benefits:
+• Taxes flow through to owners' individual tax returns
+• Business profits taxed at individual owner's personal tax rate
+• Advantageous if owner's individual tax rates are lower than corporate tax rate
+• Many factors affect optimal choice, including state tax laws
+
+==================================================
+
+FEDERAL TAX OVERVIEW
+
+Income Tax for LLCs:
+
+Single-Member LLCs:
+• Income tax handled same as Sole Proprietorship
+• Business income and losses flow through to owner's personal income tax return
+
+Multi-Member LLCs:
+• Income tax handled same as Partnerships
+• Receive Schedule K-1 from LLC based on share of business profits
+• Report information in Schedule E of Form 1040
+
+Income Tax for S Corporations:
+• Income taxes pass through to owners
+• Tax filing requirements depend on underlying business entity
+• S Corporation is not a business entity type but a special tax election
+• Available to eligible LLCs and C Corporations
+
+==================================================
+
+SELF-EMPLOYMENT TAX
+
+General Requirements:
+• Owners of pass-through entities subject to self-employment taxes under SECA
+• Self-employment taxes include Social Security and Medicare taxes
+• Self-employed individuals pay entire 12.4% Social Security tax and 2.9% Medicare tax
+• Total of 15.3% to federal government
+• Typically paid in quarterly installments with estimated income taxes
+
+Self-Employment Tax for S Corporations:
+• Self-employment tax burden lessened for business owners
+• Individuals only pay SECA tax on wages and salaries from business
+• "Employee income" from wages subject to 50% of Social Security and Medicare taxes
+• S Corp pays other 50% of those taxes
+• Business profits paid as distributions subject to income tax but not self-employment taxes
+• Must pay reasonable salary to avoid IRS audit
+
+==================================================
+
+S CORPORATION VS. LLC SUMMARY
+
+Ownership Eligibility:
+• S Corporation shareholder requirements more restrictive than LLC
+• S Corporation requires domestic company with individual, certain trust, or estate owners
+• Partnerships, Corporations, and non-resident aliens cannot be S Corporation shareholders
+• S Corporation limited to 100 shareholders maximum
+• S Corporation can issue only one class of stock
+
+Liability Protection:
+• Both LLC and S Corporation protect business owners' personal assets
+• Court might rule owners personally responsible if they:
+  - Acted fraudulently
+  - Personally guaranteed business loans
+  - Were negligent or reckless causing harm
+
+==================================================
+
+KEY DECISION FACTORS
+
+Choose LLC if:
+• You want maximum flexibility in management and operations
+• You prefer simpler compliance requirements
+• You have diverse ownership structure needs
+• You want flexibility in profit/loss distribution
+
+Choose S Corporation if:
+• You want to minimize self-employment taxes
+• You have significant business profits
+• You can meet reasonable compensation requirements
+• You don't need more than 100 shareholders
+• You can comply with S Corp restrictions
+
+==================================================
+
+CONSULTATION RECOMMENDATIONS
+
+Important Note:
+This guide provides general information only. Tax laws are complex and change frequently. Always consult with:
+
+• Qualified tax professional
+• Business attorney
+• Certified Public Accountant (CPA)
+• Business formation specialist
+
+Before making entity selection decisions for your specific situation.
+
+==================================================
+
+NEXT STEPS
+
+If You Choose LLC:
+1. Research state-specific LLC requirements
+2. Prepare Articles of Organization
+3. Create Operating Agreement
+4. Obtain EIN from IRS
+5. Consider tax election options
+
+If You Choose S Corporation:
+1. Form underlying entity (LLC or C Corp)
+2. File Form 2553 for S Corp election
+3. Establish payroll for owner-employees
+4. Set up reasonable compensation system
+5. Maintain corporate compliance requirements
+
+==================================================
+
+This comprehensive guide helps you understand the key differences between LLC and S Corporation structures. The right choice depends on your specific business goals, tax situation, and growth plans.
+
+For personalized guidance on entity selection and formation, consult qualified professionals who can analyze your unique circumstances.
+
+===============================================================================
+
+This LLC vs Corporation Complete Guide was provided through StartSmart AI - your intelligent business formation platform.
+
+IMPORTANT NOTICE: This is general information only. Tax laws are complex and vary by state. Please consult with qualified tax and legal professionals for advice specific to your situation.
+
+© ${new Date().getFullYear()} StartSmart by NexTax.AI. All rights reserved.`;
+
+      res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+      res.setHeader('Content-Disposition', 'inline; filename="LLC_vs_Corporation_Complete_Guide.txt"');
+      res.send(content);
+    } catch (error) {
+      console.error("Error serving LLC vs Corporation guide:", error);
+      res.status(500).json({ message: "Failed to load LLC vs Corporation guide" });
+    }
+  });
+
+  // Tax Setup for New Businesses guide endpoint
+  app.get('/api/download/tax-setup-for-new-businesses', async (req, res) => {
+    try {
+      const content = `Tax Setup for New Businesses
+
+Step-by-Step Guide to EIN Application, Tax Elections, and Compliance Requirements
+
+📘 Introduction: Why Tax Setup Matters
+
+Starting a new business is exciting—but skipping the right tax setup can cost you time, money, and peace of mind later. Whether you're launching a solo venture or founding a growing startup, it's essential to:
+
+Apply for the correct tax ID (EIN)
+Make informed tax elections (like S corp status)
+Understand your entity's tax obligations
+Stay compliant with federal, state, and local agencies
+
+This guide provides a step-by-step overview of how to set up your U.S. business for tax success, covering LLCs, Partnerships, S Corporations, and C Corporations.
+
+✅ Step 1: Apply for an Employer Identification Number (EIN)
+
+An EIN is your business's Social Security Number for tax purposes. You'll need it to open a business bank account, file tax returns, hire employees, and more.
+
+🛠️ How to Apply for an EIN (Free):
+
+Go to the IRS EIN Assistant: https://www.irs.gov/businesses/small-businesses-self-employed/apply-for-an-employer-identification-number-ein-online
+
+Choose Your Entity Type (LLC, Partnership, Corporation, etc.)
+
+Provide the Responsible Party's Info: This is usually one of the business owners (must be an individual with a U.S. SSN or ITIN).
+
+Complete the Online Form: Takes ~10 minutes. You'll receive your EIN instantly as a PDF.
+
+📝 Pro Tip: Even if you're a single-member LLC, you still need an EIN if you plan to hire employees or elect to be taxed as an S corp.
+
+✅ Step 2: Choose & File Federal Tax Elections
+
+Your entity type determines your default federal tax treatment. However, you can elect a different treatment by filing the proper IRS form.
+
+Entity Type | Default IRS Tax Status | Optional Tax Election
+Single-Member LLC | Disregarded Entity | S Corp (Form 2553) or C Corp
+Multi-Member LLC | Partnership | S Corp or C Corp (Form 8832/2553)
+Corporation (Inc.) | C Corporation | S Corporation (Form 2553)
+
+🧾 Common Tax Election Forms:
+• Form 2553 – Elect S Corporation status
+• Form 8832 – Elect to be taxed as a Corporation (for LLCs)
+
+🕒 Election Deadlines:
+• S Corp Election: Must file within 75 days of formation OR by March 15 of the tax year to be effective for that year.
+• Late elections may be accepted with reasonable cause.
+
+📝 Pro Tip: Consult a tax advisor before filing elections. While S corp treatment may reduce self-employment tax, it comes with more IRS scrutiny and payroll requirements.
+
+✅ Step 3: Understand Your Tax Filing Requirements
+
+Each business structure has unique compliance responsibilities.
+
+📂 LLCs and Partnerships
+
+🧾 Federal Taxation:
+Type | IRS Default | Common Forms
+Single-Member LLC | Disregarded Entity | Schedule C (Form 1040)
+Multi-Member LLC | Partnership | Form 1065 + K-1s for each partner
+
+If taxed as an S corp, file Form 1120-S.
+If taxed as a C corp, file Form 1120.
+
+💼 Key Compliance Requirements:
+• Annual federal return (Schedule C or 1065)
+• Self-employment taxes for members (unless S corp)
+• State income tax (where applicable)
+• State franchise tax (CA, TX, NY, etc.)
+• Annual reports/filings (varies by state)
+• Registered agent address in state of formation
+
+🧠 Pro Tips:
+• Consider S corp tax election once you earn $50K+ in net income to potentially reduce self-employment tax.
+• File partnership agreements—even if informal—to reduce IRS audits.
+• Ensure all partners receive Schedule K-1s for personal returns.
+
+📂 S Corporations
+
+🧾 Federal Taxation:
+• File Form 1120-S
+• Issue K-1s to all shareholders
+• Owner-employees must receive reasonable compensation (payroll)
+
+🕒 Election Process:
+Form 2553 – S Corp Election: File within 75 days of incorporation or by March 15 of the tax year.
+
+Register with State (if required): Some states (e.g., NY, NJ) require separate S corp elections.
+
+Start Payroll: Must use payroll system to pay shareholder-employees (e.g., Gusto, ADP, or QuickBooks Payroll).
+
+💼 Ongoing Requirements:
+• Quarterly estimated tax payments (if applicable)
+• Payroll tax filings (Form 941/940)
+• Annual 1120-S return + W-2s for shareholders
+• State annual report/franchise tax
+
+🧠 Pro Tips:
+• Late S elections may still be accepted. File ASAP with a written explanation.
+• Use a payroll provider early to avoid IRS penalties.
+• Keep clean books—S corps are audited more than sole props.
+
+📂 C Corporations
+
+🧾 Federal Taxation:
+• File Form 1120 (due by April 15 or 15th day of 4th month after year-end)
+• Subject to flat 21% corporate tax
+• Dividends paid to owners are double-taxed
+
+💼 Ongoing Requirements:
+• Maintain formal corporate bylaws and meeting minutes
+• Issue stock certificates and cap table tracking
+• File annual reports with your state
+• Submit Form 1099s for contractors over $600
+• Pay quarterly estimated corporate tax if owed
+
+🧠 Pro Tips:
+• C corps are ideal for startups planning to raise capital.
+• Keep personal and corporate finances completely separate.
+• Be aware of double taxation on distributions/dividends.
+
+🏛 State & Local Compliance (All Entities)
+
+Don't forget your state and local tax responsibilities, including:
+• State business registration and annual fees
+• State income taxes (if applicable)
+• State payroll tax accounts (if hiring)
+• Sales tax permits (for physical/digital products in certain states)
+• City/county business licenses
+
+📝 Resource: Use your state's Department of Revenue or Secretary of State site for forms, fees, and deadlines.
+
+📅 Sample Tax & Compliance Timeline (New LLC with S Corp Election)
+
+Timeline | Action Item
+Week 1 | Form LLC, get EIN
+Week 2 | Open bank account, choose accounting method
+Week 3 | File S Corp Election (Form 2553)
+Month 1–3 | Register with state tax agencies, start payroll
+Monthly/Quarterly | File payroll reports (Form 941, state filings)
+Quarterly | Pay estimated taxes (Form 1040-ES or 1120-W)
+End of Year | File W-2s, 1099s, Form 1120-S
+
+🚫 Common Pitfalls to Avoid
+
+❌ Mixing personal and business finances
+❌ Missing S corp election deadline (75 days)
+❌ Not setting up payroll for S corp owners
+❌ Forgetting state filings or franchise taxes
+❌ Misclassifying workers (contractor vs. employee)
+
+🧩 Pro Tips for Success
+
+✅ Use a free tool like the IRS Small Business Tax Center
+✅ Use SBA.gov for state-specific startup guides
+✅ Hire a bookkeeper or use accounting software (e.g., QuickBooks, Wave, or Xero)
+✅ Consider an accountant for tax election analysis before March 15
+✅ Review your business structure annually as you grow
+
+🔗 Helpful Resources
+
+🧾 Apply for EIN Online – IRS
+📄 Form 2553 – Electing S Corp Status
+🧮 IRS Small Business Tax Center
+🏢 SBA State Business License Lookup
+📚 IRS Publication 583 – Starting a Business and Keeping Records
+
+🏢 NexTax.AI Professional Services
+
+Need personalized guidance for your business tax setup? Our expert team provides:
+• EIN application assistance and verification
+• Tax election analysis and filing support
+• State-specific compliance requirement mapping
+• Ongoing bookkeeping and tax preparation services
+• Business structure optimization consultations
+
+Ready to get your business tax setup right from the start? Contact NexTax.AI for professional guidance tailored to your specific situation.
+
+📞 Schedule Your Consultation
+Visit: nextax.ai/consultation
+Email: support@nextax.ai
+Phone: 1-800-NEXTAX-1
+
+This guide provides general information and should not be considered specific tax or legal advice. Consult with qualified professionals for your specific situation.
+
+===============================================================================
+
+This Tax Setup Guide was provided through StartSmart AI - your intelligent business formation platform.
+
+IMPORTANT NOTICE: This is general information only. Tax laws are complex and vary by state. Please consult with qualified tax professionals for advice specific to your situation.
+
+© ${new Date().getFullYear()} StartSmart by NexTax.AI. All rights reserved.`;
+
+      res.setHeader('Content-Type', 'text/plain; charset=utf-8');
+      res.setHeader('Content-Disposition', 'inline; filename="Tax_Setup_for_New_Businesses_Guide.txt"');
+      res.send(content);
+    } catch (error) {
+      console.error("Error serving Tax Setup guide:", error);
+      res.status(500).json({ message: "Failed to load Tax Setup guide" });
+    }
+  });
+
+  const httpServer = createServer(app);
+  return httpServer;
+}
