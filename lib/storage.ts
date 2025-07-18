@@ -1,355 +1,288 @@
 import { createClient } from "@supabase/supabase-js"
 import type {
-  InsertUser,
-  InsertBusinessProfile,
-  InsertDocument,
-  InsertConversation,
-  InsertMessage,
-  InsertProgressTask,
-  InsertComplianceItem,
+  UserProfile,
+  BusinessProfile,
+  Document,
+  ChatMessage,
+  Conversation,
+  ComplianceItem,
+  Task,
+  UsageRecord,
 } from "./schema"
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
+const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
 
-const supabase = createClient(supabaseUrl, supabaseServiceKey)
+// User operations
+export async function createUserProfile(profile: Omit<UserProfile, "id" | "created_at" | "updated_at">) {
+  const { data, error } = await supabase.from("user_profiles").insert(profile).select().single()
 
-export const storage = {
-  // User operations
-  async getUser(userId: string) {
-    const { data, error } = await supabase.from("users").select("*").eq("id", userId).single()
-
-    if (error && error.code !== "PGRST116") throw error
-    return data
-  },
-
-  async createUser(userData: InsertUser) {
-    const { data, error } = await supabase.from("users").insert(userData).select().single()
-
-    if (error) throw error
-    return data
-  },
-
-  async updateUser(userId: string, updates: Partial<InsertUser>) {
-    const { data, error } = await supabase
-      .from("users")
-      .update({ ...updates, updatedAt: new Date() })
-      .eq("id", userId)
-      .select()
-      .single()
-
-    if (error) throw error
-    return data
-  },
-
-  // Business Profile operations
-  async getUserBusinessProfiles(userId: string) {
-    const { data, error } = await supabase
-      .from("business_profiles")
-      .select("*")
-      .eq("userId", userId)
-      .order("createdAt", { ascending: false })
-
-    if (error) throw error
-    return data || []
-  },
-
-  async getBusinessProfile(businessId: string) {
-    const { data, error } = await supabase.from("business_profiles").select("*").eq("id", businessId).single()
-
-    if (error && error.code !== "PGRST116") throw error
-    return data
-  },
-
-  async createBusinessProfile(profileData: InsertBusinessProfile) {
-    const { data, error } = await supabase.from("business_profiles").insert(profileData).select().single()
-
-    if (error) throw error
-    return data
-  },
-
-  async updateBusinessProfile(businessId: string, updates: Partial<InsertBusinessProfile>) {
-    const { data, error } = await supabase
-      .from("business_profiles")
-      .update({ ...updates, updatedAt: new Date() })
-      .eq("id", businessId)
-      .select()
-      .single()
-
-    if (error) throw error
-    return data
-  },
-
-  // Document operations
-  async getUserDocuments(userId: string) {
-    const { data, error } = await supabase
-      .from("documents")
-      .select("*")
-      .eq("userId", userId)
-      .order("createdAt", { ascending: false })
-
-    if (error) throw error
-    return data || []
-  },
-
-  async getDocument(documentId: string) {
-    const { data, error } = await supabase.from("documents").select("*").eq("id", documentId).single()
-
-    if (error && error.code !== "PGRST116") throw error
-    return data
-  },
-
-  async createDocument(documentData: InsertDocument) {
-    const { data, error } = await supabase.from("documents").insert(documentData).select().single()
-
-    if (error) throw error
-    return data
-  },
-
-  async updateDocument(documentId: string, updates: Partial<InsertDocument>) {
-    const { data, error } = await supabase
-      .from("documents")
-      .update({ ...updates, updatedAt: new Date() })
-      .eq("id", documentId)
-      .select()
-      .single()
-
-    if (error) throw error
-    return data
-  },
-
-  async deleteDocument(documentId: string) {
-    const { error } = await supabase.from("documents").delete().eq("id", documentId)
-
-    if (error) throw error
-  },
-
-  // Conversation operations
-  async getUserConversations(userId: string) {
-    const { data, error } = await supabase
-      .from("conversations")
-      .select("*")
-      .eq("userId", userId)
-      .order("updatedAt", { ascending: false })
-
-    if (error) throw error
-    return data || []
-  },
-
-  async getConversation(conversationId: string) {
-    const { data, error } = await supabase.from("conversations").select("*").eq("id", conversationId).single()
-
-    if (error && error.code !== "PGRST116") throw error
-    return data
-  },
-
-  async createConversation(conversationData: InsertConversation) {
-    const { data, error } = await supabase.from("conversations").insert(conversationData).select().single()
-
-    if (error) throw error
-    return data
-  },
-
-  async updateConversationTitle(conversationId: string, title: string) {
-    const { data, error } = await supabase
-      .from("conversations")
-      .update({ title, updatedAt: new Date() })
-      .eq("id", conversationId)
-      .select()
-      .single()
-
-    if (error) throw error
-    return data
-  },
-
-  // Message operations
-  async getConversationMessages(conversationId: string) {
-    const { data, error } = await supabase
-      .from("messages")
-      .select("*")
-      .eq("conversationId", conversationId)
-      .order("createdAt", { ascending: true })
-
-    if (error) throw error
-    return data || []
-  },
-
-  async createMessage(messageData: InsertMessage) {
-    const { data, error } = await supabase.from("messages").insert(messageData).select().single()
-
-    if (error) throw error
-    return data
-  },
-
-  // Progress Task operations
-  async getUserProgressTasks(userId: string, businessId?: string) {
-    let query = supabase.from("progress_tasks").select("*").eq("userId", userId)
-
-    if (businessId) {
-      query = query.eq("businessId", businessId)
-    }
-
-    const { data, error } = await query.order("createdAt", { ascending: false })
-
-    if (error) throw error
-    return data || []
-  },
-
-  async createProgressTask(taskData: InsertProgressTask) {
-    const { data, error } = await supabase.from("progress_tasks").insert(taskData).select().single()
-
-    if (error) throw error
-    return data
-  },
-
-  async updateProgressTask(taskId: string, updates: Partial<InsertProgressTask>) {
-    const { data, error } = await supabase
-      .from("progress_tasks")
-      .update({ ...updates, updatedAt: new Date() })
-      .eq("id", taskId)
-      .select()
-      .single()
-
-    if (error) throw error
-    return data
-  },
-
-  async createDefaultProgressTasks(userId: string, businessId: string) {
-    const defaultTasks = [
-      {
-        userId,
-        businessId,
-        title: "Choose Business Structure",
-        description: "Decide between LLC, Corporation, or other business entity types",
-        category: "formation" as const,
-        priority: "high" as const,
-      },
-      {
-        userId,
-        businessId,
-        title: "File Articles of Incorporation/Organization",
-        description: "Submit formation documents to your state",
-        category: "formation" as const,
-        priority: "high" as const,
-      },
-      {
-        userId,
-        businessId,
-        title: "Obtain EIN from IRS",
-        description: "Get your federal tax identification number",
-        category: "tax" as const,
-        priority: "high" as const,
-      },
-      {
-        userId,
-        businessId,
-        title: "Open Business Bank Account",
-        description: "Separate business and personal finances",
-        category: "operational" as const,
-        priority: "medium" as const,
-      },
-      {
-        userId,
-        businessId,
-        title: "Set Up Accounting System",
-        description: "Choose and implement bookkeeping solution",
-        category: "operational" as const,
-        priority: "medium" as const,
-      },
-    ]
-
-    const { data, error } = await supabase.from("progress_tasks").insert(defaultTasks).select()
-
-    if (error) throw error
-    return data
-  },
-
-  // Usage tracking operations
-  async getUserCurrentUsage(userId: string) {
-    const currentMonth = new Date().toISOString().slice(0, 7) // YYYY-MM
-
-    const { data, error } = await supabase
-      .from("usage_tracking")
-      .select("*")
-      .eq("userId", userId)
-      .eq("month", currentMonth)
-      .single()
-
-    if (error && error.code !== "PGRST116") throw error
-
-    return data || { messageCount: 0, documentCount: 0 }
-  },
-
-  async createOrUpdateUsage(userId: string, month: string, messageIncrement: number, documentIncrement: number) {
-    const { data: existing } = await supabase
-      .from("usage_tracking")
-      .select("*")
-      .eq("userId", userId)
-      .eq("month", month)
-      .single()
-
-    if (existing) {
-      const { data, error } = await supabase
-        .from("usage_tracking")
-        .update({
-          messageCount: existing.messageCount + messageIncrement,
-          documentCount: existing.documentCount + documentIncrement,
-          updatedAt: new Date(),
-        })
-        .eq("userId", userId)
-        .eq("month", month)
-        .select()
-        .single()
-
-      if (error) throw error
-      return data
-    } else {
-      const { data, error } = await supabase
-        .from("usage_tracking")
-        .insert({
-          userId,
-          month,
-          messageCount: messageIncrement,
-          documentCount: documentIncrement,
-        })
-        .select()
-        .single()
-
-      if (error) throw error
-      return data
-    }
-  },
-
-  // Compliance operations
-  async getUserComplianceItems(userId: string, businessId?: string) {
-    let query = supabase.from("compliance_items").select("*").eq("userId", userId)
-
-    if (businessId) {
-      query = query.eq("businessId", businessId)
-    }
-
-    const { data, error } = await query.order("dueDate", { ascending: true })
-
-    if (error) throw error
-    return data || []
-  },
-
-  async createComplianceItem(itemData: InsertComplianceItem) {
-    const { data, error } = await supabase.from("compliance_items").insert(itemData).select().single()
-
-    if (error) throw error
-    return data
-  },
-
-  async updateComplianceItem(itemId: string, updates: Partial<InsertComplianceItem>) {
-    const { data, error } = await supabase
-      .from("compliance_items")
-      .update({ ...updates, updatedAt: new Date() })
-      .eq("id", itemId)
-      .select()
-      .single()
-
-    if (error) throw error
-    return data
-  },
+  if (error) throw error
+  return data
 }
+
+export async function getUserProfile(userId: string) {
+  const { data, error } = await supabase.from("user_profiles").select("*").eq("id", userId).single()
+
+  if (error) throw error
+  return data
+}
+
+export async function updateUserProfile(userId: string, updates: Partial<UserProfile>) {
+  const { data, error } = await supabase
+    .from("user_profiles")
+    .update({ ...updates, updated_at: new Date().toISOString() })
+    .eq("id", userId)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+// Business profile operations
+export async function createBusinessProfile(profile: Omit<BusinessProfile, "id" | "created_at" | "updated_at">) {
+  const { data, error } = await supabase.from("business_profiles").insert(profile).select().single()
+
+  if (error) throw error
+  return data
+}
+
+export async function getBusinessProfile(profileId: string) {
+  const { data, error } = await supabase.from("business_profiles").select("*").eq("id", profileId).single()
+
+  if (error) throw error
+  return data
+}
+
+export async function getUserBusinessProfiles(userId: string) {
+  const { data, error } = await supabase
+    .from("business_profiles")
+    .select("*")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+
+  if (error) throw error
+  return data
+}
+
+export async function updateBusinessProfile(profileId: string, updates: Partial<BusinessProfile>) {
+  const { data, error } = await supabase
+    .from("business_profiles")
+    .update({ ...updates, updated_at: new Date().toISOString() })
+    .eq("id", profileId)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+// Document operations
+export async function createDocument(document: Omit<Document, "id" | "created_at" | "updated_at">) {
+  const { data, error } = await supabase.from("documents").insert(document).select().single()
+
+  if (error) throw error
+  return data
+}
+
+export async function getDocument(documentId: string) {
+  const { data, error } = await supabase.from("documents").select("*").eq("id", documentId).single()
+
+  if (error) throw error
+  return data
+}
+
+export async function getUserDocuments(userId: string, filters?: { type?: string; status?: string }) {
+  let query = supabase.from("documents").select("*").eq("user_id", userId)
+
+  if (filters?.type) {
+    query = query.eq("type", filters.type)
+  }
+  if (filters?.status) {
+    query = query.eq("status", filters.status)
+  }
+
+  const { data, error } = await query.order("created_at", { ascending: false })
+
+  if (error) throw error
+  return data
+}
+
+export async function updateDocument(documentId: string, updates: Partial<Document>) {
+  const { data, error } = await supabase
+    .from("documents")
+    .update({ ...updates, updated_at: new Date().toISOString() })
+    .eq("id", documentId)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+export async function deleteDocument(documentId: string) {
+  const { error } = await supabase.from("documents").delete().eq("id", documentId)
+
+  if (error) throw error
+}
+
+// Conversation operations
+export async function createConversation(conversation: Omit<Conversation, "id" | "created_at" | "updated_at">) {
+  const { data, error } = await supabase.from("conversations").insert(conversation).select().single()
+
+  if (error) throw error
+  return data
+}
+
+export async function getConversation(conversationId: string) {
+  const { data, error } = await supabase.from("conversations").select("*").eq("id", conversationId).single()
+
+  if (error) throw error
+  return data
+}
+
+export async function getUserConversations(userId: string) {
+  const { data, error } = await supabase
+    .from("conversations")
+    .select("*")
+    .eq("user_id", userId)
+    .eq("status", "active")
+    .order("updated_at", { ascending: false })
+
+  if (error) throw error
+  return data
+}
+
+// Message operations
+export async function createMessage(message: Omit<ChatMessage, "id" | "created_at">) {
+  const { data, error } = await supabase.from("chat_messages").insert(message).select().single()
+
+  if (error) throw error
+  return data
+}
+
+export async function getConversationMessages(conversationId: string) {
+  const { data, error } = await supabase
+    .from("chat_messages")
+    .select("*")
+    .eq("conversation_id", conversationId)
+    .order("created_at", { ascending: true })
+
+  if (error) throw error
+  return data
+}
+
+// Compliance operations
+export async function createComplianceItem(item: Omit<ComplianceItem, "id" | "created_at" | "updated_at">) {
+  const { data, error } = await supabase.from("compliance_items").insert(item).select().single()
+
+  if (error) throw error
+  return data
+}
+
+export async function getBusinessComplianceItems(businessProfileId: string) {
+  const { data, error } = await supabase
+    .from("compliance_items")
+    .select("*")
+    .eq("business_profile_id", businessProfileId)
+    .order("due_date", { ascending: true })
+
+  if (error) throw error
+  return data
+}
+
+export async function updateComplianceItem(itemId: string, updates: Partial<ComplianceItem>) {
+  const { data, error } = await supabase
+    .from("compliance_items")
+    .update({ ...updates, updated_at: new Date().toISOString() })
+    .eq("id", itemId)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+// Task operations
+export async function createTask(task: Omit<Task, "id" | "created_at" | "updated_at">) {
+  const { data, error } = await supabase.from("tasks").insert(task).select().single()
+
+  if (error) throw error
+  return data
+}
+
+export async function getUserTasks(userId: string, filters?: { status?: string; category?: string }) {
+  let query = supabase.from("tasks").select("*").eq("user_id", userId)
+
+  if (filters?.status) {
+    query = query.eq("status", filters.status)
+  }
+  if (filters?.category) {
+    query = query.eq("category", filters.category)
+  }
+
+  const { data, error } = await query.order("created_at", { ascending: false })
+
+  if (error) throw error
+  return data
+}
+
+export async function updateTask(taskId: string, updates: Partial<Task>) {
+  const { data, error } = await supabase
+    .from("tasks")
+    .update({ ...updates, updated_at: new Date().toISOString() })
+    .eq("id", taskId)
+    .select()
+    .single()
+
+  if (error) throw error
+  return data
+}
+
+// Usage tracking
+export async function recordUsage(usage: Omit<UsageRecord, "id" | "created_at">) {
+  const { data, error } = await supabase.from("usage_records").insert(usage).select().single()
+
+  if (error) throw error
+  return data
+}
+
+export async function getUserUsage(userId: string, actionType?: string, timeframe?: string) {
+  let query = supabase.from("usage_records").select("*").eq("user_id", userId)
+
+  if (actionType) {
+    query = query.eq("action_type", actionType)
+  }
+
+  if (timeframe) {
+    const now = new Date()
+    let startDate: Date
+
+    switch (timeframe) {
+      case "daily":
+        startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+        break
+      case "weekly":
+        startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+        break
+      case "monthly":
+        startDate = new Date(now.getFullYear(), now.getMonth(), 1)
+        break
+      default:
+        startDate = new Date(0)
+    }
+
+    query = query.gte("created_at", startDate.toISOString())
+  }
+
+  const { data, error } = await query.order("created_at", { ascending: false })
+
+  if (error) throw error
+  return data
+}
+
+export async function getUserUsageCount(userId: string, actionType: string, timeframe: string): Promise<number> {
+  const records = await getUserUsage(userId, actionType, timeframe)
+  return records.reduce((total, record) => total + record.count, 0)
+}
+
