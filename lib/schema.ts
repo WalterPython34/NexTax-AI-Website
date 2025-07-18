@@ -1,141 +1,77 @@
-import { z } from "zod"
+import { pgTable, text, timestamp, uuid, boolean, integer, jsonb } from "drizzle-orm/pg-core"
 
-// User schemas
-export const UserProfileSchema = z.object({
-  id: z.string().uuid(),
-  email: z.string().email(),
-  full_name: z.string().min(1),
-  subscription_tier: z.enum(["free", "basic", "premium", "enterprise"]).default("free"),
-  created_at: z.string().datetime(),
-  updated_at: z.string().datetime(),
+export const users = pgTable("users", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  email: text("email").unique().notNull(),
+  name: text("name"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 })
 
-export const BusinessProfileSchema = z.object({
-  id: z.string().uuid(),
-  user_id: z.string().uuid(),
-  business_name: z.string().min(1),
-  business_type: z.enum(["LLC", "Corporation", "Partnership", "Sole Proprietorship"]),
-  state: z.string().min(2).max(2),
-  industry: z.string().min(1),
-  formation_date: z.string().datetime().optional(),
-  ein: z.string().optional(),
-  address: z
-    .object({
-      street: z.string(),
-      city: z.string(),
-      state: z.string(),
-      zip: z.string(),
-    })
-    .optional(),
-  created_at: z.string().datetime(),
-  updated_at: z.string().datetime(),
+export const businessProfiles = pgTable("business_profiles", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").references(() => users.id),
+  businessName: text("business_name").notNull(),
+  businessType: text("business_type").notNull(),
+  state: text("state").notNull(),
+  industry: text("industry"),
+  description: text("description"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 })
 
-// Document schemas
-export const DocumentSchema = z.object({
-  id: z.string().uuid(),
-  user_id: z.string().uuid(),
-  business_profile_id: z.string().uuid().optional(),
-  title: z.string().min(1),
-  type: z.enum(["operating_agreement", "bylaws", "articles", "contract", "other"]),
-  content: z.string(),
-  status: z.enum(["draft", "review", "final"]).default("draft"),
-  created_at: z.string().datetime(),
-  updated_at: z.string().datetime(),
+export const conversations = pgTable("conversations", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").references(() => users.id),
+  title: text("title"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 })
 
-export const DocumentGenerationRequestSchema = z.object({
-  type: z.enum(["operating_agreement", "bylaws", "articles", "contract"]),
-  business_profile_id: z.string().uuid(),
-  custom_requirements: z.string().optional(),
-  template_options: z.record(z.any()).optional(),
+export const messages = pgTable("messages", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  conversationId: uuid("conversation_id").references(() => conversations.id),
+  role: text("role").notNull(), // 'user' | 'assistant'
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
 })
 
-// Chat schemas
-export const ChatMessageSchema = z.object({
-  id: z.string().uuid(),
-  conversation_id: z.string().uuid(),
-  role: z.enum(["user", "assistant", "system"]),
-  content: z.string(),
-  metadata: z.record(z.any()).optional(),
-  created_at: z.string().datetime(),
+export const documents = pgTable("documents", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").references(() => users.id),
+  businessProfileId: uuid("business_profile_id").references(() => businessProfiles.id),
+  documentType: text("document_type").notNull(),
+  title: text("title").notNull(),
+  content: jsonb("content"),
+  status: text("status").default("draft"), // 'draft' | 'completed' | 'reviewed'
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 })
 
-export const ConversationSchema = z.object({
-  id: z.string().uuid(),
-  user_id: z.string().uuid(),
-  title: z.string().min(1),
-  type: z.enum(["general", "document_help", "compliance", "tax_advice"]).default("general"),
-  status: z.enum(["active", "archived"]).default("active"),
-  created_at: z.string().datetime(),
-  updated_at: z.string().datetime(),
+export const complianceTasks = pgTable("compliance_tasks", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").references(() => users.id),
+  businessProfileId: uuid("business_profile_id").references(() => businessProfiles.id),
+  taskName: text("task_name").notNull(),
+  description: text("description"),
+  dueDate: timestamp("due_date"),
+  status: text("status").default("pending"), // 'pending' | 'in-progress' | 'completed' | 'overdue'
+  priority: text("priority").default("medium"), // 'low' | 'medium' | 'high'
+  category: text("category"), // 'federal' | 'state' | 'local'
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 })
 
-// Compliance schemas
-export const ComplianceItemSchema = z.object({
-  id: z.string().uuid(),
-  business_profile_id: z.string().uuid(),
-  title: z.string().min(1),
-  description: z.string(),
-  category: z.enum(["tax", "legal", "regulatory", "filing"]),
-  priority: z.enum(["low", "medium", "high", "critical"]).default("medium"),
-  due_date: z.string().datetime().optional(),
-  status: z.enum(["pending", "in_progress", "completed", "overdue"]).default("pending"),
-  requirements: z.array(z.string()).default([]),
-  created_at: z.string().datetime(),
-  updated_at: z.string().datetime(),
+export const progressTasks = pgTable("progress_tasks", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").references(() => users.id),
+  businessProfileId: uuid("business_profile_id").references(() => businessProfiles.id),
+  taskName: text("task_name").notNull(),
+  description: text("description"),
+  phase: text("phase").notNull(), // 'Legal Phase' | 'Financial Phase' | 'Compliance Phase'
+  completed: boolean("completed").default(false),
+  completedDate: timestamp("completed_date"),
+  order: integer("order").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 })
-
-export const TaskSchema = z.object({
-  id: z.string().uuid(),
-  user_id: z.string().uuid(),
-  business_profile_id: z.string().uuid().optional(),
-  title: z.string().min(1),
-  description: z.string().optional(),
-  category: z.enum(["formation", "compliance", "tax", "legal", "other"]).default("other"),
-  priority: z.enum(["low", "medium", "high"]).default("medium"),
-  status: z.enum(["todo", "in_progress", "completed"]).default("todo"),
-  due_date: z.string().datetime().optional(),
-  created_at: z.string().datetime(),
-  updated_at: z.string().datetime(),
-})
-
-// Usage tracking schemas
-export const UsageRecordSchema = z.object({
-  id: z.string().uuid(),
-  user_id: z.string().uuid(),
-  action_type: z.enum(["chat_message", "document_generated", "compliance_check", "ai_analysis"]),
-  count: z.number().int().positive().default(1),
-  metadata: z.record(z.any()).optional(),
-  created_at: z.string().datetime(),
-})
-
-// API request/response schemas
-export const ChatRequestSchema = z.object({
-  message: z.string().min(1),
-  conversation_id: z.string().uuid().optional(),
-  context: z
-    .object({
-      business_profile_id: z.string().uuid().optional(),
-      document_id: z.string().uuid().optional(),
-    })
-    .optional(),
-})
-
-export const QuickChatRequestSchema = z.object({
-  question: z.string().min(1),
-  context: z.enum(["general", "llc", "corporation", "tax", "compliance"]).default("general"),
-})
-
-// Export types
-export type UserProfile = z.infer<typeof UserProfileSchema>
-export type BusinessProfile = z.infer<typeof BusinessProfileSchema>
-export type Document = z.infer<typeof DocumentSchema>
-export type DocumentGenerationRequest = z.infer<typeof DocumentGenerationRequestSchema>
-export type ChatMessage = z.infer<typeof ChatMessageSchema>
-export type Conversation = z.infer<typeof ConversationSchema>
-export type ComplianceItem = z.infer<typeof ComplianceItemSchema>
-export type Task = z.infer<typeof TaskSchema>
-export type UsageRecord = z.infer<typeof UsageRecordSchema>
-export type ChatRequest = z.infer<typeof ChatRequestSchema>
-export type QuickChatRequest = z.infer<typeof QuickChatRequestSchema>
