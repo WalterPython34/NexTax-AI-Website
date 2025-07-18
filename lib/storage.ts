@@ -5,377 +5,533 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
 
 const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
-export const storage = {
-  // User operations
-  async getUser(userId: string) {
-    const { data, error } = await supabase.from("users").select("*").eq("id", userId).single()
+export interface UserProfile {
+  id: string
+  email: string
+  name: string
+  created_at: string
+  subscription_status?: string
+  stripe_customer_id?: string
+}
+
+export interface BusinessProfile {
+  id: string
+  user_id: string
+  business_name: string
+  business_type: string
+  industry: string
+  state: string
+  formation_status: string
+  created_at: string
+  updated_at: string
+}
+
+export interface Document {
+  id: string
+  user_id: string
+  business_id?: string
+  title: string
+  type: string
+  content: any
+  status: string
+  created_at: string
+  updated_at: string
+}
+
+export interface Task {
+  id: string
+  user_id: string
+  business_id?: string
+  title: string
+  description: string
+  status: string
+  priority: string
+  due_date?: string
+  category: string
+  created_at: string
+  updated_at: string
+}
+
+export interface Conversation {
+  id: string
+  user_id: string
+  title: string
+  created_at: string
+  updated_at: string
+}
+
+export interface Message {
+  id: string
+  conversation_id: string
+  role: string
+  content: string
+  created_at: string
+}
+
+export interface Notification {
+  id: string
+  user_id: string
+  title: string
+  message: string
+  type: string
+  read: boolean
+  created_at: string
+}
+
+export interface ComplianceItem {
+  id: string
+  user_id: string
+  business_id?: string
+  title: string
+  description: string
+  status: string
+  due_date?: string
+  priority: string
+  category: string
+  created_at: string
+  updated_at: string
+}
+
+// User Profile Operations
+export const userStorage = {
+  async create(userData: Omit<UserProfile, "id" | "created_at">) {
+    const { data, error } = await supabase.from("user_profiles").insert(userData).select().single()
+
     if (error) throw error
     return data
   },
 
-  async createUser(userData: any) {
-    const { data, error } = await supabase.from("users").insert(userData).select().single()
+  async getById(id: string) {
+    const { data, error } = await supabase.from("user_profiles").select("*").eq("id", id).single()
+
     if (error) throw error
     return data
   },
 
-  // Business Profile operations
-  async getUserBusinessProfiles(userId: string) {
+  async getByEmail(email: string) {
+    const { data, error } = await supabase.from("user_profiles").select("*").eq("email", email).single()
+
+    if (error) throw error
+    return data
+  },
+
+  async update(id: string, updates: Partial<UserProfile>) {
+    const { data, error } = await supabase.from("user_profiles").update(updates).eq("id", id).select().single()
+
+    if (error) throw error
+    return data
+  },
+
+  async updateUsage(userId: string, increment = 1) {
+    const { data, error } = await supabase.rpc("increment_user_usage", {
+      user_id: userId,
+      increment_by: increment,
+    })
+
+    if (error) throw error
+    return data
+  },
+}
+
+// Business Profile Operations
+export const businessStorage = {
+  async create(businessData: Omit<BusinessProfile, "id" | "created_at" | "updated_at">) {
+    const { data, error } = await supabase.from("business_profiles").insert(businessData).select().single()
+
+    if (error) throw error
+    return data
+  },
+
+  async getByUserId(userId: string) {
     const { data, error } = await supabase.from("business_profiles").select("*").eq("user_id", userId)
+
     if (error) throw error
     return data
   },
 
-  async getBusinessProfile(businessId: string) {
-    const { data, error } = await supabase.from("business_profiles").select("*").eq("id", businessId).single()
+  async getById(id: string) {
+    const { data, error } = await supabase.from("business_profiles").select("*").eq("id", id).single()
+
     if (error) throw error
     return data
   },
 
-  async createBusinessProfile(profileData: any) {
-    const { data, error } = await supabase.from("business_profiles").insert(profileData).select().single()
-    if (error) throw error
-    return data
-  },
-
-  async updateBusinessProfile(businessId: string, updates: any) {
+  async update(id: string, updates: Partial<BusinessProfile>) {
     const { data, error } = await supabase
       .from("business_profiles")
-      .update(updates)
-      .eq("id", businessId)
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .eq("id", id)
       .select()
       .single()
+
     if (error) throw error
     return data
   },
 
-  // Document operations
-  async getUserDocuments(userId: string) {
+  async delete(id: string) {
+    const { error } = await supabase.from("business_profiles").delete().eq("id", id)
+
+    if (error) throw error
+  },
+}
+
+// Document Operations
+export const documentStorage = {
+  async create(documentData: Omit<Document, "id" | "created_at" | "updated_at">) {
+    const { data, error } = await supabase.from("documents").insert(documentData).select().single()
+
+    if (error) throw error
+    return data
+  },
+
+  async getByUserId(userId: string, filters?: { type?: string; status?: string }) {
+    let query = supabase.from("documents").select("*").eq("user_id", userId).order("created_at", { ascending: false })
+
+    if (filters?.type) {
+      query = query.eq("type", filters.type)
+    }
+
+    if (filters?.status) {
+      query = query.eq("status", filters.status)
+    }
+
+    const { data, error } = await query
+
+    if (error) throw error
+    return data
+  },
+
+  async getById(id: string) {
+    const { data, error } = await supabase.from("documents").select("*").eq("id", id).single()
+
+    if (error) throw error
+    return data
+  },
+
+  async update(id: string, updates: Partial<Document>) {
     const { data, error } = await supabase
       .from("documents")
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .eq("id", id)
+      .select()
+      .single()
+
+    if (error) throw error
+    return data
+  },
+
+  async delete(id: string) {
+    const { error } = await supabase.from("documents").delete().eq("id", id)
+
+    if (error) throw error
+  },
+}
+
+// Task Operations
+export const taskStorage = {
+  async create(taskData: Omit<Task, "id" | "created_at" | "updated_at">) {
+    const { data, error } = await supabase.from("tasks").insert(taskData).select().single()
+
+    if (error) throw error
+    return data
+  },
+
+  async getByUserId(userId: string, filters?: { status?: string; priority?: string; category?: string }) {
+    let query = supabase.from("tasks").select("*").eq("user_id", userId).order("created_at", { ascending: false })
+
+    if (filters?.status) {
+      query = query.eq("status", filters.status)
+    }
+
+    if (filters?.priority) {
+      query = query.eq("priority", filters.priority)
+    }
+
+    if (filters?.category) {
+      query = query.eq("category", filters.category)
+    }
+
+    const { data, error } = await query
+
+    if (error) throw error
+    return data
+  },
+
+  async getById(id: string) {
+    const { data, error } = await supabase.from("tasks").select("*").eq("id", id).single()
+
+    if (error) throw error
+    return data
+  },
+
+  async update(id: string, updates: Partial<Task>) {
+    const { data, error } = await supabase
+      .from("tasks")
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .eq("id", id)
+      .select()
+      .single()
+
+    if (error) throw error
+    return data
+  },
+
+  async delete(id: string) {
+    const { error } = await supabase.from("tasks").delete().eq("id", id)
+
+    if (error) throw error
+  },
+
+  async getUpcoming(userId: string, days = 7) {
+    const futureDate = new Date()
+    futureDate.setDate(futureDate.getDate() + days)
+
+    const { data, error } = await supabase
+      .from("tasks")
+      .select("*")
+      .eq("user_id", userId)
+      .eq("status", "pending")
+      .lte("due_date", futureDate.toISOString())
+      .order("due_date", { ascending: true })
+
+    if (error) throw error
+    return data
+  },
+}
+
+// Conversation Operations
+export const conversationStorage = {
+  async create(conversationData: Omit<Conversation, "id" | "created_at" | "updated_at">) {
+    const { data, error } = await supabase.from("conversations").insert(conversationData).select().single()
+
+    if (error) throw error
+    return data
+  },
+
+  async getByUserId(userId: string) {
+    const { data, error } = await supabase
+      .from("conversations")
+      .select("*")
+      .eq("user_id", userId)
+      .order("updated_at", { ascending: false })
+
+    if (error) throw error
+    return data
+  },
+
+  async getById(id: string) {
+    const { data, error } = await supabase.from("conversations").select("*").eq("id", id).single()
+
+    if (error) throw error
+    return data
+  },
+
+  async update(id: string, updates: Partial<Conversation>) {
+    const { data, error } = await supabase
+      .from("conversations")
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .eq("id", id)
+      .select()
+      .single()
+
+    if (error) throw error
+    return data
+  },
+
+  async delete(id: string) {
+    const { error } = await supabase.from("conversations").delete().eq("id", id)
+
+    if (error) throw error
+  },
+}
+
+// Message Operations
+export const messageStorage = {
+  async create(messageData: Omit<Message, "id" | "created_at">) {
+    const { data, error } = await supabase.from("messages").insert(messageData).select().single()
+
+    if (error) throw error
+    return data
+  },
+
+  async getByConversationId(conversationId: string) {
+    const { data, error } = await supabase
+      .from("messages")
+      .select("*")
+      .eq("conversation_id", conversationId)
+      .order("created_at", { ascending: true })
+
+    if (error) throw error
+    return data
+  },
+
+  async delete(id: string) {
+    const { error } = await supabase.from("messages").delete().eq("id", id)
+
+    if (error) throw error
+  },
+}
+
+// Notification Operations
+export const notificationStorage = {
+  async create(notificationData: Omit<Notification, "id" | "created_at">) {
+    const { data, error } = await supabase.from("notifications").insert(notificationData).select().single()
+
+    if (error) throw error
+    return data
+  },
+
+  async getByUserId(userId: string, unreadOnly = false) {
+    let query = supabase
+      .from("notifications")
       .select("*")
       .eq("user_id", userId)
       .order("created_at", { ascending: false })
-    if (error) throw error
-    return data
-  },
 
-  async createDocument(documentData: any) {
-    const { data, error } = await supabase.from("documents").insert(documentData).select().single()
-    if (error) throw error
-    return data
-  },
-
-  async updateDocument(documentId: string, updates: any) {
-    const { data, error } = await supabase.from("documents").update(updates).eq("id", documentId).select().single()
-    if (error) throw error
-    return data
-  },
-
-  async deleteDocument(documentId: string) {
-    const { error } = await supabase.from("documents").delete().eq("id", documentId)
-    if (error) throw error
-  },
-
-  // Progress operations
-  async getUserProgress(userId: string, businessId?: string) {
-    let query = supabase.from("progress").select("*").eq("user_id", userId)
-    if (businessId) {
-      query = query.eq("business_id", businessId)
+    if (unreadOnly) {
+      query = query.eq("read", false)
     }
+
     const { data, error } = await query
+
     if (error) throw error
     return data
   },
 
-  async createProgressItem(progressData: any) {
-    const { data, error } = await supabase.from("progress").insert(progressData).select().single()
+  async markAsRead(id: string) {
+    const { data, error } = await supabase.from("notifications").update({ read: true }).eq("id", id).select().single()
+
     if (error) throw error
     return data
   },
 
-  async updateProgressItem(progressId: string, updates: any) {
-    const { data, error } = await supabase.from("progress").update(updates).eq("id", progressId).select().single()
-    if (error) throw error
-    return data
-  },
-
-  // Compliance operations
-  async getUserCompliance(userId: string) {
-    const { data, error } = await supabase.from("compliance").select("*").eq("user_id", userId)
-    if (error) throw error
-    return data
-  },
-
-  async getComplianceItem(complianceId: string) {
-    const { data, error } = await supabase.from("compliance").select("*").eq("id", complianceId).single()
-    if (error) throw error
-    return data
-  },
-
-  async createComplianceItem(complianceData: any) {
-    const { data, error } = await supabase.from("compliance").insert(complianceData).select().single()
-    if (error) throw error
-    return data
-  },
-
-  async updateComplianceItem(complianceId: string, updates: any) {
-    const { data, error } = await supabase.from("compliance").update(updates).eq("id", complianceId).select().single()
-    if (error) throw error
-    return data
-  },
-
-  async deleteComplianceItem(complianceId: string) {
-    const { error } = await supabase.from("compliance").delete().eq("id", complianceId)
-    if (error) throw error
-  },
-
-  // Task operations
-  async getUserTasks(userId: string, filters: any = {}) {
-    let query = supabase.from("tasks").select("*").eq("user_id", userId)
-
-    if (filters.businessId) query = query.eq("business_id", filters.businessId)
-    if (filters.status) query = query.eq("status", filters.status)
-    if (filters.category) query = query.eq("category", filters.category)
-    if (filters.priority) query = query.eq("priority", filters.priority)
-
-    const { data, error } = await query.order("created_at", { ascending: false })
-    if (error) throw error
-    return data
-  },
-
-  async getTask(taskId: string) {
-    const { data, error } = await supabase.from("tasks").select("*").eq("id", taskId).single()
-    if (error) throw error
-    return data
-  },
-
-  async createTask(taskData: any) {
-    const { data, error } = await supabase.from("tasks").insert(taskData).select().single()
-    if (error) throw error
-    return data
-  },
-
-  async updateTask(taskId: string, updates: any) {
-    const { data, error } = await supabase.from("tasks").update(updates).eq("id", taskId).select().single()
-    if (error) throw error
-    return data
-  },
-
-  async deleteTask(taskId: string) {
-    const { error } = await supabase.from("tasks").delete().eq("id", taskId)
-    if (error) throw error
-  },
-
-  // Compliance task operations
-  async getComplianceTasks(userId: string, filters: any = {}) {
-    let query = supabase.from("compliance_tasks").select("*").eq("user_id", userId)
-
-    if (filters.businessId) query = query.eq("business_id", filters.businessId)
-    if (filters.status) query = query.eq("status", filters.status)
-
-    const { data, error } = await query.order("created_at", { ascending: false })
-    if (error) throw error
-    return data
-  },
-
-  async getComplianceTask(taskId: string) {
-    const { data, error } = await supabase.from("compliance_tasks").select("*").eq("id", taskId).single()
-    if (error) throw error
-    return data
-  },
-
-  async createComplianceTask(taskData: any) {
-    const { data, error } = await supabase.from("compliance_tasks").insert(taskData).select().single()
-    if (error) throw error
-    return data
-  },
-
-  async updateComplianceTask(taskId: string, updates: any) {
-    const { data, error } = await supabase.from("compliance_tasks").update(updates).eq("id", taskId).select().single()
-    if (error) throw error
-    return data
-  },
-
-  async deleteComplianceTask(taskId: string) {
-    const { error } = await supabase.from("compliance_tasks").delete().eq("id", taskId)
-    if (error) throw error
-  },
-
-  // Notification operations
-  async getUserNotifications(userId: string, options: any = {}) {
-    let query = supabase.from("notifications").select("*").eq("user_id", userId)
-
-    if (options.unreadOnly) query = query.eq("is_read", false)
-    if (options.limit) query = query.limit(options.limit)
-
-    const { data, error } = await query.order("created_at", { ascending: false })
-    if (error) throw error
-    return data
-  },
-
-  async getNotification(notificationId: string) {
-    const { data, error } = await supabase.from("notifications").select("*").eq("id", notificationId).single()
-    if (error) throw error
-    return data
-  },
-
-  async createNotification(notificationData: any) {
-    const { data, error } = await supabase.from("notifications").insert(notificationData).select().single()
-    if (error) throw error
-    return data
-  },
-
-  async updateNotification(notificationId: string, updates: any) {
+  async markAllAsRead(userId: string) {
     const { data, error } = await supabase
       .from("notifications")
-      .update(updates)
-      .eq("id", notificationId)
-      .select()
-      .single()
-    if (error) throw error
-    return data
-  },
-
-  async markAllNotificationsRead(userId: string) {
-    const { count, error } = await supabase
-      .from("notifications")
-      .update({ is_read: true, read_at: new Date() })
+      .update({ read: true })
       .eq("user_id", userId)
-      .eq("is_read", false)
-    if (error) throw error
-    return count
-  },
+      .eq("read", false)
 
-  // Template operations
-  async getComplianceTemplates(filters: any = {}) {
-    let query = supabase.from("compliance_templates").select("*")
-
-    if (filters.category) query = query.eq("category", filters.category)
-    if (filters.businessType) query = query.eq("business_type", filters.businessType)
-
-    const { data, error } = await query
     if (error) throw error
     return data
   },
 
-  async getAutomationTemplates(filters: any = {}) {
-    let query = supabase.from("automation_templates").select("*")
+  async delete(id: string) {
+    const { error } = await supabase.from("notifications").delete().eq("id", id)
 
-    if (filters.category) query = query.eq("category", filters.category)
-    if (filters.businessType) query = query.eq("business_type", filters.businessType)
+    if (error) throw error
+  },
+}
 
-    const { data, error } = await query
+// Compliance Operations
+export const complianceStorage = {
+  async create(complianceData: Omit<ComplianceItem, "id" | "created_at" | "updated_at">) {
+    const { data, error } = await supabase.from("compliance_items").insert(complianceData).select().single()
+
     if (error) throw error
     return data
   },
 
-  async createAutomationTemplate(templateData: any) {
-    const { data, error } = await supabase.from("automation_templates").insert(templateData).select().single()
-    if (error) throw error
-    return data
-  },
-
-  // Workflow operations
-  async getUserWorkflows(userId: string, filters: any = {}) {
-    let query = supabase.from("workflows").select("*").eq("user_id", userId)
-
-    if (filters.businessId) query = query.eq("business_id", filters.businessId)
-    if (filters.status) query = query.eq("status", filters.status)
-
-    const { data, error } = await query.order("created_at", { ascending: false })
-    if (error) throw error
-    return data
-  },
-
-  async createWorkflow(workflowData: any) {
-    const { data, error } = await supabase.from("workflows").insert(workflowData).select().single()
-    if (error) throw error
-    return data
-  },
-
-  // Reporting operations
-  async generateComplianceReport(userId: string, options: any = {}) {
-    // This would generate compliance reports based on user data
-    const compliance = await this.getUserCompliance(userId)
-    const tasks = await this.getComplianceTasks(userId, { businessId: options.businessId })
-
-    return {
-      summary: {
-        totalItems: compliance.length,
-        completedItems: compliance.filter((item: any) => item.status === "completed").length,
-        pendingItems: compliance.filter((item: any) => item.status === "pending").length,
-        overdueItems: compliance.filter(
-          (item: any) => item.due_date && new Date(item.due_date) < new Date() && item.status !== "completed",
-        ).length,
-      },
-      tasks: {
-        total: tasks.length,
-        completed: tasks.filter((task: any) => task.status === "completed").length,
-        pending: tasks.filter((task: any) => task.status === "pending").length,
-      },
-      compliance,
-      tasks,
-    }
-  },
-
-  async createComplianceReport(reportData: any) {
-    const { data, error } = await supabase.from("compliance_reports").insert(reportData).select().single()
-    if (error) throw error
-    return data
-  },
-
-  async updateComplianceReport(reportId: string, updates: any) {
-    const { data, error } = await supabase
-      .from("compliance_reports")
-      .update(updates)
-      .eq("id", reportId)
-      .select()
-      .single()
-    if (error) throw error
-    return data
-  },
-
-  async getUpcomingComplianceDeadlines(userId: string, options: any = {}) {
-    const daysAhead = options.daysAhead || 30
-    const futureDate = new Date()
-    futureDate.setDate(futureDate.getDate() + daysAhead)
-
+  async getByUserId(userId: string, filters?: { status?: string; priority?: string; category?: string }) {
     let query = supabase
-      .from("compliance")
+      .from("compliance_items")
       .select("*")
       .eq("user_id", userId)
-      .not("due_date", "is", null)
-      .lte("due_date", futureDate.toISOString())
-      .gte("due_date", new Date().toISOString())
+      .order("due_date", { ascending: true })
 
-    if (options.businessId) query = query.eq("business_id", options.businessId)
+    if (filters?.status) {
+      query = query.eq("status", filters.status)
+    }
 
-    const { data, error } = await query.order("due_date", { ascending: true })
+    if (filters?.priority) {
+      query = query.eq("priority", filters.priority)
+    }
+
+    if (filters?.category) {
+      query = query.eq("category", filters.category)
+    }
+
+    const { data, error } = await query
+
     if (error) throw error
     return data
   },
 
-  async applyComplianceTemplate(userId: string, options: any) {
-    const template = await supabase.from("compliance_templates").select("*").eq("id", options.templateId).single()
-    if (!template.data) throw new Error("Template not found")
+  async getById(id: string) {
+    const { data, error } = await supabase.from("compliance_items").select("*").eq("id", id).single()
 
-    const items = template.data.items || []
-    const createdItems = []
-
-    for (const item of items) {
-      const complianceItem = await this.createComplianceItem({
-        userId,
-        businessId: options.businessId,
-        complianceType: item.type,
-        status: "pending",
-        dueDate: item.dueDate ? new Date(item.dueDate) : null,
-        notes: item.notes || "",
-        ...options.customizations,
-      })
-      createdItems.push(complianceItem)
-    }
-
-    return createdItems
+    if (error) throw error
+    return data
   },
+
+  async update(id: string, updates: Partial<ComplianceItem>) {
+    const { data, error } = await supabase
+      .from("compliance_items")
+      .update({ ...updates, updated_at: new Date().toISOString() })
+      .eq("id", id)
+      .select()
+      .single()
+
+    if (error) throw error
+    return data
+  },
+
+  async delete(id: string) {
+    const { error } = await supabase.from("compliance_items").delete().eq("id", id)
+
+    if (error) throw error
+  },
+
+  async getUpcomingDeadlines(userId: string, days = 30) {
+    const futureDate = new Date()
+    futureDate.setDate(futureDate.getDate() + days)
+
+    const { data, error } = await supabase
+      .from("compliance_items")
+      .select("*")
+      .eq("user_id", userId)
+      .neq("status", "completed")
+      .lte("due_date", futureDate.toISOString())
+      .order("due_date", { ascending: true })
+
+    if (error) throw error
+    return data
+  },
+}
+
+// Analytics and Reporting
+export const analyticsStorage = {
+  async getUserStats(userId: string) {
+    const [businessProfiles, documents, tasks, conversations, complianceItems] = await Promise.all([
+      businessStorage.getByUserId(userId),
+      documentStorage.getByUserId(userId),
+      taskStorage.getByUserId(userId),
+      conversationStorage.getByUserId(userId),
+      complianceStorage.getByUserId(userId),
+    ])
+
+    return {
+      businessCount: businessProfiles.length,
+      documentCount: documents.length,
+      taskCount: tasks.length,
+      conversationCount: conversations.length,
+      complianceCount: complianceItems.length,
+      completedTasks: tasks.filter((t) => t.status === "completed").length,
+      pendingTasks: tasks.filter((t) => t.status === "pending").length,
+      completedCompliance: complianceItems.filter((c) => c.status === "completed").length,
+      pendingCompliance: complianceItems.filter((c) => c.status === "pending").length,
+    }
+  },
+}
+
+export default {
+  user: userStorage,
+  business: businessStorage,
+  document: documentStorage,
+  task: taskStorage,
+  conversation: conversationStorage,
+  message: messageStorage,
+  notification: notificationStorage,
+  compliance: complianceStorage,
+  analytics: analyticsStorage,
 }
