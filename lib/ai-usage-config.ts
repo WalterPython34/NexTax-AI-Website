@@ -1,75 +1,94 @@
-export type SubscriptionTier = "free" | "starter" | "professional" | "enterprise"
-
 export interface UsageLimits {
-  maxMessages: number
-  maxDocuments: number
-  description: string
-  model: string
+  chatMessages: number
+  documentsGenerated: number
+  complianceChecks: number
+  aiAnalysis: number
 }
 
-export const AI_CHAT_TIERS: Record<SubscriptionTier, UsageLimits> = {
+export interface UserTier {
+  name: string
+  limits: UsageLimits
+  resetPeriod: "daily" | "weekly" | "monthly"
+}
+
+export const USER_TIERS: Record<string, UserTier> = {
   free: {
-    maxMessages: 10,
-    maxDocuments: 2,
-    description: "Basic AI assistance with limited usage",
-    model: "gpt-3.5-turbo",
+    name: "Free",
+    limits: {
+      chatMessages: 10,
+      documentsGenerated: 2,
+      complianceChecks: 5,
+      aiAnalysis: 3,
+    },
+    resetPeriod: "daily",
   },
-  starter: {
-    maxMessages: 100,
-    maxDocuments: 10,
-    description: "Enhanced AI assistance for growing businesses",
-    model: "gpt-4",
+  basic: {
+    name: "Basic",
+    limits: {
+      chatMessages: 100,
+      documentsGenerated: 10,
+      complianceChecks: 25,
+      aiAnalysis: 15,
+    },
+    resetPeriod: "monthly",
   },
-  professional: {
-    maxMessages: 500,
-    maxDocuments: 50,
-    description: "Professional AI assistance with priority support",
-    model: "gpt-4",
+  premium: {
+    name: "Premium",
+    limits: {
+      chatMessages: 500,
+      documentsGenerated: 50,
+      complianceChecks: 100,
+      aiAnalysis: 75,
+    },
+    resetPeriod: "monthly",
   },
   enterprise: {
-    maxMessages: -1, // unlimited
-    maxDocuments: -1, // unlimited
-    description: "Unlimited AI assistance with dedicated support",
-    model: "gpt-4",
+    name: "Enterprise",
+    limits: {
+      chatMessages: -1, // unlimited
+      documentsGenerated: -1,
+      complianceChecks: -1,
+      aiAnalysis: -1,
+    },
+    resetPeriod: "monthly",
   },
 }
 
-export function checkUsageLimit(tier: SubscriptionTier, currentUsage: number) {
-  const limits = AI_CHAT_TIERS[tier]
+export function getUserTier(subscriptionStatus?: string): UserTier {
+  switch (subscriptionStatus) {
+    case "basic":
+      return USER_TIERS.basic
+    case "premium":
+      return USER_TIERS.premium
+    case "enterprise":
+      return USER_TIERS.enterprise
+    default:
+      return USER_TIERS.free
+  }
+}
 
-  if (limits.maxMessages === -1) {
+export function checkUsageLimit(
+  currentUsage: number,
+  limit: number,
+  action: string,
+): { allowed: boolean; message?: string } {
+  if (limit === -1) {
+    return { allowed: true } // unlimited
+  }
+
+  if (currentUsage >= limit) {
     return {
-      canSend: true,
-      warningMessage: null,
-      upgradeMessage: null,
+      allowed: false,
+      message: `You've reached your ${action} limit. Please upgrade your plan to continue.`,
     }
   }
 
-  const remaining = limits.maxMessages - currentUsage
-  const isNearLimit = remaining <= 5
-  const isAtLimit = remaining <= 0
+  return { allowed: true }
+}
 
-  if (isAtLimit) {
-    return {
-      canSend: false,
-      warningMessage: null,
-      upgradeMessage: `You've reached your ${limits.maxMessages} message limit for this month. Upgrade to continue using StartSmart GPT.`,
-    }
-  }
-
-  if (isNearLimit) {
-    return {
-      canSend: true,
-      warningMessage: `You have ${remaining} messages remaining this month.`,
-      upgradeMessage: null,
-    }
-  }
-
-  return {
-    canSend: true,
-    warningMessage: null,
-    upgradeMessage: null,
-  }
+export function getUsagePercentage(current: number, limit: number): number {
+  if (limit === -1) return 0 // unlimited
+  return Math.min((current / limit) * 100, 100)
 }
 
 export function getModelForTier(tier: SubscriptionTier): string {
