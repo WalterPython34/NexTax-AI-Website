@@ -1,217 +1,149 @@
 "use client"
 
-import { useState, useEffect } from "react"
 import Link from "next/link"
-import Image from "next/image"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Menu, X, User } from "lucide-react"
-import { AuthModal } from "@/components/auth/auth-modal"
-import { supabase } from "@/lib/supabase"
-import type { User as SupabaseUser } from "@supabase/supabase-js"
+import { Menu, X } from "lucide-react"
+import Image from "next/image"
 
-export function Navigation() {
-  const [isOpen, setIsOpen] = useState(false)
-  const [showAuthModal, setShowAuthModal] = useState(false)
-  const [authMode, setAuthMode] = useState<"signin" | "signup">("signin")
-  const [user, setUser] = useState<SupabaseUser | null>(null)
-
-  useEffect(() => {
-    // Get initial user
-    supabase.auth.getUser().then(({ data: { user } }) => {
-      setUser(user)
-    })
-
-    // Listen for auth changes
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
-      setUser(session?.user ?? null)
-    })
-
-    return () => subscription.unsubscribe()
-  }, [])
-
-  const handleAuthClick = (mode: "signin" | "signup") => {
-    setAuthMode(mode)
-    setShowAuthModal(true)
-  }
-
-  const handleSignOut = async () => {
-    await supabase.auth.signOut()
-  }
-
-  const navItems = [
-    { name: "Features", href: "/features" },
-    { name: "Pricing", href: "/pricing" },
-    { name: "Resources", href: "/resources" },
-    { name: "About", href: "/about" },
-    { name: "Contact", href: "/contact" },
-  ]
+export default function Navigation() {
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
 
   return (
-    <>
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-slate-900/95 backdrop-blur-sm border-b border-slate-800">
-        <div className="container mx-auto px-4">
-          <div className="flex items-center justify-between h-16">
-            {/* Logo */}
-            <Link href="/" className="flex items-center space-x-2">
-              <Image src="/images/nextax-logo.png" alt="NexTax.AI" width={40} height={40} className="rounded-lg" />
-              <span className="text-xl font-bold text-white">NexTax.AI</span>
+    <nav className="bg-slate-900 text-white sticky top-0 z-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="flex justify-between items-center h-16">
+          {/* Logo */}
+          <Link href="/" className="flex items-center space-x-2">
+            <Image src="/images/nextax-logo.png" alt="NexTax.AI" width={32} height={32} className="rounded" />
+            <span className="text-xl font-bold">NexTax.AI</span>
+          </Link>
+
+          {/* Desktop Navigation */}
+          <div className="hidden md:flex items-center space-x-8">
+            <Link href="/features" className="hover:text-teal-400 transition-colors">
+              Features
+            </Link>
+            <Link href="/pricing" className="hover:text-teal-400 transition-colors">
+              Pricing
+            </Link>
+            <Link href="/resources" className="hover:text-teal-400 transition-colors">
+              Resources
+            </Link>
+            <Link href="/about" className="hover:text-teal-400 transition-colors">
+              About
+            </Link>
+            <Link href="/contact" className="hover:text-teal-400 transition-colors">
+              Contact
             </Link>
 
-            {/* Desktop Navigation */}
-            <div className="hidden md:flex items-center space-x-8">
-              {navItems.map((item) => (
-                <Link
-                  key={item.name}
-                  href={item.href}
-                  className="text-slate-300 hover:text-white transition-colors duration-200"
-                >
-                  {item.name}
-                </Link>
-              ))}
-
-              {/* NEW: Test StartSmart Link */}
+            {/* Test StartSmart Link */}
             <Link href="/test-startsmart">
               <Button className="bg-gradient-to-r from-orange-500 to-red-500 text-white px-4 py-2 rounded-lg font-semibold hover:from-orange-600 hover:to-red-600 transition-all duration-200 shadow-lg">
                 🧪 Test StartSmart
               </Button>
             </Link>
-              
-              {/* StartSmart GPT - Points to Replit app */}
-              <Link
-                href="https://startsmart.nextax.ai"
-                target="_blank"
-                rel="noopener noreferrer"
-                className="bg-gradient-to-r from-emerald-500 to-cyan-500 text-white px-4 py-2 rounded-lg font-semibold hover:from-emerald-600 hover:to-cyan-600 transition-all duration-200 shadow-lg"
-              >
+
+            {/* StartSmart GPT - Points to Replit app */}
+            <Link href="https://startsmart.nextax.ai" target="_blank" rel="noopener noreferrer">
+              <Button className="bg-gradient-to-r from-emerald-500 to-cyan-500 text-white px-4 py-2 rounded-lg font-semibold hover:from-emerald-600 hover:to-cyan-600 transition-all duration-200 shadow-lg">
                 StartSmart GPT
-              </Link>
-            </div>
-
-            {/* Auth Section */}
-            <div className="hidden md:flex items-center space-x-4">
-              {user ? (
-                <div className="flex items-center space-x-4">
-                  <div className="flex items-center space-x-2 text-slate-300">
-                    <User className="w-4 h-4" />
-                    <span className="text-sm">{user.email}</span>
-                  </div>
-                  <Button
-                    onClick={handleSignOut}
-                    variant="outline"
-                    size="sm"
-                    className="border-slate-600 text-slate-300 hover:bg-slate-800 bg-transparent"
-                  >
-                    Sign Out
-                  </Button>
-                </div>
-              ) : (
-                <div className="flex items-center space-x-2">
-                  <Button
-                    onClick={() => handleAuthClick("signin")}
-                    variant="ghost"
-                    size="sm"
-                    className="text-slate-300 hover:text-white hover:bg-slate-800"
-                  >
-                    Sign In
-                  </Button>
-                  <Button
-                    onClick={() => handleAuthClick("signup")}
-                    size="sm"
-                    className="bg-emerald-500 hover:bg-emerald-600 text-white"
-                  >
-                    Try StartSmart Free
-                  </Button>
-                </div>
-              )}
-            </div>
-
-            {/* Mobile menu button */}
-            <div className="md:hidden">
-              <Button
-                onClick={() => setIsOpen(!isOpen)}
-                variant="ghost"
-                size="sm"
-                className="text-slate-300 hover:text-white"
-              >
-                {isOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
               </Button>
-            </div>
+            </Link>
           </div>
 
-          {/* Mobile Navigation */}
-          {isOpen && (
-            <div className="md:hidden py-4 border-t border-slate-800">
-              <div className="flex flex-col space-y-4">
-                {navItems.map((item) => (
-                  <Link
-                    key={item.name}
-                    href={item.href}
-                    className="text-slate-300 hover:text-white transition-colors duration-200 px-2 py-1"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    {item.name}
-                  </Link>
-                ))}
+          {/* User Menu */}
+          <div className="hidden md:flex items-center space-x-4">
+            <span className="text-sm text-gray-300">steven.morello@nextax.ai</span>
+            <Button
+              variant="outline"
+              className="text-white border-white hover:bg-white hover:text-slate-900 bg-transparent"
+            >
+              Sign Out
+            </Button>
+          </div>
 
-                 {/* NEW: Mobile Test StartSmart Link */}
+          {/* Mobile menu button */}
+          <div className="md:hidden">
+            <Button variant="ghost" size="sm" onClick={() => setIsMenuOpen(!isMenuOpen)} className="text-white">
+              {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+            </Button>
+          </div>
+        </div>
+
+        {/* Mobile Navigation */}
+        {isMenuOpen && (
+          <div className="md:hidden">
+            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 border-t border-slate-700">
+              <Link
+                href="/features"
+                className="block px-3 py-2 text-white hover:text-teal-400 transition-colors"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Features
+              </Link>
+              <Link
+                href="/pricing"
+                className="block px-3 py-2 text-white hover:text-teal-400 transition-colors"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Pricing
+              </Link>
+              <Link
+                href="/resources"
+                className="block px-3 py-2 text-white hover:text-teal-400 transition-colors"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Resources
+              </Link>
+              <Link
+                href="/about"
+                className="block px-3 py-2 text-white hover:text-teal-400 transition-colors"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                About
+              </Link>
+              <Link
+                href="/contact"
+                className="block px-3 py-2 text-white hover:text-teal-400 transition-colors"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                Contact
+              </Link>
+
+              {/* Mobile Test StartSmart Link */}
               <Link href="/test-startsmart" className="block px-3 py-2" onClick={() => setIsMenuOpen(false)}>
                 <Button className="w-full bg-gradient-to-r from-orange-500 to-red-500 text-white px-4 py-2 rounded-lg font-semibold hover:from-orange-600 hover:to-red-600 transition-all duration-200 shadow-lg">
                   🧪 Test StartSmart
                 </Button>
               </Link>
-                
-                {/* Mobile StartSmart GPT Link - Points to Replit app */}
-                <Link
-                  href="https://startsmart.nextax.ai"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="bg-gradient-to-r from-emerald-500 to-cyan-500 text-white px-4 py-2 rounded-lg font-semibold text-center"
-                  onClick={() => setIsOpen(false)}
-                >
-                  StartSmart GPT
-                </Link>
 
-                {user ? (
-                  <div className="flex flex-col space-y-2 pt-4 border-t border-slate-800">
-                    <div className="text-slate-300 text-sm px-2">{user.email}</div>
-                    <Button
-                      onClick={handleSignOut}
-                      variant="outline"
-                      size="sm"
-                      className="border-slate-600 text-slate-300 hover:bg-slate-800 bg-transparent"
-                    >
-                      Sign Out
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="flex flex-col space-y-2 pt-4 border-t border-slate-800">
-                    <Button
-                      onClick={() => handleAuthClick("signin")}
-                      variant="ghost"
-                      size="sm"
-                      className="text-slate-300 hover:text-white hover:bg-slate-800 justify-start"
-                    >
-                      Sign In
-                    </Button>
-                    <Button
-                      onClick={() => handleAuthClick("signup")}
-                      size="sm"
-                      className="bg-emerald-500 hover:bg-emerald-600 text-white"
-                    >
-                      Try StartSmart Free
-                    </Button>
-                  </div>
-                )}
+              {/* Mobile StartSmart GPT */}
+              <Link
+                href="https://startsmart.nextax.ai"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block px-3 py-2"
+                onClick={() => setIsMenuOpen(false)}
+              >
+                <Button className="w-full bg-gradient-to-r from-emerald-500 to-cyan-500 text-white px-4 py-2 rounded-lg font-semibold hover:from-emerald-600 hover:to-cyan-600 transition-all duration-200 shadow-lg">
+                  StartSmart GPT
+                </Button>
+              </Link>
+
+              <div className="px-3 py-2 border-t border-slate-700 mt-4">
+                <p className="text-sm text-gray-300 mb-2">steven.morello@nextax.ai</p>
+                <Button
+                  variant="outline"
+                  className="w-full text-white border-white hover:bg-white hover:text-slate-900 bg-transparent"
+                >
+                  Sign Out
+                </Button>
               </div>
             </div>
-          )}
-        </div>
-      </nav>
-
-      <AuthModal isOpen={showAuthModal} onClose={() => setShowAuthModal(false)} mode={authMode} />
-    </>
+          </div>
+        )}
+      </div>
+    </nav>
   )
 }
-
