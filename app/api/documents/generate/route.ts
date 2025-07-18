@@ -45,3 +45,4 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: "Failed to generate document" }, { status: 500 })
   }
 }
+
