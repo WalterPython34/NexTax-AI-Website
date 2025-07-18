@@ -10,8 +10,7 @@ export async function PATCH(request: NextRequest, { params }: { params: { id: st
     }
 
     const taskId = params.id
-    const body = await request.json()
-    const { status } = body
+    const { status } = await request.json()
 
     const task = await storage.getProgressTask(taskId)
     if (!task || task.userId !== userId) {
