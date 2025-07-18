@@ -254,3 +254,125 @@ export function generateAdminNotificationHtml(contactInfo: any, results: any) {
     </html>
   `
 }
+
+// NEW STARTSMART GPT EMAIL FUNCTIONS - Added to your existing file
+export const emailService = {
+  async sendNotificationEmail(to: string, notification: any) {
+    try {
+      const html = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background-color: #10b981; color: white; padding: 20px; text-align: center;">
+            <h2 style="margin: 0;">${notification.title}</h2>
+          </div>
+          <div style="padding: 20px;">
+            <p style="color: #666; line-height: 1.6;">${notification.message}</p>
+            <div style="margin-top: 20px; padding: 15px; background-color: #f5f5f5; border-radius: 5px;">
+              <p style="margin: 0; color: #888; font-size: 14px;">
+                Priority: ${notification.priority || "Normal"}<br>
+                Type: ${notification.type}<br>
+                Time: ${new Date().toLocaleString()}
+              </p>
+            </div>
+            <div style="margin-top: 30px; text-align: center;">
+              <a href="https://nextax.ai/startsmart-gpt" style="background-color: #10b981; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px;">
+                View in StartSmart GPT
+              </a>
+            </div>
+          </div>
+        </div>
+      `
+
+      return await sendEmail({
+        to,
+        subject: `${notification.title} - StartSmart GPT`,
+        html,
+        from: "StartSmart GPT <notifications@nextax.ai>",
+      })
+    } catch (error) {
+      console.error("Error sending notification email:", error)
+      throw error
+    }
+  },
+
+  async sendWelcomeEmail(to: string, userData: any) {
+    try {
+      const html = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background-color: #10b981; color: white; padding: 20px; text-align: center;">
+            <h1 style="margin: 0;">Welcome to StartSmart GPT!</h1>
+          </div>
+          <div style="padding: 20px;">
+            <p style="color: #666; line-height: 1.6;">
+              Thank you for joining StartSmart GPT, your AI-powered business formation assistant.
+            </p>
+            <p style="color: #666; line-height: 1.6;">
+              With StartSmart GPT, you can:
+            </p>
+            <ul style="color: #666; line-height: 1.6;">
+              <li>Get expert guidance on business structure selection</li>
+              <li>Generate legal documents and templates</li>
+              <li>Track compliance requirements and deadlines</li>
+              <li>Manage your business formation progress</li>
+              <li>Access AI-powered business advice 24/7</li>
+            </ul>
+            <div style="margin-top: 30px; text-align: center;">
+              <a href="https://nextax.ai/startsmart-gpt" style="background-color: #10b981; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px;">
+                Get Started Now
+              </a>
+            </div>
+          </div>
+        </div>
+      `
+
+      return await sendEmail({
+        to,
+        subject: "Welcome to StartSmart GPT!",
+        html,
+        from: "StartSmart GPT <welcome@nextax.ai>",
+      })
+    } catch (error) {
+      console.error("Error sending welcome email:", error)
+      throw error
+    }
+  },
+
+  async sendTaskReminderEmail(to: string, task: any) {
+    try {
+      const html = `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <div style="background-color: #f59e0b; color: white; padding: 20px; text-align: center;">
+            <h2 style="margin: 0;">Task Reminder</h2>
+          </div>
+          <div style="padding: 20px;">
+            <h3 style="color: #333;">${task.title}</h3>
+            <p style="color: #666; line-height: 1.6;">${task.description}</p>
+            <div style="margin-top: 20px; padding: 15px; background-color: #fef3c7; border-radius: 5px;">
+              <p style="margin: 0; color: #92400e; font-weight: bold;">
+                Due Date: ${new Date(task.due_date).toLocaleDateString()}
+              </p>
+              <p style="margin: 5px 0 0 0; color: #92400e;">
+                Priority: ${task.priority}
+              </p>
+            </div>
+            <div style="margin-top: 30px; text-align: center;">
+              <a href="https://nextax.ai/startsmart-gpt" style="background-color: #f59e0b; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px;">
+                Complete Task
+              </a>
+            </div>
+          </div>
+        </div>
+      `
+
+      return await sendEmail({
+        to,
+        subject: `Task Reminder: ${task.title}`,
+        html,
+        from: "StartSmart GPT <reminders@nextax.ai>",
+      })
+    } catch (error) {
+      console.error("Error sending task reminder email:", error)
+      throw error
+    }
+  },
+}
+
