@@ -39,3 +39,4 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ message: "Failed to create business profile" }, { status: 500 })
   }
 }
+
