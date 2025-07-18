@@ -9,8 +9,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
     }
 
-    const body = await request.json()
-    const { title, description, category, dueDate, source } = body
+    const { title, description, category, dueDate, source } = await request.json()
 
     if (!title || !category) {
       return NextResponse.json({ message: "Title and category are required" }, { status: 400 })
