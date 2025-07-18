@@ -1,158 +1,227 @@
--- Enable Row Level Security
-ALTER DATABASE postgres SET "app.jwt_secret" TO 'your-jwt-secret-here';
+-- Enable UUID extension
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- Create users table (extends Supabase auth.users)
-CREATE TABLE IF NOT EXISTS public.users (
-  id UUID REFERENCES auth.users(id) PRIMARY KEY,
-  email TEXT UNIQUE NOT NULL,
-  full_name TEXT,
-  avatar_url TEXT,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Create user_subscriptions table
-CREATE TABLE IF NOT EXISTS public.user_subscriptions (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
-  stripe_customer_id TEXT,
-  stripe_subscription_id TEXT,
-  tier TEXT NOT NULL DEFAULT 'free' CHECK (tier IN ('free', 'pro', 'premium')),
-  questions_limit INTEGER NOT NULL DEFAULT 10,
-  questions_used INTEGER NOT NULL DEFAULT 0,
-  status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'cancelled', 'expired')),
-  current_period_start TIMESTAMP WITH TIME ZONE,
-  current_period_end TIMESTAMP WITH TIME ZONE,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  UNIQUE(user_id)
-);
-
--- Create chat_sessions table
-CREATE TABLE IF NOT EXISTS public.chat_sessions (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
-  session_data JSONB,
-  messages_count INTEGER DEFAULT 0,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Create business_profiles table
-CREATE TABLE IF NOT EXISTS public.business_profiles (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id UUID REFERENCES public.users(id) ON DELETE CASCADE NOT NULL,
-  business_name TEXT,
-  business_type TEXT,
-  industry TEXT,
-  state TEXT,
-  formation_status TEXT NOT NULL DEFAULT 'planning',
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  UNIQUE(user_id)
-);
-
--- Create user_profiles table
-CREATE TABLE IF NOT EXISTS public.user_profiles (
-    id UUID REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
-    email TEXT,
-    full_name TEXT,
-    avatar_url TEXT,
+-- User Profiles Table
+CREATE TABLE IF NOT EXISTS user_profiles (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    email VARCHAR(255) UNIQUE NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    phone VARCHAR(50),
+    subscription_status VARCHAR(50) DEFAULT 'free',
+    stripe_customer_id VARCHAR(255),
+    usage_count INTEGER DEFAULT 0,
+    usage_limit INTEGER DEFAULT 10,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
--- Enable Row Level Security on all tables
-ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
-ALTER TABLE IF EXISTS public.user_subscriptions ENABLE ROW LEVEL SECURITY;
-ALTER TABLE IF EXISTS public.chat_sessions ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.business_profiles ENABLE ROW LEVEL SECURITY;
-ALTER TABLE IF EXISTS public.user_profiles ENABLE ROW LEVEL SECURITY;
+-- Business Profiles Table
+CREATE TABLE IF NOT EXISTS business_profiles (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES user_profiles(id) ON DELETE CASCADE,
+    business_name VARCHAR(255) NOT NULL,
+    business_type VARCHAR(100) NOT NULL, -- LLC, Corporation, Partnership, etc.
+    industry VARCHAR(255),
+    state VARCHAR(50),
+    formation_status VARCHAR(50) DEFAULT 'planning', -- planning, in_progress, completed
+    ein VARCHAR(20),
+    formation_date DATE,
+    registered_agent JSONB,
+    business_address JSONB,
+    mailing_address JSONB,
+    officers JSONB, -- Array of officer information
+    members JSONB, -- Array of member/shareholder information
+    capital_structure JSONB,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
 
--- Create RLS policies for users table
-CREATE POLICY "Users can view own profile" ON public.users
-  FOR SELECT USING (auth.uid() = id);
+-- Documents Table
+CREATE TABLE IF NOT EXISTS documents (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES user_profiles(id) ON DELETE CASCADE,
+    business_id UUID REFERENCES business_profiles(id) ON DELETE CASCADE,
+    title VARCHAR(255) NOT NULL,
+    type VARCHAR(100) NOT NULL, -- operating-agreement, bylaws, articles, etc.
+    content JSONB NOT NULL,
+    status VARCHAR(50) DEFAULT 'draft', -- draft, completed, signed
+    file_url VARCHAR(500),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
 
-CREATE POLICY "Users can update own profile" ON public.users
-  FOR UPDATE USING (auth.uid() = id);
+-- Tasks Table
+CREATE TABLE IF NOT EXISTS tasks (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES user_profiles(id) ON DELETE CASCADE,
+    business_id UUID REFERENCES business_profiles(id) ON DELETE CASCADE,
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    status VARCHAR(50) DEFAULT 'pending', -- pending, in_progress, completed, cancelled
+    priority VARCHAR(20) DEFAULT 'medium', -- low, medium, high, urgent
+    category VARCHAR(100), -- formation, compliance, tax, legal, etc.
+    due_date TIMESTAMP WITH TIME ZONE,
+    completed_at TIMESTAMP WITH TIME ZONE,
+    assigned_to VARCHAR(255),
+    metadata JSONB,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
 
-CREATE POLICY "Users can insert own profile" ON public.users
-  FOR INSERT WITH CHECK (auth.uid() = id);
+-- Conversations Table
+CREATE TABLE IF NOT EXISTS conversations (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES user_profiles(id) ON DELETE CASCADE,
+    title VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
 
--- Create RLS policies for user_subscriptions table
-CREATE POLICY "Users can view own subscription" ON public.user_subscriptions
-  FOR SELECT USING (auth.uid() = user_id);
+-- Messages Table
+CREATE TABLE IF NOT EXISTS messages (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    conversation_id UUID REFERENCES conversations(id) ON DELETE CASCADE,
+    role VARCHAR(20) NOT NULL, -- user, assistant, system
+    content TEXT NOT NULL,
+    metadata JSONB,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
 
-CREATE POLICY "Users can update own subscription" ON public.user_subscriptions
-  FOR UPDATE USING (auth.uid() = user_id);
+-- Notifications Table
+CREATE TABLE IF NOT EXISTS notifications (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES user_profiles(id) ON DELETE CASCADE,
+    title VARCHAR(255) NOT NULL,
+    message TEXT NOT NULL,
+    type VARCHAR(50) NOT NULL, -- info, warning, error, success
+    read BOOLEAN DEFAULT FALSE,
+    action_url VARCHAR(500),
+    metadata JSONB,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
 
-CREATE POLICY "Users can insert own subscription" ON public.user_subscriptions
-  FOR INSERT WITH CHECK (auth.uid() = user_id);
+-- Compliance Items Table
+CREATE TABLE IF NOT EXISTS compliance_items (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES user_profiles(id) ON DELETE CASCADE,
+    business_id UUID REFERENCES business_profiles(id) ON DELETE CASCADE,
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    status VARCHAR(50) DEFAULT 'pending', -- pending, in_progress, completed, overdue
+    priority VARCHAR(20) DEFAULT 'medium', -- low, medium, high, critical
+    category VARCHAR(100), -- tax, legal, regulatory, filing, etc.
+    due_date TIMESTAMP WITH TIME ZONE,
+    completed_at TIMESTAMP WITH TIME ZONE,
+    recurring BOOLEAN DEFAULT FALSE,
+    recurrence_pattern VARCHAR(50), -- monthly, quarterly, annually
+    next_due_date TIMESTAMP WITH TIME ZONE,
+    requirements JSONB,
+    metadata JSONB,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
 
--- Create RLS policies for chat_sessions table
-CREATE POLICY "Users can view own chat sessions" ON public.chat_sessions
-  FOR SELECT USING (auth.uid() = user_id);
+-- Progress Tracking Table
+CREATE TABLE IF NOT EXISTS progress_tracking (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES user_profiles(id) ON DELETE CASCADE,
+    business_id UUID REFERENCES business_profiles(id) ON DELETE CASCADE,
+    stage VARCHAR(100) NOT NULL, -- business_planning, formation, compliance, operations
+    step VARCHAR(100) NOT NULL,
+    status VARCHAR(50) DEFAULT 'not_started', -- not_started, in_progress, completed, skipped
+    completion_percentage INTEGER DEFAULT 0,
+    data JSONB,
+    completed_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
 
-CREATE POLICY "Users can create own chat sessions" ON public.chat_sessions
-  FOR INSERT WITH CHECK (auth.uid() = user_id);
+-- Legal Reviews Table
+CREATE TABLE IF NOT EXISTS legal_reviews (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES user_profiles(id) ON DELETE CASCADE,
+    document_id UUID REFERENCES documents(id) ON DELETE CASCADE,
+    reviewer_name VARCHAR(255),
+    reviewer_email VARCHAR(255),
+    status VARCHAR(50) DEFAULT 'pending', -- pending, in_review, completed, rejected
+    comments TEXT,
+    recommendations JSONB,
+    reviewed_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
 
-CREATE POLICY "Users can update own chat sessions" ON public.chat_sessions
-  FOR UPDATE USING (auth.uid() = user_id);
+-- Leads Table (for tracking potential customers)
+CREATE TABLE IF NOT EXISTS leads (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    phone VARCHAR(50),
+    source VARCHAR(100), -- quiz, contact_form, chat, etc.
+    status VARCHAR(50) DEFAULT 'new', -- new, contacted, qualified, converted, lost
+    business_type VARCHAR(100),
+    industry VARCHAR(255),
+    expected_revenue VARCHAR(100),
+    notes TEXT,
+    quiz_results JSONB,
+    follow_up_date TIMESTAMP WITH TIME ZONE,
+    converted_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
 
-CREATE POLICY "Users can delete own chat sessions" ON public.chat_sessions
-  FOR DELETE USING (auth.uid() = user_id);
-
--- Create RLS policies for business_profiles table
-CREATE POLICY "Users can view own business profile" ON public.business_profiles
-  FOR SELECT USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can update own business profile" ON public.business_profiles
-  FOR UPDATE USING (auth.uid() = user_id);
-
-CREATE POLICY "Users can insert own business profile" ON public.business_profiles
-  FOR INSERT WITH CHECK (auth.uid() = user_id);
-
--- Create RLS policies for user_profiles table
-DROP POLICY IF EXISTS "Users can view own profile" ON public.user_profiles;
-CREATE POLICY "Users can view own profile" ON public.user_profiles
-    FOR SELECT USING (auth.uid() = id);
-
-DROP POLICY IF EXISTS "Users can update own profile" ON public.user_profiles;
-CREATE POLICY "Users can update own profile" ON public.user_profiles
-    FOR UPDATE USING (auth.uid() = id);
-
-DROP POLICY IF EXISTS "Users can insert own profile" ON public.user_profiles;
-CREATE POLICY "Users can insert own profile" ON public.user_profiles
-    FOR INSERT WITH CHECK (auth.uid() = id);
+-- Automation Workflows Table
+CREATE TABLE IF NOT EXISTS automation_workflows (
+    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    user_id UUID REFERENCES user_profiles(id) ON DELETE CASCADE,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    trigger_type VARCHAR(100) NOT NULL, -- business_created, task_due, document_signed, etc.
+    trigger_conditions JSONB,
+    actions JSONB NOT NULL, -- Array of actions to perform
+    active BOOLEAN DEFAULT TRUE,
+    last_run TIMESTAMP WITH TIME ZONE,
+    run_count INTEGER DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
 
 -- Create indexes for better performance
-CREATE INDEX IF NOT EXISTS idx_user_subscriptions_user_id ON public.user_subscriptions(user_id);
-CREATE INDEX IF NOT EXISTS idx_user_subscriptions_stripe_customer ON public.user_subscriptions(stripe_customer_id);
-CREATE INDEX IF NOT EXISTS idx_chat_sessions_user_id ON public.chat_sessions(user_id);
-CREATE INDEX IF NOT EXISTS idx_business_profiles_user_id ON public.business_profiles(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_profiles_email ON user_profiles(email);
+CREATE INDEX IF NOT EXISTS idx_business_profiles_user_id ON business_profiles(user_id);
+CREATE INDEX IF NOT EXISTS idx_documents_user_id ON documents(user_id);
+CREATE INDEX IF NOT EXISTS idx_documents_business_id ON documents(business_id);
+CREATE INDEX IF NOT EXISTS idx_tasks_user_id ON tasks(user_id);
+CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status);
+CREATE INDEX IF NOT EXISTS idx_tasks_due_date ON tasks(due_date);
+CREATE INDEX IF NOT EXISTS idx_conversations_user_id ON conversations(user_id);
+CREATE INDEX IF NOT EXISTS idx_messages_conversation_id ON messages(conversation_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_user_id ON notifications(user_id);
+CREATE INDEX IF NOT EXISTS idx_notifications_read ON notifications(read);
+CREATE INDEX IF NOT EXISTS idx_compliance_items_user_id ON compliance_items(user_id);
+CREATE INDEX IF NOT EXISTS idx_compliance_items_due_date ON compliance_items(due_date);
+CREATE INDEX IF NOT EXISTS idx_progress_tracking_user_id ON progress_tracking(user_id);
+CREATE INDEX IF NOT EXISTS idx_leads_email ON leads(email);
+CREATE INDEX IF NOT EXISTS idx_leads_status ON leads(status);
 
--- Create function to handle user creation
-CREATE OR REPLACE FUNCTION public.handle_new_user()
-RETURNS TRIGGER AS $$
+-- Create function to increment user usage
+CREATE OR REPLACE FUNCTION increment_user_usage(user_id UUID, increment_by INTEGER DEFAULT 1)
+RETURNS INTEGER AS $$
+DECLARE
+    new_usage INTEGER;
 BEGIN
-    INSERT INTO public.user_profiles (id, email, full_name)
-    VALUES (NEW.id, NEW.email, NEW.raw_user_meta_data->>'full_name');
+    UPDATE user_profiles 
+    SET usage_count = usage_count + increment_by,
+        updated_at = NOW()
+    WHERE id = user_id
+    RETURNING usage_count INTO new_usage;
     
-    INSERT INTO public.user_subscriptions (user_id, tier, status, questions_used, questions_limit)
-    VALUES (NEW.id, 'free', 'active', 0, 10);
-    
-    RETURN NEW;
+    RETURN new_usage;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
-
--- Create trigger for new user creation
-DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
-CREATE TRIGGER on_auth_user_created
-    AFTER INSERT ON auth.users
-    FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
+$$ LANGUAGE plpgsql;
 
 -- Create function to update updated_at timestamp
-CREATE OR REPLACE FUNCTION public.update_updated_at_column()
+CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
     NEW.updated_at = NOW();
@@ -161,29 +230,42 @@ END;
 $$ LANGUAGE plpgsql;
 
 -- Create triggers for updated_at
-CREATE TRIGGER update_users_updated_at BEFORE UPDATE ON public.users
-  FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+CREATE TRIGGER update_user_profiles_updated_at BEFORE UPDATE ON user_profiles FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_business_profiles_updated_at BEFORE UPDATE ON business_profiles FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_documents_updated_at BEFORE UPDATE ON documents FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_tasks_updated_at BEFORE UPDATE ON tasks FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_conversations_updated_at BEFORE UPDATE ON conversations FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_compliance_items_updated_at BEFORE UPDATE ON compliance_items FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_progress_tracking_updated_at BEFORE UPDATE ON progress_tracking FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_legal_reviews_updated_at BEFORE UPDATE ON legal_reviews FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_leads_updated_at BEFORE UPDATE ON leads FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_automation_workflows_updated_at BEFORE UPDATE ON automation_workflows FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER update_user_subscriptions_updated_at BEFORE UPDATE ON public.user_subscriptions
-  FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+-- Insert some default compliance templates
+INSERT INTO compliance_items (id, user_id, title, description, category, priority, due_date, recurring, recurrence_pattern) VALUES
+(uuid_generate_v4(), uuid_generate_v4(), 'File Articles of Incorporation', 'Submit Articles of Incorporation to state', 'formation', 'high', NOW() + INTERVAL '7 days', false, null),
+(uuid_generate_v4(), uuid_generate_v4(), 'Obtain EIN', 'Apply for Employer Identification Number from IRS', 'tax', 'high', NOW() + INTERVAL '14 days', false, null),
+(uuid_generate_v4(), uuid_generate_v4(), 'Open Business Bank Account', 'Establish business banking relationship', 'financial', 'medium', NOW() + INTERVAL '21 days', false, null),
+(uuid_generate_v4(), uuid_generate_v4(), 'Register for State Taxes', 'Register with state tax authority', 'tax', 'medium', NOW() + INTERVAL '30 days', false, null),
+(uuid_generate_v4(), uuid_generate_v4(), 'Quarterly Tax Filing', 'File quarterly tax returns', 'tax', 'high', NOW() + INTERVAL '90 days', true, 'quarterly'),
+(uuid_generate_v4(), uuid_generate_v4(), 'Annual Report Filing', 'File annual report with state', 'regulatory', 'medium', NOW() + INTERVAL '365 days', true, 'annually')
+ON CONFLICT DO NOTHING;
 
-CREATE TRIGGER update_chat_sessions_updated_at BEFORE UPDATE ON public.chat_sessions
-  FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+-- Create Row Level Security policies (optional, for multi-tenant security)
+ALTER TABLE user_profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE business_profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE documents ENABLE ROW LEVEL SECURITY;
+ALTER TABLE tasks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE conversations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE messages ENABLE ROW LEVEL SECURITY;
+ALTER TABLE notifications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE compliance_items ENABLE ROW LEVEL SECURITY;
+ALTER TABLE progress_tracking ENABLE ROW LEVEL SECURITY;
+ALTER TABLE legal_reviews ENABLE ROW LEVEL SECURITY;
+ALTER TABLE automation_workflows ENABLE ROW LEVEL SECURITY;
 
-CREATE TRIGGER update_business_profiles_updated_at BEFORE UPDATE ON public.business_profiles
-  FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
+-- Note: You'll need to create appropriate RLS policies based on your authentication setup
+-- Example policy (uncomment and modify as needed):
+-- CREATE POLICY "Users can view own profile" ON user_profiles FOR SELECT USING (auth.uid() = id);
+-- CREATE POLICY "Users can update own profile" ON user_profiles FOR UPDATE USING (auth.uid() = id);
 
-DROP TRIGGER IF EXISTS update_user_profiles_updated_at ON public.user_profiles;
-CREATE TRIGGER update_user_profiles_updated_at
-    BEFORE UPDATE ON public.user_profiles
-    FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
-
-DROP TRIGGER IF EXISTS update_user_subscriptions_updated_at ON public.user_subscriptions;
-CREATE TRIGGER update_user_subscriptions_updated_at
-    BEFORE UPDATE ON public.user_subscriptions
-    FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
-
-DROP TRIGGER IF EXISTS update_chat_sessions_updated_at ON public.chat_sessions;
-CREATE TRIGGER update_chat_sessions_updated_at
-    BEFORE UPDATE ON public.chat_sessions
-    FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
