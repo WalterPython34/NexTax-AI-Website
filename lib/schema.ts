@@ -1,123 +1,141 @@
 import { z } from "zod"
 
-// User schema
-export const insertUserSchema = z.object({
-  id: z.string(),
+// User schemas
+export const UserProfileSchema = z.object({
+  id: z.string().uuid(),
   email: z.string().email(),
-  fullName: z.string().optional(),
-  subscriptionTier: z.enum(["free", "starter", "professional", "enterprise"]).default("free"),
-  stripeCustomerId: z.string().optional(),
-  createdAt: z.date().default(() => new Date()),
-  updatedAt: z.date().default(() => new Date()),
+  full_name: z.string().min(1),
+  subscription_tier: z.enum(["free", "basic", "premium", "enterprise"]).default("free"),
+  created_at: z.string().datetime(),
+  updated_at: z.string().datetime(),
 })
 
-export type InsertUser = z.infer<typeof insertUserSchema>
-
-// Business Profile schema
-export const insertBusinessProfileSchema = z.object({
-  userId: z.string(),
-  businessName: z.string().min(1, "Business name is required"),
-  businessType: z.enum(["llc", "corporation", "s_corp", "partnership", "sole_proprietorship"]),
-  industry: z.string().min(1, "Industry is required"),
-  state: z.string().min(2, "State is required"),
-  description: z.string().optional(),
-  expectedRevenue: z.number().optional(),
-  numberOfEmployees: z.number().optional(),
-  businessAddress: z.string().optional(),
-  phone: z.string().optional(),
-  website: z.string().optional(),
-  createdAt: z.date().default(() => new Date()),
-  updatedAt: z.date().default(() => new Date()),
+export const BusinessProfileSchema = z.object({
+  id: z.string().uuid(),
+  user_id: z.string().uuid(),
+  business_name: z.string().min(1),
+  business_type: z.enum(["LLC", "Corporation", "Partnership", "Sole Proprietorship"]),
+  state: z.string().min(2).max(2),
+  industry: z.string().min(1),
+  formation_date: z.string().datetime().optional(),
+  ein: z.string().optional(),
+  address: z
+    .object({
+      street: z.string(),
+      city: z.string(),
+      state: z.string(),
+      zip: z.string(),
+    })
+    .optional(),
+  created_at: z.string().datetime(),
+  updated_at: z.string().datetime(),
 })
 
-export type InsertBusinessProfile = z.infer<typeof insertBusinessProfileSchema>
+// Document schemas
+export const DocumentSchema = z.object({
+  id: z.string().uuid(),
+  user_id: z.string().uuid(),
+  business_profile_id: z.string().uuid().optional(),
+  title: z.string().min(1),
+  type: z.enum(["operating_agreement", "bylaws", "articles", "contract", "other"]),
+  content: z.string(),
+  status: z.enum(["draft", "review", "final"]).default("draft"),
+  created_at: z.string().datetime(),
+  updated_at: z.string().datetime(),
+})
 
-// Document schema
-export const insertDocumentSchema = z.object({
-  userId: z.string(),
-  businessId: z.string().optional(),
-  title: z.string().min(1, "Title is required"),
-  documentType: z.enum([
-    "operating_agreement",
-    "bylaws",
-    "articles",
-    "chart_of_accounts",
-    "expense_tracker",
-    "business_plan",
-    "other",
-  ]),
+export const DocumentGenerationRequestSchema = z.object({
+  type: z.enum(["operating_agreement", "bylaws", "articles", "contract"]),
+  business_profile_id: z.string().uuid(),
+  custom_requirements: z.string().optional(),
+  template_options: z.record(z.any()).optional(),
+})
+
+// Chat schemas
+export const ChatMessageSchema = z.object({
+  id: z.string().uuid(),
+  conversation_id: z.string().uuid(),
+  role: z.enum(["user", "assistant", "system"]),
   content: z.string(),
   metadata: z.record(z.any()).optional(),
-  createdAt: z.date().default(() => new Date()),
-  updatedAt: z.date().default(() => new Date()),
+  created_at: z.string().datetime(),
 })
 
-export type InsertDocument = z.infer<typeof insertDocumentSchema>
-
-// Conversation schema
-export const insertConversationSchema = z.object({
-  userId: z.string(),
-  businessId: z.string().optional(),
-  title: z.string().default("New Conversation"),
-  createdAt: z.date().default(() => new Date()),
-  updatedAt: z.date().default(() => new Date()),
+export const ConversationSchema = z.object({
+  id: z.string().uuid(),
+  user_id: z.string().uuid(),
+  title: z.string().min(1),
+  type: z.enum(["general", "document_help", "compliance", "tax_advice"]).default("general"),
+  status: z.enum(["active", "archived"]).default("active"),
+  created_at: z.string().datetime(),
+  updated_at: z.string().datetime(),
 })
 
-export type InsertConversation = z.infer<typeof insertConversationSchema>
+// Compliance schemas
+export const ComplianceItemSchema = z.object({
+  id: z.string().uuid(),
+  business_profile_id: z.string().uuid(),
+  title: z.string().min(1),
+  description: z.string(),
+  category: z.enum(["tax", "legal", "regulatory", "filing"]),
+  priority: z.enum(["low", "medium", "high", "critical"]).default("medium"),
+  due_date: z.string().datetime().optional(),
+  status: z.enum(["pending", "in_progress", "completed", "overdue"]).default("pending"),
+  requirements: z.array(z.string()).default([]),
+  created_at: z.string().datetime(),
+  updated_at: z.string().datetime(),
+})
 
-// Message schema
-export const insertMessageSchema = z.object({
-  conversationId: z.string(),
-  role: z.enum(["user", "assistant"]),
-  content: z.string().min(1, "Content is required"),
+export const TaskSchema = z.object({
+  id: z.string().uuid(),
+  user_id: z.string().uuid(),
+  business_profile_id: z.string().uuid().optional(),
+  title: z.string().min(1),
+  description: z.string().optional(),
+  category: z.enum(["formation", "compliance", "tax", "legal", "other"]).default("other"),
+  priority: z.enum(["low", "medium", "high"]).default("medium"),
+  status: z.enum(["todo", "in_progress", "completed"]).default("todo"),
+  due_date: z.string().datetime().optional(),
+  created_at: z.string().datetime(),
+  updated_at: z.string().datetime(),
+})
+
+// Usage tracking schemas
+export const UsageRecordSchema = z.object({
+  id: z.string().uuid(),
+  user_id: z.string().uuid(),
+  action_type: z.enum(["chat_message", "document_generated", "compliance_check", "ai_analysis"]),
+  count: z.number().int().positive().default(1),
   metadata: z.record(z.any()).optional(),
-  createdAt: z.date().default(() => new Date()),
+  created_at: z.string().datetime(),
 })
 
-export type InsertMessage = z.infer<typeof insertMessageSchema>
-
-// Progress Task schema
-export const insertProgressTaskSchema = z.object({
-  userId: z.string(),
-  businessId: z.string(),
-  title: z.string().min(1, "Title is required"),
-  description: z.string().optional(),
-  category: z.enum(["formation", "compliance", "tax", "legal", "operational"]),
-  priority: z.enum(["low", "medium", "high", "urgent"]).default("medium"),
-  status: z.enum(["pending", "in_progress", "completed", "blocked"]).default("pending"),
-  dueDate: z.date().optional(),
-  completedAt: z.date().optional(),
-  createdAt: z.date().default(() => new Date()),
-  updatedAt: z.date().default(() => new Date()),
+// API request/response schemas
+export const ChatRequestSchema = z.object({
+  message: z.string().min(1),
+  conversation_id: z.string().uuid().optional(),
+  context: z
+    .object({
+      business_profile_id: z.string().uuid().optional(),
+      document_id: z.string().uuid().optional(),
+    })
+    .optional(),
 })
 
-export type InsertProgressTask = z.infer<typeof insertProgressTaskSchema>
-
-// Usage Tracking schema
-export const insertUsageSchema = z.object({
-  userId: z.string(),
-  month: z.string(), // YYYY-MM format
-  messageCount: z.number().default(0),
-  documentCount: z.number().default(0),
-  createdAt: z.date().default(() => new Date()),
-  updatedAt: z.date().default(() => new Date()),
+export const QuickChatRequestSchema = z.object({
+  question: z.string().min(1),
+  context: z.enum(["general", "llc", "corporation", "tax", "compliance"]).default("general"),
 })
 
-export type InsertUsage = z.infer<typeof insertUsageSchema>
-
-// Compliance Item schema
-export const insertComplianceItemSchema = z.object({
-  userId: z.string(),
-  businessId: z.string(),
-  title: z.string().min(1, "Title is required"),
-  description: z.string().optional(),
-  category: z.enum(["tax_filing", "license_renewal", "annual_report", "permit", "registration", "other"]),
-  status: z.enum(["upcoming", "due_soon", "overdue", "completed"]).default("upcoming"),
-  dueDate: z.date(),
-  completedAt: z.date().optional(),
-  reminderSent: z.boolean().default(false),
-  createdAt: z.date().default(() => new Date()),
-  updatedAt: z.date().default(() => new Date()),
-})
-
-export type InsertComplianceItem = z.infer<typeof insertComplianceItemSchema>
+// Export types
+export type UserProfile = z.infer<typeof UserProfileSchema>
+export type BusinessProfile = z.infer<typeof BusinessProfileSchema>
+export type Document = z.infer<typeof DocumentSchema>
+export type DocumentGenerationRequest = z.infer<typeof DocumentGenerationRequestSchema>
+export type ChatMessage = z.infer<typeof ChatMessageSchema>
+export type Conversation = z.infer<typeof ConversationSchema>
+export type ComplianceItem = z.infer<typeof ComplianceItemSchema>
+export type Task = z.infer<typeof TaskSchema>
+export type UsageRecord = z.infer<typeof UsageRecordSchema>
+export type ChatRequest = z.infer<typeof ChatRequestSchema>
+export type QuickChatRequest = z.infer<typeof QuickChatRequestSchema>
