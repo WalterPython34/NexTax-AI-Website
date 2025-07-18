@@ -1,160 +1,218 @@
-import { generateText, generateObject } from "ai"
 import { openai } from "@ai-sdk/openai"
-import { z } from "zod"
+import { generateText, streamText } from "ai"
+import type { BusinessProfile, DocumentGenerationRequest } from "./schema"
 
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY
+// Initialize OpenAI with your API key
+const model = openai("gpt-4o")
 
-if (!OPENAI_API_KEY) {
-  throw new Error("OPENAI_API_KEY environment variable is required")
-}
+export async function generateBusinessDocument(
+  request: DocumentGenerationRequest,
+  businessProfile: BusinessProfile,
+): Promise<string> {
+  const { type, custom_requirements } = request
 
-export const openaiService = {
-  async generateChatResponse(
-    messages: Array<{ role: "user" | "assistant"; content: string }>,
-    businessContext?: any,
-    model = "gpt-4",
-  ) {
-    const systemPrompt = `You are StartSmart GPT, an AI business advisor specializing in business formation, compliance, and growth strategies. 
+  const systemPrompt = `You are a legal document generator specializing in business formation documents. 
+  Generate professional, legally sound documents based on the provided business information.
+  Always include standard legal disclaimers and ensure compliance with general business law principles.`
 
-${
-  businessContext
-    ? `Business Context:
-- Business Name: ${businessContext.businessName}
-- Business Type: ${businessContext.businessType}
-- Industry: ${businessContext.industry}
-- State: ${businessContext.state}
-- Description: ${businessContext.description || "Not provided"}
-`
-    : ""
-}
+  let documentPrompt = ""
 
-Provide helpful, accurate advice about:
-- Business formation (LLC, Corporation, S-Corp, etc.) for all 50 US states
-- Tax implications and strategies
-- Compliance requirements
-- Document preparation
-- Business growth strategies
-- Legal considerations
-- Market Research
-- Collaborate on logos and new product ideas
-- Helping with website landing page
-- Sales & Marketing strategies
-
-
-Always be professional, concise, and actionable in your responses.`
-
-    const { text } = await generateText({
-      model: openai(model),
-      system: systemPrompt,
-      messages,
-    })
-
-    return {
-      content: text,
-      metadata: {
-        model,
-        timestamp: new Date().toISOString(),
-        businessContext: !!businessContext,
-      },
-    }
-  },
-
-  async generateDocument(documentType: string, businessProfile: any, additionalRequirements?: string) {
-    const systemPrompt = `You are a legal document generator specializing in business formation documents. Generate professional, legally sound documents based on the provided business information.
-
-Business Information:
-- Business Name: ${businessProfile.businessName}
-- Business Type: ${businessProfile.businessType}
-- Industry: ${businessProfile.industry}
-- State: ${businessProfile.state}
-- Description: ${businessProfile.description || "Not provided"}
-
-${additionalRequirements ? `Additional Requirements: ${additionalRequirements}` : ""}
-
-Generate a complete ${documentType} document that is:
-1. Legally compliant for ${businessProfile.state}
-2. Appropriate for a ${businessProfile.businessType}
-3. Professional and comprehensive
-4. Ready for use with minimal modifications
-
-Format the document with proper headings, sections, and legal language.`
-
-    const { text } = await generateText({
-      model: openai("gpt-4"),
-      system: systemPrompt,
-      prompt: `Generate a ${documentType} for the business described above.`,
-    })
-
-    return {
-      content: text,
-      metadata: {
-        documentType,
-        businessId: businessProfile.id,
-        generatedAt: new Date().toISOString(),
-        model: "gpt-4",
-      },
-    }
-  },
-
-  async generateBusinessAnalysis(businessProfile: any) {
-    const analysisSchema = z.object({
-      strengths: z.array(z.string()),
-      opportunities: z.array(z.string()),
-      recommendations: z.array(z.string()),
-      complianceItems: z.array(
-        z.object({
-          title: z.string(),
-          description: z.string(),
-          category: z.enum(["tax_filing", "license_renewal", "annual_report", "permit", "registration", "other"]),
-          priority: z.enum(["low", "medium", "high", "urgent"]),
-          estimatedDueDate: z.string(),
-        }),
-      ),
-      nextSteps: z.array(z.string()),
-    })
-
-    const { object } = await generateObject({
-      model: openai("gpt-4"),
-      schema: analysisSchema,
-      prompt: `Analyze this business profile and provide strategic insights:
-
-Business Name: ${businessProfile.businessName}
-Business Type: ${businessProfile.businessType}
-Industry: ${businessProfile.industry}
-State: ${businessProfile.state}
-Expected Revenue: ${businessProfile.expectedRevenue || "Not specified"}
-Number of Employees: ${businessProfile.numberOfEmployees || "Not specified"}
-Description: ${businessProfile.description || "Not provided"}
-
-Provide a comprehensive business analysis including strengths, opportunities, recommendations, compliance requirements, and next steps.`,
-    })
-
-    return object
-  },
-
-  async generateConversationTitle(firstMessage: string) {
-    const { text } = await generateText({
-      model: openai("gpt-3.5-turbo"),
-      prompt: `Generate a short, descriptive title (max 50 characters) for a business conversation that starts with: "${firstMessage.slice(0, 200)}..."`,
-    })
-
-    return text.replace(/['"]/g, "").slice(0, 50)
-  },
-
-  async generateComplianceReminder(complianceItem: any) {
-    const { text } = await generateText({
-      model: openai("gpt-3.5-turbo"),
-      prompt: `Generate a professional reminder email content for this compliance item:
+  switch (type) {
+    case "operating_agreement":
+      documentPrompt = `Generate a comprehensive LLC Operating Agreement for ${businessProfile.business_name}, 
+      a ${businessProfile.business_type} formed in ${businessProfile.state}. 
+      Industry: ${businessProfile.industry}.
+      ${custom_requirements ? `Additional requirements: ${custom_requirements}` : ""}
       
-Title: ${complianceItem.title}
-Description: ${complianceItem.description}
-Due Date: ${complianceItem.dueDate}
-Category: ${complianceItem.category}
+      Include sections for:
+      - Company formation and purpose
+      - Member information and ownership
+      - Management structure
+      - Capital contributions
+      - Profit and loss distribution
+      - Transfer of membership interests
+      - Dissolution procedures
+      - Legal disclaimers`
+      break
 
-The email should be professional, helpful, and include actionable next steps.`,
-    })
+    case "bylaws":
+      documentPrompt = `Generate comprehensive Corporate Bylaws for ${businessProfile.business_name}, 
+      a ${businessProfile.business_type} formed in ${businessProfile.state}.
+      Industry: ${businessProfile.industry}.
+      ${custom_requirements ? `Additional requirements: ${custom_requirements}` : ""}
+      
+      Include sections for:
+      - Corporate purpose and powers
+      - Shareholders meetings and voting
+      - Board of directors structure
+      - Officer roles and responsibilities
+      - Stock certificates and transfers
+      - Amendment procedures
+      - Legal disclaimers`
+      break
 
-    return text
-  },
+    case "articles":
+      documentPrompt = `Generate Articles of Incorporation for ${businessProfile.business_name}, 
+      a ${businessProfile.business_type} to be formed in ${businessProfile.state}.
+      Industry: ${businessProfile.industry}.
+      ${custom_requirements ? `Additional requirements: ${custom_requirements}` : ""}
+      
+      Include:
+      - Corporate name and registered address
+      - Purpose of corporation
+      - Authorized shares and stock structure
+      - Registered agent information
+      - Incorporator information
+      - Duration of corporation
+      - Legal disclaimers`
+      break
+
+    default:
+      throw new Error(`Unsupported document type: ${type}`)
+  }
+
+  const { text } = await generateText({
+    model,
+    system: systemPrompt,
+    prompt: documentPrompt,
+    maxTokens: 4000,
+  })
+
+  return text
 }
 
+export async function generateChatResponse(
+  message: string,
+  context?: {
+    businessProfile?: BusinessProfile
+    conversationHistory?: Array<{ role: "user" | "assistant"; content: string }>
+  },
+) {
+  const systemPrompt = `You are StartSmart GPT, an AI business advisor specializing in business formation, 
+  compliance, and tax planning. You provide helpful, accurate advice while always recommending users 
+  consult with qualified professionals for specific legal and tax matters.
+  
+  Your expertise includes:
+  - Business entity selection (LLC, Corporation, Partnership)
+  - State-specific formation requirements
+  - Tax implications and strategies
+  - Compliance and regulatory requirements
+  - Business planning and structure
+  
+  Always be helpful, professional, and include appropriate disclaimers about seeking professional advice.`
+
+  let contextPrompt = message
+
+  if (context?.businessProfile) {
+    contextPrompt = `Business Context: ${context.businessProfile.business_name} is a ${context.businessProfile.business_type} 
+    in ${context.businessProfile.state}, operating in the ${context.businessProfile.industry} industry.
+    
+    User Question: ${message}`
+  }
+
+  const messages = [
+    { role: "system" as const, content: systemPrompt },
+    ...(context?.conversationHistory || []),
+    { role: "user" as const, content: contextPrompt },
+  ]
+
+  return streamText({
+    model,
+    messages,
+    maxTokens: 1000,
+  })
+}
+
+export async function generateQuickResponse(question: string, context: string) {
+  const systemPrompt = `You are StartSmart GPT, providing quick, helpful answers about business formation and compliance. 
+  Keep responses concise but informative. Always include a disclaimer about consulting professionals.`
+
+  const contextPrompts = {
+    general: "General business formation question",
+    llc: "Question about LLC formation and management",
+    corporation: "Question about corporate formation and management",
+    tax: "Question about business tax implications",
+    compliance: "Question about business compliance requirements",
+  }
+
+  const fullPrompt = `Context: ${contextPrompts[context as keyof typeof contextPrompts] || contextPrompts.general}
+  
+  Question: ${question}`
+
+  const { text } = await generateText({
+    model,
+    system: systemPrompt,
+    prompt: fullPrompt,
+    maxTokens: 500,
+  })
+
+  return text
+}
+
+export async function analyzeBusinessStructure(businessInfo: {
+  industry: string
+  expectedRevenue: string
+  numberOfOwners: number
+  state: string
+  goals: string[]
+}) {
+  const systemPrompt = `You are a business structure analyst. Analyze the provided business information 
+  and recommend the most suitable business entity type with detailed reasoning.`
+
+  const prompt = `Analyze this business and recommend the optimal structure:
+  
+  Industry: ${businessInfo.industry}
+  Expected Annual Revenue: ${businessInfo.expectedRevenue}
+  Number of Owners: ${businessInfo.numberOfOwners}
+  State: ${businessInfo.state}
+  Business Goals: ${businessInfo.goals.join(", ")}
+  
+  Provide:
+  1. Recommended entity type (LLC, S-Corp, C-Corp, Partnership)
+  2. Confidence level (1-100%)
+  3. Key reasons for recommendation
+  4. Tax implications
+  5. Compliance requirements
+  6. Alternative options to consider`
+
+  const { text } = await generateText({
+    model,
+    system: systemPrompt,
+    prompt,
+    maxTokens: 1500,
+  })
+
+  return text
+}
+
+export async function generateComplianceChecklist(businessProfile: BusinessProfile) {
+  const systemPrompt = `You are a business compliance expert. Generate a comprehensive compliance 
+  checklist based on the business profile provided.`
+
+  const prompt = `Generate a compliance checklist for:
+  
+  Business: ${businessProfile.business_name}
+  Type: ${businessProfile.business_type}
+  State: ${businessProfile.state}
+  Industry: ${businessProfile.industry}
+  Formation Date: ${businessProfile.formation_date || "Recently formed"}
+  
+  Include:
+  - Federal tax obligations
+  - State-specific requirements
+  - Industry-specific compliance
+  - Annual filing requirements
+  - Ongoing maintenance tasks
+  - Important deadlines
+  
+  Format as a structured checklist with priorities and due dates where applicable.`
+
+  const { text } = await generateText({
+    model,
+    system: systemPrompt,
+    prompt,
+    maxTokens: 2000,
+  })
+
+  return text
+}
