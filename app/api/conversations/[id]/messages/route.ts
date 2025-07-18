@@ -3,14 +3,15 @@ import { storage } from "@/lib/storage"
 import { openaiService } from "@/lib/openai"
 import { checkUsageLimit, getModelForTier, type SubscriptionTier } from "@/lib/ai-usage-config"
 
-export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const { id: conversationId } = await params
     const userId = request.headers.get("x-user-id")
 
     if (!userId) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
     }
+
+    const conversationId = params.id
 
     // Verify conversation ownership
     const conversation = await storage.getConversation(conversationId)
@@ -26,24 +27,26 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   }
 }
 
-export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   try {
-    const { id: conversationId } = await params
     const userId = request.headers.get("x-user-id")
 
     if (!userId) {
       return NextResponse.json({ message: "Unauthorized" }, { status: 401 })
     }
 
+    const conversationId = params.id
+    const body = await request.json()
+    const { content } = body
+
+    if (!content) {
+      return NextResponse.json({ message: "Message content is required" }, { status: 400 })
+    }
+
     // Verify conversation ownership
     const conversation = await storage.getConversation(conversationId)
     if (!conversation || conversation.userId !== userId) {
       return NextResponse.json({ message: "Conversation not found" }, { status: 404 })
-    }
-
-    const { content } = await request.json()
-    if (!content) {
-      return NextResponse.json({ message: "Message content is required" }, { status: 400 })
     }
 
     // Get user and check subscription tier
