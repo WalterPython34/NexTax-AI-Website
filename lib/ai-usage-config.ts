@@ -1,96 +1,89 @@
-export interface UsageLimits {
-  chatMessages: number
-  documentsGenerated: number
-  complianceChecks: number
-  aiAnalysis: number
-}
-
-export interface UserTier {
-  name: string
-  limits: UsageLimits
-  resetPeriod: "daily" | "weekly" | "monthly"
-}
-
-export const USER_TIERS: Record<string, UserTier> = {
+// AI Chat usage limits configuration by subscription tier
+export const AI_CHAT_TIERS = {
   free: {
-    name: "Free",
-    limits: {
-      chatMessages: 10,
-      documentsGenerated: 2,
-      complianceChecks: 5,
-      aiAnalysis: 3,
-    },
-    resetPeriod: "daily",
+    label: "Free Tier",
+    maxMessages: 10,
+    description: "Get started with essential startup advice and AI support. Limit of 10 messages per month.",
+    upgradeCta: "Upgrade to Pro for more AI help",
+    model: "gpt-3.5-turbo",
+    tokenEstimatePerMessage: 500,
   },
-  basic: {
-    name: "Basic",
-    limits: {
-      chatMessages: 100,
-      documentsGenerated: 10,
-      complianceChecks: 25,
-      aiAnalysis: 15,
-    },
-    resetPeriod: "monthly",
+  pro: {
+    label: "Pro Tier ($29/month)",
+    maxMessages: 150,
+    description: "Access up to 150 monthly AI chats with business planning, compliance, and automation help.",
+    softCapWarningAt: 120,
+    model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+    tokenEstimatePerMessage: 500,
+    upgradeCta: "Need more? Upgrade to Premium for unlimited access",
   },
   premium: {
-    name: "Premium",
-    limits: {
-      chatMessages: 500,
-      documentsGenerated: 50,
-      complianceChecks: 100,
-      aiAnalysis: 75,
-    },
-    resetPeriod: "monthly",
+    label: "Premium Tier ($79/month)",
+    maxMessages: "unlimited" as const,
+    softCap: 1500,
+    description:
+      "Unlimited AI Chat support with advanced tools and longer sessions. Fair usage cap of 1,500 messages/month.",
+    softCapWarningAt: 1350,
+    model: "gpt-4o", // the newest OpenAI model is "gpt-4o" which was released May 13, 2024. do not change this unless explicitly requested by the user
+    tokenEstimatePerMessage: 500,
+    warningMessage: "You're approaching your monthly usage cap. Continued high usage may require rate-limiting.",
   },
-  enterprise: {
-    name: "Enterprise",
-    limits: {
-      chatMessages: -1, // unlimited
-      documentsGenerated: -1,
-      complianceChecks: -1,
-      aiAnalysis: -1,
-    },
-    resetPeriod: "monthly",
-  },
-}
+} as const
 
-export function getUserTier(subscriptionStatus?: string): UserTier {
-  switch (subscriptionStatus) {
-    case "basic":
-      return USER_TIERS.basic
-    case "premium":
-      return USER_TIERS.premium
-    case "enterprise":
-      return USER_TIERS.enterprise
-    default:
-      return USER_TIERS.free
-  }
-}
+export type SubscriptionTier = keyof typeof AI_CHAT_TIERS
 
 export function checkUsageLimit(
+  tier: SubscriptionTier,
   currentUsage: number,
-  limit: number,
-  action: string,
-): { allowed: boolean; message?: string } {
-  if (limit === -1) {
-    return { allowed: true } // unlimited
+): {
+  canSend: boolean
+  warningMessage?: string
+  upgradeMessage?: string
+} {
+  const config = AI_CHAT_TIERS[tier]
+
+  if (tier === "premium") {
+    const premiumConfig = config as typeof AI_CHAT_TIERS.premium
+    if (currentUsage >= premiumConfig.softCap) {
+      return {
+        canSend: false,
+        upgradeMessage: premiumConfig.warningMessage,
+      }
+    }
+    if (currentUsage >= premiumConfig.softCapWarningAt) {
+      return {
+        canSend: true,
+        warningMessage: premiumConfig.warningMessage,
+      }
+    }
+    return { canSend: true }
   }
 
-  if (currentUsage >= limit) {
+  // For free and pro tiers with hard limits
+  const tierConfig = config as typeof AI_CHAT_TIERS.free | typeof AI_CHAT_TIERS.pro
+  if (currentUsage >= tierConfig.maxMessages) {
     return {
-      allowed: false,
-      message: `You've reached your ${action} limit. Please upgrade your plan to continue.`,
+      canSend: false,
+      upgradeMessage: `You've reached your AI message limit for the month. ${tierConfig.upgradeCta}.`,
     }
   }
 
-  return { allowed: true }
-}
+  // Show warning when approaching limit
+  const warningThreshold =
+    tier === "pro"
+      ? (tierConfig as typeof AI_CHAT_TIERS.pro).softCapWarningAt!
+      : Math.floor(tierConfig.maxMessages * 0.8)
+  if (currentUsage >= warningThreshold) {
+    return {
+      canSend: true,
+      warningMessage: `You have ${tierConfig.maxMessages - currentUsage} AI messages remaining this month.`,
+    }
+  }
 
-export function getUsagePercentage(current: number, limit: number): number {
-  if (limit === -1) return 0 // unlimited
-  return Math.min((current / limit) * 100, 100)
+  return { canSend: true }
 }
 
 export function getModelForTier(tier: SubscriptionTier): string {
   return AI_CHAT_TIERS[tier].model
 }
+
