@@ -5,452 +5,370 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Progress } from "@/components/ui/progress"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import {
-  CheckCircle,
-  Circle,
-  Clock,
-  Target,
-  TrendingUp,
-  DollarSign,
-  Building,
-  Shield,
-  Lightbulb,
-  Rocket,
-} from "lucide-react"
+import { CheckCircle, Circle, Clock, ArrowRight, Lightbulb, FileText, Building, DollarSign, Shield } from "lucide-react"
 
-interface Milestone {
+interface RoadmapStep {
   id: string
   title: string
   description: string
-  category: "foundation" | "legal" | "financial" | "operational" | "growth"
-  status: "completed" | "in-progress" | "pending" | "blocked"
-  progress: number
-  estimatedDays: number
-  dependencies?: string[]
-  tasks: Task[]
-}
-
-interface Task {
-  id: string
-  title: string
-  completed: boolean
-  optional?: boolean
+  status: "completed" | "current" | "upcoming" | "locked"
+  category: "planning" | "formation" | "compliance" | "operations"
+  estimatedTime: string
+  tasks: Array<{
+    id: string
+    title: string
+    completed: boolean
+    description?: string
+  }>
 }
 
 export function ProgressRoadmap() {
-  const [milestones] = useState<Milestone[]>([
+  const [roadmapSteps] = useState<RoadmapStep[]>([
     {
       id: "1",
-      title: "Business Foundation",
-      description: "Establish your business entity and basic structure",
-      category: "foundation",
+      title: "Business Planning",
+      description: "Define your business idea and create a solid foundation",
       status: "completed",
-      progress: 100,
-      estimatedDays: 7,
+      category: "planning",
+      estimatedTime: "1-2 weeks",
       tasks: [
-        { id: "1-1", title: "Choose business name", completed: true },
-        { id: "1-2", title: "Check name availability", completed: true },
-        { id: "1-3", title: "Register business entity", completed: true },
-        { id: "1-4", title: "Get EIN from IRS", completed: true },
+        { id: "1-1", title: "Business idea validation", completed: true, description: "Research market demand" },
+        { id: "1-2", title: "Business model canvas", completed: true, description: "Define your business model" },
+        { id: "1-3", title: "Market research", completed: true, description: "Analyze competitors and target market" },
+        { id: "1-4", title: "Financial projections", completed: true, description: "Create basic financial forecasts" },
       ],
     },
     {
       id: "2",
-      title: "Legal Structure",
-      description: "Set up legal documents and compliance framework",
-      category: "legal",
-      status: "in-progress",
-      progress: 60,
-      estimatedDays: 14,
-      dependencies: ["1"],
+      title: "Entity Formation",
+      description: "Choose and register your business structure",
+      status: "current",
+      category: "formation",
+      estimatedTime: "1-2 weeks",
       tasks: [
-        { id: "2-1", title: "Draft operating agreement", completed: true },
-        { id: "2-2", title: "Set up registered agent", completed: true },
-        { id: "2-3", title: "Create corporate bylaws", completed: false },
-        { id: "2-4", title: "Establish compliance calendar", completed: false },
-        { id: "2-5", title: "Get business insurance", completed: false, optional: true },
+        {
+          id: "2-1",
+          title: "Choose business entity type",
+          completed: true,
+          description: "LLC vs Corporation decision",
+        },
+        { id: "2-2", title: "Select business name", completed: true, description: "Check name availability" },
+        {
+          id: "2-3",
+          title: "File formation documents",
+          completed: false,
+          description: "Submit Articles of Organization/Incorporation",
+        },
+        {
+          id: "2-4",
+          title: "Create operating agreement",
+          completed: false,
+          description: "Draft LLC operating agreement or corporate bylaws",
+        },
       ],
     },
     {
       id: "3",
-      title: "Financial Setup",
-      description: "Establish banking, accounting, and financial systems",
-      category: "financial",
-      status: "pending",
-      progress: 0,
-      estimatedDays: 10,
-      dependencies: ["1", "2"],
+      title: "Tax & Legal Setup",
+      description: "Handle tax registrations and legal requirements",
+      status: "upcoming",
+      category: "compliance",
+      estimatedTime: "1 week",
       tasks: [
-        { id: "3-1", title: "Open business bank account", completed: false },
-        { id: "3-2", title: "Set up accounting system", completed: false },
-        { id: "3-3", title: "Choose tax elections", completed: false },
-        { id: "3-4", title: "Set up payroll system", completed: false, optional: true },
+        { id: "3-1", title: "Apply for EIN", completed: false, description: "Get federal tax ID number" },
+        {
+          id: "3-2",
+          title: "Register for state taxes",
+          completed: false,
+          description: "State tax registration if required",
+        },
+        { id: "3-3", title: "Choose tax elections", completed: false, description: "S-Corp election if beneficial" },
+        {
+          id: "3-4",
+          title: "Get business licenses",
+          completed: false,
+          description: "Apply for required licenses and permits",
+        },
       ],
     },
     {
       id: "4",
-      title: "Operational Launch",
-      description: "Get your business ready for operations",
-      category: "operational",
-      status: "pending",
-      progress: 0,
-      estimatedDays: 21,
-      dependencies: ["2", "3"],
+      title: "Business Operations",
+      description: "Set up banking, accounting, and operational systems",
+      status: "upcoming",
+      category: "operations",
+      estimatedTime: "1-2 weeks",
       tasks: [
-        { id: "4-1", title: "Get business licenses", completed: false },
-        { id: "4-2", title: "Set up workspace", completed: false },
-        { id: "4-3", title: "Create business processes", completed: false },
-        { id: "4-4", title: "Hire initial team", completed: false, optional: true },
+        {
+          id: "4-1",
+          title: "Open business bank account",
+          completed: false,
+          description: "Separate business and personal finances",
+        },
+        {
+          id: "4-2",
+          title: "Set up accounting system",
+          completed: false,
+          description: "Choose and configure accounting software",
+        },
+        {
+          id: "4-3",
+          title: "Get business insurance",
+          completed: false,
+          description: "General liability and other needed coverage",
+        },
+        {
+          id: "4-4",
+          title: "Create business processes",
+          completed: false,
+          description: "Document key business procedures",
+        },
       ],
     },
     {
       id: "5",
-      title: "Growth & Scaling",
-      description: "Prepare for business growth and expansion",
-      category: "growth",
-      status: "pending",
-      progress: 0,
-      estimatedDays: 30,
-      dependencies: ["4"],
+      title: "Ongoing Compliance",
+      description: "Maintain compliance and grow your business",
+      status: "locked",
+      category: "compliance",
+      estimatedTime: "Ongoing",
       tasks: [
-        { id: "5-1", title: "Develop marketing strategy", completed: false },
-        { id: "5-2", title: "Set up customer systems", completed: false },
-        { id: "5-3", title: "Plan for funding", completed: false, optional: true },
-        { id: "5-4", title: "Establish partnerships", completed: false, optional: true },
+        { id: "5-1", title: "Annual filings", completed: false, description: "State annual reports and renewals" },
+        { id: "5-2", title: "Tax compliance", completed: false, description: "Quarterly and annual tax obligations" },
+        { id: "5-3", title: "Record keeping", completed: false, description: "Maintain corporate records and minutes" },
+        { id: "5-4", title: "Business growth", completed: false, description: "Scale operations and expand" },
       ],
     },
   ])
 
-  const getCategoryIcon = (category: string) => {
+  const getCategoryIcon = (category: RoadmapStep["category"]) => {
     switch (category) {
-      case "foundation":
+      case "planning":
+        return <Lightbulb className="h-5 w-5" />
+      case "formation":
         return <Building className="h-5 w-5" />
-      case "legal":
+      case "compliance":
         return <Shield className="h-5 w-5" />
-      case "financial":
+      case "operations":
         return <DollarSign className="h-5 w-5" />
-      case "operational":
-        return <Target className="h-5 w-5" />
-      case "growth":
-        return <Rocket className="h-5 w-5" />
       default:
         return <Circle className="h-5 w-5" />
     }
   }
 
-  const getCategoryColor = (category: string) => {
+  const getCategoryColor = (category: RoadmapStep["category"]) => {
     switch (category) {
-      case "foundation":
-        return "text-blue-600 bg-blue-100 dark:bg-blue-900/20 dark:text-blue-300"
-      case "legal":
-        return "text-green-600 bg-green-100 dark:bg-green-900/20 dark:text-green-300"
-      case "financial":
-        return "text-purple-600 bg-purple-100 dark:bg-purple-900/20 dark:text-purple-300"
-      case "operational":
-        return "text-orange-600 bg-orange-100 dark:bg-orange-900/20 dark:text-orange-300"
-      case "growth":
-        return "text-pink-600 bg-pink-100 dark:bg-pink-900/20 dark:text-pink-300"
+      case "planning":
+        return "bg-purple-100 text-purple-800 border-purple-200"
+      case "formation":
+        return "bg-[hsl(174,73%,53%)]/10 text-[hsl(174,73%,53%)] border-[hsl(174,73%,53%)]/20"
+      case "compliance":
+        return "bg-blue-100 text-blue-800 border-blue-200"
+      case "operations":
+        return "bg-green-100 text-green-800 border-green-200"
       default:
-        return "text-slate-600 bg-slate-100 dark:bg-slate-800 dark:text-slate-300"
+        return "bg-gray-100 text-gray-800 border-gray-200"
     }
   }
 
-  const getStatusIcon = (status: string) => {
+  const getStatusIcon = (status: RoadmapStep["status"]) => {
     switch (status) {
       case "completed":
-        return <CheckCircle className="h-6 w-6 text-green-500" />
-      case "in-progress":
-        return <Clock className="h-6 w-6 text-amber-500" />
-      case "blocked":
-        return <Circle className="h-6 w-6 text-red-500" />
+        return <CheckCircle className="h-6 w-6 text-green-600" />
+      case "current":
+        return <Clock className="h-6 w-6 text-[hsl(174,73%,53%)]" />
+      case "upcoming":
+        return <Circle className="h-6 w-6 text-slate-400" />
+      case "locked":
+        return <Circle className="h-6 w-6 text-slate-300" />
       default:
         return <Circle className="h-6 w-6 text-slate-400" />
     }
   }
 
-  const overallProgress = milestones.reduce((sum, milestone) => sum + milestone.progress, 0) / milestones.length
-  const completedMilestones = milestones.filter((m) => m.status === "completed").length
-  const totalTasks = milestones.reduce((sum, milestone) => sum + milestone.tasks.length, 0)
-  const completedTasks = milestones.reduce(
-    (sum, milestone) => sum + milestone.tasks.filter((task) => task.completed).length,
-    0,
-  )
+  const currentStep = roadmapSteps.find((step) => step.status === "current")
+  const completedSteps = roadmapSteps.filter((step) => step.status === "completed").length
+  const totalSteps = roadmapSteps.length
+  const overallProgress = (completedSteps / totalSteps) * 100
+
+  // Calculate current step progress
+  const currentStepProgress = currentStep
+    ? (currentStep.tasks.filter((task) => task.completed).length / currentStep.tasks.length) * 100
+    : 0
 
   return (
     <section className="flex-1 p-4 lg:p-6">
-      <div className="max-w-6xl mx-auto">
+      <div className="max-w-4xl mx-auto">
         {/* Header */}
         <div className="mb-6">
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Progress Roadmap</h2>
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Business Formation Roadmap</h2>
           <p className="text-slate-600 dark:text-slate-300">
-            Track your business launch progress with our guided roadmap
+            Track your progress through the business formation process
           </p>
         </div>
 
-        {/* Progress Overview */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <Card className="bg-gradient-to-r from-[hsl(174,73%,53%)]/10 to-[hsl(174,73%,53%)]/5">
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-3">
-                <div className="w-2 h-8 bg-[hsl(174,73%,53%)] rounded"></div>
+        {/* Overall Progress */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              <span>Overall Progress</span>
+              <span className="text-2xl font-bold text-[hsl(174,73%,53%)]">{Math.round(overallProgress)}%</span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Progress value={overallProgress} className="h-3 mb-2" />
+            <p className="text-sm text-slate-600 dark:text-slate-400">
+              {completedSteps} of {totalSteps} major steps completed
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Current Step Highlight */}
+        {currentStep && (
+          <Card className="mb-6 border-[hsl(174,73%,53%)] bg-[hsl(174,73%,53%)]/5">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Clock className="h-5 w-5 text-[hsl(174,73%,53%)]" />
+                <span>Currently Working On</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center justify-between mb-4">
                 <div>
-                  <p className="text-sm text-slate-600 dark:text-slate-400">Overall Progress</p>
-                  <p className="text-xl font-bold text-slate-900 dark:text-white">{Math.round(overallProgress)}%</p>
+                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{currentStep.title}</h3>
+                  <p className="text-slate-600 dark:text-slate-400">{currentStep.description}</p>
                 </div>
+                <Badge className={getCategoryColor(currentStep.category)}>{currentStep.category}</Badge>
               </div>
-              <Progress value={overallProgress} className="mt-2" />
-            </CardContent>
-          </Card>
 
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-3">
-                <div className="w-2 h-8 bg-green-500 rounded"></div>
-                <div>
-                  <p className="text-sm text-slate-600 dark:text-slate-400">Milestones</p>
-                  <p className="text-xl font-bold text-slate-900 dark:text-white">
-                    {completedMilestones} of {milestones.length}
-                  </p>
+              <div className="space-y-2 mb-4">
+                <div className="flex justify-between text-sm">
+                  <span>Step Progress</span>
+                  <span>
+                    {currentStep.tasks.filter((t) => t.completed).length} of {currentStep.tasks.length} tasks
+                  </span>
                 </div>
+                <Progress value={currentStepProgress} className="h-2" />
               </div>
-            </CardContent>
-          </Card>
 
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-3">
-                <div className="w-2 h-8 bg-blue-500 rounded"></div>
-                <div>
-                  <p className="text-sm text-slate-600 dark:text-slate-400">Tasks Complete</p>
-                  <p className="text-xl font-bold text-slate-900 dark:text-white">
-                    {completedTasks} of {totalTasks}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-3">
-                <div className="w-2 h-8 bg-purple-500 rounded"></div>
-                <div>
-                  <p className="text-sm text-slate-600 dark:text-slate-400">Est. Days Left</p>
-                  <p className="text-xl font-bold text-slate-900 dark:text-white">
-                    {milestones.filter((m) => m.status !== "completed").reduce((sum, m) => sum + m.estimatedDays, 0)}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        <Tabs defaultValue="roadmap" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="roadmap">Roadmap</TabsTrigger>
-            <TabsTrigger value="current">Current Tasks</TabsTrigger>
-            <TabsTrigger value="insights">Insights</TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="roadmap" className="space-y-6">
-            {/* Roadmap Timeline */}
-            <div className="space-y-6">
-              {milestones.map((milestone, index) => (
-                <Card key={milestone.id} className="relative">
-                  {/* Timeline connector */}
-                  {index < milestones.length - 1 && (
-                    <div className="absolute left-8 top-16 w-0.5 h-16 bg-slate-200 dark:bg-slate-700 z-0"></div>
-                  )}
-
-                  <CardContent className="p-6 relative z-10">
-                    <div className="flex items-start space-x-4">
-                      <div className="flex-shrink-0">{getStatusIcon(milestone.status)}</div>
-
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center space-x-3">
-                            <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{milestone.title}</h3>
-                            <Badge className={getCategoryColor(milestone.category)}>
-                              {getCategoryIcon(milestone.category)}
-                              <span className="ml-1 capitalize">{milestone.category}</span>
-                            </Badge>
-                          </div>
-
-                          <div className="flex items-center space-x-2">
-                            <span className="text-sm text-slate-500">{milestone.estimatedDays} days</span>
-                            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
-                              {milestone.progress}%
-                            </span>
-                          </div>
-                        </div>
-
-                        <p className="text-slate-600 dark:text-slate-400 mb-4">{milestone.description}</p>
-
-                        <Progress value={milestone.progress} className="mb-4" />
-
-                        {/* Dependencies */}
-                        {milestone.dependencies && milestone.dependencies.length > 0 && (
-                          <div className="mb-4">
-                            <p className="text-xs text-slate-500 mb-1">Dependencies:</p>
-                            <div className="flex space-x-1">
-                              {milestone.dependencies.map((depId) => {
-                                const dep = milestones.find((m) => m.id === depId)
-                                return dep ? (
-                                  <Badge key={depId} variant="outline" className="text-xs">
-                                    {dep.title}
-                                  </Badge>
-                                ) : null
-                              })}
-                            </div>
-                          </div>
-                        )}
-
-                        {/* Tasks */}
-                        <div className="space-y-2">
-                          {milestone.tasks.map((task) => (
-                            <div key={task.id} className="flex items-center space-x-2">
-                              {task.completed ? (
-                                <CheckCircle className="h-4 w-4 text-green-500" />
-                              ) : (
-                                <Circle className="h-4 w-4 text-slate-400" />
-                              )}
-                              <span
-                                className={`text-sm ${
-                                  task.completed ? "text-slate-500 line-through" : "text-slate-700 dark:text-slate-300"
-                                }`}
-                              >
-                                {task.title}
-                              </span>
-                              {task.optional && (
-                                <Badge variant="outline" className="text-xs">
-                                  Optional
-                                </Badge>
-                              )}
-                            </div>
-                          ))}
-                        </div>
-
-                        {milestone.status === "in-progress" && (
-                          <div className="mt-4 flex space-x-2">
-                            <Button size="sm" className="bg-[hsl(174,73%,53%)] hover:bg-[hsl(174,73%,48%)]">
-                              Continue
-                            </Button>
-                            <Button variant="outline" size="sm">
-                              View Details
-                            </Button>
-                          </div>
-                        )}
-
-                        {milestone.status === "pending" &&
-                          milestone.dependencies?.every(
-                            (depId) => milestones.find((m) => m.id === depId)?.status === "completed",
-                          ) && (
-                            <div className="mt-4">
-                              <Button size="sm" className="bg-[hsl(174,73%,53%)] hover:bg-[hsl(174,73%,48%)]">
-                                Start Milestone
-                              </Button>
-                            </div>
-                          )}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </TabsContent>
-
-          <TabsContent value="current" className="space-y-4">
-            <Card>
-              <CardHeader>
-                <CardTitle>Current Tasks</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  {milestones
-                    .filter((m) => m.status === "in-progress")
-                    .flatMap((milestone) =>
-                      milestone.tasks
-                        .filter((task) => !task.completed)
-                        .map((task) => ({ ...task, milestone: milestone.title, category: milestone.category })),
-                    )
-                    .map((task) => (
-                      <div
-                        key={task.id}
-                        className="flex items-center justify-between p-4 border border-slate-200 dark:border-slate-700 rounded-lg"
+              <div className="space-y-2">
+                {currentStep.tasks.map((task) => (
+                  <div
+                    key={task.id}
+                    className="flex items-center space-x-3 p-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800"
+                  >
+                    {task.completed ? (
+                      <CheckCircle className="h-4 w-4 text-green-600" />
+                    ) : (
+                      <Circle className="h-4 w-4 text-slate-400" />
+                    )}
+                    <div className="flex-1">
+                      <span
+                        className={`text-sm ${task.completed ? "line-through text-slate-500" : "text-slate-900 dark:text-white"}`}
                       >
+                        {task.title}
+                      </span>
+                      {task.description && (
+                        <p className="text-xs text-slate-500 dark:text-slate-400">{task.description}</p>
+                      )}
+                    </div>
+                    {!task.completed && (
+                      <Button size="sm" variant="outline">
+                        Start
+                      </Button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Roadmap Steps */}
+        <div className="space-y-4">
+          {roadmapSteps.map((step, index) => (
+            <div key={step.id} className="relative">
+              {/* Connector Line */}
+              {index < roadmapSteps.length - 1 && (
+                <div className="absolute left-6 top-16 w-0.5 h-16 bg-slate-200 dark:bg-slate-700 z-0"></div>
+              )}
+
+              <Card className={`relative z-10 ${step.status === "current" ? "ring-2 ring-[hsl(174,73%,53%)]" : ""}`}>
+                <CardContent className="p-6">
+                  <div className="flex items-start space-x-4">
+                    {/* Status Icon */}
+                    <div className="flex-shrink-0 mt-1">{getStatusIcon(step.status)}</div>
+
+                    {/* Content */}
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center space-x-3">
-                          <Circle className="h-4 w-4 text-slate-400" />
-                          <div>
-                            <h4 className="font-medium text-slate-900 dark:text-white">{task.title}</h4>
-                            <p className="text-sm text-slate-600 dark:text-slate-400">From: {task.milestone}</p>
-                          </div>
+                          <h3 className="text-lg font-semibold text-slate-900 dark:text-white">{step.title}</h3>
+                          <Badge className={getCategoryColor(step.category)}>
+                            {getCategoryIcon(step.category)}
+                            <span className="ml-1">{step.category}</span>
+                          </Badge>
                         </div>
-                        <div className="flex items-center space-x-2">
-                          <Badge className={getCategoryColor(task.category)}>{task.category}</Badge>
-                          <Button variant="outline" size="sm">
-                            Mark Complete
-                          </Button>
+                        <div className="text-right">
+                          <p className="text-sm text-slate-500 dark:text-slate-400">Est. {step.estimatedTime}</p>
                         </div>
                       </div>
-                    ))}
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
 
-          <TabsContent value="insights" className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <TrendingUp className="h-5 w-5" />
-                    <span>Progress Insights</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">Average completion time</span>
-                      <span className="font-semibold">12 days</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">Tasks completed this week</span>
-                      <span className="font-semibold">4</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">Projected completion</span>
-                      <span className="font-semibold">March 15, 2024</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+                      <p className="text-slate-600 dark:text-slate-400 mb-4">{step.description}</p>
 
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <Lightbulb className="h-5 w-5" />
-                    <span>Recommendations</span>
-                  </CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    <div className="p-3 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
-                      <p className="text-sm text-blue-800 dark:text-blue-300">
-                        Focus on completing legal structure tasks to unblock financial setup
-                      </p>
-                    </div>
-                    <div className="p-3 bg-green-50 dark:bg-green-900/20 rounded-lg">
-                      <p className="text-sm text-green-800 dark:text-green-300">
-                        Consider scheduling a consultation for tax election decisions
-                      </p>
+                      {/* Task Progress */}
+                      <div className="space-y-2 mb-4">
+                        <div className="flex justify-between text-sm">
+                          <span>Tasks</span>
+                          <span>
+                            {step.tasks.filter((t) => t.completed).length} of {step.tasks.length} completed
+                          </span>
+                        </div>
+                        <Progress
+                          value={(step.tasks.filter((t) => t.completed).length / step.tasks.length) * 100}
+                          className="h-1.5"
+                        />
+                      </div>
+
+                      {/* Action Button */}
+                      <div className="flex justify-between items-center">
+                        <div className="flex space-x-2">
+                          {step.status === "current" && (
+                            <Button className="bg-[hsl(174,73%,53%)] hover:bg-[hsl(174,73%,48%)]">
+                              Continue
+                              <ArrowRight className="h-4 w-4 ml-1" />
+                            </Button>
+                          )}
+                          {step.status === "completed" && (
+                            <Button variant="outline">
+                              <CheckCircle className="h-4 w-4 mr-1" />
+                              Review
+                            </Button>
+                          )}
+                          {step.status === "upcoming" && (
+                            <Button variant="outline" disabled>
+                              Coming Next
+                            </Button>
+                          )}
+                          {step.status === "locked" && (
+                            <Button variant="outline" disabled>
+                              Locked
+                            </Button>
+                          )}
+                        </div>
+
+                        <Button variant="ghost" size="sm">
+                          <FileText className="h-4 w-4 mr-1" />
+                          View Details
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 </CardContent>
               </Card>
             </div>
-          </TabsContent>
-        </Tabs>
+          ))}
+        </div>
       </div>
     </section>
   )
