@@ -1,209 +1,251 @@
 "use client"
 
 import { useState } from "react"
-import { useQuery, useMutation } from "@tanstack/react-query"
-import { queryClient, apiRequest } from "@/lib/queryClient"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Input } from "@/components/ui/input"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { useToast } from "@/hooks/use-toast"
 import {
   FileText,
   Download,
-  Edit3,
   Eye,
+  Plus,
+  Search,
   Clock,
   CheckCircle,
-  AlertTriangle,
+  AlertCircle,
   Scale,
+  Gavel,
+  Shield,
+  FileCheck,
+  Sparkles,
+  Building,
   Users,
-  History,
-  ExternalLink,
-  Plus,
-  Filter,
-  Search,
-  Calendar,
-  DollarSign,
-  Award,
+  Handshake,
+  Lock,
 } from "lucide-react"
-import type { Document } from "@shared/schema"
-import { isUnauthorizedError } from "@/lib/authUtils"
 
-interface DocumentWithReview extends Document {
-  reviewStatus?: string
-  reviewType?: string
-  estimatedCost?: string
-  reviewerNotes?: string
-  versionCount?: number
-  lastReviewDate?: string
+interface Document {
+  id: string
+  name: string
+  type: string
+  status: "draft" | "review" | "approved" | "needs_revision"
+  createdAt: Date
+  lastModified: Date
+  size: string
+  category: string
+  legalReview?: {
+    reviewer: string
+    status: "pending" | "approved" | "rejected"
+    comments?: string
+    reviewedAt?: Date
+  }
+  aiGenerated?: boolean
 }
 
 export function AdvancedDocumentCenter() {
-  const [selectedTab, setSelectedTab] = useState("my-documents")
-  const [filterCategory, setFilterCategory] = useState("all")
+  const [documents] = useState<Document[]>([
+    {
+      id: "1",
+      name: "Operating Agreement - TechStart LLC",
+      type: "PDF",
+      status: "approved",
+      createdAt: new Date("2024-01-15"),
+      lastModified: new Date("2024-01-20"),
+      size: "2.4 MB",
+      category: "Legal",
+      legalReview: {
+        reviewer: "Sarah Chen, Esq.",
+        status: "approved",
+        comments: "Comprehensive agreement with proper liability protections.",
+        reviewedAt: new Date("2024-01-18"),
+      },
+      aiGenerated: true,
+    },
+    {
+      id: "2",
+      name: "Employment Agreement Template",
+      type: "DOCX",
+      status: "review",
+      createdAt: new Date("2024-01-22"),
+      lastModified: new Date("2024-01-22"),
+      size: "156 KB",
+      category: "HR",
+      legalReview: {
+        reviewer: "Michael Torres, Esq.",
+        status: "pending",
+      },
+      aiGenerated: true,
+    },
+    {
+      id: "3",
+      name: "Privacy Policy - Website",
+      type: "PDF",
+      status: "needs_revision",
+      createdAt: new Date("2024-01-10"),
+      lastModified: new Date("2024-01-12"),
+      size: "890 KB",
+      category: "Compliance",
+      legalReview: {
+        reviewer: "Sarah Chen, Esq.",
+        status: "rejected",
+        comments: "Needs updates for CCPA compliance and data retention policies.",
+        reviewedAt: new Date("2024-01-14"),
+      },
+    },
+    {
+      id: "4",
+      name: "Vendor Service Agreement",
+      type: "PDF",
+      status: "draft",
+      createdAt: new Date("2024-01-25"),
+      lastModified: new Date("2024-01-25"),
+      size: "1.2 MB",
+      category: "Contracts",
+    },
+  ])
+
   const [searchQuery, setSearchQuery] = useState("")
-  const [reviewModalOpen, setReviewModalOpen] = useState(false)
-  const [selectedDocument, setSelectedDocument] = useState<DocumentWithReview | null>(null)
-  const [versionModalOpen, setVersionModalOpen] = useState(false)
-  const { toast } = useToast()
+  const [filterStatus, setFilterStatus] = useState<string>("all")
+  const [filterCategory, setFilterCategory] = useState<string>("all")
+  const [showGenerateDialog, setShowGenerateDialog] = useState(false)
 
-  // Fetch user documents with legal review status
-  const { data: documents = [], isLoading: documentsLoading } = useQuery({
-    queryKey: ["/api/documents"],
-    retry: false,
-  })
-
-  // Fetch legal reviews
-  const { data: legalReviews = [], isLoading: reviewsLoading } = useQuery({
-    queryKey: ["/api/legal-reviews"],
-    retry: false,
-  })
-
-  const typedLegalReviews = legalReviews as any[]
-
-  const typedDocuments = documents as DocumentWithReview[]
-
-  // Request legal review mutation
-  const requestReviewMutation = useMutation({
-    mutationFn: async (data: any) => {
-      const response = await apiRequest("POST", "/api/legal-reviews", data)
-      return response.json()
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/legal-reviews"] })
-      setReviewModalOpen(false)
-      toast({
-        title: "Legal Review Requested",
-        description: "Your document has been submitted for professional legal review.",
-      })
-    },
-    onError: (error) => {
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
-          variant: "destructive",
-        })
-        setTimeout(() => (window.location.href = "/api/login"), 500)
-        return
-      }
-      toast({
-        title: "Error",
-        description: "Failed to request legal review",
-        variant: "destructive",
-      })
-    },
-  })
-
-  const getReviewStatusBadge = (status: string) => {
+  const getStatusIcon = (status: string) => {
     switch (status) {
-      case "completed":
-        return (
-          <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300">
-            <CheckCircle className="h-3 w-3 mr-1" />
-            Reviewed
-          </Badge>
-        )
-      case "in_review":
-        return (
-          <Badge className="bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
-            <Clock className="h-3 w-3 mr-1" />
-            In Review
-          </Badge>
-        )
+      case "approved":
+        return <CheckCircle className="h-4 w-4 text-green-500" />
+      case "review":
+        return <Clock className="h-4 w-4 text-amber-500" />
       case "needs_revision":
-        return (
-          <Badge className="bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300">
-            <AlertTriangle className="h-3 w-3 mr-1" />
-            Needs Revision
-          </Badge>
-        )
-      case "pending":
-        return (
-          <Badge className="bg-slate-100 text-slate-800 dark:bg-slate-900/30 dark:text-slate-300">
-            <Clock className="h-3 w-3 mr-1" />
-            Pending
-          </Badge>
-        )
+        return <AlertCircle className="h-4 w-4 text-red-500" />
       default:
-        return <Badge variant="outline">No Review</Badge>
+        return <FileText className="h-4 w-4 text-slate-400" />
     }
   }
 
-  const getDocumentTypeIcon = (type: string) => {
-    switch (type) {
-      case "articles_of_incorporation":
-      case "operating_agreement":
-        return <FileText className="h-5 w-5 text-blue-600" />
-      case "tax_election":
-      case "tax_form":
-        return <DollarSign className="h-5 w-5 text-green-600" />
-      case "employment_agreement":
-        return <Users className="h-5 w-5 text-purple-600" />
-      case "contract":
-        return <Scale className="h-5 w-5 text-amber-600" />
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "approved":
+        return "bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-300"
+      case "review":
+        return "bg-amber-100 text-amber-800 dark:bg-amber-900/20 dark:text-amber-300"
+      case "needs_revision":
+        return "bg-red-100 text-red-800 dark:bg-red-900/20 dark:text-red-300"
       default:
-        return <FileText className="h-5 w-5 text-slate-600" />
+        return "bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-300"
     }
   }
 
-  const filteredDocuments = typedDocuments.filter((doc) => {
-    const matchesCategory = filterCategory === "all" || doc.documentType === filterCategory
-    const matchesSearch =
-      searchQuery === "" ||
-      doc.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      doc.documentType.toLowerCase().includes(searchQuery.toLowerCase())
-    return matchesCategory && matchesSearch
+  const filteredDocuments = documents.filter((doc) => {
+    const matchesSearch = doc.name.toLowerCase().includes(searchQuery.toLowerCase())
+    const matchesStatus = filterStatus === "all" || doc.status === filterStatus
+    const matchesCategory = filterCategory === "all" || doc.category === filterCategory
+    return matchesSearch && matchesStatus && matchesCategory
   })
 
-  const reviewedDocuments = typedDocuments.filter((doc) => doc.reviewStatus)
-  const pendingReviews = typedDocuments.filter(
-    (doc) => doc.reviewStatus === "pending" || doc.reviewStatus === "in_review",
-  )
+  const categories = Array.from(new Set(documents.map((doc) => doc.category)))
 
   return (
     <section className="flex-1 p-4 lg:p-6">
-      <div className="max-w-6xl mx-auto">
-        <div className="mb-6 flex items-center justify-between">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="flex items-center justify-between mb-6">
           <div>
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Advanced Document Center</h2>
-            <p className="text-slate-600 dark:text-slate-300">
-              Professional document generation with integrated legal review and version control
-            </p>
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Document Center</h2>
+            <p className="text-slate-600 dark:text-slate-300">AI-powered document generation with legal review</p>
           </div>
-          <div className="flex items-center space-x-3">
-            <Button variant="outline" onClick={() => setReviewModalOpen(true)} className="flex items-center space-x-2">
-              <Scale className="h-4 w-4" />
-              <span>Request Review</span>
-            </Button>
-            <Button
-              className="nexTax-gradient text-white flex items-center space-x-2"
-              onClick={() => {
-                // Redirect to document creation (existing functionality)
-                window.location.href = "#document-creation"
-              }}
-            >
-              <Plus className="h-4 w-4" />
-              <span>Create Document</span>
-            </Button>
-          </div>
+
+          <Dialog open={showGenerateDialog} onOpenChange={setShowGenerateDialog}>
+            <DialogTrigger asChild>
+              <Button className="bg-[hsl(174,73%,53%)] hover:bg-[hsl(174,73%,48%)]">
+                <Plus className="h-4 w-4 mr-2" />
+                Generate Document
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle className="flex items-center space-x-2">
+                  <Sparkles className="h-5 w-5 text-[hsl(174,73%,53%)]" />
+                  <span>AI Document Generator</span>
+                </DialogTitle>
+              </DialogHeader>
+
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="doc-type">Document Type</Label>
+                  <Select>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select document type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="operating-agreement">Operating Agreement</SelectItem>
+                      <SelectItem value="employment-agreement">Employment Agreement</SelectItem>
+                      <SelectItem value="privacy-policy">Privacy Policy</SelectItem>
+                      <SelectItem value="terms-of-service">Terms of Service</SelectItem>
+                      <SelectItem value="vendor-agreement">Vendor Agreement</SelectItem>
+                      <SelectItem value="nda">Non-Disclosure Agreement</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <Label htmlFor="business-info">Business Information</Label>
+                  <Textarea
+                    id="business-info"
+                    placeholder="Describe your business, industry, and specific requirements..."
+                    className="min-h-[100px]"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="state">State/Jurisdiction</Label>
+                  <Select>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select state" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="ca">California</SelectItem>
+                      <SelectItem value="ny">New York</SelectItem>
+                      <SelectItem value="tx">Texas</SelectItem>
+                      <SelectItem value="fl">Florida</SelectItem>
+                      <SelectItem value="de">Delaware</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex space-x-2">
+                  <Button variant="outline" onClick={() => setShowGenerateDialog(false)} className="flex-1">
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      setShowGenerateDialog(false)
+                      // Handle document generation
+                    }}
+                    className="flex-1 bg-[hsl(174,73%,53%)] hover:bg-[hsl(174,73%,48%)]"
+                  >
+                    Generate
+                  </Button>
+                </div>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
 
-        {/* Dashboard Statistics */}
+        {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
           <Card>
             <CardContent className="p-4">
-              <div className="flex items-center space-x-2">
-                <FileText className="h-5 w-5 text-blue-500" />
+              <div className="flex items-center space-x-3">
+                <div className="w-2 h-8 bg-[hsl(174,73%,53%)] rounded"></div>
                 <div>
-                  <p className="text-sm font-medium text-slate-900 dark:text-white">Total Documents</p>
-                  <p className="text-2xl font-bold text-blue-600">{typedDocuments.length}</p>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">Total Documents</p>
+                  <p className="text-xl font-bold text-slate-900 dark:text-white">{documents.length}</p>
                 </div>
               </div>
             </CardContent>
@@ -211,11 +253,13 @@ export function AdvancedDocumentCenter() {
 
           <Card>
             <CardContent className="p-4">
-              <div className="flex items-center space-x-2">
-                <Scale className="h-5 w-5 text-green-500" />
+              <div className="flex items-center space-x-3">
+                <div className="w-2 h-8 bg-green-500 rounded"></div>
                 <div>
-                  <p className="text-sm font-medium text-slate-900 dark:text-white">Reviewed</p>
-                  <p className="text-2xl font-bold text-green-600">{reviewedDocuments.length}</p>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">Approved</p>
+                  <p className="text-xl font-bold text-slate-900 dark:text-white">
+                    {documents.filter((d) => d.status === "approved").length}
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -223,11 +267,13 @@ export function AdvancedDocumentCenter() {
 
           <Card>
             <CardContent className="p-4">
-              <div className="flex items-center space-x-2">
-                <Clock className="h-5 w-5 text-amber-500" />
+              <div className="flex items-center space-x-3">
+                <div className="w-2 h-8 bg-amber-500 rounded"></div>
                 <div>
-                  <p className="text-sm font-medium text-slate-900 dark:text-white">In Review</p>
-                  <p className="text-2xl font-bold text-amber-600">{pendingReviews.length}</p>
+                  <p className="text-sm text-slate-600 dark:text-slate-400">Under Review</p>
+                  <p className="text-xl font-bold text-slate-900 dark:text-white">
+                    {documents.filter((d) => d.status === "review").length}
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -235,16 +281,12 @@ export function AdvancedDocumentCenter() {
 
           <Card>
             <CardContent className="p-4">
-              <div className="flex items-center space-x-2">
-                <Award className="h-5 w-5 text-purple-500" />
+              <div className="flex items-center space-x-3">
+                <div className="w-2 h-8 bg-blue-500 rounded"></div>
                 <div>
-                  <p className="text-sm font-medium text-slate-900 dark:text-white">Premium</p>
-                  <p className="text-2xl font-bold text-purple-600">
-                    {
-                      typedDocuments.filter(
-                        (d) => d.metadata && typeof d.metadata === "object" && "premium" in d.metadata,
-                      ).length
-                    }
+                  <p className="text-sm text-slate-600 dark:text-slate-400">AI Generated</p>
+                  <p className="text-xl font-bold text-slate-900 dark:text-white">
+                    {documents.filter((d) => d.aiGenerated).length}
                   </p>
                 </div>
               </div>
@@ -252,19 +294,27 @@ export function AdvancedDocumentCenter() {
           </Card>
         </div>
 
-        <Tabs value={selectedTab} onValueChange={setSelectedTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="my-documents">My Documents</TabsTrigger>
-            <TabsTrigger value="legal-reviews">Legal Reviews</TabsTrigger>
-            <TabsTrigger value="version-history">Version History</TabsTrigger>
-            <TabsTrigger value="templates">Premium Templates</TabsTrigger>
+        <Tabs defaultValue="documents" className="space-y-6">
+          <TabsList className="grid w-full grid-cols-3">
+            <TabsTrigger value="documents" className="flex items-center space-x-2">
+              <FileText className="h-4 w-4" />
+              <span>Documents</span>
+            </TabsTrigger>
+            <TabsTrigger value="legal-review" className="flex items-center space-x-2">
+              <Scale className="h-4 w-4" />
+              <span>Legal Review</span>
+            </TabsTrigger>
+            <TabsTrigger value="templates" className="flex items-center space-x-2">
+              <FileCheck className="h-4 w-4" />
+              <span>Templates</span>
+            </TabsTrigger>
           </TabsList>
 
-          <TabsContent value="my-documents" className="space-y-6">
-            {/* Search and Filter Bar */}
+          <TabsContent value="documents" className="space-y-4">
+            {/* Filters */}
             <div className="flex flex-col sm:flex-row gap-4">
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-slate-400" />
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 h-4 w-4" />
                 <Input
                   placeholder="Search documents..."
                   value={searchQuery}
@@ -272,393 +322,174 @@ export function AdvancedDocumentCenter() {
                   className="pl-10"
                 />
               </div>
+
+              <Select value={filterStatus} onValueChange={setFilterStatus}>
+                <SelectTrigger className="w-full sm:w-[180px]">
+                  <SelectValue placeholder="Filter by status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Status</SelectItem>
+                  <SelectItem value="draft">Draft</SelectItem>
+                  <SelectItem value="review">Under Review</SelectItem>
+                  <SelectItem value="approved">Approved</SelectItem>
+                  <SelectItem value="needs_revision">Needs Revision</SelectItem>
+                </SelectContent>
+              </Select>
+
               <Select value={filterCategory} onValueChange={setFilterCategory}>
-                <SelectTrigger className="w-48">
-                  <Filter className="h-4 w-4 mr-2" />
-                  <SelectValue />
+                <SelectTrigger className="w-full sm:w-[180px]">
+                  <SelectValue placeholder="Filter by category" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Categories</SelectItem>
-                  <SelectItem value="articles_of_incorporation">Articles of Incorporation</SelectItem>
-                  <SelectItem value="operating_agreement">Operating Agreement</SelectItem>
-                  <SelectItem value="tax_election">Tax Election</SelectItem>
-                  <SelectItem value="employment_agreement">Employment Agreement</SelectItem>
-                  <SelectItem value="contract">Contracts</SelectItem>
+                  {categories.map((category) => (
+                    <SelectItem key={category} value={category}>
+                      {category}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
 
-            {/* Documents Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredDocuments.length === 0 ? (
-                <div className="col-span-full">
-                  <Card>
-                    <CardContent className="p-8 text-center">
-                      <FileText className="h-16 w-16 text-slate-300 mx-auto mb-4" />
-                      <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">No Documents Found</h3>
-                      <p className="text-slate-600 dark:text-slate-400 mb-6">
-                        Create your first professional document with AI assistance and legal review.
-                      </p>
-                      <Button className="nexTax-gradient text-white">
-                        <Plus className="h-4 w-4 mr-2" />
-                        Create Document
-                      </Button>
-                    </CardContent>
-                  </Card>
-                </div>
-              ) : (
-                filteredDocuments.map((document) => (
-                  <Card key={document.id} className="hover:shadow-lg transition-shadow">
-                    <CardHeader>
-                      <div className="flex items-start justify-between">
-                        <div className="flex items-center space-x-3">
-                          <div className="w-10 h-10 bg-slate-100 dark:bg-slate-700 rounded-lg flex items-center justify-center">
-                            {getDocumentTypeIcon(document.documentType)}
+            {/* Documents List */}
+            <div className="space-y-3">
+              {filteredDocuments.map((doc) => (
+                <Card key={doc.id} className="hover:shadow-md transition-shadow">
+                  <CardContent className="p-4">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4 flex-1">
+                        <div className="flex items-center space-x-2">
+                          {getStatusIcon(doc.status)}
+                          <FileText className="h-5 w-5 text-slate-400" />
+                        </div>
+
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center space-x-2 mb-1">
+                            <h3 className="font-medium text-slate-900 dark:text-white truncate">{doc.name}</h3>
+                            {doc.aiGenerated && (
+                              <Badge variant="secondary" className="bg-[hsl(174,73%,53%)]/10 text-[hsl(174,73%,53%)]">
+                                <Sparkles className="h-3 w-3 mr-1" />
+                                AI Generated
+                              </Badge>
+                            )}
                           </div>
-                          <div className="flex-1">
-                            <CardTitle className="text-lg">{document.title}</CardTitle>
-                            <p className="text-sm text-slate-600 dark:text-slate-400 capitalize">
-                              {document.documentType.replace(/_/g, " ")}
-                            </p>
+
+                          <div className="flex items-center space-x-4 text-sm text-slate-500 dark:text-slate-400">
+                            <span>{doc.type}</span>
+                            <span>{doc.size}</span>
+                            <span>Modified {doc.lastModified.toLocaleDateString()}</span>
+                            <Badge className={getStatusColor(doc.status)}>{doc.status.replace("_", " ")}</Badge>
+                            <Badge variant="outline">{doc.category}</Badge>
                           </div>
                         </div>
-                        {document.reviewStatus && getReviewStatusBadge(document.reviewStatus)}
                       </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-3">
-                        {document.reviewerNotes && (
-                          <div className="p-3 bg-blue-50 dark:bg-blue-900/30 rounded-lg">
-                            <p className="text-sm text-blue-800 dark:text-blue-300">
-                              <Scale className="h-4 w-4 inline mr-1" />
-                              Legal Review: {document.reviewerNotes}
-                            </p>
+
+                      <div className="flex items-center space-x-2">
+                        <Button variant="ghost" size="sm">
+                          <Eye className="h-4 w-4" />
+                        </Button>
+                        <Button variant="ghost" size="sm">
+                          <Download className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+
+                    {/* Legal Review Info */}
+                    {doc.legalReview && (
+                      <div className="mt-3 p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center space-x-2">
+                            <Gavel className="h-4 w-4 text-slate-500" />
+                            <span className="text-sm font-medium text-slate-700 dark:text-slate-300">
+                              Legal Review by {doc.legalReview.reviewer}
+                            </span>
                           </div>
+                          <Badge className={getStatusColor(doc.legalReview.status)}>{doc.legalReview.status}</Badge>
+                        </div>
+
+                        {doc.legalReview.comments && (
+                          <p className="text-sm text-slate-600 dark:text-slate-400">{doc.legalReview.comments}</p>
                         )}
 
-                        <div className="flex items-center justify-between text-sm text-slate-600 dark:text-slate-400">
-                          <span className="flex items-center">
-                            <Calendar className="h-4 w-4 mr-1" />
-                            {document.createdAt ? new Date(document.createdAt).toLocaleDateString() : "N/A"}
-                          </span>
-                          {document.versionCount && (
-                            <span className="flex items-center">
-                              <History className="h-4 w-4 mr-1" />v{document.versionCount}
-                            </span>
-                          )}
-                        </div>
-
-                        <div className="flex items-center justify-between pt-3 border-t border-slate-200 dark:border-slate-700">
-                          <div className="flex space-x-2">
-                            <Button size="sm" variant="outline">
-                              <Eye className="h-4 w-4 mr-1" />
-                              View
-                            </Button>
-                            <Button size="sm" variant="outline">
-                              <Edit3 className="h-4 w-4 mr-1" />
-                              Edit
-                            </Button>
-                          </div>
-                          <div className="flex space-x-2">
-                            {!document.reviewStatus && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => {
-                                  setSelectedDocument(document)
-                                  setReviewModalOpen(true)
-                                }}
-                              >
-                                <Scale className="h-4 w-4 mr-1" />
-                                Review
-                              </Button>
-                            )}
-                            <Button size="sm" variant="outline">
-                              <Download className="h-4 w-4 mr-1" />
-                              Download
-                            </Button>
-                          </div>
-                        </div>
+                        {doc.legalReview.reviewedAt && (
+                          <p className="text-xs text-slate-500 dark:text-slate-500 mt-1">
+                            Reviewed on {doc.legalReview.reviewedAt.toLocaleDateString()}
+                          </p>
+                        )}
                       </div>
-                    </CardContent>
-                  </Card>
-                ))
-              )}
+                    )}
+                  </CardContent>
+                </Card>
+              ))}
             </div>
           </TabsContent>
 
-          <TabsContent value="legal-reviews" className="space-y-6">
+          <TabsContent value="legal-review" className="space-y-4">
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center space-x-2">
                   <Scale className="h-5 w-5" />
-                  <span>Legal Review Status</span>
+                  <span>Legal Review Queue</span>
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {legalReviews.length === 0 ? (
-                    <div className="text-center py-8">
-                      <Scale className="h-16 w-16 text-slate-300 mx-auto mb-4" />
-                      <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
-                        No Legal Reviews Yet
-                      </h3>
-                      <p className="text-slate-600 dark:text-slate-400">
-                        Request professional legal review for your important documents.
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="text-center py-8">
-                      <Clock className="h-16 w-16 text-slate-300 mx-auto mb-4" />
-                      <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
-                        Legal Reviews Coming Soon
-                      </h3>
-                      <p className="text-slate-600 dark:text-slate-400">
-                        Professional legal review integration is being finalized.
-                      </p>
-                    </div>
-                  )}
+                  {documents
+                    .filter((doc) => doc.legalReview)
+                    .map((doc) => (
+                      <div
+                        key={doc.id}
+                        className="flex items-center justify-between p-4 border border-slate-200 dark:border-slate-700 rounded-lg"
+                      >
+                        <div>
+                          <h4 className="font-medium text-slate-900 dark:text-white">{doc.name}</h4>
+                          <p className="text-sm text-slate-600 dark:text-slate-400">
+                            Reviewer: {doc.legalReview?.reviewer}
+                          </p>
+                        </div>
+                        <Badge className={getStatusColor(doc.legalReview?.status || "pending")}>
+                          {doc.legalReview?.status}
+                        </Badge>
+                      </div>
+                    ))}
                 </div>
               </CardContent>
             </Card>
           </TabsContent>
 
-          <TabsContent value="version-history" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <History className="h-5 w-5" />
-                  <span>Document Version History</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-8">
-                  <History className="h-16 w-16 text-slate-300 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
-                    Version Control Coming Soon
-                  </h3>
-                  <p className="text-slate-600 dark:text-slate-400">
-                    Track changes and maintain document versions with professional revision control.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="templates" className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Award className="h-5 w-5" />
-                  <span>Premium Legal Templates</span>
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-center py-8">
-                  <Award className="h-16 w-16 text-slate-300 mx-auto mb-4" />
-                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-2">
-                    Premium Templates Available
-                  </h3>
-                  <p className="text-slate-600 dark:text-slate-400 mb-6">
-                    Access professional-grade legal document templates with pre-review approval.
-                  </p>
-                  <Button
-                    className="nexTax-gradient text-white"
-                    onClick={() => window.open("https://www.nextax.ai/pricing", "_blank")}
-                  >
-                    <ExternalLink className="h-4 w-4 mr-2" />
-                    View Premium Templates
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+          <TabsContent value="templates" className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {[
+                { name: "Operating Agreement", description: "LLC operating agreement template", icon: Building },
+                { name: "Employment Agreement", description: "Standard employment contract", icon: Users },
+                { name: "Privacy Policy", description: "GDPR & CCPA compliant privacy policy", icon: Shield },
+                { name: "Terms of Service", description: "Website terms of service", icon: FileCheck },
+                { name: "NDA Template", description: "Non-disclosure agreement", icon: Lock },
+                { name: "Vendor Agreement", description: "Service provider contract", icon: Handshake },
+              ].map((template, index) => (
+                <Card key={index} className="hover:shadow-md transition-shadow cursor-pointer">
+                  <CardContent className="p-4">
+                    <div className="flex items-center space-x-3 mb-3">
+                      <template.icon className="h-8 w-8 text-[hsl(174,73%,53%)]" />
+                      <div>
+                        <h3 className="font-medium text-slate-900 dark:text-white">{template.name}</h3>
+                        <p className="text-sm text-slate-600 dark:text-slate-400">{template.description}</p>
+                      </div>
+                    </div>
+                    <Button variant="outline" size="sm" className="w-full bg-transparent">
+                      Use Template
+                    </Button>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           </TabsContent>
         </Tabs>
-
-        {/* Legal Review Request Modal */}
-        <LegalReviewModal
-          open={reviewModalOpen}
-          onClose={() => setReviewModalOpen(false)}
-          document={selectedDocument}
-          onSubmit={(data) => requestReviewMutation.mutate(data)}
-          isLoading={requestReviewMutation.isPending}
-        />
       </div>
     </section>
   )
 }
 
-// Legal Review Request Modal
-function LegalReviewModal({
-  open,
-  onClose,
-  document,
-  onSubmit,
-  isLoading,
-}: {
-  open: boolean
-  onClose: () => void
-  document: DocumentWithReview | null
-  onSubmit: (data: any) => void
-  isLoading: boolean
-}) {
-  const [formData, setFormData] = useState({
-    reviewType: "basic",
-    priority: "medium",
-    specialtyRequired: "",
-    clientInstructions: "",
-    dueDate: "",
-  })
-
-  const reviewTypes = [
-    { value: "basic", label: "Basic Review", price: "$299", description: "Standard legal compliance check" },
-    {
-      value: "comprehensive",
-      label: "Comprehensive Review",
-      price: "$599",
-      description: "Detailed analysis with recommendations",
-    },
-    {
-      value: "specialist",
-      label: "Specialist Review",
-      price: "$899",
-      description: "Expert review by specialty attorney",
-    },
-  ]
-
-  const specialties = [
-    { value: "corporate", label: "Corporate Law" },
-    { value: "tax", label: "Tax Law" },
-    { value: "employment", label: "Employment Law" },
-    { value: "contracts", label: "Contract Law" },
-    { value: "ip", label: "Intellectual Property" },
-  ]
-
-  const handleSubmit = () => {
-    if (!document) return
-    onSubmit({
-      documentId: document.id,
-      ...formData,
-      dueDate: formData.dueDate ? new Date(formData.dueDate) : undefined,
-    })
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader>
-          <DialogTitle className="flex items-center space-x-2">
-            <Scale className="h-5 w-5 text-blue-600" />
-            <span>Request Legal Review</span>
-          </DialogTitle>
-        </DialogHeader>
-        <div className="space-y-4">
-          {document && (
-            <div className="p-3 bg-slate-50 dark:bg-slate-800 rounded-lg">
-              <p className="font-medium text-slate-900 dark:text-white">{document.title}</p>
-              <p className="text-sm text-slate-600 dark:text-slate-400 capitalize">
-                {document.documentType.replace(/_/g, " ")}
-              </p>
-            </div>
-          )}
-
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="reviewType">Review Type</Label>
-              <Select
-                value={formData.reviewType}
-                onValueChange={(value) => setFormData({ ...formData, reviewType: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {reviewTypes.map((type) => (
-                    <SelectItem key={type.value} value={type.value}>
-                      <div className="flex items-center justify-between w-full">
-                        <span>{type.label}</span>
-                        <span className="text-green-600 font-semibold ml-2">{type.price}</span>
-                      </div>
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
-                {reviewTypes.find((t) => t.value === formData.reviewType)?.description}
-              </p>
-            </div>
-
-            <div>
-              <Label htmlFor="priority">Priority</Label>
-              <Select
-                value={formData.priority}
-                onValueChange={(value) => setFormData({ ...formData, priority: value })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="low">Low Priority (+0 days)</SelectItem>
-                  <SelectItem value="medium">Medium Priority (+$0)</SelectItem>
-                  <SelectItem value="high">High Priority (+$199)</SelectItem>
-                  <SelectItem value="urgent">Urgent Priority (+$399)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {formData.reviewType === "specialist" && (
-              <div>
-                <Label htmlFor="specialty">Legal Specialty</Label>
-                <Select
-                  value={formData.specialtyRequired}
-                  onValueChange={(value) => setFormData({ ...formData, specialtyRequired: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select specialty" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {specialties.map((specialty) => (
-                      <SelectItem key={specialty.value} value={specialty.value}>
-                        {specialty.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            <div>
-              <Label htmlFor="dueDate">Preferred Due Date</Label>
-              <Input
-                id="dueDate"
-                type="date"
-                value={formData.dueDate}
-                onChange={(e) => setFormData({ ...formData, dueDate: e.target.value })}
-              />
-            </div>
-
-            <div>
-              <Label htmlFor="instructions">Special Instructions</Label>
-              <Textarea
-                id="instructions"
-                value={formData.clientInstructions}
-                onChange={(e) => setFormData({ ...formData, clientInstructions: e.target.value })}
-                placeholder="Any specific areas of concern or focus areas for the review..."
-                rows={3}
-              />
-            </div>
-          </div>
-
-          <div className="flex space-x-3 pt-4">
-            <Button variant="outline" onClick={onClose} className="flex-1 bg-transparent">
-              Cancel
-            </Button>
-            <Button onClick={handleSubmit} disabled={isLoading} className="flex-1 nexTax-gradient text-white">
-              {isLoading ? "Submitting..." : "Request Review"}
-            </Button>
-          </div>
-        </div>
-      </DialogContent>
     </Dialog>
   )
 }
