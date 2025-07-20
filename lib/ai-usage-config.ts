@@ -1,82 +1,55 @@
-export interface TierConfig {
+export interface SubscriptionTier {
   name: string
   limits: {
-    chatMessages: number // per month
-    documentsGenerated: number // per month
-    complianceTracking: boolean
-    emailReminders: boolean
-    prioritySupport: boolean
+    chatMessages: number
+    documentsGenerated: number
+    apiCalls: number
   }
   features: string[]
 }
 
-export const TIER_CONFIGS: Record<string, TierConfig> = {
+export const AI_CHAT_TIERS: Record<string, SubscriptionTier> = {
   free: {
     name: "Free",
     limits: {
       chatMessages: 10,
       documentsGenerated: 2,
-      complianceTracking: false,
-      emailReminders: false,
-      prioritySupport: false,
+      apiCalls: 50,
     },
-    features: ["Basic AI chat support", "2 document generations per month", "Basic business formation guidance"],
+    features: ["Basic chat support", "Limited document generation"],
   },
   pro: {
     name: "Pro",
     limits: {
-      chatMessages: 150,
-      documentsGenerated: 25,
-      complianceTracking: true,
-      emailReminders: true,
-      prioritySupport: false,
+      chatMessages: 100,
+      documentsGenerated: 20,
+      apiCalls: 500,
     },
-    features: [
-      "Advanced AI chat support",
-      "25 document generations per month",
-      "Compliance tracking and reminders",
-      "Email notifications",
-      "Priority document processing",
-    ],
+    features: ["Advanced chat support", "Priority document generation", "Email support"],
   },
   premium: {
     name: "Premium",
     limits: {
-      chatMessages: -1, // unlimited
-      documentsGenerated: -1, // unlimited
-      complianceTracking: true,
-      emailReminders: true,
-      prioritySupport: true,
+      chatMessages: 500,
+      documentsGenerated: 100,
+      apiCalls: 2000,
     },
-    features: [
-      "Unlimited AI chat support",
-      "Unlimited document generations",
-      "Advanced compliance tracking",
-      "Priority email support",
-      "Custom document templates",
-      "Advanced business analytics",
-    ],
+    features: ["Unlimited chat support", "Advanced document generation", "Priority support", "Custom integrations"],
   },
   enterprise: {
     name: "Enterprise",
     limits: {
-      chatMessages: -1, // unlimited
-      documentsGenerated: -1, // unlimited
-      complianceTracking: true,
-      emailReminders: true,
-      prioritySupport: true,
+      chatMessages: -1, // Unlimited
+      documentsGenerated: -1, // Unlimited
+      apiCalls: -1, // Unlimited
     },
-    features: [
-      "Everything in Premium",
-      "Custom integrations",
-      "Dedicated account manager",
-      "SLA guarantees",
-      "Advanced security features",
-    ],
+    features: ["Unlimited everything", "Dedicated support", "Custom features", "SLA guarantees"],
   },
 }
 
-export const AI_CHAT_TIERS = TIER_CONFIGS
+export function getUserTier(subscriptionStatus: string): SubscriptionTier {
+  return AI_CHAT_TIERS[subscriptionStatus] || AI_CHAT_TIERS.free
+}
 
 export function getModelForTier(tier: string): string {
   switch (tier) {
@@ -89,47 +62,22 @@ export function getModelForTier(tier: string): string {
   }
 }
 
-export type SubscriptionTier = keyof typeof TIER_CONFIGS
-
-export function getUserTier(subscriptionStatus: string): TierConfig {
-  const normalizedStatus = subscriptionStatus?.toLowerCase() || "free"
-  return TIER_CONFIGS[normalizedStatus] || TIER_CONFIGS.free
-}
-
 export function checkUsageLimit(
-  tier: SubscriptionTier,
   currentUsage: number,
-): {
-  canSend: boolean
-  warningMessage?: string
-  upgradeMessage?: string
-} {
-  const config = TIER_CONFIGS[tier]
-  const limit = config.limits.chatMessages
-
+  limit: number,
+  resourceType: string,
+): { allowed: boolean; message?: string } {
   if (limit === -1) {
-    return { canSend: true }
+    return { allowed: true } // Unlimited
   }
 
   if (currentUsage >= limit) {
     return {
-      canSend: false,
-      upgradeMessage: `You've reached your monthly limit of ${limit} messages. Please upgrade your plan to continue.`,
+      allowed: false,
+      message: `You've reached your monthly limit of ${limit} ${resourceType}. Please upgrade your plan to continue.`,
     }
   }
 
-  const remaining = limit - currentUsage
-  if (remaining <= 5) {
-    return {
-      canSend: true,
-      warningMessage: `You have ${remaining} messages remaining this month.`,
-    }
-  }
-
-  return { canSend: true }
+  return { allowed: true }
 }
 
-export function getRemainingUsage(currentUsage: number, limit: number): number | string {
-  if (limit === -1) return "unlimited"
-  return Math.max(0, limit - currentUsage)
-}
