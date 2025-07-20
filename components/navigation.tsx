@@ -14,7 +14,7 @@ const navigation = [
   { name: "Contact", href: "/contact" },
 ]
 
-export default function Navigation() {
+export function Navigation() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
   // Mock user - replace with actual auth logic
@@ -141,4 +141,7 @@ export default function Navigation() {
     </header>
   )
 }
+
+// Also add a default export for compatibility
+export default Navigation
 
