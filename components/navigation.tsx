@@ -47,7 +47,7 @@ export default function Navigation() {
               <Link href="/startsmart">Test StartSmart</Link>
             </Button>
             <Button
-              className="bg-green-600 hover:bg-green-700 text-white"
+              className="bg-cyan-600 hover:bg-green-700 text-white"
               onClick={() =>
                 window.open("https://89c940af-8b32-4fc9-81c0-f4e571924056-00-ean17kbdh45e.riker.replit.dev/", "_blank")
               }
