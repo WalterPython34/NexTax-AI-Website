@@ -48,7 +48,9 @@ export default function Navigation() {
             </Button>
             <Button
               className="bg-green-600 hover:bg-green-700 text-white"
-              onClick={() => window.open("https://start-smart-business-morellosteve.replit.app", "_blank")}
+              onClick={() =>
+                window.open("https://89c940af-8b32-4fc9-81c0-f4e571924056-00-ean17kbdh45e.riker.replit.dev/", "_blank")
+              }
             >
               StartSmart GPT
             </Button>
@@ -116,7 +118,10 @@ export default function Navigation() {
                 <Button
                   className="w-full bg-green-600 hover:bg-green-700 text-white"
                   onClick={() => {
-                    window.open("https://start-smart-business-morellosteve.replit.app", "_blank")
+                    window.open(
+                      "https://89c940af-8b32-4fc9-81c0-f4e571924056-00-ean17kbdh45e.riker.replit.dev/",
+                      "_blank",
+                    )
                     setIsMenuOpen(false)
                   }}
                 >
