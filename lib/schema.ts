@@ -1,5 +1,6 @@
 import { pgTable, text, timestamp, uuid, integer, jsonb, varchar } from "drizzle-orm/pg-core"
 import { relations } from "drizzle-orm"
+import { createInsertSchema } from "drizzle-zod"
 
 // Users table
 export const users = pgTable("users", {
@@ -146,3 +147,4 @@ export const messagesRelations = relations(messages, ({ one }) => ({
   }),
 }))
 
+export const insertBusinessProfileSchema = createInsertSchema(businessProfiles)
