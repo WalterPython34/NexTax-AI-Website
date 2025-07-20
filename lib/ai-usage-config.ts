@@ -76,28 +76,57 @@ export const TIER_CONFIGS: Record<string, TierConfig> = {
   },
 }
 
+export const AI_CHAT_TIERS = TIER_CONFIGS
+
+export function getModelForTier(tier: string): string {
+  switch (tier) {
+    case "premium":
+    case "enterprise":
+    case "pro":
+      return "gpt-4"
+    default:
+      return "gpt-3.5-turbo"
+  }
+}
+
+export type SubscriptionTier = keyof typeof TIER_CONFIGS
+
 export function getUserTier(subscriptionStatus: string): TierConfig {
   const normalizedStatus = subscriptionStatus?.toLowerCase() || "free"
   return TIER_CONFIGS[normalizedStatus] || TIER_CONFIGS.free
 }
 
 export function checkUsageLimit(
+  tier: SubscriptionTier,
   currentUsage: number,
-  limit: number,
-  actionType: string,
-): { allowed: boolean; message?: string } {
+): {
+  canSend: boolean
+  warningMessage?: string
+  upgradeMessage?: string
+} {
+  const config = TIER_CONFIGS[tier]
+  const limit = config.limits.chatMessages
+
   if (limit === -1) {
-    return { allowed: true } // unlimited
+    return { canSend: true }
   }
 
   if (currentUsage >= limit) {
     return {
-      allowed: false,
-      message: `You've reached your monthly limit of ${limit} ${actionType}s. Please upgrade your plan to continue.`,
+      canSend: false,
+      upgradeMessage: `You've reached your monthly limit of ${limit} messages. Please upgrade your plan to continue.`,
     }
   }
 
-  return { allowed: true }
+  const remaining = limit - currentUsage
+  if (remaining <= 5) {
+    return {
+      canSend: true,
+      warningMessage: `You have ${remaining} messages remaining this month.`,
+    }
+  }
+
+  return { canSend: true }
 }
 
 export function getRemainingUsage(currentUsage: number, limit: number): number | string {
