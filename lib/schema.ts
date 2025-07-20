@@ -1,150 +1,102 @@
-import { pgTable, text, timestamp, uuid, integer, jsonb, varchar } from "drizzle-orm/pg-core"
-import { relations } from "drizzle-orm"
+import { pgTable, text, timestamp, integer, jsonb, uuid } from "drizzle-orm/pg-core"
 import { createInsertSchema } from "drizzle-zod"
 
-// Users table
 export const users = pgTable("users", {
   id: uuid("id").primaryKey().defaultRandom(),
-  email: varchar("email", { length: 255 }).notNull().unique(),
-  name: varchar("name", { length: 255 }),
-  subscriptionStatus: varchar("subscription_status", { length: 50 }).default("free"),
-  stripeCustomerId: varchar("stripe_customer_id", { length: 255 }),
+  email: text("email").notNull().unique(),
+  name: text("name"),
+  subscriptionStatus: text("subscription_status").default("free"),
+  stripeCustomerId: text("stripe_customer_id"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 })
 
-// Business profiles table
 export const businessProfiles = pgTable("business_profiles", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: uuid("user_id").references(() => users.id),
-  name: varchar("name", { length: 255 }).notNull(),
-  type: varchar("type", { length: 100 }),
-  state: varchar("state", { length: 50 }),
-  industry: varchar("industry", { length: 100 }),
+  name: text("name").notNull(),
+  type: text("type"),
+  state: text("state"),
+  industry: text("industry"),
   description: text("description"),
   metadata: jsonb("metadata"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 })
 
-// Documents table
 export const documents = pgTable("documents", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: uuid("user_id").references(() => users.id),
   businessProfileId: uuid("business_profile_id").references(() => businessProfiles.id),
-  title: varchar("title", { length: 255 }).notNull(),
-  type: varchar("type", { length: 100 }).notNull(),
+  title: text("title").notNull(),
+  type: text("type").notNull(),
   content: text("content").notNull(),
-  status: varchar("status", { length: 50 }).default("draft"),
+  status: text("status").default("draft"),
   metadata: jsonb("metadata"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 })
 
-// AI usage tracking
+export const conversations = pgTable("conversations", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  userId: uuid("user_id").references(() => users.id),
+  title: text("title"),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+})
+
+export const messages = pgTable("messages", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  conversationId: uuid("conversation_id").references(() => conversations.id),
+  role: text("role").notNull(),
+  content: text("content").notNull(),
+  metadata: jsonb("metadata"),
+  createdAt: timestamp("created_at").defaultNow(),
+})
+
 export const aiUsage = pgTable("ai_usage", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: uuid("user_id").references(() => users.id),
-  actionType: varchar("action_type", { length: 100 }).notNull(),
+  actionType: text("action_type").notNull(),
   count: integer("count").default(1),
   metadata: jsonb("metadata"),
   createdAt: timestamp("created_at").defaultNow(),
 })
 
-// Conversations table
-export const conversations = pgTable("conversations", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  userId: uuid("user_id").references(() => users.id),
-  title: varchar("title", { length: 255 }),
-  metadata: jsonb("metadata"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-})
-
-// Messages table
-export const messages = pgTable("messages", {
-  id: uuid("id").primaryKey().defaultRandom(),
-  conversationId: uuid("conversation_id").references(() => conversations.id),
-  role: varchar("role", { length: 20 }).notNull(),
-  content: text("content").notNull(),
-  metadata: jsonb("metadata"),
-  createdAt: timestamp("created_at").defaultNow(),
-})
-
-// Compliance tasks table
 export const complianceTasks = pgTable("compliance_tasks", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: uuid("user_id").references(() => users.id),
   businessProfileId: uuid("business_profile_id").references(() => businessProfiles.id),
-  title: varchar("title", { length: 255 }).notNull(),
+  title: text("title").notNull(),
   description: text("description"),
   dueDate: timestamp("due_date"),
-  status: varchar("status", { length: 50 }).default("pending"),
-  priority: varchar("priority", { length: 20 }).default("medium"),
-  category: varchar("category", { length: 100 }),
+  status: text("status").default("pending"),
+  priority: text("priority").default("medium"),
+  category: text("category"),
   metadata: jsonb("metadata"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 })
 
-// Progress tracking table
 export const progressTracking = pgTable("progress_tracking", {
   id: uuid("id").primaryKey().defaultRandom(),
   userId: uuid("user_id").references(() => users.id),
   businessProfileId: uuid("business_profile_id").references(() => businessProfiles.id),
-  category: varchar("category", { length: 100 }).notNull(),
-  taskName: varchar("task_name", { length: 255 }).notNull(),
-  status: varchar("status", { length: 50 }).default("not_started"),
+  category: text("category").notNull(),
+  taskName: text("task_name").notNull(),
+  status: text("status").default("not_started"),
   completedAt: timestamp("completed_at"),
-  metadata: jsonb("metadata"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 })
 
-// Relations
-export const usersRelations = relations(users, ({ many }) => ({
-  businessProfiles: many(businessProfiles),
-  documents: many(documents),
-  conversations: many(conversations),
-  aiUsage: many(aiUsage),
-  complianceTasks: many(complianceTasks),
-  progressTracking: many(progressTracking),
-}))
-
-export const businessProfilesRelations = relations(businessProfiles, ({ one, many }) => ({
-  user: one(users, {
-    fields: [businessProfiles.userId],
-    references: [users.id],
-  }),
-  documents: many(documents),
-  complianceTasks: many(complianceTasks),
-  progressTracking: many(progressTracking),
-}))
-
-export const documentsRelations = relations(documents, ({ one }) => ({
-  user: one(users, {
-    fields: [documents.userId],
-    references: [users.id],
-  }),
-  businessProfile: one(businessProfiles, {
-    fields: [documents.businessProfileId],
-    references: [businessProfiles.id],
-  }),
-}))
-
-export const conversationsRelations = relations(conversations, ({ one, many }) => ({
-  user: one(users, {
-    fields: [conversations.userId],
-    references: [users.id],
-  }),
-  messages: many(messages),
-}))
-
-export const messagesRelations = relations(messages, ({ one }) => ({
-  conversation: one(conversations, {
-    fields: [messages.conversationId],
-    references: [conversations.id],
-  }),
-}))
-
+// Create insert schemas
 export const insertBusinessProfileSchema = createInsertSchema(businessProfiles)
+export const insertUserSchema = createInsertSchema(users)
+export const insertDocumentSchema = createInsertSchema(documents)
+export const insertConversationSchema = createInsertSchema(conversations)
+export const insertMessageSchema = createInsertSchema(messages)
+export const insertAiUsageSchema = createInsertSchema(aiUsage)
+export const insertComplianceTaskSchema = createInsertSchema(complianceTasks)
+export const insertProgressTrackingSchema = createInsertSchema(progressTracking)
