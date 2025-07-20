@@ -59,7 +59,7 @@ export default function Navigation() {
 
         {/* StartSmart GPT - Points to Replit app */}
         <Link
-          href="https://startsmart.nextax.ai"
+          href="https://start-smart-business-morellosteve.replit.app"
           target="_blank"
           rel="noopener noreferrer"
           className="bg-gradient-to-r from-emerald-500 to-cyan-500 text-white px-4 py-2 rounded-lg font-semibold hover:from-emerald-600 hover:to-cyan-600 transition-all duration-200 shadow-lg"
