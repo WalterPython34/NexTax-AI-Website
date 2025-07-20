@@ -1,4 +1,4 @@
-// Create the missing leadTracking module
+// Simple lead tracking implementation
 export const leadTracking = {
   async addManualLead(email: string, firstName?: string, lastName?: string) {
     // Simple lead tracking implementation
