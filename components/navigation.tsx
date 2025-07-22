@@ -41,7 +41,7 @@ export default function Navigation() {
           {/* CTA Buttons - Only showing StartSmart GPT now */}
           <div className="hidden md:flex items-center space-x-4">
             <Button
-              className="bg-green-600 hover:bg-green-700 text-white"
+              className="bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white transition-all duration-200"
               onClick={() => window.open("https://startsmart.nextax.ai", "_blank")}
             >
               StartSmart GPT
