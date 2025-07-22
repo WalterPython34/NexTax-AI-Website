@@ -38,14 +38,8 @@ export default function Navigation() {
             </Link>
           </div>
 
-          {/* CTA Buttons */}
+          {/* CTA Buttons - Only showing StartSmart GPT now */}
           <div className="hidden md:flex items-center space-x-4">
-            <Button
-              variant="outline"
-              className="text-white border-white hover:bg-white hover:text-slate-900 bg-transparent"
-            >
-              <Link href="/startsmart">Test StartSmart</Link>
-            </Button>
             <Button
               className="bg-green-600 hover:bg-green-700 text-white"
               onClick={() => window.open("https://startsmart.nextax.ai", "_blank")}
@@ -107,12 +101,6 @@ export default function Navigation() {
                 Contact
               </Link>
               <div className="pt-4 space-y-2">
-                <Button
-                  variant="outline"
-                  className="w-full text-white border-white hover:bg-white hover:text-slate-900 bg-transparent"
-                >
-                  <Link href="/startsmart">Test StartSmart</Link>
-                </Button>
                 <Button
                   className="w-full bg-green-600 hover:bg-green-700 text-white"
                   onClick={() => {
