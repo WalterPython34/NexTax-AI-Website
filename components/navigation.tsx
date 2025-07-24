@@ -38,18 +38,11 @@ export default function Navigation() {
             </Link>
           </div>
 
-          {/* CTA Buttons */}
-          <div className="hidden md:flex items-center space-x-4">
-            <Button
-              variant="outline"
-              className="text-white border-white hover:bg-white hover:text-slate-900 bg-transparent"
-              onClick={() => window.open("https://startsmartgpt.nextax.ai", "_blank")}
-            >
-              Test StartSmart
-            </Button>
+          {/* CTA Button - Only StartSmart GPT */}
+          <div className="hidden md:flex items-center">
             <Button
               className="bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white transition-all duration-200"
-              onClick={() => window.open("https://startsmart.nextax.ai", "_blank")}
+              onClick={() => window.open("https://start-smart-business-morellosteve.replit.app/", "_blank")}
             >
               StartSmart GPT
             </Button>
@@ -107,21 +100,11 @@ export default function Navigation() {
               >
                 Contact
               </Link>
-              <div className="pt-4 space-y-2">
-                <Button
-                  variant="outline"
-                  className="w-full text-white border-white hover:bg-white hover:text-slate-900 bg-transparent"
-                  onClick={() => {
-                    window.open("https://startsmartgpt.nextax.ai", "_blank")
-                    setIsMenuOpen(false)
-                  }}
-                >
-                  Test StartSmart
-                </Button>
+              <div className="pt-4">
                 <Button
                   className="w-full bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white transition-all duration-200"
                   onClick={() => {
-                    window.open("https://startsmart.nextax.ai", "_blank")
+                    window.open("https://start-smart-business-morellosteve.replit.app/", "_blank")
                     setIsMenuOpen(false)
                   }}
                 >
