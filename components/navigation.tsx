@@ -42,7 +42,7 @@ export default function Navigation() {
           <div className="hidden md:flex items-center">
             <Button
               className="bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white transition-all duration-200"
-              onClick={() => window.open("https://start-smart-business-morellosteve.replit.app/", "_blank")}
+              onClick={() => window.open("https://startsmart.nextax.ai", "_blank")}
             >
               StartSmart GPT
             </Button>
@@ -104,7 +104,7 @@ export default function Navigation() {
                 <Button
                   className="w-full bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white transition-all duration-200"
                   onClick={() => {
-                    window.open("https://start-smart-business-morellosteve.replit.app/", "_blank")
+                    window.open("https://startsmart.nextax.ai", "_blank")
                     setIsMenuOpen(false)
                   }}
                 >
