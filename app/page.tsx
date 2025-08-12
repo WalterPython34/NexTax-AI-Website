@@ -76,14 +76,15 @@ export default function HomePage() {
 
               {/* Enhanced CTAs */}
               <div className="flex flex-col sm:flex-row gap-4">
-                <Button
-                  size="lg"
-                  className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white px-8 py-6 text-xl font-semibold w-full sm:w-auto mt-4"
-                  onClick={() => setAuthModal({ isOpen: true, mode: "signup" })}
-                >
-                  <Bot className="mr-3 w-6 h-6" />
-                  Try StartSmartGPT Free
-                </Button>              
+               <Link href="https://www.startsmartbiz.ai" target="_blank" rel="noopener noreferrer">
+              <Button
+                size="lg"
+                  className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white px-8 py-6 text-xl font-semibold w-full sm:w-auto"
+                  >
+                <Bot className="mr-3 w-6 h-6" />
+                Try StartSmartGPT Free
+                </Button>
+                </Link>        
                 <Link href="/pricing">
                   <Button
                     size="lg"
