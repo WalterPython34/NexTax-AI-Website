@@ -225,7 +225,7 @@ export default function PricingPage() {
       icon: Building2,
       price: "$29",
       period: "/month",
-      priceId: "price_1Re7HcGA3ir6ndSxjvAcK4XN",
+      priceId: "price_1RpGJLGA3ir6ndSx9SPWahsH",
       description: "AI-Powered business collaboration & support",
       features: [
         "Answering all new business related questions",
