@@ -76,7 +76,7 @@ export default function HomePage() {
 
               {/* Enhanced CTAs */}
               <div className="flex flex-col sm:flex-row gap-4">
-               <Link href="https://www.startsmartbiz.ai" target="_blank" rel="noopener noreferrer">
+               <Link href="https://www.startsmartbiz.ai/pricing" target="_blank" rel="noopener noreferrer">
               <Button
                 size="lg"
                   className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white px-8 py-6 text-xl font-semibold w-full sm:w-auto mt-4"
