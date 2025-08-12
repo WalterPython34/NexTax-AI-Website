@@ -45,7 +45,7 @@ export default function PricingPage() {
       name: "StartSmart Complete",
       icon: Crown,
       price: "$499",
-      priceId: "price_1RVxDBGA3ir6ndSxWWPxWX0Y", // ✅ UPDATED with LIVE price ID
+      priceId: "price_1RUgSNGA3ir6ndSxbI53k3dB", // ✅ UPDATED with LIVE price ID
       period: "",
       description: "Complete business formation in 48 hours",
       features: [
@@ -69,7 +69,7 @@ export default function PricingPage() {
       name: "StartSmart Premium",
       icon: Building2,
       price: "$699",
-      priceId: "price_1RUgSNGA3ir6ndSxbI53k3dB", // ✅ UPDATED with LIVE price ID
+      priceId: "price_1RVxDBGA3ir6ndSxWWPxWX0Y", // ✅ UPDATED with LIVE price ID
       period: "",
       description: "The complete business launch experience",
       features: [
