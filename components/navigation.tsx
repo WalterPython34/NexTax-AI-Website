@@ -42,7 +42,7 @@ export default function Navigation() {
           <div className="hidden md:flex items-center space-x-4">
             <Button
               className="text-white transition-all duration-200"
-              style={{ backgroundColor: "#00BFFF" }}
+              style={{ backgroundColor: "#318CE7" }}
               onClick={() => window.open("https://legal-eye-q.vercel.app/", "_blank")}
             >
               Legal EyeQ
