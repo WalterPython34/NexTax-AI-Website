@@ -39,10 +39,17 @@ export default function Navigation() {
           </div>
 
           {/* CTA Button - Only StartSmart GPT */}
-          <div className="hidden md:flex items-center">
+          <div className="hidden md:flex items-center space-x-4">
+            <Button
+              className="text-white transition-all duration-200"
+              style={{ backgroundColor: "#00BFFF" }}
+              onClick={() => window.open("https://legal-eye-q.vercel.app/", "_blank")}
+            >
+              Legal EyeQ
+            </Button>
             <Button
               className="bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white transition-all duration-200"
-              onClick={() => window.open("https://startsmartbiz.ai", "_blank")}
+              onClick={() => window.open("https://startsmart.nextax.ai", "_blank")}
             >
               StartSmart GPT
             </Button>
@@ -102,6 +109,16 @@ export default function Navigation() {
               </Link>
               <div className="pt-4">
                 <Button
+                  className="w-full mb-2 text-white transition-all duration-200"
+                  style={{ backgroundColor: "#00BFFF" }}
+                  onClick={() => {
+                    window.open("https://legal-eye-q.vercel.app/", "_blank")
+                    setIsMenuOpen(false)
+                  }}
+                >
+                  Legal EyeQ
+                </Button>
+                <Button
                   className="w-full bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white transition-all duration-200"
                   onClick={() => {
                     window.open("https://startsmart.nextax.ai", "_blank")
@@ -118,3 +135,4 @@ export default function Navigation() {
     </nav>
   )
 }
+
