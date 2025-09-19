@@ -49,7 +49,7 @@ export default function Navigation() {
             </Button>
             <Button
               className="bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white transition-all duration-200"
-              onClick={() => window.open("https://startsmart.nextax.ai", "_blank")}
+              onClick={() => window.open("https://startsmartgpt.nextax.ai", "_blank")}
             >
               StartSmart GPT
             </Button>
