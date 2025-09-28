@@ -63,9 +63,9 @@ export default function HomePage() {
               {/* NEW: Unique AI Value Props */}
               <div className="space-y-3">
                 {[
-                  "Custom AI trained on 20+ years Big 4 tax expertise",
-                  "24/7 business advisor that knows YOUR company",
-                  "From formation to IPO - your AI grows with you",
+                  "Big 4 Tax Expertise Baked-In (Custom AI trained on 20+ years of EY/KPMG strategy)",
+                  "24/7 Advisor knows YOUR Entity, State, & Tax Structure",
+                  "From formation to scaling your business - your AI grows with you",
                 ].map((feature, i) => (
                   <div key={i} className="flex items-center gap-3">
                     <CheckCircle className="w-5 h-5 text-emerald-400 flex-shrink-0" />
@@ -76,21 +76,21 @@ export default function HomePage() {
 
               {/* Enhanced CTAs */}
               <div className="flex flex-col sm:flex-row gap-4">
-               <Link href="https://www.startsmartbiz.ai/pricing" target="_blank" rel="noopener noreferrer">
+               <Link href="/pricing">
               <Button
                 size="lg"
                   className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white px-8 py-6 text-xl font-semibold w-full sm:w-auto mt-4"
                   >
                 <Bot className="mr-3 w-6 h-6" />
-                Try StartSmartGPT Free
+                Launch Now: $499 Total (No Hidden Fees)
                 </Button>
-                </Link>        
-                <Link href="/pricing">
-                  <Button
+                </Link>      
+                <Link href="https://www.startsmartbiz.ai/pricing" target="_blank" rel="noopener noreferrer">                
+                 <Button
                     size="lg"
                     className="bg-emerald-500 hover:bg-emerald-600 text-white px-8 py-6 text-xl font-semibold w-full sm:w-auto mt-4"
                   >
-                    Launch My Business
+                    Try StartSmart Free
                     <Rocket className="ml-3 w-6 h-6" />
                   </Button>
                 </Link>
