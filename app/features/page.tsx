@@ -142,7 +142,7 @@ export default function FeaturesPage() {
         </div>
       </section>
             
-       <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">
+       <h2 className="text-3xl lg:text-4xl font-bold text-cyan-500 mb-4">
               Scale Your Business with Advanced AI Tax Solutions
             </h2>
             <p className="text-xl text-slate-300 max-w-3xl mx-auto">
@@ -215,6 +215,10 @@ export default function FeaturesPage() {
         </div>
       </section>
           
+           <h3 className="text-3xl lg:text-4xl font-bold text-cyan-500 mb-4">
+              Next-Generation Tools: <span className="block text-white-400">Global Tax, Transfer Pricing, and State Nexus</span>
+            </h3>           
+          </div>
           <div className="grid lg:grid-cols-2 gap-8 mb-12">
             {/* Transfer Pricing GPT */}
             <Card className="bg-gray-900/50 border-gray-700 hover:border-emerald-500/50 transition-colors">
