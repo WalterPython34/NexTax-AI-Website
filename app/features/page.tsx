@@ -97,6 +97,18 @@ export default function FeaturesPage() {
     },
   ]
 
+  {/* NexTax.AI Product Suite */}
+      <section className="py-6">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-8">
+            {/* Large NexTax Logo - THIS IS STILL HERE! */}
+            <div className="flex justify-center mb-6">
+              <img src="/images/nextax-logo-large.png" alt="NexTax.AI" className="h-64 w-auto" />
+            </div>         
+          </div>
+        </div>
+      </section>
+  
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black pt-16">
       {/* Hero Section */}
@@ -114,19 +126,7 @@ export default function FeaturesPage() {
             Go beyond paperwork - Unlock your personalized compliance and tax optimization tools trusted by top firms, delivered with 48-hour speed.
           </p>
         </div>
-      </section>
-
-      {/* NexTax.AI Product Suite */}
-      <section className="py-6">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-8">
-            {/* Large NexTax Logo - THIS IS STILL HERE! */}
-            <div className="flex justify-center mb-6">
-              <img src="/images/nextax-logo-large.png" alt="NexTax.AI" className="h-64 w-auto" />
-            </div>         
-          </div>
-        </div>
-      </section>
+      </section>    
           
     {/* Stats Section */}
       <section className="py-10 bg-black/50">
@@ -159,7 +159,7 @@ export default function FeaturesPage() {
          </section>
           
       {/* Features Grid */}
-      <section className="py-20">
+      <section className="py-10">
         <div className="container mx-auto px-4">
           <div className="grid lg:grid-cols-2 gap-8">
             {features.map((feature, i) => (
