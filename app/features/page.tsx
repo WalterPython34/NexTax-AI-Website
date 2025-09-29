@@ -441,14 +441,14 @@ export default function FeaturesPage() {
                 />
               </div>
 
-              <h3 className="text-2xl font-bold text-white mb-4">Ready to Transform Your Tax Processes?</h3>
+              <h3 className="text-2xl font-bold text-white mb-4">"Ready to Build with Big 4 Expertise?</h3>
               <p className="text-emerald-100 mb-6 max-w-2xl mx-auto">
-                Start your journey towards efficient and intelligent tax management today.
+                Start your journey towards financial independence today.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link href="/startsmart">
+                <Link href="/pricing">
                   <Button size="lg" className="bg-white text-emerald-600 hover:bg-slate-100 px-8 py-4">
-                    Start with Business Launch
+                    View Packages
                   </Button>
                 </Link>
                 <Link href="/contact">
@@ -457,7 +457,7 @@ export default function FeaturesPage() {
                     variant="outline"
                     className="border-white text-white hover:bg-white/10 px-8 py-4 bg-transparent"
                   >
-                    Explore Enterprise Solutions
+                    Have Questions? Contact us!
                   </Button>
                 </Link>
               </div>
