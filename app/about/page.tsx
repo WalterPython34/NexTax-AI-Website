@@ -9,7 +9,7 @@ export default function AboutPage() {
     {
       name: "Steve Morello",
       role: "CEO & Founder",
-      bio: "Seasoned tax executive with 20+ years of experience across Big 4 firms, investment banking, and technology. Former Tax Manager at Morgan Stanley Private Equity and Head of Tax at leading cybersecurity and fintech companies. Registered Agent with deep expertise in complex business structures, M&A tax planning, and regulatory compliance.",
+      bio: "You shouldn't need a Wall Street budget to get Big 4 tax strategy. We founded NexTax on a simple, painful truth: The best tax and legal advice is often locked behind prohibitive costs and outdated processes. Every day, we saw entrepreneurs wasting thousands on simple formations and missing out on tens of thousands in tax savings, simply because they couldn't afford an expert.",
       image: "/images/steve-morello-headshot.jpg",
       credentials: [
         "Registered Agent",
@@ -96,7 +96,7 @@ export default function AboutPage() {
       <section className="py-20">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">Meet Our Leadership Team</h2>
+            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">Meet the Founder: Steve Morello, CEO & Founder</h2>
             <p className="text-xl text-slate-300 max-w-2xl mx-auto">
               Experienced professionals combining decades of tax expertise with cutting-edge AI innovation.
             </p>
@@ -165,13 +165,15 @@ export default function AboutPage() {
             <div>
               <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">Our Mission</h2>
               <p className="text-xl text-slate-300 mb-6">
-                To democratize access to expert-level tax and business formation services through AI, making it possible
-                for anyone to start and run a compliant business with confidence.
+                To put a Big 4 Tax Advisor in the pocket of every entrepreneur.
               </p>
               <p className="text-slate-300 mb-8">
-                We saw how complex and expensive it was for entrepreneurs to navigate tax requirements and business
-                formation. Traditional services were slow, costly, and often inaccessible to small businesses. We knew
-                AI could change this.
+                We partnered with leading AI researchers to capture decades of real-world, high-stakes
+                tax knowledge and bake it into StartSmart App. Our goal is to make it possible for anyone to
+                launch their business with the ultimate competitive advantage:
+              </p>
+              <p className="text-xl text-slate-300 mb-6">
+                unrivaled tax strategy, 48-hour speed, and zero compliance surprises.
               </p>
               <div className="space-y-4">
                 <div className="flex items-center gap-3">
