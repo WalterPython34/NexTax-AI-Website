@@ -448,7 +448,7 @@ export default function FeaturesPage() {
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <Link href="/pricing">
                   <Button size="lg" className="bg-white text-emerald-600 hover:bg-slate-100 px-8 py-4">
-                    View Packages
+                    Launch Now: View All Packages
                   </Button>
                 </Link>
                 <Link href="/contact">
@@ -457,7 +457,7 @@ export default function FeaturesPage() {
                     variant="outline"
                     className="border-white text-white hover:bg-white/10 px-8 py-4 bg-transparent"
                   >
-                    Have Questions? Contact us!
+                    Talk to a Big 4 Tax Expert
                   </Button>
                 </Link>
               </div>
