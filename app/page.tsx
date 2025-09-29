@@ -131,7 +131,7 @@ export default function HomePage() {
             </div>
 
             {/* NEW: AI Demo Preview */}
-            <div className="relative -mt-11">
+            <div className="relative -mt-14">
               <div className="relative bg-slate-800/50 backdrop-blur-sm rounded-2xl p-8 border border-slate-700">
                 <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-cyan-500/10 rounded-2xl" />
                 <div className="relative space-y-6">
