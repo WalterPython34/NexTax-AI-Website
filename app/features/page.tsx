@@ -117,11 +117,11 @@ export default function FeaturesPage() {
       </section>
 
       {/* NexTax.AI Product Suite */}
-      <section className="py-10">
+      <section className="py-6">
         <div className="container mx-auto px-4">
           <div className="text-center mb-8">
             {/* Large NexTax Logo - THIS IS STILL HERE! */}
-            <div className="flex justify-center mb-8">
+            <div className="flex justify-center mb-6">
               <img src="/images/nextax-logo-large.png" alt="NexTax.AI" className="h-64 w-auto" />
             </div>         
           </div>
@@ -129,7 +129,7 @@ export default function FeaturesPage() {
       </section>
           
     {/* Stats Section */}
-      <section className="py-16 bg-black/50">
+      <section className="py-10 bg-black/50">
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-4 gap-8">
             {stats.map((stat, i) => (
@@ -146,7 +146,7 @@ export default function FeaturesPage() {
       </section>
 
       {/* Scale Your Business Header */}
-      <section className="py-10">
+      <section className="py-8">
        <div className="container mx-auto px-4 text-center">     
        <h2 className="text-3xl lg:text-4xl font-bold text-cyan-500 mb-4">
               Scale Your Business with Advanced AI Tax Solutions
@@ -223,10 +223,10 @@ export default function FeaturesPage() {
       </section>
 
      {/* Next-Generation Tools Section */}
-      <section className="py-20">
+      <section className="py-16">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
-            <h3 className="text-3xl lg:text-4xl font-bold text-cyan-500 mb-4">
+            <h3 className="text-3xl lg:text-4xl font-bold text-emerald-500 mb-4">
               Next-Generation Tools: Global Tax, Transfer Pricing, and State Nexus
             </h3>
           </div>     
