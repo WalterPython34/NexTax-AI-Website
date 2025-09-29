@@ -97,7 +97,7 @@ export default function HomePage() {
 
             {/* Updated Social Proof */}
               <div className="bg-slate-800/30 rounded-lg p-4 border border-emerald-500/30">
-                <p className="text-emerald-300 font-large text-center mb-2">🔒 100% Transparent Pricing Promise</p>
+                <p className="text-emerald-300 font-large text-center mb-2">🔒 100% Transparent Pricing Guarantee</p>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm text-slate-300">
                   <div className="flex items-center justify-center gap-1">
                     <CheckCircle className="w-4 h-4 text-emerald-400" />
