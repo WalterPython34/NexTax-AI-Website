@@ -9,7 +9,7 @@ export default function AboutPage() {
     {
       name: "Steve Morello",
       role: "CEO & Founder",
-      bio: "You shouldn't need a Wall Street budget to get Big 4 tax strategy. We founded NexTax on a simple, painful truth: The best tax and legal advice is often locked behind prohibitive costs and outdated processes. Every day, we saw entrepreneurs wasting thousands on simple formations and missing out on tens of thousands in tax savings, simply because they couldn't afford an expert.",
+      bio: "After 20+ years navigating the tax landscape at Morgan Stanley and Big 4 firms like PwC and KPMG, our founder, Steve Morello, realized the manual, high-cost systems that served enterprises were actively failing the modern entrepreneur. His vision was to take that high-level expertise—from M&A tax structuring to global compliance—and build a platform that democratizes access.",
       image: "/images/steve-morello-headshot.jpg",
       credentials: [
         "Registered Agent",
@@ -59,6 +59,7 @@ export default function AboutPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-900 pt-16">
+     
       {/* Hero Section */}
       <section className="py-20">
         <div className="container mx-auto px-4 text-center">
@@ -92,13 +93,22 @@ export default function AboutPage() {
         </div>
       </section>
 
-      {/* Leadership Team Section */}
+      {/* Solution Section */}
       <section className="py-20">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">Meet the Founder: Steve Morello, CEO & Founder</h2>
             <p className="text-xl text-slate-300 max-w-2xl mx-auto">
-              Experienced professionals combining decades of tax expertise with cutting-edge AI innovation.
+              Experienced tax professional combining decades of tax expertise with cutting-edge AI innovation.
+            </p>
+          </div>
+          
+      {/* Leadership Team Section */}
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-8">
+            <h3 className="text-3xl lg:text-4xl font-bold text-white mb-6">Meet the Founder: Steve Morello, CEO & Founder</h3>
+            <p className="text-xl text-slate-300 max-w-2xl mx-auto">
+              Experienced tax professional combining decades of tax expertise with cutting-edge AI innovation.
             </p>
           </div>
 
@@ -116,7 +126,7 @@ export default function AboutPage() {
                           className="w-full h-full object-cover"
                         />
                       </div>
-                      <h3 className="text-2xl font-bold text-white mb-2">{member.name}</h3>
+                      <h4 className="text-2xl font-bold text-white mb-2">{member.name}</h4>
                       <p className="text-emerald-400 font-semibold mb-4">{member.role}</p>
 
                       {/* LinkedIn Button */}
@@ -139,7 +149,7 @@ export default function AboutPage() {
 
                       {/* Credentials */}
                       <div>
-                        <h4 className="font-semibold text-white mb-3">Professional Credentials</h4>
+                        <h5 className="font-semibold text-white mb-3">Professional Credentials</h5>
                         <div className="grid grid-cols-1 gap-2">
                           {member.credentials.map((credential, j) => (
                             <div key={j} className="flex items-center gap-2">
