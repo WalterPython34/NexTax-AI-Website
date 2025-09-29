@@ -124,7 +124,8 @@ export default function FeaturesPage() {
             <div className="flex justify-center mb-8">
               <img src="/images/nextax-logo-large.png" alt="NexTax.AI" className="h-64 w-auto" />
             </div>         
-
+             </section>
+          
     {/* Stats Section */}
       <section className="py-16 bg-black/50">
         <div className="container mx-auto px-4">
@@ -142,6 +143,7 @@ export default function FeaturesPage() {
         </div>
       </section>
 
+      <section className="py-10">
        <div className="container mx-auto px-4 text-center">     
        <h2 className="text-3xl lg:text-4xl font-bold text-cyan-500 mb-4">
               Scale Your Business with Advanced AI Tax Solutions
@@ -150,8 +152,9 @@ export default function FeaturesPage() {
               As your business grows, access our full StartSmart suite of specialized AI-powered tax and compliance tools designed
               for everyday business needs. Included with all Business Formation Packages.
             </p>
-          </div>
-            
+             </div>
+              </section>
+          
       {/* Features Grid */}
       <section className="py-20">
         <div className="container mx-auto px-4">
@@ -216,12 +219,14 @@ export default function FeaturesPage() {
         </div>
       </section>
 
+    <section className="py-10">
     <div className="container mx-auto px-4 text-center">
      <h3 className="text-3xl lg:text-4xl font-bold text-cyan-500 mb-4">
        Next-Generation Tools: Global Tax, Transfer Pricing, and State Nexus
      </h3>
       </div>
-            
+       </section>     
+        
           <div className="grid lg:grid-cols-2 gap-8 mb-12">
             {/* Transfer Pricing GPT */}
             <Card className="bg-gray-900/50 border-gray-700 hover:border-emerald-500/50 transition-colors">
