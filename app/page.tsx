@@ -78,7 +78,7 @@ export default function HomePage() {
                <Link href="/pricing">
               <Button
                 size="lg"
-                  className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white px-8 py-8 text-xl font-semibold w-full sm:w-auto mt-4"
+                  className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white px-8 py-6 text-xl font-semibold w-full sm:w-auto mt-4"
                   >
                 <Bot className="mr-3 w-6 h-6" />
                 Launch Now: $499 Total (No Hidden Fees)
@@ -87,7 +87,7 @@ export default function HomePage() {
                 <Link href="https://www.startsmartbiz.ai/pricing" target="_blank" rel="noopener noreferrer">                
                  <Button
                     size="lg"
-                    className="bg-emerald-500 hover:bg-emerald-600 text-white px-8 py-8 text-xl font-semibold w-full sm:w-auto mt-4"
+                    className="bg-emerald-500 hover:bg-emerald-600 text-white px-8 py-6 text-xl font-semibold w-full sm:w-auto mt-4"
                   >
                     Try StartSmart Free
                     <Rocket className="ml-3 w-6 h-6" />
