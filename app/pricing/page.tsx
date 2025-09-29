@@ -27,7 +27,7 @@ export default function PricingPage() {
       price: "$299",
       priceId: "price_1RVxBWGA3ir6ndSxlzwF0aXk", // ✅ UPDATED with LIVE price ID
       period: "",
-      description: "Simple business formation for straightforward LLCs",
+      description: "Simple business formation for Compliance Basics",
       features: [
         "Priority 48-Hour LLC Formation",
         "Business Registration in your State",
@@ -47,13 +47,13 @@ export default function PricingPage() {
       price: "$499",
       priceId: "price_1RUgSNGA3ir6ndSxbI53k3dB", // ✅ UPDATED with LIVE price ID
       period: "",
-      description: "Complete business formation in 48 hours",
+      description: "Complete Launch with Your AI Tax Expert & Compliance Tracking",
       features: [
         "EIN Filing (Employer ID Number)",
-        "Priority 48-Hour LLC Formation",
+        "🤖 AI Business Copilot (StartSmart App)",
+        "Priority 24-Hour LLC Formation",
         "Business Registration in your State",
         "LLC Agreement Preparation",
-        "🤖 AI Business Copilot (StartSmartGPT)",
         "Complete compliance setup",
         "Priority phone & email support",
         "Digital document vault",
