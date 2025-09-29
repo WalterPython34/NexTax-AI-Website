@@ -98,7 +98,7 @@ export default function FeaturesPage() {
   ] 
   
   return (
-    <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black pt-16">
+    <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black pt-8">
      {/* NexTax.AI Product Suite */}
       <section className="py-6">
         <div className="container mx-auto px-4">
