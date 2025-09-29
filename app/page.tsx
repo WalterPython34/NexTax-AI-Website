@@ -32,7 +32,7 @@ export default function HomePage() {
       {/* Hero Section - AI-Powered StartSmart */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-cyan-500/10" />
-        <div className="relative container mx-auto px-4 py-20 lg:py-18">
+        <div className="relative container mx-auto px-4 py-20 lg:py-14">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div className="space-y-8">
 
@@ -74,7 +74,7 @@ export default function HomePage() {
               </div>
 
               {/* Enhanced CTAs */}
-              <div className="flex flex-col sm:flex-row gap-4 ml-8">
+              <div className="flex flex-col sm:flex-row gap-4 ml-16">
                <Link href="/pricing">
               <Button
                 size="lg"
@@ -131,7 +131,7 @@ export default function HomePage() {
             </div>
 
             {/* NEW: AI Demo Preview */}
-            <div className="relative -mt-8">
+            <div className="relative -mt-12">
               <div className="relative bg-slate-800/50 backdrop-blur-sm rounded-2xl p-8 border border-slate-700">
                 <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-cyan-500/10 rounded-2xl" />
                 <div className="relative space-y-6">
