@@ -141,7 +141,8 @@ export default function FeaturesPage() {
           </div>
         </div>
       </section>
-            
+
+       <div className="container mx-auto px-4 text-center">     
        <h2 className="text-3xl lg:text-4xl font-bold text-cyan-500 mb-4">
               Scale Your Business with Advanced AI Tax Solutions
             </h2>
@@ -214,7 +215,8 @@ export default function FeaturesPage() {
           </div>
         </div>
       </section>
-          
+
+          <div className="container mx-auto px-4 text-center">
            <h3 className="text-3xl lg:text-4xl font-bold text-cyan-500 mb-4">
               Next-Generation Tools: <span className="block text-white-400">Global Tax, Transfer Pricing, and State Nexus</span>
             </h3>           
