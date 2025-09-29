@@ -89,18 +89,7 @@ export default function PricingPage() {
       cta: "Go Premium",
       savings: "Save $296",
     },
-     <Button
-                      variant="outline"
-                      className="w-full border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-white bg-transparent"
-                      onClick={() => {
-                        document.getElementById("launch-process")?.scrollIntoView({
-                          behavior: "smooth",
-                        })
-                      }}
-                    >
-                      How the 48-Hour Launch Works
-                    </Button>
-  ]
+   ]
 
   // Individual services with real price IDs
   const individualServices = [
