@@ -288,7 +288,7 @@ export default function PricingPage() {
   ]
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-900 pt-8">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-900 pt-4">
       {/* Hero Section */}
       <section className="py-20">
         <div className="container mx-auto px-4 text-center">
@@ -335,7 +335,7 @@ export default function PricingPage() {
       <section className="py-20">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-3xl font-bold text-white mb-6">The Only Formation Service Built on 20+ Years of Big 4 Tax Expertise.</h2>
+            <h2 className="text-3xl lg:text-3xl text-white mb-6">The Only Formation Service Built on 20+ Years of Big 4 Tax Expertise.</h2>
               </div>
 
           <div className="grid lg:grid-cols-3 gap-8 max-w-7xl mx-auto mb-20">
