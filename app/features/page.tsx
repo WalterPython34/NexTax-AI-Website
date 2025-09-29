@@ -146,7 +146,7 @@ export default function FeaturesPage() {
       <section className="py-8">
        <div className="container mx-auto px-4 text-center">     
        <h2 className="text-3xl lg:text-4xl font-bold text-cyan-500 mb-4">
-              Core Launch Tools: Entity Setup, EIN, and Operating Agreement
+              StartSmart Core: <span className="block text-white">Seamless Business Formation and Initial Compliance</span>
             </h2>
             <p className="text-xl text-slate-300 max-w-3xl mx-auto">
               Go beyond paperwork - Unlock your personalized compliance and tax optimization tools trusted by top firms, delivered in less than 48-hour speed. 
