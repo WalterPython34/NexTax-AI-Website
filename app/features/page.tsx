@@ -423,7 +423,7 @@ export default function FeaturesPage() {
               {/* Centered StartSmart White Logo */}
               <div className="flex justify-center mb-8">
                 <img
-                  src="/images/startsmart-logo-white-new.png"
+                  src="/images/startsmart-logo-white.png"
                   alt="StartSmart by NexTax.AI"
                   className="h-28 w-auto"
                 />
