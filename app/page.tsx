@@ -74,14 +74,14 @@ export default function HomePage() {
               </div>
 
               {/* Enhanced CTAs */}
-              <div className="flex flex-col sm:flex-row gap-4 ml-6">
+              <div className="flex flex-col sm:flex-row gap-4 ml-18">
                <Link href="/pricing">
               <Button
                 size="lg"
                   className="bg-gradient-to-r from-purple-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white px-8 py-6 text-xl font-semibold w-full sm:w-auto mt-4"
                   >
                 <Bot className="mr-3 w-6 h-6" />
-                Launch Now: $499 Total (No Hidden Fees)
+                Launch Now: $499 Total
                 </Button>
                 </Link>      
                 <Link href="https://www.startsmartbiz.ai/pricing" target="_blank" rel="noopener noreferrer">                
@@ -97,7 +97,7 @@ export default function HomePage() {
 
             {/* Updated Social Proof */}
               <div className="bg-slate-800/30 rounded-lg p-4 border border-emerald-500/30">
-                <p className="text-emerald-300 font-medium text-center mb-2">🔒 100% Transparent Pricing Promise</p>
+                <p className="text-emerald-300 font-large text-center mb-2">🔒 100% Transparent Pricing Promise</p>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm text-slate-300">
                   <div className="flex items-center justify-center gap-1">
                     <CheckCircle className="w-4 h-4 text-emerald-400" />
