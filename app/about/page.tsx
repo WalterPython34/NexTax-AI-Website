@@ -97,16 +97,15 @@ export default function AboutPage() {
       <section className="py-20">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">Meet the Founder: Steve Morello, CEO & Founder</h2>
             <p className="text-xl text-slate-300 max-w-2xl mx-auto">
-              Experienced tax professional combining decades of tax expertise with cutting-edge AI innovation.
+              You shouldn't need a Wall Street budget to get Big 4 tax strategy. We founded NexTax on a simple, painful truth: The best tax and legal advice is often locked behind prohibitive costs and outdated processes. Every day, we saw entrepreneurs wasting thousands on simple formations and missing out on tens of thousands in tax savings, simply because they couldn't afford an expert.
             </p>
           </div>
           
       {/* Leadership Team Section */}
         <div className="container mx-auto px-4">
           <div className="text-center mb-8">
-            <h3 className="text-3xl lg:text-4xl font-bold text-white mb-6">Meet the Founder: Steve Morello, CEO & Founder</h3>
+            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">Meet the Founder: Steve Morello, CEO & Founder</h2>
             <p className="text-xl text-slate-300 max-w-2xl mx-auto">
               Experienced tax professional combining decades of tax expertise with cutting-edge AI innovation.
             </p>
@@ -126,7 +125,7 @@ export default function AboutPage() {
                           className="w-full h-full object-cover"
                         />
                       </div>
-                      <h4 className="text-2xl font-bold text-white mb-2">{member.name}</h4>
+                      <h3 className="text-2xl font-bold text-white mb-2">{member.name}</h3>
                       <p className="text-emerald-400 font-semibold mb-4">{member.role}</p>
 
                       {/* LinkedIn Button */}
@@ -149,7 +148,7 @@ export default function AboutPage() {
 
                       {/* Credentials */}
                       <div>
-                        <h5 className="font-semibold text-white mb-3">Professional Credentials</h5>
+                        <h4 className="font-semibold text-white mb-3">Professional Credentials</h4>
                         <div className="grid grid-cols-1 gap-2">
                           {member.credentials.map((credential, j) => (
                             <div key={j} className="flex items-center gap-2">
