@@ -300,12 +300,12 @@ export default function PricingPage() {
             Choose Your AI-Powered
             <span className="block text-emerald-400">Business Launch Package</span>
           </h1>
-          <h2 className="text-3xl lg:text-3xl text-white mb-6">The Only Formation Service Built on 20+ Years of Big 4 Tax Expertise.</h2>
+          <h2 className="text-3xl lg:text-2xl text-white mb-4">The Only Formation Service Built on 20+ Years of Big 4 Tax Expertise.</h2>
           </div>
       </section>
 
       {/* Trust Indicators */}
-      <section className="py-8 bg-slate-900/50">
+      <section className="py-6 bg-slate-900/50">
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-4 gap-8 text-center">
             <div className="flex flex-col items-center">
