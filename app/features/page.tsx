@@ -112,7 +112,7 @@ export default function FeaturesPage() {
       </section>
       
       {/* Hero Section */}
-      <section className="py-10">
+      <section className="py-6">
         <div className="container mx-auto px-4 text-center">
           <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/30 mb-6">
             <Bot className="w-4 h-4 mr-2" />
@@ -126,7 +126,7 @@ export default function FeaturesPage() {
       </section>    
           
     {/* Stats Section */}
-      <section className="py-10 bg-black/50">
+      <section className="py-6 bg-black/50">
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-4 gap-8">
             {stats.map((stat, i) => (
@@ -146,11 +146,11 @@ export default function FeaturesPage() {
       <section className="py-8">
        <div className="container mx-auto px-4 text-center">     
        <h2 className="text-3xl lg:text-4xl font-bold text-cyan-500 mb-4">
-              Scale Your Business with Advanced AI Tax Solutions
+              Core Launch Tools: Entity Setup, EIN, and Operating Agreement
             </h2>
             <p className="text-xl text-slate-300 max-w-3xl mx-auto">
-              Go beyond paperwork - Unlock your personalized compliance and tax optimization tools trusted by top firms, delivered with 48-hour speed. 
-              Included with all Business Formation Packages.
+              Go beyond paperwork - Unlock your personalized compliance and tax optimization tools trusted by top firms, delivered in less than 48-hour speed. 
+              <span className="block text-emerald-400"Included with all Business Formation Packages.</span>
             </p>
           </div>
          </section>
