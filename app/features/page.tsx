@@ -124,7 +124,7 @@ export default function FeaturesPage() {
             <div className="flex justify-center mb-8">
               <img src="/images/nextax-logo-large.png" alt="NexTax.AI" className="h-64 w-auto" />
             </div>         
-             </section>
+             
           
     {/* Stats Section */}
       <section className="py-16 bg-black/50">
