@@ -150,7 +150,7 @@ export default function FeaturesPage() {
             </h2>
             <p className="text-xl text-slate-300 max-w-3xl mx-auto">
               Go beyond paperwork - Unlock your personalized compliance and tax optimization tools trusted by top firms, delivered in less than 48-hour speed. 
-              <span className="block text-emerald-400"Included with all Business Formation Packages.</span>
+              <span className="block text-emerald-400">Included with all Business Formation Packages.</span>
             </p>
           </div>
          </section>
