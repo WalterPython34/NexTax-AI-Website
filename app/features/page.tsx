@@ -119,20 +119,11 @@ export default function FeaturesPage() {
       {/* NexTax.AI Product Suite */}
       <section className="py-10">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
+          <div className="text-center mb-8">
             {/* Large NexTax Logo - THIS IS STILL HERE! */}
             <div className="flex justify-center mb-8">
               <img src="/images/nextax-logo-large.png" alt="NexTax.AI" className="h-64 w-auto" />
-            </div>
-
-            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">
-              Scale Your Business with Advanced AI Tax Solutions
-            </h2>
-            <p className="text-xl text-slate-300 max-w-3xl mx-auto">
-              As your business grows, access our full StartSmart suite of specialized AI-powered tax and compliance tools designed
-              for everyday business needs. Included with all Business Formation Packages.
-            </p>
-          </div>
+            </div>         
 
     {/* Stats Section */}
       <section className="py-16 bg-black/50">
@@ -150,7 +141,16 @@ export default function FeaturesPage() {
           </div>
         </div>
       </section>
-
+            
+       <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">
+              Scale Your Business with Advanced AI Tax Solutions
+            </h2>
+            <p className="text-xl text-slate-300 max-w-3xl mx-auto">
+              As your business grows, access our full StartSmart suite of specialized AI-powered tax and compliance tools designed
+              for everyday business needs. Included with all Business Formation Packages.
+            </p>
+          </div>
+            
       {/* Features Grid */}
       <section className="py-20">
         <div className="container mx-auto px-4">
