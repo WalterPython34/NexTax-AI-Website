@@ -135,6 +135,87 @@ export default function FeaturesPage() {
             </p>
           </div>
 
+    {/* Stats Section */}
+      <section className="py-16 bg-black/50">
+        <div className="container mx-auto px-4">
+          <div className="grid md:grid-cols-4 gap-8">
+            {stats.map((stat, i) => (
+              <Card key={i} className="bg-gray-900/50 border-gray-700 text-center">
+                <CardContent className="p-8">
+                  <stat.icon className="w-12 h-12 text-emerald-400 mx-auto mb-4" />
+                  <div className="text-3xl font-bold text-white mb-2">{stat.value}</div>
+                  <div className="text-slate-400">{stat.label}</div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Features Grid */}
+      <section className="py-20">
+        <div className="container mx-auto px-4">
+          <div className="grid lg:grid-cols-2 gap-8">
+            {features.map((feature, i) => (
+              <Card key={i} className="bg-gray-900/50 border-gray-700 hover:border-emerald-500/50 transition-colors">
+                <CardHeader>
+                  <div className="flex items-center gap-4">
+                    <div
+                      className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+                        feature.color === "emerald"
+                          ? "bg-emerald-500/20"
+                          : feature.color === "cyan"
+                            ? "bg-cyan-500/20"
+                            : feature.color === "violet"
+                              ? "bg-violet-500/20"
+                              : feature.color === "orange"
+                                ? "bg-orange-500/20"
+                                : feature.color === "blue"
+                                  ? "bg-blue-500/20"
+                                  : "bg-green-500/20"
+                      }`}
+                    >
+                      <feature.icon
+                        className={`w-6 h-6 ${
+                          feature.color === "emerald"
+                            ? "text-emerald-400"
+                            : feature.color === "cyan"
+                              ? "text-cyan-400"
+                              : feature.color === "violet"
+                                ? "text-violet-400"
+                                : feature.color === "orange"
+                                  ? "text-orange-400"
+                                  : feature.color === "blue"
+                                    ? "text-blue-400"
+                                    : "text-green-400"
+                        }`}
+                      />
+                    </div>
+                    <div>
+                      <CardTitle className="text-white text-xl">{feature.title}</CardTitle>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <p className="text-slate-300">{feature.description}</p>
+                  <div className="space-y-2">
+                    <h4 className="font-semibold text-white">Key Benefits:</h4>
+                    <ul className="space-y-2">
+                      {feature.benefits.map((benefit, j) => (
+                        <li key={j} className="flex items-center gap-2 text-slate-300">
+                          <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                          {benefit}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+          
           <div className="grid lg:grid-cols-2 gap-8 mb-12">
             {/* Transfer Pricing GPT */}
             <Card className="bg-gray-900/50 border-gray-700 hover:border-emerald-500/50 transition-colors">
@@ -299,87 +380,6 @@ export default function FeaturesPage() {
                 </div>
               </CardContent>
             </Card>
-          </div>
-        </div>
-      </section>
-
-      {/* Stats Section */}
-      <section className="py-16 bg-black/50">
-        <div className="container mx-auto px-4">
-          <div className="grid md:grid-cols-4 gap-8">
-            {stats.map((stat, i) => (
-              <Card key={i} className="bg-gray-900/50 border-gray-700 text-center">
-                <CardContent className="p-8">
-                  <stat.icon className="w-12 h-12 text-emerald-400 mx-auto mb-4" />
-                  <div className="text-3xl font-bold text-white mb-2">{stat.value}</div>
-                  <div className="text-slate-400">{stat.label}</div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Features Grid */}
-      <section className="py-20">
-        <div className="container mx-auto px-4">
-          <div className="grid lg:grid-cols-2 gap-8">
-            {features.map((feature, i) => (
-              <Card key={i} className="bg-gray-900/50 border-gray-700 hover:border-emerald-500/50 transition-colors">
-                <CardHeader>
-                  <div className="flex items-center gap-4">
-                    <div
-                      className={`w-12 h-12 rounded-lg flex items-center justify-center ${
-                        feature.color === "emerald"
-                          ? "bg-emerald-500/20"
-                          : feature.color === "cyan"
-                            ? "bg-cyan-500/20"
-                            : feature.color === "violet"
-                              ? "bg-violet-500/20"
-                              : feature.color === "orange"
-                                ? "bg-orange-500/20"
-                                : feature.color === "blue"
-                                  ? "bg-blue-500/20"
-                                  : "bg-green-500/20"
-                      }`}
-                    >
-                      <feature.icon
-                        className={`w-6 h-6 ${
-                          feature.color === "emerald"
-                            ? "text-emerald-400"
-                            : feature.color === "cyan"
-                              ? "text-cyan-400"
-                              : feature.color === "violet"
-                                ? "text-violet-400"
-                                : feature.color === "orange"
-                                  ? "text-orange-400"
-                                  : feature.color === "blue"
-                                    ? "text-blue-400"
-                                    : "text-green-400"
-                        }`}
-                      />
-                    </div>
-                    <div>
-                      <CardTitle className="text-white text-xl">{feature.title}</CardTitle>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <p className="text-slate-300">{feature.description}</p>
-                  <div className="space-y-2">
-                    <h4 className="font-semibold text-white">Key Benefits:</h4>
-                    <ul className="space-y-2">
-                      {feature.benefits.map((benefit, j) => (
-                        <li key={j} className="flex items-center gap-2 text-slate-300">
-                          <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-                          {benefit}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
           </div>
         </div>
       </section>
