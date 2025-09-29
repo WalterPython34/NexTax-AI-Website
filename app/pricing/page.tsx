@@ -288,7 +288,7 @@ export default function PricingPage() {
   ]
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-900 pt-16">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-900 pt-8">
       {/* Hero Section */}
       <section className="py-20">
         <div className="container mx-auto px-4 text-center">
@@ -297,28 +297,24 @@ export default function PricingPage() {
             Simple, Transparent Pricing
           </Badge>
           <h1 className="text-4xl lg:text-6xl font-bold text-white mb-6">
-            Choose Your Business
-            <span className="block text-emerald-400">Launch Package</span>
+            Choose Your AI-Powered
+            <span className="block text-emerald-400">Business Launch Package</span>
           </h1>
-          <p className="text-xl text-slate-300 max-w-3xl mx-auto mb-12">
-            From simple formation to complete business setup. All packages include our AI-powered optimization and
-            expert support.
-          </p>
-        </div>
+          </div>
       </section>
 
       {/* Trust Indicators */}
-      <section className="py-16 bg-slate-900/50">
+      <section className="py-8 bg-slate-900/50">
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-4 gap-8 text-center">
             <div className="flex flex-col items-center">
               <Shield className="w-12 h-12 text-emerald-400 mb-4" />
-              <h3 className="font-semibold text-white mb-2">100% Secure</h3>
+              <h3 className="font-semibold text-white mb-2">100% Secure Checkout</h3>
               <p className="text-slate-400 text-sm">Bank-level encryption & SOC 2 compliant</p>
             </div>
             <div className="flex flex-col items-center">
               <Clock className="w-12 h-12 text-emerald-400 mb-4" />
-              <h3 className="font-semibold text-white mb-2">48-Hour Guarantee</h3>
+              <h3 className="font-semibold text-white mb-2">48-Hour Launch Guarantee</h3>
               <p className="text-slate-400 text-sm">Business ready to operate or money back</p>
             </div>
             <div className="flex flex-col items-center">
@@ -328,8 +324,8 @@ export default function PricingPage() {
             </div>
             <div className="flex flex-col items-center">
               <CheckCircle className="w-12 h-12 text-emerald-400 mb-4" />
-              <h3 className="font-semibold text-white mb-2">Expert Support</h3>
-              <p className="text-slate-400 text-sm">20+ years Big 4 & Wall Street experience</p>
+              <h3 className="font-semibold text-white mb-2">Big 4 Tax Expert Support</h3>
+              <p className="text-slate-400 text-sm">20+ years Big 4 & Fortune 500 experience</p>
             </div>
           </div>
         </div>
@@ -339,11 +335,8 @@ export default function PricingPage() {
       <section className="py-20">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">Complete Business Launch Packages</h2>
-            <p className="text-xl text-slate-300 max-w-2xl mx-auto">
-              Everything you need to get your business up and running legally. Pay once, launch in 48 hours.
-            </p>
-          </div>
+            <h2 className="text-3xl lg:text-3xl font-bold text-white mb-6">The Only Formation Service Built on 20+ Years of Big 4 Tax Expertise.</h2>
+              </div>
 
           <div className="grid lg:grid-cols-3 gap-8 max-w-7xl mx-auto mb-20">
             {packages.map((pkg, i) => (
