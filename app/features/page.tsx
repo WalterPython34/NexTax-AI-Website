@@ -104,21 +104,20 @@ export default function FeaturesPage() {
         <div className="container mx-auto px-4 text-center">
           <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/30 mb-6">
             <Bot className="w-4 h-4 mr-2" />
-            Advanced AI Features
+            AI-Powered Business Formation &
           </Badge>
           <h1 className="text-4xl lg:text-6xl font-bold text-white mb-6">
-            Powerful Features for
-            <span className="block text-emerald-400">Modern Tax Teams</span>
+            Tax Strategy backed by Big 4 Expertise
+            <span className="block text-emerald-400">New Businesses</span>
           </h1>
           <p className="text-xl text-slate-300 max-w-3xl mx-auto">
-            Discover how our AI-powered platform revolutionizes tax workflows, business formation, and compliance
-            management with cutting-edge technology.
+            Go beyond paperwork - Unlock your personalized compliance and tax optimization tools trusted by top firms, delivered with 48-hour speed.
           </p>
         </div>
       </section>
 
       {/* NexTax.AI Product Suite */}
-      <section className="py-20">
+      <section className="py-10">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             {/* Large NexTax Logo - THIS IS STILL HERE! */}
@@ -130,8 +129,8 @@ export default function FeaturesPage() {
               Scale Your Business with Advanced AI Tax Solutions
             </h2>
             <p className="text-xl text-slate-300 max-w-3xl mx-auto">
-              As your business grows, access our full suite of specialized AI-powered tax and compliance tools designed
-              for complex business needs.
+              As your business grows, access our full StartSmart suite of specialized AI-powered tax and compliance tools designed
+              for everyday business needs. Included with all Business Formation Packages.
             </p>
           </div>
 
