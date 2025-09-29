@@ -104,11 +104,11 @@ export default function FeaturesPage() {
         <div className="container mx-auto px-4 text-center">
           <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/30 mb-6">
             <Bot className="w-4 h-4 mr-2" />
-            AI-Powered Business Formation &
+            AI Automations for Entrepreneurs
           </Badge>
           <h1 className="text-4xl lg:text-6xl font-bold text-white mb-6">
-            Tax Strategy backed by Big 4 Expertise
-            <span className="block text-emerald-400">New Businesses</span>
+            AI-Powered Business Formation &
+            <span className="block text-emerald-400">Tax Strategy backed by Big 4 Expertise</span>
           </h1>
           <p className="text-xl text-slate-300 max-w-3xl mx-auto">
             Go beyond paperwork - Unlock your personalized compliance and tax optimization tools trusted by top firms, delivered with 48-hour speed.
