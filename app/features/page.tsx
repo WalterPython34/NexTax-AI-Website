@@ -95,9 +95,11 @@ export default function FeaturesPage() {
       name: "Zapier",
       description: "5,000+ integrations with tailored GPT flows for finance, CRM, HR & more",
     },
-  ]
-
-  {/* NexTax.AI Product Suite */}
+  ] 
+  
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black pt-16">
+     {/* NexTax.AI Product Suite */}
       <section className="py-6">
         <div className="container mx-auto px-4">
           <div className="text-center mb-8">
@@ -108,9 +110,7 @@ export default function FeaturesPage() {
           </div>
         </div>
       </section>
-  
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black pt-16">
+      
       {/* Hero Section */}
       <section className="py-20">
         <div className="container mx-auto px-4 text-center">
