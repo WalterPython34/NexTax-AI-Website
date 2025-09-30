@@ -70,8 +70,8 @@ export default function ResourcesPage() {
 
   const upcomingWebinars = [
     {
-      title: "Tax Strategies for New Businesses",
-      date: "January 15, 2025",
+      title: "Maximizing Deductions: A CPA's Essential Tax Strategies",
+      date: "November 15, 2025",
       time: "2:00 PM EST",
       presenter: "Steve Morello, CPA",
       description: "Learn essential tax planning strategies for your new business launch.",
@@ -79,15 +79,15 @@ export default function ResourcesPage() {
     },
     {
       title: "Choosing the Right Business Structure",
-      date: "January 22, 2025",
+      date: "December 22, 2025",
       time: "1:00 PM EST",
       presenter: "NexTax.AI Expert Team",
       description: "Deep dive into LLC vs. Corporation decisions with real-world examples.",
       registrationLink: "#",
     },
     {
-      title: "Multi-State Business Compliance",
-      date: "January 29, 2025",
+      title: "Multi-State Tax Nexus: Navigating Complex State Requirements",
+      date: "January 29, 2026",
       time: "3:00 PM EST",
       presenter: "Steve Morello, CPA",
       description: "Navigate complex multi-state tax obligations and nexus requirements.",
@@ -123,7 +123,7 @@ export default function ResourcesPage() {
     { value: "50K+", label: "Downloads" },
     { value: "98%", label: "Success Rate" },
     { value: "24/7", label: "AI Support" },
-    { value: "Free", label: "Always" },
+    { value: "Always Free", label: "Resources" },
   ]
 
   return (
@@ -136,12 +136,11 @@ export default function ResourcesPage() {
             Business Resources
           </Badge>
           <h1 className="text-4xl lg:text-6xl font-bold text-white mb-6">
-            Everything You Need to
-            <span className="block text-emerald-400">Launch & Scale</span>
+            Expert Tax Strategy &
+            <span className="block text-emerald-400">Business Compliance Resources</span>
           </h1>
           <p className="text-xl text-slate-300 max-w-3xl mx-auto mb-12">
-            Access our comprehensive collection of business tools, templates, guides, and expert content designed
-            specifically for modern entrepreneurs and growing businesses.
+            AI-Powered Insights to Maximize Your Tax Savings
           </p>
 
           {/* Stats */}
