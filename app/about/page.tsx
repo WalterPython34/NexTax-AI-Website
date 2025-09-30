@@ -59,7 +59,6 @@ export default function AboutPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-900 pt-16">
-     
       {/* Hero Section */}
       <section className="py-20">
         <div className="container mx-auto px-4 text-center">
@@ -108,9 +107,11 @@ export default function AboutPage() {
       </section>
           
       {/* Leadership Team Section */}
+       <section className="py-10">
         <div className="container mx-auto px-4">
           <div className="text-center mb-8">
-            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">Meet the Founder: Steve Morello, CEO & Founder</h2>
+            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">
+              Meet the Founder: Steve Morello, CEO & Founder</h2>
             <p className="text-xl text-slate-300 max-w-2xl mx-auto">
               Experienced tax professional combining decades of tax expertise with cutting-edge AI innovation.
             </p>
