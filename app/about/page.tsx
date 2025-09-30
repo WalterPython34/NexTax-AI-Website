@@ -60,7 +60,7 @@ export default function AboutPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-900 pt-16">
       {/* Hero Section */}
-      <section className="py-20">
+      <section className="py-16">
         <div className="container mx-auto px-4 text-center">
           <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/30 mb-6">
             <Users className="w-4 h-4 mr-2" />
@@ -93,9 +93,9 @@ export default function AboutPage() {
       </section>
 
       {/* Solution Section */}
-      <section className="py-14">
+      <section className="py-10">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-14">
+          <div className="text-center mb-10">
             <p className="text-xl text-slate-300 max-w-2xl mx-auto">
               You shouldn't need a Wall Street budget to get Big 4 tax strategy. We founded NexTax on a simple, painful
               truth: The best tax and legal advice is often locked behind prohibitive costs and outdated processes.
