@@ -354,7 +354,7 @@ export default function SuccessPage() {
               You can now complete our simple EIN questionnaire and we'll handle the rest. Your business will be legally
               formed and ready to operate within 48 hours.
             </p>
-             <Link href="/startsmart">
+             <Link href="https://form.typeform.com/to/hybbpz1Z" target="_blank" rel="noopener noreferrer">
               <Button size="lg" className="bg-white text-emerald-600 hover:bg-slate-100 px-8 py-4 text-lg">
                 View Questionnaire
                 <ArrowRight className="ml-2 w-5 h-5" />
