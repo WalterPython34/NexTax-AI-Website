@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import { CheckCircle, Mail, Phone, Calendar, FileText, Clock } from "lucide-react"
+import { CheckCircle, Mail, Phone, Calendar, FileText, Clock, ArrowRight } from "lucide-react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { useSearchParams } from "next/navigation"
@@ -51,7 +51,7 @@ import { useSearchParams } from "next/navigation"
     }, 1000)
 
     if (countdown === 0 && autoRedirect) {
-      window.location.href = "https://form.typeform.com/to/hybbpz1Z"
+      window.location.href = "/typeform"
     }
 
     return () => clearTimeout(timer)
@@ -161,13 +161,13 @@ import { useSearchParams } from "next/navigation"
                       </Button>
                       <Button
                         className="bg-white text-emerald-600 hover:bg-slate-100"
-                        onClick={() => (window.location.href = "https://form.typeform.com/to/hybbpz1Z")}
+                        onClick={() => <Link href="/typeform">}
                       >
                         Continue Now
                       </Button>
                     </div>
                   ) : (
-                    <Link href="https://form.typeform.com/to/hybbpz1Z" target="_blank" rel="noopener noreferrer">
+                    <Link href="/typeform">
                       <Button
                         size="lg"
                         className="bg-white text-emerald-600 hover:bg-slate-100 px-8 py-4 text-lg font-semibold"
