@@ -295,6 +295,7 @@ export default function SuccessPage() {
                 </div>
               </CardContent>
             </Card>
+            </section>
 
             {/* Typeform Section for After Purchase */}
       <section className="py-20 bg-gradient-to-r from-emerald-600 to-cyan-600">
@@ -318,7 +319,7 @@ export default function SuccessPage() {
             </Link>
           </div>
         </div>
-      </section>
+      
             
             <div className="grid md:grid-cols-3 gap-6 mb-8">
               <Card className="bg-slate-800/50 border-slate-700">
