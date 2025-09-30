@@ -97,7 +97,7 @@ export default function AboutPage() {
         <div className="container mx-auto px-4">
           <div className="text-center mb-10">
            <h2 className="text-3xl lg:text-4xl font-bold text-emerald-400 mb-6">
-            The Problem We Solved
+            The Problem We Solved</h2>
             <p className="text-xl text-slate-300 max-w-2xl mx-auto">
               You shouldn't need a Wall Street budget to get Big 4 tax strategy. We founded NexTax on a simple, painful
               truth: The best tax and legal advice is often locked behind prohibitive costs and outdated processes.
