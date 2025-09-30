@@ -18,11 +18,6 @@ import { useSearchParams } from "next/navigation"
   const [productType, setProductType] = useState<"ein" | "other" | null>(null)
   const [loading, setLoading] = useState(true)
 
-   const handleTypeformClick = useCallback(() => {
-    console.log("[v0] Opening Typeform questionnaire")
-    window.open("https://form.typeform.com/to/hybbpz1Z", "_blank", "noopener,noreferrer")
-  }, [])
-  
   // Fetch the product type from the session ID
   useEffect(() => {
     const fetchProductType = async () => {
@@ -362,16 +357,17 @@ import { useSearchParams } from "next/navigation"
               formed and ready to operate within 48 hours.
             </p>
             
-               <div className="mb-12">
-              <Button
-                size="lg"
-                onClick={handleTypeformClick}
-                className="bg-white text-emerald-600 hover:bg-slate-100 px-8 py-4 text-lg font-semibold"
-              >
-                <FileText className="mr-3 w-5 h-5" />
-                Complete Business Questionnaire
-                <ArrowRight className="ml-3 w-5 h-5" />
-              </Button>
+                <div className="mb-12">
+              <Link href="https://form.typeform.com/to/hybbpz1Z" target="_blank" rel="noopener noreferrer">
+                <Button
+                  size="lg"
+                  className="bg-white text-emerald-600 hover:bg-slate-100 px-8 py-4 text-lg font-semibold"
+                >
+                  <FileText className="mr-3 w-5 h-5" />
+                  Complete Business Questionnaire
+                  <ArrowRight className="ml-3 w-5 h-5" />
+                </Button>
+              </Link>
               <p className="text-white/80 text-sm mt-4">⏱️ Takes 3-5 minutes • Opens in new tab • Mobile-friendly</p>
             </div>
             
