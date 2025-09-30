@@ -66,11 +66,11 @@ export default function AboutPage() {
             <Users className="w-4 h-4 mr-2" />
             About NexTax.AI
           </Badge>
-          <h1 className="text-4xl lg:text-6xl font-bold text-white mb-6">
+          <h1 className="text-4xl lg:text-6xl font-bold text-white mb-8">
             Revolutionizing Tax & Business
             <span className="block text-emerald-400">Formation with AI</span>
           </h1>
-          <p className="text-xl text-slate-300 max-w-3xl mx-auto mb-12">
+          <p className="text-xl text-slate-300 max-w-3xl mx-auto mb-8">
             Founded by seasoned tax professionals and AI researchers, NexTax.AI combines decades of Big 4 and Wall
             Street tax expertise with cutting-edge artificial intelligence to transform how businesses handle tax and
             compliance.
@@ -93,9 +93,9 @@ export default function AboutPage() {
       </section>
 
       {/* Solution Section */}
-      <section className="py-16">
+      <section className="py-14">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
+          <div className="text-center mb-14">
             <p className="text-xl text-slate-300 max-w-2xl mx-auto">
               You shouldn't need a Wall Street budget to get Big 4 tax strategy. We founded NexTax on a simple, painful
               truth: The best tax and legal advice is often locked behind prohibitive costs and outdated processes.
