@@ -310,6 +310,15 @@ export default function SuccessPage() {
               You can now complete our simple EIN questionnaire and we'll handle the rest. Your business will be
               legally formed and ready to operate within 48 hours.
             </p>
+            <Link href="/startsmart">
+              <Button size="lg" className="bg-white text-emerald-600 hover:bg-slate-100 px-8 py-4 text-lg">
+                View Questionnaire
+                <ArrowRight className="ml-2 w-5 h-5" />
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
             
             <div className="grid md:grid-cols-3 gap-6 mb-8">
               <Card className="bg-slate-800/50 border-slate-700">
