@@ -354,12 +354,19 @@ export default function SuccessPage() {
               You can now complete our simple EIN questionnaire and we'll handle the rest. Your business will be legally
               formed and ready to operate within 48 hours.
             </p>
-             <Link href="https://form.typeform.com/to/hybbpz1Z" target="_blank" rel="noopener noreferrer">
-              <Button size="lg" className="bg-white text-emerald-600 hover:bg-slate-100 px-8 py-4 text-lg">
-                View Questionnaire
-                <ArrowRight className="ml-2 w-5 h-5" />
-              </Button>
-            </Link>
+              <div className="mb-12">
+              <Link href="https://form.typeform.com/to/hybbpz1Z" target="_blank" rel="noopener noreferrer">
+                <Button
+                  size="lg"
+                  className="bg-white text-emerald-600 hover:bg-slate-100 px-8 py-4 text-lg font-semibold"
+                >
+                  <FileText className="mr-3 w-5 h-5" />
+                  Complete Business Questionnaire
+                  <ArrowRight className="ml-3 w-5 h-5" />
+                </Button>
+              </Link>
+              <p className="text-white/80 text-sm mt-4">⏱️ Takes 3-5 minutes • Opens in new tab • Mobile-friendly</p>
+            </div>
         </div>
         </div>
       </section>
