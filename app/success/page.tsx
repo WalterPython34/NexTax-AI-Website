@@ -146,37 +146,35 @@ import { useSearchParams } from "next/navigation"
                     your business formation documents.
                   </p>
 
-                  {autoRedirect ? (
-                    <div className="mb-6 bg-white/10 rounded-lg p-4 text-center">
-                      <p className="text-white mb-2">
-                        You will be automatically redirected to the questionnaire in{" "}
-                        <span className="font-bold text-xl">{countdown}</span> seconds
-                      </p>
-                      <Button
-                        variant="outline"
-                        className="bg-white/20 text-white hover:bg-white/30 border-white/30 mr-3"
-                        onClick={() => setAutoRedirect(false)}
-                      >
-                        Cancel Redirect
-                      </Button>
-                      <Button
-                        className="bg-white text-emerald-600 hover:bg-slate-100"
-                        onClick={() => <Link href="/typeform">}
-                      >
-                        Continue Now
-                      </Button>
-                    </div>
-                  ) : (
-                    <Link href="/typeform">
-                      <Button
-                        size="lg"
-                        className="bg-white text-emerald-600 hover:bg-slate-100 px-8 py-4 text-lg font-semibold"
-                      >
-                        <FileText className="mr-3 w-5 h-5" />
-                        Complete Business Questionnaire
-                      </Button>
-                    </Link>
-                  )}
+                 {autoRedirect ? (
+  <div className="mb-6 bg-white/10 rounded-lg p-4 text-center">
+    <p className="text-white mb-2">
+      You will be automatically redirected to the questionnaire in{" "}
+      <span className="font-bold text-xl">{countdown}</span> seconds
+    </p>
+    <Button
+      variant="outline"
+      className="bg-white/20 text-white hover:bg-white/30 border-white/30 mr-3"
+      onClick={() => setAutoRedirect(false)}
+    >
+      Cancel Redirect
+    </Button>
+    <Link href="/typeform">
+      <Button className="bg-white text-emerald-600 hover:bg-slate-100">Continue Now</Button>
+    </Link>
+  </div>
+) : (
+  <Link href="/typeform">
+    <Button
+      size="lg"
+      className="bg-white text-emerald-600 hover:bg-slate-100 px-8 py-4 text-lg font-semibold"
+    >
+      <FileText className="mr-3 w-5 h-5" />
+      Complete Business Questionnaire
+      <ArrowRight className="ml-3 w-5 h-5" />
+    </Button>
+  </Link>
+)}
 
                   <p className="text-emerald-100 text-sm mt-4">
                     ⏱️ Takes 3-5 minutes • Opens in new tab • Mobile-friendly
