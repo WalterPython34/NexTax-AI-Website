@@ -8,7 +8,9 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { useSearchParams } from "next/navigation"
 
-export default function SuccessPage() {
+ export default function SuccessPageContent() {
+  console.log("[v0] SuccessPageContent component rendering")
+
   const searchParams = useSearchParams()
   const sessionId = searchParams.get("session_id")
   const [countdown, setCountdown] = useState(10)
@@ -16,6 +18,11 @@ export default function SuccessPage() {
   const [productType, setProductType] = useState<"ein" | "other" | null>(null)
   const [loading, setLoading] = useState(true)
 
+   const handleTypeformClick = useCallback(() => {
+    console.log("[v0] Opening Typeform questionnaire")
+    window.open("https://form.typeform.com/to/hybbpz1Z", "_blank", "noopener,noreferrer")
+  }, [])
+  
   // Fetch the product type from the session ID
   useEffect(() => {
     const fetchProductType = async () => {
