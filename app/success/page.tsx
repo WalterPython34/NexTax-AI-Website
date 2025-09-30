@@ -274,7 +274,7 @@ export default function SuccessPage() {
                         <div>
                           <h3 className="font-semibold text-white mb-2">Confirmation Email (Within 15 minutes)</h3>
                           <p className="text-slate-300">
-                            You'll receive a detailed confirmation email with next steps and access to your services.
+                            You'll receive a detailed confirmation email with next steps to complete the EIN process and access to your services.  Alternativly, the EIN questionnaire is also included below for your conveinence.
                           </p>
                         </div>
                       </div>
@@ -296,6 +296,21 @@ export default function SuccessPage() {
               </CardContent>
             </Card>
 
+            {/* Typeform Section for After Purchase */}
+      <section className="py-20 bg-gradient-to-r from-emerald-600 to-cyan-600">
+        <div className="container mx-auto px-4">
+          <div className="max-w-4xl mx-auto text-center">
+            {/* StartSmart Logo - Black Version */}
+            <div className="flex justify-center mb-8">
+              <img src="/images/StartSmart-logo-new-business-launch.png" alt="StartSmart by NexTax.AI" className="h-40 w-auto" />
+            </div>
+
+            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">Ready to Start Your Business?</h2>
+            <p className="text-xl text-white/90 max-w-2xl mx-auto mb-8">
+              You can now complete our simple EIN questionnaire and we'll handle the rest. Your business will be
+              legally formed and ready to operate within 48 hours.
+            </p>
+            
             <div className="grid md:grid-cols-3 gap-6 mb-8">
               <Card className="bg-slate-800/50 border-slate-700">
                 <CardContent className="p-6 text-center">
