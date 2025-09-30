@@ -94,13 +94,18 @@ export default function AboutPage() {
       </section>
 
       {/* Solution Section */}
-      <section className="py-20">
+      <section className="py-16">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <p className="text-xl text-slate-300 max-w-2xl mx-auto">
-              You shouldn't need a Wall Street budget to get Big 4 tax strategy. We founded NexTax on a simple, painful truth: The best tax and legal advice is often locked behind prohibitive costs and outdated processes. Every day, we saw entrepreneurs wasting thousands on simple formations and missing out on tens of thousands in tax savings, simply because they couldn't afford an expert.
+              You shouldn't need a Wall Street budget to get Big 4 tax strategy. We founded NexTax on a simple, painful
+              truth: The best tax and legal advice is often locked behind prohibitive costs and outdated processes.
+              Every day, we saw entrepreneurs wasting thousands on simple formations and missing out on tens of
+              thousands in tax savings, simply because they couldn't afford an expert.
             </p>
           </div>
+        </div>
+      </section>
           
       {/* Leadership Team Section */}
         <div className="container mx-auto px-4">
