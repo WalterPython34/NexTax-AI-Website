@@ -20,7 +20,7 @@ export default function ResourcesPage() {
   const featuredResources = [
     {
       icon: FileText,
-      title: "Business Formation Guide",
+      title: "The Tax-First Launch Guide: Choosing Your Optimal Entity",
       description: "Complete guide to choosing the right business structure for your needs.",
       type: "PDF Guide",
       color: "emerald",
@@ -156,14 +156,14 @@ export default function ResourcesPage() {
       </section>
 
       {/* Featured Resources */}
-      <section className="py-12">
+      <section className="py-8">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
+          <div className="text-center mb-10">
             <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">Featured Resources</h2>
             <p className="text-xl text-slate-300">Our most popular tools and guides</p>
           </div>
 
-          <div className="grid lg:grid-cols-3 gap-8 mb-16">
+          <div className="grid lg:grid-cols-3 gap-8 mb-12">
             {featuredResources.map((resource, i) => (
               <Card key={i} className="bg-gray-900/50 border-gray-700 hover:border-emerald-500/50 transition-colors">
                 <CardHeader>
