@@ -123,7 +123,7 @@ export default function ResourcesPage() {
     { value: "50K+", label: "Downloads" },
     { value: "98%", label: "Success Rate" },
     { value: "24/7", label: "AI Support" },
-    { value: "Always Free", label: "Resources" },
+    { value: "Resources", label: "Always Free" },
   ]
 
   return (
@@ -156,7 +156,7 @@ export default function ResourcesPage() {
       </section>
 
       {/* Featured Resources */}
-      <section className="py-16">
+      <section className="py-12">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">Featured Resources</h2>
@@ -215,7 +215,7 @@ export default function ResourcesPage() {
       </section>
 
       {/* Upcoming Webinars */}
-      <section className="py-16 bg-black/50">
+      <section className="py-12 bg-black/50">
         <div className="container mx-auto px-4">
           <div className="text-center mb-12">
             <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">Upcoming Expert Webinars</h2>
