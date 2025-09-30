@@ -357,8 +357,8 @@ import { useSearchParams } from "next/navigation"
               formed and ready to operate within 48 hours.
             </p>
             
-                <div className="mb-12">
-              <Link href="https://form.typeform.com/to/hybbpz1Z" target="_blank" rel="noopener noreferrer">
+                 <div className="mb-12">
+              <Link href="/typeform">
                 <Button
                   size="lg"
                   className="bg-white text-emerald-600 hover:bg-slate-100 px-8 py-4 text-lg font-semibold"
