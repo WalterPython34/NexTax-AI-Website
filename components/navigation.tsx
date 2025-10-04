@@ -21,19 +21,19 @@ export default function Navigation() {
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center space-x-8">
-            <Link href="/features" className="hover:text-blue-400 transition-colors">
+            <Link href="/features" className="hover:text-teal-400 transition-colors">
               Features
             </Link>
-            <Link href="/pricing" className="hover:text-blue-400 transition-colors">
+            <Link href="/pricing" className="hover:text-teal-400 transition-colors">
               Pricing
             </Link>
-            <Link href="/resources" className="hover:text-blue-400 transition-colors">
+            <Link href="/resources" className="hover:text-teal-400 transition-colors">
               Resources
             </Link>
-            <Link href="/about" className="hover:text-blue-400 transition-colors">
+            <Link href="/about" className="hover:text-teal-400 transition-colors">
               About
             </Link>
-            <Link href="/contact" className="hover:text-blue-400 transition-colors">
+            <Link href="/contact" className="hover:text-teal-400 transition-colors">
               Contact
             </Link>
           </div>
@@ -59,11 +59,11 @@ export default function Navigation() {
           <div className="md:hidden">
             <Button
               variant="ghost"
-              size="sm"
+              size="lg"
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="text-white hover:bg-slate-800"
+              className="text-white p-3 min-w-[48px] min-h-[48px]"
             >
-              {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              {isMenuOpen ? <X className="h-7 w-7" /> : <Menu className="h-7 w-7" />}
             </Button>
           </div>
         </div>
@@ -71,38 +71,38 @@ export default function Navigation() {
         {/* Mobile Navigation */}
         {isMenuOpen && (
           <div className="md:hidden">
-            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 border-t border-slate-700">
+            <div className="px-2 pt-2 pb-6 space-y-2 sm:px-3 border-t border-slate-700">
               <Link
                 href="/features"
-                className="block px-3 py-2 text-base font-medium hover:text-blue-400 transition-colors"
+                className="block px-4 py-4 text-white hover:text-teal-400 hover:bg-slate-800 rounded-lg transition-colors text-lg"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Features
               </Link>
               <Link
                 href="/pricing"
-                className="block px-3 py-2 text-base font-medium hover:text-blue-400 transition-colors"
+                className="block px-4 py-4 text-white hover:text-teal-400 hover:bg-slate-800 rounded-lg transition-colors text-lg"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Pricing
               </Link>
               <Link
                 href="/resources"
-                className="block px-3 py-2 text-base font-medium hover:text-blue-400 transition-colors"
+                className="block px-4 py-4 text-white hover:text-teal-400 hover:bg-slate-800 rounded-lg transition-colors text-lg"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Resources
               </Link>
               <Link
                 href="/about"
-                className="block px-3 py-2 text-base font-medium hover:text-blue-400 transition-colors"
+                className="block px-4 py-4 text-white hover:text-teal-400 hover:bg-slate-800 rounded-lg transition-colors text-lg"
                 onClick={() => setIsMenuOpen(false)}
               >
                 About
               </Link>
               <Link
                 href="/contact"
-                className="block px-3 py-2 text-base font-medium hover:text-blue-400 transition-colors"
+                className="block px-4 py-4 text-white hover:text-teal-400 hover:bg-slate-800 rounded-lg transition-colors text-lg"
                 onClick={() => setIsMenuOpen(false)}
               >
                 Contact
