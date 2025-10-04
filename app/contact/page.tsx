@@ -91,9 +91,12 @@ export default function ContactPage() {
       title: "Schedule Consultation",
       description: "Book a strategy session",
       contact: (
-         <CalendlyPopup className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded text-sm">
-          Book Now
-        </CalendlyPopup>
+         <CalendlyButton
+                  url="https://calendly.com/steven-morello-nextax"
+                  className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded text-sm inline-block transition-colors"
+                >
+                  Book Now
+                </CalendlyButton>
 
       ),
       availability: "30-minute consultation",
