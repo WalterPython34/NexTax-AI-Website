@@ -114,7 +114,7 @@ export default function HomePage() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-8 pt-4">
+              <div className="flex items-center gap-8 pt-2">
                 <div className="text-center">
                   <div className="text-2xl font-bold text-cyan-500">AI-Powered</div>
                   <div className="text-sm text-slate-400">Formation</div>
@@ -131,7 +131,7 @@ export default function HomePage() {
             </div>
 
             {/* NEW: AI Demo Preview */}
-            <div className="relative -mt-14">
+            <div className="relative -mt-8">
               <div className="relative bg-slate-800/50 backdrop-blur-sm rounded-2xl p-8 border border-slate-700">
                 <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-cyan-500/10 rounded-2xl" />
                 <div className="relative space-y-6">
