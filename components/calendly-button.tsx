@@ -1,7 +1,6 @@
 "use client"
 
 import type React from "react"
-
 import { useEffect } from "react"
 
 interface CalendlyButtonProps {
@@ -10,7 +9,7 @@ interface CalendlyButtonProps {
   children: React.ReactNode
 }
 
-export function CalendlyButton({ url, className, children }: CalendlyButtonProps) {
+export default function CalendlyButton({ url, className, children }: CalendlyButtonProps) {
   useEffect(() => {
     // Load Calendly widget script
     const script = document.createElement("script")
