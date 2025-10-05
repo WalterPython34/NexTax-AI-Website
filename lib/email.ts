@@ -55,112 +55,6 @@ export async function sendEmail({ to, subject, html, from, attachments }: SendEm
   }
 }
 
-export const emailService = {
-  async sendTaxPlanningChecklistEmail(userEmail: string) {
-    const subject = "Your Tax Planning Checklist - NexTax.AI"
-    const html = `
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <meta charset="utf-8">
-          <meta name="viewport" content="width=device-width, initial-scale=1.0">
-          <title>Tax Planning Checklist</title>
-        </head>
-        <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f4f4f4;">
-          <table role="presentation" style="width: 100%; border-collapse: collapse;">
-            <tr>
-              <td align="center" style="padding: 40px 0;">
-                <table role="presentation" style="width: 600px; border-collapse: collapse; background-color: #ffffff; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-                   Header 
-                  <tr>
-                    <td style="padding: 40px 40px 30px; background: linear-gradient(135deg, #2563eb 0%, #06b6d4 100%);">
-                      <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: bold;">Tax Planning Checklist</h1>
-                      <p style="margin: 10px 0 0; color: #e0f2fe; font-size: 16px;">Essential Strategies for New Businesses</p>
-                    </td>
-                  </tr>
-                  
-                   Content 
-                  <tr>
-                    <td style="padding: 40px;">
-                      <p style="margin: 0 0 20px; color: #1f2937; font-size: 16px; line-height: 1.6;">
-                        Thank you for downloading the Tax Planning Checklist from NexTax.AI!
-                      </p>
-                      
-                      <p style="margin: 0 0 20px; color: #1f2937; font-size: 16px; line-height: 1.6;">
-                        This comprehensive checklist covers 7 essential categories to help you identify and implement key tax planning strategies for your new business:
-                      </p>
-                      
-                      <ul style="margin: 0 0 30px; padding-left: 20px; color: #1f2937; font-size: 16px; line-height: 1.8;">
-                        <li>Choose and Evaluate Your Business Structure</li>
-                        <li>Understand Tax Obligations and Filing Requirements</li>
-                        <li>Maximize Deductions and Credits</li>
-                        <li>Plan for Depreciation, Assets, and Capital Expenditures</li>
-                        <li>Optimize Retirement and Health Benefits</li>
-                        <li>Maintain Records, Compliance, and Payroll</li>
-                        <li>Advanced Strategies for Tax Efficiency</li>
-                      </ul>
-                      
-                      <div style="background-color: #dbeafe; border-left: 4px solid #2563eb; padding: 20px; margin: 0 0 30px;">
-                        <p style="margin: 0; color: #1e40af; font-size: 14px; line-height: 1.6;">
-                          <strong>Pro Tip:</strong> Review this checklist at year-end and mid-year to stay on top of your tax planning. Always consult with a qualified tax professional for personalized advice.
-                        </p>
-                      </div>
-                      
-                      <table role="presentation" style="width: 100%; border-collapse: collapse; margin: 0 0 30px;">
-                        <tr>
-                          <td align="center">
-                            <a href="${process.env.NEXT_PUBLIC_SITE_URL || "https://nextax.ai"}/resources/tax-planning-checklist" 
-                               style="display: inline-block; padding: 16px 32px; background-color: #2563eb; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">
-                              View Full Checklist Online
-                            </a>
-                          </td>
-                        </tr>
-                      </table>
-                      
-                      <p style="margin: 0 0 20px; color: #1f2937; font-size: 16px; line-height: 1.6;">
-                        Need help implementing these strategies? Our team of tax experts is here to help you optimize your business structure and maximize your tax savings.
-                      </p>
-                      
-                      <p style="margin: 0; color: #1f2937; font-size: 16px; line-height: 1.6;">
-                        <strong>Ready to get started?</strong> Schedule a free consultation with our team.
-                      </p>
-                    </td>
-                  </tr>
-                  
-                   CTA Button 
-                  <tr>
-                    <td style="padding: 0 40px 40px;">
-                      <table role="presentation" style="width: 100%; border-collapse: collapse;">
-                        <tr>
-                          <td align="center" style="padding: 30px; background-color: #f9fafb; border-radius: 8px;">
-                            <a href="${process.env.NEXT_PUBLIC_SITE_URL || "https://nextax.ai"}/contact" 
-                               style="display: inline-block; padding: 16px 32px; background-color: #10b981; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px;">
-                              Schedule Free Consultation
-                            </a>
-                          </td>
-                        </tr>
-                      </table>
-                    </td>
-                  </tr>
-                  
-                   Footer 
-                  <tr>
-                    <td style="padding: 30px 40px; background-color: #1f2937; text-align: center;">
-                      <p style="margin: 0 0 10px; color: #9ca3af; font-size: 14px;">
-                        NexTax.AI - Your AI-Powered Business Launch Partner
-                      </p>
-                      <p style="margin: 0; color: #6b7280; font-size: 12px;">
-                        This checklist provides general guidance. Always consult a qualified tax professional for personalized advice.
-                      </p>
-                    </td>
-                  </tr>
-                </table>
-              </td>
-            </tr>
-          </table>
-        </body>
-      </html>
-
 // New function specifically for sending the LLC guide
 export async function sendLLCGuideEmail(email: string, name: string) {
   const html = `
@@ -554,6 +448,87 @@ export const emailService = {
     return await sendEmail({
       to,
       subject: "📋 Your Tax-First Launch Guide - Choosing Your Optimal Entity",
+      html,
+    })
+  },
+
+    async sendTaxPlanningChecklistEmail(to: string) {
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; }
+          .header { background-color: #3b82f6; color: white; padding: 20px; text-align: center; }
+          .content { padding: 20px; }
+          .highlight { background-color: #eff6ff; border-left: 4px solid #3b82f6; padding: 15px; margin: 20px 0; }
+          .footer { background-color: #f3f4f6; padding: 15px; text-align: center; font-size: 12px; }
+          .button { background-color: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block; margin: 10px 0; }
+          ul { padding-left: 20px; }
+          li { margin-bottom: 8px; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>Tax Planning Checklist</h1>
+        </div>
+        <div class="content">
+          <p>Thank you for your interest in our Tax Planning Checklist!</p>
+          
+          <p>As promised, here's your comprehensive checklist of essential tax strategies for new businesses.</p>
+          
+          <div class="highlight">
+            <h3>✅ What's Inside This Checklist:</h3>
+            <ul>
+              <li><strong>Business Structure Evaluation</strong> - Assess and optimize your entity type</li>
+              <li><strong>Tax Obligations & Filing Requirements</strong> - Know your deadlines and requirements</li>
+              <li><strong>Maximize Deductions & Credits</strong> - Reduce taxable income legally</li>
+              <li><strong>Depreciation & Asset Planning</strong> - Optimize timing for purchases</li>
+              <li><strong>Retirement & Health Benefits</strong> - Shelter income while building security</li>
+              <li><strong>Records & Compliance</strong> - Maintain accuracy and avoid issues</li>
+              <li><strong>Advanced Tax Strategies</strong> - Implement as your business matures</li>
+            </ul>
+          </div>
+          
+          <p><strong>⚠️ Disclaimer:</strong> This checklist provides general guidance based on tax strategies relevant for 2025. Tax laws are subject to change, and individual circumstances vary. Always consult a qualified tax professional or CPA for personalized advice.</p>
+          
+          <p style="text-align: center;">
+            <a href="https://nextax.ai/resources/tax-planning-checklist" class="button">📋 View Full Checklist Online</a>
+          </p>
+          
+          <p><strong>Need Help with Tax Planning?</strong></p>
+          <p>Our NexTax.AI advisors can help you:</p>
+          <ul>
+            <li>Implement tax-saving strategies for your business</li>
+            <li>Ensure compliance with all tax requirements</li>
+            <li>Maximize deductions and credits</li>
+            <li>Plan for quarterly estimated taxes</li>
+            <li>Set up retirement and health benefits</li>
+          </ul>
+          
+          <p style="text-align: center;">
+            <a href="https://nextax.ai/contact" class="button">💼 Contact a Tax Advisor</a>
+          </p>
+          
+          <p>Ready to get started? Book a call with our team:</p>
+          
+          <p style="text-align: center;">
+            <a href="https://calendly.com/steven-morello-nextax" class="button">📅 Schedule Your Consultation</a>
+          </p>
+          
+          <p>Best regards,<br>The NexTax.AI Team</p>
+        </div>
+        <div class="footer">
+          <p>© 2025 NexTax.AI. All rights reserved.</p>
+          <p>121 W Main St, Brighton MI 48116 | support@nextax.ai</p>
+        </div>
+      </body>
+      </html>
+    `
+
+    return await sendEmail({
+      to,
+      subject: "✅ Your Tax Planning Checklist - Essential Strategies for New Businesses",
       html,
     })
   },
