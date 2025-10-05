@@ -43,6 +43,7 @@ export default function ResourcesPage() {
       type: "Interactive Tool",
       color: "violet",
       featured: true,
+      link: "/resources/startup-calculator",
     },
   ]
 
