@@ -15,6 +15,11 @@ export default function CalendlyButton({ url, className, children }: CalendlyBut
   useEffect(() => {
     console.log("[v0] Loading Calendly script...")
 
+    const link = document.createElement("link")
+    link.href = "https://assets.calendly.com/assets/external/widget.css"
+    link.rel = "stylesheet"
+    document.head.appendChild(link)
+
     // Load Calendly widget script
     const script = document.createElement("script")
     script.src = "https://assets.calendly.com/assets/external/widget.js"
@@ -32,9 +37,12 @@ export default function CalendlyButton({ url, className, children }: CalendlyBut
     document.body.appendChild(script)
 
     return () => {
-      // Cleanup script on unmount
+      // Cleanup script and stylesheet on unmount
       if (document.body.contains(script)) {
         document.body.removeChild(script)
+      }
+      if (document.head.contains(link)) {
+        document.head.removeChild(link)
       }
     }
   }, [])
@@ -47,7 +55,7 @@ export default function CalendlyButton({ url, className, children }: CalendlyBut
     if (window.Calendly) {
       console.log("[v0] Opening Calendly popup with URL:", url)
       // @ts-ignore
-      window.Calendly.initPopupWidget({ url })
+      window.Calendly.initPopupWidget({ url: url })
     } else {
       console.error("[v0] Calendly is not loaded yet")
       alert("Calendly is still loading. Please try again in a moment.")
@@ -60,4 +68,5 @@ export default function CalendlyButton({ url, className, children }: CalendlyBut
     </button>
   )
 }
+
 
