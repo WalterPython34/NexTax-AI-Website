@@ -374,5 +374,82 @@ export const emailService = {
       throw error
     }
   },
+   async sendTaxFirstGuideEmail(to: string) {
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; }
+          .header { background-color: #10b981; color: white; padding: 20px; text-align: center; }
+          .content { padding: 20px; }
+          .highlight { background-color: #f0fdf4; border-left: 4px solid #10b981; padding: 15px; margin: 20px 0; }
+          .footer { background-color: #f3f4f6; padding: 15px; text-align: center; font-size: 12px; }
+          .button { background-color: #10b981; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; display: inline-block; margin: 10px 0; }
+          ul { padding-left: 20px; }
+          li { margin-bottom: 8px; }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <h1>The Tax-First Launch Guide</h1>
+        </div>
+        <div class="content">
+          <p>Thank you for your interest in our Tax-First Launch Guide!</p>
+          
+          <p>As promised, here's your comprehensive guide to choosing the optimal business entity structure with a tax-focused approach.</p>
+          
+          <div class="highlight">
+            <h3>📋 What's Inside This Guide:</h3>
+            <ul>
+              <li><strong>Tax-Focused Entity Selection</strong> - Understand how each structure impacts your taxes</li>
+              <li><strong>Complete Entity Comparison</strong> - Detailed breakdown of Sole Prop, Partnership, LLC, S-Corp, and C-Corp</li>
+              <li><strong>Key Decision Factors</strong> - Income projections, liability risks, growth plans, and more</li>
+              <li><strong>Common Pitfalls to Avoid</strong> - Learn from others' mistakes</li>
+              <li><strong>Next Steps</strong> - Actionable guidance to launch with confidence</li>
+            </ul>
+          </div>
+          
+          <p><strong>⚠️ Important:</strong> This guide is designed for aspiring entrepreneurs and provides a clear, tax-focused overview. While it's a helpful starting point, we always recommend consulting with a tax professional or attorney for personalized advice.</p>
+          
+          <p style="text-align: center;">
+            <a href="https://nextax.ai/resources/tax-first-launch-guide" class="button">📄 View Full Guide Online</a>
+          </p>
+          
+          <p><strong>Ready to Launch Your Business?</strong></p>
+          <p>Our StartSmart GPT service can help you:</p>
+          <ul>
+            <li>Choose the right entity structure for your specific situation</li>
+            <li>Complete all formation paperwork correctly</li>
+            <li>Get your EIN and business documents within 48 hours</li>
+            <li>Ensure tax-optimized setup from day one</li>
+          </ul>
+          
+          <p style="text-align: center;">
+            <a href="https://nextax.ai/startsmart" class="button">🚀 Start Your Business Now</a>
+          </p>
+          
+          <p>Have questions? Schedule a free consultation with our team:</p>
+          
+          <p style="text-align: center;">
+            <a href="https://calendly.com/steven-morello-nextax" class="button">📅 Schedule Free Consultation</a>
+          </p>
+          
+          <p>Best regards,<br>The NexTax.AI Team</p>
+        </div>
+        <div class="footer">
+          <p>© 2025 NexTax.AI. All rights reserved.</p>
+          <p>121 W Main St, Brighton MI 48116 | support@nextax.ai</p>
+        </div>
+      </body>
+      </html>
+    `
+
+    return await sendEmail({
+      to,
+      subject: "📋 Your Tax-First Launch Guide - Choosing Your Optimal Entity",
+      html,
+    })
+  },
 }
 
