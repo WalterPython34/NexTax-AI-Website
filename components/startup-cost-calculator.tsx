@@ -1,7 +1,9 @@
 "use client"
 
+import type React from "react"
+
 import { useState } from "react"
-import { Calculator, Users, Home, Computer, Shield, TrendingUp, Download, Info, Plus, X } from "lucide-react"
+import { Calculator, Users, Home, Computer, Shield, TrendingUp, Download, Info, Plus, X, Mail } from "lucide-react"
 
 const StartupCostCalculator = () => {
   const [costs, setCosts] = useState({
@@ -52,6 +54,11 @@ const StartupCostCalculator = () => {
   const [showAddCustom, setShowAddCustom] = useState(false)
   const [newCustomItem, setNewCustomItem] = useState({ name: "", amount: "" })
   const [businessType, setBusinessType] = useState("")
+
+  const [showEmailModal, setShowEmailModal] = useState(false)
+  const [email, setEmail] = useState("")
+  const [isSubmittingEmail, setIsSubmittingEmail] = useState(false)
+  const [emailError, setEmailError] = useState("")
 
   const categoryIcons = {
     legal: Shield,
@@ -194,6 +201,42 @@ const StartupCostCalculator = () => {
       minimumFractionDigits: 0,
       maximumFractionDigits: 0,
     }).format(amount)
+  }
+
+  const handleEmailSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setEmailError("")
+
+    // Basic email validation
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setEmailError("Please enter a valid email address")
+      return
+    }
+
+    setIsSubmittingEmail(true)
+
+    try {
+      // Send email to API for lead capture
+      await fetch("/api/capture-calculator-lead", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          totalCost: calculateGrandTotal(),
+          businessType: businessType || "Custom",
+        }),
+      })
+
+      // Close modal and generate PDF
+      setShowEmailModal(false)
+      setEmail("")
+      generateReport()
+    } catch (error) {
+      console.error("[v0] Error submitting email:", error)
+      setEmailError("Something went wrong. Please try again.")
+    } finally {
+      setIsSubmittingEmail(false)
+    }
   }
 
   const generateReport = () => {
@@ -434,6 +477,10 @@ const StartupCostCalculator = () => {
     }
   }
 
+  const handleDownloadClick = () => {
+    setShowEmailModal(true)
+  }
+
   return (
     <div className="w-full max-w-6xl mx-auto p-6 bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 rounded-3xl shadow-2xl">
       {/* Header */}
@@ -620,7 +667,7 @@ const StartupCostCalculator = () => {
           </div>
           <div className="flex space-x-3 mt-4 md:mt-0">
             <button
-              onClick={generateReport}
+              onClick={handleDownloadClick}
               className="px-6 py-3 bg-white/20 hover:bg-white/30 backdrop-blur-sm text-white rounded-lg transition-colors flex items-center space-x-2"
             >
               <Download className="w-5 h-5" />
@@ -642,6 +689,77 @@ const StartupCostCalculator = () => {
           </div>
         </div>
       </div>
+
+      {showEmailModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm">
+          <div className="bg-gradient-to-br from-gray-800 to-gray-900 rounded-2xl shadow-2xl max-w-md w-full border border-gray-700 relative">
+            {/* Close button */}
+            <button
+              onClick={() => {
+                setShowEmailModal(false)
+                setEmail("")
+                setEmailError("")
+              }}
+              className="absolute top-4 right-4 p-2 hover:bg-gray-700 rounded-lg transition-colors"
+            >
+              <X className="w-5 h-5 text-gray-400" />
+            </button>
+
+            {/* Modal content */}
+            <div className="p-8">
+              <div className="flex justify-center mb-4">
+                <div className="p-3 bg-gradient-to-br from-green-400 to-blue-500 rounded-2xl">
+                  <Mail className="w-8 h-8 text-white" />
+                </div>
+              </div>
+
+              <h3 className="text-2xl font-bold text-white text-center mb-2">Download Your Report</h3>
+              <p className="text-gray-400 text-center mb-6">
+                Enter your email to receive your personalized startup cost report
+              </p>
+
+              <form onSubmit={handleEmailSubmit} className="space-y-4">
+                <div>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => {
+                      setEmail(e.target.value)
+                      setEmailError("")
+                    }}
+                    placeholder="your@email.com"
+                    className="w-full px-4 py-3 bg-gray-700 text-white rounded-lg border border-gray-600 focus:border-green-500 focus:outline-none transition-colors"
+                    disabled={isSubmittingEmail}
+                  />
+                  {emailError && <p className="text-red-400 text-sm mt-2">{emailError}</p>}
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={isSubmittingEmail}
+                  className="w-full px-6 py-3 bg-gradient-to-r from-green-500 to-blue-500 hover:from-green-600 hover:to-blue-600 text-white font-semibold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-2"
+                >
+                  {isSubmittingEmail ? (
+                    <>
+                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                      <span>Processing...</span>
+                    </>
+                  ) : (
+                    <>
+                      <Download className="w-5 h-5" />
+                      <span>Download Report</span>
+                    </>
+                  )}
+                </button>
+              </form>
+
+              <p className="text-gray-500 text-xs text-center mt-4">
+                We'll use your email to send you helpful business planning resources
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
