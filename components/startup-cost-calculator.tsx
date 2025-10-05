@@ -197,29 +197,241 @@ const StartupCostCalculator = () => {
   }
 
   const generateReport = () => {
-    const report = {
-      businessType: businessType || "custom",
-      totalCost: calculateGrandTotal(),
-      breakdown: {},
-      customItems: customItems,
-      date: new Date().toLocaleDateString(),
-    }
+    // Generate HTML content for PDF
+    const reportDate = new Date().toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    })
 
-    Object.keys(costs).forEach((category) => {
-      report.breakdown[category] = {
-        total: calculateCategoryTotal(category),
-        items: costs[category],
+    const businessTypeLabel = businessType
+      ? businessType
+          .split("-")
+          .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+          .join(" ")
+      : "Custom Business"
+
+    let htmlContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="UTF-8">
+        <title>Startup Cost Report - NexTax.AI</title>
+        <style>
+          body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            background: #fff;
+          }
+          .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #e0e0e0;
+          }
+          .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: #10b981;
+            margin-bottom: 10px;
+          }
+          h1 {
+            color: #1f2937;
+            margin: 10px 0;
+            font-size: 28px;
+          }
+          .subtitle {
+            color: #6b7280;
+            font-size: 16px;
+          }
+          .summary-box {
+            background: linear-gradient(135deg, #10b981 0%, #3b82f6 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin: 30px 0;
+            text-align: center;
+          }
+          .total-amount {
+            font-size: 36px;
+            font-weight: bold;
+            margin: 10px 0;
+          }
+          .category {
+            margin: 30px 0;
+            page-break-inside: avoid;
+          }
+          .category-header {
+            background: #f3f4f6;
+            padding: 15px;
+            border-radius: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+          }
+          .category-title {
+            font-size: 18px;
+            font-weight: 600;
+            color: #1f2937;
+          }
+          .category-total {
+            font-size: 18px;
+            font-weight: 600;
+            color: #10b981;
+          }
+          .item-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px 15px;
+            border-bottom: 1px solid #e5e7eb;
+          }
+          .item-row:last-child {
+            border-bottom: none;
+          }
+          .item-name {
+            color: #6b7280;
+            text-transform: capitalize;
+          }
+          .item-amount {
+            color: #1f2937;
+            font-weight: 500;
+          }
+          .footer {
+            margin-top: 50px;
+            padding-top: 20px;
+            border-top: 2px solid #e0e0e0;
+            text-align: center;
+            color: #6b7280;
+            font-size: 14px;
+          }
+          .tips-section {
+            background: #eff6ff;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 30px 0;
+            border: 1px solid #3b82f6;
+          }
+          .tips-title {
+            color: #1e40af;
+            font-weight: 600;
+            margin-bottom: 10px;
+          }
+          @media print {
+            body { padding: 20px; }
+            .summary-box { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+            .category { page-break-inside: avoid; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          <div class="logo">NexTax.AI</div>
+          <h1>Startup Cost Report</h1>
+          <div class="subtitle">${businessTypeLabel} • Generated on ${reportDate}</div>
+        </div>
+
+        <div class="summary-box">
+          <div>Total Startup Investment Needed</div>
+          <div class="total-amount">${formatCurrency(calculateGrandTotal())}</div>
+        </div>
+    `
+
+    // Add categories breakdown
+    Object.entries(costs).forEach(([category, items]) => {
+      const categoryTotal = calculateCategoryTotal(category)
+      if (categoryTotal > 0) {
+        htmlContent += `
+          <div class="category">
+            <div class="category-header">
+              <div class="category-title">${category
+                .replace(/([A-Z])/g, " $1")
+                .trim()
+                .toUpperCase()}</div>
+              <div class="category-total">${formatCurrency(categoryTotal)}</div>
+            </div>
+        `
+
+        Object.entries(items).forEach(([item, value]) => {
+          if (value > 0) {
+            htmlContent += `
+              <div class="item-row">
+                <div class="item-name">${item.replace(/([A-Z])/g, " $1").trim()}</div>
+                <div class="item-amount">${formatCurrency(value)}</div>
+              </div>
+            `
+          }
+        })
+
+        htmlContent += `</div>`
       }
     })
 
-    // Create and download JSON report
-    const dataStr = JSON.stringify(report, null, 2)
-    const dataUri = "data:application/json;charset=utf-8," + encodeURIComponent(dataStr)
-    const exportFileDefaultName = `startup-costs-${Date.now()}.json`
-    const linkElement = document.createElement("a")
-    linkElement.setAttribute("href", dataUri)
-    linkElement.setAttribute("download", exportFileDefaultName)
-    linkElement.click()
+    // Add custom items if any
+    if (customItems.length > 0) {
+      const customTotal = calculateCustomTotal()
+      htmlContent += `
+        <div class="category">
+          <div class="category-header">
+            <div class="category-title">CUSTOM EXPENSES</div>
+            <div class="category-total">${formatCurrency(customTotal)}</div>
+          </div>
+      `
+
+      customItems.forEach((item) => {
+        htmlContent += `
+          <div class="item-row">
+            <div class="item-name">${item.name}</div>
+            <div class="item-amount">${formatCurrency(item.amount)}</div>
+          </div>
+        `
+      })
+
+      htmlContent += `</div>`
+    }
+
+    // Add tips section
+    htmlContent += `
+      <div class="tips-section">
+        <div class="tips-title">Important Considerations</div>
+        <ul style="margin: 10px 0; padding-left: 20px;">
+          <li>Add 10-20% contingency to your total for unexpected expenses</li>
+          <li>Many startup costs are tax-deductible - consult with NexTax.AI for optimization</li>
+          <li>Consider phasing certain expenses to manage cash flow</li>
+          <li>Review and update your cost estimates quarterly</li>
+        </ul>
+      </div>
+
+      <div class="footer">
+        <p>This report was generated by NexTax.AI Startup Cost Calculator</p>
+        <p>Visit nextax.ai/resources for more business planning tools</p>
+      </div>
+    </body>
+    </html>
+    `
+
+    // Create blob and open in new window
+    const blob = new Blob([htmlContent], { type: "text/html" })
+    const url = window.URL.createObjectURL(blob)
+
+    // Open in new window for printing/saving as PDF
+    const printWindow = window.open(url, "_blank")
+
+    // Clean up
+    setTimeout(() => {
+      window.URL.revokeObjectURL(url)
+    }, 100)
+
+    // Show instructions
+    if (printWindow) {
+      setTimeout(() => {
+        alert('To save as PDF: Press Ctrl+P (or Cmd+P on Mac) and select "Save as PDF" as the destination.')
+      }, 500)
+    }
   }
 
   return (
