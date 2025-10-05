@@ -66,102 +66,103 @@ export default function TaxFirstLaunchGuidePage() {
         {/* Guide Content */}
         <Card className="bg-gray-900/50 border-gray-700 mb-8">
           <CardContent className="p-8">
-            <div className={`relative ${!isUnlocked ? "max-h-[600px] overflow-hidden" : ""}`}>
-              <div className="prose prose-invert max-w-none">
-                <p className="text-slate-300 leading-relaxed mb-6">
-                  Starting a new business is an exciting journey, but one of the most critical early decisions is
-                  selecting the right legal entity. Why "tax-first"? Because your choice of entity can dramatically
-                  impact your tax obligations, liability protection, and overall financial health. This guide is
-                  designed for aspiring entrepreneurs like you, providing a clear, tax-focused overview to help you
-                  launch smarter. Remember, while this is a helpful starting point, tax laws evolve (as of 2025, key
-                  rules remain stable but always verify with current IRS guidelines), and consulting a tax professional
-                  or attorney is essential for personalized advice.
-                </p>
+            <div className="relative">
+              <div className={`${!isUnlocked ? "max-h-[600px] overflow-hidden" : ""}`}>
+                <div className="prose prose-invert max-w-none">
+                  <p className="text-slate-300 leading-relaxed mb-6">
+                    Starting a new business is an exciting journey, but one of the most critical early decisions is
+                    selecting the right legal entity. Why "tax-first"? Because your choice of entity can dramatically
+                    impact your tax obligations, liability protection, and overall financial health. This guide is
+                    designed for aspiring entrepreneurs like you, providing a clear, tax-focused overview to help you
+                    launch smarter. Remember, while this is a helpful starting point, tax laws evolve (as of 2025, key
+                    rules remain stable but always verify with current IRS guidelines), and consulting a tax
+                    professional or attorney is essential for personalized advice.
+                  </p>
 
-                <h2 className="text-2xl font-bold text-white mb-4">Why Entity Choice Matters: A Tax Perspective</h2>
-                <p className="text-slate-300 leading-relaxed mb-4">
-                  Your business entity determines how you're taxed, how profits are distributed, and even how you report
-                  income. Choosing poorly can lead to higher taxes, unnecessary paperwork, or limited growth
-                  opportunities. For instance:
-                </p>
-                <ul className="list-disc list-inside text-slate-300 mb-6 space-y-2">
-                  <li>
-                    Pass-through entities (like LLCs or S-Corps) allow profits to "pass through" to your personal tax
-                    return, potentially avoiding double taxation.
-                  </li>
-                  <li>
-                    Corporate structures (like C-Corps) offer liability shields but may face corporate taxes plus taxes
-                    on dividends.
-                  </li>
-                  <li>
-                    Factors like your industry, expected revenue, number of owners, and long-term goals (e.g., seeking
-                    investors) all play a role.
-                  </li>
-                </ul>
-                <p className="text-slate-300 leading-relaxed mb-6">
-                  By prioritizing taxes from the start, you can minimize liabilities, maximize deductions, and set up
-                  for scalability.
-                </p>
+                  <h2 className="text-2xl font-bold text-white mb-4">Why Entity Choice Matters: A Tax Perspective</h2>
+                  <p className="text-slate-300 leading-relaxed mb-4">
+                    Your business entity determines how you're taxed, how profits are distributed, and even how you
+                    report income. Choosing poorly can lead to higher taxes, unnecessary paperwork, or limited growth
+                    opportunities. For instance:
+                  </p>
+                  <ul className="list-disc list-inside text-slate-300 mb-6 space-y-2">
+                    <li>
+                      Pass-through entities (like LLCs or S-Corps) allow profits to "pass through" to your personal tax
+                      return, potentially avoiding double taxation.
+                    </li>
+                    <li>
+                      Corporate structures (like C-Corps) offer liability shields but may face corporate taxes plus
+                      taxes on dividends.
+                    </li>
+                    <li>
+                      Factors like your industry, expected revenue, number of owners, and long-term goals (e.g., seeking
+                      investors) all play a role.
+                    </li>
+                  </ul>
+                  <p className="text-slate-300 leading-relaxed mb-6">
+                    By prioritizing taxes from the start, you can minimize liabilities, maximize deductions, and set up
+                    for scalability.
+                  </p>
 
-                <h2 className="text-2xl font-bold text-white mb-4">Common Business Entities: An Overview</h2>
-                <p className="text-slate-300 leading-relaxed mb-6">
-                  Here's a breakdown of the most popular options for U.S.-based startups. We'll focus on tax
-                  implications, but also touch on setup, liability, and management.
-                </p>
+                  <h2 className="text-2xl font-bold text-white mb-4">Common Business Entities: An Overview</h2>
+                  <p className="text-slate-300 leading-relaxed mb-6">
+                    Here's a breakdown of the most popular options for U.S.-based startups. We'll focus on tax
+                    implications, but also touch on setup, liability, and management.
+                  </p>
+
+                  {!isUnlocked && (
+                    <div className="absolute bottom-0 left-0 right-0 h-96 bg-gradient-to-t from-gray-900 via-gray-900/95 to-transparent" />
+                  )}
+                </div>
 
                 {!isUnlocked && (
-                  <div className="absolute bottom-0 left-0 right-0 h-96 bg-gradient-to-t from-gray-900 via-gray-900/95 to-transparent" />
+                  <div className="absolute bottom-8 left-1/2 -translate-x-1/2 w-full max-w-2xl px-4 z-20">
+                    <Card className="bg-gradient-to-br from-emerald-600 to-cyan-600 border-0 shadow-2xl">
+                      <CardContent className="p-8 text-center">
+                        <Mail className="w-12 h-12 text-white mx-auto mb-4" />
+                        <h3 className="text-2xl font-bold text-white mb-3">
+                          Download the Full Version of the Free Guide Now
+                        </h3>
+                        <p className="text-emerald-100 mb-6">
+                          Enter your email to receive the complete PDF guide and unlock all content instantly.
+                        </p>
+                        <form onSubmit={handleSubmit} className="max-w-md mx-auto">
+                          <div className="flex flex-col gap-3">
+                            <Input
+                              type="email"
+                              placeholder="Enter your email address"
+                              value={email}
+                              onChange={(e) => setEmail(e.target.value)}
+                              required
+                              className="bg-white text-gray-900 h-12 text-base"
+                              disabled={isSubmitting}
+                            />
+                            <Button
+                              type="submit"
+                              disabled={isSubmitting}
+                              size="lg"
+                              className="bg-white text-emerald-600 hover:bg-emerald-50 h-12 text-base font-semibold"
+                            >
+                              {isSubmitting ? (
+                                <>
+                                  <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                                  Sending...
+                                </>
+                              ) : (
+                                <>
+                                  <Mail className="w-5 h-5 mr-2" />
+                                  Get Full Guide Free
+                                </>
+                              )}
+                            </Button>
+                          </div>
+                          {error && <p className="text-red-200 text-sm mt-3 bg-red-900/30 p-2 rounded">{error}</p>}
+                        </form>
+                      </CardContent>
+                    </Card>
+                  </div>
                 )}
               </div>
-
-              {/* Email Capture Overlay */}
-              {!isUnlocked && (
-                <div className="relative z-10 mt-8">
-                  <Card className="bg-gradient-to-br from-emerald-600 to-cyan-600 border-0">
-                    <CardContent className="p-8 text-center">
-                      <Mail className="w-16 h-16 text-white mx-auto mb-4" />
-                      <h3 className="text-2xl font-bold text-white mb-2">Get the Full Guide</h3>
-                      <p className="text-emerald-100 mb-6">
-                        Enter your email to receive the complete PDF guide and unlock the full content on this page.
-                      </p>
-                      <form onSubmit={handleSubmit} className="max-w-md mx-auto">
-                        <div className="flex flex-col sm:flex-row gap-3">
-                          <Input
-                            type="email"
-                            placeholder="your@email.com"
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            required
-                            className="flex-1 bg-white text-gray-900"
-                            disabled={isSubmitting}
-                          />
-                          <Button
-                            type="submit"
-                            disabled={isSubmitting}
-                            className="bg-white text-emerald-600 hover:bg-emerald-50"
-                          >
-                            {isSubmitting ? (
-                              <>
-                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                                Sending...
-                              </>
-                            ) : (
-                              <>
-                                <Mail className="w-4 h-4 mr-2" />
-                                Get Full Guide
-                              </>
-                            )}
-                          </Button>
-                        </div>
-                        {error && <p className="text-red-200 text-sm mt-2">{error}</p>}
-                      </form>
-                      <p className="text-emerald-100 text-sm mt-4">
-                        We'll email you the PDF and unlock the full guide on this page instantly.
-                      </p>
-                    </CardContent>
-                  </Card>
-                </div>
-              )}
 
               {/* Full Content (shown after email submission) */}
               {isUnlocked && (
