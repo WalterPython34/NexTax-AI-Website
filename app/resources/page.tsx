@@ -25,6 +25,7 @@ export default function ResourcesPage() {
       type: "PDF Guide",
       color: "emerald",
       featured: true,
+      link: "/resources/tax-first-launch-guide",
     },
     {
       icon: CheckSquare,
@@ -140,7 +141,7 @@ export default function ResourcesPage() {
             <span className="block text-emerald-400">Business Compliance Resources</span>
           </h1>
           <p className="text-xl text-slate-300 max-w-3xl mx-auto mb-12">
-            AI-Powered Insights to Maximize Your Tax Savings
+            Expert Content & AI-Powered Insights Designed to Maximize Your Tax Savings
           </p>
 
           {/* Stats */}
@@ -203,10 +204,19 @@ export default function ResourcesPage() {
                 </CardHeader>
                 <CardContent className="space-y-6">
                   <p className="text-slate-300">{resource.description}</p>
-                  <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white">
-                    <Download className="w-4 h-4 mr-2" />
-                    Download Free
-                  </Button>
+                   {resource.link ? (
+                    <Link href={resource.link}>
+                      <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white">
+                        <Download className="w-4 h-4 mr-2" />
+                        Download Free
+                      </Button>
+                    </Link>
+                  ) : (
+                    <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white">
+                      <Download className="w-4 h-4 mr-2" />
+                      Download Free
+                    </Button>
+                  )}
                 </CardContent>
               </Card>
             ))}
