@@ -13,8 +13,6 @@ export default function CalendlyButton({ url, className, children }: CalendlyBut
   const [isLoaded, setIsLoaded] = useState(false)
 
   useEffect(() => {
-    console.log("[v0] Loading Calendly script...")
-
     const link = document.createElement("link")
     link.href = "https://assets.calendly.com/assets/external/widget.css"
     link.rel = "stylesheet"
@@ -26,12 +24,7 @@ export default function CalendlyButton({ url, className, children }: CalendlyBut
     script.async = true
 
     script.onload = () => {
-      console.log("[v0] Calendly script loaded successfully")
       setIsLoaded(true)
-    }
-
-    script.onerror = () => {
-      console.error("[v0] Failed to load Calendly script")
     }
 
     document.body.appendChild(script)
@@ -48,16 +41,11 @@ export default function CalendlyButton({ url, className, children }: CalendlyBut
   }, [])
 
   const openCalendly = () => {
-    console.log("[v0] Button clicked, isLoaded:", isLoaded)
-    console.log("[v0] window.Calendly exists:", typeof window !== "undefined" && "Calendly" in window)
-
     // @ts-ignore - Calendly is loaded via external script
     if (window.Calendly) {
-      console.log("[v0] Opening Calendly popup with URL:", url)
       // @ts-ignore
       window.Calendly.initPopupWidget({ url: url })
     } else {
-      console.error("[v0] Calendly is not loaded yet")
       alert("Calendly is still loading. Please try again in a moment.")
     }
   }
@@ -68,5 +56,4 @@ export default function CalendlyButton({ url, className, children }: CalendlyBut
     </button>
   )
 }
-
 
