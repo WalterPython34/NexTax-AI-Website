@@ -34,6 +34,7 @@ export default function ResourcesPage() {
       type: "Checklist",
       color: "blue",
       featured: true,
+      link: "/resources/tax-planning-checklist",
     },
     {
       icon: Calculator,
@@ -206,7 +207,13 @@ export default function ResourcesPage() {
                   <p className="text-slate-300">{resource.description}</p>
                    {resource.link ? (
                     <Link href={resource.link}>
-                      <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white">
+                      <Button
+                        className={`w-full ${
+                          resource.color === "blue"
+                            ? "bg-blue-600 hover:bg-blue-700"
+                            : "bg-emerald-600 hover:bg-emerald-700"
+                        } text-white`}
+                      >
                         <Download className="w-4 h-4 mr-2" />
                         Download Free
                       </Button>
