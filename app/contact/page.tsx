@@ -12,10 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge"
 import { Mail, MapPin, Clock, Send, MessageCircle, Calendar, Loader2, CheckCircle } from "lucide-react"
 import { CalendlyPopup } from "@/components/calendly-popup"
-
-const CalendlyButton = dynamic(() => import("@/components/calendly-button"), {
-  ssr: false,
-})
+import CalendlyButton from "@/components/calendly-button"
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
