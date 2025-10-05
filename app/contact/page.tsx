@@ -13,7 +13,7 @@ import { Badge } from "@/components/ui/badge"
 import { Mail, MapPin, Clock, Send, MessageCircle, Calendar, Loader2, CheckCircle } from "lucide-react"
 import { CalendlyPopup } from "@/components/calendly-popup"
 
-const CalendlyButton = dynamic(() => import("@/components/calendly-button").then((mod) => mod.CalendlyButton), {
+const CalendlyButton = dynamic(() => import("@/components/calendly-button"), {
   ssr: false,
 })
 
