@@ -109,7 +109,7 @@ export async function POST(request: NextRequest) {
     console.log("📧 Sending email to user:", data.email)
     try {
       await resend.emails.send({
-        from: "NextAx <noreply@nextax.ai>",
+        from: "NexTax.AI <noreply@nextax.ai>",
         to: [data.email],
         subject: "Thank you for your business assessment",
         html: `
@@ -124,7 +124,7 @@ export async function POST(request: NextRequest) {
             <li>Next steps to get started</li>
           </ul>
           <p>If you have any immediate questions, feel free to reply to this email or call us at (555) 123-4567.</p>
-          <p>Best regards,<br>The NextAx Team</p>
+          <p>Best regards,<br>The NexTax.AI Team</p>
         `,
       })
     } catch (emailError) {
@@ -137,7 +137,7 @@ export async function POST(request: NextRequest) {
       console.log("📧 Sending notification to admin:", process.env.NOTIFICATION_EMAIL)
       try {
         await resend.emails.send({
-          from: "NextAx <noreply@nextax.ai>",
+          from: "NexTax.AI <noreply@nextax.ai>",
           to: [process.env.NOTIFICATION_EMAIL],
           subject: "New Business Assessment Submission",
           html: `
