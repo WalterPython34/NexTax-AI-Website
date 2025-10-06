@@ -143,13 +143,13 @@ export default function SimpleQuiz() {
 
   if (isComplete) {
     return (
-      <Card className="w-full max-w-2xl mx-auto">
+      <Card className="w-full max-w-2xl mx-auto bg-black border-gray-800">
         <CardHeader>
           <CardTitle className="text-center text-green-600">Thank You!</CardTitle>
         </CardHeader>
         <CardContent className="text-center space-y-4">
-          <p>Your business assessment has been submitted successfully.</p>
-          <p>We'll send you a personalized business formation guide within 24 hours.</p>
+          <p className="text-gray-300">Your business assessment has been submitted successfully.</p>
+          <p className="text-gray-300">We'll send you a personalized business formation guide within 24 hours.</p>
           <Button onClick={() => window.location.reload()} className="mt-4">
             Take Quiz Again
           </Button>
