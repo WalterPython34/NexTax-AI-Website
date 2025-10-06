@@ -418,8 +418,8 @@ export const emailService = {
           
           <p><strong>⚠️ Important:</strong> This guide is designed for aspiring entrepreneurs and provides a clear, tax-focused overview. While it's a helpful starting point, we always recommend consulting with a tax professional or attorney for personalized advice.</p>
           
-          <p style="text-align: center;">
-            <a href="https://nextax.ai/resources/tax-first-launch-guide" class="button">📄 View Full Guide Online</a>
+           <p style="text-align: center;">
+            <a href="https://nextax.ai/resources/tax-first-launch-guide?unlocked=true" class="button">📄 View Full Guide Online</a>
           </p>
           
           <p><strong>Ready to Launch Your Business?</strong></p>
