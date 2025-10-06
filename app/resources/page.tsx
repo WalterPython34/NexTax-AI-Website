@@ -13,8 +13,10 @@ import {
   TrendingUp,
   BookOpen,
   Mic,
+  ClipboardList,
 } from "lucide-react"
 import Link from "next/link"
+import SimpleQuiz from "@/components/simple-quiz" // Added SimpleQuiz import
 
 export default function ResourcesPage() {
   const featuredResources = [
@@ -237,11 +239,10 @@ export default function ResourcesPage() {
             recommendations based on your specific situation.
           </p>
         </div>
-        <SimpleQuiz />
-      </div>
-          
-        </div>
-      </section>
+      <SimpleQuiz />
+      </div>        
+    </div>
+    </section>
 
       {/* Upcoming Webinars */}
       <section className="py-12 bg-black/50">
