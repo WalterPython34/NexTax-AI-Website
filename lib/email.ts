@@ -418,10 +418,6 @@ export const emailService = {
           
           <p><strong>⚠️ Important:</strong> This guide is designed for aspiring entrepreneurs and provides a clear, tax-focused overview. While it's a helpful starting point, we always recommend consulting with a tax professional or attorney for personalized advice.</p>
           
-           <p style="text-align: center;">
-            <a href="https://nextax.ai/resources/tax-first-launch-guide?unlocked=true" class="button">📄 View Full Guide Online</a>
-          </p>
-          
           <p><strong>Ready to Launch Your Business?</strong></p>
           <p>Our StartSmart GPT service can help you:</p>
           <ul>
@@ -508,11 +504,7 @@ export const emailService = {
           </div>
           
           <p><strong>⚠️ Disclaimer:</strong> This checklist provides general guidance based on tax strategies relevant for 2025. Tax laws are subject to change, and individual circumstances vary. Always consult a qualified tax professional or CPA for personalized advice.</p>
-          
-          <p style="text-align: center;">
-            <a href="https://nextax.ai/resources/tax-planning-checklist" class="button">📋 View Full Checklist Online</a>
-          </p>
-          
+                            
           <p><strong>Need Help with Tax Planning?</strong></p>
           <p>Our NexTax.AI advisors can help you:</p>
           <ul>
