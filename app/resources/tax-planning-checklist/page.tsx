@@ -18,15 +18,6 @@ export default function TaxPlanningChecklistPage() {
 
   const searchParams = useSearchParams()
 
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const params = new URLSearchParams(window.location.search)
-      if (params.get("unlocked") === "true") {
-        setIsUnlocked(true)
-      }
-    }
-  }, [])
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
