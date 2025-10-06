@@ -19,11 +19,11 @@ export default function TaxFirstLaunchGuidePage() {
   const searchParams = useSearchParams()
 
   useEffect(() => {
-    // Check if the page was accessed with the unlocked parameter from email
-    if (searchParams.get("unlocked") === "true") {
+    const params = new URLSearchParams(window.location.search)
+    if (params.get("unlocked") === "true") {
       setIsUnlocked(true)
     }
-  }, [searchParams])
+  }, [])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
