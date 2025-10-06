@@ -374,6 +374,7 @@ export const emailService = {
       throw error
     }
   },
+  
    async sendTaxFirstGuideEmail(to: string) {
     const html = `
       <!DOCTYPE html>
@@ -398,6 +399,11 @@ export const emailService = {
           <p>Thank you for your interest in our Tax-First Launch Guide!</p>
           
           <p>As promised, here's your comprehensive guide to choosing the optimal business entity structure with a tax-focused approach.</p>
+
+           <div class="attachment-notice">
+            <p style="margin: 0; color: #92400e; font-weight: bold;">📎 Your PDF guide is attached to this email!</p>
+            <p style="margin: 5px 0 0 0; color: #92400e; font-size: 14px;">Download the attachment to save it for future reference.</p>
+          </div>
           
           <div class="highlight">
             <h3>📋 What's Inside This Guide:</h3>
@@ -449,6 +455,12 @@ export const emailService = {
       to,
       subject: "📋 Your Tax-First Launch Guide - Choosing Your Optimal Entity",
       html,
+      attachments: [
+        {
+          filename: "Tax-First-Launch-Guide.pdf",
+          path: `${process.env.NEXT_PUBLIC_SITE_URL || "https://nextax.ai"}/resources/tax-first-launch-guide.pdf`,
+        },
+      ],
     })
   },
 
@@ -476,6 +488,11 @@ export const emailService = {
           <p>Thank you for your interest in our Tax Planning Checklist!</p>
           
           <p>As promised, here's your comprehensive checklist of essential tax strategies for new businesses.</p>
+
+          <div class="attachment-notice">
+            <p style="margin: 0; color: #92400e; font-weight: bold;">📎 Your PDF checklist is attached to this email!</p>
+            <p style="margin: 5px 0 0 0; color: #92400e; font-size: 14px;">Download the attachment to save it for future reference.</p>
+          </div>
           
           <div class="highlight">
             <h3>✅ What's Inside This Checklist:</h3>
@@ -530,6 +547,12 @@ export const emailService = {
       to,
       subject: "✅ Your Tax Planning Checklist - Essential Strategies for New Businesses",
       html,
+      attachments: [
+        {
+          filename: "Tax-Planning-Checklist.pdf",
+          path: `${process.env.NEXT_PUBLIC_SITE_URL || "https://nextax.ai"}/resources/tax-planning-checklist.pdf`,
+        },
+      ],
     })
   },
 }
