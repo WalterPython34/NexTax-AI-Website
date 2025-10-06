@@ -19,9 +19,11 @@ export default function TaxFirstLaunchGuidePage() {
   const searchParams = useSearchParams()
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    if (params.get("unlocked") === "true") {
-      setIsUnlocked(true)
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search)
+      if (params.get("unlocked") === "true") {
+        setIsUnlocked(true)
+      }
     }
   }, [])
 
