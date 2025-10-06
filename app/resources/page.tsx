@@ -50,7 +50,7 @@ export default function ResourcesPage() {
   const additionalResources = [
     {
       icon: Calendar,
-      title: "Tax Calendar 2024",
+      title: "Tax Calendar 2025",
       description: "Important tax deadlines and filing dates.",
       type: "Calendar",
       color: "orange",
