@@ -268,9 +268,7 @@ export default function FeaturesPage() {
                   </CardContent>
                 </Card>
               ))}
-            </div>
-          </div>
-        </div>
+            
         <div className="flex flex-center sm:flex-row gap-4 ml-18">
                <Link href="/pricing">
               <Button
@@ -281,6 +279,9 @@ export default function FeaturesPage() {
                 Launch Now
                 </Button>
               </div>   
+            </div>
+          </div>
+        </div>
       </section>
       
      {/* Next-Generation Tools Section */}
