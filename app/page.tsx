@@ -114,22 +114,7 @@ export default function HomePage() {
                 </div>
               </div>
 
-              <div className="flex items-center gap-8 pt-2">
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-cyan-500">AI-Powered</div>
-                  <div className="text-sm text-slate-400">Formation</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-emerald-400">48hrs</div>
-                  <div className="text-sm text-slate-400">Guaranteed</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-2xl font-bold text-cyan-300">24/7</div>
-                  <div className="text-sm text-slate-400">AI Support</div>
-                </div>
-              </div>
-            </div>
-
+              
             {/* NEW: AI Demo Preview */}
             <div className="relative -mt-8">
               <div className="relative bg-slate-800/50 backdrop-blur-sm rounded-2xl p-8 border border-slate-700">
