@@ -113,6 +113,19 @@ export default function HomePage() {
                   </div>
                 </div>
               </div>
+              <div className="flex items-center gap-8 pt-2">
+                <div className="text-center">
+                  
+                </div>
+                <div className="text-center">
+                  
+                </div>
+                <div className="text-center">
+                  
+                </div>
+              </div>
+            </div>
+              
 
               
             {/* NEW: AI Demo Preview */}
