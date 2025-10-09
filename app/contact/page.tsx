@@ -171,7 +171,7 @@ export default function ContactPage() {
             <Card className="bg-slate-800/50 border-slate-700">
               <CardHeader>
                 <CardTitle className="text-2xl text-white">Send us a Message</CardTitle>
-                <p className="text-slate-400">Fill out the form below and we'll get back to you within 24 hours.</p>
+                <p className="text-slate-400">Contact us below and one of our experts will get back to you within 24 hours.</p>
               </CardHeader>
               <CardContent>
                 {submitStatus === "success" ? (
@@ -247,7 +247,7 @@ export default function ContactPage() {
                             <SelectItem value="sales">Sales Inquiry</SelectItem>
                             <SelectItem value="support">Technical Support</SelectItem>
                             <SelectItem value="partnership">Partnership</SelectItem>
-                            <SelectItem value="media">Media/Press</SelectItem>
+                            <SelectItem value="Tax">Tax/Accounting</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
