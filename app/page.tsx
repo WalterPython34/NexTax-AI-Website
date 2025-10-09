@@ -44,21 +44,19 @@ export default function HomePage() {
               <div className="space-y-6">
                 <h1 className="text-3xl lg:text-5xl font-bold text-white leading-tight">
                   Launch your business
-                  <span className="block text-white-400">with confidence & ease</span>
-                  
-                  <span className="block text-emerald-400 text-xl lg:text-xl mt-8">Launch Your Business in Less Than 48 Hours.</span>
+                  <span className="block text-white-400">with confidence & ease</span>                                   
                 </h1>
 
-                <p className="text-xl text-slate-300 leading-relaxed max-w-lg">
-                  The only business formation service that includes a custom-trained AI advisor. Get your business
-                  launched in 48 hours PLUS ongoing AI guidance for growth, compliance, and strategy.
+                <p className="text-xl text-emerald-400 leading-relaxed max-w-lg">
+                  Start your business smart with tax certainty.
+                  Scale smarter with our AI tools & automations.
                 </p>
               </div>
 
               {/* NEW: Unique AI Value Props */}
               <div className="space-y-3">
                 {[
-                  "Big 4 Tax Expertise Baked-In (Custom AI trained on 20+ years of EY/KPMG strategy)",
+                  "Launch Your Business in Less Than 48 Hours",
                   "24/7 Advisor knows YOUR Entity, State, & Tax Structure",
                   "From formation to scaling your business - your AI grows with you",
                 ].map((feature, i) => (
