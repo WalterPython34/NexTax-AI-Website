@@ -46,9 +46,9 @@ export default function HomePage() {
               </div>
                 
               <div className="space-y-6">
-                <h1 className="text-4xl lg:text-6xl font-bold text-white leading-tight">
-                  Start Smart.
-                  <span className="block text-cyan-400">Scale Smarter.</span>
+                <h1 className="text-3xl lg:text-6xl font-bold text-white leading-tight">
+                  Launch your business
+                  <span className="block text-white-400">with confidence & ease</span>
                   <span className="block text-white text-3xl lg:text-4xl mt-4">With Your AI Business Copilot</span>
                   <span className="block text-emerald-400 text-xl lg:text-2xl mt-8">Launch Your Business in Less Than 48 Hours.</span>
                 </h1>
