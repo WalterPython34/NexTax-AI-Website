@@ -180,9 +180,11 @@ export default function HomePage() {
                     Try StartSmartGPT Now
                   </Button>                  
                 </div>
-              </div>
+               </div>
+              </div>    
             </div>
-            </section>
+          </div>
+        </section>
           
       {/* NEW: AI Differentiator Section */}
       <section className="py-20 bg-slate-900/50">
