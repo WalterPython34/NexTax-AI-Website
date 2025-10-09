@@ -182,6 +182,7 @@ export default function HomePage() {
                 </div>
               </div>
             </div>
+            </section>
           
       {/* NEW: AI Differentiator Section */}
       <section className="py-20 bg-slate-900/50">
