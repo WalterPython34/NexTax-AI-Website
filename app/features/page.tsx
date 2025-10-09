@@ -253,7 +253,7 @@ export default function FeaturesPage() {
                 {
                   step: "4",
                   title: "Launch Your Business",
-                  description: "Receive EIN, State regustration confirm, and promo code to begin using our StartSmart AI App.",
+                  description: "Receive EIN, State registration confirm, and a promo code to begin using our StartSmart AI App.",
                   time: "48 hours",
                 },
               ].map((step, i) => (
