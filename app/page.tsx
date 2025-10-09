@@ -56,9 +56,9 @@ export default function HomePage() {
               {/* NEW: Unique AI Value Props */}
               <div className="space-y-3">
                 {[
-                  "Launch Your Business in Less Than 48 Hours",
-                  "EIN request, Legal doc gen, and State registrations begin immediatly",
-                  "From formation to scaling your business - your AI grows with you in App",
+                  "Launch in Less Than 48 Hours",
+                  "EIN, Legal docs, & State registration begins immediatly",
+                  "Scale your business - your AI grows along with you in App",
                 ].map((feature, i) => (
                   <div key={i} className="flex items-center gap-3">
                     <CheckCircle className="w-5 h-5 text-emerald-400 flex-shrink-0" />
