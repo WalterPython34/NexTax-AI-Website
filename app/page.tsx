@@ -137,9 +137,7 @@ export default function HomePage() {
               <Badge className="bg-green-500/20 text-green-300 text-xs">Online & Ready</Badge>
             </div>
           </div>
-        </div>
-        <img src="/images/startsmart-logo-black-cropped.jpg" alt="StartSmart" className="h-20 w-auto" />
-      </div> {/* This closing tag was missing! */}
+        
     
                   {/* Sample AI Conversation */}
                   <div className="space-y-4">
