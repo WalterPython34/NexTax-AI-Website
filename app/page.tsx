@@ -57,8 +57,8 @@ export default function HomePage() {
               <div className="space-y-3">
                 {[
                   "Launch Your Business in Less Than 48 Hours",
-                  "24/7 Advisor knows YOUR Entity, State, & Tax Structure",
-                  "From formation to scaling your business - your AI grows with you",
+                  "EIN request, Legal doc generation, and State Registrations start immediatly",
+                  "From formation to scaling your business - your AI grows with you in App",
                 ].map((feature, i) => (
                   <div key={i} className="flex items-center gap-3">
                     <CheckCircle className="w-5 h-5 text-emerald-400 flex-shrink-0" />
