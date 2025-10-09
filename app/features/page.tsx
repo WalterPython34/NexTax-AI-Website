@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button"
 import {
   Bot,
   Zap,
+  Rocket,
   Shield,
   FileText,
   Calculator,
