@@ -281,8 +281,6 @@ export default function FeaturesPage() {
               </div>  
              </div> 
             </div>
-          </div>
-        </div>
       </section>
       
      {/* Next-Generation Tools Section */}
