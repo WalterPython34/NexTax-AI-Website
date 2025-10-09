@@ -278,7 +278,8 @@ export default function FeaturesPage() {
                 <Rocket className="mr-3 w-6 h-6" />
                 Launch Now
                 </Button>
-              </div>   
+              </div>  
+             </div> 
             </div>
           </div>
         </div>
