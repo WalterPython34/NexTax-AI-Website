@@ -138,7 +138,7 @@ export default function HomePage() {
             </div>
           </div>
         </div>
-        <img src="/images/startsmart-logo-black-cropped.jpg" alt="StartSmart" className="h-8 w-auto" />
+        <img src="/images/startsmart-logo-black-cropped.jpg" alt="StartSmart" className="h-10 w-auto" />
       </div> {/* This closing tag was missing! */}
     
                   {/* Sample AI Conversation */}
