@@ -129,7 +129,8 @@ export default function HomePage() {
               <div className="relative bg-slate-800/50 backdrop-blur-sm rounded-2xl p-8 border border-slate-700">
                 <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-cyan-500/10 rounded-2xl" />
                 <div className="relative space-y-6">
-                  <div className="flex items-center gap-3 mb-6">
+                  <div className="flex items-center justify-between mb-6">
+                   <div className="flex items-center gap-3">                    
                     <div className="w-12 h-12 rounded-lg bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 flex items-center justify-center">
                       <Bot className="w-6 h-6 text-emerald-400" />
                     </div>
@@ -141,9 +142,12 @@ export default function HomePage() {
                       </div>
                     </div>
                   </div>
-                  <div className="flex justify-between space-x-4">
-                  <img src="/images/startsmart-logo-black-cropped.jpg" alt="StartSmart" className="h-20 w-auto" />
+                <img src="/images/startsmart-logo-black-cropped.jpg" alt="StartSmart" className="h-20 w-auto" />
               </div>
+            </div>
+          </div>
+        </div>
+
 
                   {/* Sample AI Conversation */}
                   <div className="space-y-4">
