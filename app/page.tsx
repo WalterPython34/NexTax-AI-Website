@@ -74,7 +74,7 @@ export default function HomePage() {
                 size="lg"
                   className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white px-8 py-6 text-lg font-semibold w-full sm:w-auto mt-4"
                   >
-                <Bot className="mr-3 w-6 h-6" />
+                <Rocket className="mr-3 w-6 h-6" />
                 Launch Now
                 </Button>
                 </Link>      
@@ -84,7 +84,7 @@ export default function HomePage() {
                     className="bg-emerald-500 hover:bg-emerald-600 text-white px-8 py-6 text-lg font-semibold w-full sm:w-auto mt-4"
                   >
                     Learn more
-                    <Rocket className="ml-3 w-6 h-6" />
+                    <Bot className="ml-3 w-6 h-6" />
                   </Button>
                 </Link>
               </div>
