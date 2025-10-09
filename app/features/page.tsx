@@ -268,8 +268,8 @@ export default function FeaturesPage() {
                   </CardContent>
                 </Card>
               ))}
-            
-        <div className="flex flex-center sm:flex-row gap-4 ml-18">
+            </div>
+        <div className="flex justify-center mt-8">
                <Link href="/pricing">
               <Button
                 size="lg"
@@ -278,10 +278,11 @@ export default function FeaturesPage() {
                 <Rocket className="mr-3 w-6 h-6" />
                 Launch Now
                 </Button>
+               </Link>  
               </div>  
              </div> 
             </div>
-      </section>
+          </section>
       
      {/* Next-Generation Tools Section */}
       <section className="py-16">
