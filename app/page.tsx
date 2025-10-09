@@ -40,11 +40,7 @@ export default function HomePage() {
                 <Bot className="w-4 h-4 mr-2" />
                 Powered by StartSmartGPT AI
               </Badge> 
-               {/* StartSmart Logo */}
-              <div className="flex items-center space-x-4">
-                <img src="/images/startsmart-logo-black-cropped.jpg" alt="StartSmart" className="h-20 w-auto" />
-              </div>
-                
+                              
               <div className="space-y-6">
                 <h1 className="text-3xl lg:text-5xl font-bold text-white leading-tight">
                   Launch your business
@@ -145,6 +141,8 @@ export default function HomePage() {
                       </div>
                     </div>
                   </div>
+                  <img src="/images/startsmart-logo-black-cropped.jpg" alt="StartSmart" className="h-20 w-auto" />
+              </div>
 
                   {/* Sample AI Conversation */}
                   <div className="space-y-4">
