@@ -57,7 +57,7 @@ export default function HomePage() {
               <div className="space-y-3">
                 {[
                   "Launch Your Business in Less Than 48 Hours",
-                  "EIN request, Legal doc generation, and State Registrations start immediatly",
+                  "EIN request, Legal doc gen, and State registrations begin immediatly",
                   "From formation to scaling your business - your AI grows with you in App",
                 ].map((feature, i) => (
                   <div key={i} className="flex items-center gap-3">
