@@ -147,10 +147,10 @@ export default function FeaturesPage() {
       <section className="py-8">
        <div className="container mx-auto px-4 text-center">     
        <h2 className="text-3xl lg:text-4xl font-bold text-cyan-500 mb-4">
-              StartSmart Core: <span className="block text-white">Seamless Business Formation and Initial Compliance</span>
+              StartSmart Business Formation: <span className="block text-white">No more waiting game → Leave the paperwork behind</span>
             </h2>
             <p className="text-xl text-slate-300 max-w-3xl mx-auto">
-              Go beyond paperwork - Unlock your personalized compliance and tax optimization tools trusted by top firms, delivered in less than 48-hour speed. 
+              Launch in less than 48-hour speed, unlock your personalized in App compliance and tax optimization tools trusted by top firms. 
               <span className="block text-emerald-400">Included with all Business Formation Packages.</span>
             </p>
           </div>
