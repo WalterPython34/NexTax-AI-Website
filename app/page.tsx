@@ -46,7 +46,7 @@ export default function HomePage() {
               </div>
                 
               <div className="space-y-6">
-                <h1 className="text-4xl lg:text-4xl font-bold text-white leading-tight">
+                <h1 className="text-3xl lg:text-5xl font-bold text-white leading-tight">
                   Launch your business
                   <span className="block text-white-400">with confidence & ease</span>
                   
