@@ -131,7 +131,7 @@ export default function HomePage() {
             <Bot className="w-6 h-6 text-emerald-400" />
           </div>
           <div>
-            <h3 className="text-xl font-semibold text-white">StartSmartGPT</h3>
+            <h3 className="text-lg font-semibold text-white">StartSmart AI</h3>
             <div className="flex items-center gap-2">
               <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
               <Badge className="bg-green-500/20 text-green-300 text-xs">Online & Ready</Badge>
