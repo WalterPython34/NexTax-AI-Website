@@ -20,6 +20,11 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "No signature provided" }, { status: 400 })
     }
 
+    if (!process.env.STRIPE_WEBHOOK_SECRET) {
+      console.error("[v0] STRIPE_WEBHOOK_SECRET is not configured")
+      return NextResponse.json({ error: "Webhook secret not configured" }, { status: 500 })
+    }
+    
     let event: Stripe.Event
 
     try {
@@ -31,6 +36,22 @@ export async function POST(req: NextRequest) {
 
     console.log("Received webhook event:", event.type)
 
+    // This ensures Stripe knows we received the event even if processing fails
+    setImmediate(() => {
+      processWebhookEvent(event).catch((error) => {
+        console.error("[v0] Error processing webhook event:", error)
+      })
+    })
+
+    return NextResponse.json({ received: true }, { status: 200 })
+  } catch (error) {
+    console.error("[v0] Webhook error:", error)
+    return NextResponse.json({ received: true }, { status: 200 })
+  }
+}
+
+async function processWebhookEvent(event: Stripe.Event) {
+  try {
     // Handle the event
     switch (event.type) {
       case "customer.subscription.created":
