@@ -142,11 +142,7 @@ export default function HomePage() {
         </div>
         <img src="/images/startsmart-logo-black-cropped.jpg" alt="StartSmart" className="h-20 w-auto" />
       </div> {/* This closing tag was missing! */}
-    </div>
-  </div>
-</div>
-
-
+    
                   {/* Sample AI Conversation */}
                   <div className="space-y-4">
                     <div className="bg-slate-900/30 rounded-lg p-4">
@@ -186,9 +182,7 @@ export default function HomePage() {
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-      </section>
+          </section>
 
       {/* NEW: AI Differentiator Section */}
       <section className="py-20 bg-slate-900/50">
