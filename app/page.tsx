@@ -38,7 +38,7 @@ export default function HomePage() {
              {/* NEW: AI-Powered Badge */}
               <Badge className="bg-gradient-to-r from-emerald-500/20 to-blue-500/20 text-cyan-400 border-blue-500/30 text-lg px-2 py-2">
                 <Bot className="w-4 h-4 mr-2" />
-                Powered by StartSmartGPT AI
+                Powered by StartSmart AI
               </Badge> 
                               
               <div className="space-y-6">
