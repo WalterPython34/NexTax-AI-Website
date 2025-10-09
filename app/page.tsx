@@ -137,6 +137,7 @@ export default function HomePage() {
               <Badge className="bg-green-500/20 text-green-300 text-xs">Online & Ready</Badge>
             </div>
           </div>
+        </div>
         
     
                   {/* Sample AI Conversation */}
