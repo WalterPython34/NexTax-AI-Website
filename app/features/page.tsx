@@ -119,7 +119,7 @@ export default function FeaturesPage() {
             <Bot className="w-4 h-4 mr-2" />
             AI Automations for Entrepreneurs
           </Badge>
-          <h1 className="text-4xl lg:text-6xl font-bold text-white mb-6">
+          <h1 className="text-3xl lg:text-6xl font-bold text-white mb-6">
             AI-Powered Business Formation &
             <span className="block text-emerald-400">Tax Strategy backed by Big 4 Expertise</span>
           </h1>          
@@ -151,7 +151,6 @@ export default function FeaturesPage() {
             </h2>
             <p className="text-xl text-slate-300 max-w-3xl mx-auto">
               Launch in less than 48-hour speed, unlock your personalized in App compliance and tax optimization tools trusted by top firms. 
-              <span className="block text-emerald-400">Included with all Business Formation Packages.</span>
             </p>
           </div>
          </section>
