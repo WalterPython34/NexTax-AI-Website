@@ -121,32 +121,30 @@ export default function HomePage() {
                 </div>
               </div>
             </div>
-              
-
-              
+                            
             {/* NEW: AI Demo Preview */}
-            <div className="relative -mt-8">
-              <div className="relative bg-slate-800/50 backdrop-blur-sm rounded-2xl p-8 border border-slate-700">
-                <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-cyan-500/10 rounded-2xl" />
-                <div className="relative space-y-6">
-                  <div className="flex items-center justify-between mb-6">
-                   <div className="flex items-center gap-3">                    
-                    <div className="w-12 h-12 rounded-lg bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 flex items-center justify-center">
-                      <Bot className="w-6 h-6 text-emerald-400" />
-                    </div>
-                    <div>
-                      <h3 className="text-xl font-semibold text-white">StartSmartGPT</h3>
-                      <div className="flex items-center gap-2">
-                        <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                        <Badge className="bg-green-500/20 text-green-300 text-xs">Online & Ready</Badge>
-                      </div>
-                    </div>
-                  </div>
-                <img src="/images/startsmart-logo-black-cropped.jpg" alt="StartSmart" className="h-20 w-auto" />
-              </div>
+<div className="relative -mt-8">
+  <div className="relative bg-slate-800/50 backdrop-blur-sm rounded-2xl p-8 border border-slate-700">
+    <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-cyan-500/10 rounded-2xl" />
+    <div className="relative space-y-6">
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-3">                    
+          <div className="w-12 h-12 rounded-lg bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 flex items-center justify-center">
+            <Bot className="w-6 h-6 text-emerald-400" />
+          </div>
+          <div>
+            <h3 className="text-xl font-semibold text-white">StartSmartGPT</h3>
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+              <Badge className="bg-green-500/20 text-green-300 text-xs">Online & Ready</Badge>
             </div>
           </div>
         </div>
+        <img src="/images/startsmart-logo-black-cropped.jpg" alt="StartSmart" className="h-20 w-auto" />
+      </div> {/* This closing tag was missing! */}
+    </div>
+  </div>
+</div>
 
 
                   {/* Sample AI Conversation */}
