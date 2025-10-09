@@ -271,6 +271,16 @@ export default function FeaturesPage() {
             </div>
           </div>
         </div>
+        <div className="flex flex-center sm:flex-row gap-4 ml-18">
+               <Link href="/pricing">
+              <Button
+                size="lg"
+                  className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white px-8 py-6 text-lg font-semibold w-full sm:w-auto mt-4"
+                  >
+                <Rocket className="mr-3 w-6 h-6" />
+                Launch Now
+                </Button>
+              </div>   
       </section>
       
      {/* Next-Generation Tools Section */}
