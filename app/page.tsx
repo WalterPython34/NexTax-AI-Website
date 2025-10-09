@@ -78,12 +78,12 @@ export default function HomePage() {
                 Launch Now: $499 Total
                 </Button>
                 </Link>      
-                <Link href="https://www.startsmartbiz.ai/pricing" target="_blank" rel="noopener noreferrer">                
+                <Link href="https://www.nextax.ai/features" target="_blank" rel="noopener noreferrer">                
                  <Button
                     size="lg"
                     className="bg-emerald-500 hover:bg-emerald-600 text-white px-8 py-6 text-lg font-semibold w-full sm:w-auto mt-4"
                   >
-                    Try StartSmart Free
+                    Learn more
                     <Rocket className="ml-3 w-6 h-6" />
                   </Button>
                 </Link>
