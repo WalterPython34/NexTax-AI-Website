@@ -32,11 +32,11 @@ export default function HomePage() {
       {/* Hero Section - AI-Powered StartSmart */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-cyan-500/10" />
-        <div className="relative container mx-auto px-4 py-20 lg:py-10">
+        <div className="relative container mx-auto px-4 py-20 lg:py-8">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div className="space-y-8">
              {/* NEW: AI-Powered Badge */}
-              <Badge className="bg-gradient-to-r from-emerald-500/20 to-blue-500/20 text-cyan-400 border-blue-500/30 text-sm px-1.5 py-1">
+              <Badge className="bg-gradient-to-r from-emerald-500/20 to-blue-500/20 text-cyan-400 border-blue-500/30 text-sm px-1.5 py-0.5">
                 <Bot className="w-3 h-3 mr-1.5" />
                 Powered by StartSmart AI
               </Badge> 
