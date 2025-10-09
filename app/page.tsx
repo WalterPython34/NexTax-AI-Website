@@ -48,8 +48,8 @@ export default function HomePage() {
                 </h1>
 
                 <p className="text-xl text-emerald-400 leading-relaxed max-w-lg">
-                  Start your business smart with tax compliance certainty.
-                  Scale smarter with our AI tools & automations.
+                  Start your business Smart with tax compliance certainty.
+                  Scale Smarter with our AI tools & automations.
                 </p>
               </div>
 
