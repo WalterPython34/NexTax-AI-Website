@@ -141,7 +141,7 @@ export default function HomePage() {
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center space-x-4">
+                  <div className="flex justify-between space-x-4">
                   <img src="/images/startsmart-logo-black-cropped.jpg" alt="StartSmart" className="h-20 w-auto" />
               </div>
 
