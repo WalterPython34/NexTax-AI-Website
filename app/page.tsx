@@ -57,7 +57,7 @@ export default function HomePage() {
                <Link href="/pricing">
               <Button
                 size="lg"
-                  className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white px-8 py-8 text-lg font-semibold w-full sm:w-auto mt-4"
+                  className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white px-8 py-6 text-lg font-semibold w-full sm:w-auto mt-4"
                   >
                 <Rocket className="mr-3 w-6 h-6" />
                 Launch Now
@@ -75,7 +75,7 @@ export default function HomePage() {
               </div>
             
              {/* NEW: Unique AI Value Props */}
-              <div className="space-y-3">
+              <div className="space-y-4">
                 {[
                   "Launch in Less Than 48 Hours",
                   "EIN, Legal docs, & State registration begins immediatly",
