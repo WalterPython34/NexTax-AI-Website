@@ -246,27 +246,8 @@ export default function HomePage() {
               </Card>
             ))}
           </div>
-
-          {/* Competitive Comparison */}
-          <div className="bg-slate-800/30 rounded-2xl p-8 border border-slate-700">
-            <h3 className="text-2xl font-bold text-white mb-8 text-center">What Makes Us Different</h3>
-            <div className="grid md:grid-cols-3 gap-8 text-center">
-              <div className="space-y-4">
-                <div className="text-red-400 font-semibold">❌ LegalZoom</div>
-                <p className="text-slate-400">"File your LLC" → Done. Good luck!</p>
-              </div>
-              <div className="space-y-4">
-                <div className="text-red-400 font-semibold">❌ Incfile</div>
-                <p className="text-slate-400">"Here's your paperwork" → You're on your own.</p>
-              </div>
-              <div className="space-y-4">
-                <div className="text-emerald-400 font-semibold">✅ StartSmart</div>
-                <p className="text-emerald-300">"Meet your AI business advisor" → Lifetime guidance.</p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
+          </section>
+         
 
       {/* What's Included Section */}
       <section className="py-20 bg-slate-900/50">
@@ -443,8 +424,29 @@ export default function HomePage() {
                 </p>
               </div>
             </div>
-          </div>
+          </div>                
 
+           {/* Competitive Comparison */}
+          <div className="bg-slate-800/30 rounded-2xl p-8 border border-slate-700">
+            <h3 className="text-2xl font-bold text-white mb-8 text-center">What Makes Us Different</h3>
+            <div className="grid md:grid-cols-3 gap-8 text-center">
+              <div className="space-y-4">
+                <div className="text-red-400 font-semibold">❌ LegalZoom</div>
+                <p className="text-slate-400">"File your LLC" → Done. Good luck!</p>
+              </div>
+              <div className="space-y-4">
+                <div className="text-red-400 font-semibold">❌ Incfile</div>
+                <p className="text-slate-400">"Here's your paperwork" → You're on your own.</p>
+              </div>
+              <div className="space-y-4">
+                <div className="text-emerald-400 font-semibold">✅ StartSmart</div>
+                <p className="text-emerald-300">"Meet your AI business advisor" → Lifetime guidance.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+      
+          
           {/* Price Comparison Table */}
           <div className="mt-16">
             <h3 className="text-2xl font-bold text-white mb-8 text-center">Real Cost Comparison</h3>
