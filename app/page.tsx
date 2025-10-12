@@ -42,7 +42,7 @@ export default function HomePage() {
               </Badge> 
                               
               <div className="space-y-6">
-                <h1 className="text-[2.00rem] lg:text-5xl font-bold text-white leading-tight tracking-tighter">
+                <h1 className="text-[1.90rem] lg:text-5xl font-bold text-white leading-tight tracking-tighter">
                   From idea to new entity in an instant,
                   <span className="block text-white-400">Start with experts that know</span>   
                   <span className="block text-white-400">business tax.</span>
@@ -54,7 +54,7 @@ export default function HomePage() {
               </div>
 
               {/* Enhanced CTAs */}
-              <div className="flex flex-col sm:flex-row gap-4 ml-18">
+              <div className="flex flex-col sm:flex-row gap-4 ml-18 pb-4">
                <Link href="/pricing">
               <Button
                 size="lg"
