@@ -43,13 +43,12 @@ export default function HomePage() {
                               
               <div className="space-y-6">
                 <h1 className="text-3xl lg:text-5xl font-bold text-white leading-tight">
-                  Launch your business
-                  <span className="block text-white-400">with confidence & ease</span>                                   
+                  From idea to new entity in an instant,
+                  <span className="block text-white-400">Start with experts that know business tax.</span>                                   
                 </h1>
 
                 <p className="text-xl text-emerald-400 leading-relaxed max-w-lg">
-                  Start your business Smart with tax compliance certainty.
-                  Scale Smarter with our AI tools & automations.
+                  Our smart platform, built by business and tax experts, automates your entity formation, doc generation, and ongoing compliance
                 </p>
               </div>
 
