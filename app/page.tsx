@@ -42,9 +42,10 @@ export default function HomePage() {
               </Badge> 
                               
               <div className="space-y-6">
-                <h1 className="text-5xl lg:text-6lg font-bold text-white leading-tight">
+                <h1 className="text-4xl lg:text-5xl font-bold text-white leading-tight">
                   From idea to new entity in an instant,
-                  <span className="block text-white-400">Start with experts that know business tax.</span>                                   
+                  <span className="block text-white-400">Start with experts that know</span>   
+                  <span className="block text-white-400">business tax.</span>
                 </h1>
 
                 <p className="text-xl text-emerald-400 leading-relaxed max-w-lg">
