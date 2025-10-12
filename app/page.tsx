@@ -52,20 +52,6 @@ export default function HomePage() {
                 </p>
               </div>
 
-              {/* NEW: Unique AI Value Props */}
-              <div className="space-y-3">
-                {[
-                  "Launch in Less Than 48 Hours",
-                  "EIN, Legal docs, & State registration begins immediatly",
-                  "Scale your business - your AI grows along with you in App",
-                ].map((feature, i) => (
-                  <div key={i} className="flex items-center gap-3">
-                    <CheckCircle className="w-5 h-5 text-emerald-400 flex-shrink-0" />
-                    <span className="text-slate-300">{feature}</span>
-                  </div>
-                ))}
-              </div>
-
               {/* Enhanced CTAs */}
               <div className="flex flex-col sm:flex-row gap-4 ml-18">
                <Link href="/pricing">
@@ -87,7 +73,21 @@ export default function HomePage() {
                   </Button>
                 </Link>
               </div>
-
+            
+             {/* NEW: Unique AI Value Props */}
+              <div className="space-y-3">
+                {[
+                  "Launch in Less Than 48 Hours",
+                  "EIN, Legal docs, & State registration begins immediatly",
+                  "Scale your business - your AI grows along with you in App",
+                ].map((feature, i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <CheckCircle className="w-5 h-5 text-emerald-400 flex-shrink-0" />
+                    <span className="text-slate-300">{feature}</span>
+                  </div>
+                ))}
+              </div>
+              
             {/* Updated Social Proof */}
               <div className="bg-slate-800/30 rounded-lg p-4 border border-emerald-500/30">
                 <p className="text-emerald-300 font-large text-center mb-2">🔒 100% Transparent Pricing Guarantee</p>
