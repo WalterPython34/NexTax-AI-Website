@@ -43,7 +43,7 @@ export default function HomePage() {
                               
               <div className="space-y-6">
                 <h1 className="text-3xl lg:text-5xl font-bold text-white leading-tight">
-                  From idea to new entity in an instant,
+                  From idea to new entity in a flash,
                   <span className="block text-white-400">Start with experts that know business tax.</span>                                   
                 </h1>
 
