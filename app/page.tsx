@@ -53,7 +53,7 @@ export default function HomePage() {
               </div>
 
               {/* Enhanced CTAs */}
-              <div className="flex flex-col sm:flex-row gap-4 ml-18 pb-4">
+              <div className="flex flex-col sm:flex-row gap-4 ml-18 pb-2">
                <Link href="/pricing">
               <Button
                 size="lg"
