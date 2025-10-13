@@ -410,6 +410,60 @@ export default function PricingPage() {
         </div>
       </section>
 
+       {/* Process Explanation */}
+      <section className="py-20 bg-slate-900/50">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16"> 
+            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">What Happens After You Purchase?</h2>
+            <p className="text-xl text-slate-300 max-w-2xl mx-auto">
+              Our streamlined process gets your business legally formed and ready to operate in just 48 hours.
+            </p>
+          </div>
+
+          <div className="max-w-4xl mx-auto">
+            <div className="grid md:grid-cols-4 gap-8">
+              {[
+                {
+                  step: "1",
+                  title: "Safely Secure Payment",
+                  description: "Complete your purchase with our secure, bank-level encrypted payment system.",
+                  time: "2 minutes",
+                },
+                {
+                  step: "2",
+                  title: "Tell Us About Your Business",
+                  description: "Answer a simple questionnaire about your business needs and structure.",
+                  time: "5 minutes",
+                },
+                {
+                  step: "3",
+                  title: "AI Powered Setup",
+                  description: "Our AI analyzes your information instantly and prepares all required legal documents.",
+                  time: "2 hours",
+                },
+                {
+                  step: "4",
+                  title: "Launch Your Business",
+                  description: "Receive EIN, State registration confirm, and a promo code to begin using our StartSmart AI App.",
+                  time: "48 hours",
+                },
+              ].map((step, i) => (
+                <Card key={i} className="bg-slate-800/50 border-slate-700 text-center">
+                  <CardContent className="p-6">
+                    <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                      <span className="text-emerald-400 font-bold text-lg">{step.step}</span>
+                    </div>
+                    <h3 className="font-semibold text-white mb-2">{step.title}</h3>
+                    <p className="text-slate-300 text-sm mb-3">{step.description}</p>
+                    <Badge className="bg-emerald-500/20 text-emerald-300 text-xs">{step.time}</Badge>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+      
       {/* Individual Services - One-time payments */}
       <section className="py-20 bg-slate-900/50">
         <div className="container mx-auto px-4">
@@ -506,59 +560,7 @@ export default function PricingPage() {
         </div>
       </section>
 
-      {/* Process Explanation */}
-      <section className="py-20 bg-slate-900/50">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16"> 
-            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">What Happens After You Purchase?</h2>
-            <p className="text-xl text-slate-300 max-w-2xl mx-auto">
-              Our streamlined process gets your business legally formed and ready to operate in just 48 hours.
-            </p>
-          </div>
-
-          <div className="max-w-4xl mx-auto">
-            <div className="grid md:grid-cols-4 gap-8">
-              {[
-                {
-                  step: "1",
-                  title: "Safely Secure Payment",
-                  description: "Complete your purchase with our secure, bank-level encrypted payment system.",
-                  time: "2 minutes",
-                },
-                {
-                  step: "2",
-                  title: "Tell Us About Your Business",
-                  description: "Answer a simple questionnaire about your business needs and structure.",
-                  time: "5 minutes",
-                },
-                {
-                  step: "3",
-                  title: "AI Powered Setup",
-                  description: "Our AI analyzes your information instantly and prepares all required legal documents.",
-                  time: "2 hours",
-                },
-                {
-                  step: "4",
-                  title: "Launch Your Business",
-                  description: "Receive EIN, State registration confirm, and a promo code to begin using our StartSmart AI App.",
-                  time: "48 hours",
-                },
-              ].map((step, i) => (
-                <Card key={i} className="bg-slate-800/50 border-slate-700 text-center">
-                  <CardContent className="p-6">
-                    <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                      <span className="text-emerald-400 font-bold text-lg">{step.step}</span>
-                    </div>
-                    <h3 className="font-semibold text-white mb-2">{step.title}</h3>
-                    <p className="text-slate-300 text-sm mb-3">{step.description}</p>
-                    <Badge className="bg-emerald-500/20 text-emerald-300 text-xs">{step.time}</Badge>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
+     
 
             {/* Typeform Section for After Purchase */}
       <section className="py-20 bg-gradient-to-r from-emerald-600 to-cyan-600">
