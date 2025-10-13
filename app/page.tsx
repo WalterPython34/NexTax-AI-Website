@@ -80,7 +80,7 @@ export default function HomePage() {
                 {[
                   "Launch in Less Than 48 Hours",
                   "EIN, Legal docs, & State registration begins immediatly",
-                  "StartSmart AI-powered App included in startup packages (Free),
+                  "StartSmart AI-powered App included in startup packages (Free)",
                 ].map((feature, i) => (
                   <div key={i} className="flex items-center gap-3">
                     <CheckCircle className="w-5 h-5 text-emerald-400 flex-shrink-0" />
