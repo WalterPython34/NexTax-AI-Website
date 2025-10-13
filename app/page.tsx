@@ -75,7 +75,7 @@ export default function HomePage() {
               </div>
             
              {/* NEW: Unique AI Value Props */}
-              <div className="space-y-3 px-2">
+              <div className="space-y-3 pb-2">
                 {[
                   "Startup in Less Than 48 Hours",
                   "EIN, Legal docs, & State registrations begin immediatly",
