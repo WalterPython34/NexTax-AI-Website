@@ -41,10 +41,10 @@ export default function HomePage() {
                 Powered by StartSmart AI
               </Badge> 
                               
-              <div className="space-y-6">
+              <div className="space-y-6 py-2">
                 <h1 className="text-3xl lg:text-5xl font-bold text-white leading-tight tracking-tighter">
-                  Bring your vision to life,
-                  <span className="block text-white-400">& we’ll streamline the setup.</span>   
+                  Bring your vision to life.
+                  <span className="block text-white-400">We’ll streamline the setup.</span>   
                 </h1>
 
                 <p className="text-xl text-emerald-400 leading-relaxed max-w-lg">
