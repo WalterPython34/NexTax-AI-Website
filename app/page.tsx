@@ -42,12 +42,12 @@ export default function HomePage() {
               </Badge> 
                               
               <div className="space-y-6 py-2">
-                <h1 className="text-4xl lg:text-6xl font-bold text-white leading-tight tracking-tighter">
+                <h1 className="text-5xl lg:text-5xl font-bold text-white leading-tight tracking-tighter">
                   Bring your vision to life.
                   <span className="block mt-3">We’ll streamline the setup.</span>   
                 </h1>
 
-                <p className="text-xl text-emerald-400 leading-relaxed max-w-lg">
+                <p className="text-xl text-emerald-400 leading-relaxed max-w-lg py-2">
                   Straightforward pricing and industry-leading tax experts can help you launch with confidence & stay organized with our AI-powered chat, doc center, and tax calendar.
                 </p>
               </div>
