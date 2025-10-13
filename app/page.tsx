@@ -47,7 +47,7 @@ export default function HomePage() {
                   <span className="block mt-3">We’ll streamline the setup.</span>   
                 </h1>
 
-                <p className="text-xl text-emerald-400 leading-relaxed max-w-lg py-2 mt-2">
+                <p className="text-xl text-emerald-400 leading-relaxed max-w-lg pt-2 mt-2">
                   Straightforward pricing and industry-leading tax experts can help you launch with confidence & stay organized with our AI-powered chat, doc center, and tax calendar.
                 </p>
               </div>
