@@ -445,7 +445,6 @@ export default function HomePage() {
               </div>
             </div>
           </div>
-        </div>
       
           
           {/* Price Comparison Table */}
@@ -491,7 +490,6 @@ export default function HomePage() {
             </div>
           </div>
         </div>
-      </div>
       </section>
 
       {/* Projected Customer Success Stories */}
