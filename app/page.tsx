@@ -43,13 +43,12 @@ export default function HomePage() {
                               
               <div className="space-y-6">
                 <h1 className="text-3xl lg:text-5xl font-bold text-white leading-tight tracking-tighter">
-                  From idea to entity in an instant,
-                  <span className="block text-white-400">Start with experts that know</span>   
-                  <span className="block text-white-400">business tax.</span>
+                  Bring your vision to life,
+                  <span className="block text-white-400">& we’ll streamline the setup.</span>   
                 </h1>
 
                 <p className="text-xl text-emerald-400 leading-relaxed max-w-lg">
-                  Our smart platform, built by business and tax experts, automates your entity formation, doc generation, & ongoing compliance needs.
+                  Straightforward pricing and industry-leading tax experts can help you launch with confidence & stay organized with our AI-powered chat, doc center, and tax calendar.
                 </p>
               </div>
 
@@ -78,7 +77,7 @@ export default function HomePage() {
              {/* NEW: Unique AI Value Props */}
               <div className="space-y-3 px-2">
                 {[
-                  "Launch in Less Than 48 Hours",
+                  "Startup in Less Than 48 Hours",
                   "EIN, Legal docs, & State registrations begin immediatly",
                   "StartSmart AI-powered App included in all startup packages (Free)",
                 ].map((feature, i) => (
