@@ -42,7 +42,7 @@ export default function HomePage() {
               </Badge> 
                               
               <div className="space-y-6 py-2">
-                <h1 className="text-4xl lg:text-5xl font-bold text-white leading-tight tracking-tighter">
+                <h1 className="text-4xl lg:text-6xl font-bold text-white leading-tight tracking-tighter">
                   Bring your vision to life.
                   <span className="block text-white-400">We’ll streamline the setup.</span>   
                 </h1>
