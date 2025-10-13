@@ -280,7 +280,7 @@ export default function HomePage() {
                 icon: Zap,
                 title: "Business Essentials",
                 items: [
-                  "Business bank account prep",
+                  "Business plan generation",
                   "Digital document vault",
                   "Ongoing support",
                   "Future filing reminders",
@@ -321,7 +321,6 @@ export default function HomePage() {
                     <li>✓ No hidden state filing fees</li>
                     <li>✓ No surprise registered agent charges</li>
                     <li>✓ No mandatory add-ons or upsells</li>
-                    <li>✓ No recurring fees unless you choose them</li>
                   </ul>
                 </div>
               </div>
