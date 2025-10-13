@@ -42,7 +42,7 @@ export default function HomePage() {
               </Badge> 
                               
               <div className="space-y-6">
-                <h1 className="text-3xl lg:text-4xl font-bold text-white leading-tight tracking-tighter">
+                <h1 className="text-3xl lg:text-5xl font-bold text-white leading-tight tracking-tighter">
                   From idea to entity in an instant,
                   <span className="block text-white-400">Start with experts that know</span>   
                   <span className="block text-white-400">business tax.</span>
@@ -80,7 +80,7 @@ export default function HomePage() {
                 {[
                   "Launch in Less Than 48 Hours",
                   "EIN, Legal docs, & State registration begins immediatly",
-                  "Scale your business - your AI grows along with you in App",
+                  "StartSmart AI-powered App included in startup packages (Free),
                 ].map((feature, i) => (
                   <div key={i} className="flex items-center gap-3">
                     <CheckCircle className="w-5 h-5 text-emerald-400 flex-shrink-0" />
