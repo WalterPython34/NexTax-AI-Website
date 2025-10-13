@@ -49,7 +49,7 @@ export default function HomePage() {
                 </h1>
 
                 <p className="text-xl text-emerald-400 leading-relaxed max-w-lg">
-                  Our smart platform, built by business and tax experts, automates your entity formation, doc generation, and ongoing compliance needs.
+                  Our smart platform, built by business and tax experts, automates your entity formation, doc generation, & ongoing compliance needs.
                 </p>
               </div>
 
