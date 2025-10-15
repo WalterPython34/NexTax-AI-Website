@@ -48,7 +48,7 @@ export default function HomePage() {
                 </h1>
 
                 <p className="text-xl text-emerald-400 leading-relaxed max-w-lg pt-2 mt-2">
-                  Straightforward pricing and industry-leading tax experts can help you launch with confidence & stay organized with our AI-powered chat, doc center, and tax calendar.
+                  From idea to launch in record time, our tax experts help you startup with confidence and stay organized with our AI-powered tools.
                 </p>
               </div>
 
