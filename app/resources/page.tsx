@@ -212,7 +212,7 @@ export default function ResourcesPage() {
                     <Link href={resource.link}>
                       <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white">
                         <Download className="w-4 h-4 mr-2" />
-                        Calculate for Free
+                        Download Free
                       </Button>
                     </Link>
                   ) : (
