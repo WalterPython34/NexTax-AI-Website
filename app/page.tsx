@@ -150,7 +150,7 @@ export default function HomePage() {
                     </div>
                     <div className="bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 rounded-lg p-4 border border-emerald-500/20">
                       <p className="text-slate-300 text-sm">
-                        <strong className="text-emerald-400">StartSmartGPT:</strong> "Based on your projected $85K
+                        <strong className="text-emerald-400">StartSmart AI:</strong> "Based on your projected $85K
                         revenue and single-member structure, S-Corp election could save you ~$6,500 annually in
                         self-employment taxes. However, you'll need to run payroll. Let me show you the breakeven
                         analysis..."
@@ -163,7 +163,7 @@ export default function HomePage() {
                     </div>
                     <div className="bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 rounded-lg p-4 border border-emerald-500/20">
                       <p className="text-slate-300 text-sm">
-                        <strong className="text-emerald-400">StartSmartGPT:</strong> "Great question! Since you
+                        <strong className="text-emerald-400">StartSmart AI:</strong> "Great question! Since you
                         mentioned clients in NY and CA, you'll need to consider nexus thresholds..."
                       </p>
                     </div>
@@ -174,7 +174,7 @@ export default function HomePage() {
                     onClick={() => setAuthModal({ isOpen: true, mode: "signup" })}
                   >
                     <MessageSquare className="mr-2 w-4 h-4" />
-                    Try StartSmartGPT Now
+                    Try StartSmart AI Now
                   </Button>                  
                 </div>
                </div>
@@ -187,7 +187,7 @@ export default function HomePage() {
       <section className="py-20 bg-slate-900/50">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">Why StartSmartGPT Changes Everything</h2>
+            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">Why StartSmart AI Changes Everything</h2>
             <p className="text-xl text-slate-300 max-w-3xl mx-auto">
               Other services stop at paperwork. We give you an AI business partner trained on decades of real-world
               experience.
@@ -200,7 +200,7 @@ export default function HomePage() {
                 icon: Bot,
                 title: "Custom-Trained on Your Business",
                 description:
-                  "Not generic ChatGPT. StartSmartGPT knows your entity type, industry, state requirements, and growth plans.",
+                  "Not generic ChatGPT. StartSmart AI knows your entity type, industry, state requirements, and growth plans.",
                 color: "purple",
               },
               {
