@@ -90,7 +90,6 @@ export default function TestLandingPage() {
                         </div>
                       </div>
                     </div>
-                    <img src="/images/startsmart-logo-black-cropped.jpg" alt="StartSmart" className="h-12 w-auto" />
                   </div>
 
                   <div className="space-y-4">
