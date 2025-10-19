@@ -142,7 +142,7 @@ export default function TestLandingPage() {
             {/* Video/Image Left */}
             <div className="relative">
               <video
-                src="/videos/buried_paperwork1.MP4"
+                src="/videos/buried_paperwork1.mp4"
                 autoPlay
                 loop
                 muted
