@@ -147,7 +147,7 @@ export default function TestLandingPage() {
                 loop
                 muted
                 playsInline
-                className="w-full aspect-video rounded-2xl border border-slate-700 object-contain bg-slate-900"
+                className="w-full max-w-md aspect-[9/16] rounded-2xl border border-slate-700 object-contain bg-slate-900"
               />
             </div>
 
@@ -292,7 +292,7 @@ export default function TestLandingPage() {
                 ))}
               </div>
               <Link href="/pricing">
-                <Button className="bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white px-8 py-4 text-lg">
+                <Button className="mt-4 bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white px-8 py-4 text-lg">
                   <Rocket className="mr-2 w-5 h-5" />
                   Get Started Now
                 </Button>
