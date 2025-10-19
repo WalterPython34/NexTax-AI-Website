@@ -144,7 +144,10 @@ export default function TestLandingPage() {
               <div className="aspect-video bg-slate-800 rounded-2xl border border-slate-700 flex items-center justify-center">
                 <div className="text-center">
                   <Bot className="w-16 h-16 text-emerald-400 mx-auto mb-4" />
-                  <p className="text-slate-400">Video: "Launching Doesn't Need to Be Difficult"</p>
+                  <video src="/videos/buried_paperwork.mp4" 
+                    controls 
+                    className="w-full rounded-lg"
+                    />
                 </div>
               </div>
             </div>
