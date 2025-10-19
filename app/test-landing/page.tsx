@@ -147,7 +147,7 @@ export default function TestLandingPage() {
                 loop
                 muted
                 playsInline
-                className="w-full max-w-auto max-h-[480px] aspect-[9/16] rounded-2xl border border-slate-700 object-contain bg-slate-900"
+                className="max-h-[460px] mx-auto rounded-2xl border border-slate-700 object-contain bg-slate-900"
               />
             </div>
 
