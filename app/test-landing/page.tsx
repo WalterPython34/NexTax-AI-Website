@@ -141,15 +141,14 @@ export default function TestLandingPage() {
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             {/* Video/Image Left */}
             <div className="relative">
-              <div className="aspect-video bg-slate-800 rounded-2xl border border-slate-700 flex items-center justify-center">
-                <div className="text-center">
-                  <Bot className="w-16 h-16 text-emerald-400 mx-auto mb-4" />
-                  <video src="/videos/buried_paperwork.mp4" 
-                    controls 
-                    className="w-full rounded-lg"
-                    />
-                </div>
-              </div>
+              <video
+                src="/videos/buried_paperwork.MP4"
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="w-full aspect-video rounded-2xl border border-slate-700 object-cover"
+              />
             </div>
 
             {/* Text Right */}
@@ -209,12 +208,14 @@ export default function TestLandingPage() {
 
             {/* Video/Image Right */}
             <div className="relative lg:order-2">
-              <div className="aspect-video bg-slate-800 rounded-2xl border border-slate-700 flex items-center justify-center">
-                <div className="text-center">
-                  <Users className="w-16 h-16 text-cyan-400 mx-auto mb-4" />
-                  <p className="text-slate-400">Video: "Business Question Solved"</p>
-                </div>
-              </div>
+              <video
+                src="/videos/Question Solved_video.mp4"
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="w-full aspect-video rounded-2xl border border-slate-700 object-cover"
+              />
             </div>
           </div>
         </div>
@@ -226,12 +227,14 @@ export default function TestLandingPage() {
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             {/* Video/Image Left */}
             <div className="relative">
-              <div className="aspect-video bg-slate-800 rounded-2xl border border-slate-700 flex items-center justify-center">
-                <div className="text-center">
-                  <Shield className="w-16 h-16 text-purple-400 mx-auto mb-4" />
-                  <p className="text-slate-400">Video: "Secure Tax Info"</p>
-                </div>
-              </div>
+              <video
+                src="/videos/Secure Tax Info_video.mp4"
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="w-full aspect-video rounded-2xl border border-slate-700 object-cover"
+              />
             </div>
 
             {/* Text Right */}
@@ -298,12 +301,14 @@ export default function TestLandingPage() {
 
             {/* Video/Image Right */}
             <div className="relative lg:order-2">
-              <div className="aspect-video bg-slate-800 rounded-2xl border border-slate-700 flex items-center justify-center">
-                <div className="text-center">
-                  <Zap className="w-16 h-16 text-emerald-400 mx-auto mb-4" />
-                  <p className="text-slate-400">Video: "AI + Human Launch Support"</p>
-                </div>
-              </div>
+              <video
+                src="/videos/Launching_made_easy.mp4"
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="w-full aspect-video rounded-2xl border border-slate-700 object-cover"
+              />
             </div>
           </div>
         </div>
