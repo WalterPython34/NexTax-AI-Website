@@ -68,7 +68,7 @@ export default function TestLandingPage() {
 
               <div className="space-y-3 py-4">
                 {[
-                  "Startup in Less Than 48 Hours",
+                  "Start your new business in less than 48 Hours",
                   "EIN, Legal docs, & State registrations begin immediately",
                   "StartSmart AI-powered App included in all startup packages (Free)",
                 ].map((feature, i) => (
