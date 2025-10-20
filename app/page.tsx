@@ -326,7 +326,7 @@ export default function TestLandingPage() {
       </section>
 
        {/* NEW: AI Differentiator Section */}
-      <section className="py-20 bg-slate-900/50">
+      <section className="py-10 bg-slate-900/50">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">Why StartSmart AI Changes Everything</h2>
