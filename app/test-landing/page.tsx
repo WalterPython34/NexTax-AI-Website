@@ -153,7 +153,7 @@ export default function TestLandingPage() {
 
             {/* Text Right */}
             <div className="space-y-6">
-              <h2 className="text-3xl lg:text-4xl font-bold text-cyan-400">
+              <h2 className="text-3xl lg:text-4xl font-bold text-cyan-300">
                 Starting a Business Doesn't Have to Be Complicated
               </h2>
               <p className="text-xl text-slate-300 leading-relaxed">
@@ -243,7 +243,7 @@ export default function TestLandingPage() {
 
             {/* Text Right */}
             <div className="space-y-6">
-              <h2 className="text-3xl lg:text-4xl font-bold text-cyan-400">
+              <h2 className="text-3xl lg:text-4xl font-bold text-cyan-300">
                 Your Data, Protected Like a Fortune 500 Company
               </h2>
               <p className="text-xl text-slate-300 leading-relaxed">
