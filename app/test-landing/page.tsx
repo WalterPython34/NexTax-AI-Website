@@ -14,6 +14,13 @@ export default function TestLandingPage() {
     mode: "signin",
   })
 
+  const stats = [
+    { number: "48hrs", label: "Business Launch Time" },
+    { number: "99.7%", label: "Document Accuracy" },
+    { number: "24/7", label: "AI Support Available" },
+    { number: "50+", label: "States Supported" },
+  ]
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black">
       {/* Hero Section - Copied from current homepage */}
@@ -466,16 +473,22 @@ export default function TestLandingPage() {
                 </Button>
               </Link>
             </div>
-                      const stats = [
-           { number: "48hrs", label: "Business Launch Time" },
-           { number: "99.7%", label: "Document Accuracy" },
-           { number: "24/7", label: "AI Support Available" },
-           { number: "50+", label: "States Supported" },
-          ]
-         </div>
+          </div>
         </div>
       </section>
 
+       <section className="py-16 bg-slate-900/50">
+        <div className="container mx-auto px-4">
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
+            {stats.map((stat, index) => (
+              <div key={index} className="text-center">
+                <div className="text-4xl lg:text-5xl font-bold text-emerald-400 mb-2">{stat.number}</div>
+                <div className="text-slate-300 text-sm lg:text-base">{stat.label}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
         
       {/* Auth Modal */}
       <AuthModal
