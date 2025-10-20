@@ -466,17 +466,17 @@ export default function TestLandingPage() {
                 </Button>
               </Link>
             </div>
-          </div>
+                      const stats = [
+           { number: "48hrs", label: "Business Launch Time" },
+           { number: "99.7%", label: "Document Accuracy" },
+           { number: "24/7", label: "AI Support Available" },
+           { number: "50+", label: "States Supported" },
+          ]
+         </div>
         </div>
       </section>
 
-       const stats = [
-    { number: "48hrs", label: "Business Launch Time" },
-    { number: "99.7%", label: "Document Accuracy" },
-    { number: "24/7", label: "AI Support Available" },
-    { number: "50+", label: "States Supported" },
-   ]
-      
+        
       {/* Auth Modal */}
       <AuthModal
         isOpen={authModal.isOpen}
