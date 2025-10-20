@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
+import { Card, CardContent } from "@/components/ui/card"
 import { Bot, CheckCircle, Rocket, MessageSquare, Shield, Lock, Users, Zap, ArrowRight, Building2, TrendingUp, Clock, DollarSign } from "lucide-react"
 import Link from "next/link"
 import { AuthModal } from "@/components/auth/auth-modal"
