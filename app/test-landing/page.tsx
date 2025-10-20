@@ -58,7 +58,7 @@ export default function TestLandingPage() {
                 </Link>
               </div>
 
-              <div className="space-y-3">
+              <div className="space-y-3 py-4">
                 {[
                   "Startup in Less Than 48 Hours",
                   "EIN, Legal docs, & State registrations begin immediately",
@@ -271,7 +271,7 @@ export default function TestLandingPage() {
             {/* Text Left */}
             <div className="space-y-6 lg:order-1">
               <h2 className="text-3xl lg:text-4xl font-bold text-white">
-                Your AI Assistant. Your Expert Team. Your Business, Launched.
+                Your AI Assistant. Your Expert Team. <span className="text-cyan-400">Your Business,</span> <span className="text-emerald-400">Launched</span>.
               </h2>
               <p className="text-xl text-slate-300 leading-relaxed">
                 Stop guessing. Start growing. StartSmart combines automation and expert insight so you can form, manage,
