@@ -392,7 +392,7 @@ export default function TestLandingPage() {
          
 
       {/* What's Included Section */}
-      <section className="py-10 bg-slate-900/50">
+      <section className="py-8 bg-slate-900/50">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">Everything You Need to Start</h2>
