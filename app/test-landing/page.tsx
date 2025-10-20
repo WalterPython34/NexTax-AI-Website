@@ -385,7 +385,7 @@ export default function TestLandingPage() {
          
 
       {/* What's Included Section */}
-      <section className="py-20 bg-slate-900/50">
+      <section className="py-10 bg-slate-900/50">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">Everything You Need to Start</h2>
@@ -451,7 +451,7 @@ export default function TestLandingPage() {
               <div className="space-y-4 mb-6">
                 <p className="text-slate-300">Everything included. What you see is what you pay.</p>
                 <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-4">
-                  <h4 className="text-emerald-300 font-semibold mb-2">Our Transparency Guarantee:</h4>
+                  <h4 className="text-cyan-300 font-semibold mb-2">Our Transparency Guarantee:</h4>
                   <ul className="text-sm text-slate-300 space-y-1">
                     <li>✓ No hidden state filing fees</li>
                     <li>✓ No surprise registered agent charges</li>
