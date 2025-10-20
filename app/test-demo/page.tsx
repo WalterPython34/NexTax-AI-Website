@@ -15,7 +15,7 @@ export default function TestDemoPage() {
           <div className="text-center max-w-4xl mx-auto mb-12">
             <Badge className="mb-6 bg-emerald-500/20 text-emerald-300 border-emerald-500/30">All-in-One Platform</Badge>
             <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-6 text-balance">
-              Everything You Need to Launch and Grow — All in One Platform
+              Everything You Need to Launch and Grow — All in One Platform 
             </h1>
             <p className="text-xl text-slate-300 mb-8 text-pretty">
               StartSmart combines AI automation with real human support to guide you through every stage of starting and
@@ -219,7 +219,7 @@ export default function TestDemoPage() {
                 </li>
                 <li className="flex items-start gap-3">
                   <CheckCircle className="w-6 h-6 text-emerald-400 flex-shrink-0 mt-1" />
-                  <span className="text-slate-300">Tax savings and payroll analysis</span>
+                  <span className="text-slate-300">Tax savings and deductions analysis</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <CheckCircle className="w-6 h-6 text-emerald-400 flex-shrink-0 mt-1" />
