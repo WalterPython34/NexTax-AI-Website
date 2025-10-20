@@ -174,7 +174,7 @@ export default function TestLandingPage() {
                 ))}
               </div>
               <Link href="/features">
-              <Button className="bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-3">Learn More</Button>
+              <Button className="mt-4 bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-3">Learn More</Button>
             </Link>
             </div>
           </div>
@@ -206,7 +206,7 @@ export default function TestLandingPage() {
                 ))}
               </div>
               <Link href="/contact">
-              <Button className="bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-3">See How It Works</Button>
+              <Button className="mt-4 bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-3">See How It Works</Button>
             </Link>
             </div>
 
@@ -250,7 +250,7 @@ export default function TestLandingPage() {
                 Security isn't optional — it's built into everything we do. From encrypted document storage to secure
                 tax data sharing, your information stays private and protected.
               </p>
-              <div className="space-y-3">
+              <div className="space-y-3 mb-6">
                 {[
                   "Encrypted, bank-level data security",
                   "Auto-organized tax and business documents",
@@ -263,7 +263,7 @@ export default function TestLandingPage() {
                   </div>
                 ))}
               </div>
-              <Button className="bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-3">Learn About Security</Button>
+              <Button className="mt-4 bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-3">Learn About Security</Button>
             </div>
           </div>
         </div>
