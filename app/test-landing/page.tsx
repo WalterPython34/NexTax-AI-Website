@@ -152,7 +152,7 @@ export default function TestLandingPage() {
 
             {/* Text Right */}
             <div className="space-y-6">
-              <h2 className="text-3xl lg:text-4xl font-bold text-white">
+              <h2 className="text-3xl lg:text-4xl font-bold text-cyan-400">
                 Starting a Business Doesn't Have to Be Complicated
               </h2>
               <p className="text-xl text-slate-300 leading-relaxed">
@@ -172,7 +172,9 @@ export default function TestLandingPage() {
                   </div>
                 ))}
               </div>
+              <Link href="/features">
               <Button className="bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-3">Learn More</Button>
+            </Link>
             </div>
           </div>
         </div>
@@ -184,7 +186,7 @@ export default function TestLandingPage() {
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             {/* Text Left */}
             <div className="space-y-6 lg:order-1">
-              <h2 className="text-3xl lg:text-4xl font-bold text-white">Got Questions? We've Got Answers.</h2>
+              <h2 className="text-3xl lg:text-4xl font-bold text-emerald-400">Got Questions? We've Got Answers.</h2>
               <p className="text-xl text-slate-300 leading-relaxed">
                 Whether it's taxes, entity selection, or compliance — StartSmart AI is powered by real pros who know
                 small business inside out. Ask anything, anytime.
@@ -202,7 +204,9 @@ export default function TestLandingPage() {
                   </div>
                 ))}
               </div>
+              <Link href="/contact">
               <Button className="bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-3">See How It Works</Button>
+            </Link>
             </div>
 
             {/* Video/Image Right */}
@@ -238,7 +242,7 @@ export default function TestLandingPage() {
 
             {/* Text Right */}
             <div className="space-y-6">
-              <h2 className="text-3xl lg:text-4xl font-bold text-white">
+              <h2 className="text-3xl lg:text-4xl font-bold text-cyan-400">
                 Your Data, Protected Like a Fortune 500 Company
               </h2>
               <p className="text-xl text-slate-300 leading-relaxed">
