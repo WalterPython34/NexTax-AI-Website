@@ -2,83 +2,74 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
-import {
-  ArrowRight,
-  Rocket,
-  Shield,
-  CheckCircle,
-  Zap,
-  Bot,
-  Building2,
-  TrendingUp,
-  Clock,
-  DollarSign,
-  MessageSquare,
-} from "lucide-react"
+import { Card, CardContent } from "@/components/ui/card"
+import { Bot, CheckCircle, Rocket, MessageSquare, Shield, Lock, Users, Zap, ArrowRight, Building2, TrendingUp, Clock, DollarSign } from "lucide-react"
 import Link from "next/link"
-import { EnhancedChatBot } from "@/components/enhanced-chat-bot"
 import { AuthModal } from "@/components/auth/auth-modal"
 
-export default function HomePage() {
+export default function TestLandingPage() {
   const [authModal, setAuthModal] = useState<{ isOpen: boolean; mode: "signin" | "signup" }>({
     isOpen: false,
     mode: "signin",
-  })  
-  
+  })
+
+  const stats = [
+    { number: "48hrs", label: "Business Launch Time" },
+    { number: "99.7%", label: "Document Accuracy" },
+    { number: "24/7", label: "AI Support Available" },
+    { number: "50+", label: "States Supported" },
+  ]
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black">
-      {/* Hero Section - AI-Powered StartSmart */}
+      {/* Hero Section - Copied from current homepage */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-cyan-500/10" />
-        <div className="relative container mx-auto px-4 py-20 lg:py-8">
+        <div className="relative container mx-auto px-4 py-20 lg:py-10">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div className="space-y-8">
-             {/* NEW: AI-Powered Badge */}
-              <Badge className="bg-gradient-to-r from-emerald-500/20 to-blue-500/20 text-cyan-400 border-blue-500/30 text-sm px-1.5 py-0.5">
-                <Bot className="w-3 h-3 mr-1.5" />
+              <Badge className="bg-gradient-to-r from-emerald-500/20 to-blue-500/20 text-cyan-400 border-blue-500/30 text-lg px-2 py-2">
+                <Bot className="w-4 h-4 mr-2" />
                 Powered by StartSmart AI
-              </Badge> 
-                              
-              <div className="space-y-6 py-2">
-                <h1 className="text-5xl lg:text-5xl font-bold text-white leading-tight tracking-tighter">
-                  Bring your vision to life.
-                  <span className="block mt-3">We’ll streamline the setup.</span>   
-                </h1>
+              </Badge>
 
-                <p className="text-xl text-emerald-400 leading-relaxed max-w-lg pt-2 mt-2">
-                  From idea to launch in record time, our tax experts help you startup with confidence and stay organized with our AI-powered tools.
-                </p>
+              <div className="space-y-6">
+                <h1 className="text-3xl lg:text-5xl font-bold text-white leading-tight">
+                  Bring your vision to life.
+                  <span className="block text-white-400">We'll streamline the setup.</span>
+                  <span className="block text-emerald-400 text-xl lg:text-xl mt-8">
+                    From idea to launch in record time, our tax experts help you startup with confidence and stay
+                    organized with our AI-powered tools.
+                  </span>
+                </h1>
               </div>
 
-              {/* Enhanced CTAs */}
-              <div className="flex flex-col sm:flex-row gap-4 ml-18 pb-4">
-               <Link href="/pricing">
-              <Button
-                size="lg"
-                  className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white px-8 py-6 text-lg font-semibold w-full sm:w-auto mt-4"
-                  >
-                <Rocket className="mr-3 w-6 h-6" />
-                Start My LLC
-                </Button>
-                </Link>      
-                <Link href="https://www.nextax.ai/features" target="_blank" rel="noopener noreferrer">                
-                 <Button
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Link href="/pricing">
+                  <Button
                     size="lg"
-                    className="bg-emerald-500 hover:bg-emerald-600 text-white px-8 py-6 text-lg font-semibold w-full sm:w-auto mt-4"
+                    className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white px-8 py-6 text-lg font-semibold w-full sm:w-auto"
+                  >
+                    <Rocket className="mr-3 w-6 h-6" />
+                    Start My LLC
+                  </Button>
+                </Link>
+                <Link href="/features">
+                  <Button
+                    size="lg"
+                    className="bg-emerald-500 hover:bg-emerald-600 text-white px-8 py-6 text-lg font-semibold w-full sm:w-auto"
                   >
                     Learn more
                     <Bot className="ml-3 w-6 h-6" />
                   </Button>
                 </Link>
               </div>
-            
-             {/* NEW: Unique AI Value Props */}
-              <div className="space-y-3 pb-2">
+
+              <div className="space-y-3 py-4">
                 {[
                   "Startup in Less Than 48 Hours",
-                  "EIN, Legal docs, & State registrations begin immediatly",
+                  "EIN, Legal docs, & State registrations begin immediately",
                   "StartSmart AI-powered App included in all startup packages (Free)",
                 ].map((feature, i) => (
                   <div key={i} className="flex items-center gap-3">
@@ -87,60 +78,28 @@ export default function HomePage() {
                   </div>
                 ))}
               </div>
-              
-            {/* Updated Social Proof */}
-              <div className="bg-slate-800/30 rounded-lg p-4 border border-emerald-500/30">
-                <p className="text-cyan-400 font-large text-center mb-2">🔒 100% Transparent Pricing Guarantee</p>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-sm text-slate-300">
-                  <div className="flex items-center justify-center gap-1">
-                    <CheckCircle className="w-4 h-4 text-emerald-400" />
-                    <span>No Hidden Fees</span>
-                  </div>
-                  <div className="flex items-center justify-center gap-1">
-                    <CheckCircle className="w-4 h-4 text-emerald-400" />
-                    <span>No Add-On Charges</span>
-                  </div>
-                  <div className="flex items-center justify-center gap-1">
-                    <CheckCircle className="w-4 h-4 text-emerald-400" />
-                    <span>No Surprises</span>
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center gap-8 pt-2">
-                <div className="text-center">
-                  
-                </div>
-                <div className="text-center">
-                  
-                </div>
-                <div className="text-center">
-                  
-                </div>
-              </div>
             </div>
-                            
-            {/* NEW: AI Demo Preview */}
-<div className="relative -mt-8">
-  <div className="relative bg-slate-800/50 backdrop-blur-sm rounded-2xl p-8 border border-slate-700">
-    <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-cyan-500/10 rounded-2xl" />
-    <div className="relative space-y-6">
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-3">                    
-          <div className="w-12 h-12 rounded-lg bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 flex items-center justify-center">
-            <Bot className="w-6 h-6 text-emerald-400" />
-          </div>
-          <div>
-            <h3 className="text-lg font-semibold text-white">StartSmart AI</h3>
-            <div className="flex items-center gap-2">
-              <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-              <Badge className="bg-green-500/20 text-green-300 text-xs">Online & Ready</Badge>
-            </div>
-          </div>
-        </div>
-        <img src="/images/startsmart-logo-black-cropped.jpg" alt="StartSmart" className="h-10 w-auto" />
-      </div> {/* This closing tag was missing! */}
-    
-                  {/* Sample AI Conversation */}
+
+            {/* AI Demo Preview */}
+            <div className="relative -mt-8">
+              <div className="relative bg-slate-800/50 backdrop-blur-sm rounded-2xl p-8 border border-slate-700">
+                <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-cyan-500/10 rounded-2xl" />
+                <div className="relative space-y-6">
+                  <div className="flex items-center justify-between mb-6">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-lg bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 flex items-center justify-center">
+                        <Bot className="w-6 h-6 text-emerald-400" />
+                      </div>
+                      <div>
+                        <h3 className="text-xl font-semibold text-white">StartSmart AI</h3>
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                          <Badge className="bg-green-500/20 text-green-300 text-xs">Online & Ready</Badge>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
                   <div className="space-y-4">
                     <div className="bg-slate-900/30 rounded-lg p-4">
                       <p className="text-slate-300 text-sm">
@@ -175,15 +134,198 @@ export default function HomePage() {
                   >
                     <MessageSquare className="mr-2 w-4 h-4" />
                     Try StartSmart AI Now
-                  </Button>                  
+                  </Button>
                 </div>
-               </div>
-              </div>    
+              </div>
             </div>
           </div>
-        </section>
-          
-      {/* NEW: AI Differentiator Section */}
+        </div>
+      </section>
+
+      {/* Section 1: Launching Doesn't Need to Be Difficult (Video Left, Text Right) */}
+      <section className="py-20 bg-slate-900/50">
+        <div className="container mx-auto px-4">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            {/* Video/Image Left */}
+            <div className="relative">
+              <video
+                src="/videos/buried_paperwork1.mp4"
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="max-h-[460px] mx-auto rounded-2xl border border-slate-700 object-contain bg-slate-900"
+              />
+            </div>
+
+            {/* Text Right */}
+            <div className="space-y-6">
+              <h2 className="text-3xl lg:text-4xl font-bold text-cyan-300">
+                Starting a Business Doesn't Have to Be Complicated
+              </h2>
+              <p className="text-xl text-slate-300 leading-relaxed">
+                Most founders get stuck before they start — buried in paperwork, tax forms, and state requirements.
+                StartSmart simplifies it all with guided, AI-powered setup that feels effortless.
+              </p>
+              <div className="space-y-3">
+                {[
+                  "Launch your LLC or S-Corp in as little as 48 hours",
+                  "Step-by-step guidance built for first-time founders",
+                  "No legal jargon. No stress. Just progress.",
+                  "AI + human experts to guide your every move",
+                ].map((item, i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <CheckCircle className="w-5 h-5 text-emerald-400 flex-shrink-0" />
+                    <span className="text-slate-300">{item}</span>
+                  </div>
+                ))}
+              </div>
+              <Link href="/features">
+              <Button className="mt-4 bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-3">Learn More</Button>
+            </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Section 2: Business Question Solved (Text Left, Video Right) */}
+      <section className="py-20">
+        <div className="container mx-auto px-4">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            {/* Text Left */}
+            <div className="space-y-6 lg:order-1">
+              <h2 className="text-3xl lg:text-4xl font-bold text-emerald-400">Got Questions? We've Got Answers.</h2>
+              <p className="text-xl text-slate-300 leading-relaxed">
+                Whether it's taxes, entity selection, or compliance — StartSmart AI is powered by real pros who know
+                small business inside out. Ask anything, anytime.
+              </p>
+              <div className="space-y-3">
+                {[
+                  "AI Assistant trained on real tax and business data",
+                  "Live access to experienced U.S. tax professionals",
+                  "Get clear, instant answers to complex business questions",
+                  "Stay compliant and confident year-round",
+                ].map((item, i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <CheckCircle className="w-5 h-5 text-emerald-400 flex-shrink-0" />
+                    <span className="text-slate-300">{item}</span>
+                  </div>
+                ))}
+              </div>
+              <Link href="/contact">
+              <Button className="mt-4 bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-3">See How It Works</Button>
+            </Link>
+            </div>
+
+            {/* Video/Image Right */}
+            <div className="relative lg:order-2">
+              <video
+                src="/videos/Question Solved_video.mp4"
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="w-full aspect-video rounded-2xl border border-slate-700 object-cover"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Section 3: Secure Tax Info (Video Left, Text Right) */}
+      <section className="py-20 bg-slate-900/50">
+        <div className="container mx-auto px-4">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            {/* Video/Image Left */}
+            <div className="relative">
+              <video
+                src="/videos/Secure Tax Info_video.mp4"
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="w-full aspect-video rounded-2xl border border-slate-700 object-cover"
+              />
+            </div>
+
+            {/* Text Right */}
+            <div className="space-y-6">
+              <h2 className="text-3xl lg:text-4xl font-bold text-cyan-300">
+                Your Data, Protected Like a Fortune 500 Company
+              </h2>
+              <p className="text-xl text-slate-300 leading-relaxed">
+                Security isn't optional — it's built into everything we do. From encrypted document storage to secure
+                tax data sharing, your information stays private and protected.
+              </p>
+              <div className="space-y-3 mb-6">
+                {[
+                  "Encrypted, bank-level data security",
+                  "Auto-organized tax and business documents",
+                  "Secure cloud sync for your startup's key files",
+                  "100% privacy — your data belongs to you",
+                ].map((item, i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <Lock className="w-5 h-5 text-emerald-400 flex-shrink-0" />
+                    <span className="text-slate-300">{item}</span>
+                  </div>
+                ))}
+              </div>
+              <Button className="mt-4 bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-3">Learn About Security</Button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Section 4: AI + Human Launch Support (Text Left, Video Right) */}
+      <section className="py-20">
+        <div className="container mx-auto px-4">
+          <div className="grid lg:grid-cols-2 gap-12 items-center">
+            {/* Text Left */}
+            <div className="space-y-6 lg:order-1">
+              <h2 className="text-3xl lg:text-4xl font-bold text-white">
+                Your AI Assistant. Your Expert Team. <span className="text-cyan-400">Your Business,</span> <span className="text-emerald-400">Launched</span>.
+              </h2>
+              <p className="text-xl text-slate-300 leading-relaxed">
+                Stop guessing. Start growing. StartSmart combines automation and expert insight so you can form, manage,
+                and scale your business with confidence — all in one place.
+              </p>
+              <div className="space-y-3">
+                {[
+                  "Guided business formation powered by AI",
+                  "Live expert chat when you need human help",
+                  "Tax setup, compliance tracking, and more",
+                  "Start today — see results instantly",
+                ].map((item, i) => (
+                  <div key={i} className="flex items-center gap-3">
+                    <CheckCircle className="w-5 h-5 text-emerald-400 flex-shrink-0" />
+                    <span className="text-slate-300">{item}</span>
+                  </div>
+                ))}
+              </div>
+              <Link href="/pricing">
+                <Button className="mt-4 bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white px-8 py-4 text-lg">
+                  <Rocket className="mr-2 w-5 h-5" />
+                  Get Started Now
+                </Button>
+              </Link>
+            </div>
+
+            {/* Video/Image Right */}
+            <div className="relative lg:order-2">
+              <video
+                src="/videos/Launching_made_easy.mp4"
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="w-full aspect-video rounded-2xl border border-slate-700 object-cover"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
+       {/* NEW: AI Differentiator Section */}
       <section className="py-20 bg-slate-900/50">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
@@ -250,7 +392,7 @@ export default function HomePage() {
          
 
       {/* What's Included Section */}
-      <section className="py-20 bg-slate-900/50">
+      <section className="py-8 bg-slate-900/50">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">Everything You Need to Start</h2>
@@ -316,7 +458,7 @@ export default function HomePage() {
               <div className="space-y-4 mb-6">
                 <p className="text-slate-300">Everything included. What you see is what you pay.</p>
                 <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-4">
-                  <h4 className="text-emerald-300 font-semibold mb-2">Our Transparency Guarantee:</h4>
+                  <h4 className="text-cyan-300 font-semibold mb-2">Our Transparency Guarantee:</h4>
                   <ul className="text-sm text-slate-300 space-y-1">
                     <li>✓ No hidden state filing fees</li>
                     <li>✓ No surprise registered agent charges</li>
@@ -335,419 +477,25 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* NEW: Transparency & Trust Section */}
-      <section className="py-20 bg-gradient-to-r from-slate-800 to-slate-900">
+       <section className="py-16 bg-slate-900/50">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <Badge className="bg-red-500/20 text-red-300 px-4 py-2 mb-4">🚨 Tired of Hidden Fees?</Badge>
-            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">Why Other Services Frustrate Customers</h2>
-            <p className="text-xl text-slate-300 max-w-3xl mx-auto">
-              We've read the Reddit reviews. We know what's broken. Here's how we're different.
-            </p>
-          </div>
-
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            {/* Left: Problems with Competitors */}
-            <div className="space-y-6">
-              <h3 className="text-2xl font-bold text-red-400 mb-6">❌ What Customers Hate About Our Competitors</h3>
-
-              <div className="space-y-4">
-                {[
-                  {
-                    problem: "Hidden State Filing Fees",
-                    description: '"$49 to start" becomes $300+ with mandatory state fees they don\'t mention upfront.',
-                  },
-                  {
-                    problem: "Forced Registered Agent Upsells",
-                    description: '"Free formation" requires $199/year registered agent service to complete.',
-                  },
-                  {
-                    problem: "Terrible Customer Service",
-                    description: "Outsourced support that doesn't understand your business or tax implications.",
-                  },
-                  {
-                    problem: "Confusing Add-On Pricing",
-                    description:
-                      "EIN filing, operating agreements, and compliance - all separate charges that add up fast.",
-                  },
-                ].map((item, i) => (
-                  <div key={i} className="bg-red-500/10 border border-red-500/30 rounded-lg p-4">
-                    <h4 className="text-red-300 font-semibold mb-2">{item.problem}</h4>
-                    <p className="text-slate-300 text-sm italic">"{item.description}"</p>
-                  </div>
-                ))}
+          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
+            {stats.map((stat, index) => (
+              <div key={index} className="text-center">
+                <div className="text-4xl lg:text-5xl font-bold text-emerald-400 mb-2">{stat.number}</div>
+                <div className="text-slate-300 text-sm lg:text-base">{stat.label}</div>
               </div>
-            </div>
-
-            {/* Right: Our Solution */}
-            <div className="space-y-6">
-              <h3 className="text-2xl font-bold text-emerald-400 mb-6">✅ The StartSmart Difference</h3>
-
-              <div className="space-y-4">
-                {[
-                  {
-                    solution: "100% Transparent Pricing",
-                    description:
-                      "$499 includes EVERYTHING. State fees, registered agent, EIN, operating agreement, AI support.",
-                  },
-                  {
-                    solution: "No Mandatory Add-Ons",
-                    description:
-                      "Everything you need is included. Optional services are clearly marked and genuinely optional.",
-                  },
-                  {
-                    solution: "Expert Support + AI",
-                    description: "CPA founder with 20+ years experience PLUS 24/7 AI advisor trained on your business.",
-                  },
-                  {
-                    solution: "All-Inclusive Packages",
-                    description:
-                      "One price covers formation through compliance. No surprise bills or hidden requirements.",
-                  },
-                ].map((item, i) => (
-                  <div key={i} className="bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-4">
-                    <h4 className="text-emerald-300 font-semibold mb-2">{item.solution}</h4>
-                    <p className="text-slate-300 text-sm">{item.description}</p>
-                  </div>
-                ))}
-              </div>
-
-              <div className="bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 rounded-lg p-6 border border-emerald-500/30">
-                <h4 className="text-white font-bold mb-3">Our Money-Back Guarantee:</h4>
-                <p className="text-slate-300 text-sm mb-3">
-                  If you find ANY hidden fees or charges not clearly disclosed upfront, we'll refund your entire payment
-                  and complete your formation for free.
-                </p>
-                <p className="text-emerald-300 text-xs font-semibold">
-                  That's how confident we are in our transparent pricing.
-                </p>
-              </div>
-            </div>
-          </div>                
-
-           {/* Competitive Comparison */}
-          <div className="bg-slate-800/30 rounded-2xl p-8 border border-slate-700 pb-4">
-            <h3 className="text-2xl font-bold text-white mb-8 text-center">What Makes Us Different</h3>
-            <div className="grid md:grid-cols-3 gap-8 text-center">
-              <div className="space-y-4">
-                <div className="text-red-400 font-semibold">❌ LegalZoom</div>
-                <p className="text-slate-400">"File your LLC" → Done. Good luck!</p>
-              </div>
-              <div className="space-y-4">
-                <div className="text-red-400 font-semibold">❌ Incfile</div>
-                <p className="text-slate-400">"Here's your paperwork" → You're on your own.</p>
-              </div>
-              <div className="space-y-4">
-                <div className="text-emerald-400 font-semibold">✅ StartSmart</div>
-                <p className="text-emerald-300">"Meet your AI business advisor" → Lifetime guidance.</p>
-              </div>
-            </div>
-          </div>
-      
-          
-          {/* Price Comparison Table */}
-          <div className="mt-16">
-            <h3 className="text-2xl font-bold text-white mb-8 text-center">Real Cost Comparison</h3>
-            <div className="bg-slate-800/50 rounded-lg p-6 border border-slate-700">
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-slate-600">
-                      <th className="text-left py-3 text-slate-300">Service</th>
-                      <th className="text-center py-3 text-slate-300">Advertised Price</th>
-                      <th className="text-center py-3 text-slate-300">Hidden Fees</th>
-                      <th className="text-center py-3 text-slate-300">Real Total</th>
-                      <th className="text-center py-3 text-slate-300">What's Missing</th>
-                    </tr>
-                  </thead>
-                  <tbody className="text-slate-300">
-                    <tr className="border-b border-slate-700">
-                      <td className="py-3 font-medium">Tailor Brands</td>
-                      <td className="text-center py-3">$199</td>
-                      <td className="text-center py-3 text-red-400">+$199 agent +$99 EIN +$200 State registration</td>
-                      <td className="text-center py-3 text-red-400">$697+</td>
-                      <td className="text-center py-3 text-xs">No AI, poor support</td>
-                    </tr>
-                    <tr className="border-b border-slate-700">
-                      <td className="py-3 font-medium">LegalZoom</td>
-                      <td className="text-center py-3">$79</td>
-                      <td className="text-center py-3 text-red-400">+$299 agent +$79 EIN +$200 State registration</td>
-                      <td className="text-center py-3 text-red-400">$657+</td>
-                      <td className="text-center py-3 text-xs">No ongoing support</td>
-                    </tr>
-                    <tr className="bg-emerald-500/10 border border-emerald-500/30">
-                      <td className="py-3 font-bold text-emerald-300">StartSmart</td>
-                      <td className="text-center py-3 font-bold text-emerald-300">$499</td>
-                      <td className="text-center py-3 text-emerald-300">$0</td>
-                      <td className="text-center py-3 font-bold text-emerald-300">$499</td>
-                      <td className="text-center py-3 text-xs text-emerald-300">Includes AI advisor</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Projected Customer Success Stories */}
-      <section className="py-20">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">What Our Customers Will Experience</h2>
-            <p className="text-xl text-slate-300 max-w-2xl mx-auto">
-              Based on our founder's 20+ years of experience, here's what entrepreneurs can expect with StartSmart.
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-8">
-            {[
-              {
-                name: "Tech Startup Founder",
-                business: "SaaS Platform",
-                scenario: "E-commerce Entrepreneur",
-                quote:
-                  "Instead of spending weeks researching business formation and paying $3,000+ in legal fees, I'll get my LLC formed, EIN obtained, and operating agreements ready in 48 hours for under $500.",
-                projectedOutcome: "Saves 4-6 weeks and $2,500+ in costs",
-                timeframe: "48 hours vs 6 weeks traditionally",
-                savings: "$2,500+ saved",
-                icon: Rocket,
-              },
-              {
-                name: "Service Business Owner",
-                business: "Consulting Practice",
-                scenario: "Professional Services",
-                quote:
-                  "Our AI will recommend the optimal business structure for my consulting practice, handle multi-state compliance, and ensure I'm set up for maximum tax efficiency from day one.",
-                projectedOutcome: "Optimal structure + compliance setup",
-                timeframe: "Expert recommendations instantly",
-                savings: "Ongoing tax optimization",
-                icon: TrendingUp,
-              },
-              {
-                name: "First-Time Entrepreneur",
-                business: "Local Service Business",
-                scenario: "New Business Owner",
-                quote:
-                  "As someone with no legal or tax background, I'll have confidence knowing that Big 4-trained experts and AI are handling all the complex compliance requirements correctly.",
-                projectedOutcome: "100% compliant from launch",
-                timeframe: "Peace of mind immediately",
-                savings: "Avoid costly mistakes",
-                icon: Shield,
-              },
-            ].map((story, i) => (
-              <Card key={i} className="bg-slate-800/50 border-slate-700">
-                <CardContent className="p-8">
-                  <div className="flex items-center gap-3 mb-4">
-                    <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                      <story.icon className="w-5 h-5 text-emerald-400" />
-                    </div>
-                    <div>
-                      <div className="font-semibold text-white">{story.scenario}</div>
-                      <div className="text-slate-400 text-sm">{story.business}</div>
-                    </div>
-                  </div>
-
-                  <p className="text-slate-300 mb-6 italic">"{story.quote}"</p>
-
-                  <div className="space-y-3 border-t border-slate-700 pt-4">
-                    <div className="flex items-center gap-2">
-                      <Clock className="w-4 h-4 text-emerald-400" />
-                      <span className="text-slate-300 text-sm">{story.timeframe}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <DollarSign className="w-4 h-4 text-emerald-400" />
-                      <span className="text-slate-300 text-sm">{story.savings}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <CheckCircle className="w-4 h-4 text-emerald-400" />
-                      <span className="text-slate-300 text-sm">{story.projectedOutcome}</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
             ))}
           </div>
-
-          {/* Founder Credibility Note */}
-          <div className="mt-12 text-center">
-            <Card className="bg-slate-800/30 border-slate-600 max-w-4xl mx-auto">
-              <CardContent className="p-8">
-                <div className="flex items-center justify-center gap-4 mb-4">
-                  <img
-                    src="/images/steve-morello-headshot.jpg"
-                    alt="Steve Morello"
-                    className="w-16 h-16 rounded-full object-cover"
-                  />
-                  <div className="text-left">
-                    <div className="font-semibold text-white">Steve Morello</div>
-                    <div className="text-emerald-400 text-sm">Founder & CEO</div>
-                    <div className="text-slate-400 text-xs">Former Morgan Stanley Private Equity, Head of Corporate Tax Department, with 20+ Years of Big 4 and Tax experience</div>
-                  </div>
-                </div>
-                <p className="text-slate-300 italic">
-                  "These scenarios are based on my two decades of experience helping businesses with formation and tax
-                  optimization. I've seen the same challenges repeatedly - high costs, long timelines, and complexity.
-                  StartSmart solves all three."
-                </p>
-              </CardContent>
-            </Card>
-          </div>
         </div>
       </section>
-
-      {/* Industry Case Studies */}
-      <section className="py-20 bg-slate-900/50">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">Real-World Business Formation Insights</h2>
-            <p className="text-xl text-slate-300 max-w-3xl mx-auto">
-              Based on our founder's experience with 500+ business formations across fintech, cybersecurity, and
-              traditional industries.
-            </p>
-          </div>
-
-          <div className="grid lg:grid-cols-2 gap-8 mb-12">
-            {[
-              {
-                industry: "Technology Startups",
-                challenge: "Complex equity structures and multi-state operations",
-                traditionalApproach: "6-8 weeks, $5,000-15,000 in legal fees, manual compliance tracking",
-                ourApproach: "48 hours, $499, AI-powered compliance monitoring",
-                keyInsight:
-                  "Most tech startups over-complicate their initial structure. Our AI recommends starting simple and scaling complexity as you grow.",
-                metrics: {
-                  timeSaved: "85% faster",
-                  costSaved: "$4,500+ saved",
-                  accuracy: "99.7% compliance rate",
-                },
-              },
-              {
-                industry: "Professional Services",
-                challenge: "Multi-state licensing and tax optimization",
-                traditionalApproach: "4-6 weeks, $3,000-8,000 in fees, ongoing compliance confusion",
-                ourApproach: "48 hours, $499-699, automated multi-state monitoring",
-                keyInsight:
-                  "Service businesses often miss state-specific requirements. Our AI ensures compliance across all operating jurisdictions from day one.",
-                metrics: {
-                  timeSaved: "90% faster",
-                  costSaved: "$2,500+ saved",
-                  accuracy: "100% state compliance",
-                },
-              },
-              {
-                industry: "E-commerce & Retail",
-                challenge: "Sales tax nexus and inventory management structures",
-                traditionalApproach: "3-5 weeks, $2,500-6,000 in setup costs, manual nexus tracking",
-                ourApproach: "48 hours, $499, AI nexus monitoring included",
-                keyInsight:
-                  "E-commerce businesses face complex sales tax requirements. Our AI tracks nexus thresholds and automates compliance across all states.",
-                metrics: {
-                  timeSaved: "80% faster",
-                  costSaved: "$2,000+ saved",
-                  accuracy: "Real-time nexus tracking",
-                },
-              },
-              {
-                industry: "Healthcare & Life Sciences",
-                challenge: "Regulatory compliance and specialized entity structures",
-                traditionalApproach: "8-12 weeks, $10,000+ in specialized legal fees",
-                ourApproach: "48 hours base + specialized compliance add-ons",
-                keyInsight:
-                  "Healthcare businesses need specialized structures but often start with unnecessarily complex setups. Our AI recommends phased approaches.",
-                metrics: {
-                  timeSaved: "75% faster",
-                  costSaved: "$8,000+ saved",
-                  accuracy: "Industry-specific compliance",
-                },
-              },
-            ].map((study, i) => (
-              <Card key={i} className="bg-slate-800/50 border-slate-700">
-                <CardContent className="p-8">
-                  <div className="mb-6">
-                    <h3 className="text-xl font-semibold text-white mb-2">{study.industry}</h3>
-                    <p className="text-slate-400 text-sm">{study.challenge}</p>
-                  </div>
-
-                  <div className="space-y-6">
-                    <div className="grid grid-cols-1 gap-4">
-                      <div className="bg-slate-900/50 rounded-lg p-4">
-                        <h4 className="text-red-400 font-semibold mb-2 text-sm">Traditional Approach</h4>
-                        <p className="text-slate-300 text-sm">{study.traditionalApproach}</p>
-                      </div>
-                      <div className="bg-slate-900/50 rounded-lg p-4">
-                        <h4 className="text-emerald-400 font-semibold mb-2 text-sm">StartSmart Approach</h4>
-                        <p className="text-slate-300 text-sm">{study.ourApproach}</p>
-                      </div>
-                    </div>
-
-                    <div className="border-t border-slate-700 pt-4">
-                      <h4 className="text-white font-semibold mb-2 text-sm">Key Insight</h4>
-                      <p className="text-slate-300 text-sm italic">{study.keyInsight}</p>
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-4 text-center">
-                      <div>
-                        <div className="text-emerald-400 font-bold text-sm">{study.metrics.timeSaved}</div>
-                        <div className="text-slate-400 text-xs">Time Saved</div>
-                      </div>
-                      <div>
-                        <div className="text-emerald-400 font-bold text-sm">{study.metrics.costSaved}</div>
-                        <div className="text-slate-400 text-xs">Cost Saved</div>
-                      </div>
-                      <div>
-                        <div className="text-emerald-400 font-bold text-sm">{study.metrics.accuracy}</div>
-                        <div className="text-slate-400 text-xs">Accuracy</div>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-               {/* Customer Journey CTA */}
-          <div className="text-center">
-            <div className="bg-gradient-to-r from-emerald-600 to-cyan-600 rounded-2xl p-8">
-              {/* Centered StartSmart White Logo */}
-              <div className="flex justify-center mb-8">
-                <img src="/images/startsmart-logo-white.png" alt="StartSmart by NexTax.AI" className="h-28 w-auto" />
-              </div>
-
-              <h3 className="text-2xl font-bold text-white mb-4">Start Simple, Scale Smart</h3>
-              <p className="text-emerald-100 mb-6 max-w-2xl mx-auto">
-                Begin with StartSmart to launch your business, then add advanced AI tools as you grow. Our platform
-                scales with your needs.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link href="/startsmart">
-                  <Button size="lg" className="bg-white text-emerald-600 hover:bg-slate-100 px-8 py-4">
-                    Start with Business Launch
-                    <Rocket className="ml-2 w-5 h-5" />
-                  </Button>
-                </Link>
-                <Link href="/contact">
-                  <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10 px-8 py-4">
-                    Explore Enterprise Solutions
-                    <ArrowRight className="ml-2 w-5 h-5" />
-                  </Button>
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-
-      {/* Enhanced Chatbot */}
-      <EnhancedChatBot />
-
+        
       {/* Auth Modal */}
       <AuthModal
         isOpen={authModal.isOpen}
         onClose={() => setAuthModal({ ...authModal, isOpen: false })}
         mode={authModal.mode}
-      />      
+      />
     </div>
   )
 }
