@@ -317,6 +317,158 @@ export default function TestLandingPage() {
         </div>
       </section>
 
+       {/* NEW: AI Differentiator Section */}
+      <section className="py-20 bg-slate-900/50">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">Why StartSmart AI Changes Everything</h2>
+            <p className="text-xl text-slate-300 max-w-3xl mx-auto">
+              Other services stop at paperwork. We give you an AI business partner trained on decades of real-world
+              experience.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8 mb-12">
+            {[
+              {
+                icon: Bot,
+                title: "Custom-Trained on Your Business",
+                description:
+                  "Not generic ChatGPT. StartSmart AI knows your entity type, industry, state requirements, and growth plans.",
+                color: "purple",
+              },
+              {
+                icon: Shield,
+                title: "Big 4 Tax Expertise Built-In",
+                description:
+                  "Trained on 20+ years of Morgan Stanley, PwC, and KPMG tax strategies. Get enterprise-level advice instantly.",
+                color: "emerald",
+              },
+              {
+                icon: TrendingUp,
+                title: "Grows With Your Business",
+                description:
+                  "From startup questions to scaling challenges. Your AI advisor evolves as your business grows.",
+                color: "cyan",
+              },
+            ].map((feature, i) => (
+              <Card key={i} className="bg-slate-800/50 border-slate-700 hover:border-emerald-500/50 transition-colors">
+                <CardContent className="p-8 text-center">
+                  <div
+                    className={`w-16 h-16 mx-auto mb-6 rounded-full ${
+                      feature.color === "purple"
+                        ? "bg-purple-500/20"
+                        : feature.color === "emerald"
+                          ? "bg-emerald-500/20"
+                          : "bg-cyan-500/20"
+                    } flex items-center justify-center`}
+                  >
+                    <feature.icon
+                      className={`w-8 h-8 ${
+                        feature.color === "purple"
+                          ? "text-purple-400"
+                          : feature.color === "emerald"
+                            ? "text-emerald-400"
+                            : "text-cyan-400"
+                      }`}
+                    />
+                  </div>
+                  <h3 className="text-xl font-semibold text-white mb-4">{feature.title}</h3>
+                  <p className="text-slate-300">{feature.description}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+          </div>
+          </section>
+         
+
+      {/* What's Included Section */}
+      <section className="py-20 bg-slate-900/50">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">Everything You Need to Start</h2>
+            <p className="text-xl text-slate-300 max-w-2xl mx-auto">
+              One simple price includes everything required to legally operate your business.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8 mb-12">
+            {[
+              {
+                icon: Building2,
+                title: "Legal Entity Formation",
+                items: [
+                  "LLC or Corporation filing",
+                  "Articles of organization",
+                  "State compliance",
+                  "Registered agent service",
+                ],
+              },
+              {
+                icon: Shield,
+                title: "Tax & Compliance Setup",
+                items: ["Federal EIN number", "State tax registration", "Operating agreements", "Compliance calendar"],
+              },
+              {
+                icon: Zap,
+                title: "Business Essentials",
+                items: [
+                  "Business plan generation",
+                  "Digital document vault",
+                  "Ongoing support",
+                  "Future filing reminders",
+                ],
+              },
+            ].map((feature, i) => (
+              <Card key={i} className="bg-slate-800/50 border-slate-700">
+                <CardContent className="p-8">
+                  <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                    <feature.icon className="w-8 h-8 text-emerald-400" />
+                  </div>
+                  <h3 className="text-xl font-semibold text-white mb-4 text-center">{feature.title}</h3>
+                  <ul className="space-y-2">
+                    {feature.items.map((item, j) => (
+                      <li key={j} className="flex items-center gap-2 text-slate-300">
+                        <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+
+          {/* Pricing CTA */}
+          <div className="text-center">
+            <div className="inline-block bg-slate-800/50 rounded-2xl p-8 border border-slate-700">
+              <div className="mb-4">
+                <span className="text-4xl font-bold text-white">$499</span>
+                <span className="text-slate-400 ml-2">one-time fee</span>
+              </div>
+              <div className="space-y-4 mb-6">
+                <p className="text-slate-300">Everything included. What you see is what you pay.</p>
+                <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-4">
+                  <h4 className="text-emerald-300 font-semibold mb-2">Our Transparency Guarantee:</h4>
+                  <ul className="text-sm text-slate-300 space-y-1">
+                    <li>✓ No hidden state filing fees</li>
+                    <li>✓ No surprise registered agent charges</li>
+                    <li>✓ No mandatory add-ons or upsells</li>
+                  </ul>
+                </div>
+              </div>
+              <Link href="/pricing">
+                <Button size="lg" className="bg-emerald-500 hover:bg-emerald-600 text-white px-8 py-4 text-lg">
+                  Get Started Now
+                  <ArrowRight className="ml-2 w-5 h-5" />
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* Auth Modal */}
       <AuthModal
         isOpen={authModal.isOpen}
