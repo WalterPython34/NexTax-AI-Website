@@ -14,11 +14,11 @@ export default function TestDemoPage() {
         <div className="max-w-7xl mx-auto">
           <div className="text-center max-w-4xl mx-auto mb-12">
             <Badge className="mb-6 bg-emerald-500/20 text-emerald-300 border-emerald-500/30">All-in-One Platform</Badge>
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-6 text-balance">
+            <h1 className="text-5xl md:text-6xl lg:text-6xl font-bold text-white mb-6 text-balance">
               Everything You Need to Launch and Grow — All in One Platform 
             </h1>
             <p className="text-xl text-slate-300 mb-8 text-pretty">
-              StartSmart combines AI automation with real human support to guide you through every stage of starting and
+              StartSmart combines our live tax experts support with AI automation to guide you through every stage of starting and
               managing your business — faster, easier, and smarter.
             </p>
 
