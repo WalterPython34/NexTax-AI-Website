@@ -193,7 +193,7 @@ export default function TestDemoPage() {
             </div>
 
              {/* Video/Image Right */}
-            <div className="relative lg:order-2">
+            <div className="relative">
               <video
                 src="/videos/tax_expert.mp4"
                 autoPlay
