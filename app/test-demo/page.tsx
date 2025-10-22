@@ -59,15 +59,18 @@ export default function TestDemoPage() {
       <section className="py-20 px-4">
         <div className="max-w-7xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
-            {/* Image */}
-            <div className="order-2 lg:order-1">
-              <div className="aspect-video bg-slate-800/50 rounded-2xl border border-slate-700 flex items-center justify-center">
-                <div className="text-center">
-                  <Rocket className="w-16 h-16 text-emerald-400 mx-auto mb-4" />
-                  <p className="text-slate-400">Business Formation Tool Screenshot</p>
-                </div>
-              </div>
+           {/* Video/Image Left */}
+            <div className="relative">
+              <video
+                src="/videos/laptop_launch.mp4"
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="max-h-[460px] mx-auto rounded-2xl border border-slate-700 object-contain bg-slate-900"
+              />
             </div>
+
 
             {/* Text */}
             <div className="order-1 lg:order-2">
