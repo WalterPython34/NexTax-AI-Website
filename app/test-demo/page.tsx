@@ -114,7 +114,7 @@ export default function TestDemoPage() {
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             {/* Text */}
             <div>
-              <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">💬 Instant Answers, Real Expertise</h2>
+              <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">Instant Answers, Real Expertise 💬</h2>
               <p className="text-xl text-slate-300 mb-8">
                 From tax strategies to entity questions, StartSmart AI gives clear, actionable guidance — backed by real
                 tax professionals for complete peace of mind.
@@ -175,7 +175,7 @@ export default function TestDemoPage() {
 
             {/* Text */}
             <div className="order-1 lg:order-2">
-              <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">📂 Stay Organized and 100% Compliant</h2>
+              <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">Stay Organized and 100% Compliant 📂</h2>
               <p className="text-xl text-slate-300 mb-8">
                 Keep your documents, deadlines, and filings in one secure place — auto-organized by entity, state, and
                 due date.
@@ -215,7 +215,7 @@ export default function TestDemoPage() {
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             {/* Text */}
             <div>
-              <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">📊 Your Business, At a Glance</h2>
+              <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">Your Business, At a Glance 📊</h2>
               <p className="text-xl text-slate-300 mb-8">
                 Track your growth, compliance, and tax savings all in one intuitive dashboard — powered by real-time
                 data and automation.
