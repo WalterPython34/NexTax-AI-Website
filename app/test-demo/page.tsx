@@ -61,7 +61,7 @@ export default function TestDemoPage() {
                     }`}
                   >
                     {slide.type === "video" ? (
-                    <video src={slide.src} autoPlay muted loop playsInline className="w-full h-full object-cover" />
+                    <video src={slide.src} autoPlay muted loop playsInline className="w-full h-full object-contain" />
                     ) : (
                       <img
                         src={slide.src || "/placeholder.svg"}
@@ -208,7 +208,7 @@ export default function TestDemoPage() {
                 loop
                 muted
                 playsInline
-                className="w-full h-[460px] rounded-2xl border border-slate-700 object-cover"
+                className="max-h-[460px] mx-auto rounded-2xl border border-slate-700 object-cover"
               />
             </div>         
           </div>
