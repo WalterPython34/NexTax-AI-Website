@@ -15,7 +15,7 @@ export default function TestDemoPage() {
           <div className="text-center max-w-4xl mx-auto mb-12">
             <Badge className="mb-6 bg-emerald-500/20 text-emerald-300 border-emerald-500/30">All-in-One Platform</Badge>
             <h1 className="text-5xl md:text-6xl lg:text-6xl font-bold text-white mb-6 text-balance">
-              Everything You Need to Launch and Grow — All in One Platform 
+              Everything You Need to Launch and Grow — All in One Platform <Rocket className="w-16 h-16 text-emerald-400 mx-auto mb-4" />
             </h1>
             <p className="text-xl text-slate-300 mb-8 text-pretty">
               StartSmart combines our live tax experts support with AI automation to guide you through every stage of starting and
