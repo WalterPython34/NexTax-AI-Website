@@ -195,12 +195,12 @@ export default function TestDemoPage() {
              {/* Video/Image Right */}
             <div className="relative lg:order-2">
               <video
-                src="/videos/SS_Chat.mp4"
+                src="/videos/tax_expert.mp4"
                 autoPlay
                 loop
                 muted
                 playsInline
-                className="w-full aspect-video rounded-2xl border border-slate-700 object-cover"
+                className="max-h-[460px] mx-auto rounded-2xl border border-slate-700 object-contain bg-slate-900"
               />
             </div>         
           </div>
