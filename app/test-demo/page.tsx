@@ -162,13 +162,16 @@ export default function TestDemoPage() {
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             {/* Image */}
             <div className="order-2 lg:order-1">
-              <div className="aspect-video bg-slate-800/50 rounded-2xl border border-slate-700 flex items-center justify-center">
-                <div className="text-center">
-                  <FileText className="w-16 h-16 text-emerald-400 mx-auto mb-4" />
-                  <p className="text-slate-400">Document Hub & Compliance Tracker</p>
-                </div>
-              </div>
+              <video
+                src="/videos/SS_compliance.mp4"
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="w-full aspect-video rounded-2xl border border-slate-700 object-cover"
+              />
             </div>
+
 
             {/* Text */}
             <div className="order-1 lg:order-2">
