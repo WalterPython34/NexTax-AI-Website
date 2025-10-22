@@ -208,7 +208,7 @@ export default function TestDemoPage() {
                 loop
                 muted
                 playsInline
-                className="w-full rounded-2xl border border-slate-700 object-contain bg-slate-900"
+                className="h-[460px] w-auto rounded-2xl border border-slate-700 object-cover"
               />
             </div>         
           </div>
