@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -7,6 +8,34 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Rocket, MessageSquare, FileText, BarChart3, CheckCircle, ArrowRight } from "lucide-react"
 
 export default function TestDemoPage() {
+  const [currentSlide, setCurrentSlide] = useState(0)
+
+  const slides = [
+    {
+      type: "video" as const,
+      src: "/videos/chat.mp4",
+      text: "Ask anything about your business — and get answers instantly.",
+    },
+    {
+      type: "video" as const,
+      src: "/videos/doc_center.mp4",
+      text: "Your business documents, organized automatically.",
+    },
+    {
+      type: "video" as const,
+      src: "/videos/roadmap.mp4",
+      text: "From idea to launch — track every step with your AI Roadmap.",
+    },
+  ]
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % slides.length)
+    }, 4000) // Change slide every 4 seconds
+
+    return () => clearInterval(interval)
+  }, [slides.length])
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950">
       {/* Hero Section */}
@@ -14,24 +43,46 @@ export default function TestDemoPage() {
         <div className="max-w-7xl mx-auto">
           <div className="text-center max-w-4xl mx-auto mb-12">
             <Badge className="mb-6 bg-emerald-500/20 text-emerald-300 border-emerald-500/30">All-in-One Platform</Badge>
-            <h1 className="text-5xl md:text-6xl lg:text-6xl font-bold text-white mb-6 text-balance">
-              Everything You Need to Launch and Grow — All in One Platform 
+            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold text-white mb-6 text-balance">
+              Everything You Need to Launch and Grow — All in One Platform
             </h1>
             <p className="text-xl text-slate-300 mb-8 text-pretty">
-              StartSmart combines our live tax experts support with AI automation to guide you through every stage of starting and
+              StartSmart combines AI automation with real human support to guide you through every stage of starting and
               managing your business — faster, easier, and smarter.
             </p>
 
-            {/* Video Placeholder */}
-            <div className="relative max-w-3xl mx-auto mb-8">
-              <div className="aspect-video bg-slate-800/50 rounded-2xl border border-slate-700 flex items-center justify-center">
-                <div className="text-center">
-                  <Rocket className="w-16 h-16 text-emerald-400 mx-auto mb-4" />
-                  <p className="text-slate-400">Dashboard Demo Video</p>
-                  <p className="text-sm text-slate-500 mt-2">
-                    Forming your LLC → EIN Approved → Your Business Is Ready 🎉
-                  </p>
-                </div>
+            <div className="relative max-w-5xl mx-auto mb-8 h-[400px] md:h-[500px]">
+              <div className="relative w-full h-full rounded-2xl overflow-hidden shadow-2xl">
+                {slides.map((slide, index) => (
+                  <div
+                    key={index}
+                    className={`absolute inset-0 transition-opacity duration-700 ${
+                      index === currentSlide ? "opacity-100" : "opacity-0"
+                    }`}
+                  >
+                    <video src={slide.src} autoPlay muted loop playsInline className="w-full h-full object-cover" />
+                    {/* Overlay text */}
+                    <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-transparent to-transparent flex items-end justify-center pb-8">
+                      <p className="text-white text-lg md:text-xl font-medium px-6 text-center max-w-2xl">
+                        {slide.text}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Slide indicators */}
+              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2 flex gap-2 z-10">
+                {slides.map((_, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setCurrentSlide(index)}
+                    className={`w-2 h-2 rounded-full transition-all ${
+                      index === currentSlide ? "bg-emerald-400 w-8" : "bg-slate-500"
+                    }`}
+                    aria-label={`Go to slide ${index + 1}`}
+                  />
+                ))}
               </div>
             </div>
 
