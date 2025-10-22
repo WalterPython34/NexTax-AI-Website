@@ -12,8 +12,8 @@ export default function TestDemoPage() {
 
   const slides = [
     {
-      type: "video" as const,
-      src: "/videos/chat.mp4",
+      type: "image" as const,
+      src: "/images/chat.jpg",
       text: "Ask anything about your business — and get answers instantly.",
     },
     {
