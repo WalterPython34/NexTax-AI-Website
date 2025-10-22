@@ -141,15 +141,17 @@ export default function TestDemoPage() {
               </Link>
             </div>
 
-            {/* Image */}
-            <div>
-              <div className="aspect-video bg-slate-800/50 rounded-2xl border border-slate-700 flex items-center justify-center">
-                <div className="text-center">
-                  <MessageSquare className="w-16 h-16 text-emerald-400 mx-auto mb-4" />
-                  <p className="text-slate-400">Ask StartSmart Chat UI</p>
-                </div>
-              </div>
-            </div>
+             {/* Video/Image Right */}
+            <div className="relative lg:order-2">
+              <video
+                src="/videos/SS_Chat.mp4"
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="w-full aspect-video rounded-2xl border border-slate-700 object-cover"
+              />
+            </div>         
           </div>
         </div>
       </section>
