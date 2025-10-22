@@ -201,7 +201,7 @@ export default function TestDemoPage() {
             </div>
 
              {/* Video/Image Right */}
-            <div className="relative justify-center">
+            <div className="relative flex justify-center">
               <video
                 src="/videos/tax_expert.mp4"
                 autoPlay
