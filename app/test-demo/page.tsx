@@ -15,7 +15,7 @@ export default function TestDemoPage() {
           <div className="text-center max-w-4xl mx-auto mb-12">
             <Badge className="mb-6 bg-emerald-500/20 text-emerald-300 border-emerald-500/30">All-in-One Platform</Badge>
             <h1 className="text-5xl md:text-6xl lg:text-6xl font-bold text-white mb-6 text-balance">
-              Everything You Need to Launch and Grow — All in One Platform <Rocket className="w-16 h-16 text-emerald-400 mx-auto mb-4" />
+              Everything You Need to Launch and Grow — All in One Platform 
             </h1>
             <p className="text-xl text-slate-300 mb-8 text-pretty">
               StartSmart combines our live tax experts support with AI automation to guide you through every stage of starting and
@@ -74,7 +74,7 @@ export default function TestDemoPage() {
 
             {/* Text */}
             <div className="order-1 lg:order-2">
-              <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">🧱 Launch Your Business in Record Time</h2>
+              <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">Launch Your Business in Record Time<Rocket className="w-16 h-16 text-emerald-400 mx-auto mb-4" /> </h2>
               <p className="text-xl text-slate-300 mb-8">
                 Form your LLC or S-Corp in as little as 48 hours with guided AI workflows and expert support every step
                 of the way.
