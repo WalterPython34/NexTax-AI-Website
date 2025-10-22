@@ -60,7 +60,15 @@ export default function TestDemoPage() {
                       index === currentSlide ? "opacity-100" : "opacity-0"
                     }`}
                   >
+                    {slide.type === "video" ? (
                     <video src={slide.src} autoPlay muted loop playsInline className="w-full h-full object-cover" />
+                    ) : (
+                      <img
+                        src={slide.src || "/placeholder.svg"}
+                        alt={slide.text}
+                        className="w-full h-full object-cover"
+                      />
+                    )}
                     {/* Overlay text */}
                     <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-transparent to-transparent flex items-end justify-center pb-8">
                       <p className="text-white text-lg md:text-xl font-medium px-6 text-center max-w-2xl">
