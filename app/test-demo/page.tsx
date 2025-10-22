@@ -61,12 +61,12 @@ export default function TestDemoPage() {
                     }`}
                   >
                     {slide.type === "video" ? (
-                    <video src={slide.src} autoPlay muted loop playsInline className="w-full h-full object-contain" />
+                    <video src={slide.src} autoPlay muted loop playsInline className="w-full h-full object-cover" />
                     ) : (
                       <img
                         src={slide.src || "/placeholder.svg"}
                         alt={slide.text}
-                        className="w-full h-full object-cover"
+                        className="w-full h-full object-contain bg-slate-900"
                       />
                     )}
                     {/* Overlay text */}
@@ -169,7 +169,7 @@ export default function TestDemoPage() {
 
       {/* Feature 2: AI Chat + Expert Help (Right Image / Left Text) */}
       <section className="py-20 px-4 bg-slate-900/50">
-        <div className="container mx-auto px-4">
+        <div className="max-w-7xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             {/* Text */}
             <div>
@@ -208,7 +208,7 @@ export default function TestDemoPage() {
                 loop
                 muted
                 playsInline
-                className="max-h-[460px] mx-auto rounded-2xl border border-slate-700 object-cover bg-slate-900"
+                className="w-full h-[460px] rounded-2xl border border-slate-700 object-cover"
               />
             </div>         
           </div>
