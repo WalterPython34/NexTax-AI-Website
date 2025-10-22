@@ -74,7 +74,7 @@ export default function TestDemoPage() {
 
             {/* Text */}
             <div className="order-1 lg:order-2">
-              <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">Launch Your Business in Record Time<Rocket className="w-16 h-16 text-emerald-400 mx-auto mb-4" /> </h2>
+              <h2 className="text-4xl md:text-5xl font-bold text-white mb-6"><Rocket className="w-12 h-12 text-emerald-400 mx-auto mb-4" />Launch Your Business in Record Time</h2>
               <p className="text-xl text-slate-300 mb-8">
                 Form your LLC or S-Corp in as little as 48 hours with guided AI workflows and expert support every step
                 of the way.
