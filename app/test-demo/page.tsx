@@ -51,7 +51,7 @@ export default function TestDemoPage() {
               managing your business — faster, easier, and smarter.
             </p>
 
-            <div className="relative max-w-5xl mx-auto mb-8 h-[400px] md:h-[500px]">
+            <div className="relative max-w-3xl mx-auto mb-8 h-[400px] md:h-[500px]">
               <div className="relative w-full h-full rounded-2xl overflow-hidden shadow-2xl">
                 {slides.map((slide, index) => (
                   <div
