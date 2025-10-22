@@ -61,7 +61,7 @@ export default function TestDemoPage() {
                     }`}
                   >
                     {slide.type === "video" ? (
-                    <video src={slide.src} autoPlay muted loop playsInline className="w-full h-full object-cover" />
+                    <video src={slide.src} autoPlay muted loop playsInline className="w-full h-full object-contain" />
                     ) : (
                       <img
                         src={slide.src || "/placeholder.svg"}
@@ -169,7 +169,7 @@ export default function TestDemoPage() {
 
       {/* Feature 2: AI Chat + Expert Help (Right Image / Left Text) */}
       <section className="py-20 px-4 bg-slate-900/50">
-        <div className="max-w-7xl mx-auto">
+        <div className="container mx-auto px-4">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             {/* Text */}
             <div>
