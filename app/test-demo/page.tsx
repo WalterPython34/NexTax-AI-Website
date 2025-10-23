@@ -5,7 +5,7 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
-import { Rocket, MessageSquare, FileText, BarChart3, CheckCircle, ArrowRight } from "lucide-react"
+import { Rocket, MessageSquare, Shield, Bell, Calculator, FolderOpen, FileText, BarChart3, CheckCircle, ArrowRight } from "lucide-react"
 
 export default function TestDemoPage() {
   const [currentSlide, setCurrentSlide] = useState(0)
@@ -258,7 +258,14 @@ export default function TestDemoPage() {
                 className="w-full aspect-video rounded-2xl border border-slate-700 object-cover"
               />
             </div>
-
+            {/* Add callout badges */}
+            <div className="absolute top-4 right-4 bg-red-500 text-white px-3 py-1 rounded-full text-sm font-bold animate-pulse">
+                3 Deadlines This Month!
+            </div>
+  
+            <div className="absolute bottom-4 left-4 bg-emerald-500 text-white px-3 py-1 rounded-full text-sm">
+                ✓ IRS Connected
+            </div>
 
             {/* Text */}
             <div className="order-1 lg:order-2">
