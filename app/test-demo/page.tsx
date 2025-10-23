@@ -133,9 +133,9 @@ export default function TestDemoPage() {
 
             {/* Text */}
             <div className="order-1 lg:order-2">
-              <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 flex items-center gap-4">
+              <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 flex items-center gap-3">
                 Launch Your Business in Record Time
-               <Rocket className="w-12 h-12 text-emerald-400" />
+               <Rocket className=""w-10 h-10 md:w-12 md:h-12 text-emerald-400 flex-shrink-0 animate-pulse" />
               </h2>
               <p className="text-xl text-slate-300 mb-8">
                 Form your LLC or S-Corp in less than 48 hours with guided AI workflows and our tax expert support every step
