@@ -181,18 +181,31 @@ export default function TestDemoPage() {
                 From tax strategies to entity questions, StartSmart AI gives clear, actionable guidance — backed by real
                 tax professionals for complete peace of mind.
               </p>
+              {/* Add social proof */}
+            <div className="flex items-center gap-4 mb-8">
+              <div className="flex -space-x-2">
+               {[1,2,3,4,5].map(i => (
+              <div key={i} className="w-8 h-8 rounded-full bg-slate-600 border-2 border-slate-900" />
+               ))}
+           </div>
+            <span className="text-sm text-slate-400">Join 500+ business owners getting instant tax answers</span>
+           </div>
+              {/* Benefit-focused bullet points */}  
               <ul className="space-y-4 mb-8">
                 <li className="flex items-start gap-3">
                   <CheckCircle className="w-6 h-6 text-emerald-400 flex-shrink-0 mt-1" />
-                  <span className="text-slate-300">Ask anything, anytime — AI chat, or book a call with our tax experts</span>
+                   <span className="text-slate-300 font-semibold">Get answers in seconds, not days</span>
+                   <p className="text-slate-400 text-sm mt-1">AI chat + option to book calls with CPAs</p>
                 </li>
                 <li className="flex items-start gap-3">
                   <CheckCircle className="w-6 h-6 text-emerald-400 flex-shrink-0 mt-1" />
-                  <span className="text-slate-300">Custom AI trained to help w/ setup, marketing, product design, tax + more</span>
+                  <span className="text-slate-300 font-semibold">Save $3,000+ on consultants</span>
+                  <p className="text-slate-400 text-sm mt-1">AI trained on your specific business needs</p>
                 </li>
                 <li className="flex items-start gap-3">
                   <CheckCircle className="w-6 h-6 text-emerald-400 flex-shrink-0 mt-1" />
-                  <span className="text-slate-300">Turn chat replies into managed tasks on your Progress Roadmap</span>
+                  <span className="text-slate-300 font-semibold">Never miss a deadline</span>
+                  <p className="text-slate-400 text-sm mt-1">Turn advice into tracked tasks automatically</p>
                 </li>
                   <li className="flex items-start gap-3">
                   <CheckCircle className="w-6 h-6 text-emerald-400 flex-shrink-0 mt-1" />
@@ -217,9 +230,16 @@ export default function TestDemoPage() {
                 playsInline
                 className="h-[460px] w-auto rounded-2xl border border-slate-700 object-cover"
               />
-            </div>         
-          </div>
-        </div>
+            </div>  
+            {/* Add below the video */}
+            <div className="absolute -bottom-4 -right-4 bg-slate-800 rounded-lg px-3 py-2 border border-slate-700">
+            <div className="flex items-center gap-2">
+           <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+            <span className="text-xs text-slate-300">Live expert available</span>
+           </div>
+           </div>
+         </div>
+       </div>
       </section>
 
       {/* Feature 3: Document Hub + Compliance Tracker (Left Image / Right Text) */}
