@@ -185,15 +185,15 @@ export default function TestDemoPage() {
                 </li>
                 <li className="flex items-start gap-3">
                   <CheckCircle className="w-6 h-6 text-emerald-400 flex-shrink-0 mt-1" />
-                  <span className="text-slate-300">AI assistant trained to help w/ setup, marketing, product design, tax + more</span>
+                  <span className="text-slate-300">Custom AI trained to help w/ setup, marketing, product design, tax + more</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <CheckCircle className="w-6 h-6 text-emerald-400 flex-shrink-0 mt-1" />
-                  <span className="text-slate-300">Turn chat responses into managed tasks on your Progress Roadmap page</span>
+                  <span className="text-slate-300">Turn chat replies into managed tasks on your Progress Roadmap</span>
                 </li>
                   <li className="flex items-start gap-3">
                   <CheckCircle className="w-6 h-6 text-emerald-400 flex-shrink-0 mt-1" />
-                  <span className="text-slate-300">Use our curated list of 100+ prompts as you grow and scale your business</span>
+                  <span className="text-slate-300">Use our curated list of 100+ prompts to grow & scale your business</span>
                 </li>
               </ul>
               <Link href="/startsmart-gpt">
