@@ -258,15 +258,7 @@ export default function TestDemoPage() {
                 playsInline
                 className="w-full aspect-video rounded-2xl border border-slate-700 object-cover"
               />
-              
-              {/* Limited Time Offer Badge - positioned below the image */}
-        <div className="mt-6 bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 rounded-lg p-4 border border-emerald-500/30">
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-sm font-bold text-emerald-400">Limited time: Free setup ($299 value)</span>
-          </div>
-          <p className="text-xs text-slate-400">Includes document migration & calendar setup</p>
-        </div>
-      </div>
+            </div>
             
             {/* Text */}
             <div className="order-1 lg:order-2">
