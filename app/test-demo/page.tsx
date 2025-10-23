@@ -201,14 +201,14 @@ export default function TestDemoPage() {
             </div>
 
              {/* Video/Image Right */}
-            <div className="relative flex justify-center overflow-hidden rounded-2xl">
+            <div className="relative flex justify-center">
               <video
-                src="/videos/tax_expert.mp4"
+                src="/videos/tax_call.mp4"
                 autoPlay
                 loop
                 muted
                 playsInline
-                className="h-[460px] scale-x-[1.3] border border-slate-700 object-cover"
+                className="h-[460px] w-auto rounded-2xl border border-slate-700 object-cover"
               />
             </div>         
           </div>
