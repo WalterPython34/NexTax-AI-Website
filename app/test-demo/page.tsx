@@ -311,11 +311,6 @@ export default function TestDemoPage() {
                 </li>
               </ul>
 
-              {/* Add testimonial or stat */}
-               <div className="bg-slate-800/50 rounded-lg p-4 mb-6 border-l-4 border-emerald-400">
-                <p className="text-slate-300 italic">"This saved us from a $5,400 penalty we didn't even know was coming"</p>
-                <p className="text-sm text-slate-400 mt-2">- Sarah M., E-commerce Owner</p>
-               </div>
               <Link href="/features/compliance">
                 <Button size="lg" className="bg-emerald-600 hover:bg-emerald-700 text-white">
                   Get Your Compliance Calendar
