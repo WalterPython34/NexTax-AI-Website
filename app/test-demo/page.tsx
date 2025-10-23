@@ -231,13 +231,14 @@ export default function TestDemoPage() {
                 playsInline
                 className="h-[460px] w-auto rounded-2xl border border-slate-700 object-cover"
               />
-            </div>  
+            
             {/* Add below the video */}
             <div className="absolute -bottom-4 -right-4 bg-slate-800 rounded-lg px-3 py-2 border border-slate-700">
             <div className="flex items-center gap-2">
            <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
             <span className="text-xs text-slate-300">Live expert available</span>
-           </div>
+              </div>  
+             </div>
            </div>
          </div>
        </div>
