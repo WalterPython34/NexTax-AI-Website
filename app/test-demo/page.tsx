@@ -135,25 +135,25 @@ export default function TestDemoPage() {
             <div className="order-1 lg:order-2">
               <h2 className="text-4xl md:text-5xl font-bold text-white mb-6"><Rocket className="w-12 h-12 text-emerald-400 mx-auto mb-4" />Launch Your Business in Record Time</h2>
               <p className="text-xl text-slate-300 mb-8">
-                Form your LLC or S-Corp in as little as 48 hours with guided AI workflows and expert support every step
+                Form your LLC or S-Corp in less than 48 hours with guided AI workflows and our tax expert support every step
                 of the way.
               </p>
               <ul className="space-y-4 mb-8">
                 <li className="flex items-start gap-3">
                   <CheckCircle className="w-6 h-6 text-emerald-400 flex-shrink-0 mt-1" />
-                  <span className="text-slate-300">Auto-generated LLC documents and filings</span>
+                  <span className="text-slate-300">EIN setup with IRS integration by a tax expert</span>
+                </li>    Auto-generated LLC documents and filings
+                <li className="flex items-start gap-3">
+                  <CheckCircle className="w-6 h-6 text-emerald-400 flex-shrink-0 mt-1" />
+                  <span className="text-slate-300">Auto-generated LLC documents and filings prepared for you</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <CheckCircle className="w-6 h-6 text-emerald-400 flex-shrink-0 mt-1" />
-                  <span className="text-slate-300">EIN setup with IRS integration</span>
+                  <span className="text-slate-300">Registered Agent setup & State business registration</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <CheckCircle className="w-6 h-6 text-emerald-400 flex-shrink-0 mt-1" />
-                  <span className="text-slate-300">Compliance reminders and status tracking</span>
-                </li>
-                <li className="flex items-start gap-3">
-                  <CheckCircle className="w-6 h-6 text-emerald-400 flex-shrink-0 mt-1" />
-                  <span className="text-slate-300">Real human review before submission</span>
+                  <span className="text-slate-300">StartSmart AI access code to App included with all launch packages</span>
                 </li>
               </ul>
               <Link href="/signup?plan=pro">
@@ -246,19 +246,19 @@ export default function TestDemoPage() {
               <ul className="space-y-4 mb-8">
                 <li className="flex items-start gap-3">
                   <CheckCircle className="w-6 h-6 text-emerald-400 flex-shrink-0 mt-1" />
-                  <span className="text-slate-300">Upload, auto-tag, and retrieve key business docs</span>
+                  <span className="text-slate-300">Customized filing list instantly appears after entity & state info</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <CheckCircle className="w-6 h-6 text-emerald-400 flex-shrink-0 mt-1" />
-                  <span className="text-slate-300">Real-time compliance calendar</span>
+                  <span className="text-slate-300">Real-time business & tax compliance calendar</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <CheckCircle className="w-6 h-6 text-emerald-400 flex-shrink-0 mt-1" />
-                  <span className="text-slate-300">Tax deadlines and state filing alerts</span>
+                  <span className="text-slate-300">Receive Annual, Federal, & state filing alerts as due dates approach</span>
                 </li>
                 <li className="flex items-start gap-3">
                   <CheckCircle className="w-6 h-6 text-emerald-400 flex-shrink-0 mt-1" />
-                  <span className="text-slate-300">Bank-level encryption + private cloud storage</span>
+                  <span className="text-slate-300">Prevent $1,000+ in penalties & interest from missed filings</span>
                 </li>
               </ul>
               <Link href="/features/compliance">
@@ -278,7 +278,7 @@ export default function TestDemoPage() {
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             {/* Text */}
             <div>
-              <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">Your Business, At a Glance 📊</h2>
+              <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">Your Business, Your AI Tools 📊</h2>
               <p className="text-xl text-slate-300 mb-8">
                 Track your growth, compliance, and tax savings all in one intuitive dashboard — powered by real-time
                 data and automation.
