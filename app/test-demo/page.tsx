@@ -257,24 +257,27 @@ export default function TestDemoPage() {
                 playsInline
                 className="w-full aspect-video rounded-2xl border border-slate-700 object-cover"
               />
-            </div>
-            {/* Add callout badges */}
-            <div className="absolute top-4 right-4 bg-red-500 text-white px-3 py-1 rounded-full text-sm font-bold animate-pulse">
-                3 Deadlines This Month!
-            </div>
-  
-            <div className="absolute bottom-4 left-4 bg-emerald-500 text-white px-3 py-1 rounded-full text-sm">
-                ✓ IRS Connected
-            </div>
-
+              
+              {/* Limited Time Offer Badge - positioned below the image */}
+        <div className="mt-6 bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 rounded-lg p-4 border border-emerald-500/30">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-sm font-bold text-emerald-400">Limited time: Free setup ($299 value)</span>
+          </div>
+          <p className="text-xs text-slate-400">Includes document migration & calendar setup</p>
+        </div>
+      </div>
+            
             {/* Text */}
             <div className="order-1 lg:order-2">
-              <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">Stay Organized and 100% Compliant 📂</h2>
+              <h2 className="text-4xl md:text-5xl font-bold text-white mb-3">Stay Organized and 100% Compliant
+              <FolderOpen className="inline-block w-10 h-10 md:w-12 md:h-12 text-yellow-400 ml-3" />
+              </h2>
+              
               {/* Add urgency/fear-based subheading */}
-              <p className="text-2xl text-red-400 font-semibold mb-4">
+              <p className="text-xl text-red-400 font-semibold mb-4">
                 Stop risking $10,000+ IRS penalties from missed deadlines
               </p>
-              <p className="text-xl text-slate-300 mb-8">
+              <p className="text-lg text-slate-300 mb-8">
                 Keep your documents, deadlines, and filings in one secure place — auto-organized by entity, state, and
                 due date.
               </p>
@@ -320,8 +323,6 @@ export default function TestDemoPage() {
                 </Button>
               </Link>
             </div>
-            <p className="text-sm text-emerald-400 font-semibold">Limited time: Free setup ($299 value)</p>
-            <p className="text-xs text-slate-400 mt-1">Includes document migration & calendar setup</p>
           </div>
         </div>
       </section>
