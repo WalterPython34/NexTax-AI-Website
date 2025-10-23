@@ -292,10 +292,6 @@ export default function TestDemoPage() {
                  </div>
                 </li>
                 <li className="flex items-start gap-3">
-                  <CheckCircle className="w-6 h-6 text-emerald-400 flex-shrink-0 mt-1" />
-                  <span className="text-slate-300">Receive Annual, Federal, & state filing alerts as due dates approach</span>
-                </li>
-                <li className="flex items-start gap-3">
                   <Calculator className="w-6 h-6 text-emerald-400 flex-shrink-0 mt-1" />
                  <div>
                   <span className="text-slate-300 font-semibold">Audit-ready in seconds</span>
