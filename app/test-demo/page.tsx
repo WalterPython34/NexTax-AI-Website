@@ -377,7 +377,7 @@ export default function TestDemoPage() {
                 <img
                   src="/images/auto_docs.jpg"
                   alt="Business Templates"
-                  className="w-full h-64 object-cover"
+                  className="w-full h-80 object-cover"
                 />
                 
                 {/* Content overlay */}
@@ -414,7 +414,7 @@ export default function TestDemoPage() {
                 <img
                   src="/images/automations.jpg"
                   alt="Pro Automation Templates"
-                  className="w-full h-64 object-cover"
+                  className="w-full h-80 object-cover"
                 />
                 
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/50 to-transparent" />
@@ -450,7 +450,7 @@ export default function TestDemoPage() {
                 <img
                   src="/images/playground.jpg"
                   alt="Prompt Playground"
-                  className="w-full h-64 object-cover"
+                  className="w-full h-80 object-cover"
                 />
                 
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/50 to-transparent" />
