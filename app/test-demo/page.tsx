@@ -328,12 +328,17 @@ export default function TestDemoPage() {
         <div className="max-w-7xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             {/* Text */}
+            <div className="order-1">
+        <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 mb-6">
+          <p className="text-red-400 font-semibold text-lg">Stop the $15,000 Consultant Drain</p>
+          <p className="text-slate-300 text-sm mt-1">Most businesses waste 6+ months and thousands on basic documents</p>
+        </div>
             <div>
               <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">Your Business, Your AI Tools 📊</h2>
               <p className="text-xl text-slate-300 mb-8">
                 Stop paying $10,000+ for consultants. Generate professional documents and access expert knowledge instantly — all powered by AI trained on Big 4 best practices.
               </p>
-              </div>
+            </div>
 
             {/* Trust indicators */}
         <div className="flex items-center gap-6 mb-8">
@@ -350,9 +355,19 @@ export default function TestDemoPage() {
             <div className="text-xs text-slate-400">Average Setup</div>
           </div>
         </div>
+
+             {/* Urgency element */}
+        <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3 mb-6">
+          <div className="flex items-center gap-2">
+            <Clock className="w-4 h-4 text-amber-400" />
+            <span className="text-amber-300 font-semibold text-sm">Limited Time: Free setup worth $299</span>
+          </div>
+          <p className="text-slate-400 text-xs mt-1">This month only - includes document migration</p>
+        </div>
+      </div>
             
            {/* Slideshow Container */}
-    <div className="relative">
+    <div className="order-2 relative">
       <div className="overflow-hidden rounded-2xl border border-slate-700 bg-slate-800/50">
         <div className="flex transition-transform duration-500 ease-in-out" style={{ transform: `translateX(-${docSlideIndex * 100}%)` }}>
           
