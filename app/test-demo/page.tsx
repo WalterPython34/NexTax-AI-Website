@@ -565,6 +565,8 @@ export default function TestDemoPage() {
                 </Card>
               ))}
             </div>
+
+         {/* Button moved outside the grid and properly structured */}   
         <div className="flex justify-center mt-8">
                <Link href="/pricing">
               <Button
