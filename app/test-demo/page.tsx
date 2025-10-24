@@ -352,14 +352,8 @@ export default function TestDemoPage() {
         </div>
 
              {/* Urgency element */}
-        <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3 mb-6">
-          <div className="flex items-center gap-2">
-            <Clock className="w-4 h-4 text-amber-400" />
-            <span className="text-amber-300 font-semibold text-sm">Limited Time: Free setup worth $299</span>
-          </div>
-          <p className="text-slate-400 text-xs mt-1">This month only - includes document migration</p>
-        </div>
-      </div>
+        <div className="p-3 mb-6">
+          
             
            {/* Slideshow Container */}
     <div className="order-2 relative">
