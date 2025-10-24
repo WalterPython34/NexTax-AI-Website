@@ -344,7 +344,7 @@ export default function TestDemoPage() {
             <div className="min-w-full">
               <div className="p-8">
                 <img
-                  src="/images/template-library.png"
+                  src="/images/auto_docs.jpg"
                   alt="Business Templates"
                   className="rounded-lg shadow-xl w-full"
                 />
@@ -359,13 +359,13 @@ export default function TestDemoPage() {
             <div className="min-w-full">
               <div className="p-8">
                 <img
-                  src="/images/automation-templates.png"
+                  src="/images/automations.jpg"
                   alt="Pro Automation Templates"
                   className="rounded-lg shadow-xl w-full"
                 />
                 <div className="mt-4">
                   <Badge className="bg-purple-500/20 text-purple-300 w-fit mb-2">Pro Automations</Badge>
-                  <h3 className="text-xl font-bold text-white">30-Day Launch Calendar & More</h3>
+                  <h3 className="text-xl font-bold text-white">Social Media Launch Calendar & More</h3>
                 </div>
               </div>
             </div>
@@ -374,7 +374,7 @@ export default function TestDemoPage() {
             <div className="min-w-full">
               <div className="p-8">
                 <img
-                  src="/images/prompt-library.png"
+                  src="/images/playground.jpg"
                   alt="Prompt Playground"
                   className="rounded-lg shadow-xl w-full"
                 />
