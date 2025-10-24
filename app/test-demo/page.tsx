@@ -350,10 +350,7 @@ export default function TestDemoPage() {
             <div className="text-xs text-slate-400">Average Setup</div>
           </div>
         </div>
-
-             {/* Urgency element */}
-        <div className="p-3 mb-6">
-          
+                   
             
            {/* Slideshow Container */}
     <div className="order-2 relative">
