@@ -328,17 +328,12 @@ export default function TestDemoPage() {
         <div className="max-w-7xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             {/* Text */}
-            <div className="order-1">
-        <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 mb-6">
-          <p className="text-red-400 font-semibold text-lg">Stop the $15,000 Consultant Drain</p>
-          <p className="text-slate-300 text-sm mt-1">Most businesses waste 6+ months and thousands on basic documents</p>
-        </div>
-            <div>
+            <div className="order-1">                   
               <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">Your Business, Your AI Tools 📊</h2>
               <p className="text-xl text-slate-300 mb-8">
                 Stop paying $10,000+ for consultants. Generate professional documents and access expert knowledge instantly — all powered by AI trained on Big 4 best practices.
               </p>
-            </div>
+           
 
             {/* Trust indicators */}
         <div className="flex items-center gap-6 mb-8">
@@ -391,9 +386,22 @@ export default function TestDemoPage() {
                   <h3 className="text-2xl font-bold text-white mb-2">
                     Lawyers Charge $500/Hour for Simple Forms
                   </h3>
-                  <p className="text-slate-300 text-sm mb-4">
-                    EIN applications, operating agreements, business plans - why pay thousands when AI can generate them instantly?
-                  </p>
+                  
+                  {/* Bullet Points */}
+                  <ul className="space-y-2 mb-6">
+                    <li className="flex items-center gap-2 text-slate-300">
+                      <div className="w-1.5 h-1.5 bg-red-400 rounded-full flex-shrink-0"></div>
+                      <span className="text-sm">Most businesses waste 6+ months on basic documents</span>
+                    </li>
+                    <li className="flex items-center gap-2 text-slate-300">
+                      <div className="w-1.5 h-1.5 bg-red-400 rounded-full flex-shrink-0"></div>
+                      <span className="text-sm">$15,000+ average cost for legal document prep</span>
+                    </li>
+                    <li className="flex items-center gap-2 text-slate-300">
+                      <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full flex-shrink-0"></div>
+                      <span className="text-sm">AI generates same docs in 30 seconds</span>
+                    </li>
+                  </ul>
                   
                   <div className="flex items-center justify-between">
                     <div className="text-emerald-400 font-bold">
@@ -427,9 +435,22 @@ export default function TestDemoPage() {
                   <h3 className="text-2xl font-bold text-white mb-2">
                     30-Day Launch Plans That Actually Work
                   </h3>
-                  <p className="text-slate-300 text-sm mb-4">
-                    "This calendar saved me 3 weeks of planning. My business launched on schedule." - Sarah M., Tech Founder
-                  </p>
+
+                  {/* Bullet Points */}
+                  <ul className="space-y-2 mb-6">
+                    <li className="flex items-center gap-2 text-slate-300">
+                      <div className="w-1.5 h-1.5 bg-purple-400 rounded-full flex-shrink-0"></div>
+                      <span className="text-sm">Complete launch calendars in minutes</span>
+                    </li>
+                    <li className="flex items-center gap-2 text-slate-300">
+                      <div className="w-1.5 h-1.5 bg-purple-400 rounded-full flex-shrink-0"></div>
+                      <span className="text-sm">Industry-specific growth strategies included</span>
+                    </li>
+                    <li className="flex items-center gap-2 text-slate-300">
+                      <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full flex-shrink-0"></div>
+                      <span className="text-sm">Limited time: Free setup worth $299</span>
+                    </li>
+                  </ul>
                   
                   <div className="flex items-center justify-between">
                     <div className="text-purple-400 font-bold">
@@ -463,9 +484,22 @@ export default function TestDemoPage() {
                   <h3 className="text-2xl font-bold text-white mb-2">
                     Big 4 Expertise at Your Fingertips
                   </h3>
-                  <p className="text-slate-300 text-sm mb-4">
-                    Access 100+ expert prompts crafted by former PwC & KPMG partners. No more guessing about compliance.
-                  </p>
+
+                   {/* Bullet Points */}
+                  <ul className="space-y-2 mb-6">
+                    <li className="flex items-center gap-2 text-slate-300">
+                      <div className="w-1.5 h-1.5 bg-cyan-400 rounded-full flex-shrink-0"></div>
+                      <span className="text-sm">100+ prompts from PwC & KPMG partners</span>
+                    </li>
+                    <li className="flex items-center gap-2 text-slate-300">
+                      <div className="w-1.5 h-1.5 bg-cyan-400 rounded-full flex-shrink-0"></div>
+                      <span className="text-sm">State-specific compliance guidance</span>
+                    </li>
+                    <li className="flex items-center gap-2 text-slate-300">
+                      <div className="w-1.5 h-1.5 bg-emerald-400 rounded-full flex-shrink-0"></div>
+                      <span className="text-sm">"Saved us from $5,400 penalty" - Sarah M.</span>
+                    </li>
+                  </ul>
                   
                   <div className="flex items-center justify-between">
                     <div className="text-cyan-400 font-bold">
