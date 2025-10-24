@@ -334,72 +334,157 @@ export default function TestDemoPage() {
                 Stop paying $10,000+ for consultants. Generate professional documents and access expert knowledge instantly — all powered by AI trained on Big 4 best practices.
               </p>
               </div>
+
+            {/* Trust indicators */}
+        <div className="flex items-center gap-6 mb-8">
+          <div className="text-center">
+            <div className="text-2xl font-bold text-emerald-400">500+</div>
+            <div className="text-xs text-slate-400">Businesses Launched</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-emerald-400">$2.1M+</div>
+            <div className="text-xs text-slate-400">Saved in Fees</div>
+          </div>
+          <div className="text-center">
+            <div className="text-2xl font-bold text-emerald-400">48hrs</div>
+            <div className="text-xs text-slate-400">Average Setup</div>
+          </div>
+        </div>
             
            {/* Slideshow Container */}
     <div className="relative">
       <div className="overflow-hidden rounded-2xl border border-slate-700 bg-slate-800/50">
         <div className="flex transition-transform duration-500 ease-in-out" style={{ transform: `translateX(-${docSlideIndex * 100}%)` }}>
           
-           {/* Slide 1: Template Library Overview */}
+           {/* Slide 1: Template Library - Problem/Solution Focus */}
             <div className="min-w-full">
-              <div className="p-8">
+              <div className="relative">
                 <img
                   src="/images/auto_docs.jpg"
                   alt="Business Templates"
-                  className="rounded-lg shadow-xl w-full"
+                  className="w-full h-64 object-cover"
                 />
-                <div className="mt-4">
-                  <Badge className="bg-blue-500/20 text-blue-300 w-fit mb-2">50+ Templates</Badge>
-                  <h3 className="text-xl font-bold text-white">Every Document Your Business Needs</h3>
+                
+                {/* Content overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/50 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-6">
+                  <div className="flex items-center justify-between mb-3">
+                    <Badge className="bg-red-500/20 text-red-300">Problem</Badge>
+                    <div className="text-xs text-slate-400">1 of 3</div>
+                  </div>
+                  
+                  <h3 className="text-2xl font-bold text-white mb-2">
+                    Lawyers Charge $500/Hour for Simple Forms
+                  </h3>
+                  <p className="text-slate-300 text-sm mb-4">
+                    EIN applications, operating agreements, business plans - why pay thousands when AI can generate them instantly?
+                  </p>
+                  
+                  <div className="flex items-center justify-between">
+                    <div className="text-emerald-400 font-bold">
+                      Save $5,000+ • Generate in 30 seconds
+                    </div>
+                    <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white">
+                      Try Free Now
+                      <ArrowRight className="ml-1 w-3 h-3" />
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>
 
-           {/* Slide 2: Automation Templates */}
+           {/* Slide 2: Automation Templates - Social Proof */}
             <div className="min-w-full">
-              <div className="p-8">
+              <div className="relative">
                 <img
                   src="/images/automations.jpg"
                   alt="Pro Automation Templates"
-                  className="rounded-lg shadow-xl w-full"
+                  className="w-full h-64 object-cover"
                 />
-                <div className="mt-4">
-                  <Badge className="bg-purple-500/20 text-purple-300 w-fit mb-2">Pro Automations</Badge>
-                  <h3 className="text-xl font-bold text-white">Social Media Launch Calendar & More</h3>
+                
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/50 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-6">
+                  <div className="flex items-center justify-between mb-3">
+                    <Badge className="bg-blue-500/20 text-blue-300">Solution</Badge>
+                    <div className="text-xs text-slate-400">2 of 3</div>
+                  </div>
+                  
+                  <h3 className="text-2xl font-bold text-white mb-2">
+                    30-Day Launch Plans That Actually Work
+                  </h3>
+                  <p className="text-slate-300 text-sm mb-4">
+                    "This calendar saved me 3 weeks of planning. My business launched on schedule." - Sarah M., Tech Founder
+                  </p>
+                  
+                  <div className="flex items-center justify-between">
+                    <div className="text-purple-400 font-bold">
+                      100+ Templates • Industry-Specific
+                    </div>
+                    <Button size="sm" className="bg-purple-600 hover:bg-purple-700 text-white">
+                      Start Planning
+                      <Rocket className="ml-1 w-3 h-3" />
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>
 
-           {/* Slide 3: Prompt Library */}
+           {/* Slide 3: Prompt Library - Urgency & CTA */}
             <div className="min-w-full">
-              <div className="p-8">
+              <div className="relative">
                 <img
                   src="/images/playground.jpg"
                   alt="Prompt Playground"
-                  className="rounded-lg shadow-xl w-full"
+                  className="w-full h-64 object-cover"
                 />
-                <div className="mt-4">
-                  <Badge className="bg-cyan-500/20 text-cyan-300 w-fit mb-2">100+ Prompts</Badge>
-                  <h3 className="text-xl font-bold text-white">Expert Knowledge On-Demand</h3>
+                
+                <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/50 to-transparent" />
+                <div className="absolute bottom-0 left-0 right-0 p-6">
+                  <div className="flex items-center justify-between mb-3">
+                    <Badge className="bg-emerald-500/20 text-emerald-300">Proof</Badge>
+                    <div className="text-xs text-slate-400">3 of 3</div>
+                  </div>
+                  
+                  <h3 className="text-2xl font-bold text-white mb-2">
+                    Big 4 Expertise at Your Fingertips
+                  </h3>
+                  <p className="text-slate-300 text-sm mb-4">
+                    Access 100+ expert prompts crafted by former PwC & KPMG partners. No more guessing about compliance.
+                  </p>
+                  
+                  <div className="flex items-center justify-between">
+                    <div className="text-cyan-400 font-bold">
+                      Expert Knowledge • Instant Access
+                    </div>
+                    <Button size="sm" className="bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white">
+                      Get Started Now
+                      <Zap className="ml-1 w-3 h-3" />
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-    {/* Slide Navigation */}
+    {/* Enhanced Navigation with progress indicator */}
         <div className="flex justify-center gap-2 mt-4">
-          {[0, 1, 2].map((index) => (
+          {[
+            { label: 'Problem', color: 'red' },
+            { label: 'Solution', color: 'blue' }, 
+            { label: 'Proof', color: 'emerald' }
+          ].map((slide, index) => (
             <button
               key={index}
               onClick={() => setDocSlideIndex(index)}
-              className={`w-3 h-3 rounded-full transition-all ${
+              className={`px-3 py-1 rounded-full text-xs font-medium transition-all ${
                 docSlideIndex === index
-                  ? 'bg-emerald-400 w-8'
-                  : 'bg-slate-600 hover:bg-slate-500'
+                  ? `bg-${slide.color}-500/20 text-${slide.color}-300 border border-${slide.color}-500/30`
+                  : 'bg-slate-700 text-slate-400 hover:bg-slate-600'
               }`}
-              aria-label={`Go to slide ${index + 1}`}
-            />
+            >
+              {slide.label}
+            </button>
           ))}
         </div>
 
@@ -423,18 +508,30 @@ export default function TestDemoPage() {
 
     {/* Value Proposition Bar */}
     <div className="mt-12 bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 rounded-lg p-6 border border-emerald-500/30">
-      <div className="grid md:grid-cols-3 gap-6 text-center">
+      <div className="text-center mb-4">
+        <h3 className="text-white font-bold text-lg">Why Smart Entrepreneurs Choose StartSmart</h3>
+      </div>
+      <div className="grid md:grid-cols-4 gap-6 text-center">
         <div>
           <div className="text-3xl font-bold text-emerald-400">100+ Hours</div>
-          <p className="text-slate-300 mt-1">Saved per month</p>
+          <p className="text-slate-300 text-sm">Saved per month</p>
+          <p className="text-slate-400 text-xs mt-1">vs traditional methods</p>
         </div>
         <div>
           <div className="text-3xl font-bold text-emerald-400">$15,000+</div>
-          <p className="text-slate-300 mt-1">In consultant fees avoided</p>
+          <p className="text-slate-300 text-sm">In consultant fees avoided</p>
+          <p className="text-slate-400 text-xs mt-1">average per business</p>
+        </div>
+        <div>
+          <div className="text-3xl font-bold text-emerald-400">48hrs</div>
+          <p className="text-slate-300 text-sm">To complete setup</p>
+          <p className="text-slate-400 text-xs mt-1">vs 6+ weeks normally</p>
         </div>
         <div>
           <div className="text-3xl font-bold text-emerald-400">500+</div>
-          <p className="text-slate-300 mt-1">Businesses launched</p>
+          <p className="text-slate-300 text-sm">Businesses launched</p>
+          <p className="text-slate-400 text-xs mt-1">this month alone</p>
+        </div>
         </div>
       </div>
     </div>
