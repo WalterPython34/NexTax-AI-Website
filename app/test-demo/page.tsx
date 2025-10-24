@@ -467,9 +467,9 @@ export default function TestDemoPage() {
   {[0, 1, 2].map((index) => (
     <button
       key={index}
-      onClick={() => setDocSlideIndex(index)}  {/* Changed from setCurrentSlide */}
+      onClick={() => setDocSlideIndex(index)}  
       className={`w-3 h-3 rounded-full transition-all ${
-        docSlideIndex === index   {/* Changed from currentSlide */}
+        docSlideIndex === index   
           ? 'bg-emerald-400 w-8' 
           : 'bg-slate-600 hover:bg-slate-500'
       }`}
