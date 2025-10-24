@@ -340,143 +340,68 @@ export default function TestDemoPage() {
       <div className="overflow-hidden rounded-2xl border border-slate-700 bg-slate-800/50">
         <div className="flex transition-transform duration-500 ease-in-out" style={{ transform: `translateX(-${docSlideIndex * 100}%)` }}>
           
-          {/* Slide 1: Template Library Overview */}
-          <div className="min-w-full">
-            <div className="grid lg:grid-cols-2 gap-8 p-8">
-              <div className="order-2 lg:order-1">
+           {/* Slide 1: Template Library Overview */}
+            <div className="min-w-full">
+              <div className="p-8">
                 <img
                   src="/images/template-library.png"
                   alt="Business Templates"
-                  className="rounded-lg shadow-xl"
+                  className="rounded-lg shadow-xl w-full"
                 />
-              </div>
-              <div className="order-1 lg:order-2 flex flex-col justify-center">
-                <Badge className="bg-blue-500/20 text-blue-300 w-fit mb-4">50+ Templates</Badge>
-                <h3 className="text-3xl font-bold text-white mb-4">
-                  Every Document Your Business Needs
-                </h3>
-                <p className="text-lg text-slate-300 mb-6">
-                  From SS-4 EIN forms to complete business plans — instantly generate any document with AI that understands your specific business.
-                </p>
-                <ul className="space-y-3 mb-6">
-                  <li className="flex items-center gap-3">
-                    <DollarSign className="w-5 h-5 text-emerald-400" />
-                    <span className="text-slate-300">Save $5,000+ on legal document prep</span>
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <Clock className="w-5 h-5 text-emerald-400" />
-                    <span className="text-slate-300">Generate in seconds, not weeks</span>
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <CheckCircle className="w-5 h-5 text-emerald-400" />
-                    <span className="text-slate-300">IRS-compliant & legally vetted</span>
-                  </li>
-                </ul>
-                <Button className="bg-emerald-600 hover:bg-emerald-700 text-white w-fit">
-                  Browse All Templates
-                  <ArrowRight className="ml-2 w-4 h-4" />
-                </Button>
+                <div className="mt-4">
+                  <Badge className="bg-blue-500/20 text-blue-300 w-fit mb-2">50+ Templates</Badge>
+                  <h3 className="text-xl font-bold text-white">Every Document Your Business Needs</h3>
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Slide 2: Automation Templates */}
-          <div className="min-w-full">
-            <div className="grid lg:grid-cols-2 gap-8 p-8">
-              <div className="order-2 lg:order-1">
+           {/* Slide 2: Automation Templates */}
+            <div className="min-w-full">
+              <div className="p-8">
                 <img
                   src="/images/automation-templates.png"
                   alt="Pro Automation Templates"
-                  className="rounded-lg shadow-xl"
+                  className="rounded-lg shadow-xl w-full"
                 />
-              </div>
-              <div className="order-1 lg:order-2 flex flex-col justify-center">
-                <Badge className="bg-purple-500/20 text-purple-300 w-fit mb-4">Pro Automations</Badge>
-                <h3 className="text-3xl font-bold text-white mb-4">
-                  30-Day Launch Calendar & More
-                </h3>
-                <p className="text-lg text-slate-300 mb-6">
-                  Turn your business idea into reality with automated workflows. Generate complete launch plans, social media calendars, and growth strategies in minutes.
-                </p>
-                <ul className="space-y-3 mb-6">
-                  <li className="flex items-center gap-3">
-                    <Zap className="w-5 h-5 text-emerald-400" />
-                    <span className="text-slate-300">30-day content calendar ready instantly</span>
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <Target className="w-5 h-5 text-emerald-400" />
-                    <span className="text-slate-300">Industry-specific growth strategies</span>
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <Sparkles className="w-5 h-5 text-emerald-400" />
-                    <span className="text-slate-300">AI customizes everything to your business</span>
-                  </li>
-                </ul>
-                <Button className="bg-purple-600 hover:bg-purple-700 text-white w-fit">
-                  Create Your Launch Plan
-                  <Rocket className="ml-2 w-4 h-4" />
-                </Button>
+                <div className="mt-4">
+                  <Badge className="bg-purple-500/20 text-purple-300 w-fit mb-2">Pro Automations</Badge>
+                  <h3 className="text-xl font-bold text-white">30-Day Launch Calendar & More</h3>
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Slide 3: Prompt Library */}
-          <div className="min-w-full">
-            <div className="grid lg:grid-cols-2 gap-8 p-8">
-              <div className="order-2 lg:order-1">
+           {/* Slide 3: Prompt Library */}
+            <div className="min-w-full">
+              <div className="p-8">
                 <img
                   src="/images/prompt-library.png"
                   alt="Prompt Playground"
-                  className="rounded-lg shadow-xl"
+                  className="rounded-lg shadow-xl w-full"
                 />
-              </div>
-              <div className="order-1 lg:order-2 flex flex-col justify-center">
-                <Badge className="bg-cyan-500/20 text-cyan-300 w-fit mb-4">100+ Prompts</Badge>
-                <h3 className="text-3xl font-bold text-white mb-4">
-                  Expert Knowledge On-Demand
-                </h3>
-                <p className="text-lg text-slate-300 mb-6">
-                  Skip the $500/hour consultants. Get instant answers to complex business questions with prompts crafted by Big 4 tax experts and startup veterans.
-                </p>
-                <ul className="space-y-3 mb-6">
-                  <li className="flex items-center gap-3">
-                    <Brain className="w-5 h-5 text-emerald-400" />
-                    <span className="text-slate-300">State-specific compliance guidance</span>
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <FileText className="w-5 h-5 text-emerald-400" />
-                    <span className="text-slate-300">Entity selection & tax strategies</span>
-                  </li>
-                  <li className="flex items-center gap-3">
-                    <TrendingUp className="w-5 h-5 text-emerald-400" />
-                    <span className="text-slate-300">Growth & scaling playbooks</span>
-                  </li>
-                </ul>
-                <Button className="bg-cyan-600 hover:bg-cyan-700 text-white w-fit">
-                  Explore Knowledge Hub
-                  <BookOpen className="ml-2 w-4 h-4" />
-                </Button>
+                <div className="mt-4">
+                  <Badge className="bg-cyan-500/20 text-cyan-300 w-fit mb-2">100+ Prompts</Badge>
+                  <h3 className="text-xl font-bold text-white">Expert Knowledge On-Demand</h3>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Slide Navigation */}
-<div className="flex justify-center gap-2 mt-6">
-  {[0, 1, 2].map((index) => (
-    <button
-      key={index}
-      onClick={() => setDocSlideIndex(index)}  
-      className={`w-3 h-3 rounded-full transition-all ${
-        docSlideIndex === index   
-          ? 'bg-emerald-400 w-8' 
-          : 'bg-slate-600 hover:bg-slate-500'
-      }`}
-      aria-label={`Go to slide ${index + 1}`}
-    />
-  ))}
-</div>
+    {/* Slide Navigation */}
+        <div className="flex justify-center gap-2 mt-4">
+          {[0, 1, 2].map((index) => (
+            <button
+              key={index}
+              onClick={() => setDocSlideIndex(index)}
+              className={`w-3 h-3 rounded-full transition-all ${
+                docSlideIndex === index
+                  ? 'bg-emerald-400 w-8'
+                  : 'bg-slate-600 hover:bg-slate-500'
+              }`}
+              aria-label={`Go to slide ${index + 1}`}
+            />
+          ))}
+        </div>
 
       {/* Navigation Arrows */}
       <button
@@ -494,6 +419,7 @@ export default function TestDemoPage() {
         <ChevronRight className="w-6 h-6 text-white" />
       </button>
     </div>
+   </div>         
 
     {/* Value Proposition Bar */}
     <div className="mt-12 bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 rounded-lg p-6 border border-emerald-500/30">
