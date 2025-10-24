@@ -338,7 +338,7 @@ export default function TestDemoPage() {
            {/* Slideshow Container */}
     <div className="relative">
       <div className="overflow-hidden rounded-2xl border border-slate-700 bg-slate-800/50">
-        <div className="flex transition-transform duration-500 ease-in-out" style={{ transform: `translateX(-${currentSlide * 100}%)` }}>
+        <div className="flex transition-transform duration-500 ease-in-out" style={{ transform: `translateX(-${docSlideIndex * 100}%)` }}>
           
           {/* Slide 1: Template Library Overview */}
           <div className="min-w-full">
@@ -463,31 +463,31 @@ export default function TestDemoPage() {
       </div>
 
       {/* Slide Navigation */}
-      <div className="flex justify-center gap-2 mt-6">
-        {[0, 1, 2].map((index) => (
-          <button
-            key={index}
-            onClick={() => setCurrentSlide(index)}
-            className={`w-3 h-3 rounded-full transition-all ${
-              currentSlide === index 
-                ? 'bg-emerald-400 w-8' 
-                : 'bg-slate-600 hover:bg-slate-500'
-            }`}
-            aria-label={`Go to slide ${index + 1}`}
-          />
-        ))}
-      </div>
+<div className="flex justify-center gap-2 mt-6">
+  {[0, 1, 2].map((index) => (
+    <button
+      key={index}
+      onClick={() => setDocSlideIndex(index)}  {/* Changed from setCurrentSlide */}
+      className={`w-3 h-3 rounded-full transition-all ${
+        docSlideIndex === index   {/* Changed from currentSlide */}
+          ? 'bg-emerald-400 w-8' 
+          : 'bg-slate-600 hover:bg-slate-500'
+      }`}
+      aria-label={`Go to slide ${index + 1}`}
+    />
+  ))}
+</div>
 
       {/* Navigation Arrows */}
       <button
-        onClick={() => setCurrentSlide((prev) => (prev === 0 ? 2 : prev - 1))}
+        onClick={() => setDocSlideIndex((prev) => (prev === 0 ? 2 : prev - 1))}
         className="absolute left-4 top-1/2 -translate-y-1/2 bg-slate-800/80 hover:bg-slate-700 rounded-full p-2 transition-colors"
         aria-label="Previous slide"
       >
         <ChevronLeft className="w-6 h-6 text-white" />
       </button>
       <button
-        onClick={() => setCurrentSlide((prev) => (prev === 2 ? 0 : prev + 1))}
+        onClick={() => setDocSlideIndex((prev) => (prev === 2 ? 0 : prev + 1))}
         className="absolute right-4 top-1/2 -translate-y-1/2 bg-slate-800/80 hover:bg-slate-700 rounded-full p-2 transition-colors"
         aria-label="Next slide"
       >
