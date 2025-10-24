@@ -532,7 +532,6 @@ export default function TestDemoPage() {
           <p className="text-slate-300 text-sm">Businesses launched</p>
           <p className="text-slate-400 text-xs mt-1">this month alone</p>
         </div>
-        </div>
       </div>
     </div>
   </div>
