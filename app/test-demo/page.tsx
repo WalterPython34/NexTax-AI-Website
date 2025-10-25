@@ -118,12 +118,12 @@ export default function TestDemoPage() {
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/signup">
+              <a href="https://www.startsmartbiz.ai/pricing" target="_blank" rel="noopener noreferrer">
                 <Button size="lg" className="bg-emerald-600 hover:bg-emerald-700 text-white">
                   <Rocket className="w-5 h-5 mr-2" />
                   Try StartSmart Free
                 </Button>
-              </Link>
+              </a>
               <Button
                 size="lg"
                 variant="outline"
@@ -416,10 +416,12 @@ export default function TestDemoPage() {
                     <div className="text-emerald-400 font-bold">
                       Save $5,000+ • Generate in 30 seconds
                     </div>
+                    <a href="https://www.startsmartbiz.ai/pricing" target="_blank" rel="noopener noreferrer">
                     <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white">
                       Try Free Now
                       <ArrowRight className="ml-1 w-3 h-3" />
                     </Button>
+                     </a> 
                   </div>
                 </div>
               </div>
