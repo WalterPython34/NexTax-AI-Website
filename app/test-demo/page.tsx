@@ -543,6 +543,7 @@ export default function TestDemoPage() {
           <p className="text-slate-400 text-xs mt-1">this month alone</p>
         </div>
       </div>
+      </div>
     </div>
   </div>
 </section>
