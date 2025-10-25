@@ -553,7 +553,6 @@ export default function TestDemoPage() {
           <div className="text-3xl font-bold text-emerald-400">500+</div>
           <p className="text-slate-300 text-sm">Businesses launched</p>
         </div>     
-      </div>
     </div>
   </div>
 </section>
