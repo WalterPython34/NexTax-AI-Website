@@ -49,14 +49,14 @@ const SAMPLE_CONVERSATIONS = [
     aiResponse: `Excellent question! State selection significantly impacts your taxes, compliance, and operational costs. Here's my analysis framework:
 
 **Top Considerations:**
-1. **Tax Implications**: State income tax, franchise fees, annual costs
-2. **Nexus Requirements**: Where you'll trigger tax obligations
-3. **Operational Complexity**: Multi-state compliance burden
+1. Tax Implications: State income tax, franchise fees, annual costs
+2. Nexus Requirements: Where you'll trigger tax obligations
+3. Operational Complexity: Multi-state compliance burden
 
 **Popular Options Analysis:**
-- **Delaware**: Corporate-friendly laws, but adds complexity for small businesses
-- **Wyoming**: No state income tax, low fees, privacy protection
-- **Your Home State**: Often simplest for single-member LLCs
+- Delaware: Corporate-friendly laws, but adds complexity for small businesses
+- Wyoming: No state income tax, low fees, privacy protection
+- Your Home State: Often simplest for single-member LLCs
 
 **E-commerce Specific Factors:**
 - Sales tax nexus thresholds (varies by state)
@@ -74,19 +74,19 @@ const SAMPLE_CONVERSATIONS = [
     aiResponse: `Equity structure is critical and often irreversible. Here's my systematic approach:
 
 **Founder Equity Framework:**
-- **Equal vs. Unequal**: Based on contribution, risk, and ongoing commitment
-- **Vesting Schedules**: Typically 4-year vest with 1-year cliff
-- **Founder Departure**: What happens if someone leaves?
+- Equal vs. Unequal: Based on contribution, risk, and ongoing commitment
+- Vesting Schedules: Typically 4-year vest with 1-year cliff
+- Founder Departure: What happens if someone leaves?
 
 **Key Considerations:**
-- **Sweat Equity**: How to value pre-formation contributions
-- **Future Dilution**: Employee stock option pool (typically 10-20%)
-- **Investor Rounds**: How equity structure affects fundraising
+- Sweat Equity: How to value pre-formation contributions
+- Future Dilution: Employee stock option pool (typically 10-20%)
+- Investor Rounds: How equity structure affects fundraising
 
 **Common Structures:**
-- **50/50 Split**: Only works with strong partnership agreements
-- **Weighted by Role**: CEO/CTO often get larger shares
-- **Performance-Based**: Equity tied to specific milestones
+- 50/50 Split: Only works with strong partnership agreements
+- Weighted by Role: CEO/CTO often get larger shares
+- Performance-Based: Equity tied to specific milestones
 
 **Legal Protections:**
 - Buy-sell agreements
@@ -107,6 +107,7 @@ export default function StartSmartGPTDemo() {
   const [email, setEmail] = useState("")
   const [conversation, setConversation] = useState<Array<{ role: string; content: string }>>([])
   const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   // Check session limits on load
   useEffect(() => {
@@ -156,15 +157,32 @@ export default function StartSmartGPTDemo() {
     }
 
     setIsLoading(true)
+    setError(null)
 
     // Add user question to conversation
     const newConversation = [...conversation, { role: "user", content: userQuestion }]
     setConversation(newConversation)
 
-    // Simulate AI response with demo limitations
-    setTimeout(() => {
-      const demoResponse = generateDemoResponse(userQuestion, questionsAsked)
-      setConversation([...newConversation, { role: "assistant", content: demoResponse }])
+    try {
+      const response = await fetch("/api/startsmart-demo", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          question: userQuestion,
+          conversationHistory: conversation,
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to get response")
+      }
+
+      // Add AI response to conversation
+      setConversation([...newConversation, { role: "assistant", content: data.response }])
 
       const newCount = questionsAsked + 1
       setQuestionsAsked(newCount)
@@ -177,39 +195,15 @@ export default function StartSmartGPTDemo() {
         setShowEmailCapture(true)
       }
 
-      setIsLoading(false)
       setUserQuestion("")
-    }, 2000)
-  }
-
-  const generateDemoResponse = (question: string, questionCount: number) => {
-    const responses = [
-      `Great question! Based on my training with 20+ years of Big 4 tax expertise, here's what I can tell you:
-
-This is a common scenario I help businesses navigate. The key factors to consider are...
-
-**Important Note**: This is a general overview. For your specific situation, I'd need to analyze your business details, state requirements, and financial projections to provide personalized recommendations and step-by-step implementation guidance.
-
-*Ready to get personalized advice for YOUR business? Let's continue this conversation with your business formation package.*`,
-
-      `Excellent question! This touches on several important areas of business strategy and compliance.
-
-Here's the general framework I use to analyze this type of situation...
-
-**However**, the specific answer depends heavily on your unique circumstances, industry, state of operation, and business goals.
-
-*This is exactly the type of complex question where personalized analysis makes all the difference. With your business formation, I'll have all your details to provide specific, actionable recommendations.*`,
-
-      `This is your final demo question! Let me give you a comprehensive overview...
-
-Based on my extensive training, here are the key considerations...
-
-**What happens next?** This demo shows you the depth of expertise available, but the real value comes from ongoing, personalized guidance tailored to YOUR specific business.
-
-*Ready to make StartSmartGPT your permanent business advisor? Let's get your business formed and unlock unlimited access to personalized AI guidance.*`,
-    ]
-
-    return responses[Math.min(questionCount, responses.length - 1)]
+    } catch (err: any) {
+      console.error("Error calling StartSmart Demo API:", err)
+      setError(err.message || "Failed to get response. Please try again.")
+      // Remove the user message if API call failed
+      setConversation(conversation)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const remainingQuestions = DEMO_LIMITS.maxQuestions - questionsAsked
@@ -347,6 +341,18 @@ Based on my extensive training, here are the key considerations...
                       </div>
                     </div>
                   )}
+
+                  {error && (
+                    <div className="flex justify-start">
+                      <div className="bg-red-500/10 border border-red-500/30 p-4 rounded-lg max-w-[85%]">
+                        <div className="flex items-center gap-2 mb-2">
+                          <AlertCircle className="w-4 h-4 text-red-400" />
+                          <span className="text-red-300 font-semibold">Error</span>
+                        </div>
+                        <p className="text-slate-300 text-sm">{error}</p>
+                      </div>
+                    </div>
+                  )}
                 </div>
 
                 {/* Input Area */}
@@ -410,7 +416,7 @@ Based on my extensive training, here are the key considerations...
                         <Link href="/contact" className="flex-1">
                           <Button
                             variant="outline"
-                            className="border-emerald-500/50 text-emerald-300 hover:bg-emerald-500/10 w-full"
+                            className="border-emerald-500/50 text-emerald-300 hover:bg-emerald-500/10 w-full bg-transparent"
                           >
                             Learn More
                           </Button>
@@ -487,7 +493,11 @@ Based on my extensive training, here are the key considerations...
                   </Button>
                 </Link>
                 <Link href="/contact">
-                  <Button size="lg" variant="outline" className="border-white text-white hover:bg-white/10 px-8 py-4">
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="border-white text-white hover:bg-white/10 px-8 py-4 bg-transparent"
+                  >
                     Schedule Consultation
                   </Button>
                 </Link>
