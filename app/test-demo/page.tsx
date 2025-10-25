@@ -13,6 +13,15 @@ export default function TestDemoPage() {
    // Add the new state here
   const [docSlideIndex, setDocSlideIndex] = useState(0);
 
+    const firstSection = document.querySelector('section[id="first-section"]');
+  if (firstSection) {
+    firstSection.scrollIntoView({ 
+      behavior: 'smooth',
+      block: 'start'
+    });
+  }
+};
+
   const slides = [
     {
       type: "image" as const,
@@ -118,6 +127,7 @@ export default function TestDemoPage() {
                 size="lg"
                 variant="outline"
                 className="border-slate-600 text-slate-300 hover:bg-slate-800 bg-transparent"
+                onClick={scrollToFirstSection}
               >
                 See Features Below
               </Button>
@@ -127,7 +137,7 @@ export default function TestDemoPage() {
       </section>
 
       {/* Feature 1: AI Business Formation (Left Image / Right Text) */}
-      <section className="py-20 px-4">
+      <section id="first-section" className="py-20 px-4 bg-slate-900/50">
         <div className="max-w-7xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
            {/* Video/Image Left */}
