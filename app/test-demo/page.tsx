@@ -543,7 +543,7 @@ export default function TestDemoPage() {
         </div>
         <div>
           <div className="text-3xl font-bold text-emerald-400">$15,000+</div>
-          <p className="text-slate-300 text-sm">In consultant fees avoided</p>          <
+          <p className="text-slate-300 text-sm">In consultant fees avoided</p>
         </div>
         <div>
           <div className="text-3xl font-bold text-emerald-400">48hrs</div>
