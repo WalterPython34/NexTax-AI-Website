@@ -323,43 +323,43 @@ export default function TestDemoPage() {
         </div>
       </section>
 
-      {/* Feature 4: Business & Tax Dashboard (Right Image / Left Text) */}
-      <section className="py-20 px-4 bg-slate-900/50">
-        <div className="max-w-7xl mx-auto">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            {/* Text */}
-            <div className="order-1">                   
-              <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">Your Business, Your AI Tools 📊</h2>
-              <p className="text-xl text-slate-300 mb-8">
-                Stop paying $10,000+ for consultants. Generate professional documents and access expert knowledge instantly — all powered by AI trained on Big 4 best practices.
-              </p>
+     {/* Feature 4: Business & Tax Dashboard (Right Image / Left Text) */}
+<section className="py-20 px-4 bg-slate-900/50">
+  <div className="max-w-7xl mx-auto">
+    <div className="grid lg:grid-cols-2 gap-12 items-center">
+      {/* Text Column - Left side */}
+      <div className="order-1">                   
+        <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">Your Business, Your AI Tools 📊</h2>
+        <p className="text-xl text-slate-300 mb-8">
+          Stop paying $10,000+ for consultants. Generate professional documents and access expert knowledge instantly — all powered by AI trained on Big 4 best practices.
+        </p>
 
-              {/* Benefit-focused bullet points */}  
-              <ul className="space-y-4 mb-8">
-                <li className="flex items-start gap-3">
-                  <CheckCircle className="w-6 h-6 text-emerald-400 flex-shrink-0 mt-1" />
-                     <div>
-                  <span className="text-slate-300 font-semibold">Lawyers Charge $500/Hour for Simple Forms</span>
-                  <p className="text-slate-400 text-sm mt-1">AI generates same docs for you in 30 seconds</p>
-                 </div>
-                </li>
-                <li className="flex items-start gap-3">
-                  <Bell className="w-6 h-6 text-emerald-400 flex-shrink-0 mt-1" />
-                 <div>
-                  <span className="text-slate-300 font-semibold">Professional tools to accelerate your business growth</span>
-                  <p className="text-slate-400 text-sm mt-1">Launch checklist, Social media calendar, marketing email generaltion + more</p>
-                 </div>
-                </li>
-                <li className="flex items-start gap-3">
-                  <Calculator className="w-6 h-6 text-emerald-400 flex-shrink-0 mt-1" />
-                 <div>
-                  <span className="text-slate-300 font-semibold">Professional answers at your fingertips</span>
-                  <p className="text-slate-400 text-sm mt-1">100+ business formation & legal prompts for most asked starup questions</p>
-                 </div>
-                </li>
-              </ul>
+        {/* Benefit-focused bullet points */}  
+        <ul className="space-y-4 mb-8">
+          <li className="flex items-start gap-3">
+            <CheckCircle className="w-6 h-6 text-emerald-400 flex-shrink-0 mt-1" />
+            <div>
+              <span className="text-slate-300 font-semibold">Lawyers Charge $500/Hour for Simple Forms</span>
+              <p className="text-slate-400 text-sm mt-1">AI generates same docs for you in 30 seconds</p>
+            </div>
+          </li>
+          <li className="flex items-start gap-3">
+            <Bell className="w-6 h-6 text-emerald-400 flex-shrink-0 mt-1" />
+            <div>
+              <span className="text-slate-300 font-semibold">Professional tools to accelerate your business growth</span>
+              <p className="text-slate-400 text-sm mt-1">Launch checklist, Social media calendar, marketing email generation + more</p>
+            </div>
+          </li>
+          <li className="flex items-start gap-3">
+            <Calculator className="w-6 h-6 text-emerald-400 flex-shrink-0 mt-1" />
+            <div>
+              <span className="text-slate-300 font-semibold">Professional answers at your fingertips</span>
+              <p className="text-slate-400 text-sm mt-1">100+ business formation & legal prompts for most asked startup questions</p>
+            </div>
+          </li>
+        </ul>
 
-            {/* Trust indicators */}
+        {/* Trust indicators */}
         <div className="flex items-center gap-6 mb-8">
           <div className="text-center">
             <div className="text-2xl font-bold text-emerald-400">500+</div>
@@ -374,23 +374,22 @@ export default function TestDemoPage() {
             <div className="text-xs text-slate-400">Average Setup</div>
           </div>
         </div>
-                   
+      </div>
             
-           {/* Slideshow Container */}
-    <div className="order-2 relative">
-      <div className="overflow-hidden rounded-2xl border border-slate-700 bg-slate-800/50">
-        <div className="flex transition-transform duration-500 ease-in-out" style={{ transform: `translateX(-${docSlideIndex * 100}%)` }}>
-          
-           {/* Slide 1: Template Library - Problem/Solution Focus */}
+      {/* Slideshow Container - Right side */}
+      <div className="order-2 relative">
+        <div className="overflow-hidden rounded-2xl border border-slate-700 bg-slate-800/50">
+          <div className="flex transition-transform duration-500 ease-in-out" style={{ transform: `translateX(-${docSlideIndex * 100}%)` }}>
+            
+            {/* Slide 1: Template Library */}
             <div className="min-w-full">
               <div className="relative">
                 <img
                   src="/images/auto_docs.jpg"
                   alt="Business Templates"
-                  className="w-full h-120 object-cover"
+                  className="w-full h-80 object-cover"
                 />
                 
-                {/* Content overlay */}
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/50 to-transparent" />
                 <div className="absolute bottom-0 left-0 right-0 p-6">
                   <div className="flex items-center justify-between mb-3">
@@ -398,8 +397,10 @@ export default function TestDemoPage() {
                     <div className="text-xs text-slate-400">1 of 3</div>
                   </div>
                   
-                                   
-                                   
+                  <h3 className="text-2xl font-bold text-white mb-4">
+                    Document Generation Center
+                  </h3>
+                  
                   <div className="flex items-center justify-between">
                     <div className="text-emerald-400 font-bold">
                       Save $5,000+ • Generate in 30 seconds
@@ -413,13 +414,13 @@ export default function TestDemoPage() {
               </div>
             </div>
 
-           {/* Slide 2: Automation Templates - Social Proof */}
+            {/* Slide 2: Automation Templates */}
             <div className="min-w-full">
               <div className="relative">
                 <img
                   src="/images/automations.jpg"
                   alt="Pro Automation Templates"
-                  className="w-full h-120 object-cover"
+                  className="w-full h-80 object-cover"
                 />
                 
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/50 to-transparent" />
@@ -429,7 +430,9 @@ export default function TestDemoPage() {
                     <div className="text-xs text-slate-400">2 of 3</div>
                   </div>
                   
-                  
+                  <h3 className="text-2xl font-bold text-white mb-4">
+                    Pro Automation Templates
+                  </h3>
                   
                   <div className="flex items-center justify-between">
                     <div className="text-purple-400 font-bold">
@@ -444,13 +447,13 @@ export default function TestDemoPage() {
               </div>
             </div>
 
-           {/* Slide 3: Prompt Library - Urgency & CTA */}
+            {/* Slide 3: Prompt Library */}
             <div className="min-w-full">
               <div className="relative">
                 <img
                   src="/images/playground.jpg"
                   alt="Prompt Playground"
-                  className="w-full h-120 object-cover"
+                  className="w-full h-80 object-cover"
                 />
                 
                 <div className="absolute inset-0 bg-gradient-to-t from-slate-900/90 via-slate-900/50 to-transparent" />
@@ -460,7 +463,9 @@ export default function TestDemoPage() {
                     <div className="text-xs text-slate-400">3 of 3</div>
                   </div>
                   
-                  
+                  <h3 className="text-2xl font-bold text-white mb-4">
+                    Expert Knowledge Hub
+                  </h3>
                   
                   <div className="flex items-center justify-between">
                     <div className="text-cyan-400 font-bold">
