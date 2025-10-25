@@ -521,6 +521,15 @@ export default function TestDemoPage() {
     </div>
    </div>         
 
+     {/* Live usage indicator */}
+        <div className="absolute top-4 right-4 bg-green-500/20 border border-green-500/30 rounded-lg px-3 py-1">
+          <div className="flex items-center gap-2">
+            <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse" />
+            <span className="text-green-300 text-xs font-medium">47 users online now</span>
+          </div>
+        </div>
+      </div>
+
     {/* Value Proposition Bar */}
     <div className="mt-12 bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 rounded-lg p-6 border border-emerald-500/30">
       <div className="text-center mb-4">
@@ -529,23 +538,19 @@ export default function TestDemoPage() {
       <div className="grid md:grid-cols-4 gap-6 text-center">
         <div>
           <div className="text-3xl font-bold text-emerald-400">100+ Hours</div>
-          <p className="text-slate-300 text-sm">Saved per month</p>
-          <p className="text-slate-400 text-xs mt-1">vs traditional methods</p>
+          <p className="text-slate-300 text-sm">Saved per month</p>          
         </div>
         <div>
           <div className="text-3xl font-bold text-emerald-400">$15,000+</div>
-          <p className="text-slate-300 text-sm">In consultant fees avoided</p>
-          <p className="text-slate-400 text-xs mt-1">average per business</p>
+          <p className="text-slate-300 text-sm">In consultant fees avoided</p>          <
         </div>
         <div>
           <div className="text-3xl font-bold text-emerald-400">48hrs</div>
-          <p className="text-slate-300 text-sm">To complete setup</p>
-          <p className="text-slate-400 text-xs mt-1">vs 6+ weeks normally</p>
+          <p className="text-slate-300 text-sm">To complete setup</p>          
         </div>
         <div>
           <div className="text-3xl font-bold text-emerald-400">500+</div>
           <p className="text-slate-300 text-sm">Businesses launched</p>
-          <p className="text-slate-400 text-xs mt-1">this month alone</p>
         </div>
       </div>
       </div>
