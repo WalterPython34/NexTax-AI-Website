@@ -13,7 +13,8 @@ export default function TestDemoPage() {
    // Add the new state here
   const [docSlideIndex, setDocSlideIndex] = useState(0);
 
-    const firstSection = document.querySelector('section[id="first-section"]');
+  const scrollToFirstSection = () => {
+  const firstSection = document.querySelector('#features-section');
   if (firstSection) {
     firstSection.scrollIntoView({ 
       behavior: 'smooth',
@@ -137,7 +138,7 @@ export default function TestDemoPage() {
       </section>
 
       {/* Feature 1: AI Business Formation (Left Image / Right Text) */}
-      <section id="first-section" className="py-20 px-4 bg-slate-900/50">
+      <section id="features-section" className="py-20 px-4 bg-slate-900/50">
         <div className="max-w-7xl mx-auto">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
            {/* Video/Image Left */}
@@ -181,7 +182,7 @@ export default function TestDemoPage() {
                   <span className="text-slate-300">StartSmart AI access code to App included with all launch packages</span>
                 </li>
               </ul>
-              <Link href="/signup?plan=pro">
+              <Link href="/pricing">
                 <Button size="lg" className="bg-emerald-600 hover:bg-emerald-700 text-white">
                   Start My LLC
                   <ArrowRight className="w-5 h-5 ml-2" />
