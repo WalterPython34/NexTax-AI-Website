@@ -349,7 +349,7 @@ export default function TestLandingPage() {
                 icon: Shield,
                 title: "Big 4 Tax Expertise Built-In",
                 description:
-                  "Trained on 20+ years of Morgan Stanley, PwC, and KPMG tax strategies. Get enterprise-level advice instantly.",
+                  "Trained on 20+ years of Morgan Stanley, EY, and KPMG tax strategies. Get enterprise-level advice instantly.",
                 color: "emerald",
               },
               {
