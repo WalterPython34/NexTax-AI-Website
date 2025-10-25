@@ -529,7 +529,7 @@ export default function TestDemoPage() {
           </div>
         </div>
       </div>
-  </div>
+  
 
     {/* Value Proposition Bar */}
     <div className="mt-12 bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 rounded-lg p-6 border border-emerald-500/30">
@@ -552,8 +552,7 @@ export default function TestDemoPage() {
         <div>
           <div className="text-3xl font-bold text-emerald-400">500+</div>
           <p className="text-slate-300 text-sm">Businesses launched</p>
-        </div>
-      </div>
+        </div>     
       </div>
     </div>
   </div>
