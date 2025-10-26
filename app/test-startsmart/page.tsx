@@ -32,20 +32,22 @@ import {
   MoreHorizontal,
 } from "lucide-react"
 
-export default function TestStartSmartApp() {
+function StartSmartContent() {
   const searchParams = useSearchParams()
   const tabParam = searchParams.get("tab")
 
   const validTabs = ["ai-chat", "progress-roadmap", "document-center", "knowledge-hub", "startup-tools", "compliance"]
   const initialTab = tabParam && validTabs.includes(tabParam) ? tabParam : "ai-chat"
 
+  return <TestStartSmartApp initialTab={initialTab} />
+}
+
+function TestStartSmartApp({ initialTab = "ai-chat" }: { initialTab?: string }) {
   const [activeTab, setActiveTab] = useState(initialTab)
 
   useEffect(() => {
-    if (tabParam && validTabs.includes(tabParam)) {
-      setActiveTab(tabParam)
-    }
-  }, [tabParam])
+    setActiveTab(initialTab)
+  }, [initialTab])
   
   const [messages, setMessages] = useState([
     {
