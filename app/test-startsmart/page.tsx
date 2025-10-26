@@ -32,6 +32,8 @@ import {
   MoreHorizontal,
 } from "lucide-react"
 
+export const dynamic = "force-dynamic"
+
 function StartSmartContent() {
   const searchParams = useSearchParams()
   const tabParam = searchParams.get("tab")
