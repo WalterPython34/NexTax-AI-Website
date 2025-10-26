@@ -22,8 +22,8 @@ export async function POST(request: NextRequest) {
     if (userId) {
       try {
         const profile = await getUserProfile(userId)
-        userTier = profile?.subscription_status || "free"
-        currentUsage = await getUserUsageCount(userId, "chat_message", "monthly")
+        userTier = profile?.subscriptionTier || "free"
+        currentUsage = await getUserUsageCount(userId, "monthly")
       } catch (error) {
         console.log("User profile not found, using free tier")
       }
@@ -80,15 +80,10 @@ export async function POST(request: NextRequest) {
     // Record usage
     if (userId) {
       try {
-        await recordUsage({
-          user_id: userId,
-          action_type: "chat_message",
-          count: 1,
-          metadata: {
-            model,
-            tier: userTier,
-            tokens_used: text.length,
-          },
+        await recordUsage(userId, "chat_message", {
+          model,
+          tier: userTier,
+          tokens_used: text.length,
         })
       } catch (error) {
         console.error("Failed to record usage:", error)
@@ -199,3 +194,4 @@ Please provide ${userTier === "free" ? "essential" : "comprehensive"} guidance t
     }
   })
 }
+
