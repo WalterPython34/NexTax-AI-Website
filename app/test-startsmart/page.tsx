@@ -33,6 +33,9 @@ import {
   MoreHorizontal,
 } from "lucide-react"
 
+export const dynamic = "force-dynamic"
+  export const revalidate = false
+
 function StartSmartContent() {
   const searchParams = useSearchParams()
   const tabParam = searchParams.get("tab")
@@ -60,9 +63,6 @@ function TestStartSmartApp({ initialTab = "ai-chat" }: { initialTab?: string }) 
   const [inputMessage, setInputMessage] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
-
-  export const dynamic = "force-dynamic"
-  export const revalidate = false
 
   // Business formation state
   const [businessInfo, setBusinessInfo] = useState({
