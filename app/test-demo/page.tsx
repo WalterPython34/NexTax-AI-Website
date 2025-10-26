@@ -236,7 +236,7 @@ export default function TestDemoPage() {
                   <p className="text-slate-400 text-sm mt-1">Grow & scale your business</p>  
                 </li>
               </ul>
-              <Link href="/startsmart-gpt">
+              <Link href="/startsmart-gpt-demo">
                 <Button size="lg" className="bg-emerald-600 hover:bg-emerald-700 text-white">
                   Try the AI Assistant
                   <ArrowRight className="w-5 h-5 ml-2" />
