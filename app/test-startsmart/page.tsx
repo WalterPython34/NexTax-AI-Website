@@ -33,7 +33,20 @@ import {
 } from "lucide-react"
 
 export default function TestStartSmartApp() {
-  const [activeTab, setActiveTab] = useState("ai-chat")
+  const searchParams = useSearchParams()
+  const tabParam = searchParams.get("tab")
+
+  const validTabs = ["ai-chat", "progress-roadmap", "document-center", "knowledge-hub", "startup-tools", "compliance"]
+  const initialTab = tabParam && validTabs.includes(tabParam) ? tabParam : "ai-chat"
+
+  const [activeTab, setActiveTab] = useState(initialTab)
+
+  useEffect(() => {
+    if (tabParam && validTabs.includes(tabParam)) {
+      setActiveTab(tabParam)
+    }
+  }, [tabParam])
+  
   const [messages, setMessages] = useState([
     {
       role: "assistant",
