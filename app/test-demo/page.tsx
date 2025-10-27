@@ -790,7 +790,7 @@ const getColorClasses = (color: string) => {
                 />
               </div>
 
-              <h3 className="text-2xl font-bold text-white mb-4">Start Smart. Scale Smarter.</h3>
+              <h3 className="text-3xl font-bold text-white mb-4">Start Smart. Scale Smarter.</h3>
               <p className="text-emerald-100 mb-6 max-w-2xl mx-auto">
                 Start your journey towards financial independence today.
               </p>
