@@ -4,7 +4,7 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Card, CardContent } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Rocket, MessageSquare, Shield, Bell, Calculator, FolderOpen, FileText, Building2, Globe, BarChart3, CheckCircle, DollarSign, Clock, Zap, Bot, Target, Sparkles, Brain, ChevronRight, ChevronLeft, BookOpen, TrendingUp, ArrowRight } from "lucide-react"
 
 export default function TestDemoPage() {
