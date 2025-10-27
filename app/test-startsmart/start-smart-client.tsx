@@ -412,7 +412,7 @@ export default function StartSmartClient() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({
+        body: JSON.JSON.stringify({
           documentType: docType,
           businessInfo: {
             name: "Test Business",
@@ -1031,15 +1031,15 @@ export default function StartSmartClient() {
                             {task.dueDate && <p className="text-xs text-gray-500 mt-1">{task.dueDate}</p>}
                           </div>
                         </div>
-                        <div className="flex items-center gap-3">
-                          <Badge variant="outline" className="text-xs">
+                        <div className="grid grid-cols-[80px_160px_100px_80px] gap-3 items-center">
+                          <Badge variant="outline" className="text-xs justify-self-center">
                             {task.priority}
                           </Badge>
-                          <Badge variant="outline" className="text-xs">
+                          <Badge variant="outline" className="text-xs justify-self-center">
                             {task.category}
                           </Badge>
                           <Badge
-                            className={`text-xs ${
+                            className={`text-xs justify-self-center ${
                               task.status === "completed"
                                 ? "bg-green-100 text-green-800"
                                 : task.status === "overdue"
@@ -1053,10 +1053,12 @@ export default function StartSmartClient() {
                                 ? "Overdue"
                                 : "Pending"}
                           </Badge>
-                          {task.status !== "completed" && (
-                            <Button size="sm" variant="outline">
+                          {task.status !== "completed" ? (
+                            <Button size="sm" variant="outline" className="justify-self-center bg-transparent">
                               Start
                             </Button>
+                          ) : (
+                            <div className="w-[80px]" />
                           )}
                         </div>
                       </div>
@@ -1084,3 +1086,4 @@ export default function StartSmartClient() {
     </div>
   )
 }
+
