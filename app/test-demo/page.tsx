@@ -809,6 +809,8 @@ const getColorClasses = (color: string) => {
                     Compare Plans
                   </Button>
                 </Link>
+              </div>              
+            </div>               
           </div>
         </div>
       </section>
