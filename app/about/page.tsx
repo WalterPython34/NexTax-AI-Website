@@ -75,6 +75,16 @@ export default function AboutPage() {
             Street tax expertise with cutting-edge artificial intelligence to transform how businesses handle tax and
             compliance.
           </p>
+          <div className="relative">
+              <video
+                src="/videos/Exploding_NexTax.mp4"
+                autoPlay
+                loop
+                muted
+                playsInline
+                className="max-h-[300px] mx-auto rounded-xl border border-slate-700 object-contain bg-slate-900"
+              />
+            </div>
         </div>
       </section>
 
