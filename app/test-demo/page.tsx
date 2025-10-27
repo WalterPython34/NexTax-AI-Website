@@ -5,7 +5,55 @@ import Link from "next/link"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
-import { Rocket, MessageSquare, Shield, Bell, Calculator, FolderOpen, FileText, BarChart3, CheckCircle, DollarSign, Clock, Zap, Target, Sparkles, Brain, ChevronRight, ChevronLeft, BookOpen, TrendingUp, ArrowRight } from "lucide-react"
+import { Rocket, MessageSquare, Shield, Bell, Calculator, FolderOpen, FileText, Building2, Globe, BarChart3, CheckCircle, DollarSign, Clock, Zap, Bot, Target, Sparkles, Brain, ChevronRight, ChevronLeft, BookOpen, TrendingUp, ArrowRight } from "lucide-react"
+
+export default function FeaturesPage() {
+  const features = [
+    {
+      icon: Bot,
+      title: "Custom Tax GPTs",
+      description:
+        "AI assistants trained specifically for tax scenarios, business formation, and compliance requirements.",
+      benefits: ["24/7 availability", "Expert-level knowledge", "Personalized responses", "Multi-language support"],
+      color: "emerald",
+    },
+    {
+      icon: Zap,
+      title: "Automated Workflows",
+      description: "Streamlined processes that handle complex tax operations and business formation automatically.",
+      benefits: ["Reduce manual work by 90%", "Error-free processing", "Real-time updates", "Custom integrations"],
+      color: "cyan",
+    },
+    {
+      icon: Shield,
+      title: "Compliance Management",
+      description: "Stay compliant with automated monitoring, alerts, and filing assistance across all jurisdictions.",
+      benefits: ["Real-time compliance tracking", "Automated alerts", "Multi-state support", "Audit preparation"],
+      color: "violet",
+    },
+    {
+      icon: FileText,
+      title: "Smart Documentation",
+      description: "AI-generated forms, filings, and compliance documents with 99% accuracy and instant delivery.",
+      benefits: ["Instant document generation", "Legal template library", "Version control", "Digital signatures"],
+      color: "orange",
+    },
+    {
+      icon: Calculator,
+      title: "Tax Optimization",
+      description: "Advanced algorithms identify tax-saving opportunities and optimize your business structure.",
+      benefits: ["Maximize deductions", "Structure optimization", "Scenario modeling", "ROI tracking"],
+      color: "blue",
+    },
+    {
+      icon: Building2,
+      title: "Entity Formation",
+      description: "Complete business formation services with AI-guided entity selection and setup.",
+      benefits: ["Entity type recommendations", "State selection guidance", "EIN acquisition", "Banking setup"],
+      color: "green",
+    },
+  ]
+
 
 export default function TestDemoPage() {
   const [currentSlide, setCurrentSlide] = useState(0)
@@ -637,6 +685,70 @@ export default function TestDemoPage() {
             </div>
           </section>
 
+      {/* Features Grid */}
+      <section className="py-10">
+        <div className="container mx-auto px-4">
+          <div className="grid lg:grid-cols-2 gap-8">
+            {features.map((feature, i) => (
+              <Card key={i} className="bg-gray-900/50 border-gray-700 hover:border-emerald-500/50 transition-colors">
+                <CardHeader>
+                  <div className="flex items-center gap-4">
+                    <div
+                      className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+                        feature.color === "emerald"
+                          ? "bg-emerald-500/20"
+                          : feature.color === "cyan"
+                            ? "bg-cyan-500/20"
+                            : feature.color === "violet"
+                              ? "bg-violet-500/20"
+                              : feature.color === "orange"
+                                ? "bg-orange-500/20"
+                                : feature.color === "blue"
+                                  ? "bg-blue-500/20"
+                                  : "bg-green-500/20"
+                      }`}
+                    >
+                      <feature.icon
+                        className={`w-6 h-6 ${
+                          feature.color === "emerald"
+                            ? "text-emerald-400"
+                            : feature.color === "cyan"
+                              ? "text-cyan-400"
+                              : feature.color === "violet"
+                                ? "text-violet-400"
+                                : feature.color === "orange"
+                                  ? "text-orange-400"
+                                  : feature.color === "blue"
+                                    ? "text-blue-400"
+                                    : "text-green-400"
+                        }`}
+                      />
+                    </div>
+                    <div>
+                      <CardTitle className="text-white text-xl">{feature.title}</CardTitle>
+                    </div>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <p className="text-slate-300">{feature.description}</p>
+                  <div className="space-y-2">
+                    <h4 className="font-semibold text-white">Key Benefits:</h4>
+                    <ul className="space-y-2">
+                      {feature.benefits.map((benefit, j) => (
+                        <li key={j} className="flex items-center gap-2 text-slate-300">
+                          <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                          {benefit}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+      
       {/* Testimonial + Trust Block */}
       <section className="py-20 px-4">
         <div className="max-w-7xl mx-auto text-center">
