@@ -86,6 +86,18 @@ export default function TestDemoPage() {
       color: "green",
     },
   ]
+
+const getColorClasses = (color: string) => {
+    const colors: Record<string, { bg: string; text: string; border: string }> = {
+      emerald: { bg: "bg-emerald-500/10", text: "text-emerald-400", border: "border-emerald-500/20" },
+      cyan: { bg: "bg-cyan-500/10", text: "text-cyan-400", border: "border-cyan-500/20" },
+      violet: { bg: "bg-violet-500/10", text: "text-violet-400", border: "border-violet-500/20" },
+      orange: { bg: "bg-orange-500/10", text: "text-orange-400", border: "border-orange-500/20" },
+      blue: { bg: "bg-blue-500/10", text: "text-blue-400", border: "border-blue-500/20" },
+      green: { bg: "bg-green-500/10", text: "text-green-400", border: "border-green-500/20" },
+    }
+    return colors[color] || colors.emerald
+  }
   
   useEffect(() => {
     const interval = setInterval(() => {
