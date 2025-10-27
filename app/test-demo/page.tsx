@@ -683,66 +683,51 @@ export default function TestDemoPage() {
             </div>
           </section>
 
-      {/* Features Grid */}
-      <section className="py-10">
-        <div className="container mx-auto px-4">
-          <div className="grid lg:grid-cols-2 gap-8">
-            {features.map((feature, i) => (
-              <Card key={i} className="bg-gray-900/50 border-gray-700 hover:border-emerald-500/50 transition-colors">
-                <CardHeader>
-                  <div className="flex items-center gap-4">
+     <section className="py-20 px-4 bg-slate-900/30">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16">
+            <Badge className="mb-6 bg-emerald-500/20 text-emerald-300 border-emerald-500/30">StartSmart Benefits Summary</Badge>
+            <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">Everything You Need in One Platform</h2>
+            <p className="text-xl text-slate-300 max-w-3xl mx-auto">
+              From AI-powered automation to expert support, StartSmart gives you all the tools to launch and grow your
+              business with confidence.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {features.map((feature, index) => {
+              const Icon = feature.icon
+              const colorClasses = getColorClasses(feature.color)
+
+              return (
+                <Card
+                  key={index}
+                  className="bg-slate-800/50 border-slate-700 hover:border-slate-600 transition-all hover:shadow-lg hover:shadow-emerald-500/10"
+                >
+                  <CardHeader>
+                    <CardTitle className={`text-xl font-bold text-white mb-3 ${colorClasses.text}`}>
+                      {feature.title}
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="pt-6">
                     <div
-                      className={`w-12 h-12 rounded-lg flex items-center justify-center ${
-                        feature.color === "emerald"
-                          ? "bg-emerald-500/20"
-                          : feature.color === "cyan"
-                            ? "bg-cyan-500/20"
-                            : feature.color === "violet"
-                              ? "bg-violet-500/20"
-                              : feature.color === "orange"
-                                ? "bg-orange-500/20"
-                                : feature.color === "blue"
-                                  ? "bg-blue-500/20"
-                                  : "bg-green-500/20"
-                      }`}
+                      className={`w-12 h-12 rounded-lg ${colorClasses.bg} border ${colorClasses.border} flex items-center justify-center mb-4`}
                     >
-                      <feature.icon
-                        className={`w-6 h-6 ${
-                          feature.color === "emerald"
-                            ? "text-emerald-400"
-                            : feature.color === "cyan"
-                              ? "text-cyan-400"
-                              : feature.color === "violet"
-                                ? "text-violet-400"
-                                : feature.color === "orange"
-                                  ? "text-orange-400"
-                                  : feature.color === "blue"
-                                    ? "text-blue-400"
-                                    : "text-green-400"
-                        }`}
-                      />
+                      <Icon className={`w-6 h-6 ${colorClasses.text}`} />
                     </div>
-                    <div>
-                      <CardTitle className="text-white text-xl">{feature.title}</CardTitle>
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <p className="text-slate-300">{feature.description}</p>
-                  <div className="space-y-2">
-                    <h4 className="font-semibold text-white">Key Benefits:</h4>
+                    <p className="text-slate-300 mb-4">{feature.description}</p>
                     <ul className="space-y-2">
-                      {feature.benefits.map((benefit, j) => (
-                        <li key={j} className="flex items-center gap-2 text-slate-300">
-                          <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-                          {benefit}
+                      {feature.benefits.map((benefit, benefitIndex) => (
+                        <li key={benefitIndex} className="flex items-start gap-2 text-sm text-slate-400">
+                          <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+                          <span>{benefit}</span>
                         </li>
                       ))}
                     </ul>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                  </CardContent>
+                </Card>
+              )
+            })}
           </div>
         </div>
       </section>
