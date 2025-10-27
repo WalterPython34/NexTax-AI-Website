@@ -10,7 +10,11 @@ import { Progress } from "@/components/ui/progress"
 import {
   MessageSquare,
   FileText,
+  Calculator,
   Send,
+  CheckCircle,
+  AlertCircle,
+  Clock,
   Building,
   TrendingUp,
   Shield,
@@ -18,7 +22,14 @@ import {
   BookOpen,
   Settings,
   DollarSign,
+  Target,
+  Globe,
+  ArrowRight,
+  Eye,
   Star,
+  Calendar,
+  Plus,
+  Search,
   MoreHorizontal,
 } from "lucide-react"
 
@@ -593,43 +604,479 @@ export default function StartSmartClient() {
           )}
 
           {/* Progress Roadmap Tab */}
-          {activeTab === "progress-roadmap" && <div className="p-8">{/* Progress Roadmap Content */}</div>}
+          {activeTab === "progress-roadmap" && (
+            <div className="p-8">
+              <div className="mb-8">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900">Business Launch Roadmap</h2>
+                    <p className="text-gray-600">Track your progress through each phase of starting your business</p>
+                  </div>
+                  <Button className="bg-teal-500 hover:bg-teal-600 text-white">
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create Custom Task
+                  </Button>
+                </div>
+
+                {/* Progress Overview */}
+                <div className="bg-white rounded-lg border border-gray-200 p-6 mb-8">
+                  <div className="flex items-center gap-4 mb-4">
+                    <div className="text-3xl font-bold text-teal-600">{progressPercentage}%</div>
+                    <div>
+                      <div className="font-semibold text-gray-900">Overall Progress</div>
+                      <div className="text-sm text-gray-600">
+                        {completedSteps} of {roadmapSteps.length} steps complete
+                      </div>
+                    </div>
+                    <div className="ml-auto flex gap-4">
+                      <div className="text-center">
+                        <div className="flex items-center gap-2">
+                          <CheckCircle className="h-4 w-4 text-green-600" />
+                          <span className="font-semibold text-green-600">Completed</span>
+                        </div>
+                        <div className="text-sm text-gray-600">{completedSteps} tasks</div>
+                      </div>
+                      <div className="text-center">
+                        <div className="flex items-center gap-2">
+                          <Clock className="h-4 w-4 text-orange-600" />
+                          <span className="font-semibold text-orange-600">In Progress</span>
+                        </div>
+                        <div className="text-sm text-gray-600">1 task</div>
+                      </div>
+                    </div>
+                  </div>
+                  <Progress value={progressPercentage} className="h-2" />
+                </div>
+              </div>
+
+              {/* Roadmap Phases */}
+              <div className="space-y-8">
+                {["Legal Phase", "Financial Phase", "Compliance Phase"].map((phase, phaseIndex) => {
+                  const phaseSteps = roadmapSteps.filter((step) => step.phase === phase)
+                  const phaseCompleted = phaseSteps.filter((step) => step.completed).length
+                  const phaseProgress = Math.round((phaseCompleted / phaseSteps.length) * 100)
+
+                  return (
+                    <div key={phase} className="bg-white rounded-lg border border-gray-200">
+                      <div className="p-6 border-b border-gray-200">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-3">
+                            <div
+                              className={`w-8 h-8 rounded-lg flex items-center justify-center text-white font-bold text-sm ${
+                                phaseIndex === 0 ? "bg-teal-500" : phaseIndex === 1 ? "bg-blue-500" : "bg-purple-500"
+                              }`}
+                            >
+                              {phaseIndex + 1}
+                            </div>
+                            <div>
+                              <h3 className="font-semibold text-gray-900">{phase}</h3>
+                              <div className="text-sm text-gray-600">
+                                {phaseCompleted} of {phaseSteps.length} complete
+                              </div>
+                            </div>
+                          </div>
+                          <Badge
+                            variant={phaseProgress === 100 ? "default" : phaseProgress > 0 ? "secondary" : "outline"}
+                          >
+                            {phaseProgress === 100 ? "Completed" : phaseProgress > 0 ? "In Progress" : "Pending"}
+                          </Badge>
+                        </div>
+                        <Progress value={phaseProgress} className="h-1 mt-3" />
+                      </div>
+                      <div className="p-6 space-y-4">
+                        {phaseSteps.map((step) => (
+                          <div key={step.id} className="flex items-start gap-4 p-4 rounded-lg border border-gray-100">
+                            <div className="flex-shrink-0 mt-1">
+                              {step.completed ? (
+                                <CheckCircle className="h-5 w-5 text-green-600" />
+                              ) : step.inProgress ? (
+                                <Clock className="h-5 w-5 text-orange-600" />
+                              ) : (
+                                <div className="h-5 w-5 border-2 border-gray-300 rounded-full" />
+                              )}
+                            </div>
+                            <div className="flex-1">
+                              <h4 className="font-medium text-gray-900">{step.title}</h4>
+                              <p className="text-sm text-gray-600 mt-1">{step.description}</p>
+                              {step.completedDate && (
+                                <p className="text-xs text-green-600 mt-2">Completed {step.completedDate}</p>
+                              )}
+                            </div>
+                            {!step.completed && (
+                              <Button size="sm" variant="outline">
+                                Start
+                              </Button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Document Center Tab */}
-          {activeTab === "document-center" && <div className="p-8">{/* Document Center Content */}</div>}
+          {activeTab === "document-center" && (
+            <div className="p-8">
+              <div className="mb-8">
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">Document Generation Center</h2>
+                <p className="text-gray-600">AI-powered templates and legal documents for your startup</p>
+              </div>
+
+              <div className="space-y-8">
+                {documentTemplates.map((category) => {
+                  const Icon = category.icon
+                  return (
+                    <div key={category.category} className="bg-white rounded-lg border border-gray-200">
+                      <div className="p-6 border-b border-gray-200">
+                        <div className="flex items-center gap-3">
+                          <Icon className="h-6 w-6 text-teal-600" />
+                          <h3 className="text-lg font-semibold text-gray-900">{category.category}</h3>
+                        </div>
+                      </div>
+                      <div className="p-6">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                          {category.documents.map((doc) => (
+                            <div key={doc.name} className="border border-gray-200 rounded-lg p-4">
+                              <div className="mb-3">
+                                <h4 className="font-medium text-gray-900 mb-1">{doc.name}</h4>
+                                <p className="text-sm text-gray-600">{doc.description}</p>
+                              </div>
+                              <div className="space-y-2">
+                                {doc.hasTemplate && (
+                                  <Button size="sm" variant="outline" className="w-full bg-transparent">
+                                    <Eye className="h-3 w-3 mr-2" />
+                                    View Template
+                                  </Button>
+                                )}
+                                <Button
+                                  size="sm"
+                                  className={`w-full ${doc.isPro ? "bg-purple-600 hover:bg-purple-700" : "bg-teal-500 hover:bg-teal-600"} text-white`}
+                                  onClick={() => generateDocument(doc.name)}
+                                >
+                                  <Rocket className="h-3 w-3 mr-2" />
+                                  {doc.isPro ? "Create with AI" : "Get Template"}
+                                  {doc.isPro && (
+                                    <Badge className="ml-2 bg-purple-100 text-purple-800 text-xs">Pro</Badge>
+                                  )}
+                                </Button>
+                                <Button size="sm" variant="ghost" className="w-full text-teal-600">
+                                  <MessageSquare className="h-3 w-3 mr-2" />
+                                  Get NexTax.AI Help
+                                </Button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+
+              {/* Generated Documents Section */}
+              <div className="mt-12 bg-white rounded-lg border border-gray-200">
+                <div className="p-6 border-b border-gray-200">
+                  <h3 className="text-lg font-semibold text-gray-900">Your Generated Documents</h3>
+                </div>
+                <div className="p-12 text-center">
+                  <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <h4 className="font-medium text-gray-900 mb-2">No Documents Generated Yet</h4>
+                  <p className="text-sm text-gray-600 mb-4">
+                    Start with our free templates above, or upgrade to Pro for AI-powered customization.
+                  </p>
+                  <Button className="bg-purple-600 hover:bg-purple-700 text-white">
+                    <Rocket className="h-4 w-4 mr-2" />
+                    Upgrade to Pro
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Knowledge Hub Tab */}
-          {activeTab === "knowledge-hub" && <div className="p-8">{/* Knowledge Hub Content */}</div>}
+          {activeTab === "knowledge-hub" && (
+            <div className="p-8">
+              <div className="mb-8">
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">Knowledge Hub</h2>
+                <p className="text-gray-600">Comprehensive guides and resources for startup success</p>
+              </div>
+
+              {/* Search */}
+              <div className="mb-8">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <Input placeholder="Search guides, articles, and resources..." className="pl-10" />
+                </div>
+              </div>
+
+              {/* Featured Resources */}
+              <div className="mb-12">
+                <h3 className="text-lg font-semibold text-gray-900 mb-6">Featured Resources</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {featuredResources.map((resource) => (
+                    <div
+                      key={resource.title}
+                      className="bg-gradient-to-br from-green-50 to-teal-50 rounded-lg p-6 border border-green-200"
+                    >
+                      <div className="mb-4">
+                        <Badge className={resource.color}>{resource.category}</Badge>
+                      </div>
+                      <h4 className="font-semibold text-gray-900 mb-2">{resource.title}</h4>
+                      <p className="text-sm text-gray-600 mb-4">{resource.description}</p>
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs text-gray-500">{resource.readTime}</span>
+                        <Button size="sm" className="bg-teal-500 hover:bg-teal-600 text-white">
+                          Read Guide
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Browse by Category */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-6">Getting Started</h3>
+                  <div className="space-y-4">
+                    {[
+                      { title: "Business Idea Validation", icon: "💡", reading: "Free Reading" },
+                      { title: "Market Research Essentials", icon: "📊", reading: "Free Reading" },
+                      { title: "Finding Co-founders", icon: "👥", reading: "Free Reading" },
+                      { title: "Business Model Canvas", icon: "📋", reading: "Free Reading" },
+                    ].map((item) => (
+                      <div
+                        key={item.title}
+                        className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50"
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className="text-lg">{item.icon}</span>
+                          <span className="font-medium text-gray-900">{item.title}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="text-xs">
+                            {item.reading}
+                          </Badge>
+                          <ArrowRight className="h-4 w-4 text-gray-400" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-6">Legal & Compliance</h3>
+                  <div className="space-y-4">
+                    {[
+                      { title: "Entity Formation Guide", icon: "🏢", reading: "Free Reading" },
+                      { title: "Licenses & Permits", icon: "📜", reading: "Free Reading" },
+                      { title: "Contracts & Agreements", icon: "📝", reading: "Free Reading" },
+                      { title: "Payroll Basics & Compliance", icon: "💰", reading: "Free Reading" },
+                    ].map((item) => (
+                      <div
+                        key={item.title}
+                        className="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50"
+                      >
+                        <div className="flex items-center gap-3">
+                          <span className="text-lg">{item.icon}</span>
+                          <span className="font-medium text-gray-900">{item.title}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <Badge variant="outline" className="text-xs">
+                            {item.reading}
+                          </Badge>
+                          <ArrowRight className="h-4 w-4 text-gray-400" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* AI Assistant CTA */}
+              <div className="mt-12 bg-gradient-to-r from-teal-500 to-cyan-500 rounded-lg p-8 text-center text-white">
+                <h3 className="text-xl font-bold mb-2">Need Personal Help?</h3>
+                <p className="mb-6">Get personalized guidance from our AI assistant or connect with experts.</p>
+                <div className="flex gap-4 justify-center">
+                  <Button className="bg-white text-teal-600 hover:bg-gray-100">
+                    <MessageSquare className="h-4 w-4 mr-2" />
+                    Ask AI Assistant
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="border-white text-white hover:bg-white hover:text-teal-600 bg-transparent"
+                  >
+                    <Calendar className="h-4 w-4 mr-2" />
+                    Schedule Consultation
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Startup Tools Tab */}
-          {activeTab === "startup-tools" && <div className="p-8">{/* Startup Tools Content */}</div>}
+          {activeTab === "startup-tools" && (
+            <div className="p-8">
+              <div className="mb-8">
+                <h2 className="text-2xl font-bold text-gray-900 mb-2">Startup Tools</h2>
+                <p className="text-gray-600">Essential tools and calculators for your business</p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {[
+                  { name: "Business Name Generator", icon: Target, description: "Generate unique business names" },
+                  { name: "Domain Checker", icon: Globe, description: "Check domain availability" },
+                  { name: "ROI Calculator", icon: DollarSign, description: "Calculate return on investment" },
+                  { name: "Startup Cost Calculator", icon: Calculator, description: "Estimate startup expenses" },
+                  { name: "Market Size Calculator", icon: TrendingUp, description: "Analyze market opportunity" },
+                  { name: "Break-even Calculator", icon: Target, description: "Calculate break-even point" },
+                ].map((tool) => {
+                  const Icon = tool.icon
+                  return (
+                    <Card key={tool.name} className="hover:shadow-lg transition-shadow">
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2 text-lg">
+                          <Icon className="h-5 w-5 text-teal-600" />
+                          {tool.name}
+                        </CardTitle>
+                        <CardDescription>{tool.description}</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <Button className="w-full bg-teal-500 hover:bg-teal-600 text-white">Launch Tool</Button>
+                      </CardContent>
+                    </Card>
+                  )
+                })}
+              </div>
+            </div>
+          )}
 
           {/* Compliance Tab */}
           {activeTab === "compliance" && (
             <div className="p-8">
-              {/* Compliance Content */}
-              <Card>
-                <CardHeader>
-                  <CardTitle>Compliance Overview</CardTitle>
-                  <CardDescription>Your compliance progress at a glance.</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">Overall Progress</span>
-                      <Progress value={overallProgress} />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">Tax Compliance</span>
-                      <Progress value={taxProgress} />
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">Legal & Registration</span>
-                      <Progress value={legalProgress} />
-                    </div>
+              <div className="mb-8">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h2 className="text-2xl font-bold text-gray-900 mb-2">Smart Compliance Center</h2>
+                    <p className="text-gray-600">Automated compliance tracking with state-specific deadlines</p>
                   </div>
-                </CardContent>
-              </Card>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm">
+                      <Settings className="h-4 w-4 mr-2" />
+                      Setup
+                    </Button>
+                    <Button variant="outline" size="sm">
+                      <Calendar className="h-4 w-4 mr-2" />
+                      Calendar
+                    </Button>
+                    <Button className="bg-teal-500 hover:bg-teal-600 text-white" size="sm">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Task
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Stats */}
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
+                {[
+                  { label: "Completed", count: completedTasks, color: "text-green-600", bg: "bg-green-50" },
+                  { label: "In Progress", count: 0, color: "text-blue-600", bg: "bg-blue-50" },
+                  { label: "Pending", count: pendingTasks, color: "text-orange-600", bg: "bg-orange-50" },
+                  { label: "Overdue", count: overdueTasks, color: "text-red-600", bg: "bg-red-50" },
+                  { label: "Overall", count: `${overallProgress}%`, color: "text-gray-600", bg: "bg-gray-50" },
+                ].map((stat) => (
+                  <div key={stat.label} className={`${stat.bg} rounded-lg p-4 text-center`}>
+                    <div className={`text-2xl font-bold ${stat.color}`}>{stat.count}</div>
+                    <div className="text-sm text-gray-600">{stat.label}</div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Filter */}
+              <div className="mb-6">
+                <div className="flex items-center gap-4">
+                  <span className="text-sm font-medium text-gray-700">Filter by Category:</span>
+                  <Button variant="outline" size="sm" className="bg-blue-50 text-blue-700 border-blue-200">
+                    All Categories
+                  </Button>
+                </div>
+              </div>
+
+              {/* Tasks */}
+              <div className="bg-white rounded-lg border border-gray-200">
+                <div className="space-y-0">
+                  {complianceTasks.map((task, index) => (
+                    <div
+                      key={task.id}
+                      className={`p-4 ${index !== complianceTasks.length - 1 ? "border-b border-gray-100" : ""}`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4">
+                          <div className="w-6 h-6 border-2 border-orange-400 rounded-full flex items-center justify-center">
+                            {task.status === "completed" ? (
+                              <CheckCircle className="h-4 w-4 text-green-600" />
+                            ) : task.status === "overdue" ? (
+                              <AlertCircle className="h-4 w-4 text-red-600" />
+                            ) : (
+                              <Clock className="h-3 w-3 text-orange-600" />
+                            )}
+                          </div>
+                          <div>
+                            <h4 className="font-medium text-gray-900">{task.task}</h4>
+                            <p className="text-sm text-gray-600">{task.description}</p>
+                            {task.dueDate && <p className="text-xs text-gray-500 mt-1">{task.dueDate}</p>}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <Badge variant="outline" className="text-xs">
+                            {task.priority}
+                          </Badge>
+                          <Badge variant="outline" className="text-xs">
+                            {task.category}
+                          </Badge>
+                          <Badge
+                            className={`text-xs ${
+                              task.status === "completed"
+                                ? "bg-green-100 text-green-800"
+                                : task.status === "overdue"
+                                  ? "bg-red-100 text-red-800"
+                                  : "bg-orange-100 text-orange-800"
+                            }`}
+                          >
+                            {task.status === "completed"
+                              ? "Completed"
+                              : task.status === "overdue"
+                                ? "Overdue"
+                                : "Pending"}
+                          </Badge>
+                          {task.status !== "completed" && (
+                            <Button size="sm" variant="outline">
+                              Start
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Disclaimer */}
+              <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="h-4 w-4 text-yellow-600 mt-0.5" />
+                  <div className="text-sm text-yellow-800">
+                    <strong>Disclaimer:</strong> The compliance deadlines and due filing dates shown are based on a
+                    default December 31 year-end and general entity type assumptions. Actual filing obligations may vary
+                    based on your business's first year, state-specific rules, or other circumstances. Always consult a
+                    licensed tax professional for personalized guidance.
+                  </div>
+                </div>
+              </div>
             </div>
           )}
         </div>
