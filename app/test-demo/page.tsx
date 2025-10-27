@@ -156,7 +156,7 @@ export default function TestDemoPage() {
 
             {/* Text */}
             <div className="order-1 lg:order-2">
-              <h2 className="text-4xl md:text-5xl font-bold text-white mb-6 flex items-center gap-3">
+              <h2 className="text-4xl md:text-5xl font-bold text-emerald-400 mb-6 flex items-center gap-3">
                 Launch Your Business in Record Time
                <Rocket className="w-10 h-10 md:w-12 md:h-12 text-emerald-400 flex-shrink-0 animate-pulse" />
               </h2>
@@ -199,7 +199,7 @@ export default function TestDemoPage() {
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             {/* Text */}
             <div>
-              <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">Instant Answers, Real Expertise 💬</h2>
+              <h2 className="text-4xl md:text-5xl font-bold text-cyan-400 mb-6">Instant Answers, Real Expertise 💬</h2>
               <p className="text-xl text-slate-300 mb-8">
                 From tax strategies to entity questions, StartSmart AI gives clear, actionable guidance — backed by real
                 tax professionals for complete peace of mind.
@@ -285,7 +285,7 @@ export default function TestDemoPage() {
             
             {/* Text */}
             <div className="order-1 lg:order-2">
-              <h2 className="text-4xl md:text-5xl font-bold text-white mb-3">Stay Organized and 100% Compliant
+              <h2 className="text-4xl md:text-5xl font-bold text-emerald-400 mb-3">Stay Organized and 100% Compliant
               <FolderOpen className="inline-block w-10 h-10 md:w-12 md:h-12 text-yellow-400 ml-3" />
               </h2>
               
@@ -340,7 +340,7 @@ export default function TestDemoPage() {
     <div className="grid lg:grid-cols-2 gap-12 items-center">
       {/* Text Column - Left side */}
       <div className="order-1">                   
-        <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">Your Business, Your AI Tools 📊</h2>
+        <h2 className="text-4xl md:text-5xl font-bold text-cyan-400 mb-6">Your Business, Your AI Tools 📊</h2>
         <p className="text-xl text-slate-300 mb-8">
           Stop paying $10,000+ for consultants. Generate professional documents and access expert knowledge instantly — all powered by AI trained on Big 4 best practices.
         </p>
@@ -574,7 +574,7 @@ export default function TestDemoPage() {
       <section className="py-10 bg-slate-900/50">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16"> 
-            <h2 className="text-3xl lg:text-5xl font-bold text-cyan-400 mb-6">What Happens After You Purchase?</h2>
+            <h2 className="text-3xl lg:text-5xl font-bold text-white mb-6">What Happens After You Purchase?</h2>
             <p className="text-xl text-slate-300 max-w-2xl mx-auto">
               Our streamlined process gets your business legally formed and ready to operate in just 48 hours.
             </p>
