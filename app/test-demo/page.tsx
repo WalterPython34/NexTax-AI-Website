@@ -786,7 +786,7 @@ const getColorClasses = (color: string) => {
                 <img
                   src="/images/startsmart-logo-white.png"
                   alt="StartSmart by NexTax.AI"
-                  className="h-28 w-auto"
+                  className="h-34 w-auto"
                 />
               </div>
 
