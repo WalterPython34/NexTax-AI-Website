@@ -7,7 +7,40 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
 import { Rocket, MessageSquare, Shield, Bell, Calculator, FolderOpen, FileText, Building2, Globe, BarChart3, CheckCircle, DollarSign, Clock, Zap, Bot, Target, Sparkles, Brain, ChevronRight, ChevronLeft, BookOpen, TrendingUp, ArrowRight } from "lucide-react"
 
-export default function FeaturesPage() {
+export default function TestDemoPage() {
+  const [currentSlide, setCurrentSlide] = useState(0)
+
+   // Add the new state here
+  const [docSlideIndex, setDocSlideIndex] = useState(0);
+
+  const scrollToFirstSection = () => {
+  const firstSection = document.querySelector('#features-section');
+  if (firstSection) {
+    firstSection.scrollIntoView({ 
+      behavior: 'smooth',
+      block: 'start'
+    });
+  }
+};
+
+  const slides = [
+    {
+      type: "image" as const,
+      src: "/images/ai_chat.jpg",
+      text: "Ask anything about your business — and get answers instantly.",
+    },
+    {
+      type: "image" as const,
+      src: "/images/documents.jpg",
+      text: "Your business documents, organized automatically.",
+    },
+    {
+      type: "image" as const,
+      src: "/images/Progress.jpg",
+      text: "From idea to launch — track every step with your AI Roadmap.",
+    },
+  ]
+
   const features = [
     {
       icon: Bot,
@@ -53,42 +86,7 @@ export default function FeaturesPage() {
       color: "green",
     },
   ]
-
-
-export default function TestDemoPage() {
-  const [currentSlide, setCurrentSlide] = useState(0)
-
-   // Add the new state here
-  const [docSlideIndex, setDocSlideIndex] = useState(0);
-
-  const scrollToFirstSection = () => {
-  const firstSection = document.querySelector('#features-section');
-  if (firstSection) {
-    firstSection.scrollIntoView({ 
-      behavior: 'smooth',
-      block: 'start'
-    });
-  }
-};
-
-  const slides = [
-    {
-      type: "image" as const,
-      src: "/images/ai_chat.jpg",
-      text: "Ask anything about your business — and get answers instantly.",
-    },
-    {
-      type: "image" as const,
-      src: "/images/documents.jpg",
-      text: "Your business documents, organized automatically.",
-    },
-    {
-      type: "image" as const,
-      src: "/images/Progress.jpg",
-      text: "From idea to launch — track every step with your AI Roadmap.",
-    },
-  ]
-
+  
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % slides.length)
