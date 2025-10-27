@@ -776,30 +776,40 @@ const getColorClasses = (color: string) => {
         </div>
       </section>
 
-      {/* Final CTA */}
-      <section className="py-20 px-4 bg-gradient-to-b from-slate-900 to-slate-950">
-        <div className="max-w-4xl mx-auto text-center">
-          <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">🎯 Ready to Launch Smarter?</h2>
-          <p className="text-xl text-slate-300 mb-8">
-            Join today and start your business with confidence — for less than your morning coffee.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link href="/signup">
-              <Button size="lg" className="bg-emerald-600 hover:bg-emerald-700 text-white">
-                <Rocket className="w-5 h-5 mr-2" />
-                Start My Business Now
-              </Button>
-            </Link>
-            <Link href="/pricing">
-              <Button
-                size="lg"
-                variant="outline"
-                className="border-slate-600 text-slate-300 hover:bg-slate-800 bg-transparent"
-              >
-                Compare Plans
-                <ArrowRight className="w-5 h-5 ml-2" />
-              </Button>
-            </Link>
+      {/* Customer Journey CTA */}
+      <section className="py-20">
+        <div className="container mx-auto px-4">
+          <div className="text-center">
+            <div className="bg-gradient-to-r from-emerald-600 to-cyan-600 rounded-2xl p-8">
+              {/* Centered StartSmart White Logo */}
+              <div className="flex justify-center mb-8">
+                <img
+                  src="/images/startsmart-logo-white.png"
+                  alt="StartSmart by NexTax.AI"
+                  className="h-28 w-auto"
+                />
+              </div>
+
+              <h3 className="text-2xl font-bold text-white mb-4">Start Smart. Scale Smarter.</h3>
+              <p className="text-emerald-100 mb-6 max-w-2xl mx-auto">
+                Start your journey towards financial independence today.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Link href="/pricing">
+                  <Button size="lg" className="bg-white text-emerald-600 hover:bg-slate-100 px-8 py-4">
+                    Start My Business Now
+                  </Button>
+                </Link>
+                <Link href="/contact">
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="border-white text-white hover:bg-white/10 px-8 py-4 bg-transparent"
+                  >
+                    Compare Plans
+                  </Button>
+                </Link>
+             </div>   
           </div>
         </div>
       </section>
