@@ -73,7 +73,7 @@ export default function AboutPage() {
                 loop
                 muted
                 playsInline
-                className="max-h-[240px] mx-auto rounded-xl border border-slate-700 object-contain bg-slate-900"
+                className="max-h-[240px] mx-auto rounded-xl border border-slate-700 object-contain bg-slate-900 py-2"
               />
             </div>
           <h1 className="text-4xl lg:text-6xl font-bold text-white mb-8">
