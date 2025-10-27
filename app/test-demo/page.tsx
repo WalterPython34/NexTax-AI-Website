@@ -118,10 +118,10 @@ export default function TestDemoPage() {
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <a href="https://www.startsmartbiz.ai/pricing" target="_blank" rel="noopener noreferrer">
+              <Link href="/test-startsmart">
                 <Button size="lg" className="bg-emerald-600 hover:bg-emerald-700 text-white">
                   <Rocket className="w-5 h-5 mr-2" />
-                  Try StartSmart Free
+                  Try StartSmart Demo
                 </Button>
               </a>
               <Button
