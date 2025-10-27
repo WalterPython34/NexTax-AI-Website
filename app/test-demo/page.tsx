@@ -25,18 +25,18 @@ export default function TestDemoPage() {
 
   const slides = [
     {
-      type: "video" as const,
-      src: "/videos/ai_chat.mp4",
+      type: "image" as const,
+      src: "/images/ai_chat.jpg",
       text: "Ask anything about your business — and get answers instantly.",
     },
     {
-      type: "video" as const,
-      src: "/videos/documents.mp4",
+      type: "image" as const,
+      src: "/images/documents.jpg",
       text: "Your business documents, organized automatically.",
     },
     {
-      type: "video" as const,
-      src: "/videos/progress.mp4",
+      type: "image" as const,
+      src: "/images/Progress.jpg",
       text: "From idea to launch — track every step with your AI Roadmap.",
     },
   ]
