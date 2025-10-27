@@ -66,15 +66,6 @@ export default function AboutPage() {
             <Users className="w-4 h-4 mr-2" />
             About NexTax.AI
           </Badge>
-          <h1 className="text-4xl lg:text-6xl font-bold text-white mb-8">
-            Revolutionizing Tax & Business
-            <span className="block text-emerald-400">Formation with AI</span>
-          </h1>
-          <p className="text-xl text-slate-300 max-w-3xl mx-auto mb-8">
-            Founded by seasoned tax professionals and AI researchers, NexTax.AI combines decades of Big 4 and Wall
-            Street tax expertise with cutting-edge artificial intelligence to transform how businesses handle tax and
-            compliance.
-          </p>
           <div className="relative">
               <video
                 src="/videos/Exploding_NexTax.mp4"
@@ -85,6 +76,15 @@ export default function AboutPage() {
                 className="max-h-[300px] mx-auto rounded-xl border border-slate-700 object-contain bg-slate-900"
               />
             </div>
+          <h1 className="text-4xl lg:text-6xl font-bold text-white mb-8">
+            Revolutionizing Tax & Business
+            <span className="block text-emerald-400">Formation with AI</span>
+          </h1>
+          <p className="text-xl text-slate-300 max-w-3xl mx-auto mb-8">
+            Founded by seasoned tax professionals and AI researchers, NexTax.AI combines decades of Big 4 and Wall
+            Street tax expertise with cutting-edge artificial intelligence to transform how businesses handle tax and
+            compliance.
+          </p>          
         </div>
       </section>
 
