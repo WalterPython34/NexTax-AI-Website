@@ -944,36 +944,98 @@ function TestStartSmartApp({ initialTab = "ai-chat" }: { initialTab?: string }) 
                 </div>
               </div>
 
-              {/* Tasks */}
-              <div className="bg-white rounded-lg border border-gray-200">
-                <div className="space-y-0">
-                  {complianceTasks.map((task, index) => (
+              
+              
+             
+              {/* Tax Compliance Section */}
+              <div className="mb-8 bg-white rounded-lg border border-gray-200">
+                <div className="p-6 border-b border-gray-200 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <DollarSign className="h-6 w-6 text-green-600" />
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900">Tax Compliance</h3>
+                      <p className="text-sm text-gray-600">
+                        {taxCompleted} of {taxTotal} completed
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <span className="text-2xl font-bold text-gray-900">{taxProgress}%</span>
+                    <div className="w-32">
+                      <Progress value={taxProgress} className="h-2" />
+                    </div>
+                  </div>
+                </div>
+                <div className="divide-y divide-gray-100">
+                  {taxComplianceTasks.map((task) => (
                     <div
                       key={task.id}
-                      className={`p-4 ${index !== complianceTasks.length - 1 ? "border-b border-gray-100" : ""}`}
+                      className={`p-4 ${task.status === "overdue" ? "bg-red-50" : task.status === "completed" ? "bg-green-50" : ""}`}
                     >
                       <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-4">
-                          <div className="w-6 h-6 border-2 border-orange-400 rounded-full flex items-center justify-center">
-                            <Clock className="h-3 w-3 text-orange-600" />
+                        <div className="flex items-center gap-4 flex-1">
+                          <div
+                            className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                              task.status === "overdue"
+                                ? "bg-red-100"
+                                : task.status === "completed"
+                                  ? "bg-green-100"
+                                  : "bg-orange-100"
+                            }`}
+                          >
+                            {task.status === "overdue" ? (
+                              <AlertCircle className="h-4 w-4 text-red-600" />
+                            ) : task.status === "completed" ? (
+                              <CheckCircle className="h-4 w-4 text-green-600" />
+                            ) : (
+                              <Clock className="h-4 w-4 text-orange-600" />
+                            )}
                           </div>
-                          <div>
+                          <div className="flex-1">
                             <h4 className="font-medium text-gray-900">{task.task}</h4>
                             <p className="text-sm text-gray-600">{task.description}</p>
-                            {task.dueDate && <p className="text-xs text-gray-500 mt-1">{task.dueDate}</p>}
+                            {task.dueDate && (
+                              <p
+                                className={`text-xs mt-1 flex items-center gap-1 ${
+                                  task.status === "overdue" ? "text-red-600 font-semibold" : "text-gray-500"
+                                }`}
+                              >
+                                <Calendar className="h-3 w-3" />
+                                {task.dueDate}
+                              </p>
+                            )}
                           </div>
                         </div>
                         <div className="flex items-center gap-3">
+                          {task.recurring && (
+                            <Badge variant="outline" className="text-xs">
+                              🔄 Recurring
+                            </Badge>
+                          )}
                           <Badge variant="outline" className="text-xs">
-                            {task.priority}
+                            ⚡ {task.priority}
                           </Badge>
-                          <Badge variant="outline" className="text-xs">
-                            {task.category}
-                          </Badge>
-                          <Badge className="bg-orange-100 text-orange-800 text-xs">Pending</Badge>
-                          <Button size="sm" variant="outline">
-                            Start
-                          </Button>
+                          {task.status === "overdue" ? (
+                            <Badge className="bg-red-100 text-red-800 text-xs">Overdue</Badge>
+                          ) : task.status === "completed" ? (
+                            <Badge className="bg-green-100 text-green-800 text-xs">Complete</Badge>
+                          ) : (
+                            <Badge className="bg-orange-100 text-orange-800 text-xs">Pending</Badge>
+                          )}
+                          {task.status === "completed" ? (
+                            <Button size="sm" variant="outline" className="text-blue-600 bg-transparent">
+                              <Eye className="h-3 w-3 mr-1" />
+                              Reopen
+                            </Button>
+                          ) : task.status === "overdue" ? (
+                            <Button size="sm" className="bg-red-600 hover:bg-red-700 text-white">
+                              Complete
+                            </Button>
+                          ) : (
+                            <Button size="sm" variant="outline">
+                              Start
+                            </Button>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -981,6 +1043,106 @@ function TestStartSmartApp({ initialTab = "ai-chat" }: { initialTab?: string }) 
                 </div>
               </div>
 
+              {/* Legal & Registration Section */}
+              <div className="mb-8 bg-white rounded-lg border border-gray-200">
+                <div className="p-6 border-b border-gray-200 flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <FileText className="h-6 w-6 text-blue-600" />
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900">Legal & Registration</h3>
+                      <p className="text-sm text-gray-600">
+                        {legalCompleted} of {legalTotal} completed
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-4">
+                    <span className="text-2xl font-bold text-gray-900">{legalProgress}%</span>
+                    <div className="w-32">
+                      <Progress value={legalProgress} className="h-2" />
+                    </div>
+                  </div>
+                </div>
+                <div className="divide-y divide-gray-100">
+                  {legalRegistrationTasks.map((task) => (
+                    <div
+                      key={task.id}
+                      className={`p-4 ${task.status === "overdue" ? "bg-red-50" : task.status === "completed" ? "bg-green-50" : ""}`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-4 flex-1">
+                          <div
+                            className={`w-6 h-6 rounded-full flex items-center justify-center ${
+                              task.status === "overdue"
+                                ? "bg-red-100"
+                                : task.status === "completed"
+                                  ? "bg-green-100"
+                                  : "bg-orange-100"
+                            }`}
+                          >
+                            {task.status === "overdue" ? (
+                              <AlertCircle className="h-4 w-4 text-red-600" />
+                            ) : task.status === "completed" ? (
+                              <CheckCircle className="h-4 w-4 text-green-600" />
+                            ) : (
+                              <Clock className="h-4 w-4 text-orange-600" />
+                            )}
+                          </div>
+                          <div className="flex-1">
+                            <h4 className="font-medium text-gray-900">{task.task}</h4>
+                            <p className="text-sm text-gray-600">{task.description}</p>
+                            {task.dueDate && (
+                              <p
+                                className={`text-xs mt-1 flex items-center gap-1 ${
+                                  task.status === "overdue" ? "text-red-600 font-semibold" : "text-gray-500"
+                                }`}
+                              >
+                                <Calendar className="h-3 w-3" />
+                                {task.dueDate}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          {task.stateSpecific && (
+                            <Badge variant="outline" className="text-xs">
+                              📍 State
+                            </Badge>
+                          )}
+                          {task.recurring && (
+                            <Badge variant="outline" className="text-xs">
+                              🔄 Recurring
+                            </Badge>
+                          )}
+                          <Badge variant="outline" className="text-xs">
+                            ⚡ {task.priority}
+                          </Badge>
+                          {task.status === "overdue" ? (
+                            <Badge className="bg-red-100 text-red-800 text-xs">Overdue</Badge>
+                          ) : task.status === "completed" ? (
+                            <Badge className="bg-green-100 text-green-800 text-xs">Complete</Badge>
+                          ) : (
+                            <Badge className="bg-orange-100 text-orange-800 text-xs">Pending</Badge>
+                          )}
+                          {task.status === "completed" ? (
+                            <Button size="sm" variant="outline" className="text-blue-600 bg-transparent">
+                              <Eye className="h-3 w-3 mr-1" />
+                              Reopen
+                            </Button>
+                          ) : task.status === "overdue" ? (
+                            <Button size="sm" className="bg-red-600 hover:bg-red-700 text-white">
+                              Complete
+                            </Button>
+                          ) : (
+                            <Button size="sm" variant="outline">
+                              Start
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
               {/* Disclaimer */}
               <div className="mt-6 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
                 <div className="flex items-start gap-2">
