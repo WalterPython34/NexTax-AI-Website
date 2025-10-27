@@ -3,8 +3,10 @@
 import { useState, useRef, useEffect } from "react"
 import { useSearchParams } from "next/navigation"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
+import { Progress } from "@/components/ui/progress"
 import {
   MessageSquare,
   FileText,
@@ -30,8 +32,10 @@ export default function StartSmartClient() {
   const [activeTab, setActiveTab] = useState(initialTab)
 
   useEffect(() => {
-    setActiveTab(initialTab)
-  }, [initialTab])
+    if (tabParam && validTabs.includes(tabParam)) {
+      setActiveTab(tabParam)
+    }
+  }, [tabParam])
 
   const [messages, setMessages] = useState([
     {
@@ -113,51 +117,67 @@ export default function StartSmartClient() {
   const [complianceTasks] = useState([
     {
       id: 1,
-      task: "Federal Estimated Tax Payment - Q3",
-      description: "Submit quarterly estimated tax payment",
-      dueDate: "Due 9/15/2025",
-      status: "pending",
+      task: "Test Overdue Task - File Q3 Tax Return",
+      description:
+        "This is a test task that should automatically be marked as overdue when compliance tasks are fetched",
+      dueDate: "OVERDUE - 6/20/2025",
+      status: "overdue",
       priority: "Auto",
-      category: "Federal",
+      category: "Tax Compliance",
+      recurring: false,
     },
     {
       id: 2,
-      task: "Federal Estimated Tax Payment - Q4",
+      task: "Federal Estimated Tax Payment - Q3",
       description: "Submit quarterly estimated tax payment",
-      dueDate: "Due 1/15/2026",
-      status: "pending",
+      dueDate: "OVERDUE - 9/14/2025",
+      status: "overdue",
       priority: "Auto",
-      category: "Federal",
+      category: "Tax Compliance",
+      recurring: true,
     },
     {
       id: 3,
-      task: "Articles of Organization Filed",
-      description: "File Articles of Organization with state",
-      dueDate: "",
+      task: "Federal Estimated Tax Payment - Q4",
+      description: "Submit quarterly estimated tax payment",
+      dueDate: "Due 1/14/2026",
       status: "pending",
       priority: "Auto",
-      category: "State",
+      category: "Tax Compliance",
+      recurring: true,
     },
     {
       id: 4,
-      task: "Registered Agent Appointed",
-      description: "Appoint registered agent for business",
-      dueDate: "",
+      task: "Federal Estimated Tax Payment - Q1",
+      description: "Submit quarterly estimated tax payment",
+      dueDate: "Due 4/14/2026",
       status: "pending",
       priority: "Auto",
-      category: "State",
+      category: "Tax Compliance",
+      recurring: true,
     },
     {
       id: 5,
-      task: "Federal EIN Obtained",
-      description: "Obtain Federal Employer Identification Number",
-      dueDate: "",
+      task: "Federal Estimated Tax Payment - Q2",
+      description: "Submit quarterly estimated tax payment",
+      dueDate: "Due 6/14/2026",
       status: "pending",
       priority: "Auto",
-      category: "Federal",
+      category: "Tax Compliance",
+      recurring: true,
     },
     {
       id: 6,
+      task: "Federal EIN Obtained",
+      description: "Obtain Federal Employer Identification Number",
+      dueDate: "",
+      status: "completed",
+      priority: "Auto",
+      category: "Tax Compliance",
+      recurring: true,
+    },
+    {
+      id: 7,
       task: "State Tax Registration",
       description: "Register for state income tax",
       dueDate: "",
@@ -168,7 +188,7 @@ export default function StartSmartClient() {
       stateSpecific: true,
     },
     {
-      id: 7,
+      id: 8,
       task: "Michigan State Tax Return",
       description: "File Form 165 by March 15 (extension available until September 15)",
       dueDate: "",
@@ -179,7 +199,7 @@ export default function StartSmartClient() {
       stateSpecific: true,
     },
     {
-      id: 8,
+      id: 9,
       task: "Federal Tax Return",
       description: "File Form 1065 by March 15 (extension available until September 15 with Form 7004)",
       dueDate: "",
@@ -189,7 +209,7 @@ export default function StartSmartClient() {
       recurring: true,
     },
     {
-      id: 9,
+      id: 10,
       task: "Test Overdue - Annual Report Filing",
       description: "This annual report was due yesterday and should automatically be flagged as overdue",
       dueDate: "OVERDUE - 7/10/2025",
@@ -197,6 +217,28 @@ export default function StartSmartClient() {
       priority: "Manual",
       category: "Legal & Registration",
       recurring: false,
+    },
+    {
+      id: 11,
+      task: "Articles of Organization Filed",
+      description: "File Articles of Organization with state",
+      dueDate: "",
+      status: "completed",
+      priority: "Auto",
+      category: "Legal & Registration",
+      recurring: false,
+      stateSpecific: true,
+    },
+    {
+      id: 12,
+      task: "Registered Agent Appointed",
+      description: "Appoint registered agent for business",
+      dueDate: "",
+      status: "pending",
+      priority: "Auto",
+      category: "Legal & Registration",
+      recurring: false,
+      stateSpecific: true,
     },
   ])
 
@@ -389,6 +431,23 @@ export default function StartSmartClient() {
     { id: "compliance", label: "Compliance", icon: Shield },
   ]
 
+  // Calculate actual counts for the stats based on the compliance tasks
+  const completedTasks = complianceTasks.filter((task) => task.status === "completed").length
+  const pendingTasks = complianceTasks.filter((task) => task.status === "pending").length
+  const overdueTasks = complianceTasks.filter((task) => task.status === "overdue").length
+  const totalTasks = complianceTasks.length
+  const overallProgress = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0
+
+  const taxComplianceTasks = complianceTasks.filter((task) => task.category === "Tax Compliance")
+  const taxCompleted = taxComplianceTasks.filter((task) => task.status === "completed").length
+  const taxTotal = taxComplianceTasks.length
+  const taxProgress = taxTotal > 0 ? Math.round((taxCompleted / taxTotal) * 100) : 0
+
+  const legalRegistrationTasks = complianceTasks.filter((task) => task.category === "Legal & Registration")
+  const legalCompleted = legalRegistrationTasks.filter((task) => task.status === "completed").length
+  const legalTotal = legalRegistrationTasks.length
+  const legalProgress = legalTotal > 0 ? Math.round((legalCompleted / legalTotal) * 100) : 0
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -534,19 +593,45 @@ export default function StartSmartClient() {
           )}
 
           {/* Progress Roadmap Tab */}
-          {activeTab === "progress-roadmap" && <div className="p-8"></div>}
+          {activeTab === "progress-roadmap" && <div className="p-8">{/* Progress Roadmap Content */}</div>}
 
           {/* Document Center Tab */}
-          {activeTab === "document-center" && <div className="p-8"></div>}
+          {activeTab === "document-center" && <div className="p-8">{/* Document Center Content */}</div>}
 
           {/* Knowledge Hub Tab */}
-          {activeTab === "knowledge-hub" && <div className="p-8"></div>}
+          {activeTab === "knowledge-hub" && <div className="p-8">{/* Knowledge Hub Content */}</div>}
 
           {/* Startup Tools Tab */}
-          {activeTab === "startup-tools" && <div className="p-8"></div>}
+          {activeTab === "startup-tools" && <div className="p-8">{/* Startup Tools Content */}</div>}
 
           {/* Compliance Tab */}
-          {activeTab === "compliance" && <div className="p-8"></div>}
+          {activeTab === "compliance" && (
+            <div className="p-8">
+              {/* Compliance Content */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Compliance Overview</CardTitle>
+                  <CardDescription>Your compliance progress at a glance.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">Overall Progress</span>
+                      <Progress value={overallProgress} />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">Tax Compliance</span>
+                      <Progress value={taxProgress} />
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium">Legal & Registration</span>
+                      <Progress value={legalProgress} />
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
         </div>
       </div>
     </div>
