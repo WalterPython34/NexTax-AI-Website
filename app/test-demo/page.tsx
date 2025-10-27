@@ -118,12 +118,12 @@ export default function TestDemoPage() {
 
             {/* CTA Buttons */}
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/test-startsmart">
+              <Link href="/test-startsmart?tab=progress-roadmap">
                 <Button size="lg" className="bg-emerald-600 hover:bg-emerald-700 text-white">
                   <Rocket className="w-5 h-5 mr-2" />
                   Try StartSmart Demo
                 </Button>
-              </a>
+              </Link>
               <Button
                 size="lg"
                 variant="outline"
