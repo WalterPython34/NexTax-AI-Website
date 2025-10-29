@@ -303,7 +303,11 @@ const getColorClasses = (color: string) => {
             </div>
 
              {/* Video/Image Right */}
-            <div className="relative flex justify-center">
+            <div className="flex flex-col items-center gap-4">
+              <div className="flex items-center gap-2">
+                <div className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span className="text-sm text-slate-300">Live expert available</span>
+              </div>
               <video
                 src="/videos/tax_call.mp4"
                 autoPlay
