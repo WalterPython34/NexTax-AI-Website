@@ -90,6 +90,19 @@ export default function ResourcesPage() {
       featured: true,
     },
     {
+      id: 9,
+      title: "Should I Elect S-Corp for My LLC? The Definitive Guide to Saving on Self-Employment Tax",
+      excerpt:
+        "Discover how the S-Corp election can potentially save you thousands in self-employment tax with our comprehensive guide to making the right decision for your business.",
+      category: "Tax Strategy",
+      author: "Steve Morello, CPA",
+      date: "January 18, 2026",
+      readTime: "15 min read",
+      image: "/s-corp-election-tax-savings.jpg",
+      slug: "s-corp-election-definitive-guide",
+      featured: true,
+    },
+    {
       id: 2,
       title: "LLC vs Corporation: A Complete Guide to Choosing Your Business Structure",
       excerpt:
