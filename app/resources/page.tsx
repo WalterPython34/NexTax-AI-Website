@@ -98,7 +98,7 @@ export default function ResourcesPage() {
       author: "Steve Morello, CPA",
       date: "January 18, 2026",
       readTime: "15 min read",
-      image: "/s-corp-election-tax-savings.jpg",
+      image: "/s-corp-election-tax-savings.jpeg",
       slug: "s-corp-election-definitive-guide",
       featured: true,
     },
