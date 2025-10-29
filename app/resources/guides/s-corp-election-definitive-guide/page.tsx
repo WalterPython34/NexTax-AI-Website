@@ -48,7 +48,7 @@ export default function ScorpElectionGuidePage() {
           {/* Featured Image */}
           <div className="mb-12 rounded-xl overflow-hidden">
             <img
-              src="/s-corp-election-tax-savings.jpg"
+              src="/s-corp-election-tax-savings.jpeg"
               alt="S-Corp Election Tax Savings"
               className="w-full h-[400px] object-cover"
             />
