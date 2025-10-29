@@ -79,18 +79,6 @@ export default function ResourcesPage() {
   const blogPosts = [
     {
       id: 1,
-      title: "S-Corp Election: When and Why Your Business Should Make the Switch",
-      excerpt: "Learn the optimal timing and tax benefits of electing S-Corp status for your LLC or corporation.",
-      category: "Tax Strategy",
-      author: "Steve Morello, CPA",
-      date: "January 15, 2026",
-      readTime: "8 min read",
-      image: "/tax-strategy-business-meeting.jpg",
-      slug: "s-corp-election-timing-benefits",
-      featured: true,
-    },
-    {
-      id: 9,
       title: "Should I Elect S-Corp for My LLC? The Definitive Guide to Saving on Self-Employment Tax",
       excerpt:
         "Discover how the S-Corp election can potentially save you thousands in self-employment tax with our comprehensive guide to making the right decision for your business.",
@@ -102,6 +90,18 @@ export default function ResourcesPage() {
       slug: "s-corp-election-definitive-guide",
       featured: true,
     },
+    {
+      id: 9,
+      title: "S-Corp Election: When and Why Your Business Should Make the Switch",
+      excerpt: "Learn the optimal timing and tax benefits of electing S-Corp status for your LLC or corporation.",
+      category: "Tax Strategy",
+      author: "Steve Morello, CPA",
+      date: "January 15, 2026",
+      readTime: "8 min read",
+      image: "/tax-strategy-business-meeting.jpg",
+      slug: "s-corp-election-timing-benefits",
+      featured: true,
+    },    
     {
       id: 2,
       title: "LLC vs Corporation: A Complete Guide to Choosing Your Business Structure",
