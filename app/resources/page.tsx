@@ -111,7 +111,7 @@ export default function ResourcesPage() {
       author: "Steve Morello, CPA",
       date: "January 10, 2026",
       readTime: "10 min read",
-      image: "/multi-state-business-map.jpg",
+      image: "/multi-state-business-map.jpeg",
       slug: "multi-state-compliance-nexus-guide",
       featured: true,
     },
@@ -147,7 +147,7 @@ export default function ResourcesPage() {
       author: "NexTax.AI Team",
       date: "January 3, 2026",
       readTime: "9 min read",
-      image: "/quarterly-tax-calendar.jpg",
+      image: "/quarterly-tax-calendar.jpeg",
       slug: "quarterly-estimated-tax-guide",
     },
     {
