@@ -167,7 +167,7 @@ export default function ScorpElectionGuidePage() {
               </div>
 
               {/* Savings Highlight */}
-              <Card className="bg-gradient-to-r from-emerald-600/20 to-cyan-600/20 border-emerald-500/30">
+              <Card className="bg-gradient-to-r from-emerald-600/10 to-cyan-600/10 border-emerald-500/30">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
