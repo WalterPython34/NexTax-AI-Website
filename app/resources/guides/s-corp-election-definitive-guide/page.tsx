@@ -167,12 +167,12 @@ export default function ScorpElectionGuidePage() {
               </div>
 
               {/* Savings Highlight */}
-              <Card className="bg-gradient-to-r from-emerald-600/10 to-cyan-600/10 border-emerald-500/30">
+              <Card className="bg-gradient-to-r from-emerald-200 to-cyan-200 border-emerald-500/30">
                 <CardContent className="p-6">
                   <div className="flex items-center justify-between">
                     <div>
                       <h3 className="text-2xl font-bold text-white mb-2">Annual Tax Savings</h3>
-                      <p className="text-slate-300">By electing S-Corp status for this example</p>
+                      <p className="text-slate-500">By electing S-Corp status for this example</p>
                     </div>
                     <div className="text-4xl font-bold text-emerald-400">$6,120</div>
                   </div>
