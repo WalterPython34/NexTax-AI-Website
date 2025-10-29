@@ -1,6 +1,9 @@
+"use client"
+
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import React from "react"
 import {
   Download,
   FileText,
@@ -72,6 +75,111 @@ export default function ResourcesPage() {
       color: "green",
     },
   ]
+
+  const blogPosts = [
+    {
+      id: 1,
+      title: "S-Corp Election: When and Why Your Business Should Make the Switch",
+      excerpt: "Learn the optimal timing and tax benefits of electing S-Corp status for your LLC or corporation.",
+      category: "Tax Strategy",
+      author: "Steve Morello, CPA",
+      date: "January 15, 2026",
+      readTime: "8 min read",
+      image: "/tax-strategy-business-meeting.jpg",
+      slug: "s-corp-election-timing-benefits",
+      featured: true,
+    },
+    {
+      id: 2,
+      title: "LLC vs Corporation: A Complete Guide to Choosing Your Business Structure",
+      excerpt:
+        "Comprehensive comparison of LLCs and corporations, including tax implications, liability protection, and operational flexibility.",
+      category: "Business Formation",
+      author: "NexTax.AI Team",
+      date: "January 12, 2026",
+      readTime: "12 min read",
+      image: "/business-formation-documents.jpg",
+      slug: "llc-vs-corporation-complete-guide",
+      featured: true,
+    },
+    {
+      id: 3,
+      title: "Multi-State Compliance: Navigating Nexus Requirements for Growing Businesses",
+      excerpt:
+        "Essential guide to understanding and managing tax obligations when your business operates across state lines.",
+      category: "Compliance",
+      author: "Steve Morello, CPA",
+      date: "January 10, 2026",
+      readTime: "10 min read",
+      image: "/multi-state-business-map.jpg",
+      slug: "multi-state-compliance-nexus-guide",
+      featured: true,
+    },
+    {
+      id: 4,
+      title: "Maximizing Tax Deductions: 15 Often-Missed Write-Offs for Startups",
+      excerpt: "Discover commonly overlooked tax deductions that could save your startup thousands in tax liability.",
+      category: "Tax Strategy",
+      author: "NexTax.AI Team",
+      date: "January 8, 2026",
+      readTime: "7 min read",
+      image: "/tax-deductions-calculator.jpg",
+      slug: "maximizing-startup-tax-deductions",
+    },
+    {
+      id: 5,
+      title: "Scaling Your Business: Tax Planning Strategies for High-Growth Companies",
+      excerpt:
+        "Advanced tax strategies to optimize your tax position as your business scales from startup to enterprise.",
+      category: "Growth",
+      author: "Steve Morello, CPA",
+      date: "January 5, 2026",
+      readTime: "11 min read",
+      image: "/business-growth-chart.png",
+      slug: "tax-planning-high-growth-companies",
+    },
+    {
+      id: 6,
+      title: "Quarterly Estimated Tax Payments: A Complete Guide for Business Owners",
+      excerpt:
+        "Everything you need to know about calculating, scheduling, and submitting quarterly estimated tax payments.",
+      category: "Compliance",
+      author: "NexTax.AI Team",
+      date: "January 3, 2026",
+      readTime: "9 min read",
+      image: "/quarterly-tax-calendar.jpg",
+      slug: "quarterly-estimated-tax-guide",
+    },
+    {
+      id: 7,
+      title: "Foreign Qualification: When Your Business Needs to Register in Multiple States",
+      excerpt: "Learn when and how to register your business as a foreign entity in states outside your home state.",
+      category: "Business Formation",
+      author: "NexTax.AI Team",
+      date: "December 30, 2025",
+      readTime: "8 min read",
+      image: "/business-registration-documents.jpg",
+      slug: "foreign-qualification-multi-state-registration",
+    },
+    {
+      id: 8,
+      title: "Building a Scalable Financial Foundation: Systems and Tools for Growth",
+      excerpt: "Essential financial systems, tools, and processes to support sustainable business growth.",
+      category: "Growth",
+      author: "Steve Morello, CPA",
+      date: "December 28, 2025",
+      readTime: "10 min read",
+      image: "/financial-systems-dashboard.jpg",
+      slug: "scalable-financial-foundation-growth",
+    },
+  ]
+
+  const blogCategories = ["All", "Tax Strategy", "Business Formation", "Compliance", "Growth"]
+
+  const [selectedCategory, setSelectedCategory] = React.useState("All")
+
+  const filteredBlogPosts =
+    selectedCategory === "All" ? blogPosts : blogPosts.filter((post) => post.category === selectedCategory)
 
   const upcomingWebinars = [
     {
@@ -243,6 +351,110 @@ export default function ResourcesPage() {
       </div>        
     </div>
     </section>
+
+     <section className="py-16 bg-black/30">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <Badge className="bg-blue-500/20 text-blue-300 border-blue-500/30 mb-6">
+              <BookOpen className="w-4 h-4 mr-2" />
+              Business Guides
+            </Badge>
+            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">In-Depth Business & Tax Guides</h2>
+            <p className="text-xl text-slate-300 max-w-3xl mx-auto">
+              Expert insights and actionable strategies to help you build, grow, and optimize your business
+            </p>
+          </div>
+
+          {/* Category Filter */}
+          <div className="flex flex-wrap justify-center gap-3 mb-12">
+            {blogCategories.map((category) => (
+              <Button
+                key={category}
+                onClick={() => setSelectedCategory(category)}
+                variant={selectedCategory === category ? "default" : "outline"}
+                className={
+                  selectedCategory === category
+                    ? "bg-emerald-600 hover:bg-emerald-700 text-white"
+                    : "border-gray-600 text-gray-300 hover:bg-gray-800 bg-transparent"
+                }
+              >
+                {category}
+              </Button>
+            ))}
+          </div>
+
+          {/* Blog Posts Grid */}
+          <div className="grid lg:grid-cols-3 gap-8">
+            {filteredBlogPosts.map((post) => (
+              <article
+                key={post.id}
+                className="bg-gray-900/50 border border-gray-700 rounded-lg overflow-hidden hover:border-emerald-500/50 transition-all hover:transform hover:scale-[1.02]"
+              >
+                {/* Featured Image */}
+                <div className="relative h-48 overflow-hidden">
+                  <img src={post.image || "/placeholder.svg"} alt={post.title} className="w-full h-full object-cover" />
+                  <div className="absolute top-4 left-4">
+                    <Badge
+                      className={
+                        post.category === "Tax Strategy"
+                          ? "bg-emerald-500/90 text-white"
+                          : post.category === "Business Formation"
+                            ? "bg-blue-500/90 text-white"
+                            : post.category === "Compliance"
+                              ? "bg-orange-500/90 text-white"
+                              : "bg-violet-500/90 text-white"
+                      }
+                    >
+                      {post.category}
+                    </Badge>
+                  </div>
+                </div>
+
+                {/* Content */}
+                <div className="p-6 space-y-4">
+                  <h3 className="text-xl font-bold text-white hover:text-emerald-400 transition-colors line-clamp-2">
+                    {post.title}
+                  </h3>
+
+                  <p className="text-slate-400 text-sm line-clamp-3">{post.excerpt}</p>
+
+                  {/* Meta Information */}
+                  <div className="flex items-center justify-between text-xs text-slate-500 pt-4 border-t border-gray-800">
+                    <div className="flex items-center gap-2">
+                      <Users className="w-3 h-3" />
+                      <span>{post.author}</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Clock className="w-3 h-3" />
+                      <span>{post.readTime}</span>
+                    </div>
+                  </div>
+
+                  <div className="text-xs text-slate-500">{post.date}</div>
+
+                  {/* Read More Button */}
+                  <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white" asChild>
+                    <Link href={`/resources/guides/${post.slug}`}>Read Full Guide</Link>
+                  </Button>
+                </div>
+              </article>
+            ))}
+          </div>
+
+          {/* View All Button */}
+          {filteredBlogPosts.length > 6 && (
+            <div className="text-center mt-12">
+              <Button
+                size="lg"
+                variant="outline"
+                className="border-emerald-600 text-emerald-400 hover:bg-emerald-600 hover:text-white bg-transparent"
+              >
+                View All Guides
+              </Button>
+            </div>
+          )}
+        </div>
+      </section>      
 
       {/* Upcoming Webinars */}
       <section className="py-12 bg-black/50">
