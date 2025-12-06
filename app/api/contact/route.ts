@@ -38,15 +38,28 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: "Missing required fields" }, { status: 400 })
     }
 
-    // Basic spam content detection
+    // Basic spam content detection - catches random gibberish strings
     const spamPatterns = [
-      /^[a-zA-Z]{6,10}$/,  // Random letter strings like "bkbKkMjh"
-      /^[A-Z][a-z]+[A-Z][a-z]+$/,  // CamelCase gibberish
+      /^[a-zA-Z]{6,10}$/, // Random letter strings like "bkbKkMjh"
+      /^[A-Z][a-z]+[A-Z][a-z]+$/, // CamelCase gibberish like "TgHRpqFj"
+      /^[a-zA-Z]{3,6}[A-Z][a-zA-Z]{2,5}$/, // Mixed case gibberish
     ]
-    
-    if (spamPatterns.some(pattern => pattern.test(subject)) || 
-        spamPatterns.some(pattern => pattern.test(message))) {
-      console.log("🤖 Bot detected via spam pattern")
+
+    const isSpamSubject = spamPatterns.some((pattern) => pattern.test(subject.trim()))
+    const isSpamMessage = spamPatterns.some((pattern) => pattern.test(message.trim()))
+    const isSpamCompany = company && spamPatterns.some((pattern) => pattern.test(company.trim()))
+
+    if (isSpamSubject || isSpamMessage || isSpamCompany) {
+      console.log("🤖 Bot detected via spam pattern in content")
+      return NextResponse.json({
+        success: true,
+        message: "Contact form submitted successfully",
+      })
+    }
+
+    // Additional check: message too short (likely spam)
+    if (message.trim().length < 10) {
+      console.log("🤖 Bot detected via message too short")
       return NextResponse.json({
         success: true,
         message: "Contact form submitted successfully",
