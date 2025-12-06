@@ -6,13 +6,51 @@ export async function POST(request: NextRequest) {
 
   try {
     const data = await request.json()
-    const { name, email, company, subject, message, inquiryType } = data
+    const { name, email, company, subject, message, inquiryType, website, formLoadTime } = data
 
     console.log("📋 Contact form data:", data)
+
+    // Honeypot check - if "website" field is filled, it's a bot
+    if (website) {
+      console.log("🤖 Bot detected via honeypot field")
+      // Return success to fool the bot, but don't actually process
+      return NextResponse.json({
+        success: true,
+        message: "Contact form submitted successfully",
+      })
+    }
+
+    // Timing check - if form submitted in less than 3 seconds, likely a bot
+    if (formLoadTime) {
+      const submissionTime = Date.now()
+      const timeDiff = submissionTime - parseInt(formLoadTime)
+      if (timeDiff < 3000) {
+        console.log("🤖 Bot detected via timing check (too fast)")
+        return NextResponse.json({
+          success: true,
+          message: "Contact form submitted successfully",
+        })
+      }
+    }
 
     // Validate required fields
     if (!name || !email || !subject || !message) {
       return NextResponse.json({ success: false, error: "Missing required fields" }, { status: 400 })
+    }
+
+    // Basic spam content detection
+    const spamPatterns = [
+      /^[a-zA-Z]{6,10}$/,  // Random letter strings like "bkbKkMjh"
+      /^[A-Z][a-z]+[A-Z][a-z]+$/,  // CamelCase gibberish
+    ]
+    
+    if (spamPatterns.some(pattern => pattern.test(subject)) || 
+        spamPatterns.some(pattern => pattern.test(message))) {
+      console.log("🤖 Bot detected via spam pattern")
+      return NextResponse.json({
+        success: true,
+        message: "Contact form submitted successfully",
+      })
     }
 
     // Send email notification
