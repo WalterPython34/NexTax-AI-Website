@@ -22,7 +22,9 @@ export default function ContactPage() {
     subject: "",
     message: "",
     inquiryType: "",
+    website: "", // Honeypot field - bots will fill this, humans won't see it
   })
+  const [formLoadTime] = useState(() => Date.now().toString()) // Track when form loaded
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitStatus, setSubmitStatus] = useState<"idle" | "success" | "error">("idle")
   const [errorMessage, setErrorMessage] = useState("")
@@ -42,7 +44,10 @@ export default function ContactPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          ...formData,
+          formLoadTime, // Include timing for bot detection
+        }),
       })
 
       const data = await response.json()
@@ -62,6 +67,7 @@ export default function ContactPage() {
         subject: "",
         message: "",
         inquiryType: "",
+        website: "", // Reset honeypot field too
       })
     } catch (error: any) {
       console.error("Form submission error:", error)
@@ -92,13 +98,12 @@ export default function ContactPage() {
       title: "Schedule Consultation",
       description: "Book a strategy session",
       contact: (
-         <CalendlyButton
-                  url="https://calendly.com/steven-morello-nextax"
-                  className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded text-sm inline-block transition-colors"
-                >
-                  Book Now
-                </CalendlyButton>
-
+        <CalendlyButton
+          url="https://calendly.com/steven-morello-nextax"
+          className="bg-emerald-500 hover:bg-emerald-600 text-white px-4 py-2 rounded text-sm inline-block transition-colors"
+        >
+          Book Now
+        </CalendlyButton>
       ),
       availability: "30-minute consultation",
     },
@@ -171,7 +176,9 @@ export default function ContactPage() {
             <Card className="bg-slate-800/50 border-slate-700">
               <CardHeader>
                 <CardTitle className="text-2xl text-white">Send us a Message</CardTitle>
-                <p className="text-slate-400">Contact us below and one of our experts will get back to you within 24 hours.</p>
+                <p className="text-slate-400">
+                  Contact us below and one of our experts will get back to you within 24 hours.
+                </p>
               </CardHeader>
               <CardContent>
                 {submitStatus === "success" ? (
@@ -190,7 +197,24 @@ export default function ContactPage() {
                     </Button>
                   </div>
                 ) : (
-                  <form onSubmit={handleSubmit} className="space-y-6">
+                  <form onSubmit={handleSubmit} className="space-y-6 relative">
+                    {/* Honeypot field - hidden from humans, visible to bots */}
+                    <div
+                      className="absolute -left-[9999px] opacity-0 h-0 overflow-hidden"
+                      aria-hidden="true"
+                    >
+                      <label htmlFor="website">Website</label>
+                      <input
+                        type="text"
+                        id="website"
+                        name="website"
+                        value={formData.website}
+                        onChange={(e) => setFormData({ ...formData, website: e.target.value })}
+                        tabIndex={-1}
+                        autoComplete="off"
+                      />
+                    </div>
+
                     <div className="grid md:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="name" className="text-white">
@@ -428,6 +452,3 @@ export default function ContactPage() {
     </div>
   )
 }
-
-
-
