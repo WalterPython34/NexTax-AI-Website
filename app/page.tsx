@@ -39,7 +39,7 @@ export default function TestLandingPage() {
                   Bring your vision to life.
                   <span className="block text-white-400">We'll streamline the setup.</span>
                   <span className="block text-emerald-400 text-xl lg:text-xl mt-8">
-                    From idea to launch in record time, our tax experts help you startup with confidence and stay
+                    From idea to new business launch in record time, our tax experts help you startup with confidence and stay
                     organized with our AI-powered tools.
                   </span>
                 </h1>
