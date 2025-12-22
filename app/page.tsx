@@ -128,13 +128,15 @@ export default function TestLandingPage() {
                     </div>
                   </div>
 
-                  <Button
-                    className="w-full bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white"
-                    onClick={() => setAuthModal({ isOpen: true, mode: "signup" })}
+                  <Link
+                    href="https://chatgpt.com/g/g-684641e9df808191a9d2025951aa3f09-startsmart-ai-business-launch-assistant"
+                    target="_blank"
+                    rel="noopener noreferrer"
                   >
-                    <MessageSquare className="mr-2 w-4 h-4" />
-                    Try StartSmart AI Now
-                  </Button>
+                    <Button className="w-full bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white">
+                      <MessageSquare className="mr-2 w-4 h-4" />
+                      Try StartSmart AI Now
+                    </Button>
                 </div>
               </div>
             </div>
