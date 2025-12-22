@@ -135,7 +135,7 @@ export default function TestLandingPage() {
                   >
                     <Button className="w-full bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white">
                       <MessageSquare className="mr-2 w-4 h-4" />
-                      Access StartSmart Launch Assistant - Live on ChatGPT App Store!
+                      Try it Live on ChatGPT App Store!
                     </Button>
                     </Link>
                 </div>
@@ -286,7 +286,7 @@ export default function TestLandingPage() {
             {/* Text Left */}
             <div className="space-y-6 lg:order-1">
               <h2 className="text-3xl lg:text-4xl font-bold text-white">
-                Your AI Assistant. Your Expert Team. <span className="text-cyan-400">Your Business,</span> <span className="text-emerald-400">Launched</span>.
+                Your AI Assistant. <span className="text-cyan-400">Your Expert Team.</span> <span className="text-emerald-400">Your Business, Launched</span>.
               </h2>
               <p className="text-xl text-slate-300 leading-relaxed">
                 Stop guessing. Start growing. StartSmart combines automation and expert insight so you can form, manage,
