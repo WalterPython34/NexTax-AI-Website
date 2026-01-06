@@ -497,7 +497,7 @@ export default function PricingPage() {
                   <p className="text-slate-300 font-bold">Pro</p>
                 </div>
                 <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-t-xl p-4 text-center relative">
-                   <Badge className="absolute -top-2 left-1/2 -translate-x-1/2 bg-emerald-500 text-white text-xs whitespace-nowrap px-3">
+                   <Badge className="absolute -top-1 left-1/2 -translate-x-1/2 bg-emerald-500 text-white text-xs whitespace-nowrap px-5 py-1">
                     Best Value
                   </Badge>
                   <p className="text-emerald-400 text-xs font-medium mb-1 mt-2">NexTax</p>
