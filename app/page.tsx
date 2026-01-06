@@ -62,7 +62,7 @@ export default function TestLandingPage() {
                   >
                     <Button 
                       size="lg"
-                      className="w-full bg-gradient-to-r from-purple-500 to-blue-500 hover:from-emerald-600 hover:to-cyan-600 text-white px-8 py-6 text-lg font-semibold w-full sm:w-auto">
+                      className="w-full bg-gradient-to-r from-purple-500 to-blue-500 hover:from-emerald-500 hover:to-cyan-500 text-white px-8 py-6 text-lg font-semibold w-full sm:w-auto">
                       <Lightbulb className="mr-3 w-6 h-6" />
                       Validate Idea
                     </Button>
@@ -70,7 +70,7 @@ export default function TestLandingPage() {
                 <Link href="/features">
                   <Button
                     size="lg"
-                    className="bg-emerald-500 hover:bg-emerald-600 hover:cyan-600 text-white px-8 py-6 text-lg font-semibold w-full sm:w-auto"
+                    className="bg-emerald-500 hover:bg-emerald-600 hover:from-blue-500 hover:to-cyan-500 text-white px-8 py-6 text-lg font-semibold w-full sm:w-auto"
                   >
                     Learn more
                     <Bot className="ml-3 w-6 h-6" />
