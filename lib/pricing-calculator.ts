@@ -126,11 +126,18 @@ export const TIER_NAMES: Record<PricingTier, string> = {
   "all-in": "StartSmart All-In",
 }
 
+export const TIER_PRICE_IDS: Record<PricingTier, string> = {
+  launchpad: "price_launchpad_0", // $0 - you'll need to create this in Stripe
+  accelerator: "price_accelerator_149", // $149 - you'll need to create this in Stripe
+  "all-in": "price_allin_499", // $499 - you'll need to create this in Stripe
+}
+
 // Add-on definitions
 export interface AddOn {
   id: string
   name: string
   price: number
+  priceId: string // Add Stripe Price ID
   description: string
   includedInTiers: PricingTier[] // Which tiers include this add-on for free
 }
@@ -140,6 +147,7 @@ export const ADD_ONS: AddOn[] = [
     id: "ein",
     name: "EIN Filing",
     price: 64,
+    priceId: "price_addon_ein", // Add Stripe Price ID
     description: "Federal Employer Identification Number filing with the IRS",
     includedInTiers: ["accelerator", "all-in"],
   },
@@ -147,6 +155,7 @@ export const ADD_ONS: AddOn[] = [
     id: "operating-agreement",
     name: "Operating Agreement",
     price: 60,
+    priceId: "price_addon_oa", // Add Stripe Price ID
     description: "Custom LLC Operating Agreement tailored to your business",
     includedInTiers: ["accelerator", "all-in"],
   },
@@ -154,6 +163,7 @@ export const ADD_ONS: AddOn[] = [
     id: "registered-agent",
     name: "Registered Agent (1 Year)",
     price: 149,
+    priceId: "price_addon_ra", // Add Stripe Price ID
     description: "Professional registered agent service for one year",
     includedInTiers: ["all-in"],
   },
@@ -162,6 +172,11 @@ export const ADD_ONS: AddOn[] = [
 // States that require surcharges for the All-In tier
 export const HIGH_FEE_STATES = ["MA", "NV"]
 export const ALL_IN_SURCHARGE = 200
+export const SURCHARGE_PRICE_ID = "price_surcharge_manv" // Add Stripe Price ID for surcharge
+
+export function getStateFeeProductId(stateCode: string): string {
+  return `price_statefee_${stateCode.toUpperCase()}`
+}
 
 // Calculate pricing based on tier, state, and add-ons
 export interface PricingResult {
@@ -264,4 +279,52 @@ export function getAllStates(): { code: string; name: string; fee: number }[] {
       fee: STATE_FEES[code] || 0,
     }))
     .sort((a, b) => a.name.localeCompare(b.name))
+}
+
+export interface StripeLineItem {
+  price: string
+  quantity: number
+}
+
+export function generateStripeLineItems(
+  tier: PricingTier,
+  stateCode: string,
+  selectedAddOnIds: string[] = [],
+): StripeLineItem[] {
+  const lineItems: StripeLineItem[] = []
+  const pricing = calculatePricing(tier, stateCode, selectedAddOnIds)
+
+  // Add base tier (even if $0, we want it in the order for tracking)
+  if (TIER_BASE_PRICES[tier] > 0) {
+    lineItems.push({
+      price: TIER_PRICE_IDS[tier],
+      quantity: 1,
+    })
+  }
+
+  // Add state fee (for Launchpad and Accelerator)
+  if (pricing.stateFee > 0) {
+    lineItems.push({
+      price: getStateFeeProductId(stateCode),
+      quantity: 1,
+    })
+  }
+
+  // Add surcharge for high-fee states on All-In
+  if (pricing.surcharge > 0) {
+    lineItems.push({
+      price: SURCHARGE_PRICE_ID,
+      quantity: 1,
+    })
+  }
+
+  // Add selected add-ons (only ones not included in tier)
+  pricing.selectedAddOns.forEach((addOn) => {
+    lineItems.push({
+      price: addOn.priceId,
+      quantity: 1,
+    })
+  })
+
+  return lineItems
 }
