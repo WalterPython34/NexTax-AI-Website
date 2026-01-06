@@ -461,6 +461,177 @@ export default function PricingPage() {
         </div>
       </section>
 
+      <section id="competitor-comparison" className="py-20 bg-gradient-to-b from-slate-950 to-slate-900">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-12">
+            <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/20 mb-4">
+              Side-by-Side Comparison
+            </Badge>
+            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">How We Compare to the Competition</h2>
+            <p className="text-xl text-slate-300 max-w-2xl mx-auto">
+              See why entrepreneurs choose NexTax.AI over ZenBusiness for LLC formation
+            </p>
+          </div>
+
+          {/* Comparison Table */}
+          <div className="max-w-6xl mx-auto overflow-x-auto">
+            <div className="min-w-[900px]">
+              {/* Header Row */}
+              <div className="grid grid-cols-7 gap-2 mb-4">
+                <div className="p-4"></div>
+                {/* NexTax Columns */}
+                <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-t-xl p-4 text-center">
+                  <p className="text-emerald-400 text-xs font-medium mb-1">NexTax</p>
+                  <p className="text-white font-bold">Launchpad</p>
+                </div>
+                <div className="bg-slate-800/50 border border-slate-700/50 rounded-t-xl p-4 text-center">
+                  <p className="text-slate-400 text-xs font-medium mb-1">ZenBusiness</p>
+                  <p className="text-slate-300 font-bold">Starter</p>
+                </div>
+                <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-t-xl p-4 text-center">
+                  <p className="text-emerald-400 text-xs font-medium mb-1">NexTax</p>
+                  <p className="text-white font-bold">Accelerator</p>
+                </div>
+                <div className="bg-slate-800/50 border border-slate-700/50 rounded-t-xl p-4 text-center">
+                  <p className="text-slate-400 text-xs font-medium mb-1">ZenBusiness</p>
+                  <p className="text-slate-300 font-bold">Pro</p>
+                </div>
+                <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-t-xl p-4 text-center relative">
+                  <Badge className="absolute -top-2 left-1/2 -translate-x-1/2 bg-emerald-500 text-white text-xs">
+                    Best Value
+                  </Badge>
+                  <p className="text-emerald-400 text-xs font-medium mb-1 mt-2">NexTax</p>
+                  <p className="text-white font-bold">All-In</p>
+                </div>
+                <div className="bg-slate-800/50 border border-slate-700/50 rounded-t-xl p-4 text-center">
+                  <p className="text-slate-400 text-xs font-medium mb-1">ZenBusiness</p>
+                  <p className="text-slate-300 font-bold">Premium</p>
+                </div>
+              </div>
+
+              {/* Data Rows */}
+              {[
+                {
+                  feature: "Base Price",
+                  values: ["$0", "$0", "$149", "$199", "$499", "$349"],
+                  highlights: [true, false, true, false, true, false],
+                },
+                {
+                  feature: "State Filing Fee",
+                  values: ["+ State Fee", "+ State Fee", "+ State Fee", "+ State Fee", "INCLUDED", "+ State Fee"],
+                  highlights: [false, false, false, false, true, false],
+                  specialHighlight: 4,
+                },
+                {
+                  feature: "Processing Speed",
+                  values: ["48-Hour", "7–10 Days", "24-Hour", "1-Day Rush", "24-Hour", "1-Day Rush"],
+                  highlights: [true, false, true, false, true, false],
+                },
+                {
+                  feature: "EIN (Federal Tax ID)",
+                  values: ["$64 Add-on", "$99 Add-on", "INCLUDED", "$99 Add-on", "INCLUDED", "$99 Add-on"],
+                  highlights: [true, false, true, false, true, false],
+                },
+                {
+                  feature: "Operating Agreement",
+                  values: ["$60 Add-on", "$99 Add-on", "INCLUDED", "INCLUDED", "INCLUDED", "INCLUDED"],
+                  highlights: [true, false, true, false, true, false],
+                },
+                {
+                  feature: "AI Tax Copilot",
+                  values: [
+                    "1 Month FREE",
+                    "Not Included",
+                    "6 Months FREE",
+                    "Not Included",
+                    "12 Months FREE",
+                    "Not Included",
+                  ],
+                  highlights: [true, false, true, false, true, false],
+                  specialHighlight: 4,
+                },
+                {
+                  feature: "Total (Excl. State Fee)",
+                  values: ["$0 – $124", "$0 – $198", "$149", "$298", "$499 Flat", "$498 – $948"],
+                  highlights: [true, false, true, false, true, false],
+                  isTotal: true,
+                },
+              ].map((row, rowIndex) => (
+                <div key={rowIndex} className={`grid grid-cols-7 gap-2 ${row.isTotal ? "mt-4" : ""}`}>
+                  <div
+                    className={`p-4 flex items-center ${row.isTotal ? "bg-slate-800/80 rounded-l-lg font-semibold" : ""}`}
+                  >
+                    <span className={`${row.isTotal ? "text-white" : "text-slate-300"} text-sm`}>{row.feature}</span>
+                  </div>
+                  {row.values.map((value, colIndex) => {
+                    const isNexTax = colIndex % 2 === 0
+                    const isSpecialHighlight = row.specialHighlight === colIndex
+                    const isIncluded = value === "INCLUDED" || value.includes("FREE")
+                    const isNotIncluded = value === "Not Included"
+
+                    return (
+                      <div
+                        key={colIndex}
+                        className={`p-4 text-center text-sm ${
+                          row.isTotal
+                            ? isNexTax
+                              ? "bg-emerald-500/20 border border-emerald-500/30 font-bold text-emerald-400"
+                              : "bg-slate-800/80 border border-slate-700/50 font-bold text-slate-300"
+                            : isNexTax
+                              ? "bg-emerald-500/5 border-x border-emerald-500/30"
+                              : "bg-slate-800/30 border-x border-slate-700/50"
+                        } ${rowIndex === 6 && isNexTax ? "rounded-b-xl" : ""} ${
+                          rowIndex === 6 && !isNexTax ? "rounded-b-xl" : ""
+                        }`}
+                      >
+                        {isIncluded ? (
+                          <span
+                            className={`${isSpecialHighlight ? "text-emerald-400 font-semibold" : "text-emerald-400"}`}
+                          >
+                            {value === "INCLUDED" ? (
+                              <span className="flex items-center justify-center gap-1">
+                                <CheckCircle className="w-4 h-4" />
+                                Included
+                              </span>
+                            ) : (
+                              value
+                            )}
+                          </span>
+                        ) : isNotIncluded ? (
+                          <span className="text-slate-500 flex items-center justify-center gap-1">
+                            <X className="w-4 h-4" />
+                            None
+                          </span>
+                        ) : (
+                          <span className={isNexTax ? "text-white" : "text-slate-400"}>{value}</span>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Bottom CTA */}
+          <div className="text-center mt-12">
+            <p className="text-slate-400 mb-4">
+              Save up to <span className="text-emerald-400 font-bold">$449</span> compared to ZenBusiness Premium
+            </p>
+            <Button
+              onClick={() => {
+                setSelectedTier("allin")
+                setIsConfiguratorOpen(true)
+              }}
+              className="bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white px-8 py-3"
+            >
+              Get Started with All-In
+              <ArrowRight className="ml-2 w-4 h-4" />
+            </Button>
+          </div>
+        </div>
+      </section>
+
       {/* What Happens After You Purchase Section */}
       <section id="launch-process" className="py-20 bg-slate-900/50">
         <div className="container mx-auto px-4">
@@ -640,5 +811,6 @@ export default function PricingPage() {
     </div>
   )
 }
+
 
 
