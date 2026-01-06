@@ -26,7 +26,7 @@ import type { PricingTier } from "@/lib/pricing-calculator"
 
 export default function PricingPage() {
   const [selectedTier, setSelectedTier] = useState<PricingTier | null>(null)
-  const [showConfigurator, setShowConfigurator] = useState(false)
+  const [isConfiguratorOpen, setIsConfiguratorOpen] = useState(false)
 
   const packages = [
     {
@@ -99,7 +99,7 @@ export default function PricingPage() {
 
   const handleSelectTier = (tier: PricingTier) => {
     setSelectedTier(tier)
-    setShowConfigurator(true)
+    setIsConfiguratorOpen(true)
   }
 
   const individualServices = [
@@ -298,13 +298,12 @@ export default function PricingPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-900 pt-4">
-      {showConfigurator && selectedTier && (
+      {/* Checkout Configurator Modal */}
+      {isConfiguratorOpen && selectedTier && (
         <CheckoutConfigurator
-          initialTier={selectedTier}
-          onClose={() => {
-            setShowConfigurator(false)
-            setSelectedTier(null)
-          }}
+          isOpen={isConfiguratorOpen}
+          onClose={() => setIsConfiguratorOpen(false)}
+          selectedTier={selectedTier}
         />
       )}
 
@@ -462,100 +461,7 @@ export default function PricingPage() {
         </div>
       </section>
 
-      <section className="py-20 bg-slate-900/50">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">Individual Services</h2>
-            <p className="text-xl text-slate-300 max-w-2xl mx-auto">
-              One-time services to help establish your business
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
-            {individualServices.map((service, i) => (
-              <Card key={i} className="bg-slate-800/50 border-slate-700">
-                <CardHeader className="text-center pb-6">
-                  <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                    <service.icon className="w-8 h-8 text-emerald-400" />
-                  </div>
-                  <CardTitle className="text-xl text-white">{service.name}</CardTitle>
-                  <p className="text-slate-400 text-sm">{service.description}</p>
-                  <div className="mt-4">
-                    <span className="text-3xl font-bold text-white">{service.price}</span>
-                    <span className="text-slate-400">{service.period || ""}</span>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="space-y-3">
-                    {service.features.map((feature, j) => (
-                      <div key={j} className="flex items-center gap-3">
-                        <CheckCircle className="w-5 h-5 text-emerald-400 flex-shrink-0" />
-                        <span className="text-slate-400 text-sm">{feature}</span>
-                      </div>
-                    ))}
-                  </div>
-                  <StripeCheckoutButton
-                    priceId={service.priceId}
-                    productName={service.name}
-                    className="w-full bg-slate-700 hover:bg-slate-600 text-white"
-                  >
-                    {service.cta}
-                    <ArrowRight className="ml-2 w-4 h-4" />
-                  </StripeCheckoutButton>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="py-20">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">Ongoing Support Services</h2>
-            <p className="text-xl text-slate-300 max-w-2xl mx-auto">
-              Monthly subscription services to help your business thrive
-            </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
-            {subscriptionServices.map((service, i) => (
-              <Card key={i} className="bg-slate-800/50 border-slate-700">
-                <CardHeader className="text-center pb-6">
-                  <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                    <service.icon className="w-8 h-8 text-emerald-400" />
-                  </div>
-                  <CardTitle className="text-xl text-white">{service.name}</CardTitle>
-                  <p className="text-slate-400 text-sm">{service.description}</p>
-                  <div className="mt-4">
-                    <span className="text-3xl font-bold text-white">{service.price}</span>
-                    <span className="text-slate-400">{service.period || ""}</span>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="space-y-3">
-                    {service.features.map((feature, j) => (
-                      <div key={j} className="flex items-center gap-3">
-                        <CheckCircle className="w-5 h-5 text-emerald-400 flex-shrink-0" />
-                        <span className="text-slate-300 text-sm">{feature}</span>
-                      </div>
-                    ))}
-                  </div>
-                  <StripeCheckoutButton
-                    priceId={service.priceId}
-                    productName={service.name}
-                    className="w-full bg-slate-700 hover:bg-slate-600 text-white"
-                  >
-                    {service.cta}
-                    <ArrowRight className="ml-2 w-4 h-4" />
-                  </StripeCheckoutButton>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
+      {/* What Happens After You Purchase Section */}
       <section id="launch-process" className="py-20 bg-slate-900/50">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
@@ -609,6 +515,102 @@ export default function PricingPage() {
         </div>
       </section>
 
+      {/* Individual Services Section */}
+      <section className="py-20">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">Individual Services</h2>
+            <p className="text-xl text-slate-300 max-w-2xl mx-auto">
+              One-time services to help establish your business
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
+            {individualServices.map((service, i) => (
+              <Card key={i} className="bg-slate-800/50 border-slate-700">
+                <CardHeader className="text-center pb-6">
+                  <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                    <service.icon className="w-8 h-8 text-emerald-400" />
+                  </div>
+                  <CardTitle className="text-xl text-white">{service.name}</CardTitle>
+                  <p className="text-slate-400 text-sm">{service.description}</p>
+                  <div className="mt-4">
+                    <span className="text-3xl font-bold text-white">{service.price}</span>
+                    <span className="text-slate-400">{service.period || ""}</span>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="space-y-3">
+                    {service.features.map((feature, j) => (
+                      <div key={j} className="flex items-center gap-3">
+                        <CheckCircle className="w-5 h-5 text-emerald-400 flex-shrink-0" />
+                        <span className="text-slate-400 text-sm">{feature}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <StripeCheckoutButton
+                    priceId={service.priceId}
+                    productName={service.name}
+                    className="w-full bg-slate-700 hover:bg-slate-600 text-white"
+                  >
+                    {service.cta}
+                    <ArrowRight className="ml-2 w-4 h-4" />
+                  </StripeCheckoutButton>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Ongoing Support Services Section */}
+      <section className="py-20">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">Ongoing Support Services</h2>
+            <p className="text-xl text-slate-300 max-w-2xl mx-auto">
+              Monthly subscription services to help your business thrive
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8 max-w-7xl mx-auto">
+            {subscriptionServices.map((service, i) => (
+              <Card key={i} className="bg-slate-800/50 border-slate-700">
+                <CardHeader className="text-center pb-6">
+                  <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                    <service.icon className="w-8 h-8 text-emerald-400" />
+                  </div>
+                  <CardTitle className="text-xl text-white">{service.name}</CardTitle>
+                  <p className="text-slate-400 text-sm">{service.description}</p>
+                  <div className="mt-4">
+                    <span className="text-3xl font-bold text-white">{service.price}</span>
+                    <span className="text-slate-400">{service.period || ""}</span>
+                  </div>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="space-y-3">
+                    {service.features.map((feature, j) => (
+                      <div key={j} className="flex items-center gap-3">
+                        <CheckCircle className="w-5 h-5 text-emerald-400 flex-shrink-0" />
+                        <span className="text-slate-400 text-sm">{feature}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <StripeCheckoutButton
+                    priceId={service.priceId}
+                    productName={service.name}
+                    className="w-full bg-slate-700 hover:bg-slate-600 text-white"
+                  >
+                    {service.cta}
+                    <ArrowRight className="ml-2 w-4 h-4" />
+                  </StripeCheckoutButton>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
       <section className="py-20 bg-gradient-to-r from-emerald-600 to-cyan-600">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto text-center">
@@ -638,4 +640,5 @@ export default function PricingPage() {
     </div>
   )
 }
+
 
