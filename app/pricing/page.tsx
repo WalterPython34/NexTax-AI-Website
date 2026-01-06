@@ -106,8 +106,8 @@ export default function PricingPage() {
     {
       name: "EIN Filing",
       icon: FileText,
-      price: "$149",
-      priceId: "price_1RVxG4GA3ir6ndSxWgrZhf9U",
+      price: "$69",
+      priceId: "price_1Smc4LGA3ir6ndSxymI70xpd",
       description: "Fast Employer Identification Number (EIN) filing with the IRS",
       features: [
         "Required for business banking",
@@ -167,8 +167,8 @@ export default function PricingPage() {
     {
       name: "LLC Agreement",
       icon: FileText,
-      price: "$199",
-      priceId: "price_1RVxMUGA3ir6ndSx7JzW1uqS",
+      price: "$79",
+      priceId: "price_1Sg7sdGA3ir6ndSxrJxxgYtR",
       description: "Custom operating agreement tailored to your business",
       features: [
         "Member rights documentation",
@@ -249,9 +249,9 @@ export default function PricingPage() {
     {
       name: "Basic Bookkeeping",
       icon: Calculator,
-      price: "$149",
+      price: "$24",
       period: "/month",
-      priceId: "price_1RVxSKGA3ir6ndSxQ5rrc58j",
+      priceId: "price_1SmcAbGA3ir6ndSx3YzVL4b6",
       description: "Essential monthly bookkeeping for small businesses",
       features: [
         "Transaction categorization",
@@ -265,9 +265,9 @@ export default function PricingPage() {
     {
       name: "Full-Service Accounting",
       icon: Calculator,
-      price: "$299",
+      price: "$29",
       period: "/month",
-      priceId: "price_1RVxTqGA3ir6ndSxoXGXLC9f",
+      priceId: "price_1SmcByGA3ir6ndSxb6U2sngx",
       description: "Complete accounting and financial management",
       features: [
         "All Basic Bookkeeping features",
@@ -281,9 +281,9 @@ export default function PricingPage() {
     {
       name: "Enterprise Accounting",
       icon: Building2,
-      price: "$599",
+      price: "$39",
       period: "/month",
-      priceId: "price_1RVxV3GA3ir6ndSxyFhrc8QI",
+      priceId: "price_1SmcCaGA3ir6ndSxwLCcchIF",
       description: "Advanced accounting for complex businesses",
       features: [
         "Multi-entity accounting",
