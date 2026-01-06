@@ -38,27 +38,68 @@ export async function POST(request: NextRequest) {
       if (isMultiItemCheckout) {
         console.log("🔍 Processing multi-item checkout with", lineItems.length, "items")
 
-        // Verify all prices exist and determine mode
-        for (const item of lineItems) {
-          console.log("🔍 Verifying price:", item.price)
-          const price = await stripe.prices.retrieve(item.price)
-          console.log("✅ Price found:", {
-            id: price.id,
-            active: price.active,
-            unit_amount: price.unit_amount,
-          })
+        // Extract all lookup keys from line items
+        const lookupKeys = lineItems.map((item: { price: string }) => item.price)
+        console.log("🔑 Looking up prices by keys:", lookupKeys)
 
-          // If any price is recurring, use subscription mode
-          if (price.recurring) {
-            mode = "subscription"
+        // Fetch prices using lookup_keys
+        const pricesResponse = await stripe.prices.list({
+          lookup_keys: lookupKeys,
+          expand: ["data.product"],
+        })
+
+        console.log("📦 Prices found:", pricesResponse.data.length)
+
+        // Create a map of lookup_key -> price for easy access
+        const priceMap = new Map<string, string>()
+        for (const price of pricesResponse.data) {
+          if (price.lookup_key) {
+            priceMap.set(price.lookup_key, price.id)
+            console.log(`✅ Mapped ${price.lookup_key} -> ${price.id}`)
+
+            // If any price is recurring, use subscription mode
+            if (price.recurring) {
+              mode = "subscription"
+            }
           }
         }
 
-        sessionLineItems = lineItems
+        // Build session line items with actual Price IDs
+        for (const item of lineItems) {
+          const actualPriceId = priceMap.get(item.price)
+          if (!actualPriceId) {
+            console.error(`❌ No price found for lookup key: ${item.price}`)
+            return NextResponse.json(
+              {
+                error: `Price not found for lookup key: ${item.price}`,
+                suggestion: "Please verify this lookup key exists in your Stripe dashboard",
+              },
+              { status: 400 },
+            )
+          }
+          sessionLineItems.push({ price: actualPriceId, quantity: item.quantity || 1 })
+        }
       } else {
         // Legacy single-price checkout flow
         console.log("🔍 Verifying single price:", priceId)
-        const price = await stripe.prices.retrieve(priceId)
+
+        let actualPriceId = priceId
+
+        // If it looks like a lookup key (doesn't start with price_1), resolve it
+        if (!priceId.startsWith("price_1")) {
+          console.log("🔑 Resolving lookup key:", priceId)
+          const pricesResponse = await stripe.prices.list({
+            lookup_keys: [priceId],
+          })
+
+          if (pricesResponse.data.length === 0) {
+            return NextResponse.json({ error: `Price not found for lookup key: ${priceId}` }, { status: 400 })
+          }
+          actualPriceId = pricesResponse.data[0].id
+          console.log(`✅ Resolved ${priceId} -> ${actualPriceId}`)
+        }
+
+        const price = await stripe.prices.retrieve(actualPriceId)
         console.log("✅ Price found:", {
           id: price.id,
           active: price.active,
@@ -66,11 +107,12 @@ export async function POST(request: NextRequest) {
         })
 
         mode = price.recurring ? "subscription" : "payment"
-        sessionLineItems = [{ price: priceId, quantity: 1 }]
+        sessionLineItems = [{ price: actualPriceId, quantity: 1 }]
       }
 
       console.log(`🔄 Using checkout mode: ${mode}`)
       console.log("🛒 Creating checkout session with", sessionLineItems.length, "line items")
+      console.log("🛒 Line items:", sessionLineItems)
 
       // Build session configuration
       const sessionConfig: any = {
