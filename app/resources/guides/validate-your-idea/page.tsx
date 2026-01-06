@@ -342,7 +342,7 @@ export default function ValidateYourIdeaPage() {
                     </Link>
                   </div>
 
-                  <p className="text-slate-400 mt-6 text-sm">
+                  <p className="text-white-400 mt-6 text-sm">
                     Once you've validated your idea, NexTax.AI is ready to help you legally form and operate in as
                     little as 48 hours.
                   </p>
