@@ -55,6 +55,18 @@ export default function TestLandingPage() {
                     Start My LLC
                   </Button>
                 </Link>
+                <Link
+                    href="https://chatgpt.com/g/g-684641e9df808191a9d2025951aa3f09-startsmart-ai-business-launch-assistant"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    <Button 
+                      size="lg"
+                      className="w-full bg-gradient-to-r from-purple-500 to-blue-500 hover:from-emerald-600 hover:to-cyan-600 text-white">
+                      <MessageSquare className="mr-2 w-4 h-4" />
+                      Validate My Idea
+                    </Button>
+                </Link>
                 <Link href="/features">
                   <Button
                     size="lg"
@@ -63,7 +75,7 @@ export default function TestLandingPage() {
                     Learn more
                     <Bot className="ml-3 w-6 h-6" />
                   </Button>
-                </Link>
+                </Link>               
               </div>
 
               <div className="space-y-3 py-4">
