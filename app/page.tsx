@@ -62,8 +62,8 @@ export default function TestLandingPage() {
                   >
                     <Button 
                       size="lg"
-                      className="w-full bg-gradient-to-r from-purple-500 to-blue-500 hover:from-emerald-600 hover:to-cyan-600 text-white">
-                      <Flame className="mr-3 w-6 h-6" />
+                      className="w-full bg-gradient-to-r from-purple-500 to-blue-500 hover:from-emerald-600 hover:to-cyan-600 text-white px-8 py-6 font-semibold w-full sm:w-auto">
+                      <Lightbulb className="mr-3 w-6 h-6" />
                       Validate My Idea
                     </Button>
                 </Link>
