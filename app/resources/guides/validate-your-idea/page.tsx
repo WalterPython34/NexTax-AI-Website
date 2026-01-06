@@ -128,7 +128,7 @@ export default function ValidateYourIdeaPage() {
             {/* Gate 2: Competitive Gap Analysis */}
             <section className="mb-12">
               <h2 className="text-3xl font-bold text-white mb-6 flex items-center gap-3">
-                <div className="w-12 h-12 rounded-lg bg-blue-500/20 flex items-center justify-center">
+                <div className="w-12 h-12 rounded-lg bg-emerald-500/20 flex items-center justify-center">
                   <span className="text-blue-400 font-bold text-xl">2</span>
                 </div>
                 Competitive Gap Analysis
@@ -169,7 +169,7 @@ export default function ValidateYourIdeaPage() {
             {/* Gate 3: Unit Economics Gut Check */}
             <section className="mb-12">
               <h2 className="text-3xl font-bold text-white mb-6 flex items-center gap-3">
-                <div className="w-12 h-12 rounded-lg bg-orange-500/20 flex items-center justify-center">
+                <div className="w-12 h-12 rounded-lg bg-emerald-500/20 flex items-center justify-center">
                   <span className="text-orange-400 font-bold text-xl">3</span>
                 </div>
                 The Unit Economics Gut Check
@@ -216,7 +216,7 @@ export default function ValidateYourIdeaPage() {
             {/* Gate 4: Technical & Regulatory Feasibility */}
             <section className="mb-12">
               <h2 className="text-3xl font-bold text-white mb-6 flex items-center gap-3">
-                <div className="w-12 h-12 rounded-lg bg-violet-500/20 flex items-center justify-center">
+                <div className="w-12 h-12 rounded-lg bg-emerald-500/20 flex items-center justify-center">
                   <span className="text-violet-400 font-bold text-xl">4</span>
                 </div>
                 Technical & Regulatory Feasibility
@@ -272,7 +272,7 @@ export default function ValidateYourIdeaPage() {
             {/* Gate 5: Skin in the Game Signal */}
             <section className="mb-12">
               <h2 className="text-3xl font-bold text-white mb-6 flex items-center gap-3">
-                <div className="w-12 h-12 rounded-lg bg-cyan-500/20 flex items-center justify-center">
+                <div className="w-12 h-12 rounded-lg bg-emerald-500/20 flex items-center justify-center">
                   <span className="text-cyan-400 font-bold text-xl">5</span>
                 </div>
                 The "Skin in the Game" Signal
