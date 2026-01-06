@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -11,6 +11,7 @@ import { CheckCircle, ArrowRight, Shield, Clock, Loader2, MapPin, Gift } from "l
 import {
   type PricingTier,
   TIER_NAMES,
+  TIER_BASE_PRICES,
   calculatePricing,
   getAvailableAddOns,
   getIncludedAddOns,
@@ -18,49 +19,53 @@ import {
   getAllStates,
   STATE_NAMES,
   generateStripeLineItems,
+  ALL_IN_SURCHARGE,
 } from "@/lib/pricing-calculator"
 
 interface CheckoutConfiguratorProps {
-  tier: PricingTier
-  onClose?: () => void
+  isOpen: boolean
+  selectedTier: PricingTier | null
+  onClose: () => void
 }
 
-export function CheckoutConfigurator({ tier, onClose }: CheckoutConfiguratorProps) {
+export function CheckoutConfigurator({ isOpen, selectedTier, onClose }: CheckoutConfiguratorProps) {
   const [selectedState, setSelectedState] = useState<string>("")
   const [selectedAddOns, setSelectedAddOns] = useState<string[]>([])
   const [isLoading, setIsLoading] = useState(false)
 
-  const states = useMemo(() => getAllStates(), [])
-  const availableAddOns = useMemo(() => getAvailableAddOns(tier), [tier])
-  const includedAddOns = useMemo(() => getIncludedAddOns(tier), [tier])
+  if (!isOpen || !selectedTier) return null
 
-  const pricing = useMemo(() => {
-    if (!selectedState) return null
-    return calculatePricing(tier, selectedState, selectedAddOns)
-  }, [tier, selectedState, selectedAddOns])
+  const states = getAllStates()
+  const availableAddOns = getAvailableAddOns(selectedTier)
+  const includedAddOns = getIncludedAddOns(selectedTier)
+
+  const pricing = selectedState ? calculatePricing(selectedTier, selectedState, selectedAddOns) : null
+
+  const basePrice = TIER_BASE_PRICES[selectedTier] ?? 0
+  const tierName = TIER_NAMES[selectedTier] ?? "Selected Package"
 
   const handleAddOnToggle = (addOnId: string) => {
     setSelectedAddOns((prev) => (prev.includes(addOnId) ? prev.filter((id) => id !== addOnId) : [...prev, addOnId]))
   }
 
   const handleCheckout = async () => {
-    if (!selectedState || !pricing) return
+    if (!selectedState || !pricing || !selectedTier) return
 
     setIsLoading(true)
 
     try {
-      const lineItems = generateStripeLineItems(tier, selectedState, selectedAddOns)
+      const lineItems = generateStripeLineItems(selectedTier, selectedState, selectedAddOns)
 
       const response = await fetch("/api/create-checkout-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           lineItems,
-          tier,
+          tier: selectedTier,
           state: selectedState,
           addOns: selectedAddOns,
           metadata: {
-            tier,
+            tier: selectedTier,
             state: selectedState,
             stateName: STATE_NAMES[selectedState],
             addOns: selectedAddOns.join(","),
@@ -88,15 +93,13 @@ export function CheckoutConfigurator({ tier, onClose }: CheckoutConfiguratorProp
         <CardHeader className="border-b border-slate-700">
           <div className="flex items-center justify-between">
             <div>
-              <Badge className="bg-emerald-500/20 text-emerald-400 mb-2">{TIER_NAMES[tier]} Package</Badge>
+              <Badge className="bg-emerald-500/20 text-emerald-400 mb-2">{tierName} Package</Badge>
               <CardTitle className="text-2xl text-white">Configure Your Order</CardTitle>
               <p className="text-slate-400 mt-1">Select your state and any additional services</p>
             </div>
-            {onClose && (
-              <Button variant="ghost" className="text-slate-400 hover:text-white" onClick={onClose}>
-                ✕
-              </Button>
-            )}
+            <Button variant="ghost" className="text-slate-400 hover:text-white" onClick={onClose}>
+              ✕
+            </Button>
           </div>
         </CardHeader>
 
@@ -130,7 +133,7 @@ export function CheckoutConfigurator({ tier, onClose }: CheckoutConfiguratorProp
             <div className="space-y-3">
               <label className="flex items-center gap-2 text-white font-medium">
                 <Gift className="w-4 h-4 text-emerald-400" />
-                Included with {TIER_NAMES[tier]}
+                Included with {tierName}
               </label>
               <div className="space-y-2">
                 {includedAddOns.map((addOn) => (
@@ -198,11 +201,16 @@ export function CheckoutConfigurator({ tier, onClose }: CheckoutConfiguratorProp
                   </div>
                 ))}
 
-                {/* Show absorbed fee message for All-In tier */}
-                {tier === "all-in" && pricing.stateFee === 0 && pricing.surcharge === 0 && (
+                {selectedTier === "all-in" && pricing.stateFee === 0 && pricing.surcharge === 0 && (
                   <div className="flex justify-between text-emerald-400 text-sm">
                     <span>State Filing Fee (absorbed by NexTax)</span>
                     <span>$0</span>
+                  </div>
+                )}
+
+                {selectedTier === "all-in" && pricing.surcharge > 0 && (
+                  <div className="text-xs text-slate-400 mt-2">
+                    *{STATE_NAMES[selectedState]} has a high state filing fee. A ${ALL_IN_SURCHARGE} surcharge applies.
                   </div>
                 )}
 
@@ -252,3 +260,4 @@ export function CheckoutConfigurator({ tier, onClose }: CheckoutConfiguratorProp
     </div>
   )
 }
+
