@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
-import { Bot, CheckCircle, Rocket, MessageSquare, Shield, Lock, Users, Zap, ArrowRight, Building2, TrendingUp, Clock, DollarSign } from "lucide-react"
+import { Bot, CheckCircle, Rocket, MessageSquare, Shield, Lock, Users, Zap, ArrowRight, Building2, TrendingUp, Clock, Flame, Lightbulb, DollarSign } from "lucide-react"
 import Link from "next/link"
 import { AuthModal } from "@/components/auth/auth-modal"
 
@@ -63,7 +63,7 @@ export default function TestLandingPage() {
                     <Button 
                       size="lg"
                       className="w-full bg-gradient-to-r from-purple-500 to-blue-500 hover:from-emerald-600 hover:to-cyan-600 text-white">
-                      <MessageSquare className="mr-2 w-4 h-4" />
+                      <Flame className="mr-3 w-6 h-6" />
                       Validate My Idea
                     </Button>
                 </Link>
