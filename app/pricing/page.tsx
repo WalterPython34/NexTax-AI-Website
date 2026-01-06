@@ -620,7 +620,7 @@ export default function PricingPage() {
             </p>
             <Button
               onClick={() => {
-                setSelectedTier("allin")
+                setSelectedTier("all-in")
                 setIsConfiguratorOpen(true)
               }}
               className="bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white px-8 py-3"
