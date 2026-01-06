@@ -1,3 +1,6 @@
+"use client"
+
+import { useState } from "react"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import {
@@ -18,80 +21,87 @@ import {
 import { StripeCheckoutButton } from "@/components/stripe-checkout-button"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
+import { CheckoutConfigurator } from "@/components/checkout-configurator"
+import type { PricingTier } from "@/lib/pricing-calculator"
 
 export default function PricingPage() {
+  const [selectedTier, setSelectedTier] = useState<PricingTier | null>(null)
+  const [showConfigurator, setShowConfigurator] = useState(false)
+
   const packages = [
     {
-      name: "StartSmart Essential",
+      name: "Launchpad",
+      tier: "launchpad" as PricingTier,
       icon: Zap,
-      price: "$299",
-      priceId: "price_1RVxBWGA3ir6ndSxlzwF0aXk", // ✅ UPDATED with LIVE price ID
-      period: "",
-      description: "Simple business formation for Compliance Basics",
+      price: "$0",
+      priceNote: "+ state filing fees",
+      description: "DIY formation with optional add-ons",
       features: [
-        "Priority 48-Hour LLC Formation",
-        "Business Registration in your State",
-        "Basic compliance setup",
-        "Email support",
+        "State LLC Filing",
+        "Name availability check",
         "Digital document delivery",
-        "No add-ons or hidden fees",
+        "Email support",
+        "Formation guides & resources",
       ],
-      notIncluded: ["EIN Filing", "LLC Agreement", "Bank account setup", "Ongoing support"],
+      optionalAddons: ["EIN Filing (+$64)", "Operating Agreement (+$60)", "Registered Agent (+$149/yr)"],
+      notIncluded: ["StartSmart AI App", "Priority processing", "Expert consultation"],
       popular: false,
       cta: "Get Started",
       savings: "",
     },
     {
-      name: "StartSmart Complete",
+      name: "Accelerator",
+      tier: "accelerator" as PricingTier,
       icon: Crown,
-      price: "$499",
-      priceId: "price_1RUgSNGA3ir6ndSxbI53k3dB", // ✅ UPDATED with LIVE price ID
-      period: "",
-      description: "Complete Launch with Your AI Tax Expert & Compliance Tracking",
+      price: "$149",
+      priceNote: "+ state filing fees",
+      description: "Complete formation with AI-powered tools",
       features: [
-        "EIN Filing (Employer ID Number)",
-        "🤖 AI Business Copilot (StartSmart App)",
-        "Priority 24-Hour LLC Formation",
-        "Business Registration in your State",
-        "LLC Agreement Preparation",
-        "Complete compliance setup",
-        "Priority phone & email support",
-        "Digital document vault",
-        "30-day follow-up support",
-        "No add-ons or hidden fees",
+        "Everything in Launchpad",
+        "EIN Filing included",
+        "Operating Agreement included",
+        "StartSmart AI App (Free)",
+        "Priority 48-Hour Formation",
+        "Compliance calendar setup",
+        "Priority email support",
       ],
-      notIncluded: ["Bank account setup", "Virtual address", "Ongoing monthly support"],
+      optionalAddons: ["Registered Agent (+$149/yr)"],
+      notIncluded: ["State fees absorbed", "Expert consultation"],
       popular: true,
       cta: "Launch My Business",
-      savings: "Save $147",
+      savings: "Save $124 on add-ons",
     },
     {
-      name: "StartSmart Premium",
+      name: "All-In",
+      tier: "all-in" as PricingTier,
       icon: Building2,
-      price: "$699",
-      priceId: "price_1RVxDBGA3ir6ndSxWWPxWX0Y", // ✅ UPDATED with LIVE price ID
-      period: "",
-      description: "The complete business launch experience",
+      price: "$499",
+      priceNote: "state fees included*",
+      description: "Premium white-glove business launch",
       features: [
-        "Everything in StartSmart Complete",
-        "🤖 AI Business Copilot (StartSmartGPT)",
-        "U.S. Business Bank Account Setup",
-        "Virtual U.S. Address (1 year)",
-        "Accounting/Bookkeeping Setup",
-        "Priority 24-hour formation",
-        "Dedicated account manager",
-        "90-day business support",
-        "Tax planning consultation",
-        "No add-ons or hidden fees",
+        "Everything in Accelerator",
+        "State filing fees absorbed*",
+        "Registered Agent (1 year)",
+        "Priority 24-Hour Formation",
+        "1-on-1 Tax Expert Consultation",
+        "Business bank account setup",
+        "90-day dedicated support",
+        "Tax planning session",
       ],
+      optionalAddons: [],
       notIncluded: [],
       popular: false,
-      cta: "Go Premium",
-      savings: "Save $296",
+      cta: "Go All-In",
+      savings: "Best Value",
+      footnote: "*$200 surcharge for MA & NV due to high state fees",
     },
-   ]
+  ]
 
-  // Individual services with real price IDs
+  const handleSelectTier = (tier: PricingTier) => {
+    setSelectedTier(tier)
+    setShowConfigurator(true)
+  }
+
   const individualServices = [
     {
       name: "EIN Filing",
@@ -186,7 +196,6 @@ export default function PricingPage() {
     },
   ]
 
-  // Monthly subscription services with real price IDs
   const subscriptionServices = [
     {
       name: "Tax Compliance Support",
@@ -219,7 +228,7 @@ export default function PricingPage() {
         "Business resource library access",
       ],
       cta: "Get Business Support",
-     },
+    },
     {
       name: "StartSmartGPT",
       icon: Building2,
@@ -235,7 +244,7 @@ export default function PricingPage() {
         "Collaboration on Sales & Marketing materials",
         "Custom Business setup step plan for all 50 States",
       ],
-      cta: "StartSmart",  
+      cta: "StartSmart",
     },
     {
       name: "Basic Bookkeeping",
@@ -289,7 +298,16 @@ export default function PricingPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-900 pt-4">
-      {/* Hero Section */}
+      {showConfigurator && selectedTier && (
+        <CheckoutConfigurator
+          initialTier={selectedTier}
+          onClose={() => {
+            setShowConfigurator(false)
+            setSelectedTier(null)
+          }}
+        />
+      )}
+
       <section className="py-20">
         <div className="container mx-auto px-4 text-center">
           <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/30 mb-6">
@@ -300,11 +318,15 @@ export default function PricingPage() {
             Choose Your AI-Powered
             <span className="block text-emerald-400">Business Launch Package</span>
           </h1>
-          <h2 className="text-3xl lg:text-2xl text-white mb-4">The Only Formation Service Built on 20+ Years of Big 4 Tax Expertise.</h2>
-          </div>
+          <h2 className="text-3xl lg:text-2xl text-white mb-4">
+            The Only Formation Service Built on 20+ Years of Big 4 Tax Expertise.
+          </h2>
+          <p className="text-slate-400 max-w-2xl mx-auto">
+            All packages include state filing. Select your state to see exact pricing.
+          </p>
+        </div>
       </section>
 
-      {/* Trust Indicators */}
       <section className="py-6 bg-slate-900/50">
         <div className="container mx-auto px-4">
           <div className="grid md:grid-cols-4 gap-8 text-center">
@@ -332,12 +354,9 @@ export default function PricingPage() {
         </div>
       </section>
 
-      {/* Package Pricing */}
       <section className="py-20">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            
-              </div>
+          <div className="text-center mb-16"></div>
 
           <div className="grid lg:grid-cols-3 gap-8 max-w-7xl mx-auto mb-20">
             {packages.map((pkg, i) => (
@@ -361,7 +380,7 @@ export default function PricingPage() {
                   <p className="text-slate-400">{pkg.description}</p>
                   <div className="mt-6">
                     <span className="text-4xl font-bold text-white">{pkg.price}</span>
-                    <span className="text-slate-400">{pkg.period || ""}</span>
+                    <p className="text-sm text-slate-400 mt-1">{pkg.priceNote}</p>
                   </div>
                   {pkg.savings && <Badge className="bg-emerald-500/20 text-emerald-300 mt-2">{pkg.savings}</Badge>}
                 </CardHeader>
@@ -374,17 +393,35 @@ export default function PricingPage() {
                         <span className="text-slate-300">{feature}</span>
                       </div>
                     ))}
-                    {pkg.notIncluded.map((feature, j) => (
-                      <div key={j} className="flex items-center gap-3 opacity-50">
-                        <X className="w-5 h-5 text-slate-500 flex-shrink-0" />
-                        <span className="text-slate-500">{feature}</span>
-                      </div>
-                    ))}
                   </div>
 
-                  <StripeCheckoutButton
-                    priceId={pkg.priceId}
-                    productName={pkg.name}
+                  {pkg.optionalAddons && pkg.optionalAddons.length > 0 && (
+                    <div className="pt-4 border-t border-slate-700">
+                      <p className="text-sm text-slate-400 mb-2">Optional Add-ons:</p>
+                      <div className="space-y-2">
+                        {pkg.optionalAddons.map((addon, j) => (
+                          <div key={j} className="flex items-center gap-3">
+                            <span className="w-5 h-5 text-cyan-400 flex-shrink-0 text-center">+</span>
+                            <span className="text-slate-400 text-sm">{addon}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {pkg.notIncluded && pkg.notIncluded.length > 0 && (
+                    <div className="space-y-2">
+                      {pkg.notIncluded.map((feature, j) => (
+                        <div key={j} className="flex items-center gap-3 opacity-50">
+                          <X className="w-5 h-5 text-slate-500 flex-shrink-0" />
+                          <span className="text-slate-500">{feature}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  <Button
+                    onClick={() => handleSelectTier(pkg.tier)}
                     className={`w-full ${
                       pkg.popular
                         ? "bg-emerald-500 hover:bg-emerald-600 text-white"
@@ -393,9 +430,24 @@ export default function PricingPage() {
                   >
                     {pkg.cta}
                     <ArrowRight className="ml-2 w-4 h-4" />
-                  </StripeCheckoutButton>
+                  </Button>
 
-                  {/* Trust indicators for each package */}
+                  {pkg.footnote && <p className="text-xs text-slate-500 text-center">{pkg.footnote}</p>}
+
+                  {pkg.popular && (
+                    <Button
+                      variant="outline"
+                      className="w-full border-slate-600 text-slate-300 hover:bg-slate-700 hover:text-white bg-transparent"
+                      onClick={() => {
+                        document.getElementById("launch-process")?.scrollIntoView({
+                          behavior: "smooth",
+                        })
+                      }}
+                    >
+                      How the 48-Hour Launch Works
+                    </Button>
+                  )}
+
                   <div className="pt-4 border-t border-slate-700">
                     <div className="flex items-center justify-center gap-4 text-xs text-slate-400">
                       <span>✓ Secure payment</span>
@@ -410,61 +462,6 @@ export default function PricingPage() {
         </div>
       </section>
 
-       {/* Process Explanation */}
-      <section className="py-20 bg-slate-900/50">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16"> 
-            <h2 className="text-3xl lg:text-4xl font-bold text-cyan-400 mb-6">What Happens After You Purchase?</h2>
-            <p className="text-xl text-slate-300 max-w-2xl mx-auto">
-              Our streamlined process gets your business legally formed and ready to operate in just 48 hours.
-            </p>
-          </div>
-
-          <div className="max-w-4xl mx-auto">
-            <div className="grid md:grid-cols-4 gap-8">
-              {[
-                {
-                  step: "1",
-                  title: "Safely Secure Payment",
-                  description: "Complete your purchase with our secure, bank-level encrypted payment system.",
-                  time: "2 minutes",
-                },
-                {
-                  step: "2",
-                  title: "Tell Us About Your Business",
-                  description: "Answer a simple questionnaire about your business needs and structure.",
-                  time: "5 minutes",
-                },
-                {
-                  step: "3",
-                  title: "AI Powered Setup",
-                  description: "Our AI analyzes your information instantly and prepares all required legal documents.",
-                  time: "2 hours",
-                },
-                {
-                  step: "4",
-                  title: "Launch Your Business",
-                  description: "Receive EIN, State registration confirm, and a promo code to begin using our StartSmart AI App.",
-                  time: "48 hours",
-                },
-              ].map((step, i) => (
-                <Card key={i} className="bg-slate-800/50 border-slate-700 text-center">
-                  <CardContent className="p-6">
-                    <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                      <span className="text-emerald-400 font-bold text-lg">{step.step}</span>
-                    </div>
-                    <h3 className="font-semibold text-white mb-2">{step.title}</h3>
-                    <p className="text-slate-300 text-sm mb-3">{step.description}</p>
-                    <Badge className="bg-emerald-500/20 text-emerald-300 text-xs">{step.time}</Badge>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-      
-      {/* Individual Services - One-time payments */}
       <section className="py-20 bg-slate-900/50">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
@@ -493,7 +490,7 @@ export default function PricingPage() {
                     {service.features.map((feature, j) => (
                       <div key={j} className="flex items-center gap-3">
                         <CheckCircle className="w-5 h-5 text-emerald-400 flex-shrink-0" />
-                        <span className="text-slate-300 text-sm">{feature}</span>
+                        <span className="text-slate-400 text-sm">{feature}</span>
                       </div>
                     ))}
                   </div>
@@ -512,7 +509,6 @@ export default function PricingPage() {
         </div>
       </section>
 
-      {/* Subscription Services */}
       <section className="py-20">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
@@ -560,15 +556,68 @@ export default function PricingPage() {
         </div>
       </section>
 
-     
+      <section id="launch-process" className="py-20 bg-slate-900/50">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">What Happens After You Purchase?</h2>
+            <p className="text-xl text-slate-300 max-w-2xl mx-auto mb-8">
+              Our streamlined process gets your business legally formed and ready to operate in just 48 hours.
+            </p>
+          </div>
 
-            {/* Typeform Section for After Purchase */}
+          <div className="max-w-4xl mx-auto">
+            <div className="grid md:grid-cols-4 gap-8">
+              {[
+                {
+                  step: "1",
+                  title: "Safely Secure Payment",
+                  description: "Complete your purchase with our secure, bank-level encrypted payment system.",
+                  time: "2 minutes",
+                },
+                {
+                  step: "2",
+                  title: "Tell Us About Your Business",
+                  description: "Answer a simple questionnaire about your business needs and structure.",
+                  time: "5 minutes",
+                },
+                {
+                  step: "3",
+                  title: "AI Powered Setup",
+                  description: "Our AI analyzes your information instantly and prepares all required legal documents.",
+                  time: "2 hours",
+                },
+                {
+                  step: "4",
+                  title: "Launch Your Business",
+                  description: "Complete entity formation, receive EIN filing, and all compliance documentation.",
+                  time: "48 hours",
+                },
+              ].map((step, i) => (
+                <Card key={i} className="bg-slate-800/50 border-slate-700 text-center">
+                  <CardContent className="p-6">
+                    <div className="w-12 h-12 mx-auto mb-4 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                      <span className="text-emerald-400 font-bold text-lg">{step.step}</span>
+                    </div>
+                    <h3 className="font-semibold text-white mb-2">{step.title}</h3>
+                    <p className="text-slate-300 text-sm mb-3">{step.description}</p>
+                    <Badge className="bg-emerald-500/20 text-emerald-300 text-xs">{step.time}</Badge>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section className="py-20 bg-gradient-to-r from-emerald-600 to-cyan-600">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto text-center">
-            {/* StartSmart Logo - Black Version */}
             <div className="flex justify-center mb-8">
-              <img src="/images/StartSmart-logo-new-business-launch.png" alt="StartSmart by NexTax.AI" className="h-40 w-auto" />
+              <img
+                src="/images/StartSmart-logo-new-business-launch.png"
+                alt="StartSmart by NexTax.AI"
+                className="h-40 w-auto"
+              />
             </div>
 
             <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">Ready to Start Your Business?</h2>
@@ -577,7 +626,7 @@ export default function PricingPage() {
               legally formed and ready to operate within 48 hours.
             </p>
 
-            <Link href="/startsmart">
+            <Link href="https://form.typeform.com/to/hybbpz1Z" target="_blank" rel="noopener noreferrer">
               <Button size="lg" className="bg-white text-emerald-600 hover:bg-slate-100 px-8 py-4 text-lg">
                 View Questionnaire
                 <ArrowRight className="ml-2 w-5 h-5" />
@@ -589,3 +638,4 @@ export default function PricingPage() {
     </div>
   )
 }
+
