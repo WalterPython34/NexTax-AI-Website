@@ -303,7 +303,7 @@ export default function ValidateYourIdeaPage() {
 
             {/* CTA Section */}
             <section className="mb-12">
-              <Card className="bg-gradient-to-r from-violet-600/20 to-cyan-600/20 border-violet-500/30">
+              <Card className="bg-gradient-to-r from-emerald-500 to-cyan-500 border-emerald-500/30">
                 <CardContent className="p-8 text-center">
                   <h3 className="text-3xl font-bold text-white mb-4">Stop Guessing. Start Validating.</h3>
                   <p className="text-slate-200 mb-6 max-w-2xl mx-auto">
