@@ -83,7 +83,7 @@ export default function ContactPage() {
       icon: Mail,
       title: "Email Support",
       description: "Get help via email",
-      contact: "support@nextax.ai",
+      contact: "nextax.ai@outlook.com",
       availability: "24/7 response within 4 hours",
     },
     {
