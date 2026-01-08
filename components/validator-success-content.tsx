@@ -135,6 +135,41 @@ export default function ValidatorSuccessContent() {
           </div>
         </div>
       </section>
+
+      <section className="py-20">
+        <div className="container mx-auto px-4">
+          <div className="text-center">
+            <div className="bg-gradient-to-r from-emerald-600 to-cyan-600 rounded-2xl p-8">
+              {/* Centered StartSmart White Logo */}
+              <div className="flex justify-center mb-8">
+                <img src="/images/startsmart-logo-white.png" alt="StartSmart by NexTax.AI" className="h-28 w-auto" />
+              </div>
+
+              <h3 className="text-3xl font-bold text-white mb-4">Start Smart. Scale Smarter.</h3>
+              <p className="text-emerald-100 mb-6 max-w-2xl mx-auto">
+                Start your journey towards financial independence today.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Link href="/pricing">
+                  <Button size="lg" className="bg-white text-emerald-600 hover:bg-slate-100 px-8 py-4">
+                    Start My Business Now
+                  </Button>
+                </Link>
+                <Link href="/contact">
+                  <Button
+                    size="lg"
+                    variant="outline"
+                    className="border-white text-white hover:bg-white/10 px-8 py-4 bg-transparent"
+                  >
+                    Compare Plans
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   )
 }
+
