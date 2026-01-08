@@ -77,6 +77,19 @@ export default function ResourcesPage() {
   ]
 
   const blogPosts = [
+     {
+      id: 10,
+      title: "How to Fund Your Startup: A Founder's Guide to Capital & Cash Flow",
+      excerpt:
+        "Demystify startup capital, explore common funding options, and learn strategies for cash flow and financial runway.",
+      category: "Growth",
+      author: "Steve Morello, CPA",
+      date: "January 22, 2026",
+      readTime: "15 min read",
+      image: "/startup-funding-capital-cash-flow.jpg",
+      slug: "fund-your-startup",
+      featured: true,
+    },
     {
       id: 1,
       title: "Should I Elect S-Corp for My LLC? The Definitive Guide to Saving on Self-Employment Tax",
