@@ -101,6 +101,10 @@ export default function FundYourStartupPage() {
                     Before seeking funding, calculate your <strong className="text-white">startup costs</strong> and
                     your <strong className="text-white">financial runway</strong>.
                   </p>
+                  <p className="text-slate-300 text-lg mb-6">
+                  A. Your "One-Time" Startup Costs
+                  These are the "entry fees" to the game. You pay them once to get on the field.
+                   </p>  
 
                   <div className="grid md:grid-cols-2 gap-6">
                     {/* Startup Costs */}
