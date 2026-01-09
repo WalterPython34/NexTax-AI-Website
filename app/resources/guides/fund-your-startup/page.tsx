@@ -520,7 +520,7 @@ export default function FundYourStartupPage() {
               <Card className="bg-gradient-to-r from-emerald-500 to-cyan-500 border-emerald-500/30">
                 <CardContent className="p-8 text-center">
                   <h2 className="text-3xl font-bold text-white mb-4">Ready to Build a Financially Sound Business?</h2>
-                  <p className="text-white-300 text-lg mb-6 max-w-2xl mx-auto">
+                  <p className="text-white text-lg mb-6 max-w-2xl mx-auto">
                     Funding your dream shouldn't be a nightmare. By understanding your options and planning
                     strategically, you can secure the capital you need to thrive. NexTax.AI is here to ensure your
                     business foundation is legally sound and tax-optimized from your very first dollar.
