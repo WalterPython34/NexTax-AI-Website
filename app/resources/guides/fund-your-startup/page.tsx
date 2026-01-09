@@ -528,7 +528,7 @@ export default function FundYourStartupPage() {
                   <Link href="/pricing">
                     <Button
                       size="lg"
-                      className="bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white"
+                      className="bg-gradient-to-r from-emerald-500 to-cyan-600 hover:from-emerald-600 hover:to-cyan-600 text-white"
                     >
                       Launch Your LLC in 48 Hours with NexTax.AI
                       <ArrowRight className="ml-2 w-5 h-5" />
