@@ -78,6 +78,18 @@ export default function ResourcesPage() {
 
   const blogPosts = [
      {
+      id: 9,
+      title: "The 5-Step Bulletproof Framework: How to Validate Your Business Idea",
+      excerpt: "Before you file your LLC, learn how to validate your business idea using our 5-step framework.",
+      category: "Business Formation",
+      author: "NexTax.AI Team",
+      date: "January 6, 2026",
+      readTime: "12 min read",
+      image: "/business-idea-validation-lightbulb-brainstorm.jpg",
+      slug: "validate-your-idea",
+      featured: true,
+    },
+     {
       id: 10,
       title: "How to Fund Your Startup: A Founder's Guide to Capital & Cash Flow",
       excerpt:
@@ -103,18 +115,6 @@ export default function ResourcesPage() {
       slug: "s-corp-election-definitive-guide",
       featured: true,
     },
-    {
-      id: 9,
-      title: "The 5-Step Bulletproof Framework: How to Validate Your Business Idea",
-      excerpt: "Before you file your LLC, learn how to validate your business idea using our 5-step framework.",
-      category: "Business Formation",
-      author: "NexTax.AI Team",
-      date: "January 6, 2026",
-      readTime: "12 min read",
-      image: "/business-idea-validation-lightbulb-brainstorm.jpg",
-      slug: "validate-your-idea",
-      featured: true,
-    },    
     {
       id: 2,
       title: "LLC vs Corporation: A Complete Guide to Choosing Your Business Structure",
