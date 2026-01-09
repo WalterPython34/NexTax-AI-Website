@@ -192,7 +192,7 @@ export default function TaxPlanningChecklistPage() {
 
                 {!isUnlocked && (
                   <div className="absolute bottom-8 left-1/2 -translate-x-1/2 w-full max-w-2xl px-4 z-20">
-                    <Card className="bg-gradient-to-br from-blue-600 to-cyan-600 border-0 shadow-2xl">
+                    <Card className="bg-gradient-to-br from-blue-500 to-cyan-500 border-0 shadow-2xl">
                       <CardContent className="p-8 text-center">
                         <Mail className="w-12 h-12 text-white mx-auto mb-4" />
                         <h3 className="text-2xl font-bold text-white mb-3">
