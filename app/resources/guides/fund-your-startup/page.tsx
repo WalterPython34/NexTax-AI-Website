@@ -92,7 +92,7 @@ export default function FundYourStartupPage() {
                 <div className="w-12 h-12 rounded-lg bg-blue-500/20 flex items-center justify-center">
                   <Calculator className="w-6 h-6 text-blue-400" />
                 </div>
-                1. The "$NaN" Question: How Much Money Do I Really Need to Start?
+                1. The Magic Question: How Much Money Do I Really Need to Start?
               </h2>
 
               <Card className="bg-gray-900/50 border-gray-700 mb-6">
@@ -102,7 +102,7 @@ export default function FundYourStartupPage() {
                     your <strong className="text-white">financial runway</strong>.
                   </p>
                   <p className="text-slate-300 text-lg mb-6">
-                  A. Your "One-Time" Startup Costs
+                  A. Your<strong className="text-white"> "One-Time" Startup Costs</strong>
                   These are the "entry fees" to the game. You pay them once to get on the field.
                    </p>  
 
@@ -166,13 +166,7 @@ export default function FundYourStartupPage() {
                   </div>
                 </CardContent>
               </Card>
-              <p className="text-slate-300 text-lg mb-6">
-                  B. Your "Financial Runway
-                "This is the most important math you will ever do. Runway is the number of months your business can survive before it runs out of cash.
-                The Runway Formula: > $$Runway = \frac{\text{Total Cash in Bank}}{\text{Monthly Net Burn (Expenses - Revenue)}}$$
-                If you have $10,000 in savings and your business spends $2,000 a month but only makes $500, your Net Burn is $1,500.Your Runway is 6.6 months.
-                   </p>
-
+              
               <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-5">
                 <div className="flex items-start gap-3">
                   <Lightbulb className="w-6 h-6 text-amber-400 flex-shrink-0 mt-1" />
