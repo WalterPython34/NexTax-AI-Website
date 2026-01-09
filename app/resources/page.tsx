@@ -96,7 +96,7 @@ export default function ResourcesPage() {
         "Demystify startup capital, explore common funding options, and learn strategies for cash flow and financial runway.",
       category: "Growth",
       author: "Steve Morello, CPA",
-      date: "January 22, 2026",
+      date: "January 8, 2026",
       readTime: "15 min read",
       image: "/startup-funding-capital-cash-flow.jpg",
       slug: "fund-your-startup",
