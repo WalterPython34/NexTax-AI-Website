@@ -517,7 +517,7 @@ export default function FundYourStartupPage() {
 
             {/* CTA Section */}
             <section className="mt-16">
-              <Card className="bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 border-emerald-500/30">
+              <Card className="bg-gradient-to-r from-emerald-500 to-cyan-500 border-emerald-500/30">
                 <CardContent className="p-8 text-center">
                   <h2 className="text-3xl font-bold text-white mb-4">Ready to Build a Financially Sound Business?</h2>
                   <p className="text-slate-300 text-lg mb-6 max-w-2xl mx-auto">
