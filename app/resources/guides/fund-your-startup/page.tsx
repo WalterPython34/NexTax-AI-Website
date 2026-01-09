@@ -166,6 +166,12 @@ export default function FundYourStartupPage() {
                   </div>
                 </CardContent>
               </Card>
+              <p className="text-slate-300 text-lg mb-6">
+                  B. Your "Financial Runway
+                "This is the most important math you will ever do. Runway is the number of months your business can survive before it runs out of cash.
+                The Runway Formula: > $$Runway = \frac{\text{Total Cash in Bank}}{\text{Monthly Net Burn (Expenses - Revenue)}}$$
+                If you have $10,000 in savings and your business spends $2,000 a month but only makes $500, your Net Burn is $1,500.Your Runway is 6.6 months.
+                   </p>
 
               <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-5">
                 <div className="flex items-start gap-3">
