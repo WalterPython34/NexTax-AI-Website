@@ -373,7 +373,7 @@ export default function ResourcesPage() {
             recommendations based on your specific situation.
           </p>
         </div>
-      <BusinessStructureQuiz />
+      <SimpleQuiz />
       </div>        
     </div>
     </section>
