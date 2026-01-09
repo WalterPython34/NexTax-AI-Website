@@ -479,7 +479,7 @@ export default function TaxPlanningChecklistPage() {
         </Card>
 
         {/* CTA */}
-        <Card className="bg-gradient-to-r from-blue-600 to-cyan-600 border-0">
+        <Card className="bg-gradient-to-r from-emerald-600 to-cyan-600 border-0">
           <CardContent className="p-8 text-center">
             <h3 className="text-2xl font-bold text-white mb-4">Ready to Launch Your Business?</h3>
             <p className="text-blue-100 mb-6">
@@ -487,7 +487,7 @@ export default function TaxPlanningChecklistPage() {
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link href="/startsmart">
-                <Button size="lg" className="bg-white text-blue-600 hover:bg-blue-50">
+                <Button size="lg" className="bg-white text-emerald-600 hover:bg-blue-50">
                   Start Your Business
                 </Button>
               </Link>
