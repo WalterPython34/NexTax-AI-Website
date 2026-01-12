@@ -147,7 +147,7 @@ export default function TestLandingPage() {
                   >
                     <Button className="w-full bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white">
                       <MessageSquare className="mr-2 w-4 h-4" />
-                      Try it Live → ChatGPT App Store!
+                      Try StartSmart now → Live on ChatGPT
                     </Button>
                     </Link>
                 </div>
