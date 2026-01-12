@@ -62,18 +62,18 @@ export default function TestLandingPage() {
                   >
                     <Button 
                       size="lg"
-                      className="w-full sm:w-auto bg-transparent border border-white/30 text-emerald-400 text-emerald-400 hover:bg-emerald-400/10 hover:text-white px-8 py-6 text-lg font-semibold backdrop-blur">
-                      <Lightbulb className="mr-3 w-6 h-6" />
+                      className="w-full sm:w-auto bg-transparent border border-white/30 text-emerald-400 text-emerald-400 hover:bg-emerald-400/10 hover:text-cyan px-8 py-6 text-lg font-semibold backdrop-blur">
+                      <Lightbulb className="mr-3 w-6 h-6" text-emerald-400 transition-transform duration-300 ease-out group-hover:-translate-y-0.5/>
                       Validate my Idea
                     </Button>
                 </Link>
                 <Link href="/features">
                   <Button
                     size="lg"
-                    className="w-full sm:w-auto bg-transparent border border-white/30 text-white/80 hover:bg-white/10 hover:text-white px-8 py-6 text-lg font-semibold backdrop-blur"
+                    className="w-full sm:w-auto bg-transparent border border-white/30 text-white/80 hover:bg-white/10 hover:text-emerald px-8 py-6 text-lg font-semibold backdrop-blur"
                   >
-                    Learn more
-                    <Bot className="ml-3 w-6 h-6" />
+                    <Bot className="ml-3 w-6 h-6" /> 
+                    Learn more                   
                   </Button>
                 </Link>               
               </div>
