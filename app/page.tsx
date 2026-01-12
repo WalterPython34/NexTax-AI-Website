@@ -52,7 +52,7 @@ export default function TestLandingPage() {
                     className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white px-8 py-6 text-lg font-semibold w-full sm:w-auto"
                   >
                     <Rocket className="mr-3 w-6 h-6" />
-                    Start My LLC
+                    Get Started
                   </Button>
                 </Link>
                 <Link
@@ -70,7 +70,7 @@ export default function TestLandingPage() {
                 <Link href="/features">
                   <Button
                     size="lg"
-                    className="bg-emerald-500 hover:bg-emerald-600 hover:from-blue-500 hover:to-cyan-500 text-white px-8 py-6 text-lg font-semibold w-full sm:w-auto"
+                    className="w-full sm:w-auto bg-transparent border border-white/30 text-white/80 hover:bg-white/10 hover:text-white px-8 py-6 text-lg font-medium backdrop-blur"
                   >
                     Learn more
                     <Bot className="ml-3 w-6 h-6" />
