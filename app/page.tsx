@@ -70,7 +70,7 @@ export default function TestLandingPage() {
                 <Link href="/features">
                   <Button
                     size="lg"
-                    className="w-full sm:w-auto bg-transparent border border-white/30 text-white/80 hover:bg-white/10 hover:text-white px-8 py-6 text-lg font-medium backdrop-blur"
+                    className="w-full sm:w-auto bg-transparent border border-white/30 text-white/80 hover:bg-white/10 hover:text-white px-8 py-6 text-lg font-semibold backdrop-blur"
                   >
                     Learn more
                     <Bot className="ml-3 w-6 h-6" />
@@ -147,7 +147,7 @@ export default function TestLandingPage() {
                   >
                     <Button className="w-full bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white">
                       <MessageSquare className="mr-2 w-4 h-4" />
-                      Try StartSmart now → Live on ChatGPT
+                      Try StartSmart → Live on ChatGPT
                     </Button>
                     </Link>
                 </div>
