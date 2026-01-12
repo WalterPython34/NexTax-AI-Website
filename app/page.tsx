@@ -62,7 +62,7 @@ export default function TestLandingPage() {
                   >
                     <Button 
                       size="lg"
-                      className="w-full sm:w-auto bg-transparent border border-white/30 text-white/80 hover:bg-emerald-500 text-white px-8 py-6 text-lg font-semibold backdrop-blur">
+                      className="w-full sm:w-auto bg-transparent border border-white/30 text-emerald/80 hover:bg-emerald-400 text-white px-8 py-6 text-lg font-semibold backdrop-blur">
                       <Lightbulb className="mr-3 w-6 h-6" />
                       Validate Idea
                     </Button>
