@@ -62,8 +62,8 @@ export default function TestLandingPage() {
                   >
                     <Button 
                       size="lg"
-                      className="group w-full sm:w-auto bg-transparent border border-emerald/30 text-emerald-400 text-emerald-400 hover:bg-emerald-400/10 hover:text-cyan px-8 py-6 text-lg font-semibold backdrop-blur">
-                      <Lightbulb className="mr-3 w-6 h-6" transition-transform duration-300 ease-out group-hover:-translate-y-0.5/>
+                      className="w-full sm:w-auto bg-transparent border border-emerald/30 text-emerald-400 text-emerald-400 hover:bg-emerald-400/10 hover:text-cyan px-8 py-6 text-lg font-semibold backdrop-blur">
+                      <Lightbulb className="mr-3 w-6 h-6"/>
                       Validate my Idea
                     </Button>
                 </Link>
