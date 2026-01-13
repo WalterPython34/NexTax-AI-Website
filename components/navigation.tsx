@@ -42,7 +42,7 @@ export default function Navigation() {
           <div className="hidden md:flex items-center space-x-4">
             
             <Button
-              className="bg-cyan-200 gradient-to-r hover:from-emerald-500 hover:to-cyan-500 text-slate-600 transition-all duration-200"
+              className="bg-white gradient-to-r hover:from-emerald-500 hover:to-cyan-500 text-slate-600 transition-colors"
               onClick={() => window.open("https://startsmartbiz.ai", "_blank")}
             >
               StartSmart App
