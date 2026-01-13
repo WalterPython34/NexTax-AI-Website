@@ -18,11 +18,57 @@ import {
   DollarSign,
   Calculator,
 } from "lucide-react"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { StripeCheckoutButton } from "@/components/stripe-checkout-button"
 import Link from "next/link"
+import Image from "next/image"
 import { Button } from "@/components/ui/button"
 import { CheckoutConfigurator } from "@/components/checkout-configurator"
-import type { PricingTier } from "@/lib/pricing-calculator"
+
+type PricingTier = "launchpad" | "accelerator" | "all-in"
+
+const featureDescriptions: Record<string, string> = {
+  "State LLC Filing":
+    "We file your Articles of Organization with your state's Secretary of State office, officially creating your LLC as a legal business entity.",
+  "Name availability check":
+    "We verify your desired business name is available and not already registered in your state before filing.",
+  "Digital document delivery":
+    "All your formation documents are securely delivered electronically for immediate access and easy storage.",
+  "Email support": "Get answers to your questions via email from our support team within 24-48 hours.",
+  "Formation guides & resources":
+    "Access our library of guides, checklists, and templates to help you navigate business formation.",
+  "Everything in Launchpad": "Includes all features from the Launchpad package as your foundation.",
+  "EIN Filing included":
+    "We obtain your Employer Identification Number (EIN) from the IRS - required for business banking, hiring employees, and tax filings.",
+  "Operating Agreement included":
+    "A customized legal document that outlines your LLC's ownership structure, member responsibilities, and operating procedures.",
+  "StartSmart AI App (Free)":
+    "Get 6 months free access to our AI-powered business assistant for guidance on tax strategy, compliance, and business decisions.",
+  "Priority 48-Hour Formation":
+    "Your LLC formation is prioritized and completed within 48 hours of receiving all required information.",
+  "Compliance calendar setup":
+    "We set up automated reminders for important filing deadlines, annual reports, and tax due dates.",
+  "Priority email support": "Jump to the front of the queue with priority response times within 12 hours.",
+  "Everything in Accelerator": "Includes all features from the Accelerator package plus premium additions.",
+  "State filing fees absorbed*":
+    "We cover your state's LLC filing fees (up to standard rates). MA & NV have a $200 surcharge due to high state fees.",
+  "Registered Agent (1 year)":
+    "One year of registered agent service included - a required legal representative to receive official documents on behalf of your business.",
+  "Priority 24-Hour Formation":
+    "Expedited processing ensures your LLC is formed within 24 hours of receiving complete information.",
+  "1-on-1 Tax Expert Consultation":
+    "A personal consultation with our CPA to discuss tax strategy, entity selection, and optimization opportunities for your business.",
+  "Business bank account setup":
+    "Guidance and assistance setting up your business bank account with our banking partners.",
+  "90-day dedicated support":
+    "Three months of priority access to a dedicated support specialist for all your business questions.",
+  "Tax planning session":
+    "A comprehensive tax planning session to identify deductions, structure your finances, and minimize your tax burden.",
+  "StartSmart AI App": "AI-powered business assistant for tax strategy and compliance guidance.",
+  "Priority processing": "Expedited formation processing for faster turnaround times.",
+  "Expert consultation": "One-on-one consultation with our tax and business experts.",
+  "State fees absorbed": "State filing fees are covered as part of your package price.",
+}
 
 export default function PricingPage() {
   const [selectedTier, setSelectedTier] = useState<PricingTier | null>(null)
@@ -392,6 +438,19 @@ export default function PricingPage() {
                       <div key={j} className="flex items-center gap-3">
                         <CheckCircle className="w-5 h-5 text-emerald-400 flex-shrink-0" />
                         <span className="text-slate-300">{feature}</span>
+                        {featureDescriptions[feature] && (
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <Info className="w-4 h-4 text-slate-500 hover:text-cyan-400 cursor-help flex-shrink-0 transition-colors" />
+                              </TooltipTrigger>
+                              <TooltipContent
+                                side="top"
+                                className="max-w-xs bg-slate-900 border-slate-700 text-slate-200 p-3"
+                              >
+                                <p className="text-sm">{featureDescriptions[feature]}</p>
+                              </TooltipContent>
+                            </Tooltip>
+                          )}
                       </div>
                     ))}
                   </div>
@@ -416,6 +475,19 @@ export default function PricingPage() {
                         <div key={j} className="flex items-center gap-3 opacity-50">
                           <X className="w-5 h-5 text-slate-500 flex-shrink-0" />
                           <span className="text-slate-500">{feature}</span>
+                          {featureDescriptions[feature] && (
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Info className="w-4 h-4 text-slate-600 hover:text-slate-400 cursor-help flex-shrink-0 transition-colors" />
+                                </TooltipTrigger>
+                                <TooltipContent
+                                  side="top"
+                                  className="max-w-xs bg-slate-900 border-slate-700 text-slate-200 p-3"
+                                >
+                                  <p className="text-sm">{featureDescriptions[feature]}</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            )}
                         </div>
                       ))}
                     </div>
@@ -455,6 +527,7 @@ export default function PricingPage() {
                       <span>✓ 48hr guarantee</span>
                       <span>✓ Expert support</span>
                     </div>
+                    <p className="text-center text-sm text-cyan-400 mt-3 font-medium">100% accuracy guarantee</p> 
                   </div>
                 </CardContent>
               </Card>
