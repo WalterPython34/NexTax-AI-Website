@@ -175,7 +175,7 @@ export default function TestLandingPage() {
 
             {/* Text Right */}
             <div className="space-y-6">
-              <h2 className="text-3xl lg:text-4xl font-bold text-cyan-300">
+              <h2 className="text-3xl lg:text-4xl font-bold text-white">
                 Starting a Business Doesn't Have to Be Complicated
               </h2>
               <p className="text-xl text-slate-300 leading-relaxed">
