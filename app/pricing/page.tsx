@@ -346,6 +346,7 @@ export default function PricingPage() {
   ]
 
   return (
+    <TooltipProvider delayDuration={200}>
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-900 pt-4">
       {/* Checkout Configurator Modal */}
       {isConfiguratorOpen && selectedTier && (
