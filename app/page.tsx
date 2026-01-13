@@ -51,7 +51,7 @@ export default function TestLandingPage() {
                     size="lg"
                     className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white px-8 py-6 text-lg font-semibold w-full sm:w-auto"
                   >
-                    <Rocket className="mr-3 w-6 h-6 text-orange-400" />
+                    <Rocket className="mr-3 w-6 h-6 text-orange-500" />
                     Get Started
                   </Button>
                 </Link>
@@ -62,8 +62,8 @@ export default function TestLandingPage() {
                   >
                     <Button 
                       size="lg"
-                      className="w-full sm:w-auto bg-transparent border border-white/30 text-emerald-400 hover:bg-emerald-4=500 hover:text-yellow-100 px-8 py-6 text-lg font-semibold backdrop-blur">
-                      <Lightbulb className="mr-3 w-6 h-6 text-yellow-300"/>
+                      className="w-full sm:w-auto bg-transparent border border-white/30 text-emerald-400 hover:bg-emerald-4=500 hover:text-yellow-200 px-8 py-6 text-lg font-semibold backdrop-blur">
+                      <Lightbulb className="mr-3 w-6 h-6 text-yellow-200"/>
                       Validate my Idea
                     </Button>
                 </Link>
