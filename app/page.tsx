@@ -81,7 +81,7 @@ export default function TestLandingPage() {
               <div className="space-y-3 py-4">
                 {[
                   "Start your new business in less than 48 Hours",
-                  "EIN, Legal docs, & State registrations begin immediately",
+                  "EIN, Legal docs, Registered Agent & State registrations begin immediately",
                   "StartSmart AI-powered App & Idea Validation GPT included in all startup packages",
                 ].map((feature, i) => (
                   <div key={i} className="flex items-center gap-3">
