@@ -49,7 +49,7 @@ export default function TestLandingPage() {
                 <Link href="/pricing">
                   <Button
                     size="lg"
-                    className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white px-8 py-6 text-lg font-semibold w-full sm:w-auto"
+                    className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-orange text-white px-8 py-6 text-lg font-semibold w-full sm:w-auto"
                   >
                     <Rocket className="mr-3 w-6 h-6" />
                     Get Started
@@ -62,7 +62,7 @@ export default function TestLandingPage() {
                   >
                     <Button 
                       size="lg"
-                      className="w-full sm:w-auto bg-transparent border border-white/30 text-cyan-400 text-cyan-400 hover:bg-emerald-4=500 hover:text-white px-8 py-6 text-lg font-semibold backdrop-blur">
+                      className="w-full sm:w-auto bg-transparent border border-white/30 text-yellow-400 text-cyan-400 hover:bg-emerald-4=500 hover:text-white px-8 py-6 text-lg font-semibold backdrop-blur">
                       <Lightbulb className="mr-3 w-6 h-6"/>
                       Validate my Idea
                     </Button>
@@ -70,7 +70,7 @@ export default function TestLandingPage() {
                 <Link href="/features">
                   <Button
                     size="lg"
-                    className="w-full sm:w-auto bg-transparent border border-white/30 text-white/80 hover:bg-white/10 hover:text-emerald-400 px-8 py-6 text-lg font-semibold backdrop-blur"
+                    className="w-full sm:w-auto bg-transparent border border-white/30 text-red text-white/80 hover:bg-white/10 hover:text-emerald-400 px-8 py-6 text-lg font-semibold backdrop-blur"
                   >
                     <Bot className="ml-3 w-6 h-6" /> 
                     Learn more                   
