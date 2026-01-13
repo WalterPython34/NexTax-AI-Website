@@ -16,7 +16,7 @@ export default function Navigation() {
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-2">
             <Image src="/images/nextax-logo.png" alt="NexTax.AI" width={32} height={32} className="w-8 h-8" />
-            <span className="font-bold text-xl tracking-[0.02em] font-['Plus_Jakarta_Sans',_sans-serif]">NexTax<span className="opacity-80 font-medium">.AI</span>
+            <span className="font-bold text-xl tracking-tight font-['Space_Grotesk',_sans-serif]">NexTax<span className="text-teal-400">.AI</span>
               </span>
           </Link>
 
