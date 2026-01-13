@@ -40,18 +40,12 @@ export default function Navigation() {
 
           {/* CTA Button - Only StartSmart GPT */}
           <div className="hidden md:flex items-center space-x-4">
+            
             <Button
-              className="text-white transition-all duration-200"
-              style={{ backgroundColor: "#318CE7" }}
-              onClick={() => window.open("https://legal-eye-q.vercel.app/", "_blank")}
-            >
-              Legal EyeQ
-            </Button>
-            <Button
-              className="bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white transition-all duration-200"
+              className="bg-white hover:from-emerald-600 hover:to-cyan-600 text-black transition-all duration-200"
               onClick={() => window.open("https://startsmartbiz.ai", "_blank")}
             >
-              StartSmart GPT
+              StartSmart App
             </Button>
           </div>
 
