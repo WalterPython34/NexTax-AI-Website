@@ -1,12 +1,25 @@
 import type React from "react"
 import type { Metadata } from "next"
+import { Inter, Plus_Jakarta_Sans, Space_Grotesk } from "next/font/google"
 import { Inter } from "next/font/google"
 import "./globals.css"
 import Navigation from "@/components/navigation"
 import { Footer } from "@/components/footer"
 import Script from "next/script"
 
-const inter = Inter({ subsets: ["latin"] })
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter" })
+
+const plusJakartaSans = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  weight: ["700"],
+  variable: "--font-plus-jakarta",
+})
+
+const spaceGrotesk = Space_Grotesk({
+  subsets: ["latin"],
+  weight: ["500", "600"],
+  variable: "--font-space-grotesk",
+})
 
 export const metadata: Metadata = {
   title: "NexTax.AI - AI Copilot for Modern Tax Teams",
