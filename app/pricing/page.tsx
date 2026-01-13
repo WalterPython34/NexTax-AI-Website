@@ -13,6 +13,7 @@ import {
   Shield,
   Clock,
   Star,
+  Info,
   FileText,
   Globe,
   DollarSign,
