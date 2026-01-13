@@ -39,7 +39,7 @@ export default function TestLandingPage() {
                   Bring your vision to life.
                   <span className="block text-white-400">We'll streamline the setup.</span>
                   <span className="block text-emerald-400 text-xl lg:text-xl mt-8">
-                    From idea to new business launch in record time, our tax experts help you startup with confidence and stay
+                    From idea to new business in record time, our tax experts help you startup with confidence and stay
                     organized with our AI-powered tools.
                   </span>
                 </h1>
@@ -62,7 +62,7 @@ export default function TestLandingPage() {
                   >
                     <Button 
                       size="lg"
-                      className="w-full sm:w-auto bg-transparent border border-white/30 text-emerald-400 text-emerald-400 hover:bg-emerald-400 hover:text-white px-8 py-6 text-lg font-semibold backdrop-blur">
+                      className="w-full sm:w-auto bg-transparent border border-white/30 text-emerald-400 text-emerald-400 hover:bg-emerald-4=500 hover:text-white px-8 py-6 text-lg font-semibold backdrop-blur">
                       <Lightbulb className="mr-3 w-6 h-6"/>
                       Validate my Idea
                     </Button>
