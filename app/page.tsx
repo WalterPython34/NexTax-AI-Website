@@ -38,7 +38,7 @@ export default function TestLandingPage() {
                 <h1 className="text-3xl lg:text-5xl font-bold text-white leading-tight">
                   Bring your vision to life.
                   <span className="block text-white-400">We'll streamline the setup.</span>
-                  <span className="block text-emerald-400 text-xl lg:text-xl mt-8">
+                  <span className="block text-emerald-300 text-xl lg:text-xl mt-8">
                     From idea to new business in record time, our tax experts help you startup with confidence and stay
                     organized with our AI-powered tools.
                   </span>
