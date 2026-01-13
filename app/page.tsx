@@ -82,7 +82,7 @@ export default function TestLandingPage() {
                 {[
                   "Start your new business in less than 48 Hours",
                   "EIN, Legal docs, & State registrations begin immediately",
-                  "StartSmart AI-powered App included in all startup packages (Free)",
+                  "StartSmart AI-powered App & Idea Validation GPT included in all startup packages",
                 ].map((feature, i) => (
                   <div key={i} className="flex items-center gap-3">
                     <CheckCircle className="w-5 h-5 text-emerald-400 flex-shrink-0" />
