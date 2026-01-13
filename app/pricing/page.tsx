@@ -886,6 +886,7 @@ export default function PricingPage() {
         </div>
       </section>
     </div>
+  </TooltipProvider>
   )
 }
 
