@@ -159,15 +159,6 @@ export default function EcommLandingPage() {
         </div>
       </section>
 
-      {/* Tax Savings Quiz */}
-      <section className="py-16 bg-slate-900/30">
-        <div className="container mx-auto px-4">
-          <div className="flex justify-center">
-            <TaxSavingsWizard variant="card" />
-          </div>
-        </div>
-      </section>
-
       {/* Section 1: Launching Doesn't Need to Be Difficult (Video Left, Text Right) */}
       <section className="py-20 bg-slate-900/50">
         <div className="container mx-auto px-4">
