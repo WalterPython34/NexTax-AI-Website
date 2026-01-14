@@ -7,8 +7,10 @@ import { Card, CardContent } from "@/components/ui/card"
 import { Bot, CheckCircle, Rocket, MessageSquare, Shield, Lock, Users, Zap, ArrowRight, Building2, TrendingUp, Clock, Flame, Lightbulb, DollarSign } from "lucide-react"
 import Link from "next/link"
 import { AuthModal } from "@/components/auth/auth-modal"
+import { Navigation } from "@/components/navigation"
+import { TaxSavingsWizard } from "@/components/tax-savings-wizard"
 
-export default function TestLandingPage() {
+export default function EcommLandingPage() {
   const [authModal, setAuthModal] = useState<{ isOpen: boolean; mode: "signin" | "signup" }>({
     isOpen: false,
     mode: "signin",
@@ -153,6 +155,15 @@ export default function TestLandingPage() {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Tax Savings Quiz */}
+      <section className="py-16 bg-slate-900/30">
+        <div className="container mx-auto px-4">
+          <div className="flex justify-center">
+            <TaxSavingsWizard variant="card" />
           </div>
         </div>
       </section>
