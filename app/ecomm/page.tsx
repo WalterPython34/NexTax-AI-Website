@@ -159,6 +159,42 @@ export default function TestLandingPage() {
         </div>
       </section>
 
+      {/* Tax Savings Quiz Section */}
+      <section className="py-20 bg-slate-900/50">
+        <div className="container mx-auto px-4">
+          {/* Section Header */}
+          <h2 className="text-3xl lg:text-4xl font-bold text-white text-center mb-12">
+            Don't let 2026 platform changes <span className="text-emerald-400">eat your margins.</span>
+          </h2>
+
+          {/* 60/40 Grid Layout */}
+          <div className="grid lg:grid-cols-5 gap-8 items-center">
+            {/* Left Column - Quiz Card (60%) */}
+            <div className="lg:col-span-3">
+              <div className="bg-slate-800/80 rounded-2xl p-2 border border-slate-700/50">
+                <TaxSavingsWizard variant="card" />
+              </div>
+            </div>
+
+            {/* Right Column - Creator Image (40%) */}
+            <div className="lg:col-span-2 flex justify-center">
+              <div className="relative">
+                {/* Glow effect */}
+                <div className="absolute -inset-4 bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 rounded-3xl blur-xl"></div>
+                {/* Image container */}
+                <div className="relative">
+                  <img
+                    src="/images/creator2.jpg"
+                    alt="Content creator with ring light filming product showcase"
+                    className="rounded-2xl border-2 border-slate-700/50 shadow-2xl max-h-[500px] object-cover"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
      {/* Section 1: Launching Doesn't Need to Be Difficult (Video Left, Text Right) */}
       <section className="py-20 bg-slate-900/50">
         <div className="container mx-auto px-4">
