@@ -164,7 +164,7 @@ export default function TestLandingPage() {
         <div className="container mx-auto px-4">
           {/* Section Header */}
          <div className="text-center mb-16 max-w-3xl mx-auto"> 
-          <h2 className="text-3xl lg:text-4xl font-bold text-white text-center mb-"6>
+          <h2 className="text-3xl lg:text-4xl font-bold text-white text-center mb-6">
             Don't let 2026 platform changes eat your margins.
           </h2>
           <p className="text-lg text-slate-300 leading-relaxed">
