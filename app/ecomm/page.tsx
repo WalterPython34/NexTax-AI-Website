@@ -167,12 +167,10 @@ export default function TestLandingPage() {
            <h2 className="text-3xl lg:text-4xl font-bold text-white text-center mb-8">
             Don't let 2026 platform changes eat your margins.
           </h2>
-          <p className="text-lg text-slate-300 text-center leading-relaxed">
-                With the new $2,000 threshold, the IRS sees every livestream sale. Use the <span className="text-bold">StartSmart AI Leakage Check</span> below to see how much you’re overpaying in Self-Employment tax and claim your "Audit-Shield" roadmap.
-              </p>
+          
           
           {/* 60/40 Grid Layout */}
-          <div className="grid lg:grid-cols-5 items-center justify-center gap-8 lg:gap-16">
+          <div className="flex flex-col lg:flex-row items-center justify-center gap-8 lg:gap-16">
             {/* Left Column - Quiz Card (60%) */}
             <div className="lg:col-span-3">
              <div className="bg-slate-800/80 rounded-2xl p-2 border border-slate-700/50"> 
