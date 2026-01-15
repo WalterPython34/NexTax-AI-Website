@@ -158,24 +158,24 @@ export default function TestLandingPage() {
           </div>
         </div>
       </section>
+      
 
       {/* Tax Savings Quiz Section */}
       <section className="py-20 bg-slate-900/50">
         <div className="container mx-auto px-4">
           {/* Section Header */}
-           <h2 className="text-3xl lg:text-4xl font-bold text-white text-center mb-6">
+           <h2 className="text-3xl lg:text-4xl font-bold text-white text-center mb-8">
             Don't let 2026 platform changes eat your margins.
           </h2>
           <p className="text-lg text-slate-300 text-center leading-relaxed">
-                With the new $2,000 threshold, the IRS sees every livestream sale. Use the <span className="text-slate-300">StartSmart AI Leakage Check</span> below to see how much you’re overpaying in Self-Employment tax and claim your "Audit-Shield" roadmap.
+                With the new $2,000 threshold, the IRS sees every livestream sale. Use the <span className="text-bold">StartSmart AI Leakage Check</span> below to see how much you’re overpaying in Self-Employment tax and claim your "Audit-Shield" roadmap.
               </p>
           
-
           {/* 60/40 Grid Layout */}
-          <div className="flex flex-col lg:flex-row items-center justify-center gap-8 lg:gap-16">
+          <div className="grid lg:grid-cols-5 items-center justify-center gap-8 lg:gap-16">
             {/* Left Column - Quiz Card (60%) */}
             <div className="lg:col-span-3">
-             <div className="bg-slate-800/80 rounded-2xl p-2 border-2 border-slate-700/50"> 
+             <div className="bg-slate-800/80 rounded-2xl p-2 border border-slate-700/50"> 
               <TaxSavingsWizard variant="card" />
               </div>
               </div>
@@ -184,7 +184,7 @@ export default function TestLandingPage() {
             <div className="lg:col-span-2 flex justify-center lg:justify-start">
               <div className="relative">
                 {/* Glow effect */}
-                <div className="absolute -inset-4 bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 rounded-3xl blur-2xl"></div>
+                <div className="absolute -inset-4 bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 rounded-3xl blur-xl"></div>
                 {/* Image container */}
                 <div className="relative">
                   <img
