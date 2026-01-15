@@ -161,7 +161,6 @@ export default function TestLandingPage() {
 
       {/* Tax Savings Quiz Section */}
       <section className="py-20 bg-slate-900/50">
-        <div className="absolute inset-0 bg-[#0a0f1a] z-0"></div>
         <div className="container mx-auto px-4">
           {/* Section Header */}
          <div className="text-center mb-16 max-w-3xl mx-auto"> 
@@ -171,7 +170,7 @@ export default function TestLandingPage() {
           <p className="text-lg text-slate-300 leading-relaxed">
                 With the new $2,000 threshold, the IRS sees every livestream sale. Use the <span className="text-slate-300">StartSmart AI Leakage Check</span> below to see how much you’re overpaying in Self-Employment tax and claim your "Audit-Shield" roadmap.
               </p>
-           </div>
+          
 
           {/* 60/40 Grid Layout */}
           <div className="flex flex-col lg:flex-row items-center justify-center gap-8 lg:gap-16">
