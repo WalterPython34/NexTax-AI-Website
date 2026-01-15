@@ -173,7 +173,7 @@ export default function TestLandingPage() {
            </div>
 
           {/* 60/40 Grid Layout */}
-          <div className="grid lg:grid-cols-5 gap-12 lg:gap-16 items-center max-w-6xl mx-auto">
+          <div className="grid lg:grid-cols-5 gap-12 lg:gap-8 items-center max-w-6xl mx-auto">
             {/* Left Column - Quiz Card (60%) */}
             <div className="lg:col-span-3 flex justify-center lg:justify-end">
               <TaxSavingsWizard variant="card" />
@@ -189,7 +189,7 @@ export default function TestLandingPage() {
                   <img
                     src="/images/creator2.jpg"
                     alt="Content creator with ring light filming product showcase"
-                    className="rounded-2xl border border-slate-700/50 shadow-2xl w-full max-h-[500px] object-cover"
+                    className="rounded-2xl border-2 border-slate-700/50 shadow-2xl max-h-[500px] object-cover"
                   />
                 </div>
               </div>
