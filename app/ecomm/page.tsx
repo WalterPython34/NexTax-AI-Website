@@ -175,7 +175,9 @@ export default function TestLandingPage() {
           <div className="flex flex-col lg:flex-row items-center justify-center gap-8 lg:gap-16">
             {/* Left Column - Quiz Card (60%) */}
             <div className="lg:col-span-3">
+             <div className="bg-slate-800/80 rounded-2xl p-2"> 
               <TaxSavingsWizard variant="card" />
+              </div>
               </div>
                           
             {/* Right Column - Creator Image (40%) */}
