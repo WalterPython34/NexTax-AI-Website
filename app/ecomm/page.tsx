@@ -163,10 +163,10 @@ export default function TestLandingPage() {
       <section className="py-20 bg-slate-900/50">
         <div className="container mx-auto px-4">
           {/* Section Header */}
-          <h2 className="text-3xl lg:text-4xl font-bold text-blue-400 text-center mb-12">
+          <h2 className="text-3xl lg:text-4xl font-bold text-cyan-400 text-center mb-12">
             Don't let 2026 platform changes eat your margins.
           </h2>
-          <p className="text-xl text-slate-200 leading-relaxed">
+          <p className="text-xl text-slate-200 text-center leading-relaxed">
                 With the new $2,000 threshold, the IRS sees every livestream sale. Use the <span className="text-slate-300">StartSmart AI Leakage Check</span> below to see how much you’re overpaying in Self-Employment tax and claim your "Audit-Shield" roadmap.
               </p>
 
@@ -174,8 +174,7 @@ export default function TestLandingPage() {
           <div className="grid lg:grid-cols-5 gap-8 items-center">
             {/* Left Column - Quiz Card (60%) */}
             <div className="lg:col-span-3">
-              <div className="bg-slate-800/80 rounded-2xl p-2 border border-slate-700/50">
-                <TaxSavingsWizard variant="card" />
+              <TaxSavingsWizard variant="card" />
               </div>
             </div>
 
@@ -202,6 +201,8 @@ export default function TestLandingPage() {
       <section className="py-20 bg-slate-900/50">
         <div className="container mx-auto px-4">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
+            {/* Glow effect */}
+                <div className="absolute -inset-4 bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 rounded-3xl blur-xl"></div>
             {/* Video/Image Left */}
             <div className="relative">
               <video
