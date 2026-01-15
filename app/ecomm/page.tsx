@@ -170,6 +170,7 @@ export default function TestLandingPage() {
           <p className="text-lg text-slate-300 leading-relaxed">
                 With the new $2,000 threshold, the IRS sees every livestream sale. Use the <span className="text-slate-300">StartSmart AI Leakage Check</span> below to see how much you’re overpaying in Self-Employment tax and claim your "Audit-Shield" roadmap.
               </p>
+           </div>
 
           {/* 60/40 Grid Layout */}
           <div className="grid lg:grid-cols-5 gap-12 lg:gap-16 items-center max-w-6xl mx-auto">
