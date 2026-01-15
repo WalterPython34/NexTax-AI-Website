@@ -163,7 +163,7 @@ export default function TestLandingPage() {
       <section className="py-20 bg-slate-900/50">
         <div className="container mx-auto px-4">
           {/* Section Header */}
-          <h2 className="text-3xl lg:text-4xl font-bold text-cyan-400 text-center mb-12">
+          <h2 className="text-3xl lg:text-4xl font-bold text-white text-center mb-12">
             Don't let 2026 platform changes eat your margins.
           </h2>
           <p className="text-xl text-slate-200 text-center leading-relaxed">
