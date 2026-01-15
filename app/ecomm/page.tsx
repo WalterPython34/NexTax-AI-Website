@@ -167,6 +167,9 @@ export default function TestLandingPage() {
            <h2 className="text-3xl lg:text-4xl font-bold text-white text-center mb-8">
             Don't let 2026 platform changes eat your margins.
           </h2>
+          <p className="text-lg text-emerald-500 text-center leading-relaxed">
+                With the new $2,000 threshold, the IRS sees every livestream sale. Use the <span className="text-bold">StartSmart AI Leakage Check</span> below to see how much you’re overpaying in Self-Employment tax and claim your "Audit-Shield" roadmap.
+              </p>
           
           
           {/* 60/40 Grid Layout */}
