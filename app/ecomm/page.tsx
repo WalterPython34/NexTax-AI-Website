@@ -166,7 +166,7 @@ export default function TestLandingPage() {
            <h2 className="text-3xl lg:text-4xl font-bold text-white text-center mb-6">
             Don't let 2026 platform changes eat your margins.
           </h2>
-          <p className="text-lg text-slate-300 leading-relaxed">
+          <p className="text-lg text-slate-300 text-center leading-relaxed">
                 With the new $2,000 threshold, the IRS sees every livestream sale. Use the <span className="text-slate-300">StartSmart AI Leakage Check</span> below to see how much you’re overpaying in Self-Employment tax and claim your "Audit-Shield" roadmap.
               </p>
           
@@ -182,7 +182,7 @@ export default function TestLandingPage() {
             <div className="lg:col-span-2 flex justify-center lg:justify-start">
               <div className="relative">
                 {/* Glow effect */}
-                <div className="absolute -inset-6 bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 rounded-3xl blur-2xl opacity-60"></div>
+                <div className="absolute -inset-4 bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 rounded-3xl blur-2xl"></div>
                 {/* Image container */}
                 <div className="relative">
                   <img
