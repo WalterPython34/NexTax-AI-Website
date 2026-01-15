@@ -160,34 +160,35 @@ export default function TestLandingPage() {
       </section>
 
       {/* Tax Savings Quiz Section */}
-      <section className="py-20 bg-transparent">
+      <section className="py-20 bg-[#0a0f1a]">
         <div className="container mx-auto px-4">
           {/* Section Header */}
-          <h2 className="text-3xl lg:text-4xl font-bold text-white text-center mb-12">
+         <div className="text-center mb-16 max-w-3xl mx-auto"> 
+          <h2 className="text-3xl lg:text-4xl font-bold text-white text-center mb-"6>
             Don't let 2026 platform changes eat your margins.
           </h2>
-          <p className="text-xl text-slate-200 text-center leading-relaxed">
+          <p className="text-lg text-slate-300 leading-relaxed">
                 With the new $2,000 threshold, the IRS sees every livestream sale. Use the <span className="text-slate-300">StartSmart AI Leakage Check</span> below to see how much you’re overpaying in Self-Employment tax and claim your "Audit-Shield" roadmap.
               </p>
 
           {/* 60/40 Grid Layout */}
-          <div className="grid lg:grid-cols-5 gap-4 items-center">
+          <div className="grid lg:grid-cols-5 gap-12 lg:gap-16 items-center max-w-6xl mx-auto">
             {/* Left Column - Quiz Card (60%) */}
-            <div className="lg:col-span-3 flex justify-end">
+            <div className="lg:col-span-3 flex justify-center lg:justify-end">
               <TaxSavingsWizard variant="card" />
               </div>
             
             {/* Right Column - Creator Image (40%) */}
-            <div className="lg:col-span-2 flex justify-start">
+            <div className="lg:col-span-2 flex justify-center lg:justify-start">
               <div className="relative">
                 {/* Glow effect */}
-                <div className="absolute -inset-4 bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 rounded-3xl blur-xl"></div>
+                <div className="absolute -inset-6 bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 rounded-3xl blur-2xl opacity-60"></div>
                 {/* Image container */}
                 <div className="relative">
                   <img
                     src="/images/creator2.jpg"
                     alt="Content creator with ring light filming product showcase"
-                    className="rounded-2xl border-2 border-slate-700/50 shadow-2xl max-h-[500px] object-cover"
+                    className="rounded-2xl border border-slate-700/50 shadow-2xl w-full max-h-[500px] object-cover"
                   />
                 </div>
               </div>
