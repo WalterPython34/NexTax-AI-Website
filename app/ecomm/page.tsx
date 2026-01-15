@@ -176,8 +176,7 @@ export default function TestLandingPage() {
             <div className="lg:col-span-3">
               <TaxSavingsWizard variant="card" />
               </div>
-            </div>
-
+            
             {/* Right Column - Creator Image (40%) */}
             <div className="lg:col-span-2 flex justify-center">
               <div className="relative">
