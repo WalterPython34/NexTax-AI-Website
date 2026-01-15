@@ -160,7 +160,7 @@ export default function TestLandingPage() {
       </section>
 
       {/* Tax Savings Quiz Section */}
-      <section className="py-20 bg-slate-900/50">
+      <section className="py-20 bg-transparent">
         <div className="container mx-auto px-4">
           {/* Section Header */}
           <h2 className="text-3xl lg:text-4xl font-bold text-white text-center mb-12">
@@ -171,14 +171,14 @@ export default function TestLandingPage() {
               </p>
 
           {/* 60/40 Grid Layout */}
-          <div className="grid lg:grid-cols-5 gap-8 items-center">
+          <div className="grid lg:grid-cols-5 gap-4 items-center">
             {/* Left Column - Quiz Card (60%) */}
-            <div className="lg:col-span-3">
+            <div className="lg:col-span-3 flex justify-end">
               <TaxSavingsWizard variant="card" />
               </div>
             
             {/* Right Column - Creator Image (40%) */}
-            <div className="lg:col-span-2 flex justify-center">
+            <div className="lg:col-span-2 flex justify-start">
               <div className="relative">
                 {/* Glow effect */}
                 <div className="absolute -inset-4 bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 rounded-3xl blur-xl"></div>
