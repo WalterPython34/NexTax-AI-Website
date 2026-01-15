@@ -160,9 +160,9 @@ export default function TestLandingPage() {
       </section>
 
       {/* Tax Savings Quiz Section */}
-      <section className="pt-24 pb-32 bg-[#0a0f1a] relative overflow-hidden">
+      <section className="py-20 bg-slate-900/50">
         <div className="absolute inset-0 bg-[#0a0f1a] z-0"></div>
-        <div className="container mx-auto px-4 relative z-10">
+        <div className="container mx-auto px-4">
           {/* Section Header */}
          <div className="text-center mb-16 max-w-3xl mx-auto"> 
           <h2 className="text-3xl lg:text-4xl font-bold text-white text-center mb-6">
