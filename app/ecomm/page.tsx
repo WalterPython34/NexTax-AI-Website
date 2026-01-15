@@ -160,8 +160,9 @@ export default function TestLandingPage() {
       </section>
 
       {/* Tax Savings Quiz Section */}
-      <section className="py-20 bg-[#0a0f1a]">
-        <div className="container mx-auto px-4">
+      <section className="pt-24 pb-32 bg-[#0a0f1a] relative overflow-hidden">
+        <div className="absolute inset-0 bg-[#0a0f1a] z-0"></div>
+        <div className="container mx-auto px-4 relative z-10">
           {/* Section Header */}
          <div className="text-center mb-16 max-w-3xl mx-auto"> 
           <h2 className="text-3xl lg:text-4xl font-bold text-white text-center mb-6">
@@ -173,9 +174,9 @@ export default function TestLandingPage() {
            </div>
 
           {/* 60/40 Grid Layout */}
-          <div className="grid lg:grid-cols-5 gap-12 lg:gap-8 items-center max-w-6xl mx-auto">
+          <div className="flex flex-col lg:flex-row items-center justify-center gap-8 lg:gap-16">
             {/* Left Column - Quiz Card (60%) */}
-            <div className="lg:col-span-3 flex justify-center lg:justify-end">
+            <div className="flex-shrink-0">
               <TaxSavingsWizard variant="card" />
               </div>
             
