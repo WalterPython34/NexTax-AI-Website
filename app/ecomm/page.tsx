@@ -161,14 +161,14 @@ export default function TestLandingPage() {
       
 
       {/* Tax Savings Quiz Section */}
-      <section className="py-20 bg-slate-900/50">
+      <section className="py-20 bg-slate-900">
         <div className="container mx-auto px-4">
           {/* Section Header */}
            <h2 className="text-3xl lg:text-4xl font-bold text-emerald-500 text-center mb-10">
             Don't let 2026 platform changes eat your margins.
           </h2>
-          <p className="text-lg text-slate-300 text-center leading-relaxed">
-                With the new $2,000 threshold, the IRS sees every livestream sale. Use the <span className="text-bold">StartSmart AI Leakage Check</span> below to see how much you’re overpaying in Self-Employment tax and claim your "Audit-Shield" roadmap.
+          <p className="text-lg text-slate-300 text-center mb-10 leading-relaxed">
+                With the new $2,000 threshold, the IRS sees every livestream sale. Use the StartSmart AI Leakage Check below to see how much you’re overpaying in Self-Employment tax and claim your "Audit-Shield" roadmap.
               </p>
           
           
@@ -176,7 +176,7 @@ export default function TestLandingPage() {
           <div className="flex flex-col lg:flex-row items-center justify-center gap-8 lg:gap-16">
             {/* Left Column - Quiz Card (60%) */}
             <div className="lg:col-span-3">
-             <div className="bg-slate-800/80 rounded-2xl p-2 border border-slate-700/50 opacity-60"> 
+             <div className="bg-slate-800/80 rounded-2xl p-2 border border-slate-700/50"> 
               <TaxSavingsWizard variant="card" />
               </div>
               </div>
