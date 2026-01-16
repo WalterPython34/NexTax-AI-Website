@@ -120,90 +120,84 @@ export default function EcommLandingPage() {
 
       
        {/* Tax Savings Quiz Section */}
-      <section className="py-20">
-        <div className="container mx-auto px-4">
-          {/* Section Header */}
-           <h2 className="text-3xl lg:text-4xl font-bold text-emerald-500 text-center mb-6">
-            Don't let 2026 platform changes eat your margins.
-          </h2>
-          <p className="text-lg text-slate-300 text-center mb-12 leading-relaxed">
-                With the new $2,000 threshold, the IRS sees every livestream sale. Use the StartSmart AI Leakage Check below to see how much you’re overpaying in Self-Employment tax and claim your "Audit-Shield" roadmap.
-              </p>
-          
-          
-          {/* 60/40 Grid Layout */}
-          <div className="flex flex-col lg:flex-row items-center justify-center gap-8 lg:gap-16">
-            {/* Left Column - Quiz Card (60%) */}
-            <div className="lg:col-span-3">
-             <div className="bg-slate-800/80 rounded-2xl p-2 border border-slate-700/50"> 
-              <TaxSavingsWizard variant="card" />
-              </div>
-              </div>
-                          
-            {/* AI Demo Preview */}
-            <div className="relative -mt-8">
-              <div className="relative bg-slate-800/50 backdrop-blur-sm rounded-2xl p-8 border border-slate-700">
-                <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-cyan-500/10 rounded-2xl" />
-                <div className="relative space-y-6">
-                  <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-lg bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 flex items-center justify-center">
-                        <Bot className="w-6 h-6 text-emerald-400" />
-                      </div>
-                      <div>
-                        <h3 className="text-xl font-semibold text-white">StartSmart AI</h3>
-                        <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                          <Badge className="bg-green-500/20 text-green-300 text-xs">Online & Ready</Badge>
-                        </div>
-                      </div>
-                    </div>
+<section className="py-20">
+  <div className="container mx-auto px-4">
+    {/* Section Header */}
+    <h2 className="text-3xl lg:text-4xl font-bold text-emerald-500 text-center mb-6">
+      Don't let 2026 platform changes eat your margins.
+    </h2>
+    <p className="text-lg text-slate-300 text-center mb-12 leading-relaxed max-w-3xl mx-auto">
+      With the new $2,000 threshold, the IRS sees every livestream sale. Use the StartSmart AI Leakage Check below to see how much you're overpaying in Self-Employment tax and claim your "Audit-Shield" roadmap.
+    </p>
+    
+    {/* 60/40 Grid Layout */}
+    <div className="flex flex-col lg:flex-row items-start justify-center gap-8 lg:gap-12">
+      {/* Left Column - Quiz Card */}
+      <div className="w-full max-w-md">
+        <div className="bg-slate-800/80 rounded-2xl p-2 border border-slate-700/50"> 
+          <TaxSavingsWizard variant="card" />
+        </div>
+      </div>
+                    
+      {/* AI Demo Preview - Constrained Width */}
+      <div className="relative w-full max-w-md">
+        <div className="relative bg-slate-800/50 backdrop-blur-sm rounded-2xl p-6 border border-slate-700">
+          <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-cyan-500/10 rounded-2xl" />
+          <div className="relative space-y-4">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 flex items-center justify-center">
+                  <Bot className="w-5 h-5 text-emerald-400" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-white">StartSmart AI</h3>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                    <Badge className="bg-green-500/20 text-green-300 text-xs">Online & Ready</Badge>
                   </div>
-
-                  <div className="space-y-4">
-                    <div className="bg-slate-900/30 rounded-lg p-4">
-                      <p className="text-slate-300 text-sm">
-                        <strong className="text-emerald-400">You:</strong> "Should I elect S-Corp status for my new
-                        LLC?"
-                      </p>
-                    </div>
-                    <div className="bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 rounded-lg p-4 border border-emerald-500/20">
-                      <p className="text-slate-300 text-sm">
-                        <strong className="text-emerald-400">StartSmart AI:</strong> "Based on your projected $85K
-                        revenue and single-member structure, S-Corp election could save you ~$6,500 annually in
-                        self-employment taxes. However, you'll need to run payroll. Let me show you the breakeven
-                        analysis..."
-                      </p>
-                    </div>
-                    <div className="bg-slate-900/30 rounded-lg p-4">
-                      <p className="text-slate-300 text-sm">
-                        <strong className="text-emerald-400">You:</strong> "What about multi-state tax implications?"
-                      </p>
-                    </div>
-                    <div className="bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 rounded-lg p-4 border border-emerald-500/20">
-                      <p className="text-slate-300 text-sm">
-                        <strong className="text-emerald-400">StartSmart AI:</strong> "Great question! Since you
-                        mentioned clients in NY and CA, you'll need to consider nexus thresholds..."
-                      </p>
-                    </div>
-                  </div>
-
-                  <Link
-                    href="https://chatgpt.com/g/g-684641e9df808191a9d2025951aa3f09-startsmart-ai-business-launch-assistant"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <Button className="w-full bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white">
-                      <MessageSquare className="mr-2 w-4 h-4" text-cyan-500/>
-                      Try StartSmart → Live on ChatGPT
-                    </Button>
-                    </Link>
                 </div>
               </div>
             </div>
+
+            <div className="space-y-3">
+              <div className="bg-slate-900/30 rounded-lg p-3">
+                <p className="text-slate-300 text-sm">
+                  <strong className="text-emerald-400">You:</strong> "Should I elect S-Corp status for my new LLC?"
+                </p>
+              </div>
+              <div className="bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 rounded-lg p-3 border border-emerald-500/20">
+                <p className="text-slate-300 text-sm">
+                  <strong className="text-emerald-400">StartSmart AI:</strong> "Based on your projected $85K revenue and single-member structure, S-Corp election could save you ~$6,500 annually in self-employment taxes. However, you'll need to run payroll. Let me show you the breakeven analysis..."
+                </p>
+              </div>
+              <div className="bg-slate-900/30 rounded-lg p-3">
+                <p className="text-slate-300 text-sm">
+                  <strong className="text-emerald-400">You:</strong> "What about multi-state tax implications?"
+                </p>
+              </div>
+              <div className="bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 rounded-lg p-3 border border-emerald-500/20">
+                <p className="text-slate-300 text-sm">
+                  <strong className="text-emerald-400">StartSmart AI:</strong> "Great question! Since you mentioned clients in NY and CA, you'll need to consider nexus thresholds..."
+                </p>
+              </div>
+            </div>
+
+            <Link
+              href="https://chatgpt.com/g/g-684641e9df808191a9d2025951aa3f09-startsmart-ai-business-launch-assistant"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Button className="w-full bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white mt-2">
+                <MessageSquare className="mr-2 w-4 h-4"/>
+                Try StartSmart → Live on ChatGPT
+              </Button>
+            </Link>
           </div>
         </div>
-      </section>
+      </div>
+    </div>
+  </div>
+</section>
 
       {/* Section 1: Launching Doesn't Need to Be Difficult (Video Left, Text Right) */}
       <section className="py-20 bg-slate-900/50">
