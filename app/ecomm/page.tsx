@@ -164,10 +164,10 @@ export default function TestLandingPage() {
       <section className="py-20">
         <div className="container mx-auto px-4">
           {/* Section Header */}
-           <h2 className="text-3xl lg:text-4xl font-bold text-emerald-500 text-center mb-10">
+           <h2 className="text-3xl lg:text-4xl font-bold text-emerald-500 text-center mb-6">
             Don't let 2026 platform changes eat your margins.
           </h2>
-          <p className="text-lg text-slate-300 text-center mb-10 leading-relaxed">
+          <p className="text-lg text-slate-300 text-center mb-12 leading-relaxed">
                 With the new $2,000 threshold, the IRS sees every livestream sale. Use the StartSmart AI Leakage Check below to see how much you’re overpaying in Self-Employment tax and claim your "Audit-Shield" roadmap.
               </p>
           
