@@ -25,183 +25,179 @@ export default function EcommLandingPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black">
-      {/* Hero Section - Copied from current homepage */}
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-cyan-500/10" />
-        <div className="relative container mx-auto px-4 py-20 lg:py-10">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div className="space-y-8">
-              <Badge className="bg-gradient-to-r from-emerald-500/20 to-blue-500/20 text-cyan-400 border-blue-500/30 text-lg px-2 py-2">
-                <Bot className="w-4 h-4 mr-2" />
-                Powered by StartSmart AI
-              </Badge>
+      
+     {/* Hero Section - Copied from current homepage */}
+<section className="relative overflow-hidden">
+  <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-cyan-500/10" />
+  <div className="relative container mx-auto px-4 py-20 lg:py-10">
+    <div className="grid lg:grid-cols-2 gap-12 items-center">
+      
+      {/* Left Column - Text & CTAs */}
+      <div className="space-y-8">
+        <Badge className="bg-gradient-to-r from-emerald-500/20 to-blue-500/20 text-cyan-400 border-blue-500/30 text-lg px-2 py-2">
+          <Bot className="w-4 h-4 mr-2" />
+          Powered by StartSmart AI
+        </Badge>
 
-              <div className="space-y-6">
-                <h1 className="text-3xl lg:text-5xl font-bold text-white leading-tight">
-                  Why settle for 'influencer'
-                  <span className="block text-white-400">when you can own 'CEO'?</span>
-                  <span className="block text-emerald-300 text-xl lg:text-xl mb-6 mt-8">
-                    StartSmart AI streamlines it all — entity setups tailored for e-comm hustlers, 
-                    S-Corp elections to pocket more from every live sale, and ongoing AI guidance that evolves with your empire. 
-                  </span>
-                  <p className="text-lg text-white mb-4 leading-relaxed">
-                From side gig to six figures? We've got the blueprint
-              </p>
-                </h1>
-              </div>
-
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Link href="/pricing">
-                  <Button
-                    size="lg"
-                    className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white px-8 py-6 text-lg font-semibold w-full sm:w-auto"
-                  >
-                    <Rocket className="mr-3 w-6 h-6 text-orange-500" />
-                    Get Started
-                  </Button>
-                </Link>
-                <Link
-                    href="https://chatgpt.com/g/g-684641e9df808191a9d2025951aa3f09-startsmart-ai-business-launch-assistant"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <Button 
-                      size="lg"
-                      className="w-full sm:w-auto bg-transparent border border-white/30 text-emerald-400 hover:bg-emerald-4=500 hover:text-yellow-200 px-8 py-6 text-lg font-semibold backdrop-blur">
-                      <Lightbulb className="mr-3 w-6 h-6 text-yellow-200"/>
-                      Validate my Idea
-                    </Button>
-                </Link>
-                <Link href="/features">
-                  <Button
-                    size="lg"
-                    className="w-full sm:w-auto bg-transparent border border-white/30 text-white/80 hover:bg-white/10 hover:text-emerald-400 px-8 py-6 text-lg font-semibold backdrop-blur"
-                  >
-                    <Bot className="ml-3 w-6 h-6 text-red-400" /> 
-                    Learn more                   
-                  </Button>
-                </Link>               
-              </div>
-
-              <div className="space-y-3 py-4">
-                
-                {[
-                  "Start your new business in less than 48 Hours",
-                  "EIN, Legal doc, Registered Agent & State registrations begin immediately",
-                  "StartSmart AI-powered App & Idea Validation GPT included in all startup packages",
-                ].map((feature, i) => (
-                  <div key={i} className="flex items-center gap-3">
-                    <CheckCircle className="w-5 h-5 text-emerald-400 flex-shrink-0" />
-                    <span className="text-slate-300">{feature}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* AI Demo Preview */}
-            <div className="relative -mt-8">
-              <div className="relative bg-slate-800/50 backdrop-blur-sm rounded-2xl p-8 border border-slate-700">
-                <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-cyan-500/10 rounded-2xl" />
-                <div className="relative space-y-6">
-                  <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-lg bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 flex items-center justify-center">
-                        <Bot className="w-6 h-6 text-emerald-400" />
-                      </div>
-                      <div>
-                        <h3 className="text-xl font-semibold text-white">StartSmart AI</h3>
-                        <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                          <Badge className="bg-green-500/20 text-green-300 text-xs">Online & Ready</Badge>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-4">
-                    <div className="bg-slate-900/30 rounded-lg p-4">
-                      <p className="text-slate-300 text-sm">
-                        <strong className="text-emerald-400">You:</strong> "Should I elect S-Corp status for my new
-                        LLC?"
-                      </p>
-                    </div>
-                    <div className="bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 rounded-lg p-4 border border-emerald-500/20">
-                      <p className="text-slate-300 text-sm">
-                        <strong className="text-emerald-400">StartSmart AI:</strong> "Based on your projected $85K
-                        revenue and single-member structure, S-Corp election could save you ~$6,500 annually in
-                        self-employment taxes. However, you'll need to run payroll. Let me show you the breakeven
-                        analysis..."
-                      </p>
-                    </div>
-                    <div className="bg-slate-900/30 rounded-lg p-4">
-                      <p className="text-slate-300 text-sm">
-                        <strong className="text-emerald-400">You:</strong> "What about multi-state tax implications?"
-                      </p>
-                    </div>
-                    <div className="bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 rounded-lg p-4 border border-emerald-500/20">
-                      <p className="text-slate-300 text-sm">
-                        <strong className="text-emerald-400">StartSmart AI:</strong> "Great question! Since you
-                        mentioned clients in NY and CA, you'll need to consider nexus thresholds..."
-                      </p>
-                    </div>
-                  </div>
-
-                  <Link
-                    href="https://chatgpt.com/g/g-684641e9df808191a9d2025951aa3f09-startsmart-ai-business-launch-assistant"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <Button className="w-full bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white">
-                      <MessageSquare className="mr-2 w-4 h-4" text-cyan-500/>
-                      Try StartSmart → Live on ChatGPT
-                    </Button>
-                    </Link>
-                </div>
-              </div>
-            </div>
-          </div>
+        <div className="space-y-6">
+          <h1 className="text-3xl lg:text-5xl font-bold text-white leading-tight">
+            Why settle for 'influencer'
+            <span className="block text-white-400">when you can own 'CEO'?</span>
+          </h1>
+          <p className="text-emerald-300 text-lg lg:text-xl leading-relaxed">
+            StartSmart AI streamlines it all — entity setups tailored for e-comm hustlers, 
+            S-Corp elections to pocket more from every live sale, and ongoing AI guidance that evolves with your empire. 
+          </p>
+          <p className="text-lg text-white leading-relaxed">
+            From side gig to six figures? We've got the blueprint
+          </p>
         </div>
-      </section>
 
+        <div className="flex flex-col sm:flex-row gap-4">
+          <Link href="/pricing">
+            <Button
+              size="lg"
+              className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white px-8 py-6 text-lg font-semibold w-full sm:w-auto"
+            >
+              <Rocket className="mr-3 w-6 h-6 text-orange-500" />
+              Get Started
+            </Button>
+          </Link>
+          <Link
+            href="https://chatgpt.com/g/g-684641e9df808191a9d2025951aa3f09-startsmart-ai-business-launch-assistant"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <Button 
+              size="lg"
+              className="w-full sm:w-auto bg-transparent border border-white/30 text-emerald-400 hover:bg-emerald-500 hover:text-yellow-200 px-8 py-6 text-lg font-semibold backdrop-blur"
+            >
+              <Lightbulb className="mr-3 w-6 h-6 text-yellow-200"/>
+              Validate Sales Idea
+            </Button>
+          </Link>
+          <Link href="/features">
+            <Button
+              size="lg"
+              className="w-full sm:w-auto bg-transparent border border-white/30 text-white/80 hover:bg-white/10 hover:text-emerald-400 px-8 py-6 text-lg font-semibold backdrop-blur"
+            >
+              <Bot className="ml-3 w-6 h-6 text-red-400" /> 
+              Learn more                   
+            </Button>
+          </Link>               
+        </div>
+
+        <div className="space-y-3 py-4">
+          {[
+            "Start your new business in less than 48 Hours",
+            "EIN, Legal doc, Registered Agent & State registrations begin immediately",
+            "StartSmart AI-powered App & Idea Validation GPT included in all startup packages",
+          ].map((feature, i) => (
+            <div key={i} className="flex items-center gap-3">
+              <CheckCircle className="w-5 h-5 text-emerald-400 flex-shrink-0" />
+              <span className="text-slate-300">{feature}</span>
+            </div>
+          ))}
+        </div>
+      </div>  
+      
+      {/* Right Column - Creator Image */}
+      <div className="flex justify-center items-center">
+        <div className="relative">
+          {/* Glow effect */}
+          <div className="absolute -inset-6 bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 rounded-3xl blur-2xl opacity-70"></div>
+          {/* Image container */}
+          <img
+            src="/images/creator2.jpg"
+            alt="Content creator with ring light filming product showcase"
+            className="relative rounded-2xl border border-slate-700/50 shadow-2xl max-h-[500px] w-auto object-cover"
+          />
+        </div>
+      </div>
+      </div>
+  </div>
+</section>
+
+      
        {/* Tax Savings Quiz Section */}
-      <section className="py-20">
-        <div className="container mx-auto px-4">
-          {/* Section Header */}
-           <h2 className="text-3xl lg:text-4xl font-bold text-emerald-500 text-center mb-6">
-            Don't let 2026 platform changes eat your margins.
-          </h2>
-          <p className="text-lg text-slate-300 text-center mb-12 leading-relaxed">
-                With the new $2,000 threshold, the IRS sees every livestream sale. Use the StartSmart AI Leakage Check below to see how much you’re overpaying in Self-Employment tax and claim your "Audit-Shield" roadmap.
-              </p>
-          
-          
-          {/* 60/40 Grid Layout */}
-          <div className="flex flex-col lg:flex-row items-center justify-center gap-8 lg:gap-16">
-            {/* Left Column - Quiz Card (60%) */}
-            <div className="lg:col-span-3">
-             <div className="bg-slate-800/80 rounded-2xl p-2 border border-slate-700/50"> 
-              <TaxSavingsWizard variant="card" />
-              </div>
-              </div>
-                          
-            {/* Right Column - Creator Image (40%) */}
-            <div className="lg:col-span-2 flex justify-center lg:justify-start">
-              <div className="relative">
-                {/* Glow effect */}
-                <div className="absolute -inset-4 bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 rounded-3xl blur-xl"></div>
-                {/* Image container */}
-                <div className="relative">
-                  <img
-                    src="/images/creator2.jpg"
-                    alt="Content creator with ring light filming product showcase"
-                    className="rounded-2xl border-2 border-slate-700/50 shadow-2xl max-h-[500px] object-cover"
-                  />
+<section className="py-20">
+  <div className="container mx-auto px-4">
+    {/* Section Header */}
+    <h2 className="text-3xl lg:text-4xl font-bold text-white text-center mb-6">
+      Don't let 2026 platform changes eat your margins.
+    </h2>
+    <p className="text-lg text-slate-300 text-center mb-12 leading-relaxed max-w-3xl mx-auto">
+      With the new $2,000 threshold, the IRS sees every livestream sale. Use the <span className="text-cyan-400 text-bold">StartSmart AI Leakage Check</span> below to see how much you're overpaying in Self-Employment tax and claim your "Audit-Shield" roadmap.
+    </p>
+    
+    {/* 60/40 Grid Layout */}
+    <div className="flex flex-col lg:flex-row items-start justify-center gap-8 lg:gap-12">
+      {/* Left Column - Quiz Card */}
+      <div className="w-full max-w-md">
+        <div className="bg-slate-800/80 rounded-2xl p-2 border border-slate-700/50"> 
+          <TaxSavingsWizard variant="card" />
+        </div>
+      </div>
+                    
+      {/* AI Demo Preview - Constrained Width */}
+      <div className="relative w-full max-w-md">
+        <div className="relative bg-slate-800/50 backdrop-blur-sm rounded-2xl p-6 border border-slate-700">
+          <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-cyan-500/10 rounded-2xl" />
+          <div className="relative space-y-4">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 flex items-center justify-center">
+                  <Bot className="w-5 h-5 text-emerald-400" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-white">StartSmart AI</h3>
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
+                    <Badge className="bg-green-500/20 text-green-300 text-xs">Online & Ready</Badge>
+                  </div>
                 </div>
               </div>
             </div>
+
+            <div className="space-y-3">
+              <div className="bg-slate-900/30 rounded-lg p-3">
+                <p className="text-slate-300 text-sm">
+                  <strong className="text-emerald-400">You:</strong> "Should I elect S-Corp status for my new LLC?"
+                </p>
+              </div>
+              <div className="bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 rounded-lg p-3 border border-emerald-500/20">
+                <p className="text-slate-300 text-sm">
+                  <strong className="text-emerald-400">StartSmart AI:</strong> "Based on your projected $85K revenue and single-member structure, S-Corp election could save you ~$6,500 annually in self-employment taxes. However, you'll need to run payroll. Let me show you the breakeven analysis..."
+                </p>
+              </div>
+              <div className="bg-slate-900/30 rounded-lg p-3">
+                <p className="text-slate-300 text-sm">
+                  <strong className="text-emerald-400">You:</strong> "What about multi-state tax implications?"
+                </p>
+              </div>
+              <div className="bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 rounded-lg p-3 border border-emerald-500/20">
+                <p className="text-slate-300 text-sm">
+                  <strong className="text-emerald-400">StartSmart AI:</strong> "Great question! Since you mentioned clients in NY and CA, you'll need to consider nexus thresholds..."
+                </p>
+              </div>
+            </div>
+
+            <Link
+              href="https://chatgpt.com/g/g-684641e9df808191a9d2025951aa3f09-startsmart-ai-business-launch-assistant"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Button className="w-full bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white mt-2">
+                <MessageSquare className="mr-2 w-4 h-4"/>
+                Try StartSmart → Live on ChatGPT
+              </Button>
+            </Link>
           </div>
         </div>
-      </section>
+      </div>
+    </div>
+  </div>
+</section>
 
       {/* Section 1: Launching Doesn't Need to Be Difficult (Video Left, Text Right) */}
       <section className="py-20 bg-slate-900/50">
