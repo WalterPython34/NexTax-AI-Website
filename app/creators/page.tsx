@@ -40,11 +40,11 @@ export default function EcommLandingPage() {
                 <h1 className="text-3xl lg:text-5xl font-bold text-white leading-tight">
                   Why settle for 'influencer'
                   <span className="block text-white-400">when you can own 'CEO'?</span>
-                  <span className="block text-emerald-300 text-xl lg:text-xl mt-8">
+                  <span className="block text-emerald-300 text-xl lg:text-xl mb-6 mt-8">
                     StartSmart AI streamlines it all — entity setups tailored for e-comm hustlers, 
                     S-Corp elections to pocket more from every live sale, and ongoing AI guidance that evolves with your empire. 
                   </span>
-                  <p className="text-lg text-white mb-6 leading-relaxed">
+                  <p className="text-lg text-white mb-4 leading-relaxed">
                 From side gig to six figures? We've got the blueprint
               </p>
                 </h1>
