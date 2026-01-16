@@ -38,12 +38,15 @@ export default function EcommLandingPage() {
 
               <div className="space-y-6">
                 <h1 className="text-3xl lg:text-5xl font-bold text-white leading-tight">
-                  Built for creators who are done being 
-                  <span className="block text-white-400">‘just a side hustle.’</span>
+                  Why settle for 'influencer'
+                  <span className="block text-white-400">when you can own 'CEO'?</span>
                   <span className="block text-emerald-300 text-xl lg:text-xl mt-8">
-                    Why settle for 'influencer' when you can own 'CEO'?  StartSmart AI streamlines it all — entity setups tailored for e-comm hustlers, 
+                    StartSmart AI streamlines it all — entity setups tailored for e-comm hustlers, 
                     S-Corp elections to pocket more from every live sale, and ongoing AI guidance that evolves with your empire. 
                   </span>
+                  <p className="text-lg text-white mb-6 leading-relaxed">
+                From side gig to six figures? We've got the blueprint
+              </p>
                 </h1>
               </div>
 
@@ -81,9 +84,7 @@ export default function EcommLandingPage() {
               </div>
 
               <div className="space-y-3 py-4">
-                <p className="text-lg text-slate-300 mb-12 leading-relaxed">
-                From side gig to six figures? We've got the blueprint
-              </p>
+                
                 {[
                   "Start your new business in less than 48 Hours",
                   "EIN, Legal doc, Registered Agent & State registrations begin immediately",
