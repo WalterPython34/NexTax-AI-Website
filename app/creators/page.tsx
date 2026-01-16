@@ -127,7 +127,7 @@ export default function EcommLandingPage() {
       Don't let 2026 platform changes eat your margins.
     </h2>
     <p className="text-lg text-slate-300 text-center mb-12 leading-relaxed max-w-3xl mx-auto">
-      With the new $2,000 threshold, the IRS sees every livestream sale. Use the <span className="text-cyan-400">StartSmart AI Leakage Check</span> below to see how much you're overpaying in Self-Employment tax and claim your "Audit-Shield" roadmap.
+      With the new $2,000 threshold, the IRS sees every livestream sale. Use the <span className="text-cyan-400 text-bold">StartSmart AI Leakage Check</span> below to see how much you're overpaying in Self-Employment tax and claim your "Audit-Shield" roadmap.
     </p>
     
     {/* 60/40 Grid Layout */}
