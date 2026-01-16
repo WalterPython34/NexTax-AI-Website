@@ -10,7 +10,7 @@ import { AuthModal } from "@/components/auth/auth-modal"
 import { Navigation } from "@/components/navigation"
 import { TaxSavingsWizard } from "@/components/tax-savings-wizard"
 
-export default function TestLandingPage() {
+export default function EcommLandingPage() {
   const [authModal, setAuthModal] = useState<{ isOpen: boolean; mode: "signin" | "signup" }>({
     isOpen: false,
     mode: "signin",
@@ -38,12 +38,15 @@ export default function TestLandingPage() {
 
               <div className="space-y-6">
                 <h1 className="text-3xl lg:text-5xl font-bold text-white leading-tight">
-                  Bring your vision to life.
-                  <span className="block text-white-400">We'll streamline the setup.</span>
-                  <span className="block text-emerald-300 text-xl lg:text-xl mt-8">
-                    From idea to new business in record time, our tax experts help you startup with confidence and stay
-                    organized with our AI-powered tools.
+                  Why settle for 'influencer'
+                  <span className="block text-white-400">when you can own 'CEO'?</span>
+                  <span className="block text-emerald-300 text-xl lg:text-xl mb-6 mt-8">
+                    StartSmart AI streamlines it all — entity setups tailored for e-comm hustlers, 
+                    S-Corp elections to pocket more from every live sale, and ongoing AI guidance that evolves with your empire. 
                   </span>
+                  <p className="text-lg text-white mb-4 leading-relaxed">
+                From side gig to six figures? We've got the blueprint
+              </p>
                 </h1>
               </div>
 
@@ -81,6 +84,7 @@ export default function TestLandingPage() {
               </div>
 
               <div className="space-y-3 py-4">
+                
                 {[
                   "Start your new business in less than 48 Hours",
                   "EIN, Legal doc, Registered Agent & State registrations begin immediately",
@@ -158,9 +162,8 @@ export default function TestLandingPage() {
           </div>
         </div>
       </section>
-      
 
-      {/* Tax Savings Quiz Section */}
+       {/* Tax Savings Quiz Section */}
       <section className="py-20">
         <div className="container mx-auto px-4">
           {/* Section Header */}
@@ -200,12 +203,10 @@ export default function TestLandingPage() {
         </div>
       </section>
 
-     {/* Section 1: Launching Doesn't Need to Be Difficult (Video Left, Text Right) */}
+      {/* Section 1: Launching Doesn't Need to Be Difficult (Video Left, Text Right) */}
       <section className="py-20 bg-slate-900/50">
         <div className="container mx-auto px-4">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
-            {/* Glow effect */}
-                <div className="absolute -inset-4 bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 rounded-3xl blur-xl"></div>
             {/* Video/Image Left */}
             <div className="relative">
               <video
