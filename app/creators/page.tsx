@@ -26,7 +26,7 @@ export default function EcommLandingPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black">
       
-      {/* Hero Section - Copied from current homepage */}
+     {/* Hero Section - Copied from current homepage */}
 <section className="relative overflow-hidden">
   <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-cyan-500/10" />
   <div className="relative container mx-auto px-4 py-20 lg:py-10">
@@ -114,7 +114,7 @@ export default function EcommLandingPage() {
           />
         </div>
       </div>
-    </div>
+      </div>
   </div>
 </section>
 
