@@ -25,98 +25,100 @@ export default function EcommLandingPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black">
+      
       {/* Hero Section - Copied from current homepage */}
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-cyan-500/10" />
-        <div className="relative container mx-auto px-4 py-20 lg:py-10">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div className="space-y-8">
-              <Badge className="bg-gradient-to-r from-emerald-500/20 to-blue-500/20 text-cyan-400 border-blue-500/30 text-lg px-2 py-2">
-                <Bot className="w-4 h-4 mr-2" />
-                Powered by StartSmart AI
-              </Badge>
+<section className="relative overflow-hidden">
+  <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-cyan-500/10" />
+  <div className="relative container mx-auto px-4 py-20 lg:py-10">
+    <div className="grid lg:grid-cols-2 gap-12 items-center">
+      
+      {/* Left Column - Text & CTAs */}
+      <div className="space-y-8">
+        <Badge className="bg-gradient-to-r from-emerald-500/20 to-blue-500/20 text-cyan-400 border-blue-500/30 text-lg px-2 py-2">
+          <Bot className="w-4 h-4 mr-2" />
+          Powered by StartSmart AI
+        </Badge>
 
-              <div className="space-y-6">
-                <h1 className="text-3xl lg:text-5xl font-bold text-white leading-tight">
-                  Why settle for 'influencer'
-                  <span className="block text-white-400">when you can own 'CEO'?</span>
-                  <span className="block text-emerald-300 text-xl lg:text-xl mb-6 mt-8">
-                    StartSmart AI streamlines it all — entity setups tailored for e-comm hustlers, 
-                    S-Corp elections to pocket more from every live sale, and ongoing AI guidance that evolves with your empire. 
-                  </span>
-                  <p className="text-lg text-white mb-4 leading-relaxed">
-                From side gig to six figures? We've got the blueprint
-              </p>
-                </h1>
-              </div>
-
-              <div className="flex flex-col sm:flex-row gap-4">
-                <Link href="/pricing">
-                  <Button
-                    size="lg"
-                    className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white px-8 py-6 text-lg font-semibold w-full sm:w-auto"
-                  >
-                    <Rocket className="mr-3 w-6 h-6 text-orange-500" />
-                    Get Started
-                  </Button>
-                </Link>
-                <Link
-                    href="https://chatgpt.com/g/g-684641e9df808191a9d2025951aa3f09-startsmart-ai-business-launch-assistant"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <Button 
-                      size="lg"
-                      className="w-full sm:w-auto bg-transparent border border-white/30 text-emerald-400 hover:bg-emerald-4=500 hover:text-yellow-200 px-8 py-6 text-lg font-semibold backdrop-blur">
-                      <Lightbulb className="mr-3 w-6 h-6 text-yellow-200"/>
-                      Validate my Idea
-                    </Button>
-                </Link>
-                <Link href="/features">
-                  <Button
-                    size="lg"
-                    className="w-full sm:w-auto bg-transparent border border-white/30 text-white/80 hover:bg-white/10 hover:text-emerald-400 px-8 py-6 text-lg font-semibold backdrop-blur"
-                  >
-                    <Bot className="ml-3 w-6 h-6 text-red-400" /> 
-                    Learn more                   
-                  </Button>
-                </Link>               
-              </div>
-
-              <div className="space-y-3 py-4">
-                
-                {[
-                  "Start your new business in less than 48 Hours",
-                  "EIN, Legal doc, Registered Agent & State registrations begin immediately",
-                  "StartSmart AI-powered App & Idea Validation GPT included in all startup packages",
-                ].map((feature, i) => (
-                  <div key={i} className="flex items-center gap-3">
-                    <CheckCircle className="w-5 h-5 text-emerald-400 flex-shrink-0" />
-                    <span className="text-slate-300">{feature}</span>
-                  </div>
-                ))}
-              </div>
-            </div>  
-            
-            {/* Right Column - Creator Image (40%) */}
-            <div className="lg:col-span-2 flex justify-center lg:justify-start">
-              <div className="relative">
-                {/* Glow effect */}
-                <div className="absolute -inset-4 bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 rounded-3xl blur-xl"></div>
-                {/* Image container */}
-                <div className="relative">
-                  <img
-                    src="/images/creator2.jpg"
-                    alt="Content creator with ring light filming product showcase"
-                    className="rounded-2xl border-2 border-slate-700/50 shadow-2xl max-h-[500px] object-cover"
-                  />
-                </div>
-              </div>
-            </div>          
-           </div>
+        <div className="space-y-6">
+          <h1 className="text-3xl lg:text-5xl font-bold text-white leading-tight">
+            Why settle for 'influencer'
+            <span className="block text-white-400">when you can own 'CEO'?</span>
+          </h1>
+          <p className="text-emerald-300 text-lg lg:text-xl leading-relaxed">
+            StartSmart AI streamlines it all — entity setups tailored for e-comm hustlers, 
+            S-Corp elections to pocket more from every live sale, and ongoing AI guidance that evolves with your empire. 
+          </p>
+          <p className="text-lg text-white leading-relaxed">
+            From side gig to six figures? We've got the blueprint
+          </p>
         </div>
-      </section>
 
+        <div className="flex flex-col sm:flex-row gap-4">
+          <Link href="/pricing">
+            <Button
+              size="lg"
+              className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white px-8 py-6 text-lg font-semibold w-full sm:w-auto"
+            >
+              <Rocket className="mr-3 w-6 h-6 text-orange-500" />
+              Get Started
+            </Button>
+          </Link>
+          <Link
+            href="https://chatgpt.com/g/g-684641e9df808191a9d2025951aa3f09-startsmart-ai-business-launch-assistant"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            <Button 
+              size="lg"
+              className="w-full sm:w-auto bg-transparent border border-white/30 text-emerald-400 hover:bg-emerald-500 hover:text-yellow-200 px-8 py-6 text-lg font-semibold backdrop-blur"
+            >
+              <Lightbulb className="mr-3 w-6 h-6 text-yellow-200"/>
+              Validate my Idea
+            </Button>
+          </Link>
+          <Link href="/features">
+            <Button
+              size="lg"
+              className="w-full sm:w-auto bg-transparent border border-white/30 text-white/80 hover:bg-white/10 hover:text-emerald-400 px-8 py-6 text-lg font-semibold backdrop-blur"
+            >
+              <Bot className="ml-3 w-6 h-6 text-red-400" /> 
+              Learn more                   
+            </Button>
+          </Link>               
+        </div>
+
+        <div className="space-y-3 py-4">
+          {[
+            "Start your new business in less than 48 Hours",
+            "EIN, Legal doc, Registered Agent & State registrations begin immediately",
+            "StartSmart AI-powered App & Idea Validation GPT included in all startup packages",
+          ].map((feature, i) => (
+            <div key={i} className="flex items-center gap-3">
+              <CheckCircle className="w-5 h-5 text-emerald-400 flex-shrink-0" />
+              <span className="text-slate-300">{feature}</span>
+            </div>
+          ))}
+        </div>
+      </div>  
+      
+      {/* Right Column - Creator Image */}
+      <div className="flex justify-center items-center">
+        <div className="relative">
+          {/* Glow effect */}
+          <div className="absolute -inset-6 bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 rounded-3xl blur-2xl opacity-70"></div>
+          {/* Image container */}
+          <img
+            src="/images/creator2.jpg"
+            alt="Content creator with ring light filming product showcase"
+            className="relative rounded-2xl border border-slate-700/50 shadow-2xl max-h-[500px] w-auto object-cover"
+          />
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+      
        {/* Tax Savings Quiz Section */}
       <section className="py-20">
         <div className="container mx-auto px-4">
