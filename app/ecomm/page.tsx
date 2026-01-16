@@ -161,7 +161,7 @@ export default function TestLandingPage() {
       
 
       {/* Tax Savings Quiz Section */}
-      <section className="py-20 bg-slate-900">
+      <section className="py-20">
         <div className="container mx-auto px-4">
           {/* Section Header */}
            <h2 className="text-3xl lg:text-4xl font-bold text-emerald-500 text-center mb-10">
