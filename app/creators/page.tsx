@@ -96,8 +96,48 @@ export default function EcommLandingPage() {
                   </div>
                 ))}
               </div>
-            </div>
+            </div>  
+            
+            {/* Right Column - Creator Image (40%) */}
+            <div className="lg:col-span-2 flex justify-center lg:justify-start">
+              <div className="relative">
+                {/* Glow effect */}
+                <div className="absolute -inset-4 bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 rounded-3xl blur-xl"></div>
+                {/* Image container */}
+                <div className="relative">
+                  <img
+                    src="/images/creator2.jpg"
+                    alt="Content creator with ring light filming product showcase"
+                    className="rounded-2xl border-2 border-slate-700/50 shadow-2xl max-h-[500px] object-cover"
+                  />
+                </div>
+              </div>
+            </div>          
+           </div>
+        </div>
+      </section>
 
+       {/* Tax Savings Quiz Section */}
+      <section className="py-20">
+        <div className="container mx-auto px-4">
+          {/* Section Header */}
+           <h2 className="text-3xl lg:text-4xl font-bold text-emerald-500 text-center mb-6">
+            Don't let 2026 platform changes eat your margins.
+          </h2>
+          <p className="text-lg text-slate-300 text-center mb-12 leading-relaxed">
+                With the new $2,000 threshold, the IRS sees every livestream sale. Use the StartSmart AI Leakage Check below to see how much you’re overpaying in Self-Employment tax and claim your "Audit-Shield" roadmap.
+              </p>
+          
+          
+          {/* 60/40 Grid Layout */}
+          <div className="flex flex-col lg:flex-row items-center justify-center gap-8 lg:gap-16">
+            {/* Left Column - Quiz Card (60%) */}
+            <div className="lg:col-span-3">
+             <div className="bg-slate-800/80 rounded-2xl p-2 border border-slate-700/50"> 
+              <TaxSavingsWizard variant="card" />
+              </div>
+              </div>
+                          
             {/* AI Demo Preview */}
             <div className="relative -mt-8">
               <div className="relative bg-slate-800/50 backdrop-blur-sm rounded-2xl p-8 border border-slate-700">
@@ -156,46 +196,6 @@ export default function EcommLandingPage() {
                       Try StartSmart → Live on ChatGPT
                     </Button>
                     </Link>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-       {/* Tax Savings Quiz Section */}
-      <section className="py-20">
-        <div className="container mx-auto px-4">
-          {/* Section Header */}
-           <h2 className="text-3xl lg:text-4xl font-bold text-emerald-500 text-center mb-6">
-            Don't let 2026 platform changes eat your margins.
-          </h2>
-          <p className="text-lg text-slate-300 text-center mb-12 leading-relaxed">
-                With the new $2,000 threshold, the IRS sees every livestream sale. Use the StartSmart AI Leakage Check below to see how much you’re overpaying in Self-Employment tax and claim your "Audit-Shield" roadmap.
-              </p>
-          
-          
-          {/* 60/40 Grid Layout */}
-          <div className="flex flex-col lg:flex-row items-center justify-center gap-8 lg:gap-16">
-            {/* Left Column - Quiz Card (60%) */}
-            <div className="lg:col-span-3">
-             <div className="bg-slate-800/80 rounded-2xl p-2 border border-slate-700/50"> 
-              <TaxSavingsWizard variant="card" />
-              </div>
-              </div>
-                          
-            {/* Right Column - Creator Image (40%) */}
-            <div className="lg:col-span-2 flex justify-center lg:justify-start">
-              <div className="relative">
-                {/* Glow effect */}
-                <div className="absolute -inset-4 bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 rounded-3xl blur-xl"></div>
-                {/* Image container */}
-                <div className="relative">
-                  <img
-                    src="/images/creator2.jpg"
-                    alt="Content creator with ring light filming product showcase"
-                    className="rounded-2xl border-2 border-slate-700/50 shadow-2xl max-h-[500px] object-cover"
-                  />
                 </div>
               </div>
             </div>
