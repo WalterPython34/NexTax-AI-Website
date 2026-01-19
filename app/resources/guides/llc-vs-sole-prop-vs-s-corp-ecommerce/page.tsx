@@ -251,7 +251,7 @@ export default function LLCvsSolePropvsSCorpPage() {
             {/* Featured Image */}
             <div className="mb-12 rounded-xl overflow-hidden">
               <Image
-                src="/images/blog/llc-vs-sole-prop-vs-s-corp-ecommerce.png"
+                src="/llc-vs-sole-prop-vs-s-corp-ecommerce.png"
                 alt="S Corporation vs Single-Member LLC vs Multi-Member LLC comparison chart"
                 width={1200}
                 height={600}
