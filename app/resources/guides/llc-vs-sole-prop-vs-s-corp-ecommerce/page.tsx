@@ -72,7 +72,7 @@ const jsonLd = {
       "publisher": { "@id": "https://nextax.ai/#organization" },
       "primaryImageOfPage": {
         "@type": "ImageObject",
-        "url": "https://nextax.ai/images/blog/scorp-sm-mm-llc.png"
+        "url": "https://nextax.ai/images/blog/llc-vs-sole-prop-vs-s-corp-ecommerce.png"
       },
       "datePublished": "2026-01-19",
       "dateModified": "2026-01-19"
@@ -82,7 +82,7 @@ const jsonLd = {
       "@id": "https://nextax.ai/resources/guides/llc-vs-sole-prop-vs-s-corp-ecommerce#article",
       "headline": "LLC vs Sole Proprietor vs S-Corp for Shopify, Etsy & TikTok Sellers (And When to Switch)",
       "description": "A platform-specific guide for Shopify, Etsy, and TikTok sellers comparing sole proprietor vs LLC vs S-Corp—with decision trees and profit thresholds for switching.",
-      "image": ["https://nextax.ai/images/blog/scorp-sm-mm-llc.png"],
+      "image": ["https://nextax.ai/images/blog/llc-vs-sole-prop-vs-s-corp-ecommerce.png"],
       "author": {
         "@type": "Person",
         "name": "Steve Morello, CPA",
@@ -251,7 +251,7 @@ export default function LLCvsSolePropvsSCorpPage() {
             {/* Featured Image */}
             <div className="mb-12 rounded-xl overflow-hidden">
               <Image
-                src="/images/blog/scorp-sm-mm-llc.png"
+                src="/images/blog/llc-vs-sole-prop-vs-s-corp-ecommerce.png"
                 alt="S Corporation vs Single-Member LLC vs Multi-Member LLC comparison chart"
                 width={1200}
                 height={600}
