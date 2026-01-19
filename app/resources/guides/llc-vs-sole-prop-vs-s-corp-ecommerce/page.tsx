@@ -535,23 +535,23 @@ export default function LLCvsSolePropvsSCorpPage() {
                   The real threshold is <span className="text-emerald-400 font-semibold">profit, not revenue</span>. For most sellers, an S-Corp starts making sense around <span className="text-white font-semibold">$50,000–$80,000/year in net profit</span>.
                 </p>
 
-                <Card className="bg-gradient-to-br from-emerald-500/10 to-cyan-500/10 border-emerald-500/30 mb-6">
+                <Card className="bg-gradient-to-br from-emerald-500 to-cyan-500 border-emerald-500/30 mb-6">
                   <CardContent className="p-6">
                     <h3 className="text-xl font-semibold text-white mb-4">Example: $80,000 Net Profit</h3>
                     <div className="grid md:grid-cols-2 gap-6">
                       <div className="bg-slate-800/50 rounded-lg p-4">
-                        <p className="text-slate-400 text-sm mb-2">As an LLC (default)</p>
-                        <p className="text-2xl font-bold text-red-400">~$12,240</p>
-                        <p className="text-slate-400 text-sm">in self-employment tax</p>
+                        <p className="text-slate-900 text-sm mb-2">As an LLC (default)</p>
+                        <p className="text-2xl font-bold text-red-500">~$12,240</p>
+                        <p className="text-slate-900 text-sm">in self-employment tax</p>
                       </div>
                       <div className="bg-emerald-500/20 rounded-lg p-4 border border-emerald-500/30">
-                        <p className="text-emerald-300 text-sm mb-2">As an S-Corp</p>
+                        <p className="text-emerald-500 text-sm mb-2">As an S-Corp</p>
                         <div className="space-y-1 mb-2">
-                          <p className="text-slate-300 text-sm">$45,000 salary → payroll taxes apply</p>
-                          <p className="text-slate-300 text-sm">$35,000 distribution → no SE tax</p>
+                          <p className="text-slate-900 text-sm">$45,000 salary → payroll taxes apply</p>
+                          <p className="text-slate-900 text-sm">$35,000 distribution → no SE tax</p>
                         </div>
-                        <p className="text-2xl font-bold text-emerald-400">~$5,000–$7,000</p>
-                        <p className="text-emerald-300 text-sm">estimated annual savings</p>
+                        <p className="text-2xl font-bold text-emerald-500">~$5,000–$7,000</p>
+                        <p className="text-emerald-500 text-sm">estimated annual savings</p>
                       </div>
                     </div>
                   </CardContent>
