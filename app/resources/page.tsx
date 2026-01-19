@@ -77,7 +77,20 @@ export default function ResourcesPage() {
   ]
 
   const blogPosts = [
-     {
+      {
+      id: 11,
+      title: "LLC vs Sole Proprietor vs S-Corp for Shopify, Etsy & TikTok Sellers",
+      excerpt:
+        "A platform-specific guide comparing sole proprietor vs LLC vs S-Corp—with decision trees and profit thresholds for switching.",
+      category: "Tax Strategy",
+      author: "Steve Morello, CEO",
+      date: "January 19, 2026",
+      readTime: "18 min read",
+      image: "/images/blog/scorp-sm-mm-llc.png",
+      slug: "llc-vs-sole-prop-vs-s-corp-ecommerce",
+      featured: true,
+    },
+    {
       id: 9,
       title: "The 5-Step Bulletproof Framework: How to Validate Your Business Idea",
       excerpt: "Before you file your LLC, learn how to validate your business idea using our 5-step framework.",
