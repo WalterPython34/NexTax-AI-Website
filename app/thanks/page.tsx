@@ -25,7 +25,7 @@ export default function ThanksPage() {
       <Script id="google-ads-conversion" strategy="afterInteractive">
         {`
           gtag('event', 'conversion', {
-            'send_to': 'AW-CONVERSION_ID/CONVERSION_LABEL'
+            'send_to': 'AW-17878724249/PhMOCN7Ky-gbEJndns1C'
           });
         `}
       </Script>
