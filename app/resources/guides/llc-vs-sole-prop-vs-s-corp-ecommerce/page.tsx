@@ -539,16 +539,16 @@ export default function LLCvsSolePropvsSCorpPage() {
                   <CardContent className="p-6">
                     <h3 className="text-xl font-semibold text-white mb-4">Example: $80,000 Net Profit</h3>
                     <div className="grid md:grid-cols-2 gap-6">
-                      <div className="bg-slate-800/50 rounded-lg p-4">
-                        <p className="text-slate-900 text-sm mb-2">As an LLC (default)</p>
+                      <div className="bg-slate-800/60 rounded-lg p-4">
+                        <p className="text-white text-sm mb-2">As an LLC (default)</p>
                         <p className="text-2xl font-bold text-red-500">~$12,240</p>
-                        <p className="text-slate-900 text-sm">in self-employment tax</p>
+                        <p className="text-white text-sm">in self-employment tax</p>
                       </div>
-                      <div className="bg-emerald-500/20 rounded-lg p-4 border border-emerald-500/30">
+                      <div className="bg-emerald-600 rounded-lg p-4 border border-emerald-500/30">
                         <p className="text-emerald-500 text-sm mb-2">As an S-Corp</p>
                         <div className="space-y-1 mb-2">
-                          <p className="text-slate-900 text-sm">$45,000 salary → payroll taxes apply</p>
-                          <p className="text-slate-900 text-sm">$35,000 distribution → no SE tax</p>
+                          <p className="text-white text-sm">$45,000 salary → payroll taxes apply</p>
+                          <p className="text-white text-sm">$35,000 distribution → no SE tax</p>
                         </div>
                         <p className="text-2xl font-bold text-emerald-500">~$5,000–$7,000</p>
                         <p className="text-emerald-500 text-sm">estimated annual savings</p>
