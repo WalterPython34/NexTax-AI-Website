@@ -262,7 +262,10 @@ export default function ContactPage() {
                         <Label htmlFor="inquiryType" className="text-white">
                           Inquiry Type
                         </Label>
-                        <Select onValueChange={(value) => setFormData({ ...formData, inquiryType: value })}>
+                        <Select
+                           value={formData.inquiryType}
+                            onValueChange={(value) => setFormData({ ...formData, inquiryType: value })}
+                            >
                           <SelectTrigger className="bg-slate-900 border-slate-600 text-white">
                             <SelectValue placeholder="Select inquiry type" />
                           </SelectTrigger>
@@ -271,7 +274,7 @@ export default function ContactPage() {
                             <SelectItem value="sales">Sales Inquiry</SelectItem>
                             <SelectItem value="support">Technical Support</SelectItem>
                             <SelectItem value="partnership">Partnership</SelectItem>
-                            <SelectItem value="Tax">Tax/Accounting</SelectItem>
+                            <SelectItem value="tax">Tax/Accounting</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
