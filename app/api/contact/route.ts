@@ -6,7 +6,7 @@ export async function POST(request: NextRequest) {
 
   try {
     const data = await request.json()
-    const { name, email, company, subject, message, inquiryType, website, formLoadTime } = data
+    const { name, email, company, subject, message, inquiryType, website, formLoadTime, token } = data
 
     console.log("📋 Contact form data:", data)
 
@@ -155,6 +155,37 @@ if (spamScore >= 6) {
         message: "Contact form submitted successfully",
       })
     }
+
+    import crypto from "crypto";
+
+function timingSafeEqual(a: string, b: string) {
+  const ba = Buffer.from(a);
+  const bb = Buffer.from(b);
+  if (ba.length !== bb.length) return false;
+  return crypto.timingSafeEqual(ba, bb);
+}
+
+const secret = process.env.CONTACT_TOKEN_SECRET;
+if (!secret || !token) {
+  return NextResponse.json({ success: true, message: "ok" }); // pretend success
+}
+
+const [ts, sig] = token.split(".");
+if (!ts || !sig) return NextResponse.json({ success: true, message: "ok" });
+
+const expected = crypto.createHmac("sha256", secret).update(ts).digest("hex");
+if (!timingSafeEqual(sig, expected)) {
+  console.log("🤖 Invalid token signature");
+  return NextResponse.json({ success: true, message: "ok" });
+}
+
+// freshness: 30 minutes
+const age = Date.now() - Number(ts);
+if (Number.isNaN(age) || age < 0 || age > 1000 * 60 * 30) {
+  console.log("🤖 Token expired/invalid age");
+  return NextResponse.json({ success: true, message: "ok" });
+}
+
 
     // Send email notification
     const emailResult = await sendEmail({
