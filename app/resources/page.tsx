@@ -99,7 +99,7 @@ export default function ResourcesPage() {
       author: "Steve Morello, CEO",
       date: "January 19, 2026",
       readTime: "18 min read",
-      image: "/llc-vs-sole-prop-vs-s-corp-ecommerce.png",
+      image: "/llc-or-sole-prop.jpg",
       slug: "llc-vs-sole-prop-vs-s-corp-ecommerce",
       featured: true,
     },
