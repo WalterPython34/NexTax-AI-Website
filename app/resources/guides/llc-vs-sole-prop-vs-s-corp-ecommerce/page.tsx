@@ -780,7 +780,7 @@ export default function LLCvsSolePropvsSCorpPage() {
                   <h3 className="text-2xl font-bold text-white mb-4">
                     Ready to Choose the Right Entity for Your Business?
                   </h3>
-                  <p className="text-slate-200 mb-6 max-w-2xl mx-auto">
+                  <p className="text-black mb-6 max-w-2xl mx-auto">
                     NexTax.AI helps online sellers make entity decisions based on actual numbers—not noise. Get clarity on whether to stay a sole prop, form an LLC, or elect S-Corp status.
                   </p>
                   <div className="flex flex-wrap justify-center gap-4">
@@ -791,7 +791,7 @@ export default function LLCvsSolePropvsSCorpPage() {
                       </Button>
                     </Link>
                     <Link href="/contact">
-                      <Button variant="outline" className="border-emerald-500/50 text-emerald-300 hover:bg-emerald-500/10 bg-white">
+                      <Button variant="outline" className="border-emerald-500/50 text-emerald-400 hover:bg-cyan-500 bg-white">
                         Talk to an Expert
                       </Button>
                     </Link>
