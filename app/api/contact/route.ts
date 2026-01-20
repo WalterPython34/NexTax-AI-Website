@@ -1,5 +1,13 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { sendEmail } from "@/lib/email"
+import crypto from "crypto";
+
+function timingSafeEqual(a: string, b: string) {
+  const ba = Buffer.from(a);
+  const bb = Buffer.from(b);
+  if (ba.length !== bb.length) return false;
+  return crypto.timingSafeEqual(ba, bb);
+}
 
 export async function POST(request: NextRequest) {
   console.log("📨 Contact form submission received")
@@ -155,15 +163,6 @@ if (spamScore >= 6) {
         message: "Contact form submitted successfully",
       })
     }
-
-    import crypto from "crypto";
-
-function timingSafeEqual(a: string, b: string) {
-  const ba = Buffer.from(a);
-  const bb = Buffer.from(b);
-  if (ba.length !== bb.length) return false;
-  return crypto.timingSafeEqual(ba, bb);
-}
 
 const secret = process.env.CONTACT_TOKEN_SECRET;
 if (!secret || !token) {
