@@ -545,12 +545,12 @@ export default function LLCvsSolePropvsSCorpPage() {
                         <p className="text-white text-sm">in self-employment tax</p>
                       </div>
                       <div className="bg-emerald-600 rounded-lg p-4 border border-emerald-500/30">
-                        <p className="text-emerald-500 text-sm mb-2">As an S-Corp</p>
+                        <p className="text-cyan-500 text-sm mb-2">As an S-Corp</p>
                         <div className="space-y-1 mb-2">
                           <p className="text-white text-sm">$45,000 salary → payroll taxes apply</p>
                           <p className="text-white text-sm">$35,000 distribution → no SE tax</p>
                         </div>
-                        <p className="text-2xl font-bold text-emerald-500">~$5,000–$7,000</p>
+                        <p className="text-2xl font-bold text-cyan-500">~$5,000–$7,000</p>
                         <p className="text-emerald-500 text-sm">estimated annual savings</p>
                       </div>
                     </div>
@@ -785,13 +785,13 @@ export default function LLCvsSolePropvsSCorpPage() {
                   </p>
                   <div className="flex flex-wrap justify-center gap-4">
                     <Link href="/pricing">
-                      <Button className="bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white px-8">
+                      <Button className="bg-gradient-to-r from-emerald-600 to-cyan-500 hover:from-emerald-700 hover:to-cyan-600 text-white px-8">
                         View Packages
                         <ArrowRight className="w-4 h-4 ml-2" />
                       </Button>
                     </Link>
                     <Link href="/contact">
-                      <Button variant="outline" className="border-emerald-500/50 text-emerald-300 hover:bg-emerald-500/10 bg-transparent">
+                      <Button variant="outline" className="border-emerald-500/50 text-emerald-300 hover:bg-emerald-500/10 bg-white">
                         Talk to an Expert
                       </Button>
                     </Link>
