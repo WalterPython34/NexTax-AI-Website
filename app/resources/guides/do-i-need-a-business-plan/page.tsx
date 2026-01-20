@@ -641,18 +641,18 @@ export default function DoINeedABusinessPlanPage() {
                   <h3 className="text-2xl font-bold text-white mb-4">
                     Ready to Turn Your Plan Into a Real Business?
                   </h3>
-                  <p className="text-slate-200 mb-6 max-w-2xl mx-auto">
+                  <p className="text-slate-400 mb-6 max-w-2xl mx-auto">
                     A business plan is the starting point—not the finish line. Once you understand your revenue model, costs, and growth path, the next step is ensuring your business is structured correctly for liability protection and taxes.
                   </p>
                   <div className="flex flex-wrap justify-center gap-4">
                     <Link href="/pricing">
-                      <Button className="bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white px-8">
+                      <Button className="bg-gradient-to-r from-emerald-600 to-cyan-500 hover:from-emerald-700 hover:to-cyan-600 text-white px-8">
                         View Formation Packages
                         <ArrowRight className="w-4 h-4 ml-2" />
                       </Button>
                     </Link>
                     <Link href="/contact">
-                      <Button variant="outline" className="border-emerald-500/50 text-emerald-300 hover:bg-emerald-500/10 bg-transparent">
+                      <Button variant="outline" className="border-emerald-500/50 text-emerald-300 hover:bg-emerald-500 bg-white">
                         Talk to an Expert
                       </Button>
                     </Link>
