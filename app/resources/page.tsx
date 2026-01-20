@@ -86,7 +86,7 @@ export default function ResourcesPage() {
       author: "NexTax.AI Team",
       date: "January 20, 2026",
       readTime: "12 min read",
-      image: "/business-plan-guide.jpg",
+      image: "/do-i-need-a-business-plan.jpg",
       slug: "do-i-need-a-business-plan",
       featured: true,
     },  
