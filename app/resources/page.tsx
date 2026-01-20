@@ -77,7 +77,20 @@ export default function ResourcesPage() {
   ]
 
   const blogPosts = [
-      {
+    {
+      id: 12,
+      title: "Do I Need a Business Plan — and What Should Be in It?",
+      excerpt:
+        "Learn when a business plan is required, what to include, and how business plans connect to structure and taxes for first-time entrepreneurs.",
+      category: "Business Formation",
+      author: "NexTax.AI Team",
+      date: "January 20, 2026",
+      readTime: "12 min read",
+      image: "/business-plan-guide.jpg",
+      slug: "do-i-need-a-business-plan",
+      featured: true,
+    },  
+    {
       id: 11,
       title: "LLC vs Sole Proprietor vs S-Corp for Shopify, Etsy & TikTok Sellers",
       excerpt:
