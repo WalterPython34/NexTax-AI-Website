@@ -65,6 +65,11 @@ const jsonLd = {
         { "@type": "Thing", "name": "Small business" }
       ],
       "publisher": { "@id": "https://nextax.ai/#organization" },
+      "primaryImageOfPage": {
+        "@type": "ImageObject",
+        "url": "https://nextax.ai/images/business-plan-guide.jpg"
+      },
+
       "datePublished": "2026-01-20",
       "dateModified": "2026-01-20"
     },
