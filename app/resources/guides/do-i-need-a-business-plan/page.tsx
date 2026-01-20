@@ -636,12 +636,12 @@ export default function DoINeedABusinessPlanPage() {
               </section>
 
               {/* CTA */}
-              <Card className="bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 border-emerald-500/30">
+              <Card className="bg-gradient-to-r from-emerald-500 to-cyan-500 border-emerald-500/30">
                 <CardContent className="p-8 text-center">
                   <h3 className="text-2xl font-bold text-white mb-4">
                     Ready to Turn Your Plan Into a Real Business?
                   </h3>
-                  <p className="text-slate-300 mb-6 max-w-2xl mx-auto">
+                  <p className="text-slate-200 mb-6 max-w-2xl mx-auto">
                     A business plan is the starting point—not the finish line. Once you understand your revenue model, costs, and growth path, the next step is ensuring your business is structured correctly for liability protection and taxes.
                   </p>
                   <div className="flex flex-wrap justify-center gap-4">
