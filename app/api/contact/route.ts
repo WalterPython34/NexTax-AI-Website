@@ -57,6 +57,96 @@ export async function POST(request: NextRequest) {
       })
     }
 
+// --- Spam scoring (add after required field validation) ---
+let spamScore = 0;
+const reasons: string[] = [];
+
+const subj = subject.trim().toLowerCase();
+const msg = message.trim().toLowerCase();
+const comp = (company || "").trim().toLowerCase();
+const mail = email.trim().toLowerCase();
+
+// 1) super short subject
+if (subj.length <= 2) {
+  spamScore += 2;
+  reasons.push("subject_too_short");
+}
+
+// 2) subject mostly symbols
+const symbolRatio = (subject.match(/[^a-zA-Z0-9\s]/g)?.length || 0) / Math.max(subject.length, 1);
+if (symbolRatio > 0.3) {
+  spamScore += 3;
+  reasons.push("subject_symbol_heavy");
+}
+
+// 3) spammy phrases (tune this list over time)
+const spamPhrases = [
+  "after-sales",
+  "after sales",
+  "quotation",
+  "brochure",
+  "best price",
+  "dear",
+  "kindly",
+  "whatsapp",
+  "telegram",
+  "seo",
+  "backlinks",
+  "crypto",
+  "hair loss",
+  "advertisement",
+  "i saw your advertisement",
+  "waiting for your reply"
+];
+
+if (spamPhrases.some((p) => msg.includes(p) || subj.includes(p))) {
+  spamScore += 4;
+  reasons.push("spam_phrase_match");
+}
+
+// 4) message doesn’t mention anything relevant (light intent check)
+const businessKeywords = [
+  "llc", "s-corp", "scorp", "ein", "tax", "taxes", "bookkeeping",
+  "compliance", "formation", "incorpor", "business", "startup", "startsmart", "nextax"
+];
+if (!businessKeywords.some((k) => msg.includes(k))) {
+  spamScore += 2;
+  reasons.push("no_business_keywords");
+}
+
+// 5) suspicious “big company” + free email combo (weak signal)
+const bigBrands = ["dynamic yield", "stripe", "google", "microsoft", "amazon", "meta"];
+const isFreeEmail = ["gmail.com", "yahoo.com", "hotmail.com", "outlook.com", "icloud.com"].some((d) =>
+  mail.endsWith("@" + d)
+);
+if (bigBrands.some((b) => comp.includes(b)) && isFreeEmail) {
+  spamScore += 1; // weak signal
+  reasons.push("brand_company_free_email");
+}
+
+// 6) message too generic
+if (msg.length < 25) {
+  spamScore += 2;
+  reasons.push("message_too_short");
+}
+
+// 7) optional: mismatch inquiry type vs content
+if (inquiryType === "support" && !msg.includes("issue") && !msg.includes("problem") && !msg.includes("help")) {
+  spamScore += 1;
+  reasons.push("support_mismatch");
+}
+
+// Final decision
+if (spamScore >= 6) {
+  console.log("🤖 Spam detected via scoring:", { spamScore, reasons, email, subject });
+
+  // return success so bot thinks it worked
+  return NextResponse.json({
+    success: true,
+    message: "Contact form submitted successfully",
+  });
+}
+
     // Additional check: message too short (likely spam)
     if (message.trim().length < 10) {
       console.log("🤖 Bot detected via message too short")
