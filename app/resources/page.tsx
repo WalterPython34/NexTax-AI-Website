@@ -86,7 +86,7 @@ export default function ResourcesPage() {
       author: "Steve Morello, CEO",
       date: "January 21, 2026",
       readTime: "14 min read",
-      image: "/images/paypal-logo.png",
+      image: "/1099-k-form.jpg",
       slug: "1099-k-rules-2026",
       featured: true,
     },
