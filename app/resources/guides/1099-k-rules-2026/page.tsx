@@ -757,7 +757,7 @@ export default function Form1099KRules2026Page() {
               <img
                 src="/images/StartSmart-logo-new-business-launch.png"
                 alt="StartSmart by NexTax.AI"
-                className="h-30 w-auto"
+                className="h-40 w-auto pt-2"
               />
             </div>
                 <CardContent className="p-8 text-center">
