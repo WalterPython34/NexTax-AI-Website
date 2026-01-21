@@ -77,6 +77,19 @@ export default function ResourcesPage() {
   ]
 
   const blogPosts = [
+     {
+      id: 13,
+      title: "1099-K Rules for 2026: What Ecommerce Sellers, Livestreamers, and Creators Need to Know",
+      excerpt:
+        "1099-K rules for 2026 explained: the $20,000 and 200 transaction threshold returns for third-party payment networks, plus how to save on taxes with LLCs and S-Corps.",
+      category: "Compliance",
+      author: "Steve Morello, CEO",
+      date: "January 21, 2026",
+      readTime: "14 min read",
+      image: "/images/paypal-logo.png",
+      slug: "1099-k-rules-2026",
+      featured: true,
+    },
     {
       id: 12,
       title: "Do I Need a Business Plan — and What Should Be in It?",
