@@ -753,11 +753,11 @@ export default function Form1099KRules2026Page() {
 
               {/* CTA */}
               <Card className="bg-gradient-to-r from-emerald-600 to-cyan-600 border-emerald-500/30 mb-2">
-                <div className="flex justify-center mb-8">
+                <div className="flex justify-center mb-6">
               <img
                 src="/images/StartSmart-logo-new-business-launch.png"
                 alt="StartSmart by NexTax.AI"
-                className="h-40 w-auto pt-2"
+                className="h-40 w-auto pt-4"
               />
             </div>
                 <CardContent className="p-8 text-center">
