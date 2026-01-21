@@ -78,6 +78,31 @@ export default function ResourcesPage() {
 
   const blogPosts = [
      {
+      id: 9,
+      title: "The 5-Step Bulletproof Framework: How to Validate Your Business Idea",
+      excerpt: "Before you file your LLC, learn how to validate your business idea using our 5-step framework.",
+      category: "Business Formation",
+      author: "NexTax.AI Team",
+      date: "January 6, 2026",
+      readTime: "12 min read",
+      image: "/business-idea-validation-lightbulb-brainstorm.jpg",
+      slug: "validate-your-idea",
+      featured: true,
+    },
+    {
+      id: 11,
+      title: "LLC vs Sole Proprietor vs S-Corp for Shopify, Etsy & TikTok Sellers",
+      excerpt:
+        "A platform-specific guide comparing sole proprietor vs LLC vs S-Corp—with decision trees and profit thresholds for switching.",
+      category: "Tax Strategy",
+      author: "Steve Morello, CEO",
+      date: "January 19, 2026",
+      readTime: "18 min read",
+      image: "/llc-or-sole-prop.jpg",
+      slug: "llc-vs-sole-prop-vs-s-corp-ecommerce",
+      featured: true,
+    },
+     {
       id: 13,
       title: "1099-K Rules for 2026: What Ecommerce Sellers, Livestreamers, and Creators Need to Know",
       excerpt:
@@ -102,32 +127,7 @@ export default function ResourcesPage() {
       image: "/do-i-need-a-business-plan.jpg",
       slug: "do-i-need-a-business-plan",
       featured: true,
-    },  
-    {
-      id: 11,
-      title: "LLC vs Sole Proprietor vs S-Corp for Shopify, Etsy & TikTok Sellers",
-      excerpt:
-        "A platform-specific guide comparing sole proprietor vs LLC vs S-Corp—with decision trees and profit thresholds for switching.",
-      category: "Tax Strategy",
-      author: "Steve Morello, CEO",
-      date: "January 19, 2026",
-      readTime: "18 min read",
-      image: "/llc-or-sole-prop.jpg",
-      slug: "llc-vs-sole-prop-vs-s-corp-ecommerce",
-      featured: true,
-    },
-    {
-      id: 9,
-      title: "The 5-Step Bulletproof Framework: How to Validate Your Business Idea",
-      excerpt: "Before you file your LLC, learn how to validate your business idea using our 5-step framework.",
-      category: "Business Formation",
-      author: "NexTax.AI Team",
-      date: "January 6, 2026",
-      readTime: "12 min read",
-      image: "/business-idea-validation-lightbulb-brainstorm.jpg",
-      slug: "validate-your-idea",
-      featured: true,
-    },
+    },       
      {
       id: 10,
       title: "How to Fund Your Startup: A Founder's Guide to Capital & Cash Flow",
