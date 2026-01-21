@@ -269,11 +269,11 @@ export default function Form1099KRules2026Page() {
                   What Is the 1099-K Threshold for 2026?
                 </h2>
 
-                <Card className="bg-gradient-to-br from-blue-400 to-cyan-500 border-emerald-500/30 mb-6">
+                <Card className="bg-gradient-to-br from-emerald-500 to-cyan-500 border-emerald-500/30 mb-6">
                   <CardContent className="p-6">
                     <p className="text-xl text-white font-semibold mb-2">Key Answer:</p>
                     <p className="text-slate-200 text-lg mb-0">
-                      For tax year 2025 (filed in 2026), the 1099-K threshold for third-party payment networks is once again <span className="text-emerald-400 font-bold">more than $20,000 in gross payments</span> and <span className="text-emerald-400 font-bold">more than 200 transactions</span>.
+                      For tax year 2025 (filed in 2026), the 1099-K threshold for third-party payment networks is once again <span className="text-emerald-300 font-bold">more than $20,000 in gross payments</span> and <span className="text-emerald-300 font-bold">more than 200 transactions</span>.
                     </p>
                   </CardContent>
                 </Card>
@@ -637,11 +637,11 @@ export default function Form1099KRules2026Page() {
                         <p className="text-slate-300">Full 15.3% SE tax on $100k</p>
                         <p className="text-2xl font-bold text-red-400 mt-2">~$15,300</p>
                       </div>
-                      <div className="bg-emerald-500/20 rounded-lg p-4 border border-emerald-500/30">
-                        <p className="text-emerald-500 text-sm mb-2">As S-Corp</p>
-                        <p className="text-slate-500">$50k salary (payroll taxes)</p>
-                        <p className="text-slate-500">$50k distribution (no SE tax)</p>
-                        <p className="text-2xl font-bold text-emerald-400 mt-2">~$7,650 saved</p>
+                      <div className="bg-emerald-600 rounded-lg p-4 border border-emerald-500/30">
+                        <p className="text-emerald-300 text-sm mb-2">As S-Corp</p>
+                        <p className="text-slate-200">$50k salary (payroll taxes)</p>
+                        <p className="text-slate-200">$50k distribution (no SE tax)</p>
+                        <p className="text-2xl font-bold text-emerald-300 mt-2">~$7,650 saved</p>
                       </div>
                     </div>
                   </CardContent>
@@ -752,12 +752,12 @@ export default function Form1099KRules2026Page() {
               </section>
 
               {/* CTA */}
-              <Card className="bg-gradient-to-r from-emerald-600 to-cyan-600 border-emerald-500/30">
+              <Card className="bg-gradient-to-r from-emerald-600 to-cyan-600 border-emerald-500/30 mb-2">
                 <div className="flex justify-center mb-8">
               <img
                 src="/images/StartSmart-logo-new-business-launch.png"
                 alt="StartSmart by NexTax.AI"
-                className="h-40 w-auto"
+                className="h-30 w-auto"
               />
             </div>
                 <CardContent className="p-8 text-center">
