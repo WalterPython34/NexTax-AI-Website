@@ -243,10 +243,10 @@ export default function Form1099KRules2026Page() {
             <div className="mb-8 p-6 bg-white/5 rounded-xl border border-slate-700">
               <p className="text-slate-400 text-sm mb-4 text-center">Platforms affected by 1099-K reporting</p>
               <div className="flex flex-wrap items-center justify-center gap-8">
-                <Image src="/images/paypal-logo.png" alt="PayPal" width={120} height={40} className="h-8 w-auto object-contain" />
-                <Image src="/images/venmo-logo.png" alt="Venmo" width={50} height={50} className="h-10 w-auto object-contain rounded-lg" />
-                <Image src="/images/shopify-payments-logo.jpg" alt="Shopify Payments" width={150} height={40} className="h-8 w-auto object-contain" />
-                <Image src="/images/shop-pay-logo.jpg" alt="Shop Pay" width={100} height={40} className="h-8 w-auto object-contain" />
+                <Image src="/paypal-logo.png" alt="PayPal" width={120} height={40} className="h-8 w-auto object-contain" />
+                <Image src="/venmo-logo.png" alt="Venmo" width={50} height={50} className="h-10 w-auto object-contain rounded-lg" />
+                <Image src="/shopify-payments-logo.jpg" alt="Shopify Payments" width={150} height={40} className="h-8 w-auto object-contain" />
+                <Image src="/shop-pay-logo.jpg" alt="Shop Pay" width={100} height={40} className="h-8 w-auto object-contain" />
               </div>
             </div>
 
@@ -269,7 +269,7 @@ export default function Form1099KRules2026Page() {
                   What Is the 1099-K Threshold for 2026?
                 </h2>
 
-                <Card className="bg-gradient-to-br from-emerald-500/10 to-cyan-500/10 border-emerald-500/30 mb-6">
+                <Card className="bg-gradient-to-br from-blue-400 to-cyan-500 border-emerald-500/30 mb-6">
                   <CardContent className="p-6">
                     <p className="text-xl text-white font-semibold mb-2">Key Answer:</p>
                     <p className="text-slate-200 text-lg mb-0">
@@ -628,19 +628,19 @@ export default function Form1099KRules2026Page() {
                   </CardContent>
                 </Card>
 
-                <Card className="bg-gradient-to-br from-emerald-500/10 to-cyan-500/10 border-emerald-500/30 mb-6">
+                <Card className="bg-gradient-to-br from-emerald-500 to-cyan-500 border-emerald-500/30 mb-6">
                   <CardContent className="p-6">
                     <h3 className="text-xl font-semibold text-white mb-4">Example (simplified): $100,000 Net Profit</h3>
                     <div className="grid md:grid-cols-2 gap-6">
-                      <div className="bg-slate-800/50 rounded-lg p-4">
+                      <div className="bg-slate-600 rounded-lg p-4">
                         <p className="text-slate-400 text-sm mb-2">As Sole Prop/LLC</p>
                         <p className="text-slate-300">Full 15.3% SE tax on $100k</p>
                         <p className="text-2xl font-bold text-red-400 mt-2">~$15,300</p>
                       </div>
                       <div className="bg-emerald-500/20 rounded-lg p-4 border border-emerald-500/30">
-                        <p className="text-emerald-300 text-sm mb-2">As S-Corp</p>
-                        <p className="text-slate-300">$50k salary (payroll taxes)</p>
-                        <p className="text-slate-300">$50k distribution (no SE tax)</p>
+                        <p className="text-emerald-500 text-sm mb-2">As S-Corp</p>
+                        <p className="text-slate-500">$50k salary (payroll taxes)</p>
+                        <p className="text-slate-500">$50k distribution (no SE tax)</p>
                         <p className="text-2xl font-bold text-emerald-400 mt-2">~$7,650 saved</p>
                       </div>
                     </div>
@@ -753,6 +753,13 @@ export default function Form1099KRules2026Page() {
 
               {/* CTA */}
               <Card className="bg-gradient-to-r from-emerald-600 to-cyan-600 border-emerald-500/30">
+                <div className="flex justify-center mb-8">
+              <img
+                src="/images/StartSmart-logo-new-business-launch.png"
+                alt="StartSmart by NexTax.AI"
+                className="h-40 w-auto"
+              />
+            </div>
                 <CardContent className="p-8 text-center">
                   <h3 className="text-2xl font-bold text-white mb-4">
                     Ready to Get Your Business Structure Right?
