@@ -794,14 +794,44 @@ const WizardOverlay: React.FC<{
     }, 2000);
   };
 
-  const handleEmailSubmit = () => {
-    setIsSubmitting(true);
-    // Simulate API call
-    setTimeout(() => {
-      setIsSubmitting(false);
-      setShowResults(true);
-    }, 1500);
-  };
+  const handleEmailSubmit = async () => {
+  setIsSubmitting(true);
+  
+  try {
+    const response = await fetch('/api/leads/tax-calculator', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: data.email,
+        revenue: data.revenue,
+        structure: data.structure,
+        platform: data.platform,
+        estimatedSavings: { 
+          min: savings.min, 
+          max: savings.max 
+        },
+        calculatedData: {
+          currentSETax: savings.currentSETax,
+          projectedSETax: savings.projectedSETax,
+          profitEstimate: savings.profitEstimate,
+          reasonableSalary: savings.reasonableSalary,
+        },
+        source: 'tax_savings_wizard',
+        timestamp: new Date().toISOString()
+      })
+    });
+    
+    const result = await response.json();
+    console.log('API Response:', result);
+    
+    setShowResults(true);
+  } catch (error) {
+    console.error('Submission error:', error);
+    setShowResults(true);
+  } finally {
+    setIsSubmitting(false);
+  }
+};
 
   const handleClose = useCallback(() => {
     onClose();
