@@ -1,14 +1,13 @@
-"use client"
+'use client';
 
-import type React from "react"
-import { useState, useEffect, useCallback } from "react"
-import {
-  Calculator,
-  DollarSign,
-  Building2,
-  ShoppingBag,
-  ChevronRight,
-  X,
+import React, { useState, useEffect, useCallback } from 'react';
+import { 
+  Calculator, 
+  DollarSign, 
+  Building2, 
+  ShoppingBag, 
+  ChevronRight, 
+  X, 
   AlertTriangle,
   Check,
   Shield,
@@ -18,33 +17,33 @@ import {
   Loader2,
   Store,
   HelpCircle,
-  FileText,
-} from "lucide-react"
+  FileText
+} from 'lucide-react';
 
 // ============================================
 // TYPES
 // ============================================
 
-type RevenueRange = "<20k" | "20k-60k" | "60k-150k" | "150k+" | null
-type BusinessStructure = "sole-prop" | "llc" | "unknown" | null
-type Platform = "shopify" | "tiktok" | "etsy" | "whatnot" | "other" | null
+type RevenueRange = '<20k' | '20k-60k' | '60k-150k' | '150k+' | null;
+type BusinessStructure = 'sole-prop' | 'llc' | 'unknown' | null;
+type Platform = 'shopify' | 'tiktok' | 'etsy' | 'whatnot' | 'other' | null;
 
 interface WizardData {
-  revenue: RevenueRange
-  structure: BusinessStructure
-  platform: Platform
-  email: string
+  revenue: RevenueRange;
+  structure: BusinessStructure;
+  platform: Platform;
+  email: string;
 }
 
 interface SavingsResult {
-  min: number
-  max: number
-  nexusRisk: boolean
-  platformSpecificMessage: string
-  currentSETax: number
-  projectedSETax: number
-  profitEstimate: number
-  reasonableSalary: number
+  min: number;
+  max: number;
+  nexusRisk: boolean;
+  platformSpecificMessage: string;
+  currentSETax: number;
+  projectedSETax: number;
+  profitEstimate: number;
+  reasonableSalary: number;
 }
 
 // ============================================
@@ -53,13 +52,13 @@ interface SavingsResult {
 
 /**
  * S-Corp Tax Savings Calculator
- *
+ * 
  * The Problem: Sole Props/Single-Member LLCs pay 15.3% SE tax on 92.35% of net profit
  * Effective SE Tax Rate: 15.3% × 92.35% = 14.13%
- *
+ * 
  * The S-Corp Solution: Owner pays SE tax only on "Reasonable Salary"
  * The rest is taken as distributions (0% SE tax)
- *
+ * 
  * Formula:
  * Current SE Tax = Net Profit × 0.153 × 0.9235
  * S-Corp SE Tax = Reasonable Salary × 0.153
@@ -67,124 +66,120 @@ interface SavingsResult {
  */
 
 interface RevenueConfig {
-  avgRevenue: number
-  profitMarginLow: number
-  profitMarginHigh: number
-  salaryPercentLow: number // Lower reasonable salary = more savings
-  salaryPercentHigh: number // Higher reasonable salary = less savings
+  avgRevenue: number;
+  profitMarginLow: number;
+  profitMarginHigh: number;
+  salaryPercentLow: number;  // Lower reasonable salary = more savings
+  salaryPercentHigh: number; // Higher reasonable salary = less savings
 }
 
 const calculateSavings = (data: WizardData): SavingsResult => {
-  const SE_TAX_RATE = 0.153
-  const SE_TAX_BASE = 0.9235 // Only 92.35% of profit is subject to SE tax
-
+  const SE_TAX_RATE = 0.153;
+  const SE_TAX_BASE = 0.9235; // Only 92.35% of profit is subject to SE tax
+  
   // Revenue configurations with realistic profit margins and salary allocations
   const revenueConfigs: Record<string, RevenueConfig> = {
-    "<20k": {
-      avgRevenue: 15000,
-      profitMarginLow: 0.4,
-      profitMarginHigh: 0.6,
-      salaryPercentLow: 0.7, // Higher salary % needed at low revenue
-      salaryPercentHigh: 0.85,
+    '<20k': { 
+      avgRevenue: 15000, 
+      profitMarginLow: 0.40, 
+      profitMarginHigh: 0.60,
+      salaryPercentLow: 0.70,  // Higher salary % needed at low revenue
+      salaryPercentHigh: 0.85
     },
-    "20k-60k": {
-      avgRevenue: 40000,
-      profitMarginLow: 0.45,
+    '20k-60k': { 
+      avgRevenue: 40000, 
+      profitMarginLow: 0.45, 
       profitMarginHigh: 0.65,
-      salaryPercentLow: 0.5,
-      salaryPercentHigh: 0.7,
+      salaryPercentLow: 0.50,
+      salaryPercentHigh: 0.70
     },
-    "60k-150k": {
-      avgRevenue: 100000,
-      profitMarginLow: 0.5,
-      profitMarginHigh: 0.7,
+    '60k-150k': { 
+      avgRevenue: 100000, 
+      profitMarginLow: 0.50, 
+      profitMarginHigh: 0.70,
       salaryPercentLow: 0.35,
-      salaryPercentHigh: 0.55,
+      salaryPercentHigh: 0.55
     },
-    "150k+": {
-      avgRevenue: 200000,
-      profitMarginLow: 0.55,
+    '150k+': { 
+      avgRevenue: 200000, 
+      profitMarginLow: 0.55, 
       profitMarginHigh: 0.75,
       salaryPercentLow: 0.25,
-      salaryPercentHigh: 0.45,
+      salaryPercentHigh: 0.45
     },
-  }
+  };
 
-  const config = data.revenue ? revenueConfigs[data.revenue] : null
-
+  const config = data.revenue ? revenueConfigs[data.revenue] : null;
+  
   if (!config) {
     return {
       min: 0,
       max: 0,
       nexusRisk: false,
-      platformSpecificMessage: "",
+      platformSpecificMessage: '',
       currentSETax: 0,
       projectedSETax: 0,
       profitEstimate: 0,
       reasonableSalary: 0,
-    }
+    };
   }
 
   // Calculate profit range
-  const profitLow = config.avgRevenue * config.profitMarginLow
-  const profitHigh = config.avgRevenue * config.profitMarginHigh
-
+  const profitLow = config.avgRevenue * config.profitMarginLow;
+  const profitHigh = config.avgRevenue * config.profitMarginHigh;
+  
   // Current SE Tax (as Sole Prop/LLC)
-  const currentSETaxLow = profitLow * SE_TAX_RATE * SE_TAX_BASE
-  const currentSETaxHigh = profitHigh * SE_TAX_RATE * SE_TAX_BASE
-
+  const currentSETaxLow = profitLow * SE_TAX_RATE * SE_TAX_BASE;
+  const currentSETaxHigh = profitHigh * SE_TAX_RATE * SE_TAX_BASE;
+  
   // S-Corp SE Tax (only on reasonable salary)
-  const salaryLow = profitLow * config.salaryPercentHigh // Higher salary = lower savings (min)
-  const salaryHigh = profitHigh * config.salaryPercentLow // Lower salary = higher savings (max)
-
-  const sCorpSETaxMin = salaryLow * SE_TAX_RATE
-  const sCorpSETaxMax = salaryHigh * SE_TAX_RATE
-
+  const salaryLow = profitLow * config.salaryPercentHigh; // Higher salary = lower savings (min)
+  const salaryHigh = profitHigh * config.salaryPercentLow; // Lower salary = higher savings (max)
+  
+  const sCorpSETaxMin = salaryLow * SE_TAX_RATE;
+  const sCorpSETaxMax = salaryHigh * SE_TAX_RATE;
+  
   // Calculate savings range
-  let savingsMin = currentSETaxLow - sCorpSETaxMin
-  let savingsMax = currentSETaxHigh - sCorpSETaxMax
-
+  let savingsMin = currentSETaxLow - sCorpSETaxMin;
+  let savingsMax = currentSETaxHigh - sCorpSETaxMax;
+  
   // Ensure minimum savings are positive and reasonable
-  savingsMin = Math.max(0, savingsMin)
-  savingsMax = Math.max(savingsMin, savingsMax)
-
+  savingsMin = Math.max(0, savingsMin);
+  savingsMax = Math.max(savingsMin, savingsMax);
+  
   // Adjust based on structure - Sole Props have maximum exposure
-  let multiplier = 1
-  if (data.structure === "sole-prop") multiplier = 1.05
-  if (data.structure === "llc") multiplier = 1.0
-  if (data.structure === "unknown") multiplier = 0.95 // Conservative estimate
+  let multiplier = 1;
+  if (data.structure === 'sole-prop') multiplier = 1.05;
+  if (data.structure === 'llc') multiplier = 1.0;
+  if (data.structure === 'unknown') multiplier = 0.95; // Conservative estimate
 
   // Platform-specific messaging with 1099-K details
   const platformMessages: Record<string, string> = {
-    shopify:
-      "Shopify reports ALL seller transactions to the IRS via 1099-K. Without proper reconciliation, your gross sales (including refunds, fees, and shipping) could be taxed as net income.",
-    tiktok:
-      "TikTok Shop triggers 1099-K reporting at just $600. The IRS sees every transaction—and without proper bookkeeping, you may be overpaying by thousands.",
-    etsy: "Etsy issues 1099-Ks that often show inflated income (gross vs. net). StartSmart AI reconciles your actual profit so you only pay tax on what you actually earned.",
-    whatnot:
-      "WhatNot issues 1099-Ks for all sellers exceeding $600. Live selling creates complex transaction records that require automated reconciliation.",
-    other:
-      "Most platforms now report seller income at $600+ to the IRS via 1099-K. Without proper reconciliation, your reported gross can be mistaken for net profit.",
-  }
+    shopify: 'Shopify reports ALL seller transactions to the IRS via 1099-K. Without proper reconciliation, your gross sales (including refunds, fees, and shipping) could be taxed as net income.',
+    tiktok: 'TikTok Shop triggers 1099-K reporting at just $600. The IRS sees every transaction—and without proper bookkeeping, you may be overpaying by thousands.',
+    etsy: 'Etsy issues 1099-Ks that often show inflated income (gross vs. net). StartSmart AI reconciles your actual profit so you only pay tax on what you actually earned.',
+    whatnot: 'WhatNot issues 1099-Ks for all sellers exceeding $600. Live selling creates complex transaction records that require automated reconciliation.',
+    other: 'Most platforms now report seller income at $600+ to the IRS via 1099-K. Without proper reconciliation, your reported gross can be mistaken for net profit.',
+  };
 
   // Calculate display values for the results breakdown
-  const avgProfit = (profitLow + profitHigh) / 2
-  const avgCurrentSETax = (currentSETaxLow + currentSETaxHigh) / 2
-  const avgSCorpSETax = (sCorpSETaxMin + sCorpSETaxMax) / 2
-  const avgSalary = avgProfit * ((config.salaryPercentLow + config.salaryPercentHigh) / 2)
+  const avgProfit = (profitLow + profitHigh) / 2;
+  const avgCurrentSETax = (currentSETaxLow + currentSETaxHigh) / 2;
+  const avgSCorpSETax = (sCorpSETaxMin + sCorpSETaxMax) / 2;
+  const avgSalary = avgProfit * ((config.salaryPercentLow + config.salaryPercentHigh) / 2);
 
   return {
     min: Math.round(savingsMin * multiplier),
     max: Math.round(savingsMax * multiplier),
-    nexusRisk: data.revenue === "60k-150k" || data.revenue === "150k+",
+    nexusRisk: data.revenue === '60k-150k' || data.revenue === '150k+',
     platformSpecificMessage: data.platform ? platformMessages[data.platform] : platformMessages.other,
     // Additional data for detailed breakdown
     currentSETax: Math.round(avgCurrentSETax),
     projectedSETax: Math.round(avgSCorpSETax),
     profitEstimate: Math.round(avgProfit),
     reasonableSalary: Math.round(avgSalary),
-  }
-}
+  };
+};
 
 // ============================================
 // HOOK CARD COMPONENT (Trigger)
@@ -198,22 +193,22 @@ const HookCard: React.FC<{ onClick: () => void }> = ({ onClick }) => {
           <AlertTriangle size={14} />
           <span>IRS 1099-K Alert</span>
         </div>
-
+        
         <h3 className="hook-title">
           Is your store <span className="text-gradient">leaking money</span> to the IRS?
         </h3>
-
+        
         <p className="hook-description">
-          Most e-commerce sellers overpay by $2,000–$8,000/year in self-employment taxes. See your potential savings in
-          30 seconds.
+          Most e-commerce sellers overpay by $2,000–$8,000/year in self-employment taxes. 
+          See your potential savings in 30 seconds.
         </p>
-
+        
         <button className="hook-cta" onClick={onClick}>
           <Calculator size={18} />
           <span>Check My 2026 Tax Leakage</span>
           <ChevronRight size={18} className="cta-arrow" />
         </button>
-
+        
         <div className="hook-stats">
           <div className="stat">
             <Check size={14} />
@@ -221,61 +216,59 @@ const HookCard: React.FC<{ onClick: () => void }> = ({ onClick }) => {
           </div>
         </div>
       </div>
-
+      
       <div className="hook-card-glow" />
     </div>
-  )
-}
+  );
+};
 
 // ============================================
 // STICKY BUTTON COMPONENT (Alternative Trigger)
 // ============================================
 
 const StickyButton: React.FC<{ onClick: () => void; visible: boolean }> = ({ onClick, visible }) => {
-  if (!visible) return null
-
+  if (!visible) return null;
+  
   return (
     <button className="tax-wizard-sticky-btn" onClick={onClick}>
       <div className="sticky-pulse" />
       <Calculator size={20} />
       <span>Check Tax Leakage</span>
     </button>
-  )
-}
+  );
+};
 
 // ============================================
 // PROGRESS BAR COMPONENT
 // ============================================
 
 const ProgressBar: React.FC<{ currentStep: number; totalSteps: number }> = ({ currentStep, totalSteps }) => {
-  const progress = (currentStep / totalSteps) * 100
-
+  const progress = (currentStep / totalSteps) * 100;
+  
   return (
     <div className="wizard-progress">
       <div className="progress-track">
         <div className="progress-fill" style={{ width: `${progress}%` }} />
       </div>
-      <span className="progress-text">
-        Step {currentStep} of {totalSteps}
-      </span>
+      <span className="progress-text">Step {currentStep} of {totalSteps}</span>
     </div>
-  )
-}
+  );
+};
 
 // ============================================
 // STEP 1: REVENUE SELECTION
 // ============================================
 
 const RevenueStep: React.FC<{
-  selected: RevenueRange
-  onSelect: (value: RevenueRange) => void
+  selected: RevenueRange;
+  onSelect: (value: RevenueRange) => void;
 }> = ({ selected, onSelect }) => {
   const options: { value: RevenueRange; label: string; sublabel: string }[] = [
-    { value: "<20k", label: "Under $20K", sublabel: "Just getting started" },
-    { value: "20k-60k", label: "$20K – $60K", sublabel: "Growing steadily" },
-    { value: "60k-150k", label: "$60K – $150K", sublabel: "Scaling up" },
-    { value: "150k+", label: "$150K+", sublabel: "High volume seller" },
-  ]
+    { value: '<20k', label: 'Under $20K', sublabel: 'Just getting started' },
+    { value: '20k-60k', label: '$20K – $60K', sublabel: 'Growing steadily' },
+    { value: '60k-150k', label: '$60K – $150K', sublabel: 'Scaling up' },
+    { value: '150k+', label: '$150K+', sublabel: 'High volume seller' },
+  ];
 
   return (
     <div className="wizard-step">
@@ -286,12 +279,12 @@ const RevenueStep: React.FC<{
         <h2 className="step-title">What's your projected 2026 gross revenue?</h2>
         <p className="step-subtitle">This helps us calculate your Self-Employment tax exposure</p>
       </div>
-
+      
       <div className="options-grid revenue-options">
         {options.map((option) => (
           <button
             key={option.value}
-            className={`option-card ${selected === option.value ? "selected" : ""}`}
+            className={`option-card ${selected === option.value ? 'selected' : ''}`}
             onClick={() => onSelect(option.value)}
           >
             <div className="option-content">
@@ -305,37 +298,37 @@ const RevenueStep: React.FC<{
         ))}
       </div>
     </div>
-  )
-}
+  );
+};
 
 // ============================================
 // STEP 2: BUSINESS STRUCTURE
 // ============================================
 
 const StructureStep: React.FC<{
-  selected: BusinessStructure
-  onSelect: (value: BusinessStructure) => void
+  selected: BusinessStructure;
+  onSelect: (value: BusinessStructure) => void;
 }> = ({ selected, onSelect }) => {
   const options: { value: BusinessStructure; label: string; icon: React.ReactNode; description: string }[] = [
-    {
-      value: "sole-prop",
-      label: "Not Registered",
+    { 
+      value: 'sole-prop', 
+      label: 'Not Registered', 
       icon: <FileText size={28} />,
-      description: "Operating as a Sole Proprietor",
+      description: 'Operating as a Sole Proprietor'
     },
-    {
-      value: "llc",
-      label: "LLC (Single Member)",
+    { 
+      value: 'llc', 
+      label: 'LLC (Single Member)', 
       icon: <Building2 size={28} />,
-      description: "Registered but taxed as Sole Prop",
+      description: 'Registered but taxed as Sole Prop'
     },
-    {
-      value: "unknown",
-      label: "I'm Not Sure",
+    { 
+      value: 'unknown', 
+      label: "I'm Not Sure", 
       icon: <HelpCircle size={28} />,
-      description: "We'll help you figure it out",
+      description: "We'll help you figure it out"
     },
-  ]
+  ];
 
   return (
     <div className="wizard-step">
@@ -346,12 +339,12 @@ const StructureStep: React.FC<{
         <h2 className="step-title">How is your business currently registered?</h2>
         <p className="step-subtitle">Your entity type determines your Self-Employment tax rate</p>
       </div>
-
+      
       <div className="options-grid structure-options">
         {options.map((option) => (
           <button
             key={option.value}
-            className={`option-card structure-card ${selected === option.value ? "selected" : ""}`}
+            className={`option-card structure-card ${selected === option.value ? 'selected' : ''}`}
             onClick={() => onSelect(option.value)}
           >
             <div className="structure-icon">{option.icon}</div>
@@ -365,30 +358,30 @@ const StructureStep: React.FC<{
           </button>
         ))}
       </div>
-
+      
       <div className="step-info-box">
         <AlertTriangle size={16} />
         <span>Sole Props and Single-Member LLCs pay 15.3% SE tax on every dollar of profit</span>
       </div>
     </div>
-  )
-}
+  );
+};
 
 // ============================================
 // STEP 3: PLATFORM SELECTION
 // ============================================
 
 const PlatformStep: React.FC<{
-  selected: Platform
-  onSelect: (value: Platform) => void
+  selected: Platform;
+  onSelect: (value: Platform) => void;
 }> = ({ selected, onSelect }) => {
   const platforms: { value: Platform; name: string; color: string }[] = [
-    { value: "shopify", name: "Shopify", color: "#96BF48" },
-    { value: "tiktok", name: "TikTok Shop", color: "#FF0050" },
-    { value: "etsy", name: "Etsy", color: "#F1641E" },
-    { value: "whatnot", name: "WhatNot", color: "#FF6B35" },
-    { value: "other", name: "Other", color: "#6B7280" },
-  ]
+    { value: 'shopify', name: 'Shopify', color: '#96BF48' },
+    { value: 'tiktok', name: 'TikTok Shop', color: '#FF0050' },
+    { value: 'etsy', name: 'Etsy', color: '#F1641E' },
+    { value: 'whatnot', name: 'WhatNot', color: '#FF6B35' },
+    { value: 'other', name: 'Other', color: '#6B7280' },
+  ];
 
   return (
     <div className="wizard-step">
@@ -399,14 +392,14 @@ const PlatformStep: React.FC<{
         <h2 className="step-title">Where do you generate most of your sales?</h2>
         <p className="step-subtitle">Different platforms have different 1099-K reporting thresholds</p>
       </div>
-
+      
       <div className="options-grid platform-options">
         {platforms.map((platform) => (
           <button
             key={platform.value}
-            className={`option-card platform-card ${selected === platform.value ? "selected" : ""}`}
+            className={`option-card platform-card ${selected === platform.value ? 'selected' : ''}`}
             onClick={() => onSelect(platform.value)}
-            style={{ "--platform-color": platform.color } as React.CSSProperties}
+            style={{ '--platform-color': platform.color } as React.CSSProperties}
           >
             <div className="platform-logo">
               <Store size={24} />
@@ -419,39 +412,39 @@ const PlatformStep: React.FC<{
         ))}
       </div>
     </div>
-  )
-}
+  );
+};
 
 // ============================================
 // LOADING STATE
 // ============================================
 
 const LoadingState: React.FC = () => {
-  const [progress, setProgress] = useState(0)
-  const [message, setMessage] = useState("Analyzing your revenue data...")
+  const [progress, setProgress] = useState(0);
+  const [message, setMessage] = useState('Analyzing your revenue data...');
 
   useEffect(() => {
     const messages = [
-      "Analyzing your revenue data...",
-      "Calculating SE tax exposure...",
-      "Checking multi-state nexus risk...",
-      "Preparing your savings report...",
-    ]
-
-    let currentMessage = 0
+      'Analyzing your revenue data...',
+      'Calculating SE tax exposure...',
+      'Checking multi-state nexus risk...',
+      'Preparing your savings report...'
+    ];
+    
+    let currentMessage = 0;
     const interval = setInterval(() => {
       setProgress((prev) => {
-        const newProgress = prev + 2
+        const newProgress = prev + 2;
         if (newProgress >= 25 * (currentMessage + 1) && currentMessage < messages.length - 1) {
-          currentMessage++
-          setMessage(messages[currentMessage])
+          currentMessage++;
+          setMessage(messages[currentMessage]);
         }
-        return Math.min(newProgress, 100)
-      })
-    }, 40)
+        return Math.min(newProgress, 100);
+      });
+    }, 40);
 
-    return () => clearInterval(interval)
-  }, [])
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <div className="wizard-loading">
@@ -463,10 +456,10 @@ const LoadingState: React.FC = () => {
           <Calculator size={40} className="loading-icon" />
         </div>
       </div>
-
+      
       <h3 className="loading-title">StartSmart AI is analyzing your data...</h3>
       <p className="loading-message">{message}</p>
-
+      
       <div className="loading-progress">
         <div className="loading-track">
           <div className="loading-fill" style={{ width: `${progress}%` }} />
@@ -474,33 +467,33 @@ const LoadingState: React.FC = () => {
         <span className="loading-percent">{progress}%</span>
       </div>
     </div>
-  )
-}
+  );
+};
 
 // ============================================
 // EMAIL CAPTURE GATE
 // ============================================
 
 const EmailGate: React.FC<{
-  savings: SavingsResult
-  email: string
-  onEmailChange: (email: string) => void
-  onSubmit: () => void
-  isSubmitting: boolean
+  savings: SavingsResult;
+  email: string;
+  onEmailChange: (email: string) => void;
+  onSubmit: () => void;
+  isSubmitting: boolean;
 }> = ({ savings, email, onEmailChange, onSubmit, isSubmitting }) => {
-  const [isValid, setIsValid] = useState(false)
+  const [isValid, setIsValid] = useState(false);
 
   useEffect(() => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    setIsValid(emailRegex.test(email))
-  }, [email])
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    setIsValid(emailRegex.test(email));
+  }, [email]);
 
   const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     if (isValid && !isSubmitting) {
-      onSubmit()
+      onSubmit();
     }
-  }
+  };
 
   return (
     <div className="wizard-email-gate">
@@ -510,7 +503,7 @@ const EmailGate: React.FC<{
         </div>
         <h2 className="gate-title">Calculations Complete</h2>
       </div>
-
+      
       <div className="savings-preview">
         <span className="savings-label">Estimated Annual Tax Savings</span>
         <div className="savings-amount">
@@ -522,9 +515,11 @@ const EmailGate: React.FC<{
           Based on your revenue and current structure, you may be overpaying in Self-Employment taxes.
         </p>
       </div>
-
+      
       <form className="email-form" onSubmit={handleSubmit}>
-        <label className="email-label">Where should we send your full Audit-Shield Roadmap?</label>
+        <label className="email-label">
+          Where should we send your full Audit-Shield Roadmap?
+        </label>
         <div className="email-input-wrapper">
           <input
             type="email"
@@ -534,9 +529,9 @@ const EmailGate: React.FC<{
             className="email-input"
             disabled={isSubmitting}
           />
-          <button
-            type="submit"
-            className={`email-submit ${isValid ? "valid" : ""}`}
+          <button 
+            type="submit" 
+            className={`email-submit ${isValid ? 'valid' : ''}`}
             disabled={!isValid || isSubmitting}
           >
             {isSubmitting ? (
@@ -555,8 +550,8 @@ const EmailGate: React.FC<{
         </p>
       </form>
     </div>
-  )
-}
+  );
+};
 
 // ============================================
 // COMPARISON CHART COMPONENT
@@ -565,36 +560,36 @@ const EmailGate: React.FC<{
 const ComparisonChart: React.FC<{ savings: SavingsResult }> = ({ savings }) => {
   const rows = [
     {
-      feature: "SE Tax Rate",
-      soleProp: "15.3% on Total Profit",
-      sCorp: "15.3% on Salary Only",
-      highlight: true,
+      feature: 'SE Tax Rate',
+      soleProp: '15.3% on Total Profit',
+      sCorp: '15.3% on Salary Only',
+      highlight: true
     },
     {
-      feature: "Current SE Tax",
+      feature: 'Current SE Tax',
       soleProp: `~$${savings.currentSETax.toLocaleString()}/year`,
       sCorp: `~$${savings.projectedSETax.toLocaleString()}/year`,
-      highlight: false,
+      highlight: false
     },
     {
-      feature: "IRS 1099-K View",
-      soleProp: "High audit risk (mixed funds)",
-      sCorp: "Clean, reconciled data",
-      highlight: false,
+      feature: 'IRS 1099-K View',
+      soleProp: 'High audit risk (mixed funds)',
+      sCorp: 'Clean, reconciled data',
+      highlight: false
     },
     {
-      feature: "Audit Shield",
-      soleProp: "Basic",
-      sCorp: "StartSmart AI Reconciled",
-      highlight: false,
+      feature: 'Audit Shield',
+      soleProp: 'Basic',
+      sCorp: 'StartSmart AI Reconciled',
+      highlight: false
     },
     {
-      feature: "Annual Savings",
-      soleProp: "$0",
+      feature: 'Annual Savings',
+      soleProp: '$0',
       sCorp: `$${savings.min.toLocaleString()} - $${savings.max.toLocaleString()}+`,
-      highlight: true,
+      highlight: true
     },
-  ]
+  ];
 
   return (
     <div className="comparison-chart">
@@ -606,7 +601,7 @@ const ComparisonChart: React.FC<{ savings: SavingsResult }> = ({ savings }) => {
           <div className="chart-cell good-cell">NexTax S-Corp</div>
         </div>
         {rows.map((row, index) => (
-          <div key={index} className={`chart-row ${row.highlight ? "highlight-row" : ""}`}>
+          <div key={index} className={`chart-row ${row.highlight ? 'highlight-row' : ''}`}>
             <div className="chart-cell feature-cell">{row.feature}</div>
             <div className="chart-cell bad-cell">
               <X size={14} className="cell-icon bad" />
@@ -620,39 +615,36 @@ const ComparisonChart: React.FC<{ savings: SavingsResult }> = ({ savings }) => {
         ))}
       </div>
     </div>
-  )
-}
+  );
+};
 
 // ============================================
 // RESULTS DISPLAY
 // ============================================
 
 const ResultsDisplay: React.FC<{
-  data: WizardData
-  savings: SavingsResult
-  onClose: () => void
+  data: WizardData;
+  savings: SavingsResult;
+  onClose: () => void;
 }> = ({ data, savings, onClose }) => {
   const getStructureLabel = () => {
     switch (data.structure) {
-      case "sole-prop":
-        return "Sole Proprietorship"
-      case "llc":
-        return "Single-Member LLC"
-      default:
-        return "your current structure"
+      case 'sole-prop': return 'Sole Proprietorship';
+      case 'llc': return 'Single-Member LLC';
+      default: return 'your current structure';
     }
-  }
+  };
 
   const getPlatformName = () => {
     const names: Record<string, string> = {
-      shopify: "Shopify",
-      tiktok: "TikTok Shop",
-      etsy: "Etsy",
-      whatnot: "WhatNot",
-      other: "your platform",
-    }
-    return data.platform ? names[data.platform] : "your platform"
-  }
+      shopify: 'Shopify',
+      tiktok: 'TikTok Shop',
+      etsy: 'Etsy',
+      whatnot: 'WhatNot',
+      other: 'your platform'
+    };
+    return data.platform ? names[data.platform] : 'your platform';
+  };
 
   return (
     <div className="wizard-results">
@@ -665,7 +657,7 @@ const ResultsDisplay: React.FC<{
           <X size={20} />
         </button>
       </div>
-
+      
       <div className="results-hero">
         <span className="results-label">Your Estimated Annual Savings</span>
         <div className="results-amount">
@@ -682,22 +674,22 @@ const ResultsDisplay: React.FC<{
 
       {/* Comparison Chart */}
       <ComparisonChart savings={savings} />
-
+      
       <div className="results-breakdown">
         <h3 className="breakdown-title">Your 3-Step Audit-Shield Plan</h3>
-
+        
         <div className="breakdown-item">
           <div className="breakdown-number">1</div>
           <div className="breakdown-content">
             <h4>Stop the Leak</h4>
             <p>
-              We file your LLC and S-Corp election to trigger immediate savings. Instead of paying 15.3% SE tax on ~$
-              {savings.profitEstimate.toLocaleString()} in profit, you'll only pay it on your $
-              {savings.reasonableSalary.toLocaleString()} reasonable salary.
+              We file your LLC and S-Corp election to trigger immediate savings. 
+              Instead of paying 15.3% SE tax on ~${savings.profitEstimate.toLocaleString()} in profit, 
+              you'll only pay it on your ${savings.reasonableSalary.toLocaleString()} reasonable salary.
             </p>
           </div>
         </div>
-
+        
         <div className="breakdown-item">
           <div className="breakdown-number">2</div>
           <div className="breakdown-content">
@@ -705,47 +697,47 @@ const ResultsDisplay: React.FC<{
             <p>{savings.platformSpecificMessage}</p>
           </div>
         </div>
-
+        
         {savings.nexusRisk && (
           <div className="breakdown-item nexus-alert">
             <div className="breakdown-number warning">3</div>
             <div className="breakdown-content">
               <h4>Multi-State Nexus Protection</h4>
               <p>
-                At your revenue level, you likely have sales tax obligations in multiple states (FL, TX, CA, and more).
-                We monitor your sales volume in each state to ensure compliance and help you avoid $1,000+ in potential
-                penalties.
+                At your revenue level, you likely have sales tax obligations in multiple states 
+                (FL, TX, CA, and more). We monitor your sales volume in each state to ensure 
+                compliance and help you avoid $1,000+ in potential penalties.
               </p>
             </div>
           </div>
         )}
-
+        
         {!savings.nexusRisk && (
           <div className="breakdown-item">
             <div className="breakdown-number">3</div>
             <div className="breakdown-content">
               <h4>Nexus Monitoring</h4>
               <p>
-                As you scale, we'll monitor your sales volume in states like FL, TX, and CA to ensure you stay compliant
-                and avoid unexpected state tax obligations.
+                As you scale, we'll monitor your sales volume in states like FL, TX, and CA 
+                to ensure you stay compliant and avoid unexpected state tax obligations.
               </p>
             </div>
           </div>
         )}
       </div>
-
+      
       <div className="results-cta-section">
         <button className="results-primary-cta">
           <Sparkles size={18} />
           <span>Claim My Savings – Launch StartSmart</span>
         </button>
-
+        
         <button className="results-secondary-cta">
           <Calendar size={16} />
           <span>Book My 12-Minute Tech Check with Steve</span>
         </button>
       </div>
-
+      
       <div className="results-footer">
         <p>
           <Check size={14} />
@@ -753,94 +745,94 @@ const ResultsDisplay: React.FC<{
         </p>
       </div>
     </div>
-  )
-}
+  );
+};
 
 // ============================================
 // MAIN WIZARD OVERLAY
 // ============================================
 
 const WizardOverlay: React.FC<{
-  isOpen: boolean
-  onClose: () => void
+  isOpen: boolean;
+  onClose: () => void;
 }> = ({ isOpen, onClose }) => {
-  const [step, setStep] = useState<number>(1)
-  const [isLoading, setIsLoading] = useState(false)
-  const [isSubmitting, setIsSubmitting] = useState(false)
-  const [showResults, setShowResults] = useState(false)
+  const [step, setStep] = useState<number>(1);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showResults, setShowResults] = useState(false);
   const [data, setData] = useState<WizardData>({
     revenue: null,
     structure: null,
     platform: null,
-    email: "",
-  })
+    email: '',
+  });
 
-  const savings = calculateSavings(data)
+  const savings = calculateSavings(data);
 
   const handleRevenueSelect = (value: RevenueRange) => {
-    setData({ ...data, revenue: value })
-    setTimeout(() => setStep(2), 300)
-  }
+    setData({ ...data, revenue: value });
+    setTimeout(() => setStep(2), 300);
+  };
 
   const handleStructureSelect = (value: BusinessStructure) => {
-    setData({ ...data, structure: value })
-    setTimeout(() => setStep(3), 300)
-  }
+    setData({ ...data, structure: value });
+    setTimeout(() => setStep(3), 300);
+  };
 
   const handlePlatformSelect = (value: Platform) => {
-    setData({ ...data, platform: value })
-    setIsLoading(true)
+    setData({ ...data, platform: value });
+    setIsLoading(true);
     setTimeout(() => {
-      setIsLoading(false)
-      setStep(4)
-    }, 2000)
-  }
+      setIsLoading(false);
+      setStep(4);
+    }, 2000);
+  };
 
   const handleEmailSubmit = () => {
-    setIsSubmitting(true)
+    setIsSubmitting(true);
     // Simulate API call
     setTimeout(() => {
-      setIsSubmitting(false)
-      setShowResults(true)
-    }, 1500)
-  }
+      setIsSubmitting(false);
+      setShowResults(true);
+    }, 1500);
+  };
 
   const handleClose = useCallback(() => {
-    onClose()
+    onClose();
     // Reset state after animation
     setTimeout(() => {
-      setStep(1)
-      setIsLoading(false)
-      setIsSubmitting(false)
-      setShowResults(false)
-      setData({ revenue: null, structure: null, platform: null, email: "" })
-    }, 300)
-  }, [onClose])
+      setStep(1);
+      setIsLoading(false);
+      setIsSubmitting(false);
+      setShowResults(false);
+      setData({ revenue: null, structure: null, platform: null, email: '' });
+    }, 300);
+  }, [onClose]);
 
   // Handle escape key
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === "Escape" && isOpen) {
-        handleClose()
+      if (e.key === 'Escape' && isOpen) {
+        handleClose();
       }
-    }
-    document.addEventListener("keydown", handleEscape)
-    return () => document.removeEventListener("keydown", handleEscape)
-  }, [isOpen, handleClose])
+    };
+    document.addEventListener('keydown', handleEscape);
+    return () => document.removeEventListener('keydown', handleEscape);
+  }, [isOpen, handleClose]);
 
   // Prevent body scroll when open
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = "hidden"
+      document.body.style.overflow = 'hidden';
     } else {
-      document.body.style.overflow = ""
+      document.body.style.overflow = '';
     }
     return () => {
-      document.body.style.overflow = ""
-    }
-  }, [isOpen])
+      document.body.style.overflow = '';
+    };
+  }, [isOpen]);
 
-  if (!isOpen) return null
+  if (!isOpen) return null;
 
   return (
     <div className="wizard-overlay" onClick={handleClose}>
@@ -850,9 +842,11 @@ const WizardOverlay: React.FC<{
             <X size={20} />
           </button>
         )}
-
-        {!showResults && !isLoading && step < 4 && <ProgressBar currentStep={step} totalSteps={3} />}
-
+        
+        {!showResults && !isLoading && step < 4 && (
+          <ProgressBar currentStep={step} totalSteps={3} />
+        )}
+        
         <div className="wizard-content">
           {isLoading ? (
             <LoadingState />
@@ -860,9 +854,24 @@ const WizardOverlay: React.FC<{
             <ResultsDisplay data={data} savings={savings} onClose={handleClose} />
           ) : (
             <>
-              {step === 1 && <RevenueStep selected={data.revenue} onSelect={handleRevenueSelect} />}
-              {step === 2 && <StructureStep selected={data.structure} onSelect={handleStructureSelect} />}
-              {step === 3 && <PlatformStep selected={data.platform} onSelect={handlePlatformSelect} />}
+              {step === 1 && (
+                <RevenueStep 
+                  selected={data.revenue} 
+                  onSelect={handleRevenueSelect} 
+                />
+              )}
+              {step === 2 && (
+                <StructureStep 
+                  selected={data.structure} 
+                  onSelect={handleStructureSelect} 
+                />
+              )}
+              {step === 3 && (
+                <PlatformStep 
+                  selected={data.platform} 
+                  onSelect={handlePlatformSelect} 
+                />
+              )}
               {step === 4 && (
                 <EmailGate
                   savings={savings}
@@ -877,42 +886,47 @@ const WizardOverlay: React.FC<{
         </div>
       </div>
     </div>
-  )
-}
+  );
+};
 
 // ============================================
 // MAIN EXPORT COMPONENT
 // ============================================
 
 export const TaxSavingsWizard: React.FC<{
-  variant?: "card" | "sticky" | "both"
-}> = ({ variant = "both" }) => {
-  const [isOpen, setIsOpen] = useState(false)
-  const [showSticky, setShowSticky] = useState(false)
+  variant?: 'card' | 'sticky' | 'both';
+}> = ({ variant = 'both' }) => {
+  const [isOpen, setIsOpen] = useState(false);
+  const [showSticky, setShowSticky] = useState(false);
 
   // Show sticky button after scrolling
   useEffect(() => {
     const handleScroll = () => {
-      setShowSticky(window.scrollY > 400)
-    }
-    window.addEventListener("scroll", handleScroll)
-    return () => window.removeEventListener("scroll", handleScroll)
-  }, [])
+      setShowSticky(window.scrollY > 400);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   return (
     <>
       <style>{styles}</style>
-
-      {(variant === "card" || variant === "both") && <HookCard onClick={() => setIsOpen(true)} />}
-
-      {(variant === "sticky" || variant === "both") && (
-        <StickyButton onClick={() => setIsOpen(true)} visible={showSticky && !isOpen} />
+      
+      {(variant === 'card' || variant === 'both') && (
+        <HookCard onClick={() => setIsOpen(true)} />
       )}
-
+      
+      {(variant === 'sticky' || variant === 'both') && (
+        <StickyButton 
+          onClick={() => setIsOpen(true)} 
+          visible={showSticky && !isOpen} 
+        />
+      )}
+      
       <WizardOverlay isOpen={isOpen} onClose={() => setIsOpen(false)} />
     </>
-  )
-}
+  );
+};
 
 // ============================================
 // STYLES (Matching NexTax.AI Theme)
@@ -2153,6 +2167,6 @@ const styles = `
     width: 100%;
   }
 }
-`
+`;
 
-export default TaxSavingsWizard
+export default TaxSavingsWizard;
