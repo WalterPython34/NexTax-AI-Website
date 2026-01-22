@@ -727,15 +727,21 @@ const ResultsDisplay: React.FC<{
       </div>
       
       <div className="results-cta-section">
-        <button className="results-primary-cta">
-          <Sparkles size={18} />
-          <span>Claim My Savings – Launch StartSmart</span>
-        </button>
-        
-        <button className="results-secondary-cta">
-          <Calendar size={16} />
-          <span>Book My 12-Minute Tech Check with Steve</span>
-        </button>
+        <button 
+  className="results-primary-cta"
+  onClick={() => window.location.href = 'https://nextax.ai/startsmart'}
+>
+  <Sparkles size={18} />
+  <span>Claim My Savings – Launch StartSmart</span>
+</button>
+
+<button 
+  className="results-secondary-cta"
+  onClick={() => window.open('https://calendly.com/steven-morello-nextax', '_blank')}
+>
+  <Calendar size={16} />
+  <span>Book My 12-Minute Tech Check with Steve</span>
+</button>
       </div>
       
       <div className="results-footer">
