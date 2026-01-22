@@ -305,23 +305,4 @@ export async function GET() {
     },
   });
 }
-```
 
----
-
-## What's included:
-
-| Integration | Status | What it does |
-|-------------|--------|--------------|
-| ✅ Airtable | Enabled | Saves lead to your database |
-| ✅ SendGrid | Enabled | Sends follow-up email |
-| ✅ HubSpot | Enabled | Adds contact to CRM |
-| ✅ Slack | Enabled | Sends you instant notification |
-
----
-
-## To test after deploying:
-
-Visit this URL to check your integrations are configured:
-```
-https://nextax.ai/api/leads/tax-calculator
