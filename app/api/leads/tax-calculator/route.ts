@@ -69,7 +69,7 @@ function generateEmailData(submission: TaxCalculatorSubmission): EmailTemplateDa
     savingsAmount: `${submission.estimatedSavings.min.toLocaleString()} – ${submission.estimatedSavings.max.toLocaleString()}`,
     platform: PLATFORM_NAMES[submission.platform] || 'your platform',
     structure: STRUCTURE_NAMES[submission.structure] || 'your current structure',
-    calendarLink: process.env.CALENDLY_LINK || 'https://calendly.com/nextax-ai/12-min-tech-check',
+    calendarLink: process.env.CALENDLY_LINK || 'https://calendly.com/steven-morello-nextax',
     startSmartLink: process.env.STARTSMART_LINK || 'https://nextax.ai/startsmart',
   };
 }
