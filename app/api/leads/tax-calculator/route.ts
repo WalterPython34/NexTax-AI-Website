@@ -104,7 +104,7 @@ export async function POST(request: Request) {
     if (process.env.AIRTABLE_API_KEY && process.env.AIRTABLE_BASE_ID) {
       try {
         const airtableResponse = await fetch(
-          `https://api.airtable.com/v0/${process.env.AIRTABLE_BASE_ID}/Tax%20Calculator%20Leads`,
+          `https://api.airtable.com/v0/${process.env.AIRTABLE_BASE_ID}/tblkNXBx6f4OhKzSH`,
           {
             method: 'POST',
             headers: {
