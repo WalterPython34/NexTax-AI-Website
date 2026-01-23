@@ -146,6 +146,13 @@ export async function POST(request: Request) {
     }
 
     // =============================================
+// 2. SEND EMAIL VIA SENDGRID
+// =============================================
+console.log('Attempting SendGrid email to:', submission.email);  // ADD THIS LINE
+
+if (process.env.SENDGRID_API_KEY && process.env.SENDGRID_TEMPLATE_ID) {
+
+    // =============================================
     // 2. SEND EMAIL VIA SENDGRID
     // =============================================
     if (process.env.SENDGRID_API_KEY && process.env.SENDGRID_TEMPLATE_ID) {
@@ -210,8 +217,8 @@ export async function POST(request: Request) {
                 email: submission.email,
                 firstname: emailData.firstName,
                 tax_calculator_revenue: submission.revenue,
-                tax_calculator_structure: submission.structure,
-                tax_calculator_platform: submission.platform,
+                tax_calculator_structure: STRUCTURE_NAMES[submission.structure] || submission.structure,
+                tax_calculator_platform: PLATFORM_NAMES[submission.platform] || submission.platform,
                 estimated_tax_savings_min: submission.estimatedSavings.min,
                 estimated_tax_savings_max: submission.estimatedSavings.max,
                 lead_source: 'Tax Savings Calculator',
