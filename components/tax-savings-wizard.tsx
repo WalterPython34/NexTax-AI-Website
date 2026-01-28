@@ -32,6 +32,7 @@ interface WizardData {
   revenue: RevenueRange;
   structure: BusinessStructure;
   platform: Platform;
+  firstName: string;
   email: string;
 }
 
@@ -476,17 +477,19 @@ const LoadingState: React.FC = () => {
 
 const EmailGate: React.FC<{
   savings: SavingsResult;
+  firstName: string;
   email: string;
+  onFirstNameChange: (firstName: string) => void;
   onEmailChange: (email: string) => void;
   onSubmit: () => void;
   isSubmitting: boolean;
-}> = ({ savings, email, onEmailChange, onSubmit, isSubmitting }) => {
+}> = ({ savings, firstName, email, onFirstNameChange, onEmailChange, onSubmit, isSubmitting }) => {
   const [isValid, setIsValid] = useState(false);
 
   useEffect(() => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    setIsValid(emailRegex.test(email));
-  }, [email]);
+    setIsValid(firstName.trim().length > 0 && emailRegex.test(email));
+  }, [firstName, email]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -520,10 +523,18 @@ const EmailGate: React.FC<{
         <label className="email-label">
           Where should we send your full Audit-Shield Roadmap?
         </label>
-        <div className="email-input-wrapper">
+        <div className="email-input-wrapper" style={{ flexDirection: 'column' }}>
+          <input
+            type="text"
+            placeholder="First Name"
+            value={firstName}
+            onChange={(e) => onFirstNameChange(e.target.value)}
+            className="email-input"
+            disabled={isSubmitting}
+          />
           <input
             type="email"
-            placeholder="Enter your email"
+            placeholder="Email Address"
             value={email}
             onChange={(e) => onEmailChange(e.target.value)}
             className="email-input"
@@ -544,7 +555,7 @@ const EmailGate: React.FC<{
             )}
           </button>
         </div>
-        <p className="email-disclaimer">
+        <p className="email-disclaimer">          
           <Shield size={12} />
           <span>No spam. Just your personalized tax savings roadmap.</span>
         </p>
@@ -770,6 +781,7 @@ const WizardOverlay: React.FC<{
     revenue: null,
     structure: null,
     platform: null,
+    firstName: '',
     email: '',
   });
 
@@ -802,6 +814,7 @@ const WizardOverlay: React.FC<{
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
+        firstName: data.firstName,
         email: data.email,
         revenue: data.revenue,
         structure: data.structure,
@@ -841,7 +854,7 @@ const WizardOverlay: React.FC<{
       setIsLoading(false);
       setIsSubmitting(false);
       setShowResults(false);
-      setData({ revenue: null, structure: null, platform: null, email: '' });
+      setData({ revenue: null, structure: null, platform: null, firstName: '', email: '' });
     }, 300);
   }, [onClose]);
 
@@ -911,7 +924,9 @@ const WizardOverlay: React.FC<{
               {step === 4 && (
                 <EmailGate
                   savings={savings}
+                  firstName={data.firstName}
                   email={data.email}
+                  onFirstNameChange={(firstName) => setData({ ...data, firstName })}
                   onEmailChange={(email) => setData({ ...data, email })}
                   onSubmit={handleEmailSubmit}
                   isSubmitting={isSubmitting}
