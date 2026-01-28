@@ -5,6 +5,7 @@ import { NextResponse } from 'next/server';
 
 // Types
 interface TaxCalculatorSubmission {
+  firstName?: string;
   email: string;
   revenue: '<20k' | '20k-60k' | '60k-150k' | '150k+';
   structure: 'sole-prop' | 'llc' | 'unknown';
@@ -63,7 +64,7 @@ function extractFirstName(email: string): string {
 // Generate email template data
 function generateEmailData(submission: TaxCalculatorSubmission): EmailTemplateData {
   return {
-    firstName: extractFirstName(submission.email),
+    firstName: submission.firstName || extractFirstName(submission.email),
     savingsMin: submission.estimatedSavings.min.toLocaleString(),
     savingsMax: submission.estimatedSavings.max.toLocaleString(),
     savingsAmount: `${submission.estimatedSavings.min.toLocaleString()} – ${submission.estimatedSavings.max.toLocaleString()}`,
@@ -146,15 +147,10 @@ export async function POST(request: Request) {
     }
 
     // =============================================
-// 2. SEND EMAIL VIA SENDGRID
-// =============================================
-console.log('Attempting SendGrid email to:', submission.email);  // ADD THIS LINE
-
-if (process.env.SENDGRID_API_KEY && process.env.SENDGRID_TEMPLATE_ID) {
-
-    // =============================================
     // 2. SEND EMAIL VIA SENDGRID
     // =============================================
+    console.log('Attempting SendGrid email to:', submission.email);
+
     if (process.env.SENDGRID_API_KEY && process.env.SENDGRID_TEMPLATE_ID) {
       try {
         const sgResponse = await fetch('https://api.sendgrid.com/v3/mail/send', {
