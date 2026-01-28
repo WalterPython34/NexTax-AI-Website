@@ -9,12 +9,16 @@ import Link from "next/link"
 import { AuthModal } from "@/components/auth/auth-modal"
 import { Navigation } from "@/components/navigation"
 import { TaxSavingsWizard } from "@/components/tax-savings-wizard"
+import { IdeaValidatorPopup } from "@/components/IdeaValidatorPopup"
 
 export default function EcommLandingPage() {
   const [authModal, setAuthModal] = useState<{ isOpen: boolean; mode: "signin" | "signup" }>({
     isOpen: false,
     mode: "signin",
   })
+  
+  // Add state for Idea Validator popup
+  const [showIdeaPopup, setShowIdeaPopup] = useState(false)
 
   const stats = [
     { number: "48hrs", label: "Business Launch Time" },
@@ -63,19 +67,15 @@ export default function EcommLandingPage() {
               Get Started
             </Button>
           </Link>
-          <Link
-            href="https://chatgpt.com/g/g-684641e9df808191a9d2025951aa3f09-startsmart-ai-business-launch-assistant"
-            target="_blank"
-            rel="noopener noreferrer"
+          {/* Changed from Link to Button with onClick */}
+          <Button 
+            size="lg"
+            onClick={() => setShowIdeaPopup(true)}
+            className="w-full sm:w-auto bg-transparent border border-white/30 text-emerald-400 hover:bg-emerald-500 hover:text-yellow-200 px-8 py-6 text-lg font-semibold backdrop-blur"
           >
-            <Button 
-              size="lg"
-              className="w-full sm:w-auto bg-transparent border border-white/30 text-emerald-400 hover:bg-emerald-500 hover:text-yellow-200 px-8 py-6 text-lg font-semibold backdrop-blur"
-            >
-              <Lightbulb className="mr-3 w-6 h-6 text-yellow-200"/>
-              Validate Sales Idea
-            </Button>
-          </Link>
+            <Lightbulb className="mr-3 w-6 h-6 text-yellow-200"/>
+            Validate Sales Idea
+          </Button>
           <Link href="/features">
             <Button
               size="lg"
@@ -552,6 +552,13 @@ export default function EcommLandingPage() {
         isOpen={authModal.isOpen}
         onClose={() => setAuthModal({ ...authModal, isOpen: false })}
         mode={authModal.mode}
+      />
+      
+      {/* Idea Validator Popup */}
+      <IdeaValidatorPopup
+        isOpen={showIdeaPopup}
+        onClose={() => setShowIdeaPopup(false)}
+        gptUrl="https://chatgpt.com/g/g-684641e9df808191a9d2025951aa3f09-startsmart-ai-business-launch-assistant"
       />
     </div>
   )
