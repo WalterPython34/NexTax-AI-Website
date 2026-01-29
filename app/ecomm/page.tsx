@@ -45,15 +45,15 @@ export default function EcommLandingPage() {
 
         <div className="space-y-6">
           <h1 className="text-3xl lg:text-5xl font-bold text-white leading-tight">
-            Why settle for 'influencer'
-            <span className="block text-white-400">when you can own 'CEO'?</span>
+            Stop Overpaying 15.3%
+            <span className="block text-white-400">On Every Sale</span>
           </h1>
           <p className="text-emerald-300 text-lg lg:text-xl leading-relaxed">
-            StartSmart AI streamlines it all — entity setups tailored for e-comm hustlers, 
-            S-Corp elections to pocket more from every live sale, and ongoing AI guidance that evolves with your empire. 
+            While other sellers lose thousands to self-employment tax, NexTax.AI streamlines   
+            your entity setup and S-Corp election in 48 hours. Keep your margins, automate your compliance, and pocket more from every livesale. 
           </p>
           <p className="text-lg text-white leading-relaxed">
-            From side gig to six figures? We've got the blueprint
+            Etsy, Shopify, & TikTok sellers save $13,000+ annually with S-Corp elections.
           </p>
         </div>
 
