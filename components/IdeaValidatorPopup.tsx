@@ -171,7 +171,7 @@ export const IdeaValidatorPopup: React.FC<IdeaValidatorPopupProps> = ({
                   <Loader2 size={20} className="spin" />
                 ) : (
                   <>
-                    <span>Launch Idea Validator</span>
+                    <span>Launch Idea Validator GPT</span>
                     <ArrowRight size={18} />
                   </>
                 )}
@@ -394,7 +394,7 @@ const styles = `
 }
 
 .idea-submit-btn.valid:hover {
-  background: #d97706;
+  background: #00bbff;
   transform: translateY(-1px);
 }
 
