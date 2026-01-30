@@ -143,7 +143,7 @@ export default function EcommLandingPage() {
                   </div>
 
                   <Link
-                    href="https://chatgpt.com/g/g-684641e9df808191a9d2025951aa3f09-startsmart-ai-business-launch-assistant"
+                    href="https://chatgpt.com/g/g-684641e9df808191a9d2025951aa3f09-nextax-ai-idea-validation-launch-assistant"
                     target="_blank"
                     rel="noopener noreferrer"
                   >
