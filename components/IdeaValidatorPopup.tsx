@@ -76,20 +76,35 @@ export const IdeaValidatorPopup: React.FC<IdeaValidatorPopupProps> = ({
       });
 
       const result = await response.json();
-      console.log('Lead captured:', result);
+      console.log('✅ Lead captured:', result);
 
-      // Redirect to GPT app
-      window.open(gptUrl, '_blank');
+      // Detect if mobile device
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
       
-      // Close popup and reset form
-      onClose();
-      setFirstName('');
-      setEmail('');
+      if (isMobile) {
+        // On mobile: Direct navigation (same tab) - most reliable for mobile
+        window.location.href = gptUrl;
+      } else {
+        // On desktop: Open in new tab
+        window.open(gptUrl, '_blank');
+        // Close popup and reset form on desktop only
+        onClose();
+        setFirstName('');
+        setEmail('');
+      }
+      
     } catch (error) {
-      console.error('Submission error:', error);
-      // Still redirect even if API fails
-      window.open(gptUrl, '_blank');
-      onClose();
+      console.error('❌ Submission error:', error);
+      
+      // Still redirect even if API fails - don't lose the user!
+      const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+      
+      if (isMobile) {
+        window.location.href = gptUrl;
+      } else {
+        window.open(gptUrl, '_blank');
+        onClose();
+      }
     } finally {
       setIsSubmitting(false);
     }
