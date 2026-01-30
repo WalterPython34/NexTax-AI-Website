@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
@@ -19,6 +19,22 @@ export default function EcommLandingPage() {
   
   // Add state for Idea Validator popup
   const [showIdeaPopup, setShowIdeaPopup] = useState(false)
+  
+  // Auto-open popup on mobile after 3 seconds (optional - for ad traffic)
+  useEffect(() => {
+    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+    const hasSeenPopup = sessionStorage.getItem('hasSeenIdeaPopup');
+    
+    // Only auto-show once per session on mobile
+    if (isMobile && !hasSeenPopup) {
+      const timer = setTimeout(() => {
+        setShowIdeaPopup(true);
+        sessionStorage.setItem('hasSeenPopup', 'true');
+      }, 3000); // Show after 3 seconds
+      
+      return () => clearTimeout(timer);
+    }
+  }, []);
 
   const stats = [
     { number: "48hrs", label: "Business Launch Time" },
@@ -67,13 +83,13 @@ export default function EcommLandingPage() {
               Get Started
             </Button>
           </Link>
-          {/* Changed from Link to Button with onClick */}
+          {/* Idea Validator Button */}
           <Button 
             size="lg"
             onClick={() => setShowIdeaPopup(true)}
-            className="w-full sm:w-auto bg-transparent border border-white/30 text-emerald-400 hover:bg-emerald-500 hover:text-yellow-200 px-8 py-6 text-lg font-semibold backdrop-blur"
+            className="w-full sm:w-auto bg-transparent border-2 border-yellow-400/50 text-yellow-300 hover:bg-yellow-400/10 hover:border-yellow-400 hover:text-yellow-200 px-8 py-6 text-lg font-semibold backdrop-blur transition-all duration-200 shadow-lg shadow-yellow-400/20 hover:shadow-yellow-400/40"
           >
-            <Lightbulb className="mr-3 w-6 h-6 text-yellow-200"/>
+            <Lightbulb className="mr-3 w-6 h-6 text-yellow-400 animate-pulse"/>
             Validate Sales Idea
           </Button>
           <Link href="/features">
@@ -182,16 +198,13 @@ export default function EcommLandingPage() {
               </div>
             </div>
 
-            <Link
-              href="https://chatgpt.com/g/g-684641e9df808191a9d2025951aa3f09-nextax-ai-idea-validation-launch-assistant"
-              target="_blank"
-              rel="noopener noreferrer"
+            <Button 
+              onClick={() => setShowIdeaPopup(true)}
+              className="w-full bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white mt-2"
             >
-              <Button className="w-full bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white mt-2">
-                <MessageSquare className="mr-2 w-4 h-4"/>
-                Try StartSmart → Live on ChatGPT
-              </Button>
-            </Link>
+              <MessageSquare className="mr-2 w-4 h-4"/>
+              Try Idea Validator GPT
+            </Button>
           </div>
         </div>
       </div>
