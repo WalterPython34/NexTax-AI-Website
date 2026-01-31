@@ -106,7 +106,7 @@ export default function EcommLandingPage() {
         <div className="space-y-3 py-4">
           {[
             "Start your new business in less than 48 Hours",
-            "EIN, Legal doc, Registered Agent & State registrations start immediately",
+            "EIN, Legal docs, registered agent & state registrations start immediately",
             "StartSmart AI-powered App & Idea Validation GPT included in all startup packages",
           ].map((feature, i) => (
             <div key={i} className="flex items-center gap-3">
