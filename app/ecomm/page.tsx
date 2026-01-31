@@ -61,16 +61,15 @@ export default function EcommLandingPage() {
 
         <div className="space-y-6">
           <h1 className="text-3xl lg:text-5xl font-bold text-white leading-tight">
-            Stop Overpaying 15.3% Tax
-            <span className="block text-white-400">On Every Sale</span>
+            Stop Losing 15.3% of Every Sale
+            <span className="block text-white-400">to Self-Employment Taxes</span>
           </h1>
           <p className="text-emerald-300 text-lg lg:text-xl leading-relaxed">
-            Join other Etsy, Shopify, and TikTok Shop sellers already saving $13,000+ per year   
-            by forming your LLC and making an S-Corp election. 
-            Our tax experts will streamline the process for you in less than 48 hours.
+            Etsy, Shopify, and TikTok Shop sellers are already saving $13,000+ per year by forming an LLC and electing S-Corp status. 
+            Join them — our tax experts handle everything in under 48 hours.
           </p>
           <p className="text-lg text-white leading-relaxed">
-            Keep your margins, automate your compliance, and pocket more from every livesale. 
+            Protect your margins from rising platform fees and 2026 changes, and keep more profit from every live sale or drop.
           </p>
         </div>
 
@@ -107,7 +106,7 @@ export default function EcommLandingPage() {
         <div className="space-y-3 py-4">
           {[
             "Start your new business in less than 48 Hours",
-            "EIN, Legal doc, Registered Agent & State registrations begin immediately",
+            "EIN, Legal doc, Registered Agent & State registrations start immediately",
             "StartSmart AI-powered App & Idea Validation GPT included in all startup packages",
           ].map((feature, i) => (
             <div key={i} className="flex items-center gap-3">
