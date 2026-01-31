@@ -65,8 +65,8 @@ export default function EcommLandingPage() {
             <span className="block text-white-400">On Every Sale</span>
           </h1>
           <p className="text-emerald-300 text-lg lg:text-xl leading-relaxed">
-            Start Smart & join Etsy, Shopify, and TikTok Shop sellers already saving $13,000+ per year   
-            by forming an LLC & making an S-Corp election. 
+            Join other Etsy, Shopify, and TikTok Shop sellers already saving $13,000+ per year   
+            by forming your LLC and making an S-Corp election. 
             Our tax experts will streamline the process for you in less than 48 hours.
           </p>
           <p className="text-lg text-white leading-relaxed">
