@@ -127,7 +127,7 @@ export default function EcommLandingPage() {
       Don't Let 2026 Tax Changes & Overpayments Drain Your Profits.
     </h2>
     <p className="text-lg text-slate-300 text-center mb-12 leading-relaxed max-w-3xl mx-auto">
-      With the new $2,000 threshold, the IRS sees every livestream sale. Use our <span className="text-cyan-400 text-bold">StartSmart AI Leakage Check</span> to see your potential savings in 30 seconds—and get your "Audit-Shield" roadmap.
+      With increased IRS scrutiny on e-commmerce income, many sellers overpay $2,000–$8,000+ annually in self-employment taxes alone. Use our <span className="text-cyan-400 text-bold">StartSmart AI Leakage Check</span> to see your potential savings in 30 seconds—and get your "Audit-Shield" roadmap.
     </p>
     
     {/* 60/40 Grid Layout */}
