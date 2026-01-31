@@ -61,8 +61,8 @@ export default function EcommLandingPage() {
 
         <div className="space-y-6">
           <h1 className="text-3xl lg:text-5xl font-bold text-white leading-tight">
-            Stop Losing 15.3% of Every Sale
-            <span className="block text-white-400">to Self-Employment Taxes</span>
+            Stop Losing 15.3% of Every Sale to Self-Employment
+            <span className="block text-white-400"> Taxes</span>
           </h1>
           <p className="text-emerald-300 text-lg lg:text-xl leading-relaxed">
             Etsy, Shopify, and TikTok Shop sellers are already saving $13,000+ per year by forming an LLC and electing S-Corp status. 
