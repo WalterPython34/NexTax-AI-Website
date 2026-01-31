@@ -61,15 +61,15 @@ export default function EcommLandingPage() {
 
         <div className="space-y-6">
           <h1 className="text-3xl lg:text-5xl font-bold text-white leading-tight">
-            Stop Overpaying 15.3%
+            Stop Overpaying 15.3% Tax
             <span className="block text-white-400">On Every Sale</span>
           </h1>
           <p className="text-emerald-300 text-lg lg:text-xl leading-relaxed">
-            While other sellers lose thousands to self-employment tax, NexTax.AI streamlines   
-            your entity setup and S-Corp election in 48 hours. Keep your margins, automate your compliance, and pocket more from every livesale. 
+            Start smart & join Etsy, Shopify, and TikTok Shop sellers already saving $13,000+ per year   
+            by forming an LLC & making an S-Corp election. Our tax experts streamline the process for you in less than 48 hours.
           </p>
           <p className="text-lg text-white leading-relaxed">
-            Etsy, Shopify, & TikTok sellers save $13,000+ annually with S-Corp elections.
+            Keep your margins, automate your compliance, and pocket more from every livesale. 
           </p>
         </div>
 
