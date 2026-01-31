@@ -20,23 +20,7 @@ export default function EcommLandingPage() {
   // Add state for Idea Validator popup
   const [showIdeaPopup, setShowIdeaPopup] = useState(false)
   
-  // Auto-open popup on mobile after 3 seconds (optional - for ad traffic)
-  useEffect(() => {
-    const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-    const hasSeenPopup = sessionStorage.getItem('hasSeenIdeaPopup');
-    
-    // Only auto-show once per session on mobile
-    if (isMobile && !hasSeenPopup) {
-      const timer = setTimeout(() => {
-        setShowIdeaPopup(true);
-        sessionStorage.setItem('hasSeenPopup', 'true');
-      }, 3000); // Show after 3 seconds
-      
-      return () => clearTimeout(timer);
-    }
-  }, []);
-
-  const stats = [
+    const stats = [
     { number: "48hrs", label: "Business Launch Time" },
     { number: "99.7%", label: "Document Accuracy" },
     { number: "24/7", label: "AI Support Available" },
@@ -140,10 +124,10 @@ export default function EcommLandingPage() {
   <div className="container mx-auto px-4">
     {/* Section Header */}
     <h2 className="text-3xl lg:text-4xl font-bold text-white text-center mb-6">
-      Don't let 2026 platform changes eat your margins.
+      Don't Let 2026 Tax Changes & Overpayments Drain Your Profits.
     </h2>
     <p className="text-lg text-slate-300 text-center mb-12 leading-relaxed max-w-3xl mx-auto">
-      With the new $2,000 threshold, the IRS sees every livestream sale. Use the <span className="text-cyan-400 text-bold">StartSmart AI Leakage Check</span> below to see how much you're overpaying in Self-Employment tax and claim your "Audit-Shield" roadmap.
+      With the new $2,000 threshold, the IRS sees every livestream sale. Use our <span className="text-cyan-400 text-bold">StartSmart AI Leakage Check</span> to see your potential savings in 30 seconds—and get your "Audit-Shield" roadmap.
     </p>
     
     {/* 60/40 Grid Layout */}
@@ -231,7 +215,7 @@ export default function EcommLandingPage() {
             {/* Text Right */}
             <div className="space-y-6">
               <h2 className="text-3xl lg:text-4xl font-bold text-white">
-                Starting a Business Doesn't Have to Be Complicated
+                Starting Your Business Shouldn't Feel Overwhelming.
               </h2>
               <p className="text-xl text-slate-300 leading-relaxed">
                 Most founders get stuck before they start — buried in paperwork, tax forms, and state requirements.
@@ -401,8 +385,8 @@ export default function EcommLandingPage() {
           <div className="text-center mb-16">
             <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">Why StartSmart AI Changes Everything</h2>
             <p className="text-xl text-slate-300 max-w-3xl mx-auto">
-              Other services stop at paperwork. We give you an AI business partner trained on decades of real-world
-              experience.
+              Other services end at paperwork. We deliver an AI business partner trained on decades of real-world
+              tax strategies.
             </p>
           </div>
 
