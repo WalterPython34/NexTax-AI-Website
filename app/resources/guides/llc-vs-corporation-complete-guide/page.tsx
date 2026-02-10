@@ -1011,7 +1011,7 @@ export default function LLCvsCorporationGuidePage() {
                   </p>
                   <div className="flex flex-wrap justify-center gap-4">
                     <Link href="/pricing">
-                      <Button className="bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white px-8">
+                      <Button className="bg-gradient-to-r from-emerald-300 to-cyan-300 hover:from-emerald-600 hover:to-cyan-600 text-white px-8">
                         View Packages
                         <ArrowRight className="w-4 h-4 ml-2" />
                       </Button>
@@ -1019,7 +1019,7 @@ export default function LLCvsCorporationGuidePage() {
                     <Link href="/contact">
                       <Button
                         variant="outline"
-                        className="border-emerald-500/50 text-emerald-300 hover:bg-emerald-500/10 bg-transparent"
+                        className="border-emerald-500/50 text-emerald-300 hover:bg-emerald-500/10 bg-white"
                       >
                         Talk to an Expert
                       </Button>
