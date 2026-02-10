@@ -1031,7 +1031,7 @@ export default function QuarterlyEstimatedTaxGuidePage() {
               </section>
 
               {/* CTA */}
-              <Card className="bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 border-emerald-500/30">
+              <Card className="bg-gradient-to-r from-emerald-500 to-cyan-500 border-emerald-500/30">
                 <CardContent className="p-8 text-center">
                   <h3 className="text-2xl font-bold text-white mb-4">
                     Need Help With Quarterly Tax Planning?
@@ -1044,7 +1044,7 @@ export default function QuarterlyEstimatedTaxGuidePage() {
                   </p>
                   <div className="flex flex-wrap justify-center gap-4">
                     <Link href="/pricing">
-                      <Button className="bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white px-8">
+                      <Button className="bg-gradient-to-r from-emerald-300 to-cyan-300 hover:from-emerald-600 hover:to-cyan-600 text-white px-8">
                         View Packages
                         <ArrowRight className="w-4 h-4 ml-2" />
                       </Button>
@@ -1052,7 +1052,7 @@ export default function QuarterlyEstimatedTaxGuidePage() {
                     <Link href="/contact">
                       <Button
                         variant="outline"
-                        className="border-emerald-500/50 text-emerald-300 hover:bg-emerald-500/10 bg-transparent"
+                        className="border-emerald-500/50 text-emerald-300 hover:bg-emerald-500/10 bg-white"
                       >
                         Talk to an Expert
                       </Button>
