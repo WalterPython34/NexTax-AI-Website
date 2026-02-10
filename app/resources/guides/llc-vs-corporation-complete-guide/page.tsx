@@ -1000,12 +1000,12 @@ export default function LLCvsCorporationGuidePage() {
               </section>
 
               {/* CTA */}
-              <Card className="bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 border-emerald-500/30">
+              <Card className="bg-gradient-to-r from-emerald-500 to-cyan-500 border-emerald-500/30">
                 <CardContent className="p-8 text-center">
-                  <h3 className="text-2xl font-bold text-white mb-4">
+                  <h3 className="text-3xl font-bold text-white mb-4">
                     Need Help Choosing the Right Business Structure?
                   </h3>
-                  <p className="text-slate-300 mb-6 max-w-2xl mx-auto">
+                  <p className="text-slate-200 mb-6 max-w-2xl mx-auto">
                     NexTax.AI helps ecommerce founders make entity decisions based on actual numbers—not formation
                     service checklists. Get clarity on whether an LLC or C-corp is the right fit for your business.
                   </p>
