@@ -407,7 +407,7 @@ export default function AcquisitionsPage() {
             </Card>
 
             {/* Full Underwriting */}
-            <Card className="bg-gradient-to-b from-emerald-500/10 to-cyan-500/10 border-emerald-500/30 relative">
+            <Card className="bg-gradient-to-b from-emerald-200 to-cyan-200 border-emerald-500/30 relative">
               <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                 <Badge className="bg-emerald-500 text-white border-0 px-4">Most Popular</Badge>
               </div>
