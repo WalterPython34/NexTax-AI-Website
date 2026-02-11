@@ -407,7 +407,7 @@ export default function AcquisitionsPage() {
             </Card>
 
             {/* Full Underwriting */}
-            <Card className="bg-gradient-to-b from-emerald-200 to-cyan-200 border-emerald-500/30 relative">
+            <Card className="bg-gradient-to-b from-emerald-300 to-cyan-300 border-emerald-500/30 relative">
               <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                 <Badge className="bg-emerald-500 text-white border-0 px-4">Most Popular</Badge>
               </div>
@@ -501,7 +501,7 @@ export default function AcquisitionsPage() {
       {/* Final CTA */}
       <section className="container mx-auto px-4 py-20">
         <div className="max-w-3xl mx-auto">
-          <Card className="bg-gradient-to-r from-emerald-200 to-cyan-200 border-emerald-500/30">
+          <Card className="bg-gradient-to-r from-emerald-300 to-cyan-300 border-emerald-500/30">
             <CardContent className="p-10 text-center">
               <h2 className="text-3xl font-bold text-white mb-4">
                 Underwrite the Deal Before You Submit an LOI.
