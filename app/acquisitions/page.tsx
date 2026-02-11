@@ -501,7 +501,7 @@ export default function AcquisitionsPage() {
       {/* Final CTA */}
       <section className="container mx-auto px-4 py-20">
         <div className="max-w-3xl mx-auto">
-          <Card className="bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 border-emerald-500/30">
+          <Card className="bg-gradient-to-r from-emerald-200 to-cyan-200 border-emerald-500/30">
             <CardContent className="p-10 text-center">
               <h2 className="text-3xl font-bold text-white mb-4">
                 Underwrite the Deal Before You Submit an LOI.
