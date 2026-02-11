@@ -292,7 +292,7 @@ export default function AcquisitionsPage() {
             </p>
           </div>
 
-          <Card className="bg-gradient-to-br from-emerald-500 to-cyan-500 border-slate-700/50">
+          <Card className="bg-gradient-to-br from-emerald-600 to-cyan-600 border-slate-700/50">
             <CardContent className="p-8">
               <div className="grid md:grid-cols-2 gap-8">
                 <div>
@@ -305,7 +305,7 @@ export default function AcquisitionsPage() {
                     ].map((item, i) => (
                       <div key={i} className="flex items-center gap-3">
                         <AlertTriangle className="w-4 h-4 text-amber-400" />
-                        <span className="text-slate-300">{item}</span>
+                        <span className="text-slate-200">{item}</span>
                       </div>
                     ))}
                   </div>
@@ -422,15 +422,15 @@ export default function AcquisitionsPage() {
             </Card>
 
             {/* Full Underwriting */}
-            <Card className="bg-gradient-to-b from-emerald-500 to-cyan-500 border-emerald-500/30 relative">
+            <Card className="bg-gradient-to-b from-emerald-600 to-emerald-500 border-emerald-500/30 relative">
               <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                 <Badge className="bg-emerald-500 text-white border-0 px-4">Most Engaged Tier</Badge>
               </div>
               <CardContent className="p-8">
-                <p className="text-emerald-400 text-sm font-medium mb-2">Starting at</p>
+                <p className="text-emerald-300 text-sm font-medium mb-2">Starting at</p>
                 <p className="text-4xl font-bold text-white mb-1">$4,900</p>
                 <h3 className="text-xl font-semibold text-white mt-4 mb-2">Full Underwriting</h3>
-                <p className="text-slate-700 text-sm mb-6">
+                <p className="text-slate-800 text-sm mb-6">
                   Comprehensive modeling to support offer structuring and negotiation.
                 </p>
                 <div className="space-y-3 mb-8">
@@ -443,8 +443,8 @@ export default function AcquisitionsPage() {
                     "Two strategy sessions",
                   ].map((item, i) => (
                     <div key={i} className="flex items-center gap-3">
-                      <CheckCircle className="w-4 h-4 text-emerald-500 flex-shrink-0" />
-                      <span className="text-slate-600 text-sm">{item}</span>
+                      <CheckCircle className="w-4 h-4 text-white flex-shrink-0" />
+                      <span className="text-slate-700 text-sm">{item}</span>
                     </div>
                   ))}
                 </div>
@@ -494,7 +494,8 @@ export default function AcquisitionsPage() {
         <div className="max-w-3xl mx-auto text-center">
           <h2 className="text-3xl font-bold text-white mb-6">Built by a Corporate Finance Operator</h2>
           <p className="text-lg text-slate-300 leading-relaxed mb-4">
-            Steve Morello is a finance and tax executive with experience supporting operating companies and transaction environments.
+            Steve Morello is a finance and tax executive with experience supporting operating companies and transaction environments, 
+            including experience at EY (Big Four) and within Morgan Stanley’s Private Equity division.
           </p>
           <p className="text-lg text-slate-300 leading-relaxed mb-4">
             He built NexTax.AI to bring structured financial intelligence to entrepreneurs — from business formation to acquisition.
@@ -521,7 +522,7 @@ export default function AcquisitionsPage() {
               <h2 className="text-3xl font-bold text-white mb-4">
                 Underwrite the Deal Before You Submit an LOI.
               </h2>
-              <p className="text-slate-600 mb-8 max-w-xl mx-auto">
+              <p className="text-slate-700 mb-8 max-w-xl mx-auto">
                 Get clarity on whether to move forward, renegotiate, or walk away — before you spend $15k+ on formal diligence.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
