@@ -71,13 +71,13 @@ export default function AcquisitionsPage() {
 
             <h1 className="text-4xl lg:text-6xl font-bold text-white leading-tight text-balance">
               Professional Buy-Side Financial Underwriting
-              <span className="block text-emerald-400 mt-2">For Main Street Acquisitions</span>
+              <span className="block text-emerald-400 mt-2">For Your Main Street Acquisitions</span>
             </h1>
 
-            <p className="text-xl text-slate-300 leading-relaxed max-w-2xl mx-auto text-pretty">
+            <p className="text-xl text-slate-200 leading-relaxed max-w-2xl mx-auto text-pretty">
               Pre-QoE financial modeling, scenario analysis, and deal-structure benchmarking to help you decide:
             </p>
-            <p className="text-2xl font-semibold text-white italic">
+            <p className="text-2xl font-semibold text-cyan-500 italic">
               Should I buy this business — and what should I pay?
             </p>
 
@@ -196,6 +196,9 @@ export default function AcquisitionsPage() {
             <h2 className="text-3xl lg:text-4xl font-bold text-cyan-500 mb-4">
               {"We're the Step Before QoE."}
             </h2>
+            <p className="text-lg text-slate-300">
+              We help buyers decide whether to proceed before capital is committed and diligence costs escalate.
+            </p>
           </div>
 
           {/* Buyer Journey */}
@@ -282,8 +285,11 @@ export default function AcquisitionsPage() {
           <div className="text-center mb-8">
             <Badge className="bg-cyan-500/20 text-cyan-300 border-cyan-500/30 mb-4">Case Study</Badge>
             <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">
-              Example Outcome
+              Example Engagement: Retail Services Acquisition
             </h2>
+            <p className="text-lg text-slate-400">
+            Enterprise Value: Sub-$1M SBA-backed transaction.
+            </p>
           </div>
 
           <Card className="bg-gradient-to-br from-cyan-800/50 to-cyan-900/50 border-slate-700/50">
@@ -336,6 +342,9 @@ export default function AcquisitionsPage() {
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">Who This Is For</h2>
+            <p className="text-lg text-slate-200">
+            Built for acquisition entrepreneurs and SBA buyers evaluating $300K–$3M businesses.
+            </p>
           </div>
 
           <div className="grid md:grid-cols-2 gap-8">
@@ -375,6 +384,9 @@ export default function AcquisitionsPage() {
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">Engagement Options</h2>
+            <p className="text-lg text-slate-400">
+            Pricing depends on deal complexity, financial quality, and timeline.
+            </p>
           </div>
 
           <div className="grid lg:grid-cols-3 gap-6">
@@ -412,7 +424,7 @@ export default function AcquisitionsPage() {
             {/* Full Underwriting */}
             <Card className="bg-gradient-to-b from-emerald-400 to-cyan-400 border-emerald-500/30 relative">
               <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                <Badge className="bg-emerald-500 text-white border-0 px-4">Most Popular</Badge>
+                <Badge className="bg-emerald-500 text-white border-0 px-4">Most Engaged Tier</Badge>
               </div>
               <CardContent className="p-8">
                 <p className="text-emerald-400 text-sm font-medium mb-2">Starting at</p>
