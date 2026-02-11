@@ -71,7 +71,7 @@ export default function AcquisitionsPage() {
 
             <h1 className="text-4xl lg:text-6xl font-bold text-white leading-tight">
               Professional Buy-Side Financial Underwriting
-              <span className="block text-emerald-400 mt-2 max-w-5xl mx-auto">For Your Main Street Acquisition</span>
+              <span className="block text-emerald-400 mt-2">For Your Main Street Acquisition</span>
             </h1>
 
             <p className="text-xl text-slate-200 leading-relaxed max-w-2xl mx-auto text-pretty">
