@@ -449,7 +449,7 @@ export default function AcquisitionsPage() {
                   ))}
                 </div>
                 <Link href="/contact">
-                  <Button className="w-full bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white">
+                  <Button className="w-full border-slate-600 bg-gradient-to-r from-emerald-600 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white">
                     Book Intro Call
                   </Button>
                 </Link>
