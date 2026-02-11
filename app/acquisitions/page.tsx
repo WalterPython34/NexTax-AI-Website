@@ -415,7 +415,7 @@ export default function AcquisitionsPage() {
                 <p className="text-emerald-400 text-sm font-medium mb-2">Starting at</p>
                 <p className="text-4xl font-bold text-white mb-1">$4,900</p>
                 <h3 className="text-xl font-semibold text-white mt-4 mb-2">Full Underwriting</h3>
-                <p className="text-slate-400 text-sm mb-6">
+                <p className="text-slate-600 text-sm mb-6">
                   Comprehensive modeling to support offer structuring and negotiation.
                 </p>
                 <div className="space-y-3 mb-8">
@@ -428,8 +428,8 @@ export default function AcquisitionsPage() {
                     "Two strategy sessions",
                   ].map((item, i) => (
                     <div key={i} className="flex items-center gap-3">
-                      <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-                      <span className="text-slate-300 text-sm">{item}</span>
+                      <CheckCircle className="w-4 h-4 text-emerald-500 flex-shrink-0" />
+                      <span className="text-slate-500 text-sm">{item}</span>
                     </div>
                   ))}
                 </div>
@@ -506,7 +506,7 @@ export default function AcquisitionsPage() {
               <h2 className="text-3xl font-bold text-white mb-4">
                 Underwrite the Deal Before You Submit an LOI.
               </h2>
-              <p className="text-slate-300 mb-8 max-w-xl mx-auto">
+              <p className="text-slate-500 mb-8 max-w-xl mx-auto">
                 Get clarity on whether to move forward, renegotiate, or walk away — before you spend $15k+ on formal diligence.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -523,7 +523,7 @@ export default function AcquisitionsPage() {
                   <Button
                     size="lg"
                     variant="outline"
-                    className="border-slate-600 text-slate-200 hover:bg-slate-800 bg-transparent px-8"
+                    className="border-slate-600 text-slate-100 hover:bg-slate-800 bg-transparent px-8"
                   >
                     Discuss Your Deal
                   </Button>
