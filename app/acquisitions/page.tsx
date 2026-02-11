@@ -71,13 +71,13 @@ export default function AcquisitionsPage() {
 
             <h1 className="text-4xl lg:text-6xl font-bold text-white leading-tight text-balance">
               Professional Buy-Side Financial Underwriting
-              <span className="block text-emerald-400 mt-2 max-w-4xl mx-auto">For Your Main Street Acquisitions</span>
+              <span className="block text-emerald-400 mt-2 max-w-5xl mx-auto">For Your Main Street Acquisition</span>
             </h1>
 
             <p className="text-xl text-slate-200 leading-relaxed max-w-2xl mx-auto text-pretty">
               Pre-QoE financial modeling, scenario analysis, and deal-structure benchmarking to help you decide:
             </p>
-            <p className="text-2xl font-semibold text-cyan-300 italic">
+            <p className="text-2xl font-semibold text-white italic">
               Should I buy this business — and what should I pay?
             </p>
 
@@ -125,10 +125,10 @@ export default function AcquisitionsPage() {
       <section className="container mx-auto px-4 py-20">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6 text-balance">
+            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">
               Most SMB Buyers Underwrite Deals With Basic Calculators.
             </h2>
-            <p className="text-lg text-slate-300 max-w-2xl mx-auto mb-4">
+            <p className="text-lg text-slate-200 max-w-2xl mx-auto mb-4">
               Online listing calculators are helpful — but they rarely pressure-test the variables that determine whether a deal actually works.
             </p>
             <p className="text-lg text-emerald-500 max-w-4xl mx-auto">
@@ -173,7 +173,7 @@ export default function AcquisitionsPage() {
             <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">
               NexTax.AI Acquisition Intelligence
             </h2>
-            <p className="text-lg text-emerald-500">
+            <p className="text-lg text-emerald-400">
               We apply institutional-style underwriting discipline to Main Street deals.
             </p>
           </div>
@@ -196,7 +196,7 @@ export default function AcquisitionsPage() {
             <h2 className="text-4xl lg:text-4xl font-bold text-white mb-4">
               {"We're the Step Before QoE."}
             </h2>
-            <p className="text-lg text-cyan-500">
+            <p className="text-lg text-cyan-400">
               We help buyers decide whether to proceed before capital is committed and diligence costs escalate.
             </p>
           </div>
@@ -321,7 +321,7 @@ export default function AcquisitionsPage() {
                     ].map((item, i) => (
                       <div key={i} className="flex items-center gap-3">
                         <CheckCircle className="w-4 h-4 text-emerald-400" />
-                        <span className="text-slate-300 text-sm">{item}</span>
+                        <span className="text-slate-200 text-sm">{item}</span>
                       </div>
                     ))}
                   </div>
@@ -422,9 +422,9 @@ export default function AcquisitionsPage() {
             </Card>
 
             {/* Full Underwriting */}
-            <Card className="bg-gradient-to-b from-emerald-600 to-emerald-500 border-emerald-500/30 relative">
+            <Card className="bg-gradient-to-b from-emerald-600 to-emerald-400 border-emerald-500/30 relative">
               <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                <Badge className="bg-emerald-500 text-white border-0 px-4">Most Engaged Tier</Badge>
+                <Badge className="bg-cyan-500 text-white border-0 px-4">Most Engaged Tier</Badge>
               </div>
               <CardContent className="p-8">
                 <p className="text-emerald-300 text-sm font-medium mb-2">Starting at</p>
@@ -444,12 +444,12 @@ export default function AcquisitionsPage() {
                   ].map((item, i) => (
                     <div key={i} className="flex items-center gap-3">
                       <CheckCircle className="w-4 h-4 text-white flex-shrink-0" />
-                      <span className="text-slate-700 text-sm">{item}</span>
+                      <span className="text-slate-800 text-sm">{item}</span>
                     </div>
                   ))}
                 </div>
                 <Link href="/contact">
-                  <Button className="w-full bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-600 hover:to-cyan-600 text-white">
+                  <Button className="w-full bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white">
                     Book Intro Call
                   </Button>
                 </Link>
@@ -500,7 +500,7 @@ export default function AcquisitionsPage() {
           <p className="text-lg text-slate-300 leading-relaxed mb-4">
             He built NexTax.AI to bring structured financial intelligence to entrepreneurs — from business formation to acquisition.
           </p>
-          <p className="text-slate-400 italic">
+          <p className="text-emerald-400 italic">
             The goal: apply disciplined underwriting thinking typically seen in institutional settings to Main Street buyers.
           </p>
           <div className="mt-8">
