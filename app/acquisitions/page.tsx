@@ -69,7 +69,7 @@ export default function AcquisitionsPage() {
               Acquisition Intelligence for SMB Buyers
             </Badge>
 
-            <h1 className="text-4xl lg:text-6xl font-bold text-white leading-tight text-balance">
+            <h1 className="text-4xl lg:text-6xl font-bold text-white leading-tight">
               Professional Buy-Side Financial Underwriting
               <span className="block text-emerald-400 mt-2 max-w-5xl mx-auto">For Your Main Street Acquisition</span>
             </h1>
@@ -128,10 +128,10 @@ export default function AcquisitionsPage() {
             <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">
               Most SMB Buyers Underwrite Deals With Basic Calculators.
             </h2>
-            <p className="text-lg text-slate-200 max-w-2xl mx-auto mb-4">
+            <p className="text-lg text-emerald-400 max-w-2xl mx-auto mb-4">
               Online listing calculators are helpful — but they rarely pressure-test the variables that determine whether a deal actually works.
             </p>
-            <p className="text-lg text-emerald-500 max-w-4xl mx-auto">
+            <p className="text-lg text-slate-100 max-w-4xl mx-auto">
             The difference between a “good deal” and a bad one is often hidden inside normalization and structure.
              </p>
           </div>
@@ -154,7 +154,7 @@ export default function AcquisitionsPage() {
             ))}
           </div>
 
-          <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-6 text-center">
+          <div className="bg-orange-500/10 border border-amber-500/30 rounded-lg p-6 text-center">
             <p className="text-slate-200 text-lg">
               By the time buyers discover the real risk, they've already submitted an LOI — or spent{" "}
               <span className="text-amber-300 font-semibold">$15k-$25k</span> on a Quality of Earnings report.
