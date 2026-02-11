@@ -131,6 +131,9 @@ export default function AcquisitionsPage() {
             <p className="text-lg text-slate-300 max-w-2xl mx-auto">
               Online listing calculators are helpful — but they rarely pressure-test the variables that determine whether a deal actually works.
             </p>
+            <p className="text-lg text-cyan-500 max-w-3xl mx-auto">
+            The difference between a “good deal” and a bad one is often hidden inside normalization and structure.
+             </p>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 mb-10">
@@ -190,7 +193,7 @@ export default function AcquisitionsPage() {
       <section className="container mx-auto px-4 py-20">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">
+            <h2 className="text-3xl lg:text-4xl font-bold text-cyan-500 mb-4">
               {"We're the Step Before QoE."}
             </h2>
           </div>
@@ -283,7 +286,7 @@ export default function AcquisitionsPage() {
             </h2>
           </div>
 
-          <Card className="bg-gradient-to-br from-slate-800/50 to-slate-900/50 border-slate-700/50">
+          <Card className="bg-gradient-to-br from-cyan-800/50 to-cyan-900/50 border-slate-700/50">
             <CardContent className="p-8">
               <div className="grid md:grid-cols-2 gap-8">
                 <div>
@@ -407,7 +410,7 @@ export default function AcquisitionsPage() {
             </Card>
 
             {/* Full Underwriting */}
-            <Card className="bg-gradient-to-b from-emerald-300 to-cyan-300 border-emerald-500/30 relative">
+            <Card className="bg-gradient-to-b from-emerald-400 to-cyan-400 border-emerald-500/30 relative">
               <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                 <Badge className="bg-emerald-500 text-white border-0 px-4">Most Popular</Badge>
               </div>
@@ -434,7 +437,7 @@ export default function AcquisitionsPage() {
                   ))}
                 </div>
                 <Link href="/contact">
-                  <Button className="w-full bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white">
+                  <Button className="w-full bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-600 hover:to-cyan-600 text-white">
                     Book Intro Call
                   </Button>
                 </Link>
@@ -501,7 +504,7 @@ export default function AcquisitionsPage() {
       {/* Final CTA */}
       <section className="container mx-auto px-4 py-20">
         <div className="max-w-3xl mx-auto">
-          <Card className="bg-gradient-to-r from-emerald-300 to-cyan-300 border-emerald-500/30">
+          <Card className="bg-gradient-to-r from-emerald-400 to-cyan-400 border-emerald-500/30">
             <CardContent className="p-10 text-center">
               <h2 className="text-3xl font-bold text-white mb-4">
                 Underwrite the Deal Before You Submit an LOI.
@@ -513,7 +516,7 @@ export default function AcquisitionsPage() {
                 <Link href="/contact">
                   <Button
                     size="lg"
-                    className="bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white px-8"
+                    className="bg-gradient-to-r from-emerald-600 to-cyan-600 hover:from-emerald-700 hover:to-cyan-700 text-white px-8"
                   >
                     Book Intro Call
                     <ArrowRight className="ml-2 w-5 h-5" />
@@ -523,7 +526,7 @@ export default function AcquisitionsPage() {
                   <Button
                     size="lg"
                     variant="outline"
-                    className="border-slate-600 text-slate-100 hover:bg-slate-800 bg-transparent px-8"
+                    className="border-slate-600 text-slate-100 hover:bg-slate-600 bg-transparent px-8"
                   >
                     Discuss Your Deal
                   </Button>
