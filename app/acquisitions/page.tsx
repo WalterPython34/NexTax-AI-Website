@@ -394,7 +394,7 @@ export default function AcquisitionsPage() {
             <Card className="bg-slate-800/30 border-slate-700/50">
               <CardContent className="p-8">
                 <p className="text-emerald-400 text-sm font-medium mb-2">Starting at</p>
-                <p className="text-4xl font-bold text-white mb-1">$1,250</p>
+                <p className="text-4xl font-bold text-white mb-1">$1,350</p>
                 <h3 className="text-xl font-semibold text-white mt-4 mb-2">Deal Snapshot</h3>
                 <p className="text-slate-400 text-sm mb-6">
                   High-level underwriting to determine whether to pursue a deal.
@@ -428,7 +428,7 @@ export default function AcquisitionsPage() {
               </div>
               <CardContent className="p-8">
                 <p className="text-emerald-300 text-sm font-medium mb-2">Starting at</p>
-                <p className="text-4xl font-bold text-white mb-1">$3,800</p>
+                <p className="text-4xl font-bold text-white mb-1">$3,900</p>
                 <h3 className="text-xl font-semibold text-white mt-4 mb-2">Full Underwriting</h3>
                 <p className="text-slate-800 text-sm mb-6">
                   Comprehensive modeling to support offer structuring and negotiation.
