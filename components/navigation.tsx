@@ -107,11 +107,11 @@ export default function Navigation() {
                   className="w-full mb-2 text-white transition-all duration-200"
                   style={{ backgroundColor: "#00BFFF" }}
                   onClick={() => {
-                    window.open("https://legal-eye-q.vercel.app/", "_blank")
+                    window.open("https://valuationhub.emergent.host", "_blank")
                     setIsMenuOpen(false)
                   }}
                 >
-                  Legal EyeQ
+                  AcquiFlow
                 </Button>
                 <Button
                   className="w-full bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white transition-all duration-200"
