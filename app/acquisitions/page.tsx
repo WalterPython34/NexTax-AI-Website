@@ -440,7 +440,7 @@ export default function AcquisitionsPage() {
                     "Working capital analysis",
                     "DCF-based decision range",
                     "Deal comparison & risk assessment",
-                    "Stuctural & Tax optimization analysis (Asset vs Stock)",
+                    "Stuctural & Tax optimization analysis (Asset vs Stock sale)",
                     "Negotiation leverage summary",
                     "Two strategy sessions",
                   ].map((item, i) => (
