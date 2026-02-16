@@ -394,7 +394,7 @@ export default function AcquisitionsPage() {
             <Card className="bg-slate-800/30 border-slate-700/50">
               <CardContent className="p-8">
                 <p className="text-emerald-400 text-sm font-medium mb-2">Starting at</p>
-                <p className="text-4xl font-bold text-white mb-1">$1,350</p>
+                <p className="text-4xl font-bold text-white mb-1">$1,500</p>
                 <h3 className="text-xl font-semibold text-white mt-4 mb-2">Deal Snapshot</h3>
                 <p className="text-slate-400 text-sm mb-6">
                   High-level underwriting to determine whether to pursue a deal.
@@ -439,6 +439,8 @@ export default function AcquisitionsPage() {
                     "Deal structure sensitivity",
                     "Working capital analysis",
                     "DCF-based decision range",
+                    "Deal comparison & risk assessment",
+                    "Stock vs Asset sale tax projection,"
                     "Negotiation leverage summary",
                     "Two strategy sessions",
                   ].map((item, i) => (
