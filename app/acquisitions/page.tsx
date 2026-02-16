@@ -395,14 +395,14 @@ export default function AcquisitionsPage() {
               <CardContent className="p-8">
                 <p className="text-emerald-400 text-sm font-medium mb-2">Starting at</p>
                 <p className="text-4xl font-bold text-white mb-1">$1,500</p>
-                <h3 className="text-xl font-semibold text-white mt-4 mb-2">Deal Snapshot</h3>
+                <h3 className="text-xl font-semibold text-white mt-4 mb-2">Deal Risk Assessment</h3>
                 <p className="text-slate-400 text-sm mb-6">
                   High-level underwriting to determine whether to pursue a deal.
                 </p>
                 <div className="space-y-3 mb-8">
                   {[
                     "Earnings normalization review",
-                    "Basic DSCR viability check",
+                    "Debt & Solvency viability check",
                     "Key red flags",
                     "Decision memo",
                     "Strategy call",
