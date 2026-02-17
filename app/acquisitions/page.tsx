@@ -462,7 +462,7 @@ export default function AcquisitionsPage() {
             <Card className="bg-slate-800/30 border-slate-700/50">
               <CardContent className="p-8">
                 <p className="text-cyan-400 text-sm font-medium mb-2">Custom</p>
-                <p className="text-4xl font-bold text-white mb-1">Engagement</p>
+                <p className="text-4xl font-bold text-white mb-1">Transaction Advisory & Lender Support</p>
                 <h3 className="text-xl font-semibold text-white mt-4 mb-2">LOI / Lender Support</h3>
                 <p className="text-slate-400 text-sm mb-6">
                   For buyers moving forward and needing structured financial narrative support.
