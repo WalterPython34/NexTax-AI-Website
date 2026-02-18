@@ -275,7 +275,8 @@ export default function AcquisitionsPage() {
             ))}
           </div>
 
-          <p className="text-center text-slate-400 mt-8 italic">Our goal is clarity — not complexity.</p>
+          <p className="text-center text-slate-300 mt-8 italic">Our goal is clarity — not complexity.</p>
+          <p className="text-center text-slate-300 mt-8 italic">We help acquisition buyers stress-test earnings, structure, and debt coverage before LOI so deals survive underwriting.</p>
         </div>
       </section>
 
