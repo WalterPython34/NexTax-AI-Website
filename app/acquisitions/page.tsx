@@ -396,7 +396,7 @@ export default function AcquisitionsPage() {
               <CardContent className="p-8">
                 <p className="text-emerald-400 text-sm font-medium mb-2">Starting at</p>
                 <p className="text-4xl font-bold text-white mb-1">$1,500</p>
-                <h3 className="text-xl font-semibold text-white mt-4 mb-2">Deal Risk Assessment</h3>
+                <h3 className="text-xl font-semibold text-white mt-4 mb-2">Pre-QoE Risk Assessment</h3>
                 <p className="text-slate-400 text-sm mb-6">
                   High-level underwriting to determine whether to pursue a deal.
                 </p>
@@ -430,7 +430,7 @@ export default function AcquisitionsPage() {
               <CardContent className="p-8">
                 <p className="text-emerald-300 text-sm font-medium mb-2">Starting at</p>
                 <p className="text-4xl font-bold text-white mb-1">$3,900</p>
-                <h3 className="text-xl font-semibold text-white mt-4 mb-2">Full Underwriting</h3>
+                <h3 className="text-xl font-semibold text-white mt-4 mb-2">Full Pre-LOI Underwriting & Structural Modeling</h3>
                 <p className="text-slate-800 text-sm mb-6">
                   Comprehensive modeling to support offer structuring and negotiation.
                 </p>
