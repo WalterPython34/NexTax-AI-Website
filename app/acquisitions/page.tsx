@@ -436,11 +436,12 @@ export default function AcquisitionsPage() {
                 </p>
                 <div className="space-y-3 mb-8">
                   {[
+                    "Everything in Pre-QoE Risk package", 
                     "Full scenario modeling",
                     "Deal structure sensitivity",
                     "Working capital analysis",
                     "DCF-based decision range",
-                    "Deal comparison & risk assessment",
+                    "Deal comparison",
                     "Stuctural & Tax optimization analysis (Asset vs Stock sale)",
                     "Negotiation leverage summary",
                     "Two strategy sessions",
