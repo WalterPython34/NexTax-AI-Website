@@ -404,6 +404,7 @@ export default function AcquisitionsPage() {
                   {[
                     "Earnings normalization review",
                     "Debt & Solvency viability check",
+                    "SDE normalization review",
                     "Key red flags",
                     "Decision memo",
                     "Strategy call",
