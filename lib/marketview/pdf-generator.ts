@@ -112,7 +112,7 @@ export async function generatePDFReport(result: AnalysisResult): Promise<void> {
   doc.text(String(metrics.saturationScore), M + 40, y + 68);
   doc.setTextColor(...COLORS.textMuted);
   doc.setFontSize(14);
-  doc.text("/ 100", M + 42 + doc.getTextWidth(String(metrics.saturationScore)) * (48/56) + 8, y + 68);
+  doc.text("/ 100", M + 42 + doc.getTextWidth(String(metrics.saturationScore)) + 12, y + 68);
 
   doc.setFillColor(riskRgb[0], riskRgb[1], riskRgb[2]);
   const badgeText = `${metrics.riskBand} SATURATION`;
