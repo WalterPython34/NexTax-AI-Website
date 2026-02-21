@@ -165,9 +165,9 @@ function getRiskBand(score: number): {
   riskBand: "LOW" | "MODERATE" | "HIGH" | "CRITICAL";
   riskColor: string;
 } {
-  if (score < 30) return { riskBand: "LOW", riskColor: "#22c55e" };
-  if (score < 50) return { riskBand: "MODERATE", riskColor: "#eab308" };
-  if (score < 70) return { riskBand: "HIGH", riskColor: "#f97316" };
+  if (score < 35) return { riskBand: "LOW", riskColor: "#22c55e" };
+  if (score < 55) return { riskBand: "MODERATE", riskColor: "#eab308" };
+  if (score < 75) return { riskBand: "HIGH", riskColor: "#f97316" };
   return { riskBand: "CRITICAL", riskColor: "#ef4444" };
 }
 
