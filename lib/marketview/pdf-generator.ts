@@ -107,21 +107,22 @@ export async function generatePDFReport(result: AnalysisResult): Promise<void> {
 
   const riskRgb = hexToRgb(metrics.riskColor);
   doc.setTextColor(...riskRgb);
-  doc.setFontSize(56);
+  doc.setFontSize(48);
   doc.setFont("helvetica", "bold");
-  doc.text(String(metrics.saturationScore), M + 40, y + 72);
+  doc.text(String(metrics.saturationScore), M + 40, y + 68);
   doc.setTextColor(...COLORS.textMuted);
   doc.setFontSize(14);
-  doc.text("/ 100", M + 40 + doc.getTextWidth(String(metrics.saturationScore)) + 6, y + 72);
+  doc.text("/ 100", M + 42 + doc.getTextWidth(String(metrics.saturationScore)) * (48/56) + 8, y + 68);
 
   doc.setFillColor(riskRgb[0], riskRgb[1], riskRgb[2]);
   const badgeText = `${metrics.riskBand} SATURATION`;
-  const badgeW = doc.getTextWidth(badgeText) * 1.1 + 20;
-  doc.roundedRect(M + 40, y + 84, badgeW, 20, 3, 3, "F");
+  doc.setFontSize(7);
+  const badgeW = doc.getTextWidth(badgeText) + 16;
+  doc.roundedRect(M + 40, y + 82, badgeW, 18, 3, 3, "F");
   doc.setTextColor(...COLORS.white);
-  doc.setFontSize(8);
+  doc.setFontSize(7);
   doc.setFont("helvetica", "bold");
-  doc.text(badgeText, M + 50, y + 97);
+  doc.text(badgeText, M + 48, y + 94);
 
   // Gauge bar
   const gaugeX = M + 240;
