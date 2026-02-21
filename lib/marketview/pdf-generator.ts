@@ -509,8 +509,14 @@ export async function generatePDFReport(result: AnalysisResult): Promise<void> {
 
   doc.setTextColor(...COLORS.textMuted);
   doc.setFontSize(6.5);
+  doc.setTextColor(100, 116, 139);
+  doc.setFontSize(6);
+  doc.setFont("helvetica", "italic");
+  doc.text("Revenue estimates and benchmarks are AI-derived directional indicators for strategic planning purposes only.", W / 2, H - 36, { align: "center" });
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(6.5);
   doc.text(`Market Saturation Analyzer — ${metadata.category} — ${metadata.radius}mi radius`, W / 2, H - 24, { align: "center" });
-  doc.text("Page 3 of 3", W - M, H - 24, { align: "right" });
+  doc.text("Page 2 of 3", W - M, H - 24, { align: "right" });
 
   const filename = `Market-Saturation-Report_${metadata.category.replace(/[^a-zA-Z]/g, "-")}_${metadata.radius}mi_${new Date().toISOString().slice(0, 10)}.pdf`;
   doc.save(filename);
