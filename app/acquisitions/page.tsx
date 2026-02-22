@@ -430,7 +430,7 @@ export default function AcquisitionsPage() {
               </div>
               <CardContent className="p-8">
                 <p className="text-emerald-300 text-sm font-medium mb-2">Starting at</p>
-                <p className="text-4xl font-bold text-white mb-1">$3,900</p>
+                <p className="text-4xl font-bold text-white mb-1">$4,500</p>
                 <h3 className="text-xl font-semibold text-white mt-4 mb-2">Full Pre-LOI Underwriting & Structural Modeling</h3>
                 <p className="text-slate-800 text-sm mb-6">
                   Comprehensive modeling to support offer structuring and negotiation.
@@ -442,7 +442,9 @@ export default function AcquisitionsPage() {
                     "Deal structure sensitivity",
                     "Working capital analysis",
                     "DCF-based decision range",
-                    "Deal comparison",
+                    "Deal comparison",      
+                    "Custom Market Saturation report & Heat Map",
+                    "Local Competitor List & AI Market Analysis",
                     "Stuctural & Tax optimization analysis (Asset vs Stock sale)",
                     "Negotiation leverage summary",
                     "Two strategy sessions",
