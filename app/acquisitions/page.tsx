@@ -386,7 +386,7 @@ export default function AcquisitionsPage() {
           <div className="text-center mb-12">
             <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">Engagement Options</h2>
             <p className="text-lg text-slate-400">
-            Pricing depends on deal complexity, financial quality, and timeline.
+            Pricing depends on deal size, financial complexity, and timeline.
             </p>
           </div>
 
@@ -396,17 +396,17 @@ export default function AcquisitionsPage() {
               <CardContent className="p-8">
                 <p className="text-emerald-400 text-sm font-medium mb-2">Starting at</p>
                 <p className="text-4xl font-bold text-white mb-1">$1,500</p>
-                <h3 className="text-xl font-semibold text-white mt-4 mb-2">Pre-QoE Risk Assessment</h3>
+                <h3 className="text-xl font-semibold text-white mt-4 mb-2">Pre-LOI Risk Assessment</h3>
                 <p className="text-slate-400 text-sm mb-6">
-                  High-level underwriting to determine whether to pursue a deal.
+                  High-level financial review to help determine whether a deal makes sense before moving forward.
                 </p>
                 <div className="space-y-3 mb-8">
                   {[
                     "Earnings normalization review",
-                    "Debt & Solvency viability check",
+                    "Debt & cash flow viability check",
                     "SDE normalization review",
-                    "Key red flags",
-                    "Decision memo",
+                    "Key financial red flags",
+                    "Decision summary memo",
                     "Strategy call",
                   ].map((item, i) => (
                     <div key={i} className="flex items-center gap-3">
@@ -433,19 +433,19 @@ export default function AcquisitionsPage() {
                 <p className="text-4xl font-bold text-white mb-1">$4,500</p>
                 <h3 className="text-xl font-semibold text-white mt-4 mb-2">Full Pre-LOI Underwriting & Structural Modeling</h3>
                 <p className="text-slate-800 text-sm mb-6">
-                  Comprehensive modeling to support offer structuring and negotiation.
+                  Comprehensive financial modeling to support offer structure, pricing decisions, and negotiation.
                 </p>
                 <div className="space-y-3 mb-8">
                   {[
-                    "Everything in Pre-QoE Risk package", 
-                    "Full scenario modeling",
-                    "Deal structure sensitivity",
-                    "Working capital analysis",
-                    "DCF-based decision range",
-                    "Deal comparison",      
-                    "Custom Market Saturation report & Heat Map",
-                    "Local Competitor List & AI Market Analysis",
-                    "Stuctural & Tax optimization analysis (Asset vs Stock sale)",
+                    "Everything in Tier 1", 
+                    "Downside & scenario modeling",
+                    "Deal structure sensitivity analysis",
+                    "Working capital review",
+                    "DCF valuation decision range",
+                    "Custom market saturation & heat map report",   
+                    "Local Competitor List & AI market analysis",
+                    "Tax structure comparison (Asset vs Stock)",
+                    "Benchmarking & deal comparison",
                     "Negotiation leverage summary",
                     "Two strategy sessions",
                   ].map((item, i) => (
@@ -470,7 +470,7 @@ export default function AcquisitionsPage() {
                 <p className="text-4xl font-bold text-white mb-1">Transaction Advisory & Lender Support</p>
                 <h3 className="text-xl font-semibold text-white mt-4 mb-2">LOI / Lender Support</h3>
                 <p className="text-slate-400 text-sm mb-6">
-                  For buyers moving forward and needing structured financial narrative support.
+                  For buyers moving forward who need structured financial support through LOI and financing.
                 </p>
                 <div className="space-y-3 mb-8">
                   {[
