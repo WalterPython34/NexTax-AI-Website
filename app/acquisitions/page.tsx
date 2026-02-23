@@ -445,7 +445,7 @@ export default function AcquisitionsPage() {
                     "Custom market saturation & heat map report",   
                     "Local Competitor List & AI market analysis",
                     "Tax structure comparison (Asset vs Stock)",
-                    "Benchmarking & deal comparison",
+                    "Benchmark & deal comparison",
                     "Negotiation leverage summary",
                     "Two strategy sessions",
                   ].map((item, i) => (
