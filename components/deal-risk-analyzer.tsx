@@ -443,6 +443,11 @@ function SectionCard({ title, children, icon, accentColor }: {
 // ─── MAIN COMPONENT ──────────────────────────────────────────────────────────
 
 export default function DealRiskAnalyzer() {
+  const [gated, setGated] = useState(true);
+  const [gateEmail, setGateEmail] = useState("");
+  const [gateName, setGateName] = useState("");
+  const [gateLoading, setGateLoading] = useState(false);
+
   const [step, setStep] = useState(1);
   const [inputs, setInputs] = useState<DealInputs>({
     revenue: "", sde: "", askingPrice: "", industry: "",
@@ -537,6 +542,19 @@ Structure your response as:
 
   const handleReset = () => { setStep(1); setResults(null); };
 
+  const handleGateSubmit = async () => {
+    if (!gateEmail) return;
+    setGateLoading(true);
+    try {
+      await fetch("/api/capture-lead", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name: gateName, email: gateEmail, source: "risk-analyzer", industry: "", dealScore: null, metadata: {} }),
+      });
+    } catch { /* non-blocking */ }
+    setGated(false);
+    setGateLoading(false);
+  };
+
   return (
     <div className="min-h-screen" style={{ background: "#0B0F17", color: "#E2E8F0" }}>
       <style>{`
@@ -555,18 +573,43 @@ Structure your response as:
 
       {/* Header */}
       <div style={{ padding: "40px 24px 32px", textAlign: "center", background: "radial-gradient(ellipse at center top, rgba(59,130,246,0.06) 0%, transparent 60%)" }}>
-        <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "5px 14px", borderRadius: 20, background: "rgba(59,130,246,0.1)", border: "1px solid rgba(59,130,246,0.2)", fontSize: 12, color: "#60A5FA", fontWeight: 500, marginBottom: 16 }}>
-          🔍 Comprehensive Deal Analysis
+        <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "5px 14px", borderRadius: 20, background: "rgba(59,130,246,0.1)", border: "1px solid rgba(59,130,246,0.2)", fontSize: 12, color: "#60A5FA", fontWeight: 600, marginBottom: 16 }}>
+          🔎 Comprehensive Deal Analysis
         </div>
         <h1 style={{ fontSize: "clamp(26px, 4.5vw, 40px)", fontWeight: 800, margin: "0 0 10px", fontFamily: "'Instrument Serif', serif", background: "linear-gradient(135deg, #F8FAFC 0%, #94A3B8 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", lineHeight: 1.15 }}>
-          Deal Risk Analyzer
+          Run a full acquisition risk assessment.
         </h1>
         <p style={{ fontSize: 15, color: "#8896A6", maxWidth: 560, margin: "0 auto", lineHeight: 1.6 }}>
-          Full acquisition risk assessment with valuation analysis, debt modeling, market intelligence, operational scoring, and industry benchmarks.
+          Evaluate operational, financial, and market risks before signing your LOI. Location-aware analysis with industry benchmarks and AI underwriting.
         </p>
       </div>
 
-      <div style={{ maxWidth: 720, margin: "0 auto", padding: "0 24px 60px" }}>
+      {/* EMAIL GATE */}
+      {gated && (
+        <div style={{ maxWidth: 440, margin: "0 auto", padding: "0 24px 40px" }}>
+          <div className="fade-up" style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 16, padding: "32px 28px", textAlign: "center" }}>
+            <div style={{ fontSize: 48, marginBottom: 12 }}>🔎</div>
+            <h2 style={{ fontSize: 20, fontWeight: 700, margin: "0 0 6px", color: "#E2E8F0", fontFamily: "'Instrument Serif', serif" }}>Get your full risk report.</h2>
+            <p style={{ fontSize: 14, color: "#8896A6", margin: "0 0 24px", lineHeight: 1.5 }}>
+              Enter your email to begin the comprehensive deal analysis with operational scoring, market intelligence, and AI insights.
+            </p>
+            <div style={{ textAlign: "left", marginBottom: 12 }}>
+              <label style={{ display: "block", fontSize: 11, color: "#8896A6", marginBottom: 4, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.05em" }}>First Name</label>
+              <input type="text" placeholder="Steve" value={gateName} onChange={(e) => setGateName(e.target.value)} style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.04)", color: "#E2E8F0", fontSize: 14, fontFamily: "'DM Sans', sans-serif" }} />
+            </div>
+            <div style={{ textAlign: "left", marginBottom: 20 }}>
+              <label style={{ display: "block", fontSize: 11, color: "#8896A6", marginBottom: 4, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.05em" }}>Email</label>
+              <input type="email" placeholder="you@email.com" value={gateEmail} onChange={(e) => setGateEmail(e.target.value)} style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.04)", color: "#E2E8F0", fontSize: 14, fontFamily: "'DM Sans', sans-serif" }} />
+            </div>
+            <button onClick={handleGateSubmit} disabled={!gateEmail || gateLoading} style={{ width: "100%", padding: "13px", borderRadius: 10, border: "none", background: gateEmail ? "linear-gradient(135deg, #3B82F6, #6366F1)" : "rgba(255,255,255,0.08)", color: gateEmail ? "#fff" : "#6B7280", fontSize: 15, fontWeight: 700, cursor: gateEmail ? "pointer" : "not-allowed", fontFamily: "'DM Sans', sans-serif" }}>
+              {gateLoading ? "Loading..." : "🔎 Start Analysis"}
+            </button>
+            <p style={{ fontSize: 11, color: "#4B5563", marginTop: 12 }}>No spam. Unsubscribe anytime.</p>
+          </div>
+        </div>
+      )}
+
+      <div style={{ maxWidth: 720, margin: "0 auto", padding: "0 24px 60px", display: gated ? "none" : "block" }}>
 
         {/* Step Indicator */}
         {step < 4 && (
