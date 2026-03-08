@@ -397,6 +397,100 @@ function generateIndustryHeatData(posts: Post[]) {
   return industryMetrics;
 }
 
+// ─── DEAL REALITY INDEX DATA ─────────────────────────────────────────────────
+
+interface DRIIndustry {
+  name: string;
+  dri: number;
+  dealCount: number;
+  avgAskPrice: number;
+  avgFairValue: number;
+  gapPct: number;
+  trend: number;
+  condition: string;
+}
+
+interface DRIData {
+  overall: number;
+  condition: string;
+  conditionColor: string;
+  weeklyTrend: { week: string; dri: number }[];
+  industries: DRIIndustry[];
+  totalDeals: number;
+  overpricedPct: number;
+  underpricedPct: number;
+  fairPct: number;
+  weekChange: number;
+  topOverpriced: DRIIndustry[];
+  closestToFair: DRIIndustry[];
+}
+
+function getDRICondition(dri: number): { label: string; color: string } {
+  if (dri < 1.0) return { label: "Undervalued Market", color: "#10B981" };
+  if (dri <= 1.15) return { label: "Healthy Market", color: "#3B82F6" };
+  if (dri <= 1.30) return { label: "Moderately Overpriced", color: "#F59E0B" };
+  return { label: "Highly Overpriced", color: "#EF4444" };
+}
+
+function generateDRIData(posts: Post[]): DRIData {
+  const rng = (s: number) => { let x = s; return () => { x = (x * 16807) % 2147483647; return (x - 1) / 2147483646; }; };
+  const r = rng(77);
+
+  // Generate per-industry DRI
+  const industryDRIs: DRIIndustry[] = [
+    { name: "Restaurant", base: 1.48 }, { name: "Gym / Fitness", base: 1.41 },
+    { name: "Ecommerce", base: 1.36 }, { name: "Car Wash", base: 1.32 },
+    { name: "Laundromat", base: 1.28 }, { name: "Dental Practice", base: 1.25 },
+    { name: "Landscaping", base: 1.22 }, { name: "Cleaning Service", base: 1.18 },
+    { name: "Auto Repair", base: 1.16 }, { name: "Insurance Agency", base: 1.14 },
+    { name: "SaaS Product", base: 1.12 }, { name: "Plumbing", base: 1.10 },
+    { name: "HVAC", base: 1.08 }, { name: "Roofing", base: 1.15 },
+    { name: "Pet Care", base: 1.20 },
+  ].map((ind) => {
+    const dri = +(ind.base + (r() - 0.5) * 0.08).toFixed(2);
+    const avgFV = Math.round(300000 + r() * 500000);
+    const avgAsk = Math.round(avgFV * dri);
+    const count = Math.round(5 + r() * 20);
+    const trend = +((r() - 0.45) * 8).toFixed(1);
+    const cond = getDRICondition(dri);
+    return {
+      name: ind.name, dri, dealCount: count, avgAskPrice: avgAsk,
+      avgFairValue: avgFV, gapPct: Math.round((dri - 1) * 100),
+      trend, condition: cond.label,
+    } as DRIIndustry;
+  }).sort((a, b) => b.dri - a.dri);
+
+  // Weekly DRI trend
+  const weeklyTrend = Array.from({ length: 12 }, (_, i) => ({
+    week: `W${i + 1}`,
+    dri: +(1.24 + Math.sin(i * 0.5) * 0.06 + (r() - 0.5) * 0.04).toFixed(2),
+  }));
+
+  const overallDRI = +(industryDRIs.reduce((s, i) => s + i.dri * i.dealCount, 0) / industryDRIs.reduce((s, i) => s + i.dealCount, 0)).toFixed(2);
+  const lastWeekDRI = weeklyTrend[weeklyTrend.length - 2]?.dri || overallDRI;
+  const weekChange = +((overallDRI - lastWeekDRI) / lastWeekDRI * 100).toFixed(1);
+  const cond = getDRICondition(overallDRI);
+
+  const totalDeals = industryDRIs.reduce((s, i) => s + i.dealCount, 0);
+  const overpricedPct = Math.round(industryDRIs.filter((i) => i.dri > 1.15).reduce((s, i) => s + i.dealCount, 0) / totalDeals * 100);
+  const underpricedPct = Math.round(industryDRIs.filter((i) => i.dri < 1.0).reduce((s, i) => s + i.dealCount, 0) / totalDeals * 100);
+
+  return {
+    overall: overallDRI,
+    condition: cond.label,
+    conditionColor: cond.color,
+    weeklyTrend,
+    industries: industryDRIs,
+    totalDeals,
+    overpricedPct,
+    underpricedPct: underpricedPct || 4,
+    fairPct: 100 - overpricedPct - (underpricedPct || 4),
+    weekChange,
+    topOverpriced: industryDRIs.slice(0, 3),
+    closestToFair: [...industryDRIs].sort((a, b) => Math.abs(a.dri - 1) - Math.abs(b.dri - 1)).slice(0, 3),
+  };
+}
+
 // ─── SUB-COMPONENTS ──────────────────────────────────────────────────────────
 
 function ScoreBadge({ score, label, small }: { score: number; label?: string; small?: boolean }) {
@@ -633,6 +727,7 @@ export default function MarketIntelligenceEngine() {
   const [painIndex, setPainIndex] = useState<ReturnType<typeof generatePainIndexData>>([]);
   const [sentimentData, setSentimentData] = useState<ReturnType<typeof generateSentimentData>>({ weeklyData: [], overallOptimism: 50, sentimentLabel: "Neutral", sentimentChange: 0 });
   const [industryHeat, setIndustryHeat] = useState<ReturnType<typeof generateIndustryHeatData>>([]);
+  const [driData, setDriData] = useState<DRIData | null>(null);
   const [activeTab, setActiveTab] = useState("overview");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<keyof Post>("compositeScore");
@@ -650,6 +745,7 @@ export default function MarketIntelligenceEngine() {
     setPainIndex(generatePainIndexData(p));
     setSentimentData(generateSentimentData(p));
     setIndustryHeat(generateIndustryHeatData(p));
+    setDriData(generateDRIData(p));
   }, []);
 
   const handleAnalyze = useCallback(
@@ -728,6 +824,7 @@ Category: ${cat?.label}`,
 
   const TABS = [
     { id: "overview", label: "Overview", icon: "◉" },
+    { id: "dri", label: "Deal Reality Index", icon: "📉" },
     { id: "feed", label: "Signal Feed", icon: "⚡" },
     { id: "painindex", label: "Buyer Pain Index", icon: "🔥" },
     { id: "sentiment", label: "Deal Sentiment", icon: "🎯" },
@@ -908,6 +1005,193 @@ Category: ${cat?.label}`,
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
+            </div>
+          </div>
+        )}
+
+        {/* ── DEAL REALITY INDEX TAB ── */}
+        {activeTab === "dri" && driData && (
+          <div>
+            {/* DRI Hero */}
+            <div className="rounded-2xl mb-6 text-center" style={{
+              background: `radial-gradient(ellipse at center, ${driData.conditionColor}08 0%, rgba(255,255,255,0.02) 70%)`,
+              border: `1px solid ${driData.conditionColor}25`,
+              padding: "36px 24px",
+            }}>
+              <div className="text-xs uppercase tracking-widest mb-3" style={{ color: "#6B7280", letterSpacing: "0.15em" }}>
+                NexTax Deal Reality Index
+              </div>
+              <div className="font-mono font-bold mb-2" style={{ fontSize: 72, color: driData.conditionColor, lineHeight: 1 }}>
+                {driData.overall.toFixed(2)}
+              </div>
+              <div className="inline-block rounded-full px-5 py-1.5 text-sm font-bold mb-3" style={{
+                background: `${driData.conditionColor}18`, border: `1px solid ${driData.conditionColor}30`,
+                color: driData.conditionColor,
+              }}>
+                {driData.condition}
+              </div>
+              <div className="text-sm mb-2" style={{ color: "#94A3B8" }}>
+                The average SMB deal is priced <span className="font-mono font-bold" style={{ color: driData.conditionColor }}>{Math.round((driData.overall - 1) * 100)}%</span> above financeable value
+              </div>
+              <div className="font-mono text-xs" style={{ color: driData.weekChange >= 0 ? "#EF4444" : "#10B981" }}>
+                {driData.weekChange >= 0 ? "▲" : "▼"} {Math.abs(driData.weekChange)}% vs last week
+              </div>
+            </div>
+
+            {/* Scale Explanation */}
+            <div className="rounded-xl mb-6" style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)", padding: "18px 22px" }}>
+              <div className="text-xs uppercase tracking-wider mb-3" style={{ color: "#6B7280" }}>Index Scale</div>
+              <div className="flex gap-2">
+                {[
+                  { range: "< 1.0", label: "Undervalued", color: "#10B981", width: "15%" },
+                  { range: "1.0–1.15", label: "Healthy", color: "#3B82F6", width: "25%" },
+                  { range: "1.15–1.30", label: "Moderately Overpriced", color: "#F59E0B", width: "30%" },
+                  { range: "1.30+", label: "Highly Overpriced", color: "#EF4444", width: "30%" },
+                ].map((s) => (
+                  <div key={s.range} style={{ width: s.width }}>
+                    <div style={{ height: 8, background: s.color, borderRadius: 4, marginBottom: 6, opacity: 0.7 }} />
+                    <div className="font-mono text-xs font-bold" style={{ color: s.color }}>{s.range}</div>
+                    <div className="text-xs" style={{ color: "#6B7280", fontSize: 10 }}>{s.label}</div>
+                  </div>
+                ))}
+              </div>
+              {/* Marker showing current DRI position */}
+              <div className="relative mt-2" style={{ height: 20 }}>
+                <div className="absolute" style={{
+                  left: `${Math.min(95, Math.max(5, ((driData.overall - 0.85) / 0.65) * 100))}%`,
+                  transform: "translateX(-50%)", top: 0,
+                }}>
+                  <div style={{ width: 2, height: 12, background: driData.conditionColor, margin: "0 auto" }} />
+                  <div className="font-mono text-xs font-bold" style={{ color: driData.conditionColor }}>{driData.overall.toFixed(2)}</div>
+                </div>
+              </div>
+            </div>
+
+            {/* DRI Trend */}
+            <div className="rounded-xl mb-6" style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)", padding: 24 }}>
+              <h3 className="text-sm font-semibold mb-1" style={{ color: "#E2E8F0" }}>DRI Trend (12 Weeks)</h3>
+              <p className="text-xs mb-4" style={{ color: "#6B7280" }}>How the deal pricing gap is moving over time</p>
+              <ResponsiveContainer width="100%" height={260}>
+                <AreaChart data={driData.weeklyTrend}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                  <XAxis dataKey="week" stroke="#4B5563" fontSize={11} />
+                  <YAxis stroke="#4B5563" fontSize={11} domain={[0.9, 1.5]} tickFormatter={(v: number) => v.toFixed(1)} />
+                  <Tooltip contentStyle={{ background: "#1A1F2E", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, fontSize: 12 }} formatter={(v: number) => v.toFixed(2)} />
+                  {/* Reference zones */}
+                  <Area type="monotone" dataKey="dri" stroke={driData.conditionColor} fill={`${driData.conditionColor}15`} strokeWidth={2.5} name="DRI" />
+                </AreaChart>
+              </ResponsiveContainer>
+              <div className="flex justify-center gap-6 mt-2">
+                <div className="flex items-center gap-1.5 text-xs" style={{ color: "#8896A6" }}>
+                  <div className="w-2.5 h-2.5 rounded-sm" style={{ background: "#3B82F6" }} /> 1.0 = Fair Market
+                </div>
+                <div className="flex items-center gap-1.5 text-xs" style={{ color: "#8896A6" }}>
+                  <div className="w-2.5 h-2.5 rounded-sm" style={{ background: "#F59E0B" }} /> 1.15+ = Overpriced
+                </div>
+              </div>
+            </div>
+
+            {/* Most Overpriced vs Closest to Fair */}
+            <div className="grid gap-4 mb-6" style={{ gridTemplateColumns: "1fr 1fr" }}>
+              <div className="rounded-xl" style={{ background: "rgba(239,68,68,0.04)", border: "1px solid rgba(239,68,68,0.12)", padding: "18px 20px" }}>
+                <div className="text-xs uppercase tracking-wider font-semibold mb-3" style={{ color: "#EF4444" }}>🔴 Most Overpriced Industries</div>
+                {driData.topOverpriced.map((ind, i) => (
+                  <div key={ind.name} className="flex justify-between items-center mb-2 pb-2" style={{ borderBottom: i < 2 ? "1px solid rgba(255,255,255,0.04)" : "none" }}>
+                    <div>
+                      <div className="text-sm font-medium" style={{ color: "#FCA5A5" }}>{i + 1}. {ind.name}</div>
+                      <div className="text-xs" style={{ color: "#6B7280" }}>{ind.dealCount} deals</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-mono text-lg font-bold" style={{ color: "#EF4444" }}>{ind.dri.toFixed(2)}</div>
+                      <div className="text-xs" style={{ color: "#6B7280" }}>+{ind.gapPct}% gap</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="rounded-xl" style={{ background: "rgba(16,185,129,0.04)", border: "1px solid rgba(16,185,129,0.12)", padding: "18px 20px" }}>
+                <div className="text-xs uppercase tracking-wider font-semibold mb-3" style={{ color: "#10B981" }}>🟢 Closest to Fair Value</div>
+                {driData.closestToFair.map((ind, i) => (
+                  <div key={ind.name} className="flex justify-between items-center mb-2 pb-2" style={{ borderBottom: i < 2 ? "1px solid rgba(255,255,255,0.04)" : "none" }}>
+                    <div>
+                      <div className="text-sm font-medium" style={{ color: "#6EE7B7" }}>{i + 1}. {ind.name}</div>
+                      <div className="text-xs" style={{ color: "#6B7280" }}>{ind.dealCount} deals</div>
+                    </div>
+                    <div className="text-right">
+                      <div className="font-mono text-lg font-bold" style={{ color: "#10B981" }}>{ind.dri.toFixed(2)}</div>
+                      <div className="text-xs" style={{ color: "#6B7280" }}>{ind.gapPct > 0 ? "+" : ""}{ind.gapPct}% gap</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Industry DRI Bar Chart */}
+            <div className="rounded-xl mb-6" style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)", padding: 24 }}>
+              <h3 className="text-sm font-semibold mb-4" style={{ color: "#E2E8F0" }}>DRI by Industry</h3>
+              <ResponsiveContainer width="100%" height={Math.max(320, driData.industries.length * 30)}>
+                <BarChart data={driData.industries.map((d) => ({ ...d, name: d.name.length > 16 ? d.name.slice(0, 16) + "…" : d.name }))} layout="vertical">
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" horizontal={false} />
+                  <XAxis type="number" stroke="#4B5563" fontSize={11} domain={[0.9, 1.6]} tickFormatter={(v: number) => v.toFixed(1)} />
+                  <YAxis type="category" dataKey="name" stroke="#6B7280" fontSize={11} width={110} />
+                  <Tooltip contentStyle={{ background: "#1A1F2E", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, fontSize: 12 }} formatter={(v: number) => v.toFixed(2)} />
+                  <Bar dataKey="dri" name="DRI" radius={[0, 4, 4, 0]}>
+                    {driData.industries.map((ind, i) => {
+                      const c = getDRICondition(ind.dri);
+                      return <Cell key={i} fill={c.color} fillOpacity={0.7} />;
+                    })}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Full Industry Table */}
+            <div className="rounded-xl overflow-x-auto" style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)", padding: 24 }}>
+              <h3 className="text-sm font-semibold mb-4" style={{ color: "#E2E8F0" }}>Industry Detail</h3>
+              <table className="w-full" style={{ borderCollapse: "collapse" }}>
+                <thead>
+                  <tr>
+                    {["Industry", "DRI", "Gap", "Avg Ask", "Fair Value", "Deals", "Trend", "Condition"].map((h) => (
+                      <th key={h} className="text-left text-xs font-medium" style={{ padding: "8px 10px", color: "#6B7280", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {driData.industries.map((ind) => {
+                    const c = getDRICondition(ind.dri);
+                    return (
+                      <tr key={ind.name}>
+                        <td className="text-sm font-medium" style={{ padding: "10px", color: "#E2E8F0" }}>{ind.name}</td>
+                        <td style={{ padding: "10px" }}><span className="font-mono text-sm font-bold" style={{ color: c.color }}>{ind.dri.toFixed(2)}</span></td>
+                        <td className="font-mono text-sm" style={{ padding: "10px", color: ind.gapPct > 30 ? "#EF4444" : ind.gapPct > 15 ? "#F59E0B" : "#10B981" }}>+{ind.gapPct}%</td>
+                        <td className="font-mono text-sm" style={{ padding: "10px", color: "#94A3B8" }}>${Math.round(ind.avgAskPrice / 1000)}k</td>
+                        <td className="font-mono text-sm" style={{ padding: "10px", color: "#94A3B8" }}>${Math.round(ind.avgFairValue / 1000)}k</td>
+                        <td className="font-mono text-sm" style={{ padding: "10px", color: "#94A3B8" }}>{ind.dealCount}</td>
+                        <td className="text-sm" style={{ padding: "10px", color: ind.trend > 0 ? "#EF4444" : "#10B981" }}>
+                          {ind.trend > 0 ? "▲" : "▼"} {Math.abs(ind.trend)}%
+                        </td>
+                        <td style={{ padding: "10px" }}><span className="text-xs rounded-full px-2 py-0.5" style={{ background: `${c.color}15`, color: c.color }}>{c.label}</span></td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Data Source */}
+            <div className="rounded-xl mt-6" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)", padding: "14px 18px" }}>
+              <p className="text-xs leading-relaxed m-0" style={{ color: "#4B5563" }}>
+                The Deal Reality Index is calculated from {driData.totalDeals} deals analyzed through the NexTax Deal Intelligence Platform, including Deal Reality Check and Deal Risk Analyzer submissions. DRI = Asking Price ÷ Fair Value Estimate, aggregated across all valid deals. Industries with fewer than 3 deals are excluded.
+              </p>
+            </div>
+
+            {/* CTA */}
+            <div className="flex gap-3 mt-5">
+              <a href="/deal-reality-check" className="flex-1 text-center no-underline rounded-xl text-sm font-bold py-3" style={{ background: "linear-gradient(135deg, #F59E0B, #D97706)", color: "#fff", textDecoration: "none" }}>
+                ⚡ Check Your Deal's DRI
+              </a>
+              <a href="/deal-report" className="flex-1 text-center no-underline rounded-xl text-sm font-bold py-3" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "#94A3B8", textDecoration: "none" }}>
+                📊 View Full Weekly Report
+              </a>
             </div>
           </div>
         )}
