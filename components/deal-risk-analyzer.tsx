@@ -485,8 +485,52 @@ export default function DealRiskAnalyzer() {
       setStep(4);
       setTimeout(() => resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
       fetchAIInsight(scores);
+      // Record deal for intelligence data
+      recordDeal(scores);
     }
     setLoading(false);
+  };
+
+  const recordDeal = async (scores: FullScoreBreakdown) => {
+    try {
+      await fetch("/api/record-deal", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tool_used: "risk_analyzer",
+          industry: inputs.industry,
+          revenue: inputs.revenue,
+          sde: inputs.sde,
+          asking_price: inputs.askingPrice,
+          debt_percent: parseFloat(inputs.debtPercent),
+          interest_rate: parseFloat(inputs.interestRate),
+          term_years: parseInt(inputs.loanTermYears),
+          city: inputs.city || null,
+          state: inputs.state || null,
+          zip_code: inputs.zipCode || null,
+          employees: inputs.employeeCount ? parseInt(inputs.employeeCount) : null,
+          years_in_business: inputs.yearsInBusiness ? parseInt(inputs.yearsInBusiness) : null,
+          revenue_trend: inputs.revenueGrowth || null,
+          customer_concentration: inputs.customerConcentration || null,
+          owner_operated: inputs.ownerOperated,
+          has_real_estate: inputs.hasRealEstate,
+          valuation_multiple: +scores.valuation.multiple.toFixed(2),
+          dscr: +scores.debtRisk.dscr.toFixed(2),
+          monthly_payment: Math.round(scores.debtRisk.monthlyPayment),
+          fair_value: scores.valuation.fairValueEstimate,
+          recommended_offer_low: null,
+          recommended_offer_high: null,
+          overall_score: scores.overall,
+          risk_level: scores.riskLevel,
+          valuation_score: scores.valuation.score,
+          debt_score: scores.debtRisk.score,
+          market_score: scores.marketRisk.score,
+          industry_score: scores.industryRisk.score,
+          operational_score: scores.operationalRisk.score,
+          red_flags: scores.redFlags,
+          green_flags: scores.greenFlags,
+        }),
+      });
+    } catch { /* non-blocking */ }
   };
 
   const fetchAIInsight = async (scores: FullScoreBreakdown) => {
