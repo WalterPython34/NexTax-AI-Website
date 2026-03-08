@@ -632,7 +632,9 @@ Structure your response as:
       {gated && (
         <div style={{ maxWidth: 440, margin: "0 auto", padding: "0 24px 40px" }}>
           <div className="fade-up" style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 16, padding: "32px 28px", textAlign: "center" }}>
-            <div style={{ fontSize: 48, marginBottom: 12 }}>🔎</div>
+            <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>
+              <img src="/nextax-icon.png" alt="NexTax" style={{ width: 64, height: 64, borderRadius: 12 }} />
+            </div>
             <h2 style={{ fontSize: 20, fontWeight: 700, margin: "0 0 6px", color: "#E2E8F0", fontFamily: "'Instrument Serif', serif" }}>Get your full risk report.</h2>
             <p style={{ fontSize: 14, color: "#8896A6", margin: "0 0 24px", lineHeight: 1.5 }}>
               Enter your email to begin the comprehensive deal analysis with operational scoring, market intelligence, and AI insights.
