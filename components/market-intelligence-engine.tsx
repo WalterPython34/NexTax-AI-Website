@@ -6,12 +6,21 @@ import {
   Area,
   BarChart,
   Bar,
+  LineChart,
+  Line,
   XAxis,
   YAxis,
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
   Cell,
+  PieChart,
+  Pie,
+  RadarChart,
+  Radar,
+  PolarGrid,
+  PolarAngleAxis,
+  PolarRadiusAxis,
 } from "recharts";
 
 // ─── TYPES ───────────────────────────────────────────────────────────────────
@@ -296,6 +305,98 @@ function generateHeatMapData(posts: Post[]): Record<string, HeatMapRow> {
   return matrix;
 }
 
+// ─── BUYER PAIN INDEX DATA ───────────────────────────────────────────────────
+
+function generatePainIndexData(posts: Post[]) {
+  const thisWeek = posts.filter((p) => p.weekNum >= 10);
+  const lastWeek = posts.filter((p) => p.weekNum >= 7 && p.weekNum < 10);
+
+  return PAIN_CATEGORIES.map((cat) => {
+    const thisCount = thisWeek.filter((p) => p.category === cat.id).length;
+    const lastCount = lastWeek.filter((p) => p.category === cat.id).length;
+    const thisPain = thisWeek.filter((p) => p.category === cat.id);
+    const avgPain = thisPain.length ? Math.round(thisPain.reduce((s, p) => s + p.painScore, 0) / thisPain.length) : 0;
+    const change = lastCount > 0 ? Math.round(((thisCount - lastCount) / lastCount) * 100) : 0;
+
+    return {
+      id: cat.id,
+      label: cat.label,
+      icon: cat.icon,
+      color: cat.color,
+      count: thisCount,
+      avgPain,
+      intensity: Math.round(avgPain * (thisCount / Math.max(thisWeek.length, 1)) * 3),
+      change,
+      trending: change > 15 ? "rising" as const : change < -15 ? "falling" as const : "stable" as const,
+    };
+  }).sort((a, b) => b.intensity - a.intensity);
+}
+
+// ─── DEAL SENTIMENT DATA ─────────────────────────────────────────────────────
+
+function generateSentimentData(posts: Post[]) {
+  const weeklyData: { week: string; bullish: number; neutral: number; bearish: number; optimism: number }[] = [];
+
+  for (let w = 1; w <= 12; w++) {
+    const weekPosts = posts.filter((p) => p.weekNum === w);
+    if (weekPosts.length === 0) {
+      weeklyData.push({ week: `W${w}`, bullish: 0, neutral: 0, bearish: 0, optimism: 50 });
+      continue;
+    }
+    // Sentiment derived from scores: high intent + low pain = bullish, high pain + low intent = bearish
+    const bullish = weekPosts.filter((p) => p.intentScore > 65 && p.painScore < 50).length;
+    const bearish = weekPosts.filter((p) => p.painScore > 65 && p.intentScore < 50).length;
+    const neutral = weekPosts.length - bullish - bearish;
+    const optimism = Math.round(((bullish * 2 + neutral) / (weekPosts.length * 2)) * 100);
+
+    weeklyData.push({
+      week: `W${w}`,
+      bullish,
+      neutral,
+      bearish,
+      optimism: Math.max(15, Math.min(85, optimism)),
+    });
+  }
+
+  const latestWeek = weeklyData[weeklyData.length - 1];
+  const prevWeek = weeklyData[weeklyData.length - 2];
+  const overallOptimism = latestWeek.optimism;
+  const sentimentLabel = overallOptimism >= 60 ? "Bullish" : overallOptimism >= 40 ? "Neutral" : "Bearish";
+  const sentimentChange = latestWeek.optimism - (prevWeek?.optimism || 50);
+
+  return { weeklyData, overallOptimism, sentimentLabel, sentimentChange };
+}
+
+// ─── INDUSTRY ACQUISITION HEATMAP DATA ──────────────────────────────────────
+
+function generateIndustryHeatData(posts: Post[]) {
+  const industryMetrics = INDUSTRIES.map((ind) => {
+    const indPosts = posts.filter((p) => p.industry === ind);
+    const thisWeek = indPosts.filter((p) => p.weekNum >= 10);
+    const lastWeek = indPosts.filter((p) => p.weekNum >= 7 && p.weekNum < 10);
+
+    const buyerInterest = thisWeek.length;
+    const discussionVolume = indPosts.length;
+    const avgIntent = indPosts.length ? Math.round(indPosts.reduce((s, p) => s + p.intentScore, 0) / indPosts.length) : 0;
+    const avgPain = indPosts.length ? Math.round(indPosts.reduce((s, p) => s + p.painScore, 0) / indPosts.length) : 0;
+    const heatScore = Math.round((buyerInterest * 3 + discussionVolume + avgIntent * 0.3) * (1 + avgPain * 0.005));
+    const weekChange = lastWeek.length > 0 ? Math.round(((thisWeek.length - lastWeek.length) / lastWeek.length) * 100) : 0;
+
+    return {
+      name: ind,
+      buyerInterest,
+      discussionVolume,
+      avgIntent,
+      avgPain,
+      heatScore: Math.min(100, heatScore),
+      weekChange,
+      trending: weekChange > 20 ? "🔺" : weekChange < -20 ? "🔻" : "➡️",
+    };
+  }).sort((a, b) => b.heatScore - a.heatScore);
+
+  return industryMetrics;
+}
+
 // ─── SUB-COMPONENTS ──────────────────────────────────────────────────────────
 
 function ScoreBadge({ score, label, small }: { score: number; label?: string; small?: boolean }) {
@@ -529,6 +630,9 @@ export default function MarketIntelligenceEngine() {
   const [trendData, setTrendData] = useState<Record<string, unknown>[]>([]);
   const [contentOps, setContentOps] = useState<ContentOpportunity[]>([]);
   const [heatMap, setHeatMap] = useState<Record<string, HeatMapRow>>({});
+  const [painIndex, setPainIndex] = useState<ReturnType<typeof generatePainIndexData>>([]);
+  const [sentimentData, setSentimentData] = useState<ReturnType<typeof generateSentimentData>>({ weeklyData: [], overallOptimism: 50, sentimentLabel: "Neutral", sentimentChange: 0 });
+  const [industryHeat, setIndustryHeat] = useState<ReturnType<typeof generateIndustryHeatData>>([]);
   const [activeTab, setActiveTab] = useState("overview");
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState<keyof Post>("compositeScore");
@@ -543,6 +647,9 @@ export default function MarketIntelligenceEngine() {
     setTrendData(generateTrendData(p));
     setContentOps(generateContentOpportunities(p));
     setHeatMap(generateHeatMapData(p));
+    setPainIndex(generatePainIndexData(p));
+    setSentimentData(generateSentimentData(p));
+    setIndustryHeat(generateIndustryHeatData(p));
   }, []);
 
   const handleAnalyze = useCallback(
@@ -622,6 +729,9 @@ Category: ${cat?.label}`,
   const TABS = [
     { id: "overview", label: "Overview", icon: "◉" },
     { id: "feed", label: "Signal Feed", icon: "⚡" },
+    { id: "painindex", label: "Buyer Pain Index", icon: "🔥" },
+    { id: "sentiment", label: "Deal Sentiment", icon: "🎯" },
+    { id: "industryheat", label: "Industry Heatmap", icon: "🏭" },
     { id: "trends", label: "Trends", icon: "📈" },
     { id: "content", label: "Content Ops", icon: "💡" },
     { id: "heatmap", label: "Service Gap Map", icon: "🗺️" },
@@ -905,6 +1015,237 @@ Category: ${cat?.label}`,
                   Showing top 30 results. Refine filters to narrow further.
                 </div>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* ── BUYER PAIN INDEX TAB ── */}
+        {activeTab === "painindex" && (
+          <div>
+            <p className="text-sm leading-relaxed mb-5" style={{ color: "#8896A6" }}>
+              Real-time buyer pain signals ranked by intensity. Tracks what acquisition buyers are struggling with most this week and how concerns are shifting.
+            </p>
+
+            {/* Top-line metrics */}
+            <div className="flex gap-4 mb-6 flex-wrap">
+              {[
+                { label: "Top Concern", value: painIndex[0]?.label || "—", accent: painIndex[0]?.color || "#EF4444" },
+                { label: "Highest Pain Score", value: painIndex[0]?.avgPain?.toString() || "0", accent: "#F59E0B" },
+                { label: "Rising Fastest", value: painIndex.find((p) => p.trending === "rising")?.label || "None", accent: "#EF4444" },
+                { label: "Falling Fastest", value: painIndex.find((p) => p.trending === "falling")?.label || "None", accent: "#10B981" },
+              ].map((kpi) => (
+                <div key={kpi.label} className="flex-1 rounded-xl" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", padding: "16px 18px", minWidth: 150 }}>
+                  <div className="text-xs uppercase tracking-wider mb-1" style={{ color: "#6B7280" }}>{kpi.label}</div>
+                  <div className="font-mono text-xl font-bold" style={{ color: kpi.accent }}>{kpi.value}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Pain Index Cards */}
+            <div className="flex flex-col gap-3">
+              {painIndex.map((item, i) => (
+                <div key={item.id} className="rounded-xl" style={{
+                  background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)",
+                  padding: "18px 22px", borderLeft: `3px solid ${item.color}`,
+                }}>
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl font-bold font-mono" style={{ color: item.color, minWidth: 32 }}>#{i + 1}</span>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="text-lg">{item.icon}</span>
+                          <span className="text-sm font-semibold" style={{ color: "#E2E8F0" }}>{item.label}</span>
+                          <span className="text-xs rounded-full px-2 py-0.5 font-mono font-semibold" style={{
+                            background: item.trending === "rising" ? "rgba(239,68,68,0.12)" : item.trending === "falling" ? "rgba(16,185,129,0.12)" : "rgba(255,255,255,0.05)",
+                            color: item.trending === "rising" ? "#EF4444" : item.trending === "falling" ? "#10B981" : "#6B7280",
+                          }}>
+                            {item.trending === "rising" ? "▲" : item.trending === "falling" ? "▼" : "→"} {item.change > 0 ? "+" : ""}{item.change}%
+                          </span>
+                        </div>
+                        <div className="flex gap-4 mt-1">
+                          <span className="text-xs" style={{ color: "#6B7280" }}>{item.count} posts this week</span>
+                          <span className="text-xs" style={{ color: "#6B7280" }}>Avg Pain: <span className="font-mono font-semibold" style={{ color: "#F59E0B" }}>{item.avgPain}</span></span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-xs uppercase mb-1" style={{ color: "#6B7280" }}>Intensity</div>
+                      <div className="font-mono text-2xl font-bold" style={{ color: item.color }}>{item.intensity}</div>
+                    </div>
+                  </div>
+                  {/* Intensity bar */}
+                  <div className="mt-3" style={{ height: 4, background: "rgba(255,255,255,0.06)", borderRadius: 2, overflow: "hidden" }}>
+                    <div style={{ height: "100%", width: `${Math.min(item.intensity, 100)}%`, background: item.color, borderRadius: 2, transition: "width 0.8s ease-out" }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── DEAL SENTIMENT TRACKER TAB ── */}
+        {activeTab === "sentiment" && (
+          <div>
+            <p className="text-sm leading-relaxed mb-5" style={{ color: "#8896A6" }}>
+              Measures deal optimism vs pessimism across acquisition communities. Tracks shifts in buyer confidence over time.
+            </p>
+
+            {/* Sentiment Hero */}
+            <div className="rounded-xl mb-6 text-center" style={{
+              background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", padding: "28px 24px",
+            }}>
+              <div className="text-xs uppercase tracking-wider mb-2" style={{ color: "#6B7280" }}>Deal Optimism Score</div>
+              <div className="font-mono font-bold mb-2" style={{
+                fontSize: 56,
+                color: sentimentData.overallOptimism >= 60 ? "#10B981" : sentimentData.overallOptimism >= 40 ? "#F59E0B" : "#EF4444",
+              }}>
+                {sentimentData.overallOptimism}
+              </div>
+              <div className="inline-block rounded-full px-4 py-1 text-sm font-semibold" style={{
+                background: sentimentData.sentimentLabel === "Bullish" ? "rgba(16,185,129,0.15)" : sentimentData.sentimentLabel === "Neutral" ? "rgba(245,158,11,0.15)" : "rgba(239,68,68,0.15)",
+                color: sentimentData.sentimentLabel === "Bullish" ? "#10B981" : sentimentData.sentimentLabel === "Neutral" ? "#F59E0B" : "#EF4444",
+              }}>
+                {sentimentData.sentimentLabel}
+              </div>
+              <div className="mt-2 text-xs font-mono" style={{
+                color: sentimentData.sentimentChange >= 0 ? "#10B981" : "#EF4444",
+              }}>
+                {sentimentData.sentimentChange >= 0 ? "▲" : "▼"} {Math.abs(sentimentData.sentimentChange)} pts vs last week
+              </div>
+            </div>
+
+            {/* Sentiment Trend Chart */}
+            <div className="rounded-xl mb-6" style={{
+              background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", padding: 24,
+            }}>
+              <h3 className="text-sm font-semibold mb-1" style={{ color: "#E2E8F0" }}>Weekly Sentiment Trend</h3>
+              <p className="text-xs mb-4" style={{ color: "#6B7280" }}>Optimism score tracked over 12 weeks</p>
+              <ResponsiveContainer width="100%" height={280}>
+                <AreaChart data={sentimentData.weeklyData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                  <XAxis dataKey="week" stroke="#4B5563" fontSize={11} />
+                  <YAxis stroke="#4B5563" fontSize={11} domain={[0, 100]} />
+                  <Tooltip contentStyle={{ background: "#1A1F2E", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, fontSize: 12 }} />
+                  <Area type="monotone" dataKey="optimism" stroke="#8B5CF6" fill="rgba(139,92,246,0.15)" strokeWidth={2.5} name="Optimism Score" />
+                </AreaChart>
+              </ResponsiveContainer>
+              <div className="flex justify-center gap-8 mt-3">
+                <div className="flex items-center gap-1.5 text-xs" style={{ color: "#8896A6" }}>
+                  <div className="w-2.5 h-2.5 rounded-sm" style={{ background: "#8B5CF6" }} /> Optimism Score (0-100)
+                </div>
+              </div>
+            </div>
+
+            {/* Bullish / Neutral / Bearish Breakdown */}
+            <div className="rounded-xl" style={{
+              background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", padding: 24,
+            }}>
+              <h3 className="text-sm font-semibold mb-4" style={{ color: "#E2E8F0" }}>Sentiment Breakdown by Week</h3>
+              <ResponsiveContainer width="100%" height={260}>
+                <BarChart data={sentimentData.weeklyData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
+                  <XAxis dataKey="week" stroke="#4B5563" fontSize={11} />
+                  <YAxis stroke="#4B5563" fontSize={11} />
+                  <Tooltip contentStyle={{ background: "#1A1F2E", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, fontSize: 12 }} />
+                  <Bar dataKey="bullish" stackId="a" fill="#10B981" name="Bullish" radius={[0, 0, 0, 0]} />
+                  <Bar dataKey="neutral" stackId="a" fill="#F59E0B" name="Neutral" />
+                  <Bar dataKey="bearish" stackId="a" fill="#EF4444" name="Bearish" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+              <div className="flex justify-center gap-6 mt-3">
+                {[{ l: "Bullish", c: "#10B981" }, { l: "Neutral", c: "#F59E0B" }, { l: "Bearish", c: "#EF4444" }].map((s) => (
+                  <div key={s.l} className="flex items-center gap-1.5 text-xs" style={{ color: "#8896A6" }}>
+                    <div className="w-2.5 h-2.5 rounded-sm" style={{ background: s.c }} /> {s.l}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* ── INDUSTRY ACQUISITION HEATMAP TAB ── */}
+        {activeTab === "industryheat" && (
+          <div>
+            <p className="text-sm leading-relaxed mb-5" style={{ color: "#8896A6" }}>
+              Ranks industries by acquisition buyer interest, discussion volume, and deal activity. Identifies where buyer demand is hottest and which sectors are trending.
+            </p>
+
+            {/* Top 3 Industries */}
+            <div className="grid gap-4 mb-6" style={{ gridTemplateColumns: "repeat(3, 1fr)" }}>
+              {industryHeat.slice(0, 3).map((ind, i) => (
+                <div key={ind.name} className="rounded-xl text-center" style={{
+                  background: i === 0 ? "rgba(245,158,11,0.06)" : "rgba(255,255,255,0.03)",
+                  border: i === 0 ? "1px solid rgba(245,158,11,0.15)" : "1px solid rgba(255,255,255,0.06)",
+                  padding: "20px 16px",
+                }}>
+                  <div className="text-xs uppercase tracking-wider mb-1" style={{ color: "#6B7280" }}>
+                    {i === 0 ? "🥇 Hottest Industry" : i === 1 ? "🥈 #2" : "🥉 #3"}
+                  </div>
+                  <div className="text-lg font-bold mb-1" style={{ color: i === 0 ? "#F59E0B" : "#E2E8F0" }}>{ind.name}</div>
+                  <div className="font-mono text-3xl font-bold" style={{ color: i === 0 ? "#F59E0B" : "#818CF8" }}>{ind.heatScore}</div>
+                  <div className="text-xs mt-1" style={{ color: "#6B7280" }}>Heat Score</div>
+                  <div className="text-xs font-mono mt-1" style={{
+                    color: ind.weekChange > 0 ? "#10B981" : ind.weekChange < 0 ? "#EF4444" : "#6B7280",
+                  }}>
+                    {ind.trending} {ind.weekChange > 0 ? "+" : ""}{ind.weekChange}% vs last week
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Heat Score Chart */}
+            <div className="rounded-xl mb-6" style={{
+              background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", padding: 24,
+            }}>
+              <h3 className="text-sm font-semibold mb-4" style={{ color: "#E2E8F0" }}>Industry Heat Scores</h3>
+              <ResponsiveContainer width="100%" height={Math.max(300, industryHeat.length * 32)}>
+                <BarChart data={industryHeat.map((d) => ({ ...d, name: d.name.length > 16 ? d.name.slice(0, 16) + "…" : d.name }))} layout="vertical">
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" horizontal={false} />
+                  <XAxis type="number" stroke="#4B5563" fontSize={11} domain={[0, 100]} />
+                  <YAxis type="category" dataKey="name" stroke="#6B7280" fontSize={11} width={110} />
+                  <Tooltip contentStyle={{ background: "#1A1F2E", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, fontSize: 12 }} />
+                  <Bar dataKey="heatScore" name="Heat Score" radius={[0, 4, 4, 0]}>
+                    {industryHeat.map((_, i) => (
+                      <Cell key={i} fill={i === 0 ? "#F59E0B" : i < 3 ? "#818CF8" : "#4B5563"} fillOpacity={1 - i * 0.05} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+
+            {/* Detail Table */}
+            <div className="rounded-xl overflow-x-auto" style={{
+              background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", padding: 24,
+            }}>
+              <h3 className="text-sm font-semibold mb-4" style={{ color: "#E2E8F0" }}>Industry Detail</h3>
+              <table className="w-full" style={{ borderCollapse: "collapse" }}>
+                <thead>
+                  <tr>
+                    {["Industry", "Heat Score", "Buyer Interest", "Discussion Vol", "Avg Intent", "Avg Pain", "Trend"].map((h) => (
+                      <th key={h} className="text-left text-xs font-medium" style={{ padding: "8px 10px", color: "#6B7280", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {industryHeat.map((ind) => (
+                    <tr key={ind.name}>
+                      <td className="text-sm font-medium" style={{ padding: "10px", color: "#E2E8F0" }}>{ind.name}</td>
+                      <td style={{ padding: "10px" }}>
+                        <span className="font-mono text-sm font-bold" style={{ color: ind.heatScore >= 70 ? "#F59E0B" : ind.heatScore >= 40 ? "#818CF8" : "#6B7280" }}>{ind.heatScore}</span>
+                      </td>
+                      <td className="font-mono text-sm" style={{ padding: "10px", color: "#94A3B8" }}>{ind.buyerInterest}</td>
+                      <td className="font-mono text-sm" style={{ padding: "10px", color: "#94A3B8" }}>{ind.discussionVolume}</td>
+                      <td className="font-mono text-sm" style={{ padding: "10px", color: ind.avgIntent >= 65 ? "#10B981" : "#94A3B8" }}>{ind.avgIntent}</td>
+                      <td className="font-mono text-sm" style={{ padding: "10px", color: ind.avgPain >= 65 ? "#EF4444" : "#94A3B8" }}>{ind.avgPain}</td>
+                      <td className="text-sm" style={{ padding: "10px" }}>
+                        <span style={{ color: ind.weekChange > 0 ? "#10B981" : ind.weekChange < 0 ? "#EF4444" : "#6B7280" }}>
+                          {ind.trending} {ind.weekChange > 0 ? "+" : ""}{ind.weekChange}%
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           </div>
         )}
