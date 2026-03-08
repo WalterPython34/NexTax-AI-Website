@@ -256,7 +256,43 @@ export default function DealRealityCheck() {
     setShowResults(true);
     setGateLoading(false);
     setTimeout(() => resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
-    if (pendingResults) fetchAI(pendingResults);
+    if (pendingResults) {
+      fetchAI(pendingResults);
+      // Record deal for intelligence data
+      recordDeal(pendingResults);
+    }
+  };
+
+  const recordDeal = async (scores: ScoreBreakdown) => {
+    try {
+      await fetch("/api/record-deal", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tool_used: "reality_check",
+          industry: inputs.industry,
+          revenue: inputs.revenue,
+          sde: inputs.sde,
+          asking_price: inputs.askingPrice,
+          debt_percent: parseFloat(inputs.debtPercent),
+          interest_rate: parseFloat(inputs.interestRate),
+          term_years: parseInt(inputs.loanTermYears),
+          valuation_multiple: +scores.valuation.multiple.toFixed(2),
+          dscr: +scores.debtRisk.dscr.toFixed(2),
+          monthly_payment: Math.round(scores.debtRisk.monthlyPayment),
+          fair_value: scores.valuation.fairValue,
+          recommended_offer_low: scores.valuation.recommendedOffer[0],
+          recommended_offer_high: scores.valuation.recommendedOffer[1],
+          overall_score: scores.overall,
+          risk_level: scores.riskLevel,
+          valuation_score: scores.valuation.score,
+          debt_score: scores.debtRisk.score,
+          market_score: scores.marketRisk.score,
+          industry_score: scores.industryRisk.score,
+          red_flags: scores.redFlags,
+          green_flags: scores.greenFlags,
+        }),
+      });
+    } catch { /* non-blocking */ }
   };
 
   const fetchAI = async (scores: ScoreBreakdown) => {
