@@ -172,37 +172,138 @@ function SBar({ label, score, icon }: { label: string; score: number; icon: stri
 }
 
 function generateShareCard(results: ScoreBreakdown, industry: string, inputs: DealInputs): string {
-  const col = sc(results.overall); const ind = INDUSTRIES[industry];
-  const insights = [...results.redFlags.slice(0, 2), ...results.greenFlags.slice(0, 1)];
-  const canvas = document.createElement("canvas"); canvas.width = 1200; canvas.height = 630;
+  const col = sc(results.overall);
+  const ind = INDUSTRIES[industry];
+  const canvas = document.createElement("canvas");
+  canvas.width = 1200; canvas.height = 630;
   const ctx = canvas.getContext("2d")!;
-  const grad = ctx.createLinearGradient(0, 0, 1200, 630); grad.addColorStop(0, "#0B0F17"); grad.addColorStop(1, "#131927");
-  ctx.fillStyle = grad; ctx.fillRect(0, 0, 1200, 630);
-  ctx.fillStyle = col; ctx.fillRect(0, 0, 6, 630);
-  ctx.fillStyle = "#6B7280"; ctx.font = "500 14px sans-serif"; ctx.fillText("NEXTAX.AI", 48, 52);
-  ctx.fillStyle = "#94A3B8"; ctx.font = "700 28px sans-serif"; ctx.fillText("Deal Reality Check", 48, 90);
-  const cx = 960, cy = 200, sr = 80;
-  ctx.beginPath(); ctx.arc(cx, cy, sr, 0, Math.PI * 2); ctx.strokeStyle = "rgba(255,255,255,0.06)"; ctx.lineWidth = 10; ctx.stroke();
-  ctx.beginPath(); ctx.arc(cx, cy, sr, -Math.PI / 2, -Math.PI / 2 + (results.overall / 100) * Math.PI * 2); ctx.strokeStyle = col; ctx.lineWidth = 10; ctx.lineCap = "round"; ctx.stroke();
-  ctx.fillStyle = col; ctx.font = "800 48px monospace"; ctx.textAlign = "center"; ctx.fillText(String(results.overall), cx, cy + 14);
-  ctx.fillStyle = "#6B7280"; ctx.font = "500 11px sans-serif"; ctx.fillText("DEAL SCORE", cx, cy + 34); ctx.textAlign = "left";
-  ctx.fillStyle = col; ctx.beginPath(); ctx.roundRect(cx - 70, cy + 50, 140, 30, 15); ctx.fill();
-  ctx.fillStyle = "#fff"; ctx.font = "700 13px sans-serif"; ctx.textAlign = "center"; ctx.fillText(results.riskLevel + " Risk", cx, cy + 70); ctx.textAlign = "left";
-  ctx.fillStyle = "#E2E8F0"; ctx.font = "600 18px sans-serif"; ctx.fillText(ind?.label || "", 48, 150);
-  ctx.fillStyle = "#6B7280"; ctx.font = "400 14px sans-serif";
-  ctx.fillText(`Price: ${fmt(parseFloat(inputs.askingPrice.replace(/,/g, "")))}  ·  SDE: ${fmt(parseFloat(inputs.sde.replace(/,/g, "")))}  ·  Multiple: ${results.valuation.multiple.toFixed(2)}x`, 48, 178);
-  [{ l: "DSCR", v: results.debtRisk.dscr.toFixed(2) }, { l: "Monthly Debt", v: fmt(results.debtRisk.monthlyPayment) }, { l: "Fair Value", v: fmt(results.valuation.fairValue) }].forEach((m, i) => {
-    ctx.fillStyle = "#E2E8F0"; ctx.font = "700 22px monospace"; ctx.fillText(m.v, 48 + i * 200, 220);
-    ctx.fillStyle = "#6B7280"; ctx.font = "500 11px sans-serif"; ctx.fillText(m.l.toUpperCase(), 48 + i * 200, 238);
+
+  // ── BACKGROUND: Bloomberg terminal dark
+  ctx.fillStyle = "#0A0E14";
+  ctx.fillRect(0, 0, 1200, 630);
+
+  // Subtle grid pattern
+  ctx.strokeStyle = "rgba(255,255,255,0.02)";
+  ctx.lineWidth = 1;
+  for (let x = 0; x < 1200; x += 40) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 630); ctx.stroke(); }
+  for (let y = 0; y < 630; y += 40) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(1200, y); ctx.stroke(); }
+
+  // Left accent bar
+  ctx.fillStyle = col;
+  ctx.fillRect(0, 0, 4, 630);
+
+  // ── TOP BAR
+  ctx.fillStyle = "rgba(255,255,255,0.03)";
+  ctx.fillRect(0, 0, 1200, 56);
+  ctx.fillStyle = "#6366F1";
+  ctx.font = "bold 16px monospace";
+  ctx.fillText("NEXTAX", 24, 36);
+  ctx.fillStyle = "#94A3B8";
+  ctx.font = "400 16px monospace";
+  ctx.fillText(".AI", 96, 36);
+  ctx.fillStyle = "#4B5563";
+  ctx.font = "400 12px monospace";
+  ctx.fillText("DEAL INTELLIGENCE PLATFORM", 160, 36);
+  // Right side: date
+  ctx.textAlign = "right";
+  ctx.fillStyle = "#4B5563";
+  ctx.font = "400 12px monospace";
+  ctx.fillText(new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }).toUpperCase(), 1176, 36);
+  ctx.textAlign = "left";
+
+  // ── DEAL IDENTITY
+  ctx.fillStyle = "#F59E0B";
+  ctx.font = "bold 13px monospace";
+  ctx.fillText("DEAL REALITY CHECK", 32, 90);
+  ctx.fillStyle = "#E2E8F0";
+  ctx.font = "bold 26px sans-serif";
+  ctx.fillText(ind?.label || "Unknown Industry", 32, 124);
+  ctx.fillStyle = "#6B7280";
+  ctx.font = "400 14px sans-serif";
+  const price = parseFloat(inputs.askingPrice.replace(/,/g, ""));
+  const sde = parseFloat(inputs.sde.replace(/,/g, ""));
+  const rev = parseFloat(inputs.revenue.replace(/,/g, ""));
+  ctx.fillText(`Revenue: ${fmt(rev)}  |  SDE: ${fmt(sde)}  |  Asking: ${fmt(price)}`, 32, 150);
+
+  // ── SCORE RING (large, left side)
+  const scx = 150, scy = 310, sr = 90;
+  ctx.beginPath(); ctx.arc(scx, scy, sr, 0, Math.PI * 2);
+  ctx.strokeStyle = "rgba(255,255,255,0.06)"; ctx.lineWidth = 12; ctx.stroke();
+  ctx.beginPath(); ctx.arc(scx, scy, sr, -Math.PI / 2, -Math.PI / 2 + (results.overall / 100) * Math.PI * 2);
+  ctx.strokeStyle = col; ctx.lineWidth = 12; ctx.lineCap = "round"; ctx.stroke();
+  ctx.fillStyle = col; ctx.font = "bold 56px monospace"; ctx.textAlign = "center";
+  ctx.fillText(String(results.overall), scx, scy + 16);
+  ctx.fillStyle = "#6B7280"; ctx.font = "500 10px sans-serif";
+  ctx.fillText("DEAL SCORE", scx, scy + 36);
+  ctx.textAlign = "left";
+
+  // Risk badge below ring
+  ctx.fillStyle = col;
+  ctx.beginPath(); ctx.roundRect(scx - 55, scy + 55, 110, 28, 14); ctx.fill();
+  ctx.fillStyle = "#fff"; ctx.font = "bold 12px sans-serif"; ctx.textAlign = "center";
+  ctx.fillText(results.riskLevel + " Risk", scx, scy + 73); ctx.textAlign = "left";
+
+  // ── METRICS PANEL (right side, terminal style)
+  const mx = 310, my = 190;
+  const dri = results.valuation.fairValue > 0 ? (price / results.valuation.fairValue) : 0;
+  const gapPct = Math.round((dri - 1) * 100);
+
+  // Metric rows
+  const metrics = [
+    { label: "MULTIPLE", value: results.valuation.multiple.toFixed(2) + "x", range: `MKT ${results.valuation.marketRange[0]}-${results.valuation.marketRange[1]}x` },
+    { label: "DSCR", value: results.debtRisk.dscr.toFixed(2), range: results.debtRisk.dscr >= 1.25 ? "PASS" : "FAIL" },
+    { label: "FAIR VALUE", value: fmt(results.valuation.fairValue), range: "" },
+    { label: "MONTHLY DEBT", value: fmt(results.debtRisk.monthlyPayment), range: "" },
+    { label: "VAL GAP", value: (gapPct >= 0 ? "+" : "") + gapPct + "%", range: gapPct > 15 ? "OVERPRICED" : gapPct < 0 ? "UNDERVALUED" : "FAIR" },
+  ];
+
+  ctx.fillStyle = "rgba(255,255,255,0.03)";
+  ctx.beginPath(); ctx.roundRect(mx, my, 520, metrics.length * 44 + 16, 8); ctx.fill();
+
+  metrics.forEach((m, i) => {
+    const y = my + 28 + i * 44;
+    ctx.fillStyle = "#4B5563"; ctx.font = "500 11px monospace"; ctx.fillText(m.label, mx + 16, y);
+    ctx.fillStyle = "#E2E8F0"; ctx.font = "bold 18px monospace"; ctx.fillText(m.value, mx + 160, y);
+    if (m.range) {
+      const rc = m.range === "PASS" ? "#10B981" : m.range === "FAIL" ? "#EF4444" : m.range === "OVERPRICED" ? "#F59E0B" : m.range === "UNDERVALUED" ? "#10B981" : "#6B7280";
+      ctx.fillStyle = rc; ctx.font = "500 11px monospace"; ctx.fillText(m.range, mx + 380, y);
+    }
+    if (i < metrics.length - 1) {
+      ctx.fillStyle = "rgba(255,255,255,0.04)"; ctx.fillRect(mx + 16, y + 14, 488, 1);
+    }
   });
-  ctx.fillStyle = "rgba(99,102,241,0.08)"; ctx.beginPath(); ctx.roundRect(48, 270, 500, 60, 10); ctx.fill();
-  ctx.fillStyle = "#818CF8"; ctx.font = "600 11px sans-serif"; ctx.fillText("RECOMMENDED OFFER", 68, 295);
-  ctx.fillStyle = "#C4B5FD"; ctx.font = "600 16px sans-serif"; ctx.fillText(`${fmt(results.valuation.recommendedOffer[0])} – ${fmt(results.valuation.recommendedOffer[1])}`, 68, 318);
-  ctx.fillStyle = "#6B7280"; ctx.font = "600 11px sans-serif"; ctx.fillText("KEY INSIGHTS", 48, 370);
-  insights.forEach((ins, i) => { const isR = results.redFlags.includes(ins); ctx.fillStyle = isR ? "#FCA5A5" : "#6EE7B7"; ctx.font = "500 14px sans-serif"; ctx.fillText((isR ? "⚠ " : "✓ ") + ins, 48, 395 + i * 24); });
-  ctx.fillStyle = "rgba(255,255,255,0.04)"; ctx.fillRect(0, 570, 1200, 60);
-  ctx.fillStyle = "#4B5563"; ctx.font = "400 13px sans-serif"; ctx.fillText("Free deal analysis at nextax.ai/deal-reality-check", 48, 606);
-  ctx.fillStyle = "#6366F1"; ctx.font = "600 13px sans-serif"; ctx.textAlign = "right"; ctx.fillText("NexTax.AI", 1152, 606); ctx.textAlign = "left";
+
+  // ── RECOMMENDED OFFER
+  ctx.fillStyle = "rgba(99,102,241,0.08)";
+  ctx.beginPath(); ctx.roundRect(mx, my + metrics.length * 44 + 30, 520, 50, 8); ctx.fill();
+  ctx.fillStyle = "#818CF8"; ctx.font = "500 11px monospace";
+  ctx.fillText("INVESTOR RANGE", mx + 16, my + metrics.length * 44 + 52);
+  ctx.fillStyle = "#10B981"; ctx.font = "bold 16px monospace";
+  ctx.fillText(`${fmt(results.valuation.recommendedOffer[0])} – ${fmt(results.valuation.recommendedOffer[1])}`, mx + 160, my + metrics.length * 44 + 54);
+
+  // ── KEY INSIGHTS (bottom)
+  const insights = [...results.redFlags.slice(0, 2), ...results.greenFlags.slice(0, 1)];
+  const iy = 500;
+  ctx.fillStyle = "#4B5563"; ctx.font = "500 11px monospace"; ctx.fillText("SIGNALS", 32, iy);
+  insights.forEach((ins, i) => {
+    const isR = results.redFlags.includes(ins);
+    ctx.fillStyle = isR ? "#FCA5A5" : "#6EE7B7";
+    ctx.font = "400 13px sans-serif";
+    ctx.fillText((isR ? "▸ " : "▸ ") + ins, 32, iy + 20 + i * 22);
+  });
+
+  // ── BOTTOM BAR
+  ctx.fillStyle = "rgba(255,255,255,0.03)";
+  ctx.fillRect(0, 584, 1200, 46);
+  ctx.fillStyle = "#374151"; ctx.font = "400 11px monospace";
+  ctx.fillText("FREE ANALYSIS", 24, 612);
+  ctx.fillStyle = "#6366F1"; ctx.font = "500 11px monospace";
+  ctx.fillText("nextax.ai/deal-reality-check", 140, 612);
+  ctx.textAlign = "right";
+  ctx.fillStyle = "#374151"; ctx.font = "400 11px monospace";
+  ctx.fillText("DEAL INTELLIGENCE PLATFORM", 1176, 612);
+  ctx.textAlign = "left";
+
   return canvas.toDataURL("image/png");
 }
 
@@ -218,6 +319,7 @@ export default function DealRealityCheck() {
   const [extractSummary, setExtractSummary] = useState("");
   const [extractConfidence, setExtractConfidence] = useState("");
   const [pdfFile, setPdfFile] = useState<File | null>(null);
+  const [extractNotice, setExtractNotice] = useState("");
   const [results, setResults] = useState<ScoreBreakdown | null>(null);
   const [loading, setLoading] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
@@ -258,6 +360,17 @@ export default function DealRealityCheck() {
       if (e.industry_key && INDUSTRIES[e.industry_key]) set("industry", e.industry_key);
       if (e.summary) setExtractSummary(e.summary);
       if (e.confidence) setExtractConfidence(e.confidence);
+      // Detect missing fields and notify user
+      const missing: string[] = [];
+      if (!e.revenue) missing.push("Revenue");
+      if (!e.sde && !e.cash_flow) missing.push("SDE");
+      if (!e.asking_price) missing.push("Asking Price");
+      if (!e.industry_key || !INDUSTRIES[e.industry_key]) missing.push("Industry");
+      if (missing.length > 0) {
+        setExtractNotice(`Please fill in the missing fields: ${missing.join(", ")}. ${pasteUrl.trim() ? "This site may require login to view financials — try pasting the listing text instead." : ""}`);
+      } else {
+        setExtractNotice("");
+      }
       setInputMode("manual");
     } catch { setExtractError("Extraction failed. Please try pasting the listing text directly."); }
     setExtracting(false);
@@ -456,6 +569,22 @@ Red flags: ${scores.redFlags.join("; ") || "None"} | Green flags: ${scores.green
         {/* MANUAL MODE */}
         {inputMode === "manual" && (
           <div style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, padding: "24px 24px 18px" }}>
+          {extractNotice && (
+            <div style={{ marginBottom: 16, padding: "12px 16px", borderRadius: 10, background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.2)", display: "flex", alignItems: "flex-start", gap: 10 }}>
+              <span style={{ fontSize: 18, flexShrink: 0 }}>⚠️</span>
+              <div>
+                <div style={{ fontSize: 12, fontWeight: 600, color: "#F59E0B", marginBottom: 2 }}>Missing Data From Listing</div>
+                <div style={{ fontSize: 12, color: "#FBBF24", lineHeight: 1.5 }}>{extractNotice}</div>
+              </div>
+              <button onClick={() => setExtractNotice("")} style={{ marginLeft: "auto", background: "none", border: "none", color: "#6B7280", cursor: "pointer", fontSize: 14, flexShrink: 0 }}>✕</button>
+            </div>
+          )}
+          {extractSummary && !extractNotice && (
+            <div style={{ marginBottom: 16, padding: "10px 14px", borderRadius: 8, background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.15)" }}>
+              <div style={{ fontSize: 11, color: "#10B981", fontWeight: 600, textTransform: "uppercase", marginBottom: 2 }}>✓ Data Extracted — Verify & Submit</div>
+              <div style={{ fontSize: 12, color: "#6EE7B7" }}>{extractSummary}</div>
+            </div>
+          )}
           <div style={{ marginBottom: 16 }}>
             <label style={{ display: "block", fontSize: 11, color: "#8896A6", marginBottom: 5, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.05em" }}>Industry</label>
             <select value={inputs.industry} onChange={(e) => set("industry", e.target.value)} style={{ width: "100%", padding: "11px 12px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.04)", color: "#E2E8F0", fontSize: 14 }}>
@@ -620,7 +749,7 @@ Red flags: ${scores.redFlags.join("; ") || "None"} | Green flags: ${scores.green
             </button>
             {shareMenuOpen && (
               <div style={{ position: "absolute", top: "100%", left: 0, right: 0, marginTop: 8, background: "#1A1F2E", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, padding: 12, zIndex: 10, display: "flex", flexDirection: "column", gap: 6 }}>
-                <button onClick={handleShareImage} style={{ padding: "10px 14px", borderRadius: 8, border: "none", background: "rgba(255,255,255,0.04)", color: "#E2E8F0", fontSize: 13, fontWeight: 500, cursor: "pointer", textAlign: "left", fontFamily: "'DM Sans', sans-serif" }}>🖼️ Download Score Card Image</button>
+                <button onClick={handleShareImage} style={{ padding: "10px 14px", borderRadius: 8, border: "none", background: "rgba(255,255,255,0.04)", color: "#E2E8F0", fontSize: 13, fontWeight: 500, cursor: "pointer", textAlign: "left", fontFamily: "'DM Sans', sans-serif" }}>🖼️ Download Deal Score Card</button>
                 <button onClick={() => handleShareText("twitter")} style={{ padding: "10px 14px", borderRadius: 8, border: "none", background: "rgba(255,255,255,0.04)", color: "#E2E8F0", fontSize: 13, fontWeight: 500, cursor: "pointer", textAlign: "left", fontFamily: "'DM Sans', sans-serif" }}>🐦 Share on Twitter / X</button>
                 <button onClick={() => handleShareText("linkedin")} style={{ padding: "10px 14px", borderRadius: 8, border: "none", background: "rgba(255,255,255,0.04)", color: "#E2E8F0", fontSize: 13, fontWeight: 500, cursor: "pointer", textAlign: "left", fontFamily: "'DM Sans', sans-serif" }}>💼 Share on LinkedIn</button>
                 <button onClick={() => handleShareText("copy")} style={{ padding: "10px 14px", borderRadius: 8, border: "none", background: "rgba(255,255,255,0.04)", color: "#E2E8F0", fontSize: 13, fontWeight: 500, cursor: "pointer", textAlign: "left", fontFamily: "'DM Sans', sans-serif" }}>{copied ? "✅ Copied!" : "📋 Copy to Clipboard"}</button>
