@@ -632,7 +632,9 @@ Red flags: ${scores.redFlags.join("; ") || "None"} | Green flags: ${scores.green
       {showGate && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, padding: 24 }}>
           <div className="fu" style={{ background: "#141922", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 20, padding: "36px 32px", maxWidth: 440, width: "100%", textAlign: "center" }}>
-            <div style={{ fontSize: 48, marginBottom: 12 }}>📊</div>
+            <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>
+              <img src="/nextax-icon.png" alt="NexTax" style={{ width: 64, height: 64, borderRadius: 12 }} />
+            </div>
             <h2 style={{ fontSize: 22, fontWeight: 700, margin: "0 0 6px", color: "#E2E8F0", fontFamily: "'Instrument Serif', serif" }}>Your results are ready</h2>
             <p style={{ fontSize: 14, color: "#8896A6", margin: "0 0 24px", lineHeight: 1.5 }}>
               Enter your email to see your Deal Health Score, AI analysis, and investor valuation range.
