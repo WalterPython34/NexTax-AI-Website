@@ -237,59 +237,29 @@ export default function DealRealityCheck() {
   const set = (f: keyof DealInputs, v: string) => setInputs((p) => ({ ...p, [f]: v }));
   const setCurrency = (f: keyof DealInputs, v: string) => { const c = v.replace(/[^0-9]/g, ""); set(f, c ? parseInt(c).toLocaleString() : ""); };
 
-  // ── AI LISTING EXTRACTION ──
   const handleExtract = async () => {
-    setExtracting(true);
-    setExtractError("");
-    setExtractSummary("");
-    setExtractConfidence("");
-
+    setExtracting(true); setExtractError(""); setExtractSummary(""); setExtractConfidence("");
     try {
       let res: Response;
-
       if (pdfFile) {
-        const formData = new FormData();
-        formData.append("file", pdfFile);
-        res = await fetch("/api/extract-listing", { method: "POST", body: formData });
+        const fd = new FormData(); fd.append("file", pdfFile);
+        res = await fetch("/api/extract-listing", { method: "POST", body: fd });
       } else if (pasteUrl.trim()) {
-        res = await fetch("/api/extract-listing", {
-          method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ url: pasteUrl.trim() }),
-        });
+        res = await fetch("/api/extract-listing", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url: pasteUrl.trim() }) });
       } else if (pasteText.trim()) {
-        res = await fetch("/api/extract-listing", {
-          method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ text: pasteText.trim() }),
-        });
-      } else {
-        setExtractError("Please paste a listing, enter a URL, or upload a CIM.");
-        setExtracting(false);
-        return;
-      }
-
+        res = await fetch("/api/extract-listing", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ text: pasteText.trim() }) });
+      } else { setExtractError("Please paste a listing, enter a URL, or upload a CIM."); setExtracting(false); return; }
       const data = await res.json();
-      if (!data.success || !data.extracted) {
-        setExtractError(data.error || "Could not extract deal data. Try pasting the listing text instead.");
-        setExtracting(false);
-        return;
-      }
-
+      if (!data.success || !data.extracted) { setExtractError(data.error || "Could not extract deal data. Try pasting the listing text instead."); setExtracting(false); return; }
       const e = data.extracted;
-
-      // Map extracted data to inputs
       if (e.revenue) set("revenue", Math.round(e.revenue).toLocaleString());
       if (e.sde || e.cash_flow) set("sde", Math.round(e.sde || e.cash_flow).toLocaleString());
       if (e.asking_price) set("askingPrice", Math.round(e.asking_price).toLocaleString());
       if (e.industry_key && INDUSTRIES[e.industry_key]) set("industry", e.industry_key);
-
       if (e.summary) setExtractSummary(e.summary);
       if (e.confidence) setExtractConfidence(e.confidence);
-
-      // Auto-switch to manual mode to show populated fields
       setInputMode("manual");
-    } catch {
-      setExtractError("Extraction failed. Please try pasting the listing text directly.");
-    }
+    } catch { setExtractError("Extraction failed. Please try pasting the listing text directly."); }
     setExtracting(false);
   };
 
@@ -418,155 +388,74 @@ Red flags: ${scores.redFlags.join("; ") || "None"} | Green flags: ${scores.green
         </p>
       </div>
 
-      {/* Input Form */}
+      {/* Input Section */}
       <div style={{ maxWidth: 680, margin: "0 auto", padding: "0 24px 40px" }}>
-
-        {/* Input Mode Toggle */}
+        {/* Mode Toggle */}
         <div style={{ display: "flex", gap: 4, marginBottom: 16, background: "rgba(255,255,255,0.03)", borderRadius: 10, padding: 4, border: "1px solid rgba(255,255,255,0.06)" }}>
-          <button onClick={() => setInputMode("paste")} style={{
-            flex: 1, padding: "10px 16px", borderRadius: 8, border: "none",
-            background: inputMode === "paste" ? "rgba(245,158,11,0.15)" : "transparent",
-            color: inputMode === "paste" ? "#F59E0B" : "#6B7280",
-            fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "'DM Sans', sans-serif",
-            transition: "all 0.2s",
-          }}>
+          <button onClick={() => setInputMode("paste")} style={{ flex: 1, padding: "10px 16px", borderRadius: 8, border: "none", background: inputMode === "paste" ? "rgba(245,158,11,0.15)" : "transparent", color: inputMode === "paste" ? "#F59E0B" : "#6B7280", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
             📋 Paste a Listing
           </button>
-          <button onClick={() => setInputMode("manual")} style={{
-            flex: 1, padding: "10px 16px", borderRadius: 8, border: "none",
-            background: inputMode === "manual" ? "rgba(245,158,11,0.15)" : "transparent",
-            color: inputMode === "manual" ? "#F59E0B" : "#6B7280",
-            fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "'DM Sans', sans-serif",
-            transition: "all 0.2s",
-          }}>
+          <button onClick={() => setInputMode("manual")} style={{ flex: 1, padding: "10px 16px", borderRadius: 8, border: "none", background: inputMode === "manual" ? "rgba(245,158,11,0.15)" : "transparent", color: inputMode === "manual" ? "#F59E0B" : "#6B7280", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
             ✏️ Enter Numbers
           </button>
         </div>
 
-        {/* ── PASTE MODE ── */}
+        {/* PASTE MODE */}
         {inputMode === "paste" && (
-          <div className="fu" style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, padding: "24px 24px 18px" }}>
+          <div style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, padding: "24px 24px 18px" }}>
             <div style={{ fontSize: 13, color: "#E2E8F0", fontWeight: 600, marginBottom: 14, display: "flex", alignItems: "center", gap: 6 }}>
               🤖 AI-Powered Extraction
-              <span style={{ fontSize: 11, fontWeight: 400, color: "#6B7280" }}>— paste text, URL, or upload a PDF</span>
+              <span style={{ fontSize: 11, fontWeight: 400, color: "#6B7280" }}>— paste text, URL, or upload PDF</span>
             </div>
-
-            {/* Paste text area */}
             <div style={{ marginBottom: 14 }}>
-              <label style={{ display: "block", fontSize: 11, color: "#8896A6", marginBottom: 5, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                Paste Listing Description, Broker Email, or Deal Memo
-              </label>
-              <textarea
-                value={pasteText}
-                onChange={(e) => { setPasteText(e.target.value); setPasteUrl(""); setPdfFile(null); }}
-                placeholder={"Example:\n\nWell-established cleaning service in Austin, TX. Revenue $520,000. SDE $145,000. Asking $475,000. 12 employees, owner-operated, 8 years in business. Includes all equipment and vehicles. Loyal recurring customer base with low concentration..."}
-                style={{
-                  width: "100%", minHeight: 140, padding: "12px 14px", borderRadius: 10,
-                  border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.04)",
-                  color: "#E2E8F0", fontSize: 13, fontFamily: "'DM Sans', sans-serif",
-                  resize: "vertical", outline: "none", lineHeight: 1.6,
-                }}
-              />
+              <label style={{ display: "block", fontSize: 11, color: "#8896A6", marginBottom: 5, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.05em" }}>Paste Listing Description, Broker Email, or Deal Memo</label>
+              <textarea value={pasteText} onChange={(e) => { setPasteText(e.target.value); setPasteUrl(""); setPdfFile(null); }}
+                placeholder={"Example:\n\nWell-established cleaning service in Austin, TX. Revenue $520,000. SDE $145,000. Asking $475,000. 12 employees, owner-operated, 8 years in business..."}
+                style={{ width: "100%", minHeight: 130, padding: "12px 14px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.04)", color: "#E2E8F0", fontSize: 13, fontFamily: "'DM Sans', sans-serif", resize: "vertical", outline: "none", lineHeight: 1.6 }} />
             </div>
-
-            {/* Divider */}
-            <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "16px 0" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "14px 0" }}>
               <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.06)" }} />
-              <span style={{ fontSize: 11, color: "#4B5563", fontWeight: 500 }}>OR</span>
+              <span style={{ fontSize: 11, color: "#4B5563" }}>OR</span>
               <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.06)" }} />
             </div>
-
-            {/* URL input */}
             <div style={{ marginBottom: 14 }}>
-              <label style={{ display: "block", fontSize: 11, color: "#8896A6", marginBottom: 5, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                Paste a BizBuySell, Acquire.com, or Listing URL
-              </label>
-              <input
-                type="url"
-                value={pasteUrl}
-                onChange={(e) => { setPasteUrl(e.target.value); setPasteText(""); setPdfFile(null); }}
+              <label style={{ display: "block", fontSize: 11, color: "#8896A6", marginBottom: 5, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.05em" }}>Paste a BizBuySell, Acquire.com, or Listing URL</label>
+              <input type="url" value={pasteUrl} onChange={(e) => { setPasteUrl(e.target.value); setPasteText(""); setPdfFile(null); }}
                 placeholder="https://www.bizbuysell.com/Business-Opportunity/..."
-                style={{
-                  width: "100%", padding: "11px 14px", borderRadius: 8,
-                  border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.04)",
-                  color: "#E2E8F0", fontSize: 14, outline: "none",
-                }}
-              />
+                style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.04)", color: "#E2E8F0", fontSize: 14, outline: "none" }} />
             </div>
-
-            {/* Divider */}
-            <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "16px 0" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "14px 0" }}>
               <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.06)" }} />
-              <span style={{ fontSize: 11, color: "#4B5563", fontWeight: 500 }}>OR</span>
+              <span style={{ fontSize: 11, color: "#4B5563" }}>OR</span>
               <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.06)" }} />
             </div>
-
-            {/* PDF Upload */}
-            <div style={{ marginBottom: 20 }}>
-              <label style={{ display: "block", fontSize: 11, color: "#8896A6", marginBottom: 5, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                Upload CIM or Deal Memo (PDF)
-              </label>
-              <label style={{
-                display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-                padding: "14px 16px", borderRadius: 10, border: "1.5px dashed rgba(255,255,255,0.12)",
-                background: "rgba(255,255,255,0.02)", cursor: "pointer", transition: "all 0.2s",
-              }}>
-                <input
-                  type="file" accept=".pdf" style={{ display: "none" }}
-                  onChange={(e) => { const f = e.target.files?.[0]; if (f) { setPdfFile(f); setPasteText(""); setPasteUrl(""); } }}
-                />
-                {pdfFile ? (
-                  <span style={{ fontSize: 13, color: "#10B981", fontWeight: 500 }}>📄 {pdfFile.name}</span>
-                ) : (
-                  <span style={{ fontSize: 13, color: "#6B7280" }}>📤 Click to upload PDF</span>
-                )}
+            <div style={{ marginBottom: 18 }}>
+              <label style={{ display: "block", fontSize: 11, color: "#8896A6", marginBottom: 5, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.05em" }}>Upload CIM or Deal Memo (PDF)</label>
+              <label style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "14px 16px", borderRadius: 10, border: "1.5px dashed rgba(255,255,255,0.12)", background: "rgba(255,255,255,0.02)", cursor: "pointer" }}>
+                <input type="file" accept=".pdf" style={{ display: "none" }} onChange={(e) => { const f = e.target.files?.[0]; if (f) { setPdfFile(f); setPasteText(""); setPasteUrl(""); } }} />
+                {pdfFile ? <span style={{ fontSize: 13, color: "#10B981", fontWeight: 500 }}>📄 {pdfFile.name}</span> : <span style={{ fontSize: 13, color: "#6B7280" }}>📤 Click to upload PDF</span>}
               </label>
             </div>
-
-            {/* Extract Error */}
-            {extractError && (
-              <div style={{ marginBottom: 14, padding: "10px 14px", borderRadius: 8, background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.15)", fontSize: 13, color: "#FCA5A5" }}>
-                {extractError}
-              </div>
-            )}
-
-            {/* Extract Success Summary */}
+            {extractError && <div style={{ marginBottom: 14, padding: "10px 14px", borderRadius: 8, background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.15)", fontSize: 13, color: "#FCA5A5" }}>{extractError}</div>}
             {extractSummary && (
               <div style={{ marginBottom: 14, padding: "10px 14px", borderRadius: 8, background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.15)" }}>
-                <div style={{ fontSize: 11, color: "#10B981", fontWeight: 600, textTransform: "uppercase", marginBottom: 4 }}>
-                  ✓ Extracted {extractConfidence === "high" ? "(High Confidence)" : extractConfidence === "medium" ? "(Medium Confidence)" : "(Low Confidence — verify numbers)"}
-                </div>
+                <div style={{ fontSize: 11, color: "#10B981", fontWeight: 600, textTransform: "uppercase", marginBottom: 4 }}>✓ Extracted {extractConfidence === "high" ? "(High Confidence)" : extractConfidence === "medium" ? "(Medium Confidence)" : "(Low Confidence — verify numbers)"}</div>
                 <div style={{ fontSize: 13, color: "#6EE7B7" }}>{extractSummary}</div>
               </div>
             )}
-
-            {/* Extract Button */}
-            <button
-              onClick={handleExtract}
-              disabled={extracting || (!pasteText.trim() && !pasteUrl.trim() && !pdfFile)}
-              style={{
-                width: "100%", padding: "13px", borderRadius: 10, border: "none",
-                background: (pasteText.trim() || pasteUrl.trim() || pdfFile) && !extracting
-                  ? "linear-gradient(135deg, #F59E0B, #D97706)" : "rgba(255,255,255,0.08)",
-                color: (pasteText.trim() || pasteUrl.trim() || pdfFile) ? "#fff" : "#6B7280",
-                fontSize: 15, fontWeight: 700,
-                cursor: (pasteText.trim() || pasteUrl.trim() || pdfFile) && !extracting ? "pointer" : "not-allowed",
-                fontFamily: "'DM Sans', sans-serif", opacity: extracting ? 0.7 : 1,
-              }}
-            >
+            <button onClick={handleExtract} disabled={extracting || (!pasteText.trim() && !pasteUrl.trim() && !pdfFile)}
+              style={{ width: "100%", padding: "13px", borderRadius: 10, border: "none", background: (pasteText.trim() || pasteUrl.trim() || pdfFile) && !extracting ? "linear-gradient(135deg, #F59E0B, #D97706)" : "rgba(255,255,255,0.08)", color: (pasteText.trim() || pasteUrl.trim() || pdfFile) ? "#fff" : "#6B7280", fontSize: 15, fontWeight: 700, cursor: (pasteText.trim() || pasteUrl.trim() || pdfFile) && !extracting ? "pointer" : "not-allowed", fontFamily: "'DM Sans', sans-serif", opacity: extracting ? 0.7 : 1 }}>
               {extracting ? "🤖 AI Extracting Deal Data..." : "⚡ Extract & Analyze"}
             </button>
-
-            <div style={{ display: "flex", justifyContent: "center", gap: 16, marginTop: 14, flexWrap: "wrap" }}>
-              {["BizBuySell", "Acquire.com", "Broker emails", "CIM PDFs", "Axial listings"].map((s) => (
-                <span key={s} style={{ fontSize: 10, color: "#374151" }}>✓ {s}</span>
-              ))}
+            <div style={{ display: "flex", justifyContent: "center", gap: 16, marginTop: 12, flexWrap: "wrap" }}>
+              {["BizBuySell", "Acquire.com", "Broker emails", "CIM PDFs", "Axial"].map((s) => <span key={s} style={{ fontSize: 10, color: "#374151" }}>✓ {s}</span>)}
             </div>
           </div>
         )}
 
-        {/* ── MANUAL MODE ── */}
+        {/* MANUAL MODE */}
         {inputMode === "manual" && (
+          <div style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, padding: "24px 24px 18px" }}>
           <div style={{ marginBottom: 16 }}>
             <label style={{ display: "block", fontSize: 11, color: "#8896A6", marginBottom: 5, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.05em" }}>Industry</label>
             <select value={inputs.industry} onChange={(e) => set("industry", e.target.value)} style={{ width: "100%", padding: "11px 12px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.04)", color: "#E2E8F0", fontSize: 14 }}>
@@ -606,7 +495,7 @@ Red flags: ${scores.redFlags.join("; ") || "None"} | Green flags: ${scores.green
           <button onClick={handleSubmit} disabled={!isValid || loading} style={{ width: "100%", padding: "13px", borderRadius: 10, border: "none", background: isValid && !loading ? "linear-gradient(135deg, #F59E0B, #D97706)" : "rgba(255,255,255,0.08)", color: isValid ? "#fff" : "#6B7280", fontSize: 15, fontWeight: 700, cursor: isValid && !loading ? "pointer" : "not-allowed", fontFamily: "'DM Sans', sans-serif", opacity: loading ? 0.7 : 1 }}>
             {loading ? "Analyzing Deal..." : "⚡ Check My Deal"}
           </button>
-        </div>
+          </div>
         )}
       </div>
 
