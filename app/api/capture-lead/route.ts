@@ -1,13 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@supabase/supabase-js";
 
-// This route captures leads from both Deal Reality Check and Deal Risk Analyzer.
-// Currently stores in-memory for demo. Connect to Supabase for production:
-//
-// import { createClient } from '@supabase/supabase-js';
-// const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!);
-//
-// Then replace the in-memory store with:
-// await supabase.from('deal_leads').insert({ name, email, source, industry, deal_score, metadata });
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+);
 
 export async function POST(req: NextRequest) {
   try {
@@ -18,19 +15,21 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Email required" }, { status: 400 });
     }
 
-    // TODO: Replace with Supabase insert
-    console.log("[LEAD CAPTURED]", {
-      name,
+    // Save to Supabase
+    const { error } = await supabase.from("deal_leads").insert({
+      name: name || null,
       email,
-      source, // "reality-check" or "risk-analyzer"
-      industry,
-      dealScore,
-      metadata,
-      timestamp: new Date().toISOString(),
+      source: source || "unknown",
+      industry: industry || null,
+      deal_score: dealScore || null,
+      metadata: metadata || {},
     });
 
-    // TODO: Optionally trigger SendGrid welcome email
-    // await sendWelcomeEmail(email, name, source);
+    if (error) {
+      console.error("Lead insert error:", error);
+      // Don't fail the request — lead capture shouldn't block the user
+      return NextResponse.json({ success: true, warning: "Lead may not have been saved" });
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {
