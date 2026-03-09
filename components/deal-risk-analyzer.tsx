@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useCallback, useRef } from "react";
+import jsPDF from "jspdf";
 
 // ─── TYPES ───────────────────────────────────────────────────────────────────
 
@@ -461,6 +462,9 @@ export default function DealRiskAnalyzer() {
   const [results, setResults] = useState<FullScoreBreakdown | null>(null);
   const [loading, setLoading] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
+  const [pdfExporting, setPdfExporting] = useState(false);
+  const [pdfOptions, setPdfOptions] = useState({ aiAssessment: true, benchmarks: true, industryComparison: true });
+  const [showPdfOptions, setShowPdfOptions] = useState(false);
   const resultsRef = useRef<HTMLDivElement>(null);
 
   const set = (field: keyof DealInputs, value: string | boolean) => {
@@ -582,6 +586,250 @@ Structure your response as:
       } : prev);
     }
     setAiLoading(false);
+  };
+
+  const generateDealMemoPDF = async () => {
+    if (!results) return;
+    setPdfExporting(true);
+    const ind = INDUSTRIES[inputs.industry];
+    const location = [inputs.city, inputs.state].filter(Boolean).join(", ");
+
+    // Create multi-page PDF using Canvas
+    const pages: HTMLCanvasElement[] = [];
+    const W = 816, H = 1056; // Letter size at 96dpi
+
+    // ── Helper functions
+    const newPage = () => {
+      const c = document.createElement("canvas"); c.width = W; c.height = H;
+      const ctx = c.getContext("2d")!;
+      ctx.fillStyle = "#0A0E14"; ctx.fillRect(0, 0, W, H);
+      // Header bar
+      ctx.fillStyle = "rgba(255,255,255,0.03)"; ctx.fillRect(0, 0, W, 44);
+      ctx.fillStyle = "#6366F1"; ctx.font = "bold 13px monospace"; ctx.fillText("NEXTAX", 24, 28);
+      ctx.fillStyle = "#6B7280"; ctx.font = "400 13px monospace"; ctx.fillText(".AI", 82, 28);
+      ctx.fillStyle = "#374151"; ctx.font = "400 10px monospace";
+      ctx.textAlign = "right"; ctx.fillText("DEAL INTELLIGENCE PLATFORM", W - 24, 28); ctx.textAlign = "left";
+      // Left accent
+      ctx.fillStyle = "#6366F1"; ctx.fillRect(0, 0, 3, H);
+      pages.push(c);
+      return ctx;
+    };
+
+    const drawBar = (ctx: CanvasRenderingContext2D, x: number, y: number, w: number, score: number, label: string) => {
+      const col = score >= 70 ? "#10B981" : score >= 50 ? "#F59E0B" : score >= 30 ? "#F97316" : "#EF4444";
+      ctx.fillStyle = "#374151"; ctx.font = "400 11px sans-serif"; ctx.fillText(label, x, y);
+      ctx.fillStyle = col; ctx.font = "bold 12px monospace"; ctx.textAlign = "right"; ctx.fillText(String(score), x + w, y); ctx.textAlign = "left";
+      ctx.fillStyle = "rgba(255,255,255,0.06)"; ctx.beginPath(); ctx.roundRect(x, y + 6, w, 6, 3); ctx.fill();
+      ctx.fillStyle = col; ctx.beginPath(); ctx.roundRect(x, y + 6, w * (score / 100), 6, 3); ctx.fill();
+    };
+
+    const fmt$ = (v: number) => new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(v);
+
+    // ════════════════════════════════════════════════════════
+    // PAGE 1: Deal Snapshot + Valuation + Debt
+    // ════════════════════════════════════════════════════════
+    let ctx = newPage();
+    let y = 80;
+
+    // Title block
+    ctx.fillStyle = "#F59E0B"; ctx.font = "bold 11px monospace"; ctx.fillText("DEAL MEMO", 40, y);
+    y += 28;
+    ctx.fillStyle = "#E2E8F0"; ctx.font = "bold 28px sans-serif";
+    ctx.fillText(`${location ? location + " " : ""}${ind?.label || ""}`, 40, y);
+    y += 20;
+    ctx.fillStyle = "#6B7280"; ctx.font = "400 12px sans-serif";
+    ctx.fillText(`Generated ${new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}`, 40, y);
+    y += 40;
+
+    // ── DEAL SNAPSHOT
+    ctx.fillStyle = "#818CF8"; ctx.font = "bold 11px monospace"; ctx.fillText("1. DEAL SNAPSHOT", 40, y);
+    y += 24;
+
+    // Score circle
+    const scx = 120, scy = y + 60, sr = 50;
+    ctx.beginPath(); ctx.arc(scx, scy, sr, 0, Math.PI * 2);
+    ctx.strokeStyle = "rgba(255,255,255,0.06)"; ctx.lineWidth = 8; ctx.stroke();
+    const scCol = results.overall >= 70 ? "#10B981" : results.overall >= 50 ? "#F59E0B" : results.overall >= 30 ? "#F97316" : "#EF4444";
+    ctx.beginPath(); ctx.arc(scx, scy, sr, -Math.PI / 2, -Math.PI / 2 + (results.overall / 100) * Math.PI * 2);
+    ctx.strokeStyle = scCol; ctx.lineWidth = 8; ctx.lineCap = "round"; ctx.stroke();
+    ctx.fillStyle = scCol; ctx.font = "bold 36px monospace"; ctx.textAlign = "center";
+    ctx.fillText(String(results.overall), scx, scy + 10);
+    ctx.fillStyle = "#6B7280"; ctx.font = "400 8px sans-serif"; ctx.fillText("DEAL SCORE", scx, scy + 26);
+    ctx.textAlign = "left";
+    // Risk badge
+    ctx.fillStyle = scCol; ctx.beginPath(); ctx.roundRect(scx - 40, scy + 38, 80, 22, 11); ctx.fill();
+    ctx.fillStyle = "#fff"; ctx.font = "bold 10px sans-serif"; ctx.textAlign = "center";
+    ctx.fillText(results.riskLevel + " Risk", scx, scy + 53); ctx.textAlign = "left";
+
+    // Metrics table (right of score)
+    const mx = 220;
+    const metrics = [
+      ["Industry", ind?.label || ""],
+      ["Revenue", fmt$(parseFloat(inputs.revenue.replace(/,/g, "")))],
+      ["SDE", fmt$(parseFloat(inputs.sde.replace(/,/g, "")))],
+      ["Asking Price", fmt$(parseFloat(inputs.askingPrice.replace(/,/g, "")))],
+      ["Location", location || "Not specified"],
+      ["Years in Business", inputs.yearsInBusiness || "N/A"],
+      ["Employees", inputs.employeeCount || "N/A"],
+      ["Revenue Trend", inputs.revenueGrowth || "N/A"],
+    ];
+    metrics.forEach((m, i) => {
+      const my = y + 10 + i * 22;
+      ctx.fillStyle = "#6B7280"; ctx.font = "400 11px sans-serif"; ctx.fillText(m[0], mx, my);
+      ctx.fillStyle = "#E2E8F0"; ctx.font = "500 11px monospace"; ctx.fillText(m[1], mx + 180, my);
+    });
+    y += 200;
+
+    // ── VALUATION ANALYSIS
+    ctx.fillStyle = "#818CF8"; ctx.font = "bold 11px monospace"; ctx.fillText("2. VALUATION ANALYSIS", 40, y);
+    y += 24;
+    ctx.fillStyle = "rgba(255,255,255,0.03)"; ctx.beginPath(); ctx.roundRect(40, y, W - 80, 100, 8); ctx.fill();
+    const valMetrics = [
+      ["Asking Multiple", results.valuation.multiple.toFixed(2) + "x SDE"],
+      ["Industry Range", results.valuation.marketRange[0] + "–" + results.valuation.marketRange[1] + "x SDE"],
+      ["Fair Value Estimate", fmt$(results.valuation.fairValueEstimate)],
+      ["Valuation Verdict", results.valuation.verdict],
+    ];
+    valMetrics.forEach((m, i) => {
+      ctx.fillStyle = "#6B7280"; ctx.font = "400 11px sans-serif"; ctx.fillText(m[0], 60, y + 22 + i * 22);
+      ctx.fillStyle = "#E2E8F0"; ctx.font = "500 11px monospace"; ctx.fillText(m[1], 280, y + 22 + i * 22);
+    });
+    y += 124;
+
+    // ── DEBT & FINANCING
+    ctx.fillStyle = "#818CF8"; ctx.font = "bold 11px monospace"; ctx.fillText("3. DEBT & FINANCING", 40, y);
+    y += 24;
+    ctx.fillStyle = "rgba(255,255,255,0.03)"; ctx.beginPath(); ctx.roundRect(40, y, W - 80, 110, 8); ctx.fill();
+    const debtMetrics = [
+      ["Estimated Loan", fmt$(results.debtRisk.loanAmount)],
+      ["Down Payment", fmt$(results.debtRisk.downPayment)],
+      ["DSCR", results.debtRisk.dscr.toFixed(2) + (results.debtRisk.dscr >= 1.25 ? " (PASS)" : " (BELOW MIN)")],
+      ["Monthly Debt Payment", fmt$(results.debtRisk.monthlyPayment)],
+      ["Annual Debt Service", fmt$(results.debtRisk.annualPayment)],
+    ];
+    debtMetrics.forEach((m, i) => {
+      ctx.fillStyle = "#6B7280"; ctx.font = "400 11px sans-serif"; ctx.fillText(m[0], 60, y + 22 + i * 20);
+      ctx.fillStyle = "#E2E8F0"; ctx.font = "500 11px monospace"; ctx.fillText(m[1], 280, y + 22 + i * 20);
+    });
+    y += 134;
+
+    // ── RISK BREAKDOWN
+    ctx.fillStyle = "#818CF8"; ctx.font = "bold 11px monospace"; ctx.fillText("4. RISK BREAKDOWN", 40, y);
+    y += 24;
+    const riskBars = [
+      { label: "Valuation Risk", score: results.valuation.score },
+      { label: "Debt Risk", score: results.debtRisk.score },
+      { label: "Market Risk", score: results.marketRisk.score },
+      { label: "Industry Risk", score: results.industryRisk.score },
+      { label: "Operational Risk", score: results.operationalRisk.score },
+    ];
+    riskBars.forEach((b, i) => { drawBar(ctx, 60, y + i * 30, 500, b.score, b.label); });
+    y += riskBars.length * 30 + 20;
+
+    // Red/green flags
+    if (results.redFlags.length > 0) {
+      ctx.fillStyle = "#EF4444"; ctx.font = "bold 10px monospace"; ctx.fillText("RED FLAGS", 60, y);
+      y += 16;
+      results.redFlags.forEach((f) => {
+        ctx.fillStyle = "#FCA5A5"; ctx.font = "400 11px sans-serif"; ctx.fillText("▸ " + f, 70, y);
+        y += 16;
+      });
+      y += 8;
+    }
+    if (results.greenFlags.length > 0) {
+      ctx.fillStyle = "#10B981"; ctx.font = "bold 10px monospace"; ctx.fillText("GREEN FLAGS", 60, y);
+      y += 16;
+      results.greenFlags.forEach((f) => {
+        ctx.fillStyle = "#6EE7B7"; ctx.font = "400 11px sans-serif"; ctx.fillText("▸ " + f, 70, y);
+        y += 16;
+      });
+    }
+
+    // ════════════════════════════════════════════════════════
+    // PAGE 2: AI Assessment + Benchmarks
+    // ════════════════════════════════════════════════════════
+    if (pdfOptions.aiAssessment || pdfOptions.benchmarks) {
+      ctx = newPage();
+      y = 80;
+
+      if (pdfOptions.aiAssessment && results.aiInsight) {
+        ctx.fillStyle = "#818CF8"; ctx.font = "bold 11px monospace"; ctx.fillText("5. AI DEAL ASSESSMENT", 40, y);
+        y += 20;
+        ctx.fillStyle = "rgba(99,102,241,0.06)"; ctx.beginPath(); ctx.roundRect(40, y, W - 80, 0, 8); ctx.fill();
+
+        // Word wrap the AI insight
+        ctx.fillStyle = "#C4B5FD"; ctx.font = "400 12px sans-serif";
+        const words = results.aiInsight.replace(/\*\*/g, "").split(" ");
+        let line = "";
+        const maxW = W - 120;
+        const lineH = 18;
+        let startY = y + 16;
+        words.forEach((word) => {
+          const test = line + word + " ";
+          if (ctx.measureText(test).width > maxW && line) {
+            ctx.fillText(line.trim(), 60, startY);
+            line = word + " ";
+            startY += lineH;
+          } else { line = test; }
+        });
+        if (line.trim()) { ctx.fillText(line.trim(), 60, startY); startY += lineH; }
+        y = startY + 24;
+      }
+
+      if (pdfOptions.benchmarks) {
+        ctx.fillStyle = "#818CF8"; ctx.font = "bold 11px monospace"; ctx.fillText("6. INDUSTRY BENCHMARKS", 40, y);
+        y += 24;
+        ctx.fillStyle = "rgba(255,255,255,0.03)"; ctx.beginPath(); ctx.roundRect(40, y, W - 80, 90, 8); ctx.fill();
+
+        const benchItems = [
+          ["SDE Margin", results.benchmarks.actualMargin + "%", "Industry: " + results.benchmarks.typicalMargin[0] + "-" + results.benchmarks.typicalMargin[1] + "%"],
+          ["Valuation Multiple", results.valuation.multiple.toFixed(2) + "x", "Industry: " + results.benchmarks.typicalMultiple[0] + "-" + results.benchmarks.typicalMultiple[1] + "x"],
+          ["Rev/Employee", fmt$(results.benchmarks.revenuePerEmployee), "Industry avg: " + fmt$(results.benchmarks.industryAvgRevenuePerEmployee)],
+          ["Labor Ratio", results.benchmarks.laborRatio, "Typical range"],
+        ];
+        benchItems.forEach((b, i) => {
+          const by = y + 20 + i * 18;
+          ctx.fillStyle = "#6B7280"; ctx.font = "400 11px sans-serif"; ctx.fillText(b[0], 60, by);
+          ctx.fillStyle = "#E2E8F0"; ctx.font = "bold 11px monospace"; ctx.fillText(b[1], 240, by);
+          ctx.fillStyle = "#4B5563"; ctx.font = "400 10px sans-serif"; ctx.fillText(b[2], 420, by);
+        });
+        y += 114;
+      }
+
+      // Footer
+      ctx.fillStyle = "rgba(255,255,255,0.03)"; ctx.fillRect(0, H - 60, W, 60);
+      ctx.fillStyle = "#374151"; ctx.font = "400 10px sans-serif";
+      ctx.fillText("Generated by NexTax Deal Intelligence Platform — nextax.ai", 40, H - 30);
+      ctx.textAlign = "right";
+      ctx.fillText(new Date().toLocaleDateString(), W - 40, H - 30);
+      ctx.textAlign = "left";
+      ctx.fillStyle = "#374151"; ctx.font = "400 9px sans-serif";
+      ctx.fillText("This report is for informational purposes only and does not constitute financial advice.", 40, H - 16);
+    }
+
+    // Also add footer to page 1
+    const p1ctx = pages[0].getContext("2d")!;
+    p1ctx.fillStyle = "rgba(255,255,255,0.03)"; p1ctx.fillRect(0, H - 60, W, 60);
+    p1ctx.fillStyle = "#374151"; p1ctx.font = "400 10px sans-serif";
+    p1ctx.fillText("Generated by NexTax Deal Intelligence Platform — nextax.ai", 40, H - 30);
+    p1ctx.textAlign = "right"; p1ctx.fillText(new Date().toLocaleDateString(), W - 40, H - 30); p1ctx.textAlign = "left";
+    p1ctx.fillStyle = "#374151"; p1ctx.font = "400 9px sans-serif";
+    p1ctx.fillText("This report is for informational purposes only and does not constitute financial advice.", 40, H - 16);
+
+    // ── Convert canvases to PDF using jsPDF
+    const pdf = new jsPDF({ orientation: "portrait", unit: "px", format: [W, H] });
+
+    pages.forEach((pageCanvas, i) => {
+      if (i > 0) pdf.addPage([W, H]);
+      const imgData = pageCanvas.toDataURL("image/png", 1.0);
+      pdf.addImage(imgData, "PNG", 0, 0, W, H);
+    });
+
+    const filename = `NexTax-Deal-Memo-${ind?.label?.replace(/\s/g, "-") || "Deal"}-${new Date().toISOString().split("T")[0]}.pdf`;
+    pdf.save(filename);
+
+    setPdfExporting(false);
+    setShowPdfOptions(false);
   };
 
   const handleReset = () => { setStep(1); setResults(null); };
@@ -910,6 +1158,34 @@ Structure your response as:
               ) : results.aiInsight ? (
                 <p style={{ margin: 0, fontSize: 14, color: "#C4B5FD", lineHeight: 1.7 }}>{renderMarkdown(results.aiInsight)}</p>
               ) : null}
+            </div>
+
+            {/* PDF Export */}
+            <div className="fade-up fade-up-d5" style={{ marginBottom: 14 }}>
+              <button onClick={() => setShowPdfOptions(!showPdfOptions)} style={{ width: "100%", padding: "13px 20px", borderRadius: 10, border: "1px solid rgba(16,185,129,0.3)", background: "rgba(16,185,129,0.08)", color: "#34D399", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "'DM Sans', sans-serif", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
+                📄 Download Deal Memo
+              </button>
+              {showPdfOptions && (
+                <div className="fade-up" style={{ marginTop: 10, padding: "16px 20px", borderRadius: 10, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: "#94A3B8", marginBottom: 12 }}>Customize your report:</div>
+                  {[
+                    { key: "aiAssessment", label: "Include AI Assessment" },
+                    { key: "benchmarks", label: "Include Industry Benchmarks" },
+                    { key: "industryComparison", label: "Include Market Comparison" },
+                  ].map((opt) => (
+                    <label key={opt.key} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8, cursor: "pointer", fontSize: 13, color: "#C9D1D9" }}>
+                      <input type="checkbox" checked={pdfOptions[opt.key as keyof typeof pdfOptions]}
+                        onChange={(e) => setPdfOptions((p) => ({ ...p, [opt.key]: e.target.checked }))}
+                        style={{ width: 16, height: 16, accentColor: "#10B981" }} />
+                      {opt.label}
+                    </label>
+                  ))}
+                  <button onClick={generateDealMemoPDF} disabled={pdfExporting}
+                    style={{ width: "100%", marginTop: 8, padding: "11px", borderRadius: 8, border: "none", background: "linear-gradient(135deg, #10B981, #059669)", color: "#fff", fontSize: 14, fontWeight: 700, cursor: pdfExporting ? "wait" : "pointer", fontFamily: "'DM Sans', sans-serif", opacity: pdfExporting ? 0.7 : 1 }}>
+                    {pdfExporting ? "Generating..." : "📄 Generate Deal Memo"}
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* CTAs */}
