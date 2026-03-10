@@ -166,13 +166,13 @@ function scoreDeal(industry: string, revenue: number, sde: number, price: number
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { listings, source_platform } = body;
+    const { listings, source_platform, batch_name } = body;
 
     if (!Array.isArray(listings) || listings.length === 0) {
       return NextResponse.json({ error: "No listings provided" }, { status: 400 });
     }
 
-    const batchId = `batch_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    const batchId = batch_name || `batch_${new Date().toISOString().split("T")[0]}_${source_platform?.toLowerCase().replace(/[\s.]/g, "") || "unknown"}_${Date.now().toString(36)}`;
 
     const results = {
       total: listings.length,
@@ -349,6 +349,7 @@ export async function POST(req: NextRequest) {
           raw_data: row,
           confidence_score: confidence,
           data_source_type: "marketplace_supply",
+          import_batch_id: batchId,
         });
 
         results.imported++;
