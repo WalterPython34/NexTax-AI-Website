@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "URL required" }, { status: 400 });
     }
 
-    const maxPages = Math.min(pages_to_scrape || 5, 10); // Cap at 10 pages
+    const maxPages = Math.min(pages_to_scrape || 1, 3); // Cap at 3 pages for Vercel timeout
     const allListings: Record<string, string>[] = [];
     const detectedPlatform = platform || detectPlatform(url);
 
@@ -20,13 +20,18 @@ export async function POST(req: NextRequest) {
       const pageUrl = buildPageUrl(url, page, detectedPlatform);
 
       try {
+        const controller = new AbortController();
+        const timeout = setTimeout(() => controller.abort(), 6000); // 6s per page fetch
+
         const res = await fetch(pageUrl, {
           headers: {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
             "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
             "Accept-Language": "en-US,en;q=0.5",
           },
+          signal: controller.signal,
         });
+        clearTimeout(timeout);
 
         if (!res.ok) break;
         const html = await res.text();
@@ -49,18 +54,12 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // Now use Claude to enrich any listings that are missing fields
-    let enrichedListings = allListings;
-    if (allListings.length > 0 && allListings.some((l) => !l["Cash Flow"] && !l.cash_flow)) {
-      enrichedListings = await enrichWithAI(allListings, detectedPlatform);
-    }
-
     return NextResponse.json({
       success: true,
       platform: detectedPlatform,
       pages_scraped: maxPages,
-      listings: enrichedListings,
-      count: enrichedListings.length,
+      listings: allListings,
+      count: allListings.length,
     });
   } catch (error) {
     console.error("Scraper error:", error);
