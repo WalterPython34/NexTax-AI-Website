@@ -33,6 +33,7 @@ interface ImportResult {
 
 export default function DealImportTool() {
   const [source, setSource] = useState("BizBuySell");
+  const [batchName, setBatchName] = useState("");
   const [rawText, setRawText] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [importing, setImporting] = useState(false);
@@ -92,7 +93,7 @@ export default function DealImportTool() {
       const res = await fetch("/api/bulk-import", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ listings: normalized, source_platform: source }),
+        body: JSON.stringify({ listings: normalized, source_platform: source, batch_name: batchName.trim() || null }),
       });
 
       const data = await res.json();
@@ -136,6 +137,18 @@ export default function DealImportTool() {
                 </button>
               ))}
             </div>
+          </div>
+
+          {/* Batch Name */}
+          <div style={{ marginBottom: 20 }}>
+            <label style={{ display: "block", fontSize: 11, color: "#8896A6", marginBottom: 6, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.05em" }}>Batch Name</label>
+            <input
+              type="text" value={batchName}
+              onChange={(e) => setBatchName(e.target.value)}
+              placeholder={`${new Date().toISOString().split("T")[0]}-${source.toLowerCase().replace(/[.\s]/g, "")}-industry`}
+              style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.04)", color: "#E2E8F0", fontSize: 13, fontFamily: "'JetBrains Mono', monospace", outline: "none" }}
+            />
+            <div style={{ fontSize: 10, color: "#4B5563", marginTop: 4 }}>Used for tracking, debugging, and undoing imports. Example: 2026-03-10-bizbuysell-hvac</div>
           </div>
 
           {/* Download Template */}
