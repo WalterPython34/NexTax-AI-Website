@@ -41,6 +41,11 @@ export default function DealImportTool() {
   const [error, setError] = useState("");
   const [parsedCount, setParsedCount] = useState(0);
   const fileRef = useRef<HTMLInputElement>(null);
+  const [inputMode, setInputMode] = useState<"scrape" | "manual">("scrape");
+  const [scrapeUrl, setScrapeUrl] = useState("");
+  const [scrapePages, setScrapePages] = useState("5");
+  const [scraping, setScraping] = useState(false);
+  const [scrapeResult, setScrapeResult] = useState<{ count: number; listings: Record<string, string>[] } | null>(null);
 
   const parseCSV = (text: string): Record<string, string>[] => {
     const lines = text.trim().split("\n");
@@ -68,6 +73,43 @@ export default function DealImportTool() {
   const handlePasteChange = (text: string) => {
     setRawText(text);
     try { setParsedCount(parseCSV(text).length); } catch { setParsedCount(0); }
+  };
+
+  const handleScrape = async () => {
+    setScraping(true); setError(""); setScrapeResult(null); setResult(null);
+    try {
+      const res = await fetch("/api/scrape-marketplace", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url: scrapeUrl.trim(), platform: source.toLowerCase().replace(/[\s.]/g, ""), pages_to_scrape: parseInt(scrapePages) || 5 }),
+      });
+      const data = await res.json();
+      if (data.success && data.listings?.length > 0) {
+        setScrapeResult({ count: data.count, listings: data.listings });
+        // Auto-convert to CSV for the import pipeline
+        const headers = Object.keys(data.listings[0]);
+        const csv = [headers.join(","), ...data.listings.map((l: Record<string, string>) => headers.map((h) => `"${(l[h] || "").replace(/"/g, '""')}"`).join(","))].join("\n");
+        setRawText(csv);
+        setParsedCount(data.count);
+      } else {
+        setError(data.error || `No listings found. The page may require JavaScript rendering. Try copying the search results manually instead.`);
+      }
+    } catch { setError("Scraping failed. Try the manual CSV method instead."); }
+    setScraping(false);
+  };
+
+  const handleScrapeAndImport = async () => {
+    if (!scrapeResult?.listings.length) return;
+    setImporting(true); setError(""); setResult(null);
+    try {
+      const res = await fetch("/api/bulk-import", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ listings: scrapeResult.listings, source_platform: source, batch_name: batchName.trim() || null }),
+      });
+      const data = await res.json();
+      if (data.success) setResult(data.results);
+      else setError(data.error || "Import failed.");
+    } catch (err) { setError("Import failed: " + String(err)); }
+    setImporting(false);
   };
 
   const handleImport = async () => {
@@ -151,6 +193,70 @@ export default function DealImportTool() {
             <div style={{ fontSize: 10, color: "#4B5563", marginTop: 4 }}>Used for tracking, debugging, and undoing imports. Example: 2026-03-10-bizbuysell-hvac</div>
           </div>
 
+          {/* Input Mode Toggle */}
+          <div style={{ display: "flex", gap: 4, marginBottom: 20, background: "rgba(255,255,255,0.03)", borderRadius: 10, padding: 4, border: "1px solid rgba(255,255,255,0.06)" }}>
+            <button onClick={() => setInputMode("scrape")} style={{ flex: 1, padding: "10px 16px", borderRadius: 8, border: "none", background: inputMode === "scrape" ? "rgba(99,102,241,0.15)" : "transparent", color: inputMode === "scrape" ? "#818CF8" : "#6B7280", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+              🤖 Auto-Scrape URL
+            </button>
+            <button onClick={() => setInputMode("manual")} style={{ flex: 1, padding: "10px 16px", borderRadius: 8, border: "none", background: inputMode === "manual" ? "rgba(99,102,241,0.15)" : "transparent", color: inputMode === "manual" ? "#818CF8" : "#6B7280", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+              📋 Paste CSV
+            </button>
+          </div>
+
+          {/* AUTO-SCRAPE MODE */}
+          {inputMode === "scrape" && (
+            <div style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 14, padding: "22px 22px 16px", marginBottom: 20 }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: "#E2E8F0", marginBottom: 4 }}>🤖 Auto-Scrape Marketplace</div>
+              <div style={{ fontSize: 11, color: "#6B7280", marginBottom: 16 }}>Paste a search results URL and the AI agent will extract all listings automatically.</div>
+
+              <div style={{ marginBottom: 14 }}>
+                <label style={{ display: "block", fontSize: 11, color: "#8896A6", marginBottom: 5, fontWeight: 500, textTransform: "uppercase" }}>Search Results URL</label>
+                <input
+                  type="url" value={scrapeUrl} onChange={(e) => setScrapeUrl(e.target.value)}
+                  placeholder="https://www.bizbuysell.com/service-businesses-for-sale/?q=..."
+                  style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.04)", color: "#E2E8F0", fontSize: 13, fontFamily: "'JetBrains Mono', monospace", outline: "none" }}
+                />
+              </div>
+
+              <div style={{ marginBottom: 16 }}>
+                <label style={{ display: "block", fontSize: 11, color: "#8896A6", marginBottom: 5, fontWeight: 500, textTransform: "uppercase" }}>Pages to Scrape</label>
+                <div style={{ display: "flex", gap: 6 }}>
+                  {["1", "3", "5", "10"].map((p) => (
+                    <button key={p} onClick={() => setScrapePages(p)} style={{
+                      padding: "8px 16px", borderRadius: 8, border: scrapePages === p ? "1.5px solid #6366F1" : "1px solid rgba(255,255,255,0.08)",
+                      background: scrapePages === p ? "rgba(99,102,241,0.12)" : "rgba(255,255,255,0.03)",
+                      color: scrapePages === p ? "#818CF8" : "#6B7280", fontSize: 13, fontWeight: 500, cursor: "pointer",
+                    }}>{p} {p === "1" ? "page" : "pages"}</button>
+                  ))}
+                </div>
+                <div style={{ fontSize: 10, color: "#4B5563", marginTop: 4 }}>BizBuySell shows ~25 listings per page</div>
+              </div>
+
+              <button onClick={handleScrape} disabled={scraping || !scrapeUrl.trim()}
+                style={{ width: "100%", padding: "13px", borderRadius: 10, border: "none", background: scrapeUrl.trim() && !scraping ? "linear-gradient(135deg, #6366F1, #8B5CF6)" : "rgba(255,255,255,0.08)", color: scrapeUrl.trim() ? "#fff" : "#6B7280", fontSize: 14, fontWeight: 700, cursor: scrapeUrl.trim() && !scraping ? "pointer" : "not-allowed", opacity: scraping ? 0.7 : 1 }}>
+                {scraping ? "🤖 Scraping listings..." : "🤖 Scrape Listings"}
+              </button>
+
+              {/* Scrape Results */}
+              {scrapeResult && (
+                <div style={{ marginTop: 14, padding: "14px 16px", borderRadius: 10, background: "rgba(16,185,129,0.06)", border: "1px solid rgba(16,185,129,0.12)" }}>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: "#10B981", marginBottom: 6 }}>✓ {scrapeResult.count} listings extracted</div>
+                  <div style={{ fontSize: 11, color: "#6B7280", marginBottom: 10 }}>
+                    Preview: {scrapeResult.listings.slice(0, 3).map((l) => l.Title || "Untitled").join(" • ")}
+                    {scrapeResult.count > 3 && ` ...and ${scrapeResult.count - 3} more`}
+                  </div>
+                  <button onClick={handleScrapeAndImport} disabled={importing}
+                    style={{ width: "100%", padding: "11px", borderRadius: 8, border: "none", background: "linear-gradient(135deg, #10B981, #059669)", color: "#fff", fontSize: 13, fontWeight: 700, cursor: importing ? "wait" : "pointer", opacity: importing ? 0.7 : 1 }}>
+                    {importing ? "Importing..." : `🚀 Import ${scrapeResult.count} Listings to Database`}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* MANUAL CSV MODE */}
+          {inputMode === "manual" && (
+          <>
           {/* Download Template */}
           <div style={{ marginBottom: 20, padding: "14px 18px", borderRadius: 10, background: "rgba(99,102,241,0.06)", border: "1px solid rgba(99,102,241,0.12)" }}>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -247,6 +353,8 @@ export default function DealImportTool() {
             }}>
             {importing ? "Importing..." : `🚀 Import ${parsedCount > 0 ? parsedCount + " Listings" : "Data"} from ${source}`}
           </button>
+          </>
+          )}
 
           {/* Results */}
           {result && (
