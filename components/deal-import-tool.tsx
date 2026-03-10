@@ -78,22 +78,66 @@ export default function DealImportTool() {
   const handleScrape = async () => {
     setScraping(true); setError(""); setScrapeResult(null); setResult(null);
     try {
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 15000); // 15s client timeout
+
       const res = await fetch("/api/scrape-marketplace", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ url: scrapeUrl.trim(), platform: source.toLowerCase().replace(/[\s.]/g, ""), pages_to_scrape: parseInt(scrapePages) || 5 }),
+        body: JSON.stringify({ url: scrapeUrl.trim(), platform: source.toLowerCase().replace(/[\s.]/g, ""), pages_to_scrape: parseInt(scrapePages) || 1 }),
+        signal: controller.signal,
       });
+      clearTimeout(timeout);
+
+      if (!res.ok) {
+        const errData = await res.json().catch(() => ({ error: `Server returned ${res.status}` }));
+        setError(errData.error || `Server error (${res.status}). Try the "Paste Page Source" method below.`);
+        setScraping(false);
+        return;
+      }
+
       const data = await res.json();
       if (data.success && data.listings?.length > 0) {
         setScrapeResult({ count: data.count, listings: data.listings });
-        // Auto-convert to CSV for the import pipeline
         const headers = Object.keys(data.listings[0]);
         const csv = [headers.join(","), ...data.listings.map((l: Record<string, string>) => headers.map((h) => `"${(l[h] || "").replace(/"/g, '""')}"`).join(","))].join("\n");
         setRawText(csv);
         setParsedCount(data.count);
       } else {
-        setError(data.error || `No listings found. The page may require JavaScript rendering. Try copying the search results manually instead.`);
+        setError(data.error || "No listings extracted. BizBuySell may require JavaScript rendering. Try the page source method below.");
       }
-    } catch { setError("Scraping failed. Try the manual CSV method instead."); }
+    } catch (err) {
+      if (err instanceof DOMException && err.name === "AbortError") {
+        setError("Request timed out (Vercel Hobby has a 10s limit). Try scraping just 1 page, or use the page source method below.");
+      } else {
+        setError("Scraping failed: " + String(err) + ". Try the page source method below.");
+      }
+    }
+    setScraping(false);
+  };
+
+  const handlePageSourceExtract = async () => {
+    if (!rawText.trim()) return;
+    setScraping(true); setError(""); setScrapeResult(null);
+    try {
+      const res = await fetch("/api/extract-listing", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: `Extract ALL business listings from this HTML page. There are multiple listings.\n\n${rawText.trim().slice(0, 15000)}` }),
+      });
+      const data = await res.json();
+      if (data.success && data.extracted) {
+        // Single extraction result — wrap in array
+        const listing = data.extracted;
+        const mapped: Record<string, string> = {};
+        if (listing.revenue) mapped["Gross Revenue"] = String(listing.revenue);
+        if (listing.sde) mapped["Cash Flow"] = String(listing.sde);
+        if (listing.asking_price) mapped["Asking Price"] = String(listing.asking_price);
+        if (listing.industry_key) mapped.Category = listing.industry_key;
+        if (listing.city) mapped.Location = `${listing.city}${listing.state ? ", " + listing.state : ""}`;
+        mapped.Title = listing.summary || "Listing";
+        mapped.source_platform = source;
+        setScrapeResult({ count: 1, listings: [mapped] });
+      }
+    } catch { setError("Extraction failed."); }
     setScraping(false);
   };
 
@@ -236,6 +280,24 @@ export default function DealImportTool() {
                 style={{ width: "100%", padding: "13px", borderRadius: 10, border: "none", background: scrapeUrl.trim() && !scraping ? "linear-gradient(135deg, #6366F1, #8B5CF6)" : "rgba(255,255,255,0.08)", color: scrapeUrl.trim() ? "#fff" : "#6B7280", fontSize: 14, fontWeight: 700, cursor: scrapeUrl.trim() && !scraping ? "pointer" : "not-allowed", opacity: scraping ? 0.7 : 1 }}>
                 {scraping ? "🤖 Scraping listings..." : "🤖 Scrape Listings"}
               </button>
+
+              {/* Page Source Fallback */}
+              <div style={{ marginTop: 16, padding: "14px 16px", borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)" }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: "#94A3B8", marginBottom: 4 }}>Alternative: Paste Page Source</div>
+                <div style={{ fontSize: 11, color: "#6B7280", marginBottom: 10 }}>If auto-scrape times out, right-click the BizBuySell search results page → View Page Source → Select All → Copy → Paste below.</div>
+                <textarea
+                  value={rawText}
+                  onChange={(e) => { setRawText(e.target.value); setScrapeResult(null); }}
+                  placeholder="Paste the full HTML page source here..."
+                  style={{ width: "100%", minHeight: 80, padding: "10px 12px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.03)", color: "#E2E8F0", fontSize: 11, fontFamily: "'JetBrains Mono', monospace", resize: "vertical", outline: "none" }}
+                />
+                {rawText.trim() && !scrapeResult && (
+                  <button onClick={handlePageSourceExtract} disabled={scraping}
+                    style={{ width: "100%", marginTop: 8, padding: "10px", borderRadius: 8, border: "none", background: "rgba(99,102,241,0.15)", color: "#818CF8", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+                    {scraping ? "Extracting..." : "🤖 Extract Listings from Page Source"}
+                  </button>
+                )}
+              </div>
 
               {/* Scrape Results */}
               {scrapeResult && (
