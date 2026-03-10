@@ -130,7 +130,7 @@ export default function DealImportTool() {
 
     for (const chunk of chunks) {
       try {
-        const res = await fetch("/api/deal-reality-check", {
+        const res = await fetch("/api/extract-proxy", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
