@@ -119,25 +119,21 @@ export default function DealImportTool() {
     if (!rawText.trim()) return;
     setScraping(true); setError(""); setScrapeResult(null);
     try {
-      const res = await fetch("/api/extract-listing", {
+      const res = await fetch("/api/bulk-extract", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: `Extract ALL business listings from this HTML page. There are multiple listings.\n\n${rawText.trim().slice(0, 15000)}` }),
+        body: JSON.stringify({ text: rawText.trim(), source_platform: source }),
       });
       const data = await res.json();
-      if (data.success && data.extracted) {
-        // Single extraction result — wrap in array
-        const listing = data.extracted;
-        const mapped: Record<string, string> = {};
-        if (listing.revenue) mapped["Gross Revenue"] = String(listing.revenue);
-        if (listing.sde) mapped["Cash Flow"] = String(listing.sde);
-        if (listing.asking_price) mapped["Asking Price"] = String(listing.asking_price);
-        if (listing.industry_key) mapped.Category = listing.industry_key;
-        if (listing.city) mapped.Location = `${listing.city}${listing.state ? ", " + listing.state : ""}`;
-        mapped.Title = listing.summary || "Listing";
-        mapped.source_platform = source;
-        setScrapeResult({ count: 1, listings: [mapped] });
+      if (data.success && data.listings?.length > 0) {
+        setScrapeResult({ count: data.count, listings: data.listings });
+        // Also set CSV for backup
+        const headers = Object.keys(data.listings[0]);
+        const csv = [headers.join(","), ...data.listings.map((l: Record<string, string>) => headers.map((h) => `"${(l[h] || "").replace(/"/g, '""')}"`).join(","))].join("\n");
+        setParsedCount(data.count);
+      } else {
+        setError(data.error || "No listings found. Try selecting and copying more of the page content.");
       }
-    } catch { setError("Extraction failed."); }
+    } catch { setError("Extraction failed. Check your internet connection and try again."); }
     setScraping(false);
   };
 
@@ -283,8 +279,8 @@ export default function DealImportTool() {
 
               {/* Page Source Fallback */}
               <div style={{ marginTop: 16, padding: "14px 16px", borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)" }}>
-                <div style={{ fontSize: 12, fontWeight: 600, color: "#94A3B8", marginBottom: 4 }}>Alternative: Paste Page Source</div>
-                <div style={{ fontSize: 11, color: "#6B7280", marginBottom: 10 }}>If auto-scrape times out, right-click the BizBuySell search results page → View Page Source → Select All → Copy → Paste below.</div>
+                <div style={{ fontSize: 12, fontWeight: 600, color: "#94A3B8", marginBottom: 4 }}>Alternative: Paste Page Content</div>
+                <div style={{ fontSize: 11, color: "#6B7280", marginBottom: 10 }}>Go to BizBuySell search results → Select all the listings on the page (Ctrl+A) → Copy (Ctrl+C) → Paste below. The AI will extract all deal data automatically.</div>
                 <textarea
                   value={rawText}
                   onChange={(e) => { setRawText(e.target.value); setScrapeResult(null); }}
@@ -294,23 +290,95 @@ export default function DealImportTool() {
                 {rawText.trim() && !scrapeResult && (
                   <button onClick={handlePageSourceExtract} disabled={scraping}
                     style={{ width: "100%", marginTop: 8, padding: "10px", borderRadius: 8, border: "none", background: "rgba(99,102,241,0.15)", color: "#818CF8", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
-                    {scraping ? "Extracting..." : "🤖 Extract Listings from Page Source"}
+                    {scraping ? "Extracting..." : "🤖 Extract Listings from Pasted Content"}
                   </button>
                 )}
               </div>
 
               {/* Scrape Results */}
               {scrapeResult && (
-                <div style={{ marginTop: 14, padding: "14px 16px", borderRadius: 10, background: "rgba(16,185,129,0.06)", border: "1px solid rgba(16,185,129,0.12)" }}>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: "#10B981", marginBottom: 6 }}>✓ {scrapeResult.count} listings extracted</div>
-                  <div style={{ fontSize: 11, color: "#6B7280", marginBottom: 10 }}>
-                    Preview: {scrapeResult.listings.slice(0, 3).map((l) => l.Title || "Untitled").join(" • ")}
-                    {scrapeResult.count > 3 && ` ...and ${scrapeResult.count - 3} more`}
+                <div style={{ marginTop: 14 }}>
+                  <div style={{ padding: "14px 16px", borderRadius: "10px 10px 0 0", background: "rgba(16,185,129,0.06)", border: "1px solid rgba(16,185,129,0.12)", borderBottom: "none" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <div style={{ fontSize: 12, fontWeight: 600, color: "#10B981" }}>✓ {scrapeResult.count} listings extracted</div>
+                      <div style={{ fontSize: 11, color: "#6B7280" }}>
+                        {scrapeResult.listings.filter((l) => !l["Cash Flow"] && !l.cash_flow).length > 0 && (
+                          <span style={{ color: "#F59E0B" }}>⚠ {scrapeResult.listings.filter((l) => !l["Cash Flow"] && !l.cash_flow).length} missing Cash Flow</span>
+                        )}
+                      </div>
+                    </div>
+                    <div style={{ fontSize: 11, color: "#6B7280", marginTop: 4 }}>Review and edit below. Click any cell to update. Yellow fields are missing or estimated.</div>
                   </div>
-                  <button onClick={handleScrapeAndImport} disabled={importing}
-                    style={{ width: "100%", padding: "11px", borderRadius: 8, border: "none", background: "linear-gradient(135deg, #10B981, #059669)", color: "#fff", fontSize: 13, fontWeight: 700, cursor: importing ? "wait" : "pointer", opacity: importing ? 0.7 : 1 }}>
-                    {importing ? "Importing..." : `🚀 Import ${scrapeResult.count} Listings to Database`}
-                  </button>
+
+                  {/* Editable Listings Table */}
+                  <div style={{ maxHeight: 500, overflowY: "auto", overflowX: "auto", border: "1px solid rgba(255,255,255,0.06)", borderRadius: "0 0 10px 10px" }}>
+                    <table style={{ width: "100%", borderCollapse: "collapse", minWidth: 900 }}>
+                      <thead>
+                        <tr style={{ position: "sticky", top: 0, background: "#141922", zIndex: 5 }}>
+                          {["#", "Title", "Location", "Category", "Asking Price", "Cash Flow", "Revenue", "Employees"].map((h) => (
+                            <th key={h} style={{ padding: "8px 8px", fontSize: 10, color: "#6B7280", fontWeight: 600, textTransform: "uppercase", textAlign: "left", borderBottom: "1px solid rgba(255,255,255,0.08)", whiteSpace: "nowrap" }}>{h}</th>
+                          ))}
+                          <th style={{ padding: "8px", fontSize: 10, color: "#6B7280", fontWeight: 600, borderBottom: "1px solid rgba(255,255,255,0.08)" }}></th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {scrapeResult.listings.map((listing, idx) => {
+                          const missingCF = !listing["Cash Flow"] && !listing.cash_flow;
+                          const missingRev = !listing["Gross Revenue"] && !listing.revenue;
+                          const missingPrice = !listing["Asking Price"] && !listing.price;
+                          return (
+                            <tr key={idx} style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+                              <td style={{ padding: "6px 8px", fontSize: 10, color: "#4B5563", fontFamily: "'JetBrains Mono', monospace" }}>{idx + 1}</td>
+                              <td style={{ padding: "4px 4px", minWidth: 160 }}>
+                                <input type="text" value={listing.Title || ""} onChange={(e) => { const updated = [...scrapeResult.listings]; updated[idx] = { ...updated[idx], Title: e.target.value }; setScrapeResult({ ...scrapeResult, listings: updated }); }}
+                                  style={{ width: "100%", padding: "4px 6px", borderRadius: 4, border: "1px solid rgba(255,255,255,0.06)", background: "transparent", color: "#C9D1D9", fontSize: 11, outline: "none" }} />
+                              </td>
+                              <td style={{ padding: "4px 4px", minWidth: 100 }}>
+                                <input type="text" value={listing.Location || ""} onChange={(e) => { const updated = [...scrapeResult.listings]; updated[idx] = { ...updated[idx], Location: e.target.value }; setScrapeResult({ ...scrapeResult, listings: updated }); }}
+                                  style={{ width: "100%", padding: "4px 6px", borderRadius: 4, border: "1px solid rgba(255,255,255,0.06)", background: "transparent", color: "#C9D1D9", fontSize: 11, outline: "none" }} />
+                              </td>
+                              <td style={{ padding: "4px 4px", minWidth: 80 }}>
+                                <input type="text" value={listing.Category || ""} onChange={(e) => { const updated = [...scrapeResult.listings]; updated[idx] = { ...updated[idx], Category: e.target.value }; setScrapeResult({ ...scrapeResult, listings: updated }); }}
+                                  style={{ width: "100%", padding: "4px 6px", borderRadius: 4, border: "1px solid rgba(255,255,255,0.06)", background: "transparent", color: "#C9D1D9", fontSize: 11, outline: "none" }} />
+                              </td>
+                              <td style={{ padding: "4px 4px", minWidth: 90 }}>
+                                <input type="text" value={listing["Asking Price"] || listing.price || ""} onChange={(e) => { const updated = [...scrapeResult.listings]; updated[idx] = { ...updated[idx], "Asking Price": e.target.value }; setScrapeResult({ ...scrapeResult, listings: updated }); }}
+                                  style={{ width: "100%", padding: "4px 6px", borderRadius: 4, border: `1px solid ${missingPrice ? "rgba(245,158,11,0.4)" : "rgba(255,255,255,0.06)"}`, background: missingPrice ? "rgba(245,158,11,0.06)" : "transparent", color: missingPrice ? "#F59E0B" : "#C9D1D9", fontSize: 11, fontFamily: "'JetBrains Mono', monospace", outline: "none" }} />
+                              </td>
+                              <td style={{ padding: "4px 4px", minWidth: 90 }}>
+                                <input type="text" value={listing["Cash Flow"] || listing.cash_flow || ""} onChange={(e) => { const updated = [...scrapeResult.listings]; updated[idx] = { ...updated[idx], "Cash Flow": e.target.value }; setScrapeResult({ ...scrapeResult, listings: updated }); }}
+                                  style={{ width: "100%", padding: "4px 6px", borderRadius: 4, border: `1px solid ${missingCF ? "rgba(245,158,11,0.4)" : "rgba(255,255,255,0.06)"}`, background: missingCF ? "rgba(245,158,11,0.06)" : "transparent", color: missingCF ? "#F59E0B" : "#C9D1D9", fontSize: 11, fontFamily: "'JetBrains Mono', monospace", outline: "none" }} />
+                              </td>
+                              <td style={{ padding: "4px 4px", minWidth: 90 }}>
+                                <input type="text" value={listing["Gross Revenue"] || listing.revenue || ""} onChange={(e) => { const updated = [...scrapeResult.listings]; updated[idx] = { ...updated[idx], "Gross Revenue": e.target.value }; setScrapeResult({ ...scrapeResult, listings: updated }); }}
+                                  style={{ width: "100%", padding: "4px 6px", borderRadius: 4, border: `1px solid ${missingRev ? "rgba(245,158,11,0.4)" : "rgba(255,255,255,0.06)"}`, background: missingRev ? "rgba(245,158,11,0.06)" : "transparent", color: missingRev ? "#F59E0B" : "#C9D1D9", fontSize: 11, fontFamily: "'JetBrains Mono', monospace", outline: "none" }} />
+                              </td>
+                              <td style={{ padding: "4px 4px", minWidth: 60 }}>
+                                <input type="text" value={listing.Employees || listing.employees || ""} onChange={(e) => { const updated = [...scrapeResult.listings]; updated[idx] = { ...updated[idx], Employees: e.target.value }; setScrapeResult({ ...scrapeResult, listings: updated }); }}
+                                  style={{ width: "100%", padding: "4px 6px", borderRadius: 4, border: "1px solid rgba(255,255,255,0.06)", background: "transparent", color: "#C9D1D9", fontSize: 11, fontFamily: "'JetBrains Mono', monospace", outline: "none" }} />
+                              </td>
+                              <td style={{ padding: "4px 4px" }}>
+                                <button onClick={() => { const updated = scrapeResult.listings.filter((_, i) => i !== idx); setScrapeResult({ count: updated.length, listings: updated }); }}
+                                  style={{ padding: "2px 6px", borderRadius: 4, border: "none", background: "rgba(239,68,68,0.1)", color: "#EF4444", fontSize: 10, cursor: "pointer" }}>✕</button>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+
+                  {/* Import Button */}
+                  <div style={{ marginTop: 12, display: "flex", gap: 8 }}>
+                    <button onClick={handleScrapeAndImport} disabled={importing}
+                      style={{ flex: 1, padding: "12px", borderRadius: 8, border: "none", background: "linear-gradient(135deg, #10B981, #059669)", color: "#fff", fontSize: 14, fontWeight: 700, cursor: importing ? "wait" : "pointer", opacity: importing ? 0.7 : 1 }}>
+                      {importing ? "Importing..." : `🚀 Import ${scrapeResult.count} Listings to Database`}
+                    </button>
+                  </div>
+
+                  <div style={{ marginTop: 8, fontSize: 10, color: "#4B5563" }}>
+                    Tip: Open each listing on BizBuySell in a new tab to fill in missing Revenue and Cash Flow numbers before importing.
+                  </div>
                 </div>
               )}
             </div>
