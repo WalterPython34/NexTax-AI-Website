@@ -118,22 +118,88 @@ export default function DealImportTool() {
   const handlePageSourceExtract = async () => {
     if (!rawText.trim()) return;
     setScraping(true); setError(""); setScrapeResult(null);
-    try {
-      const res = await fetch("/api/bulk-extract", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text: rawText.trim(), source_platform: source }),
-      });
-      const data = await res.json();
-      if (data.success && data.listings?.length > 0) {
-        setScrapeResult({ count: data.count, listings: data.listings });
-        // Also set CSV for backup
-        const headers = Object.keys(data.listings[0]);
-        const csv = [headers.join(","), ...data.listings.map((l: Record<string, string>) => headers.map((h) => `"${(l[h] || "").replace(/"/g, '""')}"`).join(","))].join("\n");
-        setParsedCount(data.count);
-      } else {
-        setError(data.error || "No listings found. Try selecting and copying more of the page content.");
+
+    // Split pasted content into chunks if very large
+    const text = rawText.trim();
+    const maxChunk = 12000; // Stay well within token limits
+    const chunks = text.length > maxChunk
+      ? [text.slice(0, maxChunk), text.slice(maxChunk, maxChunk * 2)].filter((c) => c.length > 50)
+      : [text];
+
+    const allListings: Record<string, string>[] = [];
+
+    for (const chunk of chunks) {
+      try {
+        const res = await fetch("https://api.anthropic.com/v1/messages", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: "claude-sonnet-4-20250514",
+            max_tokens: 4000,
+            messages: [{
+              role: "user",
+              content: `You are a data extraction system. Extract ALL business-for-sale listings from this marketplace page content.
+
+Return ONLY a JSON array. No markdown, no backticks, no explanation. Each listing:
+{"Title":"string","Location":"City, ST","Category":"business type","Asking Price":number,"Cash Flow":number_or_null,"Gross Revenue":number_or_null,"Employees":number_or_null}
+
+Rules:
+- Extract EVERY listing. There may be 10-30+.
+- Numbers must be plain integers: 450000 not "$450,000"
+- "Cash Flow" = SDE = Seller's Discretionary Earnings
+- null for missing fields
+
+CONTENT:
+${chunk}`,
+            }],
+          }),
+        });
+
+        if (!res.ok) {
+          const errText = await res.text();
+          console.error("Anthropic error:", errText);
+          setError("AI extraction failed. Check your Anthropic API key.");
+          setScraping(false);
+          return;
+        }
+
+        const data = await res.json();
+        const rawResponse = data.content
+          ?.map((b: { type: string; text?: string }) => (b.type === "text" ? b.text : ""))
+          .join("")
+          .trim();
+
+        try {
+          const cleaned = rawResponse.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
+          const parsed = JSON.parse(cleaned);
+          if (Array.isArray(parsed)) {
+            const normalized = parsed.map((item: Record<string, unknown>) => {
+              const obj: Record<string, string> = {};
+              Object.entries(item).forEach(([k, v]) => {
+                if (v !== null && v !== undefined) obj[k] = String(v);
+              });
+              obj.source_platform = source;
+              return obj;
+            });
+            allListings.push(...normalized);
+          }
+        } catch (parseErr) {
+          console.error("JSON parse error:", rawResponse?.slice(0, 200));
+        }
+      } catch (fetchErr) {
+        console.error("Fetch error:", fetchErr);
+        setError("Network error calling AI. Check console for details.");
+        setScraping(false);
+        return;
       }
-    } catch { setError("Extraction failed. Check your internet connection and try again."); }
+    }
+
+    if (allListings.length > 0) {
+      setScrapeResult({ count: allListings.length, listings: allListings });
+      setParsedCount(allListings.length);
+    } else {
+      setError("No listings found. Try selecting just the listing titles, prices, and cash flow from the search results page.");
+    }
     setScraping(false);
   };
 
