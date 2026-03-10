@@ -79,7 +79,24 @@ function calculateScores(inputs: DealInputs): ScoreBreakdown | null {
   else valuationScore = Math.max(5, 40 - ((multiple - highMult) / highMult) * 60);
   valuationScore = Math.round(Math.max(5, Math.min(98, valuationScore)));
   const fairValue = Math.round(sde * midMult);
-  const recommendedOffer: [number, number] = [Math.round(sde * lowMult), Math.round(sde * highMult * 0.9)];
+  const fairRangeLow = Math.round(sde * lowMult);
+  const fairRangeHigh = Math.round(sde * highMult * 0.9);
+
+  // Smart offer logic: never recommend above asking price
+  let recommendedOffer: [number, number];
+  if (price <= fairRangeLow) {
+    // Deal appears significantly undervalued — offer 80-100% of asking
+    recommendedOffer = [Math.round(price * 0.80), Math.round(price * 1.0)];
+  } else if (price <= fairValue) {
+    // Deal is below fair value — offer 85-100% of asking
+    recommendedOffer = [Math.round(price * 0.85), Math.round(price * 1.0)];
+  } else if (price <= fairRangeHigh) {
+    // Deal is fairly priced — offer 90-100% of fair value
+    recommendedOffer = [Math.round(fairValue * 0.90), fairValue];
+  } else {
+    // Deal is overpriced — offer at fair value range
+    recommendedOffer = [fairRangeLow, fairValue];
+  }
 
   if (multiple > highMult * 1.15) redFlags.push("Valuation " + Math.round(((multiple / highMult) - 1) * 100) + "% above industry ceiling");
   else if (multiple > highMult) redFlags.push("Asking price at top of market range");
@@ -632,9 +649,7 @@ Red flags: ${scores.redFlags.join("; ") || "None"} | Green flags: ${scores.green
       {showGate && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, padding: 24 }}>
           <div className="fu" style={{ background: "#141922", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 20, padding: "36px 32px", maxWidth: 440, width: "100%", textAlign: "center" }}>
-            <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}>
-              <img src="/nextax-icon.png" alt="NexTax" style={{ width: 64, height: 64, borderRadius: 12 }} />
-            </div>
+            <div style={{ fontSize: 48, marginBottom: 12 }}>📊</div>
             <h2 style={{ fontSize: 22, fontWeight: 700, margin: "0 0 6px", color: "#E2E8F0", fontFamily: "'Instrument Serif', serif" }}>Your results are ready</h2>
             <p style={{ fontSize: 14, color: "#8896A6", margin: "0 0 24px", lineHeight: 1.5 }}>
               Enter your email to see your Deal Health Score, AI analysis, and investor valuation range.
@@ -672,13 +687,38 @@ Red flags: ${scores.redFlags.join("; ") || "None"} | Green flags: ${scores.green
             </div>
           </div>
 
-          {/* Pro Valuation */}
+          {/* Pro Valuation — Three-Value Display */}
           <div className="fu fd1" style={{ background: "rgba(99,102,241,0.06)", border: "1px solid rgba(99,102,241,0.15)", borderRadius: 14, padding: "18px 22px", marginBottom: 14 }}>
-            <div style={{ fontSize: 11, color: "#818CF8", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 10, fontWeight: 600 }}>💰 What Would Pros Pay?</div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
-              <div><div style={{ fontSize: 10, color: "#6B7280", marginBottom: 3 }}>MARKET RANGE</div><div style={{ fontSize: 17, fontWeight: 700, color: "#C4B5FD", fontFamily: "'JetBrains Mono', monospace" }}>{results.valuation.marketRange[0]}–{results.valuation.marketRange[1]}x</div><div style={{ fontSize: 10, color: "#6B7280" }}>SDE</div></div>
-              <div><div style={{ fontSize: 10, color: "#6B7280", marginBottom: 3 }}>YOUR DEAL</div><div style={{ fontSize: 17, fontWeight: 700, color: results.valuation.multiple > results.valuation.marketRange[1] ? "#F97316" : "#10B981", fontFamily: "'JetBrains Mono', monospace" }}>{results.valuation.multiple.toFixed(2)}x</div><div style={{ fontSize: 10, color: "#6B7280" }}>SDE</div></div>
-              <div><div style={{ fontSize: 10, color: "#6B7280", marginBottom: 3 }}>RECOMMENDED OFFER</div><div style={{ fontSize: 15, fontWeight: 700, color: "#10B981", fontFamily: "'JetBrains Mono', monospace" }}>{fmt(results.valuation.recommendedOffer[0])}</div><div style={{ fontSize: 10, color: "#6B7280" }}>to {fmt(results.valuation.recommendedOffer[1])}</div></div>
+            <div style={{ fontSize: 11, color: "#818CF8", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 14, fontWeight: 600 }}>💰 What Would Pros Pay?</div>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 14, marginBottom: 14 }}>
+              <div style={{ padding: "12px 14px", borderRadius: 10, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                <div style={{ fontSize: 10, color: "#6B7280", marginBottom: 4 }}>ASKING PRICE</div>
+                <div style={{ fontSize: 18, fontWeight: 700, color: "#E2E8F0", fontFamily: "'JetBrains Mono', monospace" }}>{fmt(parseFloat(inputs.askingPrice.replace(/,/g, "")))}</div>
+                <div style={{ fontSize: 10, color: "#6B7280", marginTop: 2 }}>{results.valuation.multiple.toFixed(2)}x SDE</div>
+              </div>
+              <div style={{ padding: "12px 14px", borderRadius: 10, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                <div style={{ fontSize: 10, color: "#6B7280", marginBottom: 4 }}>FAIR MARKET VALUE</div>
+                <div style={{ fontSize: 18, fontWeight: 700, color: "#C4B5FD", fontFamily: "'JetBrains Mono', monospace" }}>{fmt(results.valuation.fairValue)}</div>
+                <div style={{ fontSize: 10, color: "#6B7280", marginTop: 2 }}>{results.valuation.marketRange[0]}–{results.valuation.marketRange[1]}x range</div>
+              </div>
+              <div style={{ padding: "12px 14px", borderRadius: 10, background: "rgba(16,185,129,0.06)", border: "1px solid rgba(16,185,129,0.15)" }}>
+                <div style={{ fontSize: 10, color: "#10B981", marginBottom: 4, fontWeight: 600 }}>SMART OFFER RANGE</div>
+                <div style={{ fontSize: 18, fontWeight: 700, color: "#10B981", fontFamily: "'JetBrains Mono', monospace" }}>{fmt(results.valuation.recommendedOffer[0])}</div>
+                <div style={{ fontSize: 10, color: "#6B7280", marginTop: 2 }}>to {fmt(results.valuation.recommendedOffer[1])}</div>
+              </div>
+            </div>
+            {/* Negotiation Insight */}
+            <div style={{ padding: "10px 14px", borderRadius: 8, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.04)" }}>
+              <div style={{ fontSize: 10, color: "#6B7280", textTransform: "uppercase", marginBottom: 4, fontWeight: 500 }}>Negotiation Insight</div>
+              <div style={{ fontSize: 12, color: "#94A3B8", lineHeight: 1.5 }}>
+                {results.valuation.multiple < results.valuation.marketRange[0]
+                  ? "Listing appears significantly under market value. This may indicate a motivated seller, missing financial details, or operational risk. Submit offer near asking price but include diligence protections."
+                  : results.valuation.multiple <= (results.valuation.marketRange[0] + results.valuation.marketRange[1]) / 2
+                  ? "Deal is priced within fair market range. Negotiate toward the lower end of your offer range and justify with comparable market data."
+                  : results.valuation.multiple <= results.valuation.marketRange[1]
+                  ? "Asking price is at the upper end of market range. Use fair value estimate as your anchor and negotiate aggressively on terms if not on price."
+                  : "Deal is priced above market. Lead with your fair value analysis and be prepared to walk away. Consider seller financing to bridge the gap."}
+              </div>
             </div>
           </div>
 
@@ -750,7 +790,7 @@ Red flags: ${scores.redFlags.join("; ") || "None"} | Green flags: ${scores.green
               📤 Share My Deal Score
             </button>
             {shareMenuOpen && (
-              <div style={{ position: "absolute", top: "100%", left: 0, right: 0, marginTop: 8, background: "#1A1F2E", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 12, padding: 12, zIndex: 10, display: "flex", flexDirection: "column", gap: 6 }}>
+              <div style={{ position: "absolute", top: "100%", left: 0, right: 0, marginTop: 8, background: "#141922", border: "1px solid rgba(255,255,255,0.12)", borderRadius: 12, padding: 12, zIndex: 50, display: "flex", flexDirection: "column", gap: 6, boxShadow: "0 8px 32px rgba(0,0,0,0.6)" }}>
                 <button onClick={handleShareImage} style={{ padding: "10px 14px", borderRadius: 8, border: "none", background: "rgba(255,255,255,0.04)", color: "#E2E8F0", fontSize: 13, fontWeight: 500, cursor: "pointer", textAlign: "left", fontFamily: "'DM Sans', sans-serif" }}>🖼️ Download Deal Score Card</button>
                 <button onClick={() => handleShareText("twitter")} style={{ padding: "10px 14px", borderRadius: 8, border: "none", background: "rgba(255,255,255,0.04)", color: "#E2E8F0", fontSize: 13, fontWeight: 500, cursor: "pointer", textAlign: "left", fontFamily: "'DM Sans', sans-serif" }}>🐦 Share on Twitter / X</button>
                 <button onClick={() => handleShareText("linkedin")} style={{ padding: "10px 14px", borderRadius: 8, border: "none", background: "rgba(255,255,255,0.04)", color: "#E2E8F0", fontSize: 13, fontWeight: 500, cursor: "pointer", textAlign: "left", fontFamily: "'DM Sans', sans-serif" }}>💼 Share on LinkedIn</button>
