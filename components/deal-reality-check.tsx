@@ -59,6 +59,17 @@ const INDUSTRIES: Record<string, {
   plumbing: { label: "Plumbing", typicalMultiple: [2.0, 4.0], marginRange: [15, 30], growth: "Growing", riskFactor: 0.75, demandScore: 85, buyerInterestRank: 3, competitionLevel: "Low-Moderate" },
   roofing: { label: "Roofing", typicalMultiple: [1.5, 3.5], marginRange: [15, 30], growth: "Stable", riskFactor: 0.90, demandScore: 72, buyerInterestRank: 6, competitionLevel: "Moderate" },
   petcare: { label: "Pet Care / Grooming", typicalMultiple: [2.0, 4.0], marginRange: [20, 40], growth: "Growing", riskFactor: 0.80, demandScore: 77, buyerInterestRank: 5, competitionLevel: "Moderate" },
+  pharmacy: { label: "Pharmacy", typicalMultiple: [2.5, 4.0], marginRange: [18, 30], growth: "Stable", riskFactor: 0.75, demandScore: 62, buyerInterestRank: 14, competitionLevel: "Low" },
+  daycare: { label: "Daycare / Childcare", typicalMultiple: [2.0, 4.0], marginRange: [15, 30], growth: "Growing", riskFactor: 0.80, demandScore: 74, buyerInterestRank: 10, competitionLevel: "Moderate" },
+  medspa: { label: "Med Spa / Aesthetics", typicalMultiple: [3.0, 5.0], marginRange: [25, 45], growth: "Growing", riskFactor: 0.75, demandScore: 80, buyerInterestRank: 7, competitionLevel: "Moderate" },
+  accounting: { label: "Accounting / Tax Firm", typicalMultiple: [1.5, 3.5], marginRange: [30, 55], growth: "Stable", riskFactor: 0.60, demandScore: 86, buyerInterestRank: 3, competitionLevel: "Low-Moderate" },
+  electrical: { label: "Electrical Contractor", typicalMultiple: [2.0, 4.0], marginRange: [15, 30], growth: "Growing", riskFactor: 0.75, demandScore: 82, buyerInterestRank: 5, competitionLevel: "Low-Moderate" },
+  healthcare: { label: "Healthcare / Home Health", typicalMultiple: [3.0, 6.0], marginRange: [15, 35], growth: "Growing", riskFactor: 0.70, demandScore: 79, buyerInterestRank: 6, competitionLevel: "Moderate" },
+  transportation: { label: "Transportation / Trucking", typicalMultiple: [2.0, 4.0], marginRange: [10, 25], growth: "Stable", riskFactor: 0.85, demandScore: 68, buyerInterestRank: 11, competitionLevel: "Moderate" },
+  printing: { label: "Printing / Marketing", typicalMultiple: [1.5, 3.0], marginRange: [15, 30], growth: "Variable", riskFactor: 0.90, demandScore: 55, buyerInterestRank: 18, competitionLevel: "High" },
+  storage: { label: "Self-Storage", typicalMultiple: [4.0, 8.0], marginRange: [40, 65], growth: "Growing", riskFactor: 0.60, demandScore: 84, buyerInterestRank: 4, competitionLevel: "Moderate" },
+  painting: { label: "Painting Contractor", typicalMultiple: [1.5, 3.0], marginRange: [15, 30], growth: "Stable", riskFactor: 0.90, demandScore: 64, buyerInterestRank: 15, competitionLevel: "High" },
+  security: { label: "Security Services", typicalMultiple: [2.5, 4.5], marginRange: [15, 30], growth: "Growing", riskFactor: 0.75, demandScore: 72, buyerInterestRank: 9, competitionLevel: "Low-Moderate" },
 };
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
@@ -358,6 +369,7 @@ export default function DealRealityCheck() {
   const [aiLoading, setAiLoading] = useState(false);
   const [showResults, setShowResults] = useState(false);
   const [shareMenuOpen, setShareMenuOpen] = useState(false);
+  const [dealPageUrl, setDealPageUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
   // EMAIL GATE STATE
@@ -440,7 +452,53 @@ export default function DealRealityCheck() {
       fetchAI(pendingResults);
       fetchBenchmarks(pendingResults);
       recordDeal(pendingResults);
+      createDealPage(pendingResults);
     }
+  };
+
+  const createDealPage = async (scores: ScoreBreakdown) => {
+    try {
+      const ind = INDUSTRIES[inputs.industry];
+      const revenue = parseFloat(inputs.revenue.replace(/,/g, ""));
+      const sde = parseFloat(inputs.sde.replace(/,/g, ""));
+      const price = parseFloat(inputs.askingPrice.replace(/,/g, ""));
+      const res = await fetch("/api/deal-page", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          industry: inputs.industry,
+          industry_label: ind?.label || inputs.industry,
+          revenue, sde, asking_price: price,
+          valuation_multiple: scores.valuation.multiple,
+          dscr: scores.debtRisk.dscr,
+          monthly_payment: scores.debtRisk.monthlyPayment,
+          fair_value: scores.valuation.fairValue,
+          recommended_offer_low: scores.valuation.recommendedOffer[0],
+          recommended_offer_high: scores.valuation.recommendedOffer[1],
+          overall_score: scores.overall,
+          risk_level: scores.riskLevel,
+          valuation_score: scores.valuation.score,
+          debt_score: scores.debtRisk.score,
+          market_score: scores.marketRisk.score,
+          industry_score: scores.industryRisk.score,
+          red_flags: scores.redFlags,
+          green_flags: scores.greenFlags,
+          ai_insight: scores.aiInsight,
+          community_avg_score: scores.communityComparison.avgScore,
+          community_top_score: scores.communityComparison.topScore,
+          community_lowest_score: scores.communityComparison.lowestScore,
+          community_percentile: scores.communityComparison.percentile,
+          similar_deals_count: scores.communityComparison.totalDeals,
+          demand_level: scores.marketIntel.demandLevel,
+          buyer_interest_rank: scores.marketIntel.buyerInterestRank,
+          competition_level: scores.marketIntel.competitionLevel,
+          source_tool: "reality_check",
+        }),
+      });
+      const data = await res.json();
+      if (data.success && data.url) {
+        setDealPageUrl(data.url);
+      }
+    } catch { /* non-blocking */ }
   };
 
   const fetchBenchmarks = async (scores: ScoreBreakdown) => {
@@ -961,6 +1019,22 @@ Red flags: ${scores.redFlags.join("; ") || "None"} | Green flags: ${scores.green
               </div>
             )}
           </div>
+
+          {/* Deal Intelligence Page Link */}
+          {dealPageUrl && (
+            <div className="fu fd8" style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(99,102,241,0.15)", borderRadius: 14, padding: "16px 20px", marginBottom: 14, textAlign: "center" }}>
+              <div style={{ fontSize: 10, color: "#6B7280", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 6 }}>Your Deal Intelligence Page</div>
+              <a href={dealPageUrl} style={{ fontSize: 15, fontWeight: 700, color: "#818CF8", fontFamily: "'JetBrains Mono', monospace", textDecoration: "none" }}>
+                nextax.ai{dealPageUrl}
+              </a>
+              <div style={{ display: "flex", justifyContent: "center", gap: 8, marginTop: 10 }}>
+                <button onClick={() => { navigator.clipboard.writeText(`https://nextax.ai${dealPageUrl}`); }} style={{ padding: "6px 14px", borderRadius: 6, border: "1px solid rgba(99,102,241,0.2)", background: "rgba(99,102,241,0.08)", color: "#818CF8", fontSize: 11, fontWeight: 500, cursor: "pointer" }}>📋 Copy Link</button>
+                <button onClick={() => window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(`Just analyzed this deal on NexTax — scored ${results?.overall}/100`)}&url=${encodeURIComponent(`https://nextax.ai${dealPageUrl}`)}`, "_blank")} style={{ padding: "6px 14px", borderRadius: 6, border: "1px solid rgba(99,102,241,0.2)", background: "rgba(99,102,241,0.08)", color: "#818CF8", fontSize: 11, fontWeight: 500, cursor: "pointer" }}>🐦 Tweet</button>
+                <button onClick={() => window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent(`https://nextax.ai${dealPageUrl}`)}`, "_blank")} style={{ padding: "6px 14px", borderRadius: 6, border: "1px solid rgba(99,102,241,0.2)", background: "rgba(99,102,241,0.08)", color: "#818CF8", fontSize: 11, fontWeight: 500, cursor: "pointer" }}>💼 LinkedIn</button>
+              </div>
+              <div style={{ fontSize: 10, color: "#4B5563", marginTop: 8 }}>Share this link to get community feedback on your deal</div>
+            </div>
+          )}
 
           {/* Monetization CTA */}
           <div className="fu fd8" style={{ background: "linear-gradient(135deg, rgba(99,102,241,0.1), rgba(139,92,246,0.08))", border: "1px solid rgba(99,102,241,0.2)", borderRadius: 14, padding: 24, marginBottom: 14 }}>
