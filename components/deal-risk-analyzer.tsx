@@ -123,6 +123,14 @@ const INDUSTRIES: Record<string, {
   pharmacy: { label: "Pharmacy", typicalMultiple: [2.5, 4.0], marginRange: [18, 30], growth: "Stable", riskFactor: 0.75, avgRevenuePerEmployee: 300000, laborRatioRange: "15-25%", category: "Healthcare" },
   daycare: { label: "Daycare / Childcare", typicalMultiple: [2.0, 4.0], marginRange: [15, 30], growth: "Growing", riskFactor: 0.85, avgRevenuePerEmployee: 40000, laborRatioRange: "50-65%", category: "Service" },
   medspa: { label: "Med Spa / Aesthetics", typicalMultiple: [3.0, 5.0], marginRange: [25, 45], growth: "Growing", riskFactor: 0.80, avgRevenuePerEmployee: 120000, laborRatioRange: "25-35%", category: "Healthcare" },
+  accounting: { label: "Accounting / Tax Firm", typicalMultiple: [1.5, 3.5], marginRange: [30, 55], growth: "Stable", riskFactor: 0.60, avgRevenuePerEmployee: 110000, laborRatioRange: "40-55%", category: "Professional Services" },
+  electrical: { label: "Electrical Contractor", typicalMultiple: [2.0, 4.0], marginRange: [15, 30], growth: "Growing", riskFactor: 0.75, avgRevenuePerEmployee: 90000, laborRatioRange: "35-50%", category: "Trades" },
+  healthcare: { label: "Healthcare / Home Health", typicalMultiple: [3.0, 6.0], marginRange: [15, 35], growth: "Growing", riskFactor: 0.70, avgRevenuePerEmployee: 70000, laborRatioRange: "50-65%", category: "Healthcare" },
+  transportation: { label: "Transportation / Trucking", typicalMultiple: [2.0, 4.0], marginRange: [10, 25], growth: "Stable", riskFactor: 0.85, avgRevenuePerEmployee: 130000, laborRatioRange: "30-45%", category: "Logistics" },
+  printing: { label: "Printing / Marketing", typicalMultiple: [1.5, 3.0], marginRange: [15, 30], growth: "Variable", riskFactor: 0.90, avgRevenuePerEmployee: 85000, laborRatioRange: "35-50%", category: "Service" },
+  storage: { label: "Self-Storage", typicalMultiple: [4.0, 8.0], marginRange: [40, 65], growth: "Growing", riskFactor: 0.60, avgRevenuePerEmployee: 200000, laborRatioRange: "5-15%", category: "Real Estate" },
+  painting: { label: "Painting Contractor", typicalMultiple: [1.5, 3.0], marginRange: [15, 30], growth: "Stable", riskFactor: 0.90, avgRevenuePerEmployee: 65000, laborRatioRange: "40-55%", category: "Trades" },
+  security: { label: "Security Services", typicalMultiple: [2.5, 4.5], marginRange: [15, 30], growth: "Growing", riskFactor: 0.75, avgRevenuePerEmployee: 50000, laborRatioRange: "55-70%", category: "Service" },
 };
 
 const US_STATES = [
