@@ -76,6 +76,21 @@ interface FullScoreBreakdown {
   redFlags: string[];
   greenFlags: string[];
   aiInsight: string | null;
+  threeLens?: {
+    listing: { medianMultiple: number; sampleSize: number } | null;
+    transaction: { cashflowMultiple: number; saleToAskRatio: number; daysOnMarket: number; reportedSales: number; subsector: string; medianSalePrice: number } | null;
+    financial: { sdeMargin: number } | null;
+    sellerBuyerGap: number | null;
+    estimatedNegotiatedPrice: number | null;
+    smartOfferRange: [number, number];
+    confidence: {
+      overall: string;
+      listing: { grade: string; description: string; sampleSize: number };
+      transaction: { grade: string; description: string; sampleSize: number };
+      financial: { grade: string; description: string; sampleSize: number };
+      weights: { valuation: number; debt: number; financial: number; liquidity: number };
+    };
+  };
 }
 
 // ─── INDUSTRY DATA (EXPANDED) ───────────────────────────────────────────────
@@ -489,10 +504,110 @@ export default function DealRiskAnalyzer() {
       setStep(4);
       setTimeout(() => resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
       fetchAIInsight(scores);
-      // Record deal for intelligence data
+      fetchBenchmarks(scores);
       recordDeal(scores);
     }
     setLoading(false);
+  };
+
+  const fetchBenchmarks = async (scores: FullScoreBreakdown) => {
+    try {
+      const revenue = parseFloat(inputs.revenue.replace(/,/g, ""));
+      const sde = parseFloat(inputs.sde.replace(/,/g, ""));
+      const price = parseFloat(inputs.askingPrice.replace(/,/g, ""));
+
+      const res = await fetch("/api/benchmark-lookup", {
+        method: "POST", headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ industry: inputs.industry, state: inputs.state || null, revenue, sde, asking_price: price }),
+      });
+      if (!res.ok) return;
+      const data = await res.json();
+      if (!data.success) return;
+
+      const b = data.benchmarks;
+      const a = data.analysis;
+      const c = data.confidence;
+
+      setResults((prev) => {
+        if (!prev) return prev;
+
+        // Recompute valuation score using transaction data
+        let newValScore = prev.valuation.score;
+        let newMarketRange = prev.valuation.marketRange;
+        let newFairValue = prev.valuation.fairValueEstimate;
+        let newOverall = prev.overall;
+
+        if (b.transaction) {
+          const txnMult = b.transaction.cashflowMultiple;
+          newMarketRange = a.effectiveMultipleRange;
+          newFairValue = a.effectiveFairValue;
+          const dealMult = a.dealMultiple;
+
+          if (dealMult <= txnMult * 0.85) newValScore = Math.min(95, 85 + (txnMult - dealMult) / txnMult * 20);
+          else if (dealMult <= txnMult) newValScore = Math.min(90, 70 + (txnMult - dealMult) / txnMult * 40);
+          else if (dealMult <= txnMult * 1.15) newValScore = 70 - ((dealMult - txnMult) / txnMult) * 50;
+          else if (dealMult <= txnMult * 1.3) newValScore = 50 - ((dealMult - txnMult * 1.15) / txnMult) * 60;
+          else newValScore = Math.max(5, 30 - ((dealMult - txnMult * 1.3) / txnMult) * 50);
+          newValScore = Math.round(Math.max(5, Math.min(98, newValScore)));
+
+          const w = c.weights;
+          newOverall = Math.round(Math.max(5, Math.min(98,
+            newValScore * (w.valuation / 100) +
+            prev.debtRisk.score * (w.debt / 100) +
+            prev.marketRisk.score * ((w.financial + w.liquidity) / 200) +
+            prev.industryRisk.score * ((w.financial + w.liquidity) / 200)
+          )));
+        }
+
+        const newRiskLevel: FullScoreBreakdown["riskLevel"] = newOverall >= 70 ? "Low" : newOverall >= 50 ? "Moderate" : newOverall >= 30 ? "High" : "Critical";
+
+        const newRedFlags = [...prev.redFlags];
+        const newGreenFlags = [...prev.greenFlags];
+
+        if (b.transaction && a.sellerBuyerGap && a.sellerBuyerGap > 20) {
+          newRedFlags.push(`Sellers in this industry typically overask by ${a.sellerBuyerGap.toFixed(0)}%`);
+        }
+        if (b.transaction && b.transaction.saleToAskRatio < 0.90) {
+          newGreenFlags.push(`Typical negotiation: ${Math.round((1 - b.transaction.saleToAskRatio) * 100)}% off asking price`);
+        }
+        if (b.transaction && b.transaction.daysOnMarket > 250) {
+          newGreenFlags.push("Long average days on market — leverage for negotiation");
+        }
+
+        return {
+          ...prev,
+          overall: newOverall,
+          riskLevel: newRiskLevel,
+          valuation: { ...prev.valuation, score: newValScore, marketRange: newMarketRange, fairValueEstimate: newFairValue },
+          redFlags: newRedFlags,
+          greenFlags: newGreenFlags,
+          threeLens: {
+            listing: b.listing ? { medianMultiple: b.listing.medianMultiple, sampleSize: b.listing.sampleSize } : null,
+            transaction: b.transaction ? {
+              cashflowMultiple: b.transaction.cashflowMultiple,
+              saleToAskRatio: b.transaction.saleToAskRatio,
+              daysOnMarket: b.transaction.daysOnMarket,
+              reportedSales: b.transaction.reportedSales,
+              subsector: b.transaction.subsector,
+              medianSalePrice: b.transaction.medianSalePrice,
+            } : null,
+            financial: b.financial ? { sdeMargin: b.financial.sdeMargin } : null,
+            sellerBuyerGap: a.sellerBuyerGap,
+            estimatedNegotiatedPrice: a.estimatedNegotiatedPrice,
+            smartOfferRange: a.smartOfferRange,
+            confidence: {
+              overall: c.overall,
+              listing: { grade: c.listing.grade, description: c.listing.description, sampleSize: c.listing.sampleSize },
+              transaction: { grade: c.transaction.grade, description: c.transaction.description, sampleSize: c.transaction.sampleSize },
+              financial: { grade: c.financial.grade, description: c.financial.description, sampleSize: c.financial.sampleSize },
+              weights: c.weights,
+            },
+          },
+        };
+      });
+    } catch (err) {
+      console.error("Benchmark fetch error:", err);
+    }
   };
 
   const recordDeal = async (scores: FullScoreBreakdown) => {
@@ -1159,6 +1274,55 @@ Structure your response as:
                 <p style={{ margin: 0, fontSize: 14, color: "#C4B5FD", lineHeight: 1.7 }}>{renderMarkdown(results.aiInsight)}</p>
               ) : null}
             </div>
+
+            {/* THREE-LENS DATA SOURCES + CONFIDENCE */}
+            {results.threeLens && (
+              <div className="fade-up fade-up-d5" style={{ background: "linear-gradient(135deg, rgba(59,130,246,0.08) 0%, rgba(99,102,241,0.06) 100%)", border: "1px solid rgba(59,130,246,0.2)", borderRadius: 14, padding: "20px 22px", marginBottom: 14 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
+                  <div style={{ padding: "3px 10px", borderRadius: 6, background: results.threeLens.confidence.overall === "HIGH" ? "rgba(16,185,129,0.15)" : results.threeLens.confidence.overall === "MEDIUM" ? "rgba(245,158,11,0.15)" : "rgba(239,68,68,0.15)", border: `1px solid ${results.threeLens.confidence.overall === "HIGH" ? "rgba(16,185,129,0.25)" : results.threeLens.confidence.overall === "MEDIUM" ? "rgba(245,158,11,0.25)" : "rgba(239,68,68,0.25)"}`, fontSize: 11, fontWeight: 700, color: results.threeLens.confidence.overall === "HIGH" ? "#10B981" : results.threeLens.confidence.overall === "MEDIUM" ? "#F59E0B" : "#EF4444" }}>
+                    CONFIDENCE: {results.threeLens.confidence.overall}
+                  </div>
+                  <span style={{ fontSize: 12, color: "#8896A6" }}>Three-lens intelligence</span>
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 14 }}>
+                  {[
+                    { icon: "📊", label: "Listings", ...results.threeLens.confidence.listing },
+                    { icon: "💰", label: "Transactions", ...results.threeLens.confidence.transaction },
+                    { icon: "🏦", label: "Financial", ...results.threeLens.confidence.financial },
+                  ].map((lens) => (
+                    <div key={lens.label} style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                      <span style={{ fontSize: 12 }}>{lens.icon}</span>
+                      <span style={{ fontSize: 11, color: lens.grade === "HIGH" ? "#10B981" : lens.grade === "MEDIUM" ? "#F59E0B" : lens.grade === "LOW" ? "#F97316" : "#6B7280", fontWeight: 600, minWidth: 16 }}>●</span>
+                      <span style={{ fontSize: 12, color: "#94A3B8" }}>{lens.description}</span>
+                    </div>
+                  ))}
+                </div>
+                {results.threeLens.transaction && (
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 10 }}>
+                    <div style={{ padding: "10px 12px", borderRadius: 8, background: "rgba(255,255,255,0.03)" }}>
+                      <div style={{ fontSize: 16, fontWeight: 700, color: "#E2E8F0", fontFamily: "'JetBrains Mono', monospace" }}>{(results.threeLens.transaction.saleToAskRatio * 100).toFixed(0)}%</div>
+                      <div style={{ fontSize: 9, color: "#6B7280", textTransform: "uppercase" }}>Sale-to-Ask</div>
+                    </div>
+                    <div style={{ padding: "10px 12px", borderRadius: 8, background: "rgba(255,255,255,0.03)" }}>
+                      <div style={{ fontSize: 16, fontWeight: 700, color: "#E2E8F0", fontFamily: "'JetBrains Mono', monospace" }}>{results.threeLens.transaction.daysOnMarket}</div>
+                      <div style={{ fontSize: 9, color: "#6B7280", textTransform: "uppercase" }}>Days on Market</div>
+                    </div>
+                    <div style={{ padding: "10px 12px", borderRadius: 8, background: "rgba(255,255,255,0.03)" }}>
+                      <div style={{ fontSize: 16, fontWeight: 700, color: "#E2E8F0", fontFamily: "'JetBrains Mono', monospace" }}>{results.threeLens.transaction.reportedSales.toLocaleString()}</div>
+                      <div style={{ fontSize: 9, color: "#6B7280", textTransform: "uppercase" }}>Closed Sales</div>
+                    </div>
+                  </div>
+                )}
+                {results.threeLens.transaction && (
+                  <div style={{ padding: "10px 14px", borderRadius: 8, background: "rgba(255,255,255,0.03)", fontSize: 12, color: "#94A3B8", lineHeight: 1.5 }}>
+                    {results.threeLens.sellerBuyerGap !== null && results.threeLens.sellerBuyerGap > 5
+                      ? `Based on ${results.threeLens.transaction.reportedSales.toLocaleString()} closed ${results.threeLens.transaction.subsector} transactions, sellers typically overask by ${results.threeLens.sellerBuyerGap.toFixed(0)}%. The median sold price is ${formatCurrency(results.threeLens.transaction.medianSalePrice)} at ${results.threeLens.transaction.cashflowMultiple.toFixed(2)}x cash flow.`
+                      : `Based on ${results.threeLens.transaction.reportedSales.toLocaleString()} closed ${results.threeLens.transaction.subsector} transactions, the median sold multiple is ${results.threeLens.transaction.cashflowMultiple.toFixed(2)}x with ${results.threeLens.transaction.daysOnMarket} median days on market.`
+                    }
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* PDF Export */}
             <div className="fade-up fade-up-d5" style={{ marginBottom: 14 }}>
