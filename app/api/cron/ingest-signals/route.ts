@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
+export const maxDuration = 60;
+
 // This runs as a Vercel Cron Job every 6 hours automatically
 // vercel.json config: { "crons": [{ "path": "/api/cron/ingest-signals", "schedule": "0 */6 * * *" }] }
 
