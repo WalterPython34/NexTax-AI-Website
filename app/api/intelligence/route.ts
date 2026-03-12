@@ -19,17 +19,19 @@ const INDUSTRY_LABELS: Record<string, string> = {
 export async function GET() {
   try {
     // ── Fetch all data sources in parallel
-    const [dealsRes, txnRes, listingRes, leadsRes] = await Promise.all([
+    const [dealsRes, txnRes, listingRes, leadsRes, signalsRes] = await Promise.all([
       supabase.from("deal_runs").select("*").eq("is_valid", true).order("created_at", { ascending: false }).limit(2000),
       supabase.from("industry_transaction_benchmarks").select("*").not("industry_key", "is", null),
       supabase.from("industry_listing_benchmarks").select("*").is("state", null).is("size_band", null),
       supabase.from("deal_leads").select("id, source, created_at").order("created_at", { ascending: false }).limit(500),
+      supabase.from("community_signals").select("*").eq("is_active", true).order("ingested_at", { ascending: false }).limit(500),
     ]);
 
     const deals = dealsRes.data || [];
     const txnBenchmarks = txnRes.data || [];
     const listingBenchmarks = listingRes.data || [];
     const leads = leadsRes.data || [];
+    const signals = signalsRes.data || [];
 
     // ── OVERVIEW KPIs
     const totalDeals = deals.length;
@@ -192,6 +194,52 @@ export async function GET() {
       return { industry: key, label, txnCount, dealCount, userCount, gap: txnCount > 0 ? Math.round((1 - Math.min(dealCount / (txnCount * 0.1), 1)) * 100) : 0 };
     }).sort((a, b) => b.gap - a.gap);
 
+    // ── SIGNAL FEED (from community_signals)
+    const recentSignals = signals.slice(0, 50).map((s) => ({
+      id: s.id, title: s.title, summary: s.summary, platform: s.source_platform,
+      url: s.source_url, author: s.author, industry: s.industry,
+      painCategory: s.pain_category, signalType: s.signal_type,
+      relevance: s.relevance_score, painIntensity: s.pain_intensity,
+      buyerIntent: s.buyer_intent, sentiment: s.sentiment,
+      topics: s.topics, insight: s.ai_insight, contentOp: s.content_opportunity,
+      date: s.original_date || s.ingested_at,
+    }));
+
+    // ── BUYER PAIN INDEX
+    const painCategories = ["valuation", "financial_modeling", "diligence", "seller_addbacks", "dscr", "market_saturation", "competitive", "deal_structure"];
+    const painLabels: Record<string, string> = {
+      valuation: "Valuation Confusion", financial_modeling: "Financial Modeling", diligence: "Due Diligence",
+      seller_addbacks: "Seller Addbacks", dscr: "DSCR & Debt", market_saturation: "Market Saturation",
+      competitive: "Competitive Pressure", deal_structure: "Deal Structure",
+    };
+    const buyerPainIndex = painCategories.map((cat) => {
+      const catSignals = signals.filter((s) => s.pain_category === cat);
+      const avgIntensity = catSignals.length > 0 ? Math.round(catSignals.reduce((s, sig) => s + (sig.pain_intensity || 0), 0) / catSignals.length) : 0;
+      const count = catSignals.length;
+      const recent = catSignals.filter((s) => new Date(s.ingested_at).getTime() > now - 7 * 86400000).length;
+      const prior = catSignals.filter((s) => { const t = new Date(s.ingested_at).getTime(); return t > now - 14 * 86400000 && t <= now - 7 * 86400000; }).length;
+      const weekChange = prior > 0 ? Math.round(((recent - prior) / prior) * 100) : recent > 0 ? 100 : 0;
+      return { category: cat, label: painLabels[cat] || cat, intensity: avgIntensity, count, weekChange };
+    }).sort((a, b) => b.intensity - a.intensity);
+
+    // ── TRENDS
+    const painTrends = painCategories.map((cat) => {
+      const weeklyData = Array.from({ length: 12 }, (_, i) => {
+        const weekStart = now - (11 - i) * 7 * 86400000;
+        const weekEnd = weekStart + 7 * 86400000;
+        const weekSignals = signals.filter((s) => s.pain_category === cat && new Date(s.ingested_at).getTime() >= weekStart && new Date(s.ingested_at).getTime() < weekEnd);
+        return { week: `W${i + 1}`, count: weekSignals.length };
+      });
+      return { category: cat, label: painLabels[cat] || cat, data: weeklyData };
+    });
+
+    const signalStats = {
+      total: signals.length,
+      highRelevance: signals.filter((s) => s.relevance_score >= 70).length,
+      avgPainScore: signals.length > 0 ? Math.round(signals.reduce((s, sig) => s + (sig.pain_intensity || 0), 0) / signals.length) : 0,
+      activeBuyerSignals: signals.filter((s) => s.buyer_intent >= 60).length,
+    };
+
     return NextResponse.json({
       success: true,
       lastUpdated: new Date().toISOString(),
@@ -230,6 +278,10 @@ export async function GET() {
       },
       contentOps,
       serviceGap,
+      signalFeed: recentSignals,
+      buyerPainIndex,
+      painTrends,
+      signalStats,
     });
   } catch (error) {
     console.error("Intelligence API error:", error);
