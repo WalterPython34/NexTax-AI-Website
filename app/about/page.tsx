@@ -9,7 +9,7 @@ export default function AboutPage() {
     {
       name: "Steve Morello",
       role: "CEO & Founder",
-      bio: "After 20+ years navigating the tax landscape at Morgan Stanley and Big 4 firms like EY and KPMG, our founder, Steve Morello, realized the manual, high-cost systems that served enterprises were actively failing the modern entrepreneur. His vision was to take that high-level expertise—from M&A tax structuring to global compliance—and build a platform that democratizes access.",
+      bio: "After 20+ years navigating the tax landscape at Morgan Stanley and Big 4 firms like EY and KPMG, our founder, Steve Morello, realized the manual, high-cost systems that served enterprises were actively failing the modern entrepreneur. His vision was to take that high-level expertise, from M&A tax structuring to global compliance, and build a platform that democratizes access.",
       image: "/images/steve-morello-headshot.jpg",
       credentials: [
         "Registered Agent",
