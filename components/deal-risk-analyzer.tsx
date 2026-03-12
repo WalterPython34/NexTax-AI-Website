@@ -717,23 +717,26 @@ Structure your response as:
     const ind = INDUSTRIES[inputs.industry];
     const location = [inputs.city, inputs.state].filter(Boolean).join(", ");
 
-    // Create multi-page PDF using Canvas
+    // Create multi-page PDF using Canvas at 2x resolution for crisp output
     const pages: HTMLCanvasElement[] = [];
-    const W = 816, H = 1056; // Letter size at 96dpi
+    const S = 2; // Scale factor for high-DPI
+    const W = 816 * S, H = 1056 * S; // Letter size at 192dpi (2x)
+    const PW = 816, PH = 1056; // PDF page size (1x)
 
     // ── Helper functions
     const newPage = () => {
       const c = document.createElement("canvas"); c.width = W; c.height = H;
       const ctx = c.getContext("2d")!;
-      ctx.fillStyle = "#0A0E14"; ctx.fillRect(0, 0, W, H);
+      ctx.scale(S, S); // Scale all drawing ops by 2x
+      ctx.fillStyle = "#0A0E14"; ctx.fillRect(0, 0, PW, PH);
       // Header bar
-      ctx.fillStyle = "rgba(255,255,255,0.03)"; ctx.fillRect(0, 0, W, 44);
-      ctx.fillStyle = "#6366F1"; ctx.font = "bold 13px monospace"; ctx.fillText("NEXTAX", 24, 28);
-      ctx.fillStyle = "#6B7280"; ctx.font = "400 13px monospace"; ctx.fillText(".AI", 82, 28);
-      ctx.fillStyle = "#374151"; ctx.font = "400 10px monospace";
-      ctx.textAlign = "right"; ctx.fillText("DEAL INTELLIGENCE PLATFORM", W - 24, 28); ctx.textAlign = "left";
+      ctx.fillStyle = "rgba(255,255,255,0.04)"; ctx.fillRect(0, 0, PW, 44);
+      ctx.fillStyle = "#FFFFFF"; ctx.font = "bold 15px monospace"; ctx.fillText("NEXTAX", 24, 29);
+      ctx.fillStyle = "#2DD4BF"; ctx.font = "bold 15px monospace"; ctx.fillText(".AI", 90, 29);
+      ctx.fillStyle = "#2DD4BF"; ctx.font = "400 10px monospace";
+      ctx.textAlign = "right"; ctx.fillText("DEAL INTELLIGENCE PLATFORM", PW - 24, 29); ctx.textAlign = "left";
       // Left accent
-      ctx.fillStyle = "#6366F1"; ctx.fillRect(0, 0, 3, H);
+      ctx.fillStyle = "#6366F1"; ctx.fillRect(0, 0, 3, PH);
       pages.push(c);
       return ctx;
     };
@@ -806,7 +809,7 @@ Structure your response as:
     // ── VALUATION ANALYSIS
     ctx.fillStyle = "#818CF8"; ctx.font = "bold 11px monospace"; ctx.fillText("2. VALUATION ANALYSIS", 40, y);
     y += 24;
-    ctx.fillStyle = "rgba(255,255,255,0.03)"; ctx.beginPath(); ctx.roundRect(40, y, W - 80, 100, 8); ctx.fill();
+    ctx.fillStyle = "rgba(255,255,255,0.03)"; ctx.beginPath(); ctx.roundRect(40, y, PW - 80, 100, 8); ctx.fill();
     const valMetrics = [
       ["Asking Multiple", results.valuation.multiple.toFixed(2) + "x SDE"],
       ["Industry Range", results.valuation.marketRange[0] + "–" + results.valuation.marketRange[1] + "x SDE"],
@@ -822,7 +825,7 @@ Structure your response as:
     // ── DEBT & FINANCING
     ctx.fillStyle = "#818CF8"; ctx.font = "bold 11px monospace"; ctx.fillText("3. DEBT & FINANCING", 40, y);
     y += 24;
-    ctx.fillStyle = "rgba(255,255,255,0.03)"; ctx.beginPath(); ctx.roundRect(40, y, W - 80, 110, 8); ctx.fill();
+    ctx.fillStyle = "rgba(255,255,255,0.03)"; ctx.beginPath(); ctx.roundRect(40, y, PW - 80, 110, 8); ctx.fill();
     const debtMetrics = [
       ["Estimated Loan", fmt$(results.debtRisk.loanAmount)],
       ["Down Payment", fmt$(results.debtRisk.downPayment)],
@@ -878,13 +881,13 @@ Structure your response as:
       if (pdfOptions.aiAssessment && results.aiInsight) {
         ctx.fillStyle = "#818CF8"; ctx.font = "bold 11px monospace"; ctx.fillText("5. AI DEAL ASSESSMENT", 40, y);
         y += 20;
-        ctx.fillStyle = "rgba(99,102,241,0.06)"; ctx.beginPath(); ctx.roundRect(40, y, W - 80, 0, 8); ctx.fill();
+        ctx.fillStyle = "rgba(99,102,241,0.06)"; ctx.beginPath(); ctx.roundRect(40, y, PW - 80, 0, 8); ctx.fill();
 
         // Word wrap the AI insight
         ctx.fillStyle = "#C4B5FD"; ctx.font = "400 12px sans-serif";
         const words = results.aiInsight.replace(/\*\*/g, "").split(" ");
         let line = "";
-        const maxW = W - 120;
+        const maxW = PW - 120;
         const lineH = 18;
         let startY = y + 16;
         words.forEach((word) => {
@@ -902,7 +905,7 @@ Structure your response as:
       if (pdfOptions.benchmarks) {
         ctx.fillStyle = "#818CF8"; ctx.font = "bold 11px monospace"; ctx.fillText("6. INDUSTRY BENCHMARKS", 40, y);
         y += 24;
-        ctx.fillStyle = "rgba(255,255,255,0.03)"; ctx.beginPath(); ctx.roundRect(40, y, W - 80, 90, 8); ctx.fill();
+        ctx.fillStyle = "rgba(255,255,255,0.03)"; ctx.beginPath(); ctx.roundRect(40, y, PW - 80, 90, 8); ctx.fill();
 
         const benchItems = [
           ["SDE Margin", results.benchmarks.actualMargin + "%", "Industry: " + results.benchmarks.typicalMargin[0] + "-" + results.benchmarks.typicalMargin[1] + "%"],
@@ -912,40 +915,40 @@ Structure your response as:
         ];
         benchItems.forEach((b, i) => {
           const by = y + 20 + i * 18;
-          ctx.fillStyle = "#6B7280"; ctx.font = "400 11px sans-serif"; ctx.fillText(b[0], 60, by);
-          ctx.fillStyle = "#E2E8F0"; ctx.font = "bold 11px monospace"; ctx.fillText(b[1], 240, by);
-          ctx.fillStyle = "#4B5563"; ctx.font = "400 10px sans-serif"; ctx.fillText(b[2], 420, by);
+          ctx.fillStyle = "#C9D1D9"; ctx.font = "400 11px sans-serif"; ctx.fillText(b[0], 60, by);
+          ctx.fillStyle = "#FFFFFF"; ctx.font = "bold 11px monospace"; ctx.fillText(b[1], 240, by);
+          ctx.fillStyle = "#94A3B8"; ctx.font = "400 10px sans-serif"; ctx.fillText(b[2], 420, by);
         });
         y += 114;
       }
 
       // Footer
-      ctx.fillStyle = "rgba(255,255,255,0.03)"; ctx.fillRect(0, H - 60, W, 60);
+      ctx.fillStyle = "rgba(255,255,255,0.03)"; ctx.fillRect(0, PH - 60, PW, 60);
       ctx.fillStyle = "#374151"; ctx.font = "400 10px sans-serif";
-      ctx.fillText("Generated by NexTax Deal Intelligence Platform — nextax.ai", 40, H - 30);
+      ctx.fillText("Generated by NexTax Deal Intelligence Platform — nextax.ai", 40, PH - 30);
       ctx.textAlign = "right";
-      ctx.fillText(new Date().toLocaleDateString(), W - 40, H - 30);
+      ctx.fillText(new Date().toLocaleDateString(), PW - 40, PH - 30);
       ctx.textAlign = "left";
       ctx.fillStyle = "#374151"; ctx.font = "400 9px sans-serif";
-      ctx.fillText("This report is for informational purposes only and does not constitute financial advice.", 40, H - 16);
+      ctx.fillText("This report is for informational purposes only and does not constitute financial advice.", 40, PH - 16);
     }
 
     // Also add footer to page 1
     const p1ctx = pages[0].getContext("2d")!;
-    p1ctx.fillStyle = "rgba(255,255,255,0.03)"; p1ctx.fillRect(0, H - 60, W, 60);
+    p1ctx.fillStyle = "rgba(255,255,255,0.03)"; p1ctx.fillRect(0, PH - 60, PW, 60);
     p1ctx.fillStyle = "#374151"; p1ctx.font = "400 10px sans-serif";
-    p1ctx.fillText("Generated by NexTax Deal Intelligence Platform — nextax.ai", 40, H - 30);
-    p1ctx.textAlign = "right"; p1ctx.fillText(new Date().toLocaleDateString(), W - 40, H - 30); p1ctx.textAlign = "left";
+    p1ctx.fillText("Generated by NexTax Deal Intelligence Platform — nextax.ai", 40, PH - 30);
+    p1ctx.textAlign = "right"; p1ctx.fillText(new Date().toLocaleDateString(), PW - 40, PH - 30); p1ctx.textAlign = "left";
     p1ctx.fillStyle = "#374151"; p1ctx.font = "400 9px sans-serif";
-    p1ctx.fillText("This report is for informational purposes only and does not constitute financial advice.", 40, H - 16);
+    p1ctx.fillText("This report is for informational purposes only and does not constitute financial advice.", 40, PH - 16);
 
     // ── Convert canvases to PDF using jsPDF
-    const pdf = new jsPDF({ orientation: "portrait", unit: "px", format: [W, H] });
+    const pdf = new jsPDF({ orientation: "portrait", unit: "px", format: [PW, PH] });
 
     pages.forEach((pageCanvas, i) => {
-      if (i > 0) pdf.addPage([W, H]);
+      if (i > 0) pdf.addPage([PW, PH]);
       const imgData = pageCanvas.toDataURL("image/png", 1.0);
-      pdf.addImage(imgData, "PNG", 0, 0, W, H);
+      pdf.addImage(imgData, "PNG", 0, 0, PW, PH);
     });
 
     const filename = `NexTax-Deal-Memo-${ind?.label?.replace(/\s/g, "-") || "Deal"}-${new Date().toISOString().split("T")[0]}.pdf`;
