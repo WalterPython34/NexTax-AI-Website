@@ -4,6 +4,7 @@ import { createClient } from "@supabase/supabase-js";
 // This runs as a Vercel Cron Job every 6 hours
 // vercel.json config: { "crons": [{ "path": "/api/cron/ingest-signals", "schedule": "0 */6 * * *" }] }
 
+
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
