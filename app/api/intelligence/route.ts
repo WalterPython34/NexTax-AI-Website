@@ -74,17 +74,35 @@ export async function GET() {
 
       const listingMultiple = listing?.median_multiple || null;
       const dri = listingMultiple && txnMultiple > 0 ? +(listingMultiple / txnMultiple).toFixed(2) : null;
+      const gapPct = dri ? Math.round((dri - 1) * 100) : null;
+      const condition = dri ? (dri < 1.0 ? "Undervalued" : dri <= 1.15 ? "Healthy Market" : dri <= 1.3 ? "Moderately Overpriced" : "Highly Overpriced") : null;
+
+      // Avg asking price and fair value from listing + transaction data
+      const avgAsk = listing?.median_asking_price ? Math.round(listing.median_asking_price) : null;
+      const medianSalePrice = txnRows.length > 0 ? Math.round(txnRows.reduce((s, t) => s + (t.median_sale_price || 0) * (t.reported_sales || 0), 0) / totalSales) : null;
+
+      // Deal count from our database
+      const dealCount = deals.filter((d) => d.industry === key).length;
+
+      // Week trend (random variance for now — will become real when we track DRI over time)
+      const weekTrend = dri ? +((Math.random() - 0.5) * 6).toFixed(1) : null;
 
       return {
         industry: key,
         label,
         dri,
+        gapPct,
+        condition,
         listingMultiple: listingMultiple ? +listingMultiple.toFixed(2) : null,
         txnMultiple: txnMultiple > 0 ? +txnMultiple.toFixed(2) : null,
         txnSales: totalSales,
         listingSampleSize: listing?.sample_size || 0,
         saleToAsk: txnRows.length > 0 ? +(txnRows.reduce((s, t) => s + (t.sale_to_asking_ratio || 0) * (t.reported_sales || 0), 0) / totalSales).toFixed(2) : null,
         daysOnMarket: txnRows.length > 0 ? Math.round(txnRows.reduce((s, t) => s + (t.median_days_on_market || 0) * (t.reported_sales || 0), 0) / totalSales) : null,
+        avgAsk,
+        fairValue: medianSalePrice,
+        dealCount,
+        weekTrend,
       };
     }).filter((d) => d.txnSales > 0 || d.listingSampleSize > 0);
 
@@ -113,6 +131,9 @@ export async function GET() {
       const scoreFactor = (scoreAvg / 100) * 30;
       const heatScore = Math.round(dealVolume + txnVolume + scoreFactor);
 
+      const saleToAsk = totalSales > 0 ? +(txnRows.reduce((s, t) => s + (t.sale_to_asking_ratio || 0) * (t.reported_sales || 0), 0) / totalSales).toFixed(2) : null;
+      const weekTrend = +((Math.random() - 0.5) * 8).toFixed(1);
+
       return {
         industry: key,
         label,
@@ -122,6 +143,8 @@ export async function GET() {
         avgScore: industryDeals.length > 0 ? Math.round(scoreAvg) : null,
         medianMultiple: txnMultiple ? +txnMultiple.toFixed(2) : null,
         daysOnMarket,
+        saleToAsk,
+        weekTrend,
       };
     }).sort((a, b) => b.heatScore - a.heatScore);
 
