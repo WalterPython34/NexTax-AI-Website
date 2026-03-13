@@ -726,10 +726,15 @@ export default function MarketIntelligenceEngine() {
         {/* ═══════════════════════════════════════════════════════════════════ */}
         {activeTab === "trends" && (
           <div className="fu">
+            <p style={{ fontSize: 13, color: "#94A3B8", margin: "0 0 16px", lineHeight: 1.5 }}>
+              Tracks deal activity, valuation trends, and market signals over time. All charts reflect real deal data from your database.
+            </p>
+
+            {/* Deal Volume Trend */}
             <div style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 14, padding: "20px 22px", marginBottom: 16 }}>
               <h3 style={{ fontSize: 14, fontWeight: 600, color: "#E2E8F0", margin: "0 0 4px" }}>Deal Analysis Volume</h3>
-              <p style={{ fontSize: 12, color: "#6B7280", margin: "0 0 14px" }}>All deals vs user-submitted analyses over 12 weeks</p>
-              <ResponsiveContainer width="100%" height={240}>
+              <p style={{ fontSize: 12, color: "#6B7280", margin: "0 0 14px" }}>Total deals analyzed vs user-submitted analyses per week</p>
+              <ResponsiveContainer width="100%" height={220}>
                 <AreaChart data={overview.weeklyTrend}>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
                   <XAxis dataKey="week" tick={{ fill: "#4B5563", fontSize: 10 }} axisLine={false} tickLine={false} />
@@ -739,11 +744,85 @@ export default function MarketIntelligenceEngine() {
                   <Area type="monotone" dataKey="userDeals" stroke="#F59E0B" fill="rgba(245,158,11,0.06)" strokeWidth={1.5} name="User Analyses" />
                 </AreaChart>
               </ResponsiveContainer>
+              <div style={{ display: "flex", justifyContent: "center", gap: 20, marginTop: 6, fontSize: 10 }}>
+                <span style={{ color: "#10B981" }}>● All Deals</span>
+                <span style={{ color: "#F59E0B" }}>● User Analyses</span>
+              </div>
             </div>
 
-            <h3 style={{ fontSize: 14, fontWeight: 600, color: "#94A3B8", margin: "0 0 12px" }}>Pain Category Trends (12 Weeks)</h3>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 16 }}>
+              {/* Average Deal Score Trend */}
+              <div style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 14, padding: "20px 22px" }}>
+                <h3 style={{ fontSize: 14, fontWeight: 600, color: "#E2E8F0", margin: "0 0 4px" }}>Average Deal Score</h3>
+                <p style={{ fontSize: 12, color: "#6B7280", margin: "0 0 14px" }}>Quality of deals being analyzed each week</p>
+                <ResponsiveContainer width="100%" height={180}>
+                  <LineChart data={overview.weeklyTrend}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+                    <XAxis dataKey="week" tick={{ fill: "#4B5563", fontSize: 9 }} axisLine={false} tickLine={false} />
+                    <YAxis domain={[0, 100]} tick={{ fill: "#4B5563", fontSize: 9 }} axisLine={false} tickLine={false} />
+                    <Tooltip contentStyle={{ background: "#1A1F2E", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, fontSize: 12 }} />
+                    <Line type="monotone" dataKey="avgScore" stroke="#818CF8" strokeWidth={2.5} dot={{ fill: "#818CF8", r: 3 }} name="Avg Score" connectNulls />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* Average Multiple Trend */}
+              <div style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 14, padding: "20px 22px" }}>
+                <h3 style={{ fontSize: 14, fontWeight: 600, color: "#E2E8F0", margin: "0 0 4px" }}>Average Valuation Multiple</h3>
+                <p style={{ fontSize: 12, color: "#6B7280", margin: "0 0 14px" }}>How deals are being priced relative to cash flow</p>
+                <ResponsiveContainer width="100%" height={180}>
+                  <LineChart data={overview.weeklyTrend}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+                    <XAxis dataKey="week" tick={{ fill: "#4B5563", fontSize: 9 }} axisLine={false} tickLine={false} />
+                    <YAxis domain={[0, 6]} tick={{ fill: "#4B5563", fontSize: 9 }} axisLine={false} tickLine={false} tickFormatter={(v: number) => v.toFixed(1) + "x"} />
+                    <Tooltip contentStyle={{ background: "#1A1F2E", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, fontSize: 12 }} formatter={(v: number) => v ? v.toFixed(2) + "x" : "—"} />
+                    <Line type="monotone" dataKey="avgMultiple" stroke="#F59E0B" strokeWidth={2.5} dot={{ fill: "#F59E0B", r: 3 }} name="Avg Multiple" connectNulls />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 16 }}>
+              {/* Risk Distribution Trend */}
+              <div style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 14, padding: "20px 22px" }}>
+                <h3 style={{ fontSize: 14, fontWeight: 600, color: "#E2E8F0", margin: "0 0 4px" }}>Deal Risk Trend</h3>
+                <p style={{ fontSize: 12, color: "#6B7280", margin: "0 0 14px" }}>Low risk (score 70+) vs high risk (score &lt;40) deals per week</p>
+                <ResponsiveContainer width="100%" height={180}>
+                  <BarChart data={overview.weeklyTrend}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+                    <XAxis dataKey="week" tick={{ fill: "#4B5563", fontSize: 9 }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fill: "#4B5563", fontSize: 9 }} axisLine={false} tickLine={false} />
+                    <Tooltip contentStyle={{ background: "#1A1F2E", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, fontSize: 12 }} />
+                    <Bar dataKey="lowRisk" fill="#10B981" name="Low Risk (70+)" radius={[2, 2, 0, 0]} />
+                    <Bar dataKey="highRisk" fill="#EF4444" name="High Risk (<40)" radius={[2, 2, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+                <div style={{ display: "flex", justifyContent: "center", gap: 16, marginTop: 6, fontSize: 10 }}>
+                  <span style={{ color: "#10B981" }}>● Low Risk (70+)</span>
+                  <span style={{ color: "#EF4444" }}>● High Risk (&lt;40)</span>
+                </div>
+              </div>
+
+              {/* Average Revenue Trend */}
+              <div style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 14, padding: "20px 22px" }}>
+                <h3 style={{ fontSize: 14, fontWeight: 600, color: "#E2E8F0", margin: "0 0 4px" }}>Average Deal Revenue</h3>
+                <p style={{ fontSize: 12, color: "#6B7280", margin: "0 0 14px" }}>Size of deals being analyzed each week</p>
+                <ResponsiveContainer width="100%" height={180}>
+                  <AreaChart data={overview.weeklyTrend}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+                    <XAxis dataKey="week" tick={{ fill: "#4B5563", fontSize: 9 }} axisLine={false} tickLine={false} />
+                    <YAxis tick={{ fill: "#4B5563", fontSize: 9 }} axisLine={false} tickLine={false} tickFormatter={(v: number) => v >= 1000000 ? `$${(v / 1000000).toFixed(1)}M` : `$${Math.round(v / 1000)}K`} />
+                    <Tooltip contentStyle={{ background: "#1A1F2E", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, fontSize: 12 }} formatter={(v: number) => v ? fmt(v) : "—"} />
+                    <Area type="monotone" dataKey="avgRevenue" stroke="#3B82F6" fill="rgba(59,130,246,0.08)" strokeWidth={2} name="Avg Revenue" connectNulls />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            {/* Pain Category Trends */}
+            <h3 style={{ fontSize: 14, fontWeight: 600, color: "#94A3B8", margin: "0 0 12px" }}>Community Pain Trends (12 Weeks)</h3>
             {(!painTrends || painTrends.length === 0) ? (
-              <div style={{ padding: "30px", textAlign: "center", color: "#6B7280", fontSize: 13, background: "rgba(255,255,255,0.025)", borderRadius: 12 }}>Trends populate as signals accumulate over time.</div>
+              <div style={{ padding: "30px", textAlign: "center", color: "#6B7280", fontSize: 13, background: "rgba(255,255,255,0.025)", borderRadius: 12 }}>Pain trends populate as community signals accumulate over time.</div>
             ) : (
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12 }}>
                 {painTrends.map((trend: {category: string; label: string; data: {week: string; count: number}[]}) => (
@@ -752,7 +831,7 @@ export default function MarketIntelligenceEngine() {
                       <div style={{ width: 8, height: 8, borderRadius: 2, background: PAIN_COLORS[trend.category] || "#6366F1" }} />
                       <span style={{ fontSize: 13, fontWeight: 600, color: "#C9D1D9" }}>{trend.label}</span>
                     </div>
-                    <ResponsiveContainer width="100%" height={100}>
+                    <ResponsiveContainer width="100%" height={80}>
                       <AreaChart data={trend.data}>
                         <XAxis dataKey="week" tick={{ fill: "#4B5563", fontSize: 8 }} axisLine={false} tickLine={false} />
                         <YAxis hide />
