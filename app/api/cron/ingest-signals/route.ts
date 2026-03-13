@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
-
 export const maxDuration = 60;
 
-// This runs as a Vercel Cron Job every 6 hours automatically
+// This runs as a Vercel Cron Job every 6 hours
 // vercel.json config: { "crons": [{ "path": "/api/cron/ingest-signals", "schedule": "0 */6 * * *" }] }
 
 const supabase = createClient(
@@ -34,7 +33,7 @@ export async function GET(req: NextRequest) {
   // Verify cron secret (Vercel sends this header for cron jobs)
   const authHeader = req.headers.get("authorization");
   const querySecret = new URL(req.url).searchParams.get("secret");
-if (authHeader !== `Bearer ${process.env.CRON_SECRET}` && querySecret !== process.env.CRON_SECRET && process.env.NODE_ENV === "production") {
+  if (authHeader !== `Bearer ${process.env.CRON_SECRET}` && querySecret !== process.env.CRON_SECRET && process.env.NODE_ENV === "production") {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -44,7 +43,7 @@ if (authHeader !== `Bearer ${process.env.CRON_SECRET}` && querySecret !== proces
   try {
     // Pick 3 random search queries per run to stay within limits
     const shuffled = [...SEARCH_QUERIES].sort(() => Math.random() - 0.5);
-    const queriesToRun = shuffled.slice(0, 2);
+    const queriesToRun = shuffled.slice(0, 1);
 
     for (const query of queriesToRun) {
       try {
@@ -158,11 +157,35 @@ ONLY return the JSON array. No other text.`,
       } catch { /* Skip failed query, continue with next */ }
     }
 
+    // ── MAINTENANCE TASKS ──────────────────────────────────────────────
+
+    // 1. Recompute listing benchmarks from deal_runs
+    let benchmarksRecomputed = false;
+    try {
+      const { error: rpcError } = await supabase.rpc("compute_listing_benchmarks");
+      benchmarksRecomputed = !rpcError;
+      if (rpcError) console.error("Benchmark recompute error:", rpcError);
+    } catch { benchmarksRecomputed = false; }
+
+    // 2. Clean up stale signals (older than 90 days)
+    let staleRemoved = 0;
+    try {
+      const cutoff = new Date(Date.now() - 90 * 86400000).toISOString();
+      const { count } = await supabase
+        .from("community_signals")
+        .delete()
+        .lt("ingested_at", cutoff)
+        .select("*", { count: "exact", head: true });
+      staleRemoved = count || 0;
+    } catch { /* non-blocking */ }
+
     return NextResponse.json({
       success: true,
       batch_id: batchId,
       queries_run: queriesToRun.length,
       signals_ingested: totalIngested,
+      benchmarks_recomputed: benchmarksRecomputed,
+      stale_signals_removed: staleRemoved,
     });
   } catch (error) {
     console.error("Signal ingestion error:", error);
