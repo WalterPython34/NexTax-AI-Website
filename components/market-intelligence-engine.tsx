@@ -634,8 +634,46 @@ export default function MarketIntelligenceEngine() {
         {/* ═══════════════════════════════════════════════════════════════════ */}
         {/* INDUSTRY HEATMAP TAB */}
         {/* ═══════════════════════════════════════════════════════════════════ */}
-        {activeTab === "heatmap" && (
+        {activeTab === "heatmap" && (() => {
+          const heatColor = (score: number, total: number, idx: number) => {
+            const pct = total > 0 ? idx / total : 1;
+            if (pct < 0.15) return "#EF4444";  // hottest = red
+            if (pct < 0.35) return "#F97316";  // orange
+            if (pct < 0.55) return "#F59E0B";  // yellow
+            if (pct < 0.75) return "#FCD34D";  // light yellow
+            return "#4B5563";                   // cool = gray
+          };
+          const top3 = industryHeatmap.slice(0, 3);
+
+          return (
           <div className="fu">
+            {/* Description */}
+            <p style={{ fontSize: 13, color: "#94A3B8", margin: "0 0 16px", lineHeight: 1.5 }}>
+              Ranks industries by deal activity, transaction volume, and average deal quality. Higher heat scores indicate more active markets with stronger deal flow.
+            </p>
+
+            {/* Top 3 Hottest Industries */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 12, marginBottom: 20 }}>
+              {top3.map((ind: {label: string; heatScore: number; weekTrend: number}, i: number) => {
+                const medals = ["🔥", "🔥", "🔥"];
+                const colors = ["#EF4444", "#F97316", "#F59E0B"];
+                return (
+                  <div key={ind.label} style={{ background: `${colors[i]}08`, border: `1px solid ${colors[i]}20`, borderRadius: 14, padding: "18px 20px" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 6 }}>
+                      <span style={{ fontSize: 13, fontWeight: 700, color: "#E2E8F0" }}>{medals[i]} #{i + 1} Hottest</span>
+                      <span style={{ fontSize: 11, fontWeight: 600, color: ind.weekTrend > 0 ? "#EF4444" : "#10B981", fontFamily: "'JetBrains Mono', monospace" }}>
+                        {ind.weekTrend > 0 ? `▲ +${ind.weekTrend}%` : `▼ ${ind.weekTrend}%`}
+                      </span>
+                    </div>
+                    <div style={{ fontSize: 20, fontWeight: 700, color: colors[i], fontFamily: "'Instrument Serif', serif", marginBottom: 2 }}>{ind.label}</div>
+                    <div style={{ fontSize: 28, fontWeight: 800, color: colors[i], fontFamily: "'JetBrains Mono', monospace" }}>{ind.heatScore}</div>
+                    <div style={{ fontSize: 10, color: "#6B7280" }}>Heat Score</div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Heatmap Chart */}
             <div style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 14, padding: "20px 22px", marginBottom: 16 }}>
               <h3 style={{ fontSize: 14, fontWeight: 600, color: "#94A3B8", margin: "0 0 14px" }}>Industry Activity Heatmap</h3>
               <ResponsiveContainer width="100%" height={Math.max(400, industryHeatmap.length * 28)}>
@@ -643,33 +681,36 @@ export default function MarketIntelligenceEngine() {
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" horizontal={false} />
                   <XAxis type="number" tick={{ fill: "#4B5563", fontSize: 10 }} axisLine={false} tickLine={false} />
                   <YAxis type="category" dataKey="label" tick={{ fill: "#C9D1D9", fontSize: 11 }} axisLine={false} tickLine={false} width={130} />
-                  <Tooltip contentStyle={{ background: "#1A1F2E", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, fontSize: 12 }} />
+                  <Tooltip contentStyle={{ background: "#1A1F2E", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, fontSize: 12 }} formatter={(value: number, _name: string, props: {payload: {heatScore: number}}) => { const c = heatColor(props.payload.heatScore, industryHeatmap.length, industryHeatmap.findIndex((h: {heatScore: number}) => h.heatScore === props.payload.heatScore)); return [<span style={{color: c, fontWeight: 700}}>{value}</span>, "Heat Score"]; }} />
                   <Bar dataKey="heatScore" radius={[0, 6, 6, 0]} name="Heat Score">
-                    {industryHeatmap.map((_: unknown, i: number) => <Cell key={i} fill={i < 3 ? "#10B981" : i < 8 ? "#F59E0B" : i < 15 ? "#6366F1" : "#374151"} fillOpacity={0.7} />)}
+                    {industryHeatmap.map((_: unknown, i: number) => <Cell key={i} fill={heatColor(0, industryHeatmap.length, i)} fillOpacity={0.8} />)}
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </div>
 
+            {/* Industry Detail Table */}
             <div style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 14, padding: "18px 20px" }}>
               <h3 style={{ fontSize: 14, fontWeight: 600, color: "#94A3B8", margin: "0 0 14px" }}>Industry Detail</h3>
               <div style={{ overflowX: "auto" }}>
                 <table style={{ width: "100%", borderCollapse: "collapse" }}>
                   <thead><tr>
-                    {["Industry", "Heat", "Deals", "Txn Vol", "Avg Score", "Median Mult", "DOM"].map((h) => (
-                      <th key={h} style={{ padding: "8px 10px", fontSize: 10, color: "#6B7280", fontWeight: 600, textTransform: "uppercase", textAlign: "left", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>{h}</th>
+                    {["Industry", "Heat Score", "Deals in Database", "Transaction Volume", "Average Score", "Median Multiple", "Days on Market", "Sale to Ask", "Trend"].map((h) => (
+                      <th key={h} style={{ padding: "8px 10px", fontSize: 10, color: "#6B7280", fontWeight: 600, textTransform: "uppercase", textAlign: "center", borderBottom: "1px solid rgba(255,255,255,0.06)", whiteSpace: "normal", lineHeight: 1.3 }}>{h}</th>
                     ))}
                   </tr></thead>
                   <tbody>
-                    {industryHeatmap.map((ind: {industry: string; label: string; heatScore: number; dealCount: number; txnCount: number; avgScore: number | null; medianMultiple: number | null; daysOnMarket: number | null}) => (
+                    {industryHeatmap.map((ind: {industry: string; label: string; heatScore: number; dealCount: number; txnCount: number; avgScore: number | null; medianMultiple: number | null; daysOnMarket: number | null; saleToAsk: number | null; weekTrend: number}, i: number) => (
                       <tr key={ind.industry} style={{ borderBottom: "1px solid rgba(255,255,255,0.03)" }}>
-                        <td style={{ padding: "8px 10px", fontSize: 13, color: "#E2E8F0", fontWeight: 500 }}>{ind.label}</td>
-                        <td style={{ padding: "8px 10px", fontSize: 14, fontWeight: 700, color: ind.heatScore >= 60 ? "#10B981" : ind.heatScore >= 30 ? "#F59E0B" : "#6B7280", fontFamily: "'JetBrains Mono', monospace" }}>{ind.heatScore}</td>
-                        <td style={{ padding: "8px 10px", fontSize: 12, color: "#94A3B8", fontFamily: "'JetBrains Mono', monospace" }}>{ind.dealCount}</td>
-                        <td style={{ padding: "8px 10px", fontSize: 12, color: "#94A3B8", fontFamily: "'JetBrains Mono', monospace" }}>{ind.txnCount.toLocaleString()}</td>
-                        <td style={{ padding: "8px 10px", fontSize: 12, color: ind.avgScore ? sc(ind.avgScore) : "#4B5563", fontFamily: "'JetBrains Mono', monospace" }}>{ind.avgScore || "—"}</td>
-                        <td style={{ padding: "8px 10px", fontSize: 12, color: "#94A3B8", fontFamily: "'JetBrains Mono', monospace" }}>{ind.medianMultiple ? ind.medianMultiple + "x" : "—"}</td>
-                        <td style={{ padding: "8px 10px", fontSize: 12, color: "#94A3B8", fontFamily: "'JetBrains Mono', monospace" }}>{ind.daysOnMarket || "—"}</td>
+                        <td style={{ padding: "8px 10px", fontSize: 13, color: "#E2E8F0", fontWeight: 500, textAlign: "left" }}>{ind.label}</td>
+                        <td style={{ padding: "8px 10px", fontSize: 14, fontWeight: 700, color: heatColor(0, industryHeatmap.length, i), fontFamily: "'JetBrains Mono', monospace", textAlign: "center" }}>{ind.heatScore}</td>
+                        <td style={{ padding: "8px 10px", fontSize: 12, color: "#94A3B8", fontFamily: "'JetBrains Mono', monospace", textAlign: "center" }}>{ind.dealCount}</td>
+                        <td style={{ padding: "8px 10px", fontSize: 12, color: "#94A3B8", fontFamily: "'JetBrains Mono', monospace", textAlign: "center" }}>{ind.txnCount.toLocaleString()}</td>
+                        <td style={{ padding: "8px 10px", fontSize: 12, color: ind.avgScore ? sc(ind.avgScore) : "#4B5563", fontFamily: "'JetBrains Mono', monospace", textAlign: "center" }}>{ind.avgScore || "—"}</td>
+                        <td style={{ padding: "8px 10px", fontSize: 12, color: "#94A3B8", fontFamily: "'JetBrains Mono', monospace", textAlign: "center" }}>{ind.medianMultiple ? ind.medianMultiple + "x" : "—"}</td>
+                        <td style={{ padding: "8px 10px", fontSize: 12, color: "#94A3B8", fontFamily: "'JetBrains Mono', monospace", textAlign: "center" }}>{ind.daysOnMarket || "—"}</td>
+                        <td style={{ padding: "8px 10px", fontSize: 12, color: "#94A3B8", fontFamily: "'JetBrains Mono', monospace", textAlign: "center" }}>{ind.saleToAsk ? (ind.saleToAsk * 100).toFixed(0) + "%" : "—"}</td>
+                        <td style={{ padding: "8px 10px", fontSize: 12, fontWeight: 600, color: ind.weekTrend > 0 ? "#EF4444" : "#10B981", fontFamily: "'JetBrains Mono', monospace", textAlign: "center" }}>{ind.weekTrend > 0 ? `▲ ${ind.weekTrend}%` : `▼ ${Math.abs(ind.weekTrend)}%`}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -677,7 +718,8 @@ export default function MarketIntelligenceEngine() {
               </div>
             </div>
           </div>
-        )}
+          );
+        })()}
 
         {/* ═══════════════════════════════════════════════════════════════════ */}
         {/* TRENDS TAB */}
