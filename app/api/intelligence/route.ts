@@ -51,11 +51,17 @@ export async function GET() {
         const t = new Date(d.created_at).getTime();
         return t >= weekStart && t < weekEnd;
       });
+      const weekMultiples = weekDeals.filter((d) => d.valuation_multiple > 0 && d.valuation_multiple < 20).map((d) => d.valuation_multiple);
+      const weekRevenues = weekDeals.filter((d) => d.revenue > 0).map((d) => d.revenue);
       return {
         week: `W${i + 1}`,
         deals: weekDeals.length,
         avgScore: weekDeals.length > 0 ? Math.round(weekDeals.reduce((s, d) => s + (d.overall_score || 0), 0) / weekDeals.length) : null,
         userDeals: weekDeals.filter((d) => d.data_source_type === "user_submitted").length,
+        avgMultiple: weekMultiples.length > 0 ? +(weekMultiples.reduce((s, v) => s + v, 0) / weekMultiples.length).toFixed(2) : null,
+        avgRevenue: weekRevenues.length > 0 ? Math.round(weekRevenues.reduce((s, v) => s + v, 0) / weekRevenues.length) : null,
+        lowRisk: weekDeals.filter((d) => d.overall_score >= 70).length,
+        highRisk: weekDeals.filter((d) => d.overall_score < 40).length,
       };
     });
 
