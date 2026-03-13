@@ -7,6 +7,8 @@ function fmt(v: number) { return new Intl.NumberFormat("en-US", { style: "curren
 function driColor(d: number) { return d < 1.0 ? "#10B981" : d <= 1.15 ? "#3B82F6" : d <= 1.3 ? "#F59E0B" : "#EF4444"; }
 function driLabel(d: number) { return d < 1.0 ? "Undervalued" : d <= 1.15 ? "Fair Market" : d <= 1.3 ? "Overpriced" : "Highly Overpriced"; }
 function sc(s: number) { return s >= 70 ? "#10B981" : s >= 50 ? "#F59E0B" : s >= 30 ? "#F97316" : "#EF4444"; }
+function sentimentColor(s: number) { return s >= 75 ? "#10B981" : s >= 60 ? "#84CC16" : s >= 45 ? "#F59E0B" : s >= 30 ? "#F97316" : "#EF4444"; }
+function sentimentLabel(s: number) { return s >= 75 ? "Very Bullish" : s >= 60 ? "Bullish" : s >= 45 ? "Neutral" : s >= 30 ? "Bearish" : "Very Bearish"; }
 const PAIN_COLORS: Record<string, string> = { valuation: "#EF4444", financial_modeling: "#F59E0B", diligence: "#3B82F6", seller_addbacks: "#8B5CF6", dscr: "#F97316", market_saturation: "#EC4899", competitive: "#14B8A6", deal_structure: "#6366F1" };
 
 const TABS = [
@@ -21,8 +23,8 @@ const TABS = [
   { id: "gaps", label: "Service Gap Map", icon: "📊" },
 ];
 
-function ScoreRing({ score, size = 120, sw = 7, label }: { score: number; size?: number; sw?: number; label?: string }) {
-  const r = (size - sw) / 2, c = r * 2 * Math.PI, o = c - (score / 100) * c, col = sc(score);
+function ScoreRing({ score, size = 120, sw = 7, label, color }: { score: number; size?: number; sw?: number; label?: string; color?: string }) {
+  const r = (size - sw) / 2, c = r * 2 * Math.PI, o = c - (score / 100) * c, col = color || sc(score);
   return (
     <div style={{ position: "relative", width: size, height: size, display: "inline-block" }}>
       <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }}>
@@ -587,24 +589,30 @@ export default function MarketIntelligenceEngine() {
         {/* ═══════════════════════════════════════════════════════════════════ */}
         {activeTab === "sentiment" && (
           <div className="fu">
+            <p style={{ fontSize: 13, color: "#94A3B8", margin: "0 0 16px", lineHeight: 1.5 }}>
+              Measures deal optimism vs pessimism across acquisition communities. Tracks shifts in buyer confidence over time.
+            </p>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: 14, marginBottom: 20 }}>
               <div style={{ textAlign: "center", padding: "36px 24px", borderRadius: 16, background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)" }}>
-                <div style={{ fontSize: 10, color: "#6B7280", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 8 }}>Market Optimism</div>
-                <ScoreRing score={sentiment.score} size={140} sw={9} label="optimism" />
-                <div style={{ fontSize: 18, fontWeight: 700, color: sentiment.label === "Bullish" ? "#10B981" : sentiment.label === "Neutral" ? "#F59E0B" : "#EF4444", marginTop: 8 }}>{sentiment.label}</div>
+                <div style={{ fontSize: 10, color: "#6B7280", textTransform: "uppercase", letterSpacing: "0.15em", marginBottom: 12 }}>Deal Optimism Score</div>
+                <ScoreRing score={sentiment.score} size={140} sw={9} label="optimism" color={sentimentColor(sentiment.score)} />
+                <div style={{ display: "inline-block", padding: "4px 18px", borderRadius: 20, background: `${sentimentColor(sentiment.score)}18`, border: `1px solid ${sentimentColor(sentiment.score)}30`, fontSize: 14, fontWeight: 700, color: sentimentColor(sentiment.score), marginTop: 8 }}>{sentimentLabel(sentiment.score)}</div>
               </div>
               <div style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, padding: "20px 22px" }}>
-                <h3 style={{ fontSize: 14, fontWeight: 600, color: "#E2E8F0", margin: "0 0 4px" }}>Sentiment Trend (12 Weeks)</h3>
-                <p style={{ fontSize: 12, color: "#6B7280", margin: "0 0 14px" }}>Optimism score based on deal quality distribution</p>
+                <h3 style={{ fontSize: 14, fontWeight: 600, color: "#E2E8F0", margin: "0 0 4px" }}>Weekly Sentiment Trend</h3>
+                <p style={{ fontSize: 12, color: "#6B7280", margin: "0 0 14px" }}>Optimism score tracked over 12 weeks</p>
                 <ResponsiveContainer width="100%" height={200}>
                   <AreaChart data={sentiment.trend}>
                     <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
                     <XAxis dataKey="week" tick={{ fill: "#4B5563", fontSize: 10 }} axisLine={false} tickLine={false} />
                     <YAxis domain={[0, 100]} tick={{ fill: "#4B5563", fontSize: 10 }} axisLine={false} tickLine={false} />
                     <Tooltip contentStyle={{ background: "#1A1F2E", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, fontSize: 12 }} />
-                    <Area type="monotone" dataKey="score" stroke="#818CF8" fill="rgba(99,102,241,0.1)" strokeWidth={2.5} />
+                    <Area type="monotone" dataKey="score" stroke={sentimentColor(sentiment.score)} fill={`${sentimentColor(sentiment.score)}15`} strokeWidth={2.5} />
                   </AreaChart>
                 </ResponsiveContainer>
+                <div style={{ display: "flex", justifyContent: "center", gap: 6, marginTop: 6 }}>
+                  <span style={{ fontSize: 10, color: sentimentColor(sentiment.score) }}>● Optimism Score (0-100)</span>
+                </div>
               </div>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
