@@ -82,7 +82,7 @@ For each discussion found, return a JSON array (no markdown, no backticks). Each
   "source_url": "URL if available, otherwise null",
   "author": "username if visible, otherwise null",
   "industry": "matched industry key (hvac, dental, cleaning, etc) or null",
-  "pain_category": one of: "valuation", "financial_modeling", "diligence", "seller_addbacks", "dscr", "market_saturation", "competitive", "deal_structure",
+  "pain_category": one of: "valuation", "financial_modeling", "diligence", "seller_addbacks", "dscr", "sde", "market_research", "cash_flow", "market_saturation", "competitive", "deal_structure",
   "signal_type": one of: "question", "deal_share", "advice", "complaint", "success_story", "market_insight",
   "relevance_score": 0-100 (how relevant to SMB acquisition intelligence),
   "pain_intensity": 0-100 (how much pain/urgency is expressed),
