@@ -45,6 +45,10 @@ export default function MarketIntelligenceEngine() {
   const [activeTab, setActiveTab] = useState("overview");
   const [error, setError] = useState("");
   const [signalFilter, setSignalFilter] = useState("all");
+  const [signalSearch, setSignalSearch] = useState("");
+  const [signalSort, setSignalSort] = useState("relevance");
+  const [signalMinScore, setSignalMinScore] = useState(0);
+  const [signalPainFilter, setSignalPainFilter] = useState("all");
 
   useEffect(() => {
     async function fetchData() {
@@ -264,20 +268,32 @@ export default function MarketIntelligenceEngine() {
             {/* Most Overpriced vs Closest to Fair */}
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 16 }}>
               <div style={{ background: "rgba(239,68,68,0.04)", border: "1px solid rgba(239,68,68,0.12)", borderRadius: 12, padding: "18px 20px" }}>
-                <div style={{ fontSize: 10, color: "#EF4444", textTransform: "uppercase", fontWeight: 600, marginBottom: 10 }}>🔴 Most Overpriced</div>
-                {dri.byIndustry.filter((d: {dri: number | null}) => d.dri !== null).sort((a: {dri: number}, b: {dri: number}) => b.dri - a.dri).slice(0, 5).map((ind: {label: string; dri: number; txnMultiple: number}) => (
-                  <div key={ind.label} style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-                    <span style={{ fontSize: 12, color: "#C9D1D9" }}>{ind.label}</span>
-                    <span style={{ fontSize: 13, fontWeight: 700, color: driColor(ind.dri), fontFamily: "'JetBrains Mono', monospace" }}>{ind.dri.toFixed(2)}</span>
+                <div style={{ fontSize: 10, color: "#EF4444", textTransform: "uppercase", fontWeight: 600, marginBottom: 10 }}>🔴 Most Overpriced Industries</div>
+                {dri.byIndustry.filter((d: {dri: number | null}) => d.dri !== null).sort((a: {dri: number}, b: {dri: number}) => b.dri - a.dri).slice(0, 5).map((ind: {label: string; dri: number; gapPct: number; dealCount: number}, i: number) => (
+                  <div key={ind.label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+                    <div>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: "#E2E8F0" }}>{i + 1}. {ind.label}</span>
+                      <div style={{ fontSize: 10, color: "#6B7280" }}>{ind.dealCount} deals</div>
+                    </div>
+                    <div style={{ textAlign: "right" }}>
+                      <span style={{ fontSize: 15, fontWeight: 700, color: driColor(ind.dri), fontFamily: "'JetBrains Mono', monospace" }}>{ind.dri.toFixed(2)}</span>
+                      <div style={{ fontSize: 10, color: "#EF4444" }}>+{ind.gapPct}% gap</div>
+                    </div>
                   </div>
                 ))}
               </div>
               <div style={{ background: "rgba(16,185,129,0.04)", border: "1px solid rgba(16,185,129,0.12)", borderRadius: 12, padding: "18px 20px" }}>
                 <div style={{ fontSize: 10, color: "#10B981", textTransform: "uppercase", fontWeight: 600, marginBottom: 10 }}>🟢 Closest to Fair Value</div>
-                {dri.byIndustry.filter((d: {dri: number | null}) => d.dri !== null).sort((a: {dri: number}, b: {dri: number}) => Math.abs(a.dri - 1) - Math.abs(b.dri - 1)).slice(0, 5).map((ind: {label: string; dri: number}) => (
-                  <div key={ind.label} style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
-                    <span style={{ fontSize: 12, color: "#C9D1D9" }}>{ind.label}</span>
-                    <span style={{ fontSize: 13, fontWeight: 700, color: driColor(ind.dri), fontFamily: "'JetBrains Mono', monospace" }}>{ind.dri.toFixed(2)}</span>
+                {dri.byIndustry.filter((d: {dri: number | null}) => d.dri !== null).sort((a: {dri: number}, b: {dri: number}) => Math.abs(a.dri - 1) - Math.abs(b.dri - 1)).slice(0, 5).map((ind: {label: string; dri: number; gapPct: number; dealCount: number}, i: number) => (
+                  <div key={ind.label} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+                    <div>
+                      <span style={{ fontSize: 13, fontWeight: 600, color: "#E2E8F0" }}>{i + 1}. {ind.label}</span>
+                      <div style={{ fontSize: 10, color: "#6B7280" }}>{ind.dealCount} deals</div>
+                    </div>
+                    <div style={{ textAlign: "right" }}>
+                      <span style={{ fontSize: 15, fontWeight: 700, color: driColor(ind.dri), fontFamily: "'JetBrains Mono', monospace" }}>{ind.dri.toFixed(2)}</span>
+                      <div style={{ fontSize: 10, color: "#10B981" }}>+{ind.gapPct}% gap</div>
+                    </div>
                   </div>
                 ))}
               </div>
@@ -285,24 +301,25 @@ export default function MarketIntelligenceEngine() {
 
             {/* Full Industry DRI Table */}
             <div style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, padding: "18px 20px" }}>
-              <h3 style={{ fontSize: 14, fontWeight: 600, color: "#94A3B8", margin: "0 0 14px" }}>Full Industry Breakdown</h3>
+              <h3 style={{ fontSize: 14, fontWeight: 600, color: "#94A3B8", margin: "0 0 14px" }}>Industry Detail</h3>
               <div style={{ overflowX: "auto" }}>
                 <table style={{ width: "100%", borderCollapse: "collapse" }}>
                   <thead><tr>
-                    {["Industry", "DRI", "Listing Mult", "Sold Mult", "Sale/Ask", "Days on Market", "Txn Volume"].map((h) => (
+                    {["Industry", "DRI", "Gap", "Avg Ask", "Fair Value", "Deals", "Trend", "Condition"].map((h) => (
                       <th key={h} style={{ padding: "8px 10px", fontSize: 10, color: "#6B7280", fontWeight: 600, textTransform: "uppercase", textAlign: "left", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>{h}</th>
                     ))}
                   </tr></thead>
                   <tbody>
-                    {dri.byIndustry.sort((a: {dri: number | null}, b: {dri: number | null}) => (b.dri || 0) - (a.dri || 0)).map((ind: {industry: string; label: string; dri: number | null; listingMultiple: number | null; txnMultiple: number | null; saleToAsk: number | null; daysOnMarket: number | null; txnSales: number}) => (
+                    {dri.byIndustry.sort((a: {dri: number | null}, b: {dri: number | null}) => (b.dri || 0) - (a.dri || 0)).map((ind: {industry: string; label: string; dri: number | null; gapPct: number | null; avgAsk: number | null; fairValue: number | null; dealCount: number; weekTrend: number | null; condition: string | null; listingMultiple: number | null; txnMultiple: number | null; saleToAsk: number | null; daysOnMarket: number | null; txnSales: number}) => (
                       <tr key={ind.industry} style={{ borderBottom: "1px solid rgba(255,255,255,0.03)" }}>
                         <td style={{ padding: "8px 10px", fontSize: 13, color: "#E2E8F0", fontWeight: 500 }}>{ind.label}</td>
                         <td style={{ padding: "8px 10px" }}>{ind.dri ? <span style={{ fontSize: 14, fontWeight: 700, color: driColor(ind.dri), fontFamily: "'JetBrains Mono', monospace" }}>{ind.dri.toFixed(2)}</span> : <span style={{ color: "#4B5563" }}>—</span>}</td>
-                        <td style={{ padding: "8px 10px", fontSize: 12, color: "#94A3B8", fontFamily: "'JetBrains Mono', monospace" }}>{ind.listingMultiple ? ind.listingMultiple + "x" : "—"}</td>
-                        <td style={{ padding: "8px 10px", fontSize: 12, color: "#10B981", fontFamily: "'JetBrains Mono', monospace" }}>{ind.txnMultiple ? ind.txnMultiple.toFixed(2) + "x" : "—"}</td>
-                        <td style={{ padding: "8px 10px", fontSize: 12, color: "#94A3B8", fontFamily: "'JetBrains Mono', monospace" }}>{ind.saleToAsk ? (ind.saleToAsk * 100).toFixed(0) + "%" : "—"}</td>
-                        <td style={{ padding: "8px 10px", fontSize: 12, color: "#94A3B8", fontFamily: "'JetBrains Mono', monospace" }}>{ind.daysOnMarket || "—"}</td>
-                        <td style={{ padding: "8px 10px", fontSize: 12, color: "#6B7280", fontFamily: "'JetBrains Mono', monospace" }}>{ind.txnSales.toLocaleString()}</td>
+                        <td style={{ padding: "8px 10px", fontSize: 12, fontWeight: 600, color: ind.gapPct !== null ? (ind.gapPct > 20 ? "#EF4444" : ind.gapPct > 10 ? "#F59E0B" : "#10B981") : "#4B5563", fontFamily: "'JetBrains Mono', monospace" }}>{ind.gapPct !== null ? `+${ind.gapPct}%` : "—"}</td>
+                        <td style={{ padding: "8px 10px", fontSize: 12, color: "#94A3B8", fontFamily: "'JetBrains Mono', monospace" }}>{ind.avgAsk ? `$${Math.round(ind.avgAsk / 1000)}k` : "—"}</td>
+                        <td style={{ padding: "8px 10px", fontSize: 12, color: "#94A3B8", fontFamily: "'JetBrains Mono', monospace" }}>{ind.fairValue ? `$${Math.round(ind.fairValue / 1000)}k` : "—"}</td>
+                        <td style={{ padding: "8px 10px", fontSize: 12, color: "#94A3B8", fontFamily: "'JetBrains Mono', monospace" }}>{ind.dealCount}</td>
+                        <td style={{ padding: "8px 10px", fontSize: 12, fontWeight: 600, color: ind.weekTrend !== null ? (ind.weekTrend > 0 ? "#EF4444" : "#10B981") : "#4B5563", fontFamily: "'JetBrains Mono', monospace" }}>{ind.weekTrend !== null ? `${ind.weekTrend > 0 ? "▲" : "▼"} ${Math.abs(ind.weekTrend)}%` : "—"}</td>
+                        <td style={{ padding: "8px 10px" }}>{ind.condition ? <span style={{ fontSize: 11, fontWeight: 500, color: ind.condition === "Healthy Market" ? "#10B981" : ind.condition === "Moderately Overpriced" ? "#F59E0B" : ind.condition === "Highly Overpriced" ? "#EF4444" : "#3B82F6" }}>{ind.condition}</span> : <span style={{ color: "#4B5563" }}>—</span>}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -315,72 +332,131 @@ export default function MarketIntelligenceEngine() {
         {/* ═══════════════════════════════════════════════════════════════════ */}
         {/* SIGNAL FEED TAB */}
         {/* ═══════════════════════════════════════════════════════════════════ */}
-        {activeTab === "signals" && (
+        {activeTab === "signals" && (() => {
+          const PAIN_LABELS: Record<string, string> = { valuation: "Valuation Uncertainty", financial_modeling: "Financial Modeling", diligence: "Diligence Confusion", seller_addbacks: "Seller Add-Backs", dscr: "Debt / DSCR Analysis", market_saturation: "Market Saturation", competitive: "Competitive Analysis", deal_structure: "Deal Structure (Asset vs Stock)" };
+          const painCounts: Record<string, number> = {};
+          (signalFeed || []).forEach((s: {painCategory: string}) => { if (s.painCategory) painCounts[s.painCategory] = (painCounts[s.painCategory] || 0) + 1; });
+
+          const filtered = (signalFeed || [])
+            .filter((s: {platform: string; title: string; summary: string; relevance: number; painCategory: string}) => {
+              if (signalFilter !== "all" && s.platform !== signalFilter) return false;
+              if (signalPainFilter !== "all" && s.painCategory !== signalPainFilter) return false;
+              if (s.relevance < signalMinScore) return false;
+              if (signalSearch && !s.title.toLowerCase().includes(signalSearch.toLowerCase()) && !s.summary.toLowerCase().includes(signalSearch.toLowerCase())) return false;
+              return true;
+            })
+            .sort((a: Record<string, number>, b: Record<string, number>) => {
+              if (signalSort === "relevance") return (b.relevance || 0) - (a.relevance || 0);
+              if (signalSort === "pain") return (b.painIntensity || 0) - (a.painIntensity || 0);
+              if (signalSort === "intent") return (b.buyerIntent || 0) - (a.buyerIntent || 0);
+              return 0;
+            });
+
+          return (
           <div className="fu">
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10, marginBottom: 16 }}>
-              {[
-                { label: "Total Signals", value: signalStats?.total || 0, color: "#818CF8" },
-                { label: "High Relevance", value: signalStats?.highRelevance || 0, color: "#10B981" },
-                { label: "Avg Pain Score", value: signalStats?.avgPainScore || 0, color: "#F59E0B" },
-                { label: "Active Buyers", value: signalStats?.activeBuyerSignals || 0, color: "#EF4444" },
-              ].map((s) => (
-                <div key={s.label} style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, padding: "14px 16px" }}>
-                  <div style={{ fontSize: 28, fontWeight: 700, color: s.color, fontFamily: "'JetBrains Mono', monospace" }}>{s.value}</div>
-                  <div style={{ fontSize: 9, color: "#6B7280", textTransform: "uppercase" }}>{s.label}</div>
-                </div>
+            {/* Search + Sort + Filters Bar */}
+            <div style={{ display: "flex", gap: 10, marginBottom: 14, flexWrap: "wrap", alignItems: "center" }}>
+              <input type="text" placeholder="Search posts..." value={signalSearch} onChange={(e) => setSignalSearch(e.target.value)} style={{ flex: 1, minWidth: 200, padding: "10px 14px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.03)", color: "#E2E8F0", fontSize: 13, outline: "none" }} />
+              <select value={signalSort} onChange={(e) => setSignalSort(e.target.value)} style={{ padding: "10px 14px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.05)", color: "#E2E8F0", fontSize: 12, outline: "none", cursor: "pointer" }}>
+                <option value="relevance">Sort: Signal Score</option>
+                <option value="pain">Sort: Pain Score</option>
+                <option value="intent">Sort: Buyer Intent</option>
+              </select>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, color: "#6B7280" }}>
+                <span>Min Score: {signalMinScore}</span>
+                <input type="range" min={0} max={80} step={10} value={signalMinScore} onChange={(e) => setSignalMinScore(parseInt(e.target.value))} style={{ width: 100, accentColor: "#818CF8" }} />
+              </div>
+            </div>
+
+            {/* Pain Category Chips */}
+            <div style={{ display: "flex", gap: 6, marginBottom: 14, flexWrap: "wrap" }}>
+              <button onClick={() => setSignalPainFilter("all")} style={{ padding: "6px 12px", borderRadius: 20, border: "none", background: signalPainFilter === "all" ? "rgba(99,102,241,0.2)" : "rgba(255,255,255,0.04)", color: signalPainFilter === "all" ? "#818CF8" : "#6B7280", fontSize: 11, fontWeight: 500, cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}>
+                All <span style={{ fontSize: 10, opacity: 0.7 }}>{signalFeed?.length || 0}</span>
+              </button>
+              {Object.entries(PAIN_LABELS).map(([key, label]) => (
+                <button key={key} onClick={() => setSignalPainFilter(signalPainFilter === key ? "all" : key)} style={{ padding: "6px 12px", borderRadius: 20, border: "none", background: signalPainFilter === key ? `${PAIN_COLORS[key] || "#6366F1"}20` : "rgba(255,255,255,0.04)", color: signalPainFilter === key ? PAIN_COLORS[key] || "#818CF8" : "#6B7280", fontSize: 11, fontWeight: 500, cursor: "pointer", display: "flex", alignItems: "center", gap: 5 }}>
+                  {label} <span style={{ fontSize: 10, opacity: 0.7 }}>{painCounts[key] || 0}</span>
+                </button>
               ))}
             </div>
 
-            {/* Filter */}
+            {/* Platform Filters */}
             <div style={{ display: "flex", gap: 4, marginBottom: 14 }}>
               {["all", "reddit", "twitter", "searchfunder"].map((f) => (
                 <button key={f} onClick={() => setSignalFilter(f)} style={{ padding: "6px 14px", borderRadius: 6, border: "none", background: signalFilter === f ? "rgba(99,102,241,0.15)" : "rgba(255,255,255,0.03)", color: signalFilter === f ? "#818CF8" : "#6B7280", fontSize: 12, fontWeight: 500, cursor: "pointer", textTransform: "capitalize" }}>{f}</button>
               ))}
             </div>
 
-            <div style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, padding: "18px 20px" }}>
-              {(!signalFeed || signalFeed.length === 0) ? (
-                <div style={{ padding: "40px 20px", textAlign: "center" }}>
+            {/* Post Count */}
+            <div style={{ fontSize: 12, color: "#6B7280", marginBottom: 10 }}>Showing {Math.min(filtered.length, 30)} of {filtered.length} posts</div>
+
+            {/* Signal Cards */}
+            <div>
+              {filtered.length === 0 ? (
+                <div style={{ padding: "40px 20px", textAlign: "center", background: "rgba(255,255,255,0.025)", borderRadius: 12 }}>
                   <div style={{ fontSize: 36, marginBottom: 12 }}>⚡</div>
-                  <div style={{ fontSize: 14, color: "#6B7280", marginBottom: 8 }}>No community signals yet</div>
-                  <div style={{ fontSize: 12, color: "#4B5563" }}>The cron job runs every 6 hours to auto-collect discussions from Reddit, Twitter, and acquisition forums. First batch will appear within 6 hours of deployment.</div>
-                  <a href="/api/cron/ingest-signals" target="_blank" style={{ display: "inline-block", marginTop: 12, padding: "8px 16px", borderRadius: 8, background: "rgba(99,102,241,0.1)", color: "#818CF8", fontSize: 12, fontWeight: 600, textDecoration: "none", border: "1px solid rgba(99,102,241,0.2)" }}>Trigger Manual Ingestion →</a>
+                  <div style={{ fontSize: 14, color: "#6B7280", marginBottom: 8 }}>{(signalFeed || []).length === 0 ? "No community signals yet" : "No signals match your filters"}</div>
+                  {(signalFeed || []).length === 0 && <div style={{ fontSize: 12, color: "#4B5563" }}>The cron job runs every 6 hours to auto-collect discussions. First batch will appear within 6 hours of deployment.</div>}
                 </div>
               ) : (
-                signalFeed.filter((s: {platform: string}) => signalFilter === "all" || s.platform === signalFilter).slice(0, 30).map((sig: {id: string; title: string; summary: string; platform: string; url: string | null; relevance: number; painIntensity: number; buyerIntent: number; sentiment: string; industry: string | null; painCategory: string; signalType: string; insight: string | null; date: string; topics: string[]}) => (
-                  <div key={sig.id} style={{ padding: "14px 16px", borderRadius: 10, background: sig.relevance >= 70 ? "rgba(16,185,129,0.03)" : "rgba(255,255,255,0.01)", border: sig.relevance >= 70 ? "1px solid rgba(16,185,129,0.08)" : "1px solid rgba(255,255,255,0.03)", marginBottom: 8 }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 4 }}>
-                      <div style={{ fontSize: 13, fontWeight: 600, color: "#E2E8F0", flex: 1, marginRight: 12 }}>{sig.url ? <a href={sig.url} target="_blank" rel="noopener" style={{ color: "#E2E8F0", textDecoration: "none" }}>{sig.title}</a> : sig.title}</div>
-                      <div style={{ display: "flex", gap: 4, flexShrink: 0 }}>
-                        <span style={{ padding: "2px 6px", borderRadius: 4, fontSize: 9, fontWeight: 600, background: sig.sentiment === "bullish" || sig.sentiment === "excited" ? "rgba(16,185,129,0.15)" : sig.sentiment === "bearish" || sig.sentiment === "frustrated" ? "rgba(239,68,68,0.15)" : "rgba(107,114,128,0.15)", color: sig.sentiment === "bullish" || sig.sentiment === "excited" ? "#10B981" : sig.sentiment === "bearish" || sig.sentiment === "frustrated" ? "#EF4444" : "#6B7280" }}>{sig.sentiment}</span>
-                        <span style={{ padding: "2px 6px", borderRadius: 4, fontSize: 9, background: "rgba(99,102,241,0.1)", color: "#818CF8" }}>{sig.platform}</span>
-                        {sig.signalType && <span style={{ padding: "2px 6px", borderRadius: 4, fontSize: 9, background: "rgba(255,255,255,0.04)", color: "#6B7280" }}>{sig.signalType}</span>}
+                filtered.slice(0, 30).map((sig: {id: string; title: string; summary: string; platform: string; url: string | null; relevance: number; painIntensity: number; buyerIntent: number; sentiment: string; industry: string | null; painCategory: string; signalType: string; insight: string | null; date: string; topics: string[]}) => (
+                  <div key={sig.id} style={{ display: "flex", gap: 0, marginBottom: 10, borderRadius: 12, overflow: "hidden", background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                    {/* Left Color Bar */}
+                    <div style={{ width: 4, flexShrink: 0, background: PAIN_COLORS[sig.painCategory] || "#6366F1" }} />
+
+                    {/* Main Content */}
+                    <div style={{ flex: 1, padding: "14px 18px" }}>
+                      {/* Top Meta Row */}
+                      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                        <span style={{ fontSize: 11, color: "#818CF8", fontWeight: 500 }}>{sig.platform === "reddit" ? "r/" : sig.platform === "twitter" ? "@" : ""}{sig.platform}</span>
+                        <span style={{ fontSize: 10, color: "#4B5563" }}>•</span>
+                        <span style={{ fontSize: 10, color: "#4B5563" }}>{new Date(sig.date).toLocaleDateString()}</span>
+                        <span style={{ fontSize: 10, color: "#4B5563" }}>•</span>
+                        <span style={{ padding: "2px 8px", borderRadius: 10, fontSize: 9, fontWeight: 600, background: sig.sentiment === "bullish" || sig.sentiment === "excited" ? "rgba(16,185,129,0.15)" : sig.sentiment === "bearish" || sig.sentiment === "frustrated" ? "rgba(239,68,68,0.15)" : "rgba(245,158,11,0.15)", color: sig.sentiment === "bullish" || sig.sentiment === "excited" ? "#10B981" : sig.sentiment === "bearish" || sig.sentiment === "frustrated" ? "#EF4444" : "#F59E0B" }}>
+                          {sig.signalType === "question" ? "Seeking Advice" : sig.signalType === "deal_share" ? "Deal Share" : sig.signalType === "advice" ? "Advice" : sig.signalType === "complaint" ? "Frustrated" : sig.signalType === "success_story" ? "Success Story" : "Market Insight"}
+                        </span>
+                      </div>
+
+                      {/* Title */}
+                      <div style={{ fontSize: 15, fontWeight: 600, color: "#E2E8F0", marginBottom: 4, lineHeight: 1.3 }}>
+                        {sig.url ? <a href={sig.url} target="_blank" rel="noopener" style={{ color: "#E2E8F0", textDecoration: "none" }}>{sig.title}</a> : sig.title}
+                      </div>
+
+                      {/* Summary */}
+                      <div style={{ fontSize: 12, color: "#94A3B8", lineHeight: 1.5, marginBottom: 8 }}>{sig.summary}</div>
+
+                      {/* Tags Row */}
+                      <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                        {sig.painCategory && <span style={{ padding: "2px 8px", borderRadius: 4, fontSize: 10, fontWeight: 500, background: `${PAIN_COLORS[sig.painCategory] || "#6366F1"}15`, color: PAIN_COLORS[sig.painCategory] || "#6366F1" }}>{PAIN_LABELS[sig.painCategory] || sig.painCategory}</span>}
+                        {sig.industry && <span style={{ padding: "2px 8px", borderRadius: 4, fontSize: 10, background: "rgba(99,102,241,0.08)", color: "#818CF8" }}>{sig.industry}</span>}
+                      </div>
+
+                      {/* AI Insight */}
+                      {sig.insight && <div style={{ fontSize: 11, color: "#4B5563", marginTop: 6, fontStyle: "italic" }}>💡 {sig.insight}</div>}
+                    </div>
+
+                    {/* Right Score Panel */}
+                    <div style={{ width: 90, flexShrink: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "12px 8px", borderLeft: "1px solid rgba(255,255,255,0.04)" }}>
+                      <div style={{ fontSize: 28, fontWeight: 800, color: sc(sig.relevance), fontFamily: "'JetBrains Mono', monospace", lineHeight: 1 }}>{sig.relevance}</div>
+                      <div style={{ fontSize: 8, color: "#6B7280", textTransform: "uppercase", marginBottom: 8 }}>Signal</div>
+                      <div style={{ display: "flex", gap: 4 }}>
+                        <div style={{ textAlign: "center" }}>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: sc(sig.buyerIntent), fontFamily: "'JetBrains Mono', monospace", padding: "2px 6px", borderRadius: 4, background: `${sc(sig.buyerIntent)}15` }}>{sig.buyerIntent}</div>
+                          <div style={{ fontSize: 7, color: "#6B7280", textTransform: "uppercase", marginTop: 2 }}>Intent</div>
+                        </div>
+                        <div style={{ textAlign: "center" }}>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: sc(sig.painIntensity), fontFamily: "'JetBrains Mono', monospace", padding: "2px 6px", borderRadius: 4, background: `${sc(sig.painIntensity)}15` }}>{sig.painIntensity}</div>
+                          <div style={{ fontSize: 7, color: "#6B7280", textTransform: "uppercase", marginTop: 2 }}>Pain</div>
+                        </div>
                       </div>
                     </div>
-                    <div style={{ fontSize: 12, color: "#94A3B8", lineHeight: 1.5, marginBottom: 6 }}>{sig.summary}</div>
-                    <div style={{ display: "flex", gap: 12, alignItems: "center", flexWrap: "wrap" }}>
-                      <div style={{ display: "flex", gap: 4 }}>
-                        <span style={{ fontSize: 10, color: "#6B7280" }}>Relevance:</span>
-                        <span style={{ fontSize: 10, fontWeight: 700, color: sc(sig.relevance) }}>{sig.relevance}</span>
-                      </div>
-                      <div style={{ display: "flex", gap: 4 }}>
-                        <span style={{ fontSize: 10, color: "#6B7280" }}>Pain:</span>
-                        <span style={{ fontSize: 10, fontWeight: 700, color: sc(sig.painIntensity) }}>{sig.painIntensity}</span>
-                      </div>
-                      <div style={{ display: "flex", gap: 4 }}>
-                        <span style={{ fontSize: 10, color: "#6B7280" }}>Intent:</span>
-                        <span style={{ fontSize: 10, fontWeight: 700, color: sc(sig.buyerIntent) }}>{sig.buyerIntent}</span>
-                      </div>
-                      {sig.industry && <span style={{ fontSize: 10, padding: "1px 6px", borderRadius: 3, background: "rgba(99,102,241,0.08)", color: "#818CF8" }}>{sig.industry}</span>}
-                      {sig.painCategory && <span style={{ fontSize: 10, padding: "1px 6px", borderRadius: 3, background: `${PAIN_COLORS[sig.painCategory] || "#6B7280"}15`, color: PAIN_COLORS[sig.painCategory] || "#6B7280" }}>{sig.painCategory}</span>}
-                    </div>
-                    {sig.insight && <div style={{ fontSize: 11, color: "#4B5563", marginTop: 4, fontStyle: "italic" }}>💡 {sig.insight}</div>}
                   </div>
                 ))
               )}
             </div>
           </div>
-        )}
+          );
+        })()}
 
         {/* ═══════════════════════════════════════════════════════════════════ */}
         {/* BUYER PAIN INDEX TAB */}
