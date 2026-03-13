@@ -81,7 +81,7 @@ export default function MarketIntelligenceEngine() {
     </div>
   );
 
-  const { overview, dri, industryHeatmap, sentiment, contentOps, serviceGap, dataSources, lastUpdated, signalFeed, buyerPainIndex, painTrends, signalStats } = data;
+  const { overview, dri, industryHeatmap, sentiment, contentOps, serviceGap, serviceGapMatrix, dataSources, lastUpdated, signalFeed, buyerPainIndex, painTrends, signalStats } = data;
 
   return (
     <div style={{ minHeight: "100vh", background: "#0B0F17", color: "#E2E8F0" }}>
@@ -850,86 +850,131 @@ export default function MarketIntelligenceEngine() {
         {/* ═══════════════════════════════════════════════════════════════════ */}
         {activeTab === "content" && (
           <div className="fu">
-            <div style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 14, padding: "20px 22px" }}>
-              <h3 style={{ fontSize: 14, fontWeight: 600, color: "#94A3B8", margin: "0 0 4px" }}>Content Opportunities</h3>
-              <p style={{ fontSize: 12, color: "#6B7280", margin: "0 0 16px" }}>Industries with high transaction demand but low NexTax coverage — biggest content gaps to fill</p>
-              {(contentOps || []).map((op: {industry: string; key: string; txnVolume: number; currentCoverage: number; opportunityGap: number; suggestedTopics: string[]}, i: number) => (
-                <div key={op.key} style={{ padding: "16px 18px", borderRadius: 12, background: i < 3 ? "rgba(16,185,129,0.04)" : "rgba(255,255,255,0.02)", border: i < 3 ? "1px solid rgba(16,185,129,0.1)" : "1px solid rgba(255,255,255,0.04)", marginBottom: 10 }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                      <span style={{ fontSize: 16, fontWeight: 800, color: "#374151", fontFamily: "'JetBrains Mono', monospace" }}>{i + 1}</span>
-                      <span style={{ fontSize: 15, fontWeight: 600, color: "#E2E8F0" }}>{op.industry}</span>
+            <p style={{ fontSize: 13, color: "#94A3B8", margin: "0 0 16px", lineHeight: 1.5 }}>
+              Content opportunities ranked by buyer pain intensity. Each category shows what acquisition buyers are struggling with and the specific content topics that would address their needs.
+            </p>
+
+            {(contentOps || []).map((op: {rank: number; category: string; label: string; intensity: number; postCount: number; avgPain: number; avgIntent: number; suggestedTopics: string[]}) => (
+              <div key={op.category} style={{ marginBottom: 12, borderRadius: 12, overflow: "hidden", background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                <div style={{ display: "flex", alignItems: "center" }}>
+                  {/* Left color bar */}
+                  <div style={{ width: 4, alignSelf: "stretch", background: PAIN_COLORS[op.category] || "#6366F1" }} />
+
+                  <div style={{ flex: 1, padding: "16px 20px" }}>
+                    {/* Header */}
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                        <span style={{ fontSize: 20, fontWeight: 800, color: PAIN_COLORS[op.category] || "#818CF8", fontFamily: "'JetBrains Mono', monospace" }}>#{op.rank}</span>
+                        <span style={{ fontSize: 16, fontWeight: 600, color: "#E2E8F0" }}>{op.label}</span>
+                        <span style={{ padding: "2px 8px", borderRadius: 10, fontSize: 10, fontWeight: 600, background: `${PAIN_COLORS[op.category] || "#6366F1"}15`, color: PAIN_COLORS[op.category] || "#818CF8" }}>opportunity</span>
+                      </div>
                     </div>
-                    <span style={{ fontSize: 14, fontWeight: 700, color: op.opportunityGap > 70 ? "#10B981" : "#F59E0B", fontFamily: "'JetBrains Mono', monospace" }}>{op.opportunityGap}% gap</span>
-                  </div>
-                  <div style={{ display: "flex", gap: 16, fontSize: 11, color: "#6B7280", marginBottom: 8 }}>
-                    <span>{op.txnVolume.toLocaleString()} closed sales</span>
-                    <span>{op.currentCoverage} in NexTax database</span>
-                  </div>
-                  <div style={{ height: 5, background: "rgba(255,255,255,0.06)", borderRadius: 3, marginBottom: 10 }}>
-                    <div style={{ height: "100%", width: `${op.opportunityGap}%`, background: op.opportunityGap > 70 ? "#10B981" : "#F59E0B", borderRadius: 3 }} />
-                  </div>
-                  <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                    {op.suggestedTopics.map((t: string) => (
-                      <span key={t} style={{ padding: "3px 10px", borderRadius: 6, background: "rgba(99,102,241,0.08)", fontSize: 10, color: "#818CF8" }}>{t}</span>
-                    ))}
+
+                    {/* Metrics */}
+                    <div style={{ display: "flex", gap: 20, fontSize: 12, color: "#6B7280", marginBottom: 12 }}>
+                      <span>{op.postCount} signals</span>
+                      <span>Avg Pain: <span style={{ fontWeight: 600, color: sc(op.avgPain) }}>{op.avgPain}</span></span>
+                      <span>Avg Intent: <span style={{ fontWeight: 600, color: sc(op.avgIntent) }}>{op.avgIntent}</span></span>
+                    </div>
+
+                    {/* Suggested Content Topics */}
+                    <div style={{ fontSize: 11, color: "#6B7280", marginBottom: 6 }}>Suggested Content Topics:</div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                      {op.suggestedTopics.map((topic: string) => (
+                        <div key={topic} style={{ display: "flex", alignItems: "center", gap: 8, padding: "6px 12px", borderRadius: 6, background: "rgba(99,102,241,0.04)", border: "1px solid rgba(99,102,241,0.08)" }}>
+                          <span style={{ color: "#818CF8", fontSize: 12 }}>→</span>
+                          <span style={{ fontSize: 12, color: "#C9D1D9" }}>{topic}</span>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
-              ))}
-            </div>
+              </div>
+            ))}
           </div>
         )}
 
         {/* ═══════════════════════════════════════════════════════════════════ */}
         {/* SERVICE GAP MAP TAB */}
         {/* ═══════════════════════════════════════════════════════════════════ */}
-        {activeTab === "gaps" && (
+        {activeTab === "gaps" && (() => {
+          const SERVICE_TIERS = ["Deal Risk Assessment", "Full Deal Underwriting", "Market Intelligence"];
+          const matrix = serviceGapMatrix || [];
+
+          return (
           <div className="fu">
-            <div style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 14, padding: "20px 22px", marginBottom: 16 }}>
-              <h3 style={{ fontSize: 14, fontWeight: 600, color: "#94A3B8", margin: "0 0 4px" }}>Service Gap Analysis</h3>
-              <p style={{ fontSize: 12, color: "#6B7280", margin: "0 0 14px" }}>Market transaction demand vs NexTax data coverage. Red = high demand, low coverage</p>
-              <ResponsiveContainer width="100%" height={Math.max(400, (serviceGap || []).length * 28)}>
-                <BarChart data={(serviceGap || []).slice(0, 26)} layout="vertical">
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" horizontal={false} />
-                  <XAxis type="number" tick={{ fill: "#4B5563", fontSize: 10 }} axisLine={false} tickLine={false} />
-                  <YAxis type="category" dataKey="label" tick={{ fill: "#C9D1D9", fontSize: 11 }} axisLine={false} tickLine={false} width={130} />
-                  <Tooltip contentStyle={{ background: "#1A1F2E", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, fontSize: 12 }} />
-                  <Bar dataKey="gap" radius={[0, 6, 6, 0]} name="Coverage Gap %">
-                    {(serviceGap || []).slice(0, 26).map((_: unknown, i: number) => <Cell key={i} fill={i < 5 ? "#EF4444" : i < 12 ? "#F59E0B" : "#10B981"} fillOpacity={0.7} />)}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+            <p style={{ fontSize: 13, color: "#94A3B8", margin: "0 0 16px", lineHeight: 1.5 }}>
+              This matrix maps buyer pain points against NexTax service tiers. Dark cells indicate strong alignment — where your services directly address high-volume buyer needs. Light cells reveal gaps where new products could capture unmet demand.
+            </p>
+
+            {/* Service Gap Matrix Grid */}
+            <div style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 14, padding: "20px 22px", marginBottom: 16, overflowX: "auto" }}>
+              <table style={{ width: "100%", borderCollapse: "collapse" }}>
+                <thead>
+                  <tr>
+                    <th style={{ padding: "10px 12px", fontSize: 11, color: "#6B7280", fontWeight: 600, textTransform: "uppercase", textAlign: "left", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>Pain Category</th>
+                    {SERVICE_TIERS.map((tier) => (
+                      <th key={tier} style={{ padding: "10px 12px", fontSize: 11, color: "#6B7280", fontWeight: 600, textTransform: "uppercase", textAlign: "center", borderBottom: "1px solid rgba(255,255,255,0.08)", whiteSpace: "normal", lineHeight: 1.3 }}>{tier}</th>
+                    ))}
+                    <th style={{ padding: "10px 12px", fontSize: 11, color: "#6B7280", fontWeight: 600, textTransform: "uppercase", textAlign: "center", borderBottom: "1px solid rgba(255,255,255,0.08)" }}>Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {matrix.map((row: {category: string; label: string; signalCount: number; intensity: number; tiers: number[]; total: number}) => (
+                    <tr key={row.category} style={{ borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+                      <td style={{ padding: "10px 12px" }}>
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <div style={{ width: 8, height: 8, borderRadius: 2, background: PAIN_COLORS[row.category] || "#6366F1" }} />
+                          <span style={{ fontSize: 13, fontWeight: 500, color: "#E2E8F0" }}>{row.label}</span>
+                        </div>
+                      </td>
+                      {row.tiers.map((score: number, ti: number) => (
+                        <td key={ti} style={{ padding: "8px 12px", textAlign: "center" }}>
+                          <div style={{
+                            padding: "8px 12px", borderRadius: 6,
+                            background: score >= 80 ? "rgba(99,102,241,0.25)" : score >= 60 ? "rgba(99,102,241,0.15)" : score >= 40 ? "rgba(99,102,241,0.08)" : "rgba(255,255,255,0.02)",
+                            border: score >= 80 ? "1px solid rgba(99,102,241,0.3)" : "1px solid transparent",
+                          }}>
+                            <span style={{ fontSize: 16, fontWeight: 700, color: score >= 80 ? "#818CF8" : score >= 60 ? "#A5B4FC" : score >= 40 ? "#6B7280" : "#4B5563", fontFamily: "'JetBrains Mono', monospace" }}>{score}</span>
+                          </div>
+                        </td>
+                      ))}
+                      <td style={{ padding: "8px 12px", textAlign: "center" }}>
+                        <span style={{ fontSize: 16, fontWeight: 700, color: row.total >= 70 ? "#10B981" : row.total >= 50 ? "#F59E0B" : "#EF4444", fontFamily: "'JetBrains Mono', monospace" }}>{row.total}</span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
 
-            {/* Gap Detail Table */}
-            <div style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 14, padding: "18px 20px" }}>
-              <h3 style={{ fontSize: 14, fontWeight: 600, color: "#94A3B8", margin: "0 0 14px" }}>Coverage Detail</h3>
-              <div style={{ overflowX: "auto" }}>
-                <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                  <thead><tr>
-                    {["Industry", "Gap %", "Txn Demand", "NexTax Deals", "User Analyses", "Priority"].map((h) => (
-                      <th key={h} style={{ padding: "8px 10px", fontSize: 10, color: "#6B7280", fontWeight: 600, textTransform: "uppercase", textAlign: "left", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>{h}</th>
-                    ))}
-                  </tr></thead>
-                  <tbody>
-                    {(serviceGap || []).map((g: {industry: string; label: string; gap: number; txnCount: number; dealCount: number; userCount: number}) => (
-                      <tr key={g.industry} style={{ borderBottom: "1px solid rgba(255,255,255,0.03)" }}>
-                        <td style={{ padding: "8px 10px", fontSize: 13, color: "#E2E8F0", fontWeight: 500 }}>{g.label}</td>
-                        <td style={{ padding: "8px 10px", fontSize: 14, fontWeight: 700, color: g.gap > 70 ? "#EF4444" : g.gap > 40 ? "#F59E0B" : "#10B981", fontFamily: "'JetBrains Mono', monospace" }}>{g.gap}%</td>
-                        <td style={{ padding: "8px 10px", fontSize: 12, color: "#94A3B8", fontFamily: "'JetBrains Mono', monospace" }}>{g.txnCount.toLocaleString()}</td>
-                        <td style={{ padding: "8px 10px", fontSize: 12, color: "#94A3B8", fontFamily: "'JetBrains Mono', monospace" }}>{g.dealCount}</td>
-                        <td style={{ padding: "8px 10px", fontSize: 12, color: "#94A3B8", fontFamily: "'JetBrains Mono', monospace" }}>{g.userCount}</td>
-                        <td style={{ padding: "8px 10px" }}>
-                          <span style={{ padding: "2px 8px", borderRadius: 4, fontSize: 10, fontWeight: 600, background: g.gap > 70 ? "rgba(239,68,68,0.1)" : g.gap > 40 ? "rgba(245,158,11,0.1)" : "rgba(16,185,129,0.1)", color: g.gap > 70 ? "#EF4444" : g.gap > 40 ? "#F59E0B" : "#10B981" }}>{g.gap > 70 ? "HIGH" : g.gap > 40 ? "MEDIUM" : "LOW"}</span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+            {/* Legend */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
+              <div style={{ padding: "14px 18px", borderRadius: 12, background: "rgba(239,68,68,0.04)", border: "1px solid rgba(239,68,68,0.12)" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+                  <div style={{ width: 10, height: 10, borderRadius: 2, background: "#EF4444" }} />
+                  <span style={{ fontSize: 12, fontWeight: 600, color: "#EF4444" }}>Positioning Opportunities</span>
+                </div>
+                <p style={{ fontSize: 11, color: "#94A3B8", margin: 0, lineHeight: 1.5 }}>Pain categories where NexTax has strong service alignment but low market awareness. Focus marketing and positioning here.</p>
+              </div>
+              <div style={{ padding: "14px 18px", borderRadius: 12, background: "rgba(59,130,246,0.04)", border: "1px solid rgba(59,130,246,0.12)" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+                  <div style={{ width: 10, height: 10, borderRadius: 2, background: "#3B82F6" }} />
+                  <span style={{ fontSize: 12, fontWeight: 600, color: "#3B82F6" }}>Product Development Signals</span>
+                </div>
+                <p style={{ fontSize: 11, color: "#94A3B8", margin: 0, lineHeight: 1.5 }}>High buyer pain with low service alignment. These represent product gaps where new tools or features could capture unmet demand.</p>
+              </div>
+              <div style={{ padding: "14px 18px", borderRadius: 12, background: "rgba(16,185,129,0.04)", border: "1px solid rgba(16,185,129,0.12)" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 6 }}>
+                  <div style={{ width: 10, height: 10, borderRadius: 2, background: "#10B981" }} />
+                  <span style={{ fontSize: 12, fontWeight: 600, color: "#10B981" }}>Thought Leadership Targets</span>
+                </div>
+                <p style={{ fontSize: 11, color: "#94A3B8", margin: 0, lineHeight: 1.5 }}>Categories where NexTax can establish authority through content, guides, and community engagement to build trust.</p>
               </div>
             </div>
           </div>
-        )}
+          );
+        })()}
 
         {/* Data Sources Footer */}
         <div style={{ marginTop: 28, padding: "16px 20px", borderRadius: 12, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)" }}>
