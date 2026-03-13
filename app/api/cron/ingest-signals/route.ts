@@ -12,16 +12,26 @@ const supabase = createClient(
 );
 
 const SEARCH_QUERIES = [
-  "SMB acquisition deal analysis site:reddit.com",
-  "buying a small business valuation site:reddit.com",
-  "searchfund ETA acquisition 2025 2026",
-  "small business acquisition due diligence",
-  "SMB Twitter buying business deal",
-  "business broker deal pricing overpriced",
-  "HVAC plumbing roofing business for sale analysis",
-  "SBA loan small business acquisition DSCR",
-  "laundromat car wash business valuation multiple",
-  "dental practice acquisition deal structure",
+  "buying a small business reddit 2026",
+  "small business acquisition valuation multiples reddit",
+  "searchfund ETA acquisition challenges 2026",
+  "SBA loan business acquisition denied approved",
+  "business broker overpriced listings frustrating",
+  "HVAC plumbing business for sale owner retiring",
+  "laundromat car wash acquisition due diligence tips",
+  "dental practice acquisition deal structure advice",
+  "restaurant business valuation cash flow multiple",
+  "cleaning business acquisition scaling challenges",
+  "ecommerce business acquisition due diligence",
+  "landscaping business for sale owner financing",
+  "SMB acquisition seller addbacks red flags",
+  "small business DSCR debt service coverage ratio",
+  "first time business buyer mistakes lessons learned",
+  "business acquisition LOI letter of intent tips",
+  "private equity roll up HVAC plumbing electrical",
+  "small business acquisition market 2026 outlook",
+  "buying a franchise vs independent business",
+  "business valuation SDE vs EBITDA small business",
 ];
 
 const PAIN_CATEGORIES = [
@@ -43,7 +53,7 @@ export async function GET(req: NextRequest) {
   try {
     // Pick 3 random search queries per run to stay within limits
     const shuffled = [...SEARCH_QUERIES].sort(() => Math.random() - 0.5);
-    const queriesToRun = shuffled.slice(0, 2);
+    const queriesToRun = shuffled.slice(0, 1);
 
     for (const query of queriesToRun) {
       try {
@@ -72,14 +82,14 @@ For each discussion found, return a JSON array (no markdown, no backticks). Each
   "source_url": "URL if available, otherwise null",
   "author": "username if visible, otherwise null",
   "industry": "matched industry key (hvac, dental, cleaning, etc) or null",
-  "pain_category": one of: "valuation", "financial_modeling", "diligence", "seller_addbacks", "sde", "dscr", "market_saturation", "market_research", "competitive", "deal_structure",
+  "pain_category": one of: "valuation", "financial_modeling", "diligence", "seller_addbacks", "dscr", "market_saturation", "competitive", "deal_structure",
   "signal_type": one of: "question", "deal_share", "advice", "complaint", "success_story", "market_insight",
   "relevance_score": 0-100 (how relevant to SMB acquisition intelligence),
   "pain_intensity": 0-100 (how much pain/urgency is expressed),
   "buyer_intent": 0-100 (likelihood this person is actively buying a business),
   "sentiment": "bullish", "bearish", "neutral", "frustrated", or "excited",
   "topics": ["topic1", "topic2"],
-  "mentioned_industries": ["hvac", "dental", "auto", "saas", "ecommerce", "landscaping", "restaruant", etc],
+  "mentioned_industries": ["hvac", "dental", etc],
   "ai_insight": "one sentence insight about what this signal means for the market",
   "content_opportunity": "suggested content topic to address this signal"
 }
@@ -120,12 +130,12 @@ ONLY return the JSON array. No other text.`,
           if (!signal.title || !signal.summary) continue;
           if (signal.relevance_score < 30) continue; // Skip low-relevance
 
-          // Dedup: check if similar title already exists (last 7 days)
+          // Dedup: check if exact same title exists (last 3 days)
           const { data: existing } = await supabase
             .from("community_signals")
             .select("id")
-            .ilike("title", `%${signal.title.slice(0, 40)}%`)
-            .gte("ingested_at", new Date(Date.now() - 7 * 86400000).toISOString())
+            .eq("title", signal.title)
+            .gte("ingested_at", new Date(Date.now() - 3 * 86400000).toISOString())
             .limit(1)
             .single();
 
