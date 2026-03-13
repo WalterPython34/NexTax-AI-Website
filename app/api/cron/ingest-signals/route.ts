@@ -44,7 +44,7 @@ if (authHeader !== `Bearer ${process.env.CRON_SECRET}` && querySecret !== proces
   try {
     // Pick 3 random search queries per run to stay within limits
     const shuffled = [...SEARCH_QUERIES].sort(() => Math.random() - 0.5);
-    const queriesToRun = shuffled.slice(0, 3);
+    const queriesToRun = shuffled.slice(0, 2);
 
     for (const query of queriesToRun) {
       try {
