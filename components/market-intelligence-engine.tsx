@@ -461,52 +461,126 @@ export default function MarketIntelligenceEngine() {
         {/* ═══════════════════════════════════════════════════════════════════ */}
         {/* BUYER PAIN INDEX TAB */}
         {/* ═══════════════════════════════════════════════════════════════════ */}
-        {activeTab === "pain" && (
+        {activeTab === "pain" && (() => {
+          const PAIN_ICONS: Record<string, string> = { valuation: "📊", financial_modeling: "📐", diligence: "🔍", seller_addbacks: "📑", dscr: "🏦", market_saturation: "🏘️", competitive: "⚔️", deal_structure: "📋" };
+          const PAIN_FULL_LABELS: Record<string, string> = { valuation: "Valuation Uncertainty", financial_modeling: "Financial Modeling", diligence: "Diligence Confusion", seller_addbacks: "Seller Add-Backs", dscr: "Debt / DSCR Analysis", market_saturation: "Market Saturation", competitive: "Competitive Pressure", deal_structure: "Deal Structure (Asset vs Stock)" };
+          const pains = buyerPainIndex || [];
+          const topPain = pains[0];
+          const highestScore = pains.reduce((m: number, p: {intensity: number}) => Math.max(m, p.intensity), 0);
+          const rising = pains.filter((p: {weekChange: number}) => p.weekChange > 0).sort((a: {weekChange: number}, b: {weekChange: number}) => b.weekChange - a.weekChange)[0];
+          const falling = pains.filter((p: {weekChange: number}) => p.weekChange < 0).sort((a: {weekChange: number}, b: {weekChange: number}) => a.weekChange - b.weekChange)[0];
+          const avgPain = pains.length > 0 ? Math.round(pains.reduce((s: number, p: {intensity: number}) => s + p.intensity, 0) / pains.length) : 0;
+          const gaugeAngle = (avgPain / 100) * 180 - 90; // -90 to 90 degrees
+
+          return (
           <div className="fu">
+            {/* Description */}
+            <p style={{ fontSize: 13, color: "#94A3B8", margin: "0 0 16px", lineHeight: 1.5 }}>
+              Real-time buyer pain signals ranked by intensity. Tracks what acquisition buyers are struggling with most this week and how concerns are shifting.
+            </p>
+
+            {/* KPI Cards */}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10, marginBottom: 20 }}>
+              <div style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, padding: "16px 18px" }}>
+                <div style={{ fontSize: 10, color: "#6B7280", textTransform: "uppercase", marginBottom: 6 }}>Top Concern</div>
+                <div style={{ fontSize: 18, fontWeight: 700, color: topPain ? PAIN_COLORS[topPain.category] || "#EF4444" : "#6B7280", fontFamily: "'Instrument Serif', serif" }}>{topPain ? PAIN_FULL_LABELS[topPain.category] || topPain.label : "—"}</div>
+              </div>
+              <div style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, padding: "16px 18px" }}>
+                <div style={{ fontSize: 10, color: "#6B7280", textTransform: "uppercase", marginBottom: 6 }}>Highest Pain Score</div>
+                <div style={{ fontSize: 32, fontWeight: 700, color: "#F59E0B", fontFamily: "'JetBrains Mono', monospace" }}>{highestScore}</div>
+              </div>
+              <div style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, padding: "16px 18px" }}>
+                <div style={{ fontSize: 10, color: "#6B7280", textTransform: "uppercase", marginBottom: 6 }}>Rising Fastest</div>
+                <div style={{ fontSize: 18, fontWeight: 700, color: "#EF4444", fontFamily: "'Instrument Serif', serif" }}>{rising ? PAIN_FULL_LABELS[rising.category] || rising.label : "—"}</div>
+              </div>
+              <div style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, padding: "16px 18px" }}>
+                <div style={{ fontSize: 10, color: "#6B7280", textTransform: "uppercase", marginBottom: 6 }}>Falling Fastest</div>
+                <div style={{ fontSize: 18, fontWeight: 700, color: "#10B981", fontFamily: "'Instrument Serif', serif" }}>{falling ? PAIN_FULL_LABELS[falling.category] || falling.label : "—"}</div>
+              </div>
+            </div>
+
             <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr", gap: 14, marginBottom: 16 }}>
-              <div style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 14, padding: "20px 22px" }}>
-                <h3 style={{ fontSize: 14, fontWeight: 600, color: "#94A3B8", margin: "0 0 14px" }}>Pain Categories — Ranked by Intensity</h3>
-                {(!buyerPainIndex || buyerPainIndex.length === 0) ? (
-                  <div style={{ padding: "30px", textAlign: "center", color: "#6B7280" }}>Pain index populates as signals are ingested.</div>
-                ) : buyerPainIndex.map((pain: {category: string; label: string; intensity: number; count: number; weekChange: number}, i: number) => (
-                  <div key={pain.category} style={{ display: "flex", alignItems: "center", gap: 14, padding: "10px 14px", borderRadius: 8, background: i === 0 ? "rgba(239,68,68,0.04)" : "transparent", marginBottom: 4 }}>
-                    <div style={{ fontSize: 18, fontWeight: 800, color: "#374151", fontFamily: "'JetBrains Mono', monospace", minWidth: 24 }}>{i + 1}</div>
-                    <div style={{ width: 10, height: 10, borderRadius: 2, background: PAIN_COLORS[pain.category] || "#6B7280", flexShrink: 0 }} />
-                    <div style={{ flex: 1 }}>
-                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                        <span style={{ fontSize: 13, fontWeight: 600, color: "#E2E8F0" }}>{pain.label}</span>
-                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-                          <span style={{ fontSize: 14, fontWeight: 700, color: PAIN_COLORS[pain.category] || sc(pain.intensity), fontFamily: "'JetBrains Mono', monospace" }}>{pain.intensity}</span>
-                          <span style={{ fontSize: 10, fontWeight: 600, color: pain.weekChange > 0 ? "#EF4444" : pain.weekChange < 0 ? "#10B981" : "#6B7280" }}>
-                            {pain.weekChange > 0 ? `↑${pain.weekChange}%` : pain.weekChange < 0 ? `↓${Math.abs(pain.weekChange)}%` : "—"}
-                          </span>
-                        </div>
+              {/* Pain Cards */}
+              <div>
+                {pains.length === 0 ? (
+                  <div style={{ padding: "40px", textAlign: "center", color: "#6B7280", background: "rgba(255,255,255,0.025)", borderRadius: 14 }}>Pain index populates as signals are ingested.</div>
+                ) : pains.map((pain: {category: string; label: string; intensity: number; count: number; weekChange: number}, i: number) => (
+                  <div key={pain.category} style={{ display: "flex", alignItems: "center", marginBottom: 10, borderRadius: 12, overflow: "hidden", background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                    {/* Left Color Bar */}
+                    <div style={{ width: 4, alignSelf: "stretch", background: PAIN_COLORS[pain.category] || "#6366F1" }} />
+
+                    <div style={{ flex: 1, padding: "16px 20px" }}>
+                      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
+                        <span style={{ fontSize: 22, fontWeight: 800, color: PAIN_COLORS[pain.category] || "#818CF8", fontFamily: "'JetBrains Mono', monospace" }}>#{i + 1}</span>
+                        <span style={{ fontSize: 15 }}>{PAIN_ICONS[pain.category] || "📌"}</span>
+                        <span style={{ fontSize: 15, fontWeight: 600, color: "#E2E8F0" }}>{PAIN_FULL_LABELS[pain.category] || pain.label}</span>
+                        <span style={{ padding: "2px 8px", borderRadius: 10, fontSize: 10, fontWeight: 700, background: pain.weekChange > 0 ? "rgba(239,68,68,0.15)" : pain.weekChange < 0 ? "rgba(16,185,129,0.15)" : "rgba(107,114,128,0.1)", color: pain.weekChange > 0 ? "#EF4444" : pain.weekChange < 0 ? "#10B981" : "#6B7280" }}>
+                          {pain.weekChange > 0 ? `▲ +${pain.weekChange}%` : pain.weekChange < 0 ? `▼ ${pain.weekChange}%` : "—"}
+                        </span>
+                      </div>
+                      <div style={{ display: "flex", gap: 16, fontSize: 12, color: "#6B7280", marginBottom: 8 }}>
+                        <span>{pain.count} signals this week</span>
+                        <span>Avg Pain: <span style={{ fontWeight: 600, color: sc(pain.intensity) }}>{pain.intensity}</span></span>
                       </div>
                       <div style={{ height: 6, background: "rgba(255,255,255,0.06)", borderRadius: 3, overflow: "hidden" }}>
                         <div style={{ height: "100%", width: `${pain.intensity}%`, background: PAIN_COLORS[pain.category] || sc(pain.intensity), borderRadius: 3, transition: "width 0.8s ease-out" }} />
                       </div>
-                      <div style={{ fontSize: 10, color: "#6B7280", marginTop: 3 }}>{pain.count} signals</div>
+                    </div>
+
+                    {/* Right Intensity Score */}
+                    <div style={{ width: 90, flexShrink: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", padding: "12px", borderLeft: "1px solid rgba(255,255,255,0.04)" }}>
+                      <div style={{ fontSize: 9, color: "#6B7280", textTransform: "uppercase", marginBottom: 2 }}>Intensity</div>
+                      <div style={{ fontSize: 30, fontWeight: 800, color: PAIN_COLORS[pain.category] || sc(pain.intensity), fontFamily: "'JetBrains Mono', monospace", lineHeight: 1 }}>{pain.intensity}</div>
                     </div>
                   </div>
                 ))}
               </div>
 
-              <div style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 14, padding: "20px 22px" }}>
-                <h3 style={{ fontSize: 14, fontWeight: 600, color: "#94A3B8", margin: "0 0 14px" }}>Pain Distribution</h3>
-                <ResponsiveContainer width="100%" height={300}>
-                  <BarChart data={buyerPainIndex || []} layout="vertical">
-                    <XAxis type="number" tick={{ fill: "#4B5563", fontSize: 10 }} axisLine={false} tickLine={false} />
-                    <YAxis type="category" dataKey="label" tick={{ fill: "#C9D1D9", fontSize: 10 }} axisLine={false} tickLine={false} width={100} />
-                    <Tooltip contentStyle={{ background: "#1A1F2E", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, fontSize: 12 }} />
-                    <Bar dataKey="intensity" radius={[0, 4, 4, 0]}>
-                      {(buyerPainIndex || []).map((p: {category: string}, i: number) => <Cell key={i} fill={PAIN_COLORS[p.category] || "#6366F1"} fillOpacity={0.7} />)}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
+              {/* Right Column: Chart + Gauge */}
+              <div>
+                {/* Pain Distribution Chart */}
+                <div style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 14, padding: "20px 22px", marginBottom: 14 }}>
+                  <h3 style={{ fontSize: 14, fontWeight: 600, color: "#94A3B8", margin: "0 0 14px" }}>Pain Distribution</h3>
+                  <ResponsiveContainer width="100%" height={260}>
+                    <BarChart data={pains} layout="vertical">
+                      <XAxis type="number" tick={{ fill: "#4B5563", fontSize: 10 }} axisLine={false} tickLine={false} />
+                      <YAxis type="category" dataKey="label" tick={{ fill: "#C9D1D9", fontSize: 10 }} axisLine={false} tickLine={false} width={100} />
+                      <Tooltip contentStyle={{ background: "#1A1F2E", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 8, fontSize: 12 }} />
+                      <Bar dataKey="intensity" radius={[0, 4, 4, 0]}>
+                        {pains.map((p: {category: string}, i: number) => <Cell key={i} fill={PAIN_COLORS[p.category] || "#6366F1"} fillOpacity={0.7} />)}
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* Pain Gauge (Fear & Greed style) */}
+                <div style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 14, padding: "20px 22px", textAlign: "center" }}>
+                  <h3 style={{ fontSize: 14, fontWeight: 600, color: "#94A3B8", margin: "0 0 14px" }}>Buyer Pain Gauge</h3>
+                  <div style={{ position: "relative", width: 200, height: 120, margin: "0 auto" }}>
+                    <svg viewBox="0 0 200 120" width="200" height="120">
+                      {/* Background arc segments */}
+                      <path d="M 20 110 A 80 80 0 0 1 60 35" fill="none" stroke="#10B981" strokeWidth={14} strokeLinecap="round" />
+                      <path d="M 65 32 A 80 80 0 0 1 100 15" fill="none" stroke="#3B82F6" strokeWidth={14} strokeLinecap="round" />
+                      <path d="M 105 15 A 80 80 0 0 1 140 35" fill="none" stroke="#F59E0B" strokeWidth={14} strokeLinecap="round" />
+                      <path d="M 145 38 A 80 80 0 0 1 180 110" fill="none" stroke="#EF4444" strokeWidth={14} strokeLinecap="round" />
+                      {/* Needle */}
+                      <line x1="100" y1="110" x2={100 + 65 * Math.cos((gaugeAngle * Math.PI) / 180)} y2={110 - 65 * Math.abs(Math.sin((gaugeAngle * Math.PI) / 180))} stroke="#E2E8F0" strokeWidth={3} strokeLinecap="round" />
+                      <circle cx="100" cy="110" r="6" fill="#E2E8F0" />
+                    </svg>
+                  </div>
+                  <div style={{ fontSize: 36, fontWeight: 800, color: avgPain >= 60 ? "#EF4444" : avgPain >= 40 ? "#F59E0B" : avgPain >= 20 ? "#3B82F6" : "#10B981", fontFamily: "'JetBrains Mono', monospace", marginTop: -4 }}>{avgPain}</div>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: avgPain >= 60 ? "#EF4444" : avgPain >= 40 ? "#F59E0B" : avgPain >= 20 ? "#3B82F6" : "#10B981" }}>
+                    {avgPain >= 70 ? "Extreme Pain" : avgPain >= 50 ? "High Pain" : avgPain >= 30 ? "Moderate Pain" : avgPain >= 15 ? "Low Pain" : "Minimal Pain"}
+                  </div>
+                  <div style={{ display: "flex", justifyContent: "space-between", marginTop: 8, fontSize: 9, color: "#6B7280" }}>
+                    <span>Low Pain</span><span>Moderate</span><span>High Pain</span><span>Extreme</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
-        )}
+          );
+        })()}
 
         {/* ═══════════════════════════════════════════════════════════════════ */}
         {/* DEAL SENTIMENT TAB */}
