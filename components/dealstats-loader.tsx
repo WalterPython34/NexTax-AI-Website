@@ -13,20 +13,35 @@ const INDUSTRIES: Record<string, string> = {
 };
 
 function mapColumn(header: string): string | null {
-  const h = header.trim().toLowerCase().replace(/[^a-z0-9 ]/g, "");
-  if (h === "mvic price" || h === "mvic" || h === "sale price" || h === "selling price" || h === "price") return "mvic_price";
-  if (h === "revenue" || h === "sales" || h === "total revenue" || h === "annual revenue" || h === "gross revenue") return "revenue";
-  if (h === "sde" || h === "discretionary earnings" || h === "sellers discretionary earnings" || h === "de" || h === "cash flow") return "sde";
-  if (h === "ebitda" || h === "ebit da") return "ebitda";
-  if (h === "operating profit" || h === "operating income" || h === "op income" || h === "ebit") return "operating_profit";
-  if (h === "assets" || h === "total assets") return "assets";
-  if (h === "operating margin" || h === "op margin") return "operating_margin_pct";
-  if (h === "sde margin" || h === "de margin" || h === "discretionary margin") return "sde_margin_pct";
-  if (h === "ebitda margin") return "ebitda_margin_pct";
-  if (h === "transaction date" || h === "sale date" || h === "close date" || h === "date" || h === "sold date") return "sale_date";
-  if (h === "naics" || h === "naics code" || h === "industry code") return "naics_code";
-  if (h === "description" || h === "naics description" || h === "industry" || h === "business type") return "naics_description";
-  if (h === "deal type" || h === "transaction type" || h === "sale type") return "deal_type";
+  // Strip BOM, whitespace, special chars, and normalize
+  const h = header.replace(/[\ufeff\u200b\u00a0]/g, "").trim().toLowerCase().replace(/[^a-z0-9]/g, "");
+  if (!h) return null;
+  // MVIC Price
+  if (h.includes("mvic") || h === "saleprice" || h === "sellingprice" || h === "price") return "mvic_price";
+  // Revenue (check before "operating" since both contain common letters)
+  if (h === "revenue" || h === "sales" || h === "totalrevenue" || h === "annualrevenue" || h === "grossrevenue") return "revenue";
+  // SDE Margin (must check before SDE)
+  if (h === "sdemargin" || h === "demargin" || h === "discretionarymargin") return "sde_margin_pct";
+  // SDE
+  if (h === "sde" || h === "discretionaryearnings" || h === "sellersdiscretionaryearnings" || h === "de" || h === "cashflow") return "sde";
+  // EBITDA Margin (must check before EBITDA)
+  if (h === "ebitdamargin") return "ebitda_margin_pct";
+  // EBITDA
+  if (h === "ebitda" || h === "ebitda") return "ebitda";
+  // Operating Margin (must check before Operating Profit)
+  if (h === "operatingmargin" || h === "opmargin") return "operating_margin_pct";
+  // Operating Profit
+  if (h === "operatingprofit" || h === "operatingincome" || h === "opincome" || h === "ebit") return "operating_profit";
+  // Assets
+  if (h === "assets" || h === "totalassets") return "assets";
+  // Transaction Date
+  if (h === "transactiondate" || h === "saledate" || h === "closedate" || h === "date" || h === "solddate") return "sale_date";
+  // NAICS
+  if (h === "naics" || h === "naicscode" || h === "industrycode") return "naics_code";
+  // Description
+  if (h === "description" || h === "naicsdescription" || h === "industry" || h === "businesstype") return "naics_description";
+  // Deal type
+  if (h === "dealtype" || h === "transactiontype" || h === "saletype") return "deal_type";
   return null;
 }
 
@@ -99,53 +114,49 @@ export default function DealStatsLoader() {
     setFileName(file.name);
 
     try {
-      const isCSV = file.name.toLowerCase().endsWith(".csv");
-
       let rows: Record<string, unknown>[] = [];
 
-      if (isCSV) {
-        // Native CSV parsing - no library needed
-        const text = await file.text();
-        const lines = text.split(/\r?\n/).filter((l) => l.trim());
-        if (lines.length < 2) { setError("CSV has no data rows"); setLoading(false); return; }
-        const headers = lines[0].split(",").map((h) => h.trim().replace(/^"|"$/g, ""));
-        for (let i = 1; i < lines.length; i++) {
-          const vals = lines[i].match(/(".*?"|[^,]*)/g) || [];
-          const row: Record<string, unknown> = {};
-          headers.forEach((h, j) => {
-            let v = (vals[j] || "").trim().replace(/^"|"$/g, "");
-            row[h] = v === "" ? null : v;
-          });
-          rows.push(row);
-        }
-      } else {
-        // XLSX - load SheetJS dynamically via script tag
-        const loadXLSX = () => new Promise<typeof import("xlsx")>((resolve, reject) => {
-          // Check if already loaded
-          if ((window as Record<string, unknown>).XLSX) {
-            resolve((window as Record<string, unknown>).XLSX as typeof import("xlsx"));
-            return;
-          }
-          // Try dynamic import first
-          import("xlsx").then(resolve).catch(() => {
-            // Fallback: load from CDN
-            const script = document.createElement("script");
-            script.src = "https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js";
-            script.onload = () => {
-              const XLSX = (window as Record<string, unknown>).XLSX as typeof import("xlsx");
-              if (XLSX) resolve(XLSX);
-              else reject(new Error("SheetJS failed to load"));
-            };
-            script.onerror = () => reject(new Error("Failed to load spreadsheet parser"));
-            document.head.appendChild(script);
-          });
+      // Always try text-based parsing first (handles CSV, TSV, and text exports)
+      let text = await file.text();
+      // Strip BOM
+      if (text.charCodeAt(0) === 0xFEFF) text = text.slice(1);
+      
+      const allLines = text.split(/\r?\n/);
+      
+      // Skip empty rows at top to find actual header row
+      let headerIdx = 0;
+      for (let i = 0; i < allLines.length; i++) {
+        const stripped = allLines[i].replace(/[,\t;"\s]/g, "");
+        if (stripped.length > 0) { headerIdx = i; break; }
+      }
+      
+      const lines = allLines.slice(headerIdx).filter((l) => l.trim());
+      
+      if (lines.length < 2) {
+        setError("File has no data rows.");
+        setLoading(false);
+        return;
+      }
+      
+      // Auto-detect delimiter: tab, comma, or semicolon
+      const firstLine = lines[0];
+      const tabCount = (firstLine.match(/\t/g) || []).length;
+      const commaCount = (firstLine.match(/,/g) || []).length;
+      const semiCount = (firstLine.match(/;/g) || []).length;
+      const delimiter = tabCount >= commaCount && tabCount >= semiCount ? "\t" : commaCount >= semiCount ? "," : ";";
+      
+      const csvHeaders = firstLine.split(delimiter).map((h) => h.trim().replace(/^"|"$/g, "").replace(/^\uFEFF/, ""));
+      
+      for (let i = 1; i < lines.length; i++) {
+        const vals = delimiter === ","
+          ? (lines[i].match(/"[^"]*"|[^,]*/g) || [])
+          : lines[i].split(delimiter);
+        const row: Record<string, unknown> = {};
+        csvHeaders.forEach((h, j) => {
+          const v = (vals[j] || "").trim().replace(/^"|"$/g, "");
+          row[h] = v === "" ? null : v;
         });
-
-        const XLSX = await loadXLSX();
-        const data = await file.arrayBuffer();
-        const wb = XLSX.read(data, { type: "array" });
-        const ws = wb.Sheets[wb.SheetNames[0]];
-        rows = XLSX.utils.sheet_to_json(ws, { defval: null });
+        rows.push(row);
       }
 
       if (rows.length === 0) {
@@ -155,11 +166,11 @@ export default function DealStatsLoader() {
       }
 
       // Map columns
-      const headers = Object.keys(rows[0]);
+      const fileHeaders = Object.keys(rows[0]);
       const colMap: Record<string, string> = {};
       const unmapped: string[] = [];
 
-      headers.forEach((h) => {
+      fileHeaders.forEach((h) => {
         const mapped = mapColumn(h);
         if (mapped) {
           colMap[h] = mapped;
@@ -320,9 +331,9 @@ export default function DealStatsLoader() {
             }
           }}
         >
-          <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv" onChange={handleFile} style={{ display: "none" }} />
+          <input ref={fileRef} type="file" accept=".csv,.tsv,.txt,.xlsx,.xls" onChange={handleFile} style={{ display: "none" }} />
           {loading ? (
-            <div style={{ fontSize: 15, color: "#818CF8" }}>🔄 Parsing spreadsheet...</div>
+            <div style={{ fontSize: 15, color: "#818CF8" }}>🔄 Parsing file...</div>
           ) : fileName ? (
             <div>
               <div style={{ fontSize: 15, color: "#10B981", fontWeight: 600 }}>✓ {fileName}</div>
@@ -331,8 +342,8 @@ export default function DealStatsLoader() {
           ) : (
             <div>
               <div style={{ fontSize: 32, marginBottom: 8 }}>📄</div>
-              <div style={{ fontSize: 15, color: "#E2E8F0", fontWeight: 600 }}>Drop Excel/CSV file here or click to browse</div>
-              <div style={{ fontSize: 12, color: "#6B7280", marginTop: 4 }}>Supports .xlsx, .xls, and .csv files</div>
+              <div style={{ fontSize: 15, color: "#E2E8F0", fontWeight: 600 }}>Drop CSV file here or click to browse</div>
+              <div style={{ fontSize: 12, color: "#6B7280", marginTop: 4 }}>Save Excel as CSV first (File → Save As → CSV UTF-8)</div>
             </div>
           )}
         </div>
