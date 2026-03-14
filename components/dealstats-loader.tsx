@@ -46,11 +46,18 @@ function mapColumn(header: string): string | null {
 }
 
 function parseNum(val: unknown): number | null {
-  if (val === null || val === undefined || val === "" || val === "N/A" || val === "n/a" || val === "-") return null;
-  if (typeof val === "number") return val;
-  const s = String(val).replace(/[$,%x]/g, "").replace(/\s/g, "").replace(/\(([0-9.]+)\)/, "-$1");
+  if (val === null || val === undefined) return null;
+  if (typeof val === "number") return isNaN(val) ? null : val;
+  let s = String(val).trim();
+  if (s === "" || s === "N/A" || s === "n/a" || s === "-" || s === "--" || s === "NA" || s === "null" || s === "undefined") return null;
+  // Handle parenthetical negatives: ($1,234) or (1234)
+  const isNeg = /^\(.*\)$/.test(s);
+  // Strip everything except digits, dots, and minus signs
+  s = s.replace(/[^0-9.\-]/g, "");
+  if (s === "" || s === "." || s === "-") return null;
   const n = parseFloat(s);
-  return isNaN(n) ? null : n;
+  if (isNaN(n)) return null;
+  return isNeg ? -Math.abs(n) : n;
 }
 
 function parseYear(val: unknown): number | null {
@@ -147,13 +154,32 @@ export default function DealStatsLoader() {
       
       const csvHeaders = firstLine.split(delimiter).map((h) => h.trim().replace(/^"|"$/g, "").replace(/^\uFEFF/, ""));
       
+      // Proper CSV line parser that handles commas inside quoted values
+      function parseCsvLine(line: string, delim: string): string[] {
+        const result: string[] = [];
+        let current = "";
+        let inQuotes = false;
+        for (let c = 0; c < line.length; c++) {
+          const ch = line[c];
+          if (inQuotes) {
+            if (ch === '"' && line[c + 1] === '"') { current += '"'; c++; }
+            else if (ch === '"') { inQuotes = false; }
+            else { current += ch; }
+          } else {
+            if (ch === '"') { inQuotes = true; }
+            else if (ch === delim) { result.push(current); current = ""; }
+            else { current += ch; }
+          }
+        }
+        result.push(current);
+        return result;
+      }
+      
       for (let i = 1; i < lines.length; i++) {
-        const vals = delimiter === ","
-          ? (lines[i].match(/"[^"]*"|[^,]*/g) || [])
-          : lines[i].split(delimiter);
+        const vals = parseCsvLine(lines[i], delimiter);
         const row: Record<string, unknown> = {};
         csvHeaders.forEach((h, j) => {
-          const v = (vals[j] || "").trim().replace(/^"|"$/g, "");
+          const v = (vals[j] || "").trim();
           row[h] = v === "" ? null : v;
         });
         rows.push(row);
@@ -228,9 +254,10 @@ export default function DealStatsLoader() {
       }
 
       if (parsed.length === 0) {
-        setError(`File parsed ${rows.length} rows but no valid transactions found. Check column mapping above.`);
-        setMappedCols(colMap);
-        setUnmappedCols(unmapped);
+        // Show sample row for debugging
+        const sampleRow = rows[0];
+        const sampleVals = Object.entries(colMap).map(([orig, mapped]) => `${mapped}: "${sampleRow[orig]}"`).join(", ");
+        setError(`File parsed ${rows.length} rows but no valid transactions found. Sample row values: ${sampleVals}`);
         setLoading(false);
         return;
       }
