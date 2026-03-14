@@ -99,14 +99,57 @@ export default function DealStatsLoader() {
     setFileName(file.name);
 
     try {
-      const data = await file.arrayBuffer();
-      const XLSX = (await import("xlsx"));
-      const wb = XLSX.read(data, { type: "array" });
-      const ws = wb.Sheets[wb.SheetNames[0]];
-      const rows: Record<string, unknown>[] = XLSX.utils.sheet_to_json(ws, { defval: null });
+      const isCSV = file.name.toLowerCase().endsWith(".csv");
+
+      let rows: Record<string, unknown>[] = [];
+
+      if (isCSV) {
+        // Native CSV parsing - no library needed
+        const text = await file.text();
+        const lines = text.split(/\r?\n/).filter((l) => l.trim());
+        if (lines.length < 2) { setError("CSV has no data rows"); setLoading(false); return; }
+        const headers = lines[0].split(",").map((h) => h.trim().replace(/^"|"$/g, ""));
+        for (let i = 1; i < lines.length; i++) {
+          const vals = lines[i].match(/(".*?"|[^,]*)/g) || [];
+          const row: Record<string, unknown> = {};
+          headers.forEach((h, j) => {
+            let v = (vals[j] || "").trim().replace(/^"|"$/g, "");
+            row[h] = v === "" ? null : v;
+          });
+          rows.push(row);
+        }
+      } else {
+        // XLSX - load SheetJS dynamically via script tag
+        const loadXLSX = () => new Promise<typeof import("xlsx")>((resolve, reject) => {
+          // Check if already loaded
+          if ((window as Record<string, unknown>).XLSX) {
+            resolve((window as Record<string, unknown>).XLSX as typeof import("xlsx"));
+            return;
+          }
+          // Try dynamic import first
+          import("xlsx").then(resolve).catch(() => {
+            // Fallback: load from CDN
+            const script = document.createElement("script");
+            script.src = "https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js";
+            script.onload = () => {
+              const XLSX = (window as Record<string, unknown>).XLSX as typeof import("xlsx");
+              if (XLSX) resolve(XLSX);
+              else reject(new Error("SheetJS failed to load"));
+            };
+            script.onerror = () => reject(new Error("Failed to load spreadsheet parser"));
+            document.head.appendChild(script);
+          });
+        });
+
+        const XLSX = await loadXLSX();
+        const data = await file.arrayBuffer();
+        const wb = XLSX.read(data, { type: "array" });
+        const ws = wb.Sheets[wb.SheetNames[0]];
+        rows = XLSX.utils.sheet_to_json(ws, { defval: null });
+      }
 
       if (rows.length === 0) {
-        setError("No data rows found in spreadsheet");
+        setError("No data rows found in file");
         setLoading(false);
         return;
       }
@@ -146,12 +189,11 @@ export default function DealStatsLoader() {
         // Skip rows with no financial data
         if (mvic === null && revenue === null && sde === null) continue;
 
-        // Parse margins - if they look like percentages (0-100), keep as-is. If decimals (0-1), convert.
+        // Parse margins - if they look like decimals (0-1), convert to percentage
         let opMargin = parseNum(rec.operating_margin_pct);
         let sdeMargin = parseNum(rec.sde_margin_pct);
         let ebitdaMargin = parseNum(rec.ebitda_margin_pct);
 
-        // If margin values look like decimals (< 1), convert to percentage
         if (opMargin !== null && opMargin > -1 && opMargin < 1) opMargin = +(opMargin * 100).toFixed(1);
         if (sdeMargin !== null && sdeMargin > -1 && sdeMargin < 1) sdeMargin = +(sdeMargin * 100).toFixed(1);
         if (ebitdaMargin !== null && ebitdaMargin > -1 && ebitdaMargin < 1) ebitdaMargin = +(ebitdaMargin * 100).toFixed(1);
@@ -174,6 +216,14 @@ export default function DealStatsLoader() {
         });
       }
 
+      if (parsed.length === 0) {
+        setError(`File parsed ${rows.length} rows but no valid transactions found. Check column mapping above.`);
+        setMappedCols(colMap);
+        setUnmappedCols(unmapped);
+        setLoading(false);
+        return;
+      }
+
       // Auto-detect NAICS from first row
       if (parsed[0]?.naics_code && !naicsCode) {
         setNaicsCode(parsed[0].naics_code);
@@ -181,7 +231,7 @@ export default function DealStatsLoader() {
 
       setRecords(parsed);
     } catch (err) {
-      setError("Failed to parse spreadsheet: " + (err instanceof Error ? err.message : "Unknown error"));
+      setError("Failed to parse file: " + (err instanceof Error ? err.message : "Unknown error"));
     }
     setLoading(false);
   };
