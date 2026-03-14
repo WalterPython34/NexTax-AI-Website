@@ -342,18 +342,22 @@ export default function DealStatsLoader() {
         )}
 
         {/* Column Mapping Display */}
-        {records.length > 0 && (
-          <div style={{ padding: "12px 16px", borderRadius: 8, background: "rgba(16,185,129,0.06)", border: "1px solid rgba(16,185,129,0.12)", marginBottom: 12, fontSize: 12 }}>
-            <div style={{ fontWeight: 600, color: "#10B981", marginBottom: 4 }}>✓ Column Mapping ({Object.keys(mappedCols).length} mapped)</div>
-            <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-              {Object.entries(mappedCols).map(([orig, mapped]) => (
-                <span key={orig} style={{ padding: "2px 8px", borderRadius: 4, background: "rgba(16,185,129,0.1)", color: "#10B981", fontSize: 10 }}>
-                  {orig} → {mapped}
-                </span>
-              ))}
+        {(Object.keys(mappedCols).length > 0 || unmappedCols.length > 0) && (
+          <div style={{ padding: "12px 16px", borderRadius: 8, background: Object.keys(mappedCols).length > 0 ? "rgba(16,185,129,0.06)" : "rgba(239,68,68,0.06)", border: `1px solid ${Object.keys(mappedCols).length > 0 ? "rgba(16,185,129,0.12)" : "rgba(239,68,68,0.12)"}`, marginBottom: 12, fontSize: 12 }}>
+            <div style={{ fontWeight: 600, color: Object.keys(mappedCols).length > 0 ? "#10B981" : "#EF4444", marginBottom: 4 }}>
+              {Object.keys(mappedCols).length > 0 ? `✓ Column Mapping (${Object.keys(mappedCols).length} mapped)` : "✕ No columns mapped"}
             </div>
+            {Object.keys(mappedCols).length > 0 && (
+              <div style={{ display: "flex", gap: 6, flexWrap: "wrap", marginBottom: unmappedCols.length > 0 ? 6 : 0 }}>
+                {Object.entries(mappedCols).map(([orig, mapped]) => (
+                  <span key={orig} style={{ padding: "2px 8px", borderRadius: 4, background: "rgba(16,185,129,0.1)", color: "#10B981", fontSize: 10 }}>
+                    {orig} → {mapped}
+                  </span>
+                ))}
+              </div>
+            )}
             {unmappedCols.length > 0 && (
-              <div style={{ marginTop: 6, color: "#F59E0B", fontSize: 10 }}>
+              <div style={{ color: "#F59E0B", fontSize: 10 }}>
                 Unmapped (skipped): {unmappedCols.join(", ")}
               </div>
             )}
