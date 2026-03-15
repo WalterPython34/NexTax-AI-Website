@@ -1,5 +1,16 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import {
+  loadBenchmarkData,
+  getValuationBenchmark,
+  getValuationMultiple,
+  getFairValue,
+  getDealRealityScore,
+  classifyDealSentiment,
+  getBBMarketStats,
+  getSizeBand,
+  type BenchmarkDataset,
+} from "@/lib/valuation-engine";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -16,131 +27,25 @@ const INDUSTRY_LABELS: Record<string, string> = {
   storage: "Self-Storage", painting: "Painting", security: "Security",
 };
 
-// ─────────────────────────────────────────────────────────────────────────────
-// BENCHMARK LOOKUP — three-tier fallback for valuation multiples
-//
-// Layer 1: DealStats size-band specific (most precise — individual closed txns)
-// Layer 2: DealStats industry-level aggregate (broader sample)
-// Layer 3: BizBuySell industry_transaction_benchmarks (annual report aggregates)
-//
-// Raw DealStats data is never returned to users.
-// All outputs are labeled "NexTax Market Intelligence".
-// ─────────────────────────────────────────────────────────────────────────────
-function getValuationMultiple(
-  industryKey: string,
-  dstatsByIndustry: Record<string, { national: any; byBand: Record<string, any> }>,
-  bbBenchmarks: any[],
-  sizeBand?: string | null,
-): {
-  multiple: number | null;
-  p25: number | null;
-  p75: number | null;
-  source: "dstats_band" | "dstats_national" | "bizbuysell" | null;
-  sampleSize: number;
-  confidence: "HIGH" | "MEDIUM" | "LOW" | "INSUFFICIENT";
-} {
-  const ds = dstatsByIndustry[industryKey];
-
-  // Layer 1: DealStats size-band specific (min 5 samples to use)
-  if (sizeBand && ds?.byBand?.[sizeBand]) {
-    const row = ds.byBand[sizeBand];
-    if (row.sample_size >= 5 && row.median_mvic_to_sde) {
-      return {
-        multiple: +row.median_mvic_to_sde.toFixed(2),
-        p25: row.p25_mvic_to_sde ? +row.p25_mvic_to_sde.toFixed(2) : null,
-        p75: row.p75_mvic_to_sde ? +row.p75_mvic_to_sde.toFixed(2) : null,
-        source: "dstats_band",
-        sampleSize: row.sample_size,
-        confidence: row.sample_size >= 20 ? "HIGH" : row.sample_size >= 10 ? "MEDIUM" : "LOW",
-      };
-    }
-  }
-
-  // Layer 2: DealStats national/industry-level aggregate (min 10 samples)
-  if (ds?.national?.median_mvic_to_sde && ds.national.sample_size >= 10) {
-    const row = ds.national;
-    return {
-      multiple: +row.median_mvic_to_sde.toFixed(2),
-      p25: row.p25_mvic_to_sde ? +row.p25_mvic_to_sde.toFixed(2) : null,
-      p75: row.p75_mvic_to_sde ? +row.p75_mvic_to_sde.toFixed(2) : null,
-      source: "dstats_national",
-      sampleSize: row.sample_size,
-      confidence: row.sample_size >= 30 ? "HIGH" : row.sample_size >= 15 ? "MEDIUM" : "LOW",
-    };
-  }
-
-  // Layer 3: BizBuySell annual report aggregates (cashflow multiple)
-  const bbRows = bbBenchmarks.filter((t) => t.industry_key === industryKey);
-  const bbSales = bbRows.reduce((s: number, t: any) => s + (t.reported_sales || 0), 0);
-  if (bbSales > 0) {
-    const bbMultiple = bbRows.reduce((s: number, t: any) => s + (t.cashflow_multiple_avg || 0) * (t.reported_sales || 0), 0) / bbSales;
-    return {
-      multiple: bbMultiple > 0 ? +bbMultiple.toFixed(2) : null,
-      p25: null,
-      p75: null,
-      source: "bizbuysell",
-      sampleSize: bbSales,
-      confidence: bbSales >= 50 ? "MEDIUM" : "LOW",
-    };
-  }
-
-  return { multiple: null, p25: null, p75: null, source: null, sampleSize: 0, confidence: "INSUFFICIENT" };
-}
-
 export async function GET() {
   try {
-    // ── Fetch all sources in parallel
-    const [dealsRes, bbRes, listingRes, leadsRes, signalsRes, dstatsAllRes] = await Promise.all([
-      // Layer A: Live analyzed / marketplace deal supply
+    // ── Load all data in parallel: deal_runs + leads + signals + benchmark dataset
+    const [dealsRes, leadsRes, signalsRes, benchmarks] = await Promise.all([
       supabase.from("deal_runs").select("*").eq("is_valid", true).order("created_at", { ascending: false }).limit(2000),
-
-      // Layer B: BizBuySell 2025 annual closed-market activity report (pre-aggregated)
-      supabase.from("industry_transaction_benchmarks").select("*").not("industry_key", "is", null),
-
-      // Layer C: Listing benchmarks (computed from deal_runs)
-      supabase.from("industry_listing_benchmarks").select("*").is("state", null).is("size_band", null),
-
       supabase.from("deal_leads").select("id, source, created_at").order("created_at", { ascending: false }).limit(500),
       supabase.from("community_signals").select("*").eq("is_active", true).order("ingested_at", { ascending: false }).limit(500),
-
-      // Layer D: DealStats closed transaction benchmarks — ALL rows (national + size-band)
-      // This is the primary valuation source. Never exposed raw to users.
-      supabase.from("dealstats_benchmarks").select(
-        "industry_key, naics_code, size_band, sample_size, " +
-        "median_mvic_to_sde, median_mvic_to_revenue, median_mvic_to_ebitda, " +
-        "p25_mvic_to_sde, p75_mvic_to_sde, " +
-        "median_revenue, median_sde, median_ebitda, median_mvic, " +
-        "median_sde_margin, median_ebitda_margin, median_operating_margin"
-      ),
+      loadBenchmarkData(),  // loads dstats + bb + listing in one parallel call
     ]);
 
     const deals = dealsRes.data || [];
-    const bbBenchmarks = bbRes.data || [];       // BizBuySell annual report rows
-    const listingBenchmarks = listingRes.data || [];
     const leads = leadsRes.data || [];
     const signals = signalsRes.data || [];
-    const dstatsAll = dstatsAllRes.data || [];   // All DealStats rows (national + size-banded)
+    const data: BenchmarkDataset = benchmarks;
 
-    // ── Organize DealStats rows into a lookup structure:
-    //    dstatsByIndustry[industry_key] = { national: row, byBand: { band: row } }
-    const dstatsByIndustry: Record<string, { national: any; byBand: Record<string, any> }> = {};
-    for (const row of dstatsAll) {
-      const key = row.industry_key;
-      if (!key) continue;
-      if (!dstatsByIndustry[key]) dstatsByIndustry[key] = { national: null, byBand: {} };
-      if (!row.size_band) {
-        dstatsByIndustry[key].national = row;
-      } else {
-        dstatsByIndustry[key].byBand[row.size_band] = row;
-      }
-    }
-
-    // ── Source counts for data sources footer (kept conceptually separate)
-    // BizBuySell: sum of reported_sales from the annual report rows
-    const bbReportedSales = bbBenchmarks.reduce((s: number, t: any) => s + (t.reported_sales || 0), 0);
-    // DealStats: sum of sample_size from national-level rows only (avoid double-counting size bands)
-    const dstatsNationalRows = dstatsAll.filter((r: any) => !r.size_band);
-    const dstatsTotalTransactions = dstatsNationalRows.reduce((s: number, r: any) => s + (r.sample_size || 0), 0) || 5649;
+    // ── Data source counts (kept conceptually separate — never merged)
+    const bbReportedSalesTotal = Object.values(data.bb).flat().reduce((s, r) => s + (r.reported_sales || 0), 0);
+    const dstatsNationalRows = Object.values(data.dstats).map((d) => d.national).filter(Boolean);
+    const dstatsTotalTransactions = dstatsNationalRows.reduce((s, r) => s + (r!.sample_size || 0), 0) || 5649;
 
     // ── OVERVIEW KPIs
     const now = Date.now();
@@ -153,7 +58,7 @@ export async function GET() {
       : 0;
     const totalLeads = leads.length;
 
-    // Weekly trend (last 12 weeks) — sourced entirely from deal_runs (live deal layer)
+    // Weekly trend — sourced entirely from deal_runs (live deal layer)
     const weeklyTrend = Array.from({ length: 12 }, (_, i) => {
       const weekStart = now - (11 - i) * 7 * 86400000;
       const weekEnd = weekStart + 7 * 86400000;
@@ -183,21 +88,14 @@ export async function GET() {
       };
     });
 
-    // ── DEAL REALITY INDEX (DRI)
-    //
-    // Formula: DRI = listing median multiple / sold median multiple
-    //
-    // "Listing multiple" = from industry_listing_benchmarks (computed from deal_runs asking prices / SDE)
-    // "Sold multiple"    = from getValuationMultiple() — prefers DealStats, falls back to BizBuySell
-    //
-    // Interpretation: DRI > 1.0 means market is asking more than comps support.
-    // DRI = 1.19 → sellers are asking 19% above what closed deals actually traded at.
-    //
+    // ── DEAL REALITY INDEX (DRI) per industry
+    // DRI = listing median multiple / sold median multiple (via valuation engine)
+    // Sold multiple prefers DealStats, falls back through hierarchy automatically.
+    const listingBenchmarks = Object.values(data.listing);
     const driByIndustry = Object.entries(INDUSTRY_LABELS).map(([key, label]) => {
-      const listing = listingBenchmarks.find((l: any) => l.industry_key === key);
-      const bbRows = bbBenchmarks.filter((t: any) => t.industry_key === key);
-      const bbSales = bbRows.reduce((s: number, t: any) => s + (t.reported_sales || 0), 0);
-      const vm = getValuationMultiple(key, dstatsByIndustry, bbBenchmarks);
+      const listing = data.listing[key];
+      const vm = getValuationMultiple(key, null, data);   // national-level for DRI (no size band)
+      const bbStats = getBBMarketStats(key, data);
 
       const listingMultiple = listing?.median_multiple || null;
       const soldMultiple = vm.multiple;
@@ -211,14 +109,11 @@ export async function GET() {
         : null;
 
       const avgAsk = listing?.median_asking_price ? Math.round(listing.median_asking_price) : null;
-
-      // Fair value: DealStats median MVIC (preferred) → BizBuySell median sale price
-      const dstatsNational = dstatsByIndustry[key]?.national;
+      // Fair value: DealStats median MVIC preferred, BizBuySell sale price fallback
+      const dstatsNational = data.dstats[key]?.national;
       const fairValue = dstatsNational?.median_mvic
         ? Math.round(dstatsNational.median_mvic)
-        : bbSales > 0
-        ? Math.round(bbRows.reduce((s: number, t: any) => s + (t.median_sale_price || 0) * (t.reported_sales || 0), 0) / bbSales)
-        : null;
+        : bbStats.medianSalePrice;
 
       const dealCount = deals.filter((d: any) => d.industry === key).length;
       const weekTrend = dri ? +((Math.random() - 0.5) * 6).toFixed(1) : null;
@@ -230,18 +125,14 @@ export async function GET() {
         gapPct,
         condition,
         listingMultiple: listingMultiple ? +listingMultiple.toFixed(2) : null,
-        txnMultiple: soldMultiple,          // the "sold" side — DealStats preferred
-        txnMultipleSource: vm.source,       // which layer provided it
+        txnMultiple: soldMultiple,
+        txnMultipleSource: vm.source,
         txnMultipleConfidence: vm.confidence,
-        txnSales: bbSales,                  // BizBuySell reported sales count (from annual report)
-        dstatsSampleSize: dstatsByIndustry[key]?.national?.sample_size || 0,
+        txnSales: bbStats.bbReportedSales,
+        dstatsSampleSize: dstatsNational?.sample_size || 0,
         listingSampleSize: listing?.sample_size || 0,
-        saleToAsk: bbSales > 0
-          ? +(bbRows.reduce((s: number, t: any) => s + (t.sale_to_asking_ratio || 0) * (t.reported_sales || 0), 0) / bbSales).toFixed(2)
-          : null,
-        daysOnMarket: bbSales > 0
-          ? Math.round(bbRows.reduce((s: number, t: any) => s + (t.median_days_on_market || 0) * (t.reported_sales || 0), 0) / bbSales)
-          : null,
+        saleToAsk: bbStats.saleToAsk,
+        daysOnMarket: bbStats.medianDaysOnMarket,
         avgAsk,
         fairValue,
         dealCount,
@@ -256,103 +147,75 @@ export async function GET() {
       ? +(driValues.reduce((s, v) => s + v, 0) / driValues.length).toFixed(2)
       : null;
 
+    // DRI trend (simulated — will become real once dri_snapshots table is added)
     const driTrend = Array.from({ length: 12 }, (_, i) => ({
       week: `W${i + 1}`,
       dri: overallDRI ? +(overallDRI + (Math.random() - 0.5) * 0.15).toFixed(2) : null,
     }));
 
     // ── INDUSTRY HEATMAP
-    //
-    // Heat score uses three independent signals from three separate layers:
-    //   - Live deal supply (deal_runs):              up to 30 pts — how active is NexTax coverage?
-    //   - Market transaction activity (BizBuySell):  up to 40 pts — how active is the closed market?
-    //   - Benchmark confidence (DealStats):          up to 30 pts — how deep is our comp data?
-    //
+    // Three independent signals — never merged into one raw count
     const industryHeatmap = Object.entries(INDUSTRY_LABELS).map(([key, label]) => {
       const industryDeals = deals.filter((d: any) => d.industry === key);
-      const bbRows = bbBenchmarks.filter((t: any) => t.industry_key === key);
-      const bbSales = bbRows.reduce((s: number, t: any) => s + (t.reported_sales || 0), 0);
-      const dstatsNational = dstatsByIndustry[key]?.national;
+      const bbStats = getBBMarketStats(key, data);
+      const dstatsNational = data.dstats[key]?.national;
       const dstatsSampleSize = dstatsNational?.sample_size || 0;
-
-      const vm = getValuationMultiple(key, dstatsByIndustry, bbBenchmarks);
-
-      const daysOnMarket = bbSales > 0
-        ? Math.round(bbRows.reduce((s: number, t: any) => s + (t.median_days_on_market || 0) * (t.reported_sales || 0), 0) / bbSales)
-        : null;
-      const saleToAsk = bbSales > 0
-        ? +(bbRows.reduce((s: number, t: any) => s + (t.sale_to_asking_ratio || 0) * (t.reported_sales || 0), 0) / bbSales).toFixed(2)
-        : null;
-
-      // Signal A: Live deal supply from deal_runs (0–30 pts)
-      const liveSupplyScore = Math.min(industryDeals.length / 20, 1) * 30;
-
-      // Signal B: BizBuySell closed market activity from annual report (0–40 pts)
-      const marketActivityScore = Math.min(bbSales / 200, 1) * 40;
-
-      // Signal C: DealStats benchmark confidence depth (0–30 pts)
-      const benchmarkDepthScore = Math.min(dstatsSampleSize / 150, 1) * 30;
-
-      const heatScore = Math.round(liveSupplyScore + marketActivityScore + benchmarkDepthScore);
+      const vm = getValuationMultiple(key, null, data);
 
       const scoreAvg = industryDeals.length > 0
         ? industryDeals.reduce((s: number, d: any) => s + (d.overall_score || 0), 0) / industryDeals.length
         : null;
 
-      const weekTrend = +((Math.random() - 0.5) * 8).toFixed(1);
+      // Signal A: Live deal supply from deal_runs (0–30 pts)
+      const liveSupplyScore = Math.min(industryDeals.length / 20, 1) * 30;
+      // Signal B: BizBuySell closed market activity — annual report reported sales (0–40 pts)
+      const marketActivityScore = Math.min(bbStats.bbReportedSales / 200, 1) * 40;
+      // Signal C: DealStats benchmark confidence depth (0–30 pts)
+      const benchmarkDepthScore = Math.min(dstatsSampleSize / 150, 1) * 30;
+      const heatScore = Math.round(liveSupplyScore + marketActivityScore + benchmarkDepthScore);
 
       return {
         industry: key,
         label,
         heatScore,
-        // Separate counts — not merged into one pool
-        liveDeals: industryDeals.length,          // deal_runs: marketplace + user analyses
-        bbReportedSales: bbSales,                  // BizBuySell 2025 annual report
-        dstatsSampleSize,                           // DealStats closed comp depth
-        dealCount: industryDeals.length,            // alias for UI compatibility
-        txnCount: bbSales,                          // UI uses this for "Transaction Volume" column → BizBuySell only
+        liveDeals: industryDeals.length,
+        bbReportedSales: bbStats.bbReportedSales,
+        dstatsSampleSize,
+        dealCount: industryDeals.length,           // alias for UI compat
+        txnCount: bbStats.bbReportedSales,          // UI "Transaction Volume" col → BizBuySell only
         avgScore: scoreAvg ? Math.round(scoreAvg) : null,
         medianMultiple: vm.multiple,
         multipleSource: vm.source,
-        daysOnMarket,
-        saleToAsk,
-        weekTrend,
+        daysOnMarket: bbStats.medianDaysOnMarket,
+        saleToAsk: bbStats.saleToAsk,
+        weekTrend: +((Math.random() - 0.5) * 8).toFixed(1),
       };
     }).sort((a, b) => b.heatScore - a.heatScore);
 
     // ── DEAL SENTIMENT
-    //
-    // For each live deal, determine overpriced / fair / undervalued using:
-    //   Primary:  DealStats median_mvic_to_sde × deal SDE = NexTax fair value estimate
-    //   Fallback: overall_score bucketing (when no DealStats coverage for that industry)
-    //
+    // Classifies each live deal using the valuation engine hierarchy.
+    // DealStats fair value used when available; falls back to score-based bucketing.
     let sentimentOverpriced = 0, sentimentFair = 0, sentimentUndervalued = 0;
     deals.forEach((d: any) => {
-      const ds = dstatsByIndustry[d.industry];
-      // Try size-band first, then national
-      const sizeBand = d.size_band || null;
-      const dsRow = (sizeBand && ds?.byBand?.[sizeBand]?.sample_size >= 5)
-        ? ds.byBand[sizeBand]
-        : ds?.national;
-
-      if (dsRow?.median_mvic_to_sde && d.sde > 0 && d.asking_price > 0) {
-        const fairValue = dsRow.median_mvic_to_sde * d.sde;
-        const ratio = d.asking_price / fairValue;
-        if (ratio > 1.15) sentimentOverpriced++;
-        else if (ratio < 0.85) sentimentUndervalued++;
-        else sentimentFair++;
-      } else {
-        // Fallback to score-based bucketing
-        if (d.overall_score < 40) sentimentOverpriced++;
-        else if (d.overall_score >= 70) sentimentUndervalued++;
-        else sentimentFair++;
-      }
+      const sizeBand = d.size_band || getSizeBand(d.revenue);
+      const bucket = classifyDealSentiment(
+        d.asking_price || 0,
+        d.sde || 0,
+        d.overall_score || 50,
+        d.industry,
+        sizeBand,
+        data
+      );
+      if (bucket === "overpriced") sentimentOverpriced++;
+      else if (bucket === "fair") sentimentFair++;
+      else sentimentUndervalued++;
     });
 
     const sentimentScore = deals.length > 0
       ? Math.round((sentimentUndervalued / deals.length) * 100)
       : 50;
-    const sentimentLabel = sentimentScore >= 75 ? "Very Bullish"
+    const sentimentLabel =
+      sentimentScore >= 75 ? "Very Bullish"
       : sentimentScore >= 60 ? "Bullish"
       : sentimentScore >= 45 ? "Neutral"
       : sentimentScore >= 30 ? "Bearish"
@@ -382,7 +245,6 @@ export async function GET() {
       return sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
     };
 
-    // ── VALUATION DISTRIBUTION (score-based, from deal_runs)
     const valDist = {
       overpriced: deals.filter((d: any) => d.valuation_score !== null && d.valuation_score < 40).length,
       fair: deals.filter((d: any) => d.valuation_score !== null && d.valuation_score >= 40 && d.valuation_score < 70).length,
@@ -410,13 +272,16 @@ export async function GET() {
 
     // ── SERVICE GAP MAP
     const serviceGap = Object.entries(INDUSTRY_LABELS).map(([key, label]) => {
-      const bbRows = bbBenchmarks.filter((t: any) => t.industry_key === key);
-      const bbSales = bbRows.reduce((s: number, t: any) => s + (t.reported_sales || 0), 0);
+      const bbStats = getBBMarketStats(key, data);
       const dealCount = deals.filter((d: any) => d.industry === key).length;
       const userCount = deals.filter((d: any) => d.industry === key && d.data_source_type === "user_submitted").length;
       return {
-        industry: key, label, txnCount: bbSales, dealCount, userCount,
-        gap: bbSales > 0 ? Math.round((1 - Math.min(dealCount / (bbSales * 0.1), 1)) * 100) : 0,
+        industry: key, label,
+        txnCount: bbStats.bbReportedSales,
+        dealCount, userCount,
+        gap: bbStats.bbReportedSales > 0
+          ? Math.round((1 - Math.min(dealCount / (bbStats.bbReportedSales * 0.1), 1)) * 100)
+          : 0,
       };
     }).sort((a, b) => b.gap - a.gap);
 
@@ -444,7 +309,6 @@ export async function GET() {
     const serviceGapMatrix = PAIN_CATEGORIES_FOR_MATRIX.map((cat) => {
       const catSignals = signals.filter((s: any) => s.pain_category === cat);
       const tiers = SERVICE_ALIGNMENT[cat] || [50, 50, 50];
-      const total = Math.round(tiers.reduce((s, v) => s + v, 0) / tiers.length);
       return {
         category: cat,
         label: PAIN_FULL_LABELS[cat] || cat,
@@ -453,7 +317,7 @@ export async function GET() {
           ? Math.round(catSignals.reduce((s: number, sig: any) => s + (sig.pain_intensity || 0), 0) / catSignals.length)
           : 0,
         tiers,
-        total,
+        total: Math.round(tiers.reduce((s, v) => s + v, 0) / tiers.length),
       };
     });
 
@@ -498,12 +362,14 @@ export async function GET() {
       const weeklyData = Array.from({ length: 12 }, (_, i) => {
         const weekStart = now - (11 - i) * 7 * 86400000;
         const weekEnd = weekStart + 7 * 86400000;
-        const weekSignals = signals.filter((s: any) =>
-          s.pain_category === cat &&
-          new Date(s.ingested_at).getTime() >= weekStart &&
-          new Date(s.ingested_at).getTime() < weekEnd
-        );
-        return { week: `W${i + 1}`, count: weekSignals.length };
+        return {
+          week: `W${i + 1}`,
+          count: signals.filter((s: any) =>
+            s.pain_category === cat &&
+            new Date(s.ingested_at).getTime() >= weekStart &&
+            new Date(s.ingested_at).getTime() < weekEnd
+          ).length,
+        };
       });
       return { category: cat, label: painLabels[cat] || cat, data: weeklyData };
     });
@@ -521,18 +387,13 @@ export async function GET() {
       success: true,
       lastUpdated: new Date().toISOString(),
 
-      // ── Data sources — clearly labeled by what each number represents
       dataSources: {
-        // Layer A: Live analyzed / marketplace deal supply (deal_runs)
         dealsAnalyzed: totalDeals,
         userSubmitted,
         marketplaceImports,
-        // Layer B: BizBuySell 2025 annual report — reported sales count (pre-aggregated)
-        bizbuysellReportedSales: bbReportedSales,
-        // Layer C: DealStats — normalized closed SMB transactions used for benchmarks
+        bizbuysellReportedSales: bbReportedSalesTotal,
         dstatsNormalizedTransactions: dstatsTotalTransactions,
-        // Legacy field used by UI header — show BizBuySell reported sales for consistency
-        closedTransactions: bbReportedSales,
+        closedTransactions: bbReportedSalesTotal,   // legacy field used by UI header
         industriesCovered: uniqueIndustries,
         leadsCapture: totalLeads,
       },
@@ -553,25 +414,12 @@ export async function GET() {
         },
       },
 
-      dri: {
-        overall: overallDRI,
-        trend: driTrend,
-        byIndustry: driByIndustry,
-      },
-
+      dri: { overall: overallDRI, trend: driTrend, byIndustry: driByIndustry },
       industryHeatmap,
-
       sentiment: {
-        score: sentimentScore,
-        label: sentimentLabel,
-        trend: sentimentTrend,
-        distribution: {
-          overpriced: sentimentOverpriced,
-          fair: sentimentFair,
-          undervalued: sentimentUndervalued,
-        },
+        score: sentimentScore, label: sentimentLabel, trend: sentimentTrend,
+        distribution: { overpriced: sentimentOverpriced, fair: sentimentFair, undervalued: sentimentUndervalued },
       },
-
       contentOps,
       serviceGap,
       serviceGapMatrix,
