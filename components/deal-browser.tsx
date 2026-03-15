@@ -34,6 +34,24 @@ const SORT_OPTIONS = [
   { label: "Lowest Multiple", value: "valuation_multiple", order: "asc" },
 ];
 
+// DRI color for the gap percentage display
+function driColor(dri: number | null) {
+  if (dri === null) return "#6B7280";
+  if (dri < 0.85) return "#10B981";
+  if (dri < 1.0)  return "#34D399";
+  if (dri <= 1.15) return "#3B82F6";
+  if (dri <= 1.30) return "#F59E0B";
+  return "#EF4444";
+}
+
+// Confidence dot color
+function confColor(conf: string | null) {
+  if (conf === "HIGH") return "#10B981";
+  if (conf === "MEDIUM") return "#F59E0B";
+  if (conf === "LOW") return "#F97316";
+  return "#4B5563";
+}
+
 interface Deal {
   id: string;
   industry: string;
@@ -51,6 +69,20 @@ interface Deal {
   data_source_type: string;
   created_at: string;
   slug: string | null;
+
+  // Valuation engine enrichments
+  fairValue: number | null;
+  fairValueP25: number | null;
+  fairValueP75: number | null;
+  benchmarkMultiple: number | null;
+  benchmarkSource: string | null;
+  benchmarkConfidence: string | null;
+  dri: number | null;
+  driGapPct: number | null;
+  driCondition: string | null;
+  pricingStatus: string;
+  pricingStatusColor: string;
+  pricingStatusBg: string;
 }
 
 export default function DealBrowser() {
@@ -61,7 +93,6 @@ export default function DealBrowser() {
   const [totalPages, setTotalPages] = useState(1);
   const [industryCounts, setIndustryCounts] = useState<Record<string, number>>({});
 
-  // Filters
   const [industry, setIndustry] = useState("all");
   const [priceRange, setPriceRange] = useState(0);
   const [minScore, setMinScore] = useState("");
@@ -108,7 +139,6 @@ export default function DealBrowser() {
       `}</style>
 
       <div style={{ maxWidth: 1200, margin: "0 auto", padding: "24px 24px 60px" }}>
-        {/* Header */}
         <div style={{ marginBottom: 24 }}>
           <h1 style={{ fontSize: 26, fontWeight: 700, margin: "0 0 4px", color: "#E2E8F0" }}>Deal Database</h1>
           <p style={{ fontSize: 13, color: "#6B7280", margin: 0 }}>
@@ -117,9 +147,8 @@ export default function DealBrowser() {
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "220px 1fr", gap: 20 }}>
-          {/* ── SIDEBAR FILTERS ── */}
+          {/* ── SIDEBAR ── unchanged layout */}
           <div>
-            {/* Industry Filter */}
             <div style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, padding: "16px", marginBottom: 12 }}>
               <div style={{ fontSize: 10, color: "#6B7280", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 10 }}>Industry</div>
               <div onClick={() => setIndustry("all")} style={{ padding: "6px 10px", borderRadius: 6, marginBottom: 2, cursor: "pointer", fontSize: 12, background: industry === "all" ? "rgba(99,102,241,0.15)" : "transparent", color: industry === "all" ? "#818CF8" : "#94A3B8", fontWeight: industry === "all" ? 600 : 400, display: "flex", justifyContent: "space-between" }}>
@@ -136,7 +165,6 @@ export default function DealBrowser() {
               </div>
             </div>
 
-            {/* Price Filter */}
             <div style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, padding: "16px", marginBottom: 12 }}>
               <div style={{ fontSize: 10, color: "#6B7280", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 10 }}>Price Range</div>
               {PRICE_RANGES.map((pr, i) => (
@@ -146,7 +174,6 @@ export default function DealBrowser() {
               ))}
             </div>
 
-            {/* Min Score Filter */}
             <div style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, padding: "16px", marginBottom: 12 }}>
               <div style={{ fontSize: 10, color: "#6B7280", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 10 }}>Min Deal Score</div>
               {["", "50", "60", "70", "80"].map((s) => (
@@ -156,7 +183,6 @@ export default function DealBrowser() {
               ))}
             </div>
 
-            {/* CTA */}
             <a href="/deal-reality-check" style={{ display: "block", padding: "12px", borderRadius: 10, background: "linear-gradient(135deg, #F59E0B, #D97706)", color: "#fff", fontSize: 13, fontWeight: 700, textAlign: "center", textDecoration: "none" }}>
               + Analyze a New Deal
             </a>
@@ -164,7 +190,6 @@ export default function DealBrowser() {
 
           {/* ── MAIN CONTENT ── */}
           <div>
-            {/* Sort Bar */}
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
               <div style={{ fontSize: 13, color: "#6B7280" }}>
                 Showing {deals.length} of {total.toLocaleString()} deals
@@ -178,7 +203,6 @@ export default function DealBrowser() {
               </div>
             </div>
 
-            {/* Deal Cards */}
             {loading ? (
               <div style={{ padding: "60px 20px", textAlign: "center", color: "#6B7280" }}>Loading deals...</div>
             ) : deals.length === 0 ? (
@@ -192,77 +216,151 @@ export default function DealBrowser() {
                   const ind = INDUSTRY_LABELS[deal.industry] || deal.industry;
                   const location = [deal.city, deal.state].filter(Boolean).join(", ");
                   const margin = deal.revenue > 0 ? ((deal.sde / deal.revenue) * 100).toFixed(0) : "—";
+                  const gapSign = deal.driGapPct !== null && deal.driGapPct !== undefined
+                    ? deal.driGapPct > 0 ? `+${deal.driGapPct}%` : `${deal.driGapPct}%`
+                    : null;
+
                   return (
-                    <div key={deal.id} className="fu" style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, padding: "16px 20px", display: "grid", gridTemplateColumns: "60px 1fr 1fr 1fr auto", gap: 16, alignItems: "center", cursor: deal.slug ? "pointer" : "default" }} onClick={() => deal.slug && window.open(`/deal/${deal.slug}`, "_blank")}>
+                    <div
+                      key={deal.id}
+                      className="fu"
+                      onClick={() => deal.slug && window.open(`/deal/${deal.slug}`, "_blank")}
+                      style={{
+                        background: "rgba(255,255,255,0.025)",
+                        border: "1px solid rgba(255,255,255,0.06)",
+                        borderRadius: 12,
+                        padding: "14px 18px",
+                        cursor: deal.slug ? "pointer" : "default",
+                        display: "grid",
+                        gridTemplateColumns: "52px 1fr auto",
+                        gap: 14,
+                        alignItems: "center",
+                      }}
+                    >
                       {/* Score Ring */}
-                      <div style={{ position: "relative", width: 52, height: 52 }}>
+                      <div style={{ position: "relative", width: 52, height: 52, flexShrink: 0 }}>
                         <svg width={52} height={52} style={{ transform: "rotate(-90deg)" }}>
                           <circle cx={26} cy={26} r={22} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth={4} />
-                          <circle cx={26} cy={26} r={22} fill="none" stroke={sc(deal.overall_score)} strokeWidth={4} strokeDasharray={138} strokeDashoffset={138 - (deal.overall_score / 100) * 138} strokeLinecap="round" />
+                          <circle cx={26} cy={26} r={22} fill="none" stroke={sc(deal.overall_score)} strokeWidth={4}
+                            strokeDasharray={138}
+                            strokeDashoffset={138 - (deal.overall_score / 100) * 138}
+                            strokeLinecap="round" />
                         </svg>
-                        <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, fontWeight: 700, color: sc(deal.overall_score), fontFamily: "'JetBrains Mono', monospace" }}>{deal.overall_score}</div>
-                      </div>
-
-                      {/* Deal Info */}
-                      <div>
-                        <div style={{ fontSize: 14, fontWeight: 600, color: "#E2E8F0", marginBottom: 2 }}>{ind}</div>
-                        <div style={{ fontSize: 11, color: "#6B7280" }}>{location || "Location N/A"}</div>
-                        <div style={{ display: "flex", gap: 6, marginTop: 4 }}>
-                          <span style={{ padding: "1px 6px", borderRadius: 4, fontSize: 9, background: `${sc(deal.overall_score)}15`, color: sc(deal.overall_score), fontWeight: 600 }}>{rl(deal.overall_score)}</span>
-                          {deal.source_platform && <span style={{ padding: "1px 6px", borderRadius: 4, fontSize: 9, background: "rgba(99,102,241,0.08)", color: "#818CF8" }}>{deal.source_platform}</span>}
+                        <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, fontWeight: 700, color: sc(deal.overall_score), fontFamily: "'JetBrains Mono', monospace" }}>
+                          {deal.overall_score}
                         </div>
                       </div>
 
-                      {/* Financials */}
+                      {/* Center: deal info + metrics */}
                       <div>
-                        <div style={{ fontSize: 11, color: "#6B7280", marginBottom: 2 }}>Asking / Revenue</div>
-                        <div style={{ fontSize: 14, fontWeight: 600, color: "#E2E8F0", fontFamily: "'JetBrains Mono', monospace" }}>{fmt(deal.asking_price)}</div>
-                        <div style={{ fontSize: 11, color: "#94A3B8", fontFamily: "'JetBrains Mono', monospace" }}>{fmt(deal.revenue)} rev</div>
-                      </div>
+                        {/* Row 1: industry + location + badges */}
+                        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4, flexWrap: "wrap" }}>
+                          <span style={{ fontSize: 14, fontWeight: 600, color: "#E2E8F0" }}>{ind}</span>
+                          {location && <span style={{ fontSize: 11, color: "#6B7280" }}>{location}</span>}
+                          <span style={{ padding: "1px 6px", borderRadius: 4, fontSize: 9, background: `${sc(deal.overall_score)}15`, color: sc(deal.overall_score), fontWeight: 600 }}>
+                            {rl(deal.overall_score)}
+                          </span>
+                          {/* Pricing status badge — new, from valuation engine */}
+                          {deal.pricingStatus && deal.pricingStatus !== "Unrated" && (
+                            <span style={{ padding: "1px 6px", borderRadius: 4, fontSize: 9, background: deal.pricingStatusBg, color: deal.pricingStatusColor, fontWeight: 600 }}>
+                              {deal.pricingStatus}
+                            </span>
+                          )}
+                          {deal.source_platform && (
+                            <span style={{ padding: "1px 6px", borderRadius: 4, fontSize: 9, background: "rgba(99,102,241,0.08)", color: "#818CF8" }}>
+                              {deal.source_platform}
+                            </span>
+                          )}
+                        </div>
 
-                      {/* Metrics */}
-                      <div>
-                        <div style={{ display: "flex", gap: 16 }}>
+                        {/* Row 2: financial metrics grid */}
+                        <div style={{ display: "flex", gap: 20, flexWrap: "wrap" }}>
+                          {/* Asking / Revenue */}
                           <div>
-                            <div style={{ fontSize: 9, color: "#6B7280", textTransform: "uppercase" }}>Multiple</div>
-                            <div style={{ fontSize: 14, fontWeight: 600, color: "#E2E8F0", fontFamily: "'JetBrains Mono', monospace" }}>{deal.valuation_multiple ? deal.valuation_multiple.toFixed(2) + "x" : "—"}</div>
+                            <div style={{ fontSize: 9, color: "#6B7280", textTransform: "uppercase", marginBottom: 1 }}>Asking / Rev</div>
+                            <div style={{ fontSize: 13, fontWeight: 600, color: "#E2E8F0", fontFamily: "'JetBrains Mono', monospace" }}>{fmt(deal.asking_price)}</div>
+                            <div style={{ fontSize: 10, color: "#6B7280", fontFamily: "'JetBrains Mono', monospace" }}>{fmt(deal.revenue)}</div>
                           </div>
+
+                          {/* SDE */}
                           <div>
-                            <div style={{ fontSize: 9, color: "#6B7280", textTransform: "uppercase" }}>SDE Margin</div>
-                            <div style={{ fontSize: 14, fontWeight: 600, color: "#E2E8F0", fontFamily: "'JetBrains Mono', monospace" }}>{margin}%</div>
+                            <div style={{ fontSize: 9, color: "#6B7280", textTransform: "uppercase", marginBottom: 1 }}>SDE</div>
+                            <div style={{ fontSize: 13, fontWeight: 600, color: "#E2E8F0", fontFamily: "'JetBrains Mono', monospace" }}>{fmt(deal.sde)}</div>
+                            <div style={{ fontSize: 10, color: "#6B7280" }}>{margin}% margin</div>
                           </div>
+
+                          {/* Multiple */}
                           <div>
-                            <div style={{ fontSize: 9, color: "#6B7280", textTransform: "uppercase" }}>SDE</div>
-                            <div style={{ fontSize: 14, fontWeight: 600, color: "#E2E8F0", fontFamily: "'JetBrains Mono', monospace" }}>{fmt(deal.sde)}</div>
+                            <div style={{ fontSize: 9, color: "#6B7280", textTransform: "uppercase", marginBottom: 1 }}>Multiple</div>
+                            <div style={{ fontSize: 13, fontWeight: 600, color: "#E2E8F0", fontFamily: "'JetBrains Mono', monospace" }}>
+                              {deal.valuation_multiple ? deal.valuation_multiple.toFixed(2) + "x" : "—"}
+                            </div>
+                            {deal.benchmarkMultiple && (
+                              <div style={{ fontSize: 10, color: "#6B7280" }}>Mkt: {deal.benchmarkMultiple.toFixed(2)}x</div>
+                            )}
                           </div>
+
+                          {/* Fair Value — new from engine */}
+                          {deal.fairValue && (
+                            <div>
+                              <div style={{ fontSize: 9, color: "#6B7280", textTransform: "uppercase", marginBottom: 1 }}>Fair Value</div>
+                              <div style={{ fontSize: 13, fontWeight: 600, color: "#C4B5FD", fontFamily: "'JetBrains Mono', monospace" }}>{fmt(deal.fairValue)}</div>
+                              {deal.fairValueP25 && deal.fairValueP75 && (
+                                <div style={{ fontSize: 10, color: "#6B7280" }}>{fmt(deal.fairValueP25)}–{fmt(deal.fairValueP75)}</div>
+                              )}
+                            </div>
+                          )}
+
+                          {/* DRI gap — new from engine */}
+                          {gapSign && (
+                            <div>
+                              <div style={{ fontSize: 9, color: "#6B7280", textTransform: "uppercase", marginBottom: 1 }}>vs Market</div>
+                              <div style={{ fontSize: 13, fontWeight: 700, color: driColor(deal.dri), fontFamily: "'JetBrains Mono', monospace" }}>
+                                {gapSign}
+                              </div>
+                              <div style={{ fontSize: 10, color: "#6B7280" }}>
+                                {deal.benchmarkConfidence && (
+                                  <span style={{ color: confColor(deal.benchmarkConfidence) }}>● </span>
+                                )}
+                                {deal.benchmarkConfidence || ""}
+                              </div>
+                            </div>
+                          )}
                         </div>
                       </div>
 
-                      {/* Arrow */}
-                      {deal.slug && <div style={{ fontSize: 16, color: "#4B5563" }}>→</div>}
+                      {/* Right: arrow */}
+                      {deal.slug && (
+                        <div style={{ fontSize: 16, color: "#4B5563", flexShrink: 0 }}>→</div>
+                      )}
                     </div>
                   );
                 })}
               </div>
             )}
 
-            {/* Pagination */}
+            {/* Pagination — unchanged */}
             {totalPages > 1 && (
               <div style={{ display: "flex", justifyContent: "center", gap: 8, marginTop: 20 }}>
-                <button onClick={() => setPage(Math.max(1, page - 1))} disabled={page === 1} style={{ padding: "8px 16px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.03)", color: page === 1 ? "#374151" : "#94A3B8", fontSize: 12, cursor: page === 1 ? "default" : "pointer" }}>← Prev</button>
+                <button onClick={() => setPage(Math.max(1, page - 1))} disabled={page === 1}
+                  style={{ padding: "8px 16px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.03)", color: page === 1 ? "#374151" : "#94A3B8", fontSize: 12, cursor: page === 1 ? "default" : "pointer" }}>
+                  ← Prev
+                </button>
                 <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "#6B7280" }}>
                   Page {page} of {totalPages}
                 </div>
-                <button onClick={() => setPage(Math.min(totalPages, page + 1))} disabled={page === totalPages} style={{ padding: "8px 16px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.03)", color: page === totalPages ? "#374151" : "#94A3B8", fontSize: 12, cursor: page === totalPages ? "default" : "pointer" }}>Next →</button>
+                <button onClick={() => setPage(Math.min(totalPages, page + 1))} disabled={page === totalPages}
+                  style={{ padding: "8px 16px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.03)", color: page === totalPages ? "#374151" : "#94A3B8", fontSize: 12, cursor: page === totalPages ? "default" : "pointer" }}>
+                  Next →
+                </button>
               </div>
             )}
           </div>
         </div>
 
-        {/* Footer */}
         <div style={{ marginTop: 24, padding: "14px 18px", borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)", textAlign: "center" }}>
           <div style={{ fontSize: 11, color: "#6B7280" }}>
-            Data from {Object.keys(industryCounts).length} industries • Updated continuously as deals are analyzed
+            Data from {Object.keys(industryCounts).length} industries • Fair value powered by NexTax Market Intelligence • Updated continuously
           </div>
         </div>
       </div>
