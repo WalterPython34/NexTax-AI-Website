@@ -12,7 +12,7 @@ const nextConfig = {
       allowedOrigins: ['localhost:3000', 'nextax.ai', '*.vercel.app']
     },
     serverComponentsExternalPackages: [
-      "@sparticuz/chromium",
+      "@sparticuz/chromium-min",
       "puppeteer-core",
     ],
   },
