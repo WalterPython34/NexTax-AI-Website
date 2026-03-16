@@ -1,8 +1,7 @@
 /**
- * POST /api/pulse/generate
- * Aggregates weekly stats from existing intelligence tables and creates
- * a weekly_reports row. Called by the Monday cron or manually.
- * Auth: CRON_SECRET
+ * GET  /api/pulse/generate  — browser-friendly test trigger
+ * POST /api/pulse/generate  — called by cron and weekly-pulse handler
+ * Auth: CRON_SECRET via Authorization header or ?secret= query param
  */
 
 import { NextRequest, NextResponse } from "next/server";
@@ -30,7 +29,7 @@ function driCondition(dri: number): string {
   return "Highly Overpriced";
 }
 
-export async function POST(req: NextRequest) {
+async function generate(req: NextRequest) {
   const secret = req.headers.get("authorization")?.replace("Bearer ", "") ||
                  new URL(req.url).searchParams.get("secret");
   if (secret !== process.env.CRON_SECRET) {
@@ -178,7 +177,6 @@ export async function POST(req: NextRequest) {
     const weekGroups: Record<string, number[]> = {};
     snapshotTrend.forEach((row) => {
       const d = new Date(row.snapshot_date);
-      // Get Monday of that week
       const day = d.getDay();
       const monday = new Date(d);
       monday.setDate(d.getDate() - (day === 0 ? 6 : day - 1));
@@ -197,33 +195,33 @@ export async function POST(req: NextRequest) {
 
     // ── Total transaction count
     const bbTotal = validSnapshots.reduce((s, snap) => s + (snap.sold_sample_size || 0), 0);
-    const benchmarkedTransactions = bbTotal || 13053; // fallback to known combined count
+    const benchmarkedTransactions = bbTotal || 13053;
 
     // ── Upsert the weekly report row
     const reportData = {
       slug,
-      week_starting:           weekStart.toISOString().split("T")[0],
-      week_ending:             weekEnd.toISOString().split("T")[0],
-      deal_reality_index:      overallDRI,
-      dri_interpretation:      overallDRI ? driCondition(overallDRI) : null,
-      dri_gap_pct:             driGapPct,
-      total_deals_analyzed:    deals.length,
+      week_starting:            weekStart.toISOString().split("T")[0],
+      week_ending:              weekEnd.toISOString().split("T")[0],
+      deal_reality_index:       overallDRI,
+      dri_interpretation:       overallDRI ? driCondition(overallDRI) : null,
+      dri_gap_pct:              driGapPct,
+      total_deals_analyzed:     deals.length,
       benchmarked_transactions: benchmarkedTransactions,
-      industries_tracked:      26,
-      avg_listing_multiple:    avgListingMultiple,
-      avg_sold_multiple:       avgSoldMultiple,
-      pct_deals_overpriced:    Math.round((overpriced / total) * 100),
-      pct_deals_fair:          Math.round((fair / total) * 100),
-      pct_deals_undervalued:   Math.round((undervalued / total) * 100),
-      most_overpriced:         mostOverpriced,
-      most_undervalued:        mostUndervalued,
-      all_industries:          allIndustries,
-      top_opportunities:       topOpportunities,
-      buyer_pain_index:        buyerPainIndex,
-      top_pain_category:       topPainCategory,
-      pain_signal_count:       signals.length,
-      dri_trend:               driTrend,
-      generated_at:            new Date().toISOString(),
+      industries_tracked:       26,
+      avg_listing_multiple:     avgListingMultiple,
+      avg_sold_multiple:        avgSoldMultiple,
+      pct_deals_overpriced:     Math.round((overpriced / total) * 100),
+      pct_deals_fair:           Math.round((fair / total) * 100),
+      pct_deals_undervalued:    Math.round((undervalued / total) * 100),
+      most_overpriced:          mostOverpriced,
+      most_undervalued:         mostUndervalued,
+      all_industries:           allIndustries,
+      top_opportunities:        topOpportunities,
+      buyer_pain_index:         buyerPainIndex,
+      top_pain_category:        topPainCategory,
+      pain_signal_count:        signals.length,
+      dri_trend:                driTrend,
+      generated_at:             new Date().toISOString(),
     };
 
     const { data: report, error } = await supabase
@@ -241,6 +239,7 @@ export async function POST(req: NextRequest) {
       success: true,
       slug,
       reportId: report.id,
+      previewUrl: `https://nextax.ai/pulse/${slug}`,
       metrics: {
         dri: overallDRI,
         driGapPct,
@@ -256,3 +255,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
+
+// Both GET and POST call the same function
+export async function GET(req: NextRequest)  { return generate(req); }
+export async function POST(req: NextRequest) { return generate(req); }
