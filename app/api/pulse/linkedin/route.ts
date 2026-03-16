@@ -399,10 +399,17 @@ export async function GET(req: NextRequest) {
     const chromium  = (await import("@sparticuz/chromium")).default;
     const puppeteer = (await import("puppeteer-core")).default;
 
+    const execPath = await chromium.executablePath();
     const browser = await puppeteer.launch({
-      args: chromium.args,
+      args: [
+        ...chromium.args,
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",
+        "--single-process",
+      ],
       defaultViewport: { width: SLIDE_W, height: SLIDE_H, deviceScaleFactor: 2 },
-      executablePath: await chromium.executablePath(),
+      executablePath: execPath,
       headless: true,
     });
 
