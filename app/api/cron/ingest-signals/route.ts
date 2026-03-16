@@ -1,16 +1,3 @@
-/**
- * /api/cron/ingest-signals
- *
- * Runs every 6 hours via Vercel cron (vercel.json: "0 */6 * * *")
- * Auth: CRON_SECRET via Bearer header or ?secret= query param
- *
- * Does three things each run:
- *   1. Ingests 1 new community signal via Claude web search
- *   2. Recomputes industry_listing_benchmarks from deal_runs
- *   3. [NEW] Writes a DRI snapshot row for each industry with benchmark data
- *   4. Cleans community_signals older than 90 days
- */
-
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import {
@@ -23,7 +10,6 @@ const supabase = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-// maxDuration 60 keeps us within Vercel Pro function limit
 export const maxDuration = 60;
 
 const INDUSTRY_KEYS = [
@@ -40,7 +26,7 @@ const SEARCH_QUERIES = [
   "business broker deal fell through reasons 2026",
   "ETA entrepreneurship through acquisition struggles forum",
   "how to value a small business acquisition 2026",
-  "seller financing deal structure questions acqui-hire",
+  "seller financing deal structure questions",
   "DSCR small business loan denial reasons 2026",
   "due diligence red flags buying a business",
   "small business asking price too high negotiation",
@@ -56,30 +42,30 @@ const SEARCH_QUERIES = [
   "roofing company acquisition risks 2026",
 ];
 
-// ── TASK 1: Ingest one community signal
+// Task 1: Ingest one community signal
 async function ingestSignal(): Promise<{ ingested: boolean; title: string | null; reason: string }> {
   const query = SEARCH_QUERIES[Math.floor(Math.random() * SEARCH_QUERIES.length)];
 
-  const prompt = `Search for a recent (last 7 days) Reddit post, Searchfunder thread, or forum discussion about: "${query}"
+  const prompt = `Search for a recent Reddit post, Searchfunder thread, or forum discussion about: "${query}"
 
-Find one highly relevant post from a real business buyer or searcher discussing pain points about SMB acquisitions.
+Find one highly relevant post from a real business buyer discussing SMB acquisition pain points.
 
-Return ONLY valid JSON (no markdown, no explanation):
+Return ONLY valid JSON (no markdown, no backticks):
 {
   "title": "exact post title",
-  "summary": "2-3 sentence summary of the key question or problem",
-  "platform": "reddit" or "searchfunder" or "twitter" or "other",
-  "url": "direct URL if available or null",
-  "pain_category": one of: "valuation" | "financial_modeling" | "diligence" | "seller_addbacks" | "dscr" | "market_saturation" | "competitive" | "deal_structure",
-  "signal_type": one of: "question" | "deal_share" | "complaint" | "advice" | "success_story" | "market_insight",
-  "sentiment": one of: "bullish" | "bearish" | "frustrated" | "excited" | "neutral",
-  "industry": the most relevant industry key or null,
-  "relevance_score": integer 0-100 (how relevant to SMB acquisition buyers),
-  "pain_intensity": integer 0-100 (how much pain/frustration is expressed),
-  "buyer_intent": integer 0-100 (likelihood the poster is actively buying a business),
-  "topics": ["array", "of", "key", "topics"],
-  "ai_insight": "one sentence about what this signal means for acquisition buyers",
-  "content_opportunity": "one content idea NexTax could create to address this pain point"
+  "summary": "2-3 sentence summary",
+  "platform": "reddit or searchfunder or twitter or other",
+  "url": "direct URL or null",
+  "pain_category": "valuation or financial_modeling or diligence or seller_addbacks or dscr or market_saturation or competitive or deal_structure",
+  "signal_type": "question or deal_share or complaint or advice or success_story or market_insight",
+  "sentiment": "bullish or bearish or frustrated or excited or neutral",
+  "industry": "relevant industry key or null",
+  "relevance_score": 0-100,
+  "pain_intensity": 0-100,
+  "buyer_intent": 0-100,
+  "topics": ["array", "of", "topics"],
+  "ai_insight": "one sentence insight for acquisition buyers",
+  "content_opportunity": "one content idea to address this pain"
 }`;
 
   try {
@@ -119,23 +105,23 @@ Return ONLY valid JSON (no markdown, no explanation):
     if (existing && existing.length > 0) return { ingested: false, title: signal.title, reason: "Duplicate" };
 
     const { error } = await supabase.from("community_signals").insert({
-      title:              signal.title,
-      summary:            signal.summary,
-      source_platform:    signal.platform,
-      source_url:         signal.url,
-      pain_category:      signal.pain_category,
-      signal_type:        signal.signal_type,
-      sentiment:          signal.sentiment,
-      industry:           signal.industry,
-      relevance_score:    signal.relevance_score,
-      pain_intensity:     signal.pain_intensity,
-      buyer_intent:       signal.buyer_intent,
-      topics:             signal.topics,
-      ai_insight:         signal.ai_insight,
+      title:               signal.title,
+      summary:             signal.summary,
+      source_platform:     signal.platform,
+      source_url:          signal.url,
+      pain_category:       signal.pain_category,
+      signal_type:         signal.signal_type,
+      sentiment:           signal.sentiment,
+      industry:            signal.industry,
+      relevance_score:     signal.relevance_score,
+      pain_intensity:      signal.pain_intensity,
+      buyer_intent:        signal.buyer_intent,
+      topics:              signal.topics,
+      ai_insight:          signal.ai_insight,
       content_opportunity: signal.content_opportunity,
-      is_active:          true,
-      ingested_at:        new Date().toISOString(),
-      original_date:      new Date().toISOString(),
+      is_active:           true,
+      ingested_at:         new Date().toISOString(),
+      original_date:       new Date().toISOString(),
     });
 
     if (error) return { ingested: false, title: signal.title, reason: error.message };
@@ -145,19 +131,16 @@ Return ONLY valid JSON (no markdown, no explanation):
   }
 }
 
-// ── TASK 2: Recompute listing benchmarks
+// Task 2: Recompute listing benchmarks
 async function recomputeListingBenchmarks(): Promise<{ success: boolean; error?: string }> {
   const { error } = await supabase.rpc("compute_listing_benchmarks");
   return error ? { success: false, error: error.message } : { success: true };
 }
 
-// ── TASK 3: Write DRI snapshots for today
-// Uses the valuation engine to compute DRI per industry and stores it in dri_snapshots.
-// This replaces the simulated random-variance trend chart with real historical data.
+// Task 3: Write DRI snapshot for today
 async function writeDRISnapshots(): Promise<{ written: number; skipped: number }> {
-  const today = new Date().toISOString().split("T")[0]; // "2026-03-15"
+  const today = new Date().toISOString().split("T")[0];
 
-  // Load benchmarks and listing benchmarks in parallel
   const [benchmarkData, listingRes, dealCountRes] = await Promise.all([
     loadBenchmarkData(),
     supabase
@@ -165,14 +148,13 @@ async function writeDRISnapshots(): Promise<{ written: number; skipped: number }
       .select("industry_key, median_multiple, sample_size")
       .is("state", null)
       .is("size_band", null),
-    // Deal counts per industry for the snapshot
     supabase
       .from("deal_runs")
       .select("industry")
       .eq("is_valid", true),
   ]);
 
-  const listingByIndustry: Record<string, { median_multiple: number; sample_size: number }> = {};
+  const listingByIndustry: Record<string, any> = {};
   (listingRes.data || []).forEach((r: any) => {
     if (r.industry_key) listingByIndustry[r.industry_key] = r;
   });
@@ -186,13 +168,13 @@ async function writeDRISnapshots(): Promise<{ written: number; skipped: number }
   let skipped = 0;
 
   for (const key of INDUSTRY_KEYS) {
-    const listing  = listingByIndustry[key];
-    const vm       = getValuationMultiple(key, null, benchmarkData);  // national, no size band for DRI
+    const listing = listingByIndustry[key];
+    const vm = getValuationMultiple(key, null, benchmarkData);
 
     if (!listing?.median_multiple || !vm.multiple) { skipped++; continue; }
 
-    const dri      = +(listing.median_multiple / vm.multiple).toFixed(4);
-    const gapPct   = Math.round((dri - 1) * 100);
+    const dri = +(listing.median_multiple / vm.multiple).toFixed(4);
+    const gapPct = Math.round((dri - 1) * 100);
     const condition =
       dri < 1.0   ? "Undervalued" :
       dri <= 1.15 ? "Healthy Market" :
@@ -216,20 +198,19 @@ async function writeDRISnapshots(): Promise<{ written: number; skipped: number }
 
   if (snapshots.length === 0) return { written: 0, skipped };
 
-  // Upsert — safe to re-run, UNIQUE(snapshot_date, industry_key) prevents doubles
   const { error } = await supabase
     .from("dri_snapshots")
     .upsert(snapshots, { onConflict: "snapshot_date,industry_key" });
 
   if (error) {
-    console.error("DRI snapshot upsert error:", error);
+    console.error("DRI snapshot error:", error);
     return { written: 0, skipped };
   }
 
   return { written: snapshots.length, skipped };
 }
 
-// ── TASK 4: Clean stale signals
+// Task 4: Clean stale signals older than 90 days
 async function cleanStaleSignals(): Promise<{ deleted: number }> {
   const cutoff = new Date(Date.now() - 90 * 86400000).toISOString();
   const { data, error } = await supabase
@@ -237,14 +218,13 @@ async function cleanStaleSignals(): Promise<{ deleted: number }> {
     .delete()
     .lt("ingested_at", cutoff)
     .select("id");
-
   return { deleted: error ? 0 : (data?.length || 0) };
 }
 
-// ── MAIN HANDLER
 export async function GET(req: NextRequest) {
-  const secret = req.headers.get("authorization")?.replace("Bearer ", "") ||
-                 new URL(req.url).searchParams.get("secret");
+  const secret =
+    req.headers.get("authorization")?.replace("Bearer ", "") ||
+    new URL(req.url).searchParams.get("secret");
 
   if (secret !== process.env.CRON_SECRET) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -252,11 +232,10 @@ export async function GET(req: NextRequest) {
 
   const results: Record<string, any> = {};
 
-  // Run tasks sequentially to stay within 60s limit
-  results.signal    = await ingestSignal();
+  results.signal     = await ingestSignal();
   results.benchmarks = await recomputeListingBenchmarks();
-  results.dri       = await writeDRISnapshots();
-  results.cleanup   = await cleanStaleSignals();
+  results.dri        = await writeDRISnapshots();
+  results.cleanup    = await cleanStaleSignals();
 
   console.log("Cron completed:", JSON.stringify(results));
   return NextResponse.json({ success: true, timestamp: new Date().toISOString(), results });
