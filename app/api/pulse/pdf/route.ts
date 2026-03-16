@@ -44,14 +44,33 @@ export async function GET(req: NextRequest) {
     const html = buildReportHTML(report);
 
     // Launch Puppeteer with Sparticuz Chromium (Vercel-compatible)
-    const chromium = (await import("@sparticuz/chromium")).default;
-    const puppeteer = (await import("puppeteer-core")).default;
+    // @sparticuz/chromium + puppeteer-core required: pnpm add @sparticuz/chromium puppeteer-core
+    let chromium: any, puppeteer: any;
+    try {
+      chromium  = (await import("@sparticuz/chromium")).default;
+      puppeteer = (await import("puppeteer-core")).default;
+    } catch (importErr: any) {
+      return NextResponse.json({
+        error: "Missing dependency",
+        details: "Run: pnpm add @sparticuz/chromium puppeteer-core",
+        importError: importErr?.message,
+      }, { status: 500 });
+    }
+
+    const execPath = await chromium.executablePath();
+    console.log("Chromium execPath:", execPath);
 
     const browser = await puppeteer.launch({
-      args: chromium.args,
+      args: [
+        ...chromium.args,
+        "--no-sandbox",
+        "--disable-setuid-sandbox",
+        "--disable-dev-shm-usage",
+        "--single-process",           // required on Vercel Lambda
+      ],
       defaultViewport: { width: 794, height: 1123 },
-      executablePath: await chromium.executablePath(),
-      headless: true,
+      executablePath: execPath,
+      headless: true,                 // chromium@112 uses boolean, not "new"
     });
 
     const page = await browser.newPage();
@@ -97,9 +116,13 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json({ success: true, pdfUrl, slug });
 
-  } catch (err) {
+  } catch (err: any) {
     console.error("PDF generation error:", err);
-    return NextResponse.json({ error: "PDF generation failed" }, { status: 500 });
+    return NextResponse.json({
+      error: "PDF generation failed",
+      details: err?.message || String(err),
+      stack: err?.stack?.split("\n").slice(0, 5).join(" | "),
+    }, { status: 500 });
   }
 }
 
