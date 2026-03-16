@@ -37,7 +37,9 @@ async function generate(req: NextRequest) {
   }
 
   try {
-    // Week boundaries: last Monday → last Sunday
+    // Week boundaries: last completed Monday → Sunday
+    // Cron runs Monday 1am — this captures the just-completed week
+    // Display: "Mar 9, 2026 – Mar 15, 2026"
     const now = new Date();
     const dayOfWeek = now.getDay(); // 0=Sun, 1=Mon...
     const daysToLastMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
