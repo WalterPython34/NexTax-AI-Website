@@ -44,19 +44,21 @@ export async function GET(req: NextRequest) {
     const html = buildReportHTML(report);
 
     // Launch Puppeteer with Sparticuz Chromium (Vercel-compatible)
-    // @sparticuz/chromium + puppeteer-core required: pnpm add @sparticuz/chromium puppeteer-core
+    // Using @sparticuz/chromium-min (binary bundled in package, no runtime download)
+    // pnpm add @sparticuz/chromium-min puppeteer-core
     let chromium: any, puppeteer: any;
     try {
-      chromium  = (await import("@sparticuz/chromium")).default;
+      chromium  = (await import("@sparticuz/chromium-min")).default;
       puppeteer = (await import("puppeteer-core")).default;
     } catch (importErr: any) {
       return NextResponse.json({
         error: "Missing dependency",
-        details: "Run: pnpm add @sparticuz/chromium puppeteer-core",
+        details: "Run: pnpm add @sparticuz/chromium-min puppeteer-core",
         importError: importErr?.message,
       }, { status: 500 });
     }
 
+    // On Vercel, executablePath() returns the path to the bundled binary
     const execPath = await chromium.executablePath();
     console.log("Chromium execPath:", execPath);
 
@@ -66,11 +68,13 @@ export async function GET(req: NextRequest) {
         "--no-sandbox",
         "--disable-setuid-sandbox",
         "--disable-dev-shm-usage",
-        "--single-process",           // required on Vercel Lambda
+        "--disable-gpu",
+        "--single-process",
+        "--no-zygote",
       ],
       defaultViewport: { width: 794, height: 1123 },
       executablePath: execPath,
-      headless: true,                 // chromium@112 uses boolean, not "new"
+      headless: true,
     });
 
     const page = await browser.newPage();
