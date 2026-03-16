@@ -10,7 +10,11 @@ const nextConfig = {
   experimental: {
     serverActions: {
       allowedOrigins: ['localhost:3000', 'nextax.ai', '*.vercel.app']
-    }
+    },
+    serverComponentsExternalPackages: [
+      "@sparticuz/chromium",
+      "puppeteer-core",
+    ],
   },
   images: {
     domains: ['nextax.ai', 'vercel.com'],
@@ -35,5 +39,4 @@ const nextConfig = {
     ]
   },
 }
-
 export default nextConfig
