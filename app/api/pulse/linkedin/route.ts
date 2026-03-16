@@ -396,17 +396,20 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Report not found" }, { status: 404 });
     }
 
-    const chromium  = (await import("@sparticuz/chromium")).default;
+    const chromium  = (await import("@sparticuz/chromium-min")).default;
     const puppeteer = (await import("puppeteer-core")).default;
 
     const execPath = await chromium.executablePath();
+    console.log("Chromium execPath:", execPath);
     const browser = await puppeteer.launch({
       args: [
         ...chromium.args,
         "--no-sandbox",
         "--disable-setuid-sandbox",
         "--disable-dev-shm-usage",
+        "--disable-gpu",
         "--single-process",
+        "--no-zygote",
       ],
       defaultViewport: { width: SLIDE_W, height: SLIDE_H, deviceScaleFactor: 2 },
       executablePath: execPath,
