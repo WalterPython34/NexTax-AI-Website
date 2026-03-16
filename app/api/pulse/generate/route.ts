@@ -222,6 +222,7 @@ async function generate(req: NextRequest) {
       pain_signal_count:        signals.length,
       dri_trend:                driTrend,
       generated_at:             new Date().toISOString(),
+      is_published:             true,  // publish immediately — PDF is optional
     };
 
     const { data: report, error } = await supabase
