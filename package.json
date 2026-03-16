@@ -73,7 +73,7 @@
     "recharts": "^2.15.4",
     "resend": "^4.7.0",
     "stripe": "^17.7.0",
-    "@sparticuz/chromium": "^112.0.0",
+    "@sparticuz/chromium-min": "^123.0.0",
     "tailwind-merge": "^2.6.0",
     "tailwindcss-animate": "^1.0.7",
     "@types/archiver": "^6.0.0",
