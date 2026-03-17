@@ -99,7 +99,7 @@ function AllSlides({ report }: { report: any }) {
       <Slide num={1} accent={`linear-gradient(180deg,${col} 0%,transparent 100%)`} dateRange={dateRange}>
         <div style={{textAlign:"center",paddingTop:4}}>
           <div style={{fontSize:19,color:"#0096C7",fontWeight:800,letterSpacing:"0.2em",
-            textTransform:"uppercase",marginBottom:10}}>NexTax SMB Pulse Report</div>
+            textTransform:"uppercase",marginBottom:30}}>NexTax SMB Pulse Report</div>
 
           {/* DRI ring */}
           <div style={{position:"relative",width:RS,height:RS,margin:"0 auto 16px"}}>
@@ -283,7 +283,7 @@ function AllSlides({ report }: { report: any }) {
           <div style={{fontSize:15,color:"#EF4444",fontWeight:600,letterSpacing:"0.2em",
             textTransform:"uppercase",marginBottom:14}}>Industry Heat Map</div>
           <h2 style={{fontFamily:"Georgia,serif",fontSize:52,color:"#F8FAFC",lineHeight:1.0,
-            marginBottom:28,fontWeight:400}}>Who's Overpriced.<br/>Who's a Steal.</h2>
+            marginBottom:38,fontWeight:400}}>Who's Overpriced.<br/>Who's a Steal.</h2>
 
           {/* Two column heat map */}
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:16}}>
@@ -334,7 +334,7 @@ function AllSlides({ report }: { report: any }) {
             borderRadius:14,padding:"16px 20px"}}>
             <div style={{fontSize:14,color:"#818CF8",fontWeight:700,textTransform:"uppercase",
               letterSpacing:"0.08em",marginBottom:4,textAlign:"center"}}>Deals Worth Looking At This Week</div>
-            <div style={{fontSize:12,color:"#94A3B8",textAlign:"center",marginBottom:10}}>
+            <div style={{fontSize:12,color:"#D9D9D9",textAlign:"center",marginBottom:10}}>
               Score 65+ with favorable pricing signals
             </div>
             <div style={{display:"grid",gridTemplateColumns:"1.4fr 1fr 1fr 1fr 80px",gap:"0 8px",
@@ -354,7 +354,7 @@ function AllSlides({ report }: { report: any }) {
                   gap:"0 8px",padding:"9px 0",borderBottom:"1px solid rgba(255,255,255,0.04)",
                   alignItems:"center"}}>
                   <span style={{fontSize:15,fontWeight:600,color:"#E2E8F0"}}>{opp.industry}</span>
-                  <span style={{fontSize:14,color:"#6B7280",fontFamily:"monospace"}}>{fmt(opp.sde)}</span>
+                  <span style={{fontSize:14,fontWeight:500,color:"#6B7280",fontFamily:"monospace"}}>{fmt(opp.sde)}</span>
                   <span style={{fontSize:14,fontWeight:700,color:"#E2E8F0",fontFamily:"monospace"}}>{fmt(opp.asking_price)}</span>
                   <span style={{fontSize:14,color:"#C4B5FD",fontFamily:"monospace"}}>{opp.fair_value?fmt(opp.fair_value):"—"}</span>
                   <span style={{fontSize:12,fontWeight:700,color:sc,padding:"3px 10px",
