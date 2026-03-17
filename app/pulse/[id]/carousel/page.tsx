@@ -115,7 +115,7 @@ function AllSlides({ report }: { report: any }) {
                 {dri.toFixed(2)}
               </span>
               <span style={{fontSize:14,color:"#6B7280",textTransform:"uppercase",letterSpacing:"0.15em",
-                marginTop:12}}>Deal Reality Index</span>
+                marginTop:14}}>Deal Reality Index</span>
             </div>
           </div>
 
