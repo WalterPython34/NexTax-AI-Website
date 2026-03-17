@@ -97,7 +97,7 @@ function AllSlides({ report }: { report: any }) {
           SLIDE 1 — COVER with DRI ring + KPI strip
       ══════════════════════════════════════════ */}
       <Slide num={1} accent={`linear-gradient(180deg,${col} 0%,transparent 100%)`} dateRange={dateRange}>
-        <div style={{textAlign:"center",paddingTop:8}}>
+        <div style={{textAlign:"center",paddingTop:4}}>
           <div style={{fontSize:17,color:"#6366F1",fontWeight:600,letterSpacing:"0.2em",
             textTransform:"uppercase",marginBottom:20}}>NexTax SMB Pulse Report</div>
 
@@ -111,7 +111,7 @@ function AllSlides({ report }: { report: any }) {
             <div style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",
               alignItems:"center",justifyContent:"center"}}>
               <span style={{fontSize:96,fontWeight:800,color:col,lineHeight:1,fontFamily:"monospace",
-                marginTop:-16}}>
+                marginTop:-14}}>
                 {dri.toFixed(2)}
               </span>
               <span style={{fontSize:14,color:"#6B7280",textTransform:"uppercase",letterSpacing:"0.15em",
