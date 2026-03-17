@@ -11,10 +11,7 @@ const nextConfig = {
     serverActions: {
       allowedOrigins: ['localhost:3000', 'nextax.ai', '*.vercel.app']
     },
-    serverComponentsExternalPackages: [
-      "@sparticuz/chromium-min",
-      "puppeteer-core",
-    ],
+    
   },
   // Tell Vercel to include the Chromium binary in the deployment bundle
   outputFileTracingIncludes: {
