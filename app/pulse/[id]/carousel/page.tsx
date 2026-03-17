@@ -283,7 +283,7 @@ function AllSlides({ report }: { report: any }) {
           <div style={{fontSize:15,color:"#EF4444",fontWeight:600,letterSpacing:"0.2em",
             textTransform:"uppercase",marginBottom:14}}>Industry Heat Map</div>
           <h2 style={{fontFamily:"Georgia,serif",fontSize:52,color:"#F8FAFC",lineHeight:1.0,
-            marginBottom:18,fontWeight:400}}>Who's Overpriced.<br/>Who's a Steal.</h2>
+            marginBottom:14,fontWeight:400}}>Who's Overpriced.<br/>Who's a Steal.</h2>
 
           {/* Two column heat map */}
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:16}}>
@@ -293,9 +293,9 @@ function AllSlides({ report }: { report: any }) {
                 letterSpacing:"0.1em",marginBottom:6}}>Most Overpriced</div>
               <div style={{display:"grid",gridTemplateColumns:"1fr 60px 72px",gap:"0 8px",
                 borderBottom:"1px solid rgba(255,255,255,0.1)",paddingBottom:8,marginBottom:6}}>
-                <span style={{fontSize:12,color:"#94A3B8",textTransform:"uppercase",fontWeight:600}}>Industry</span>
-                <span style={{fontSize:12,color:"#94A3B8",textTransform:"uppercase",fontWeight:600,textAlign:"right"}}>DRI</span>
-                <span style={{fontSize:12,color:"#94A3B8",textTransform:"uppercase",fontWeight:600,textAlign:"right"}}>Gap</span>
+                <span style={{fontSize:12,color:"#E7E9E9",textTransform:"uppercase",fontWeight:600}}>Industry</span>
+                <span style={{fontSize:12,color:"#E7E9E9",textTransform:"uppercase",fontWeight:600,textAlign:"right"}}>DRI</span>
+                <span style={{fontSize:12,color:"#E7E9E9",textTransform:"uppercase",fontWeight:600,textAlign:"right"}}>Gap</span>
               </div>
               {(report.most_overpriced||[]).slice(0,4).map((ind:any)=>(
                 <div key={ind.industry} style={{display:"grid",gridTemplateColumns:"1fr 60px 72px",
@@ -313,9 +313,9 @@ function AllSlides({ report }: { report: any }) {
                 letterSpacing:"0.1em",marginBottom:6}}>Best Opportunities</div>
               <div style={{display:"grid",gridTemplateColumns:"1fr 60px 72px",gap:"0 8px",
                 borderBottom:"1px solid rgba(255,255,255,0.1)",paddingBottom:8,marginBottom:6}}>
-                <span style={{fontSize:12,color:"#94A3B8",textTransform:"uppercase",fontWeight:600}}>Industry</span>
-                <span style={{fontSize:12,color:"#94A3B8",textTransform:"uppercase",fontWeight:600,textAlign:"right"}}>DRI</span>
-                <span style={{fontSize:12,color:"#94A3B8",textTransform:"uppercase",fontWeight:600,textAlign:"right"}}>Gap</span>
+                <span style={{fontSize:12,color:"#E7E9E9",textTransform:"uppercase",fontWeight:600}}>Industry</span>
+                <span style={{fontSize:12,color:"#E7E9E9",textTransform:"uppercase",fontWeight:600,textAlign:"right"}}>DRI</span>
+                <span style={{fontSize:12,color:"#E7E9E9",textTransform:"uppercase",fontWeight:600,textAlign:"right"}}>Gap</span>
               </div>
               {(report.most_undervalued||[]).slice(0,4).map((ind:any)=>(
                 <div key={ind.industry} style={{display:"grid",gridTemplateColumns:"1fr 60px 72px",
@@ -334,13 +334,13 @@ function AllSlides({ report }: { report: any }) {
             borderRadius:14,padding:"16px 20px"}}>
             <div style={{fontSize:14,color:"#818CF8",fontWeight:700,textTransform:"uppercase",
               letterSpacing:"0.08em",marginBottom:4,textAlign:"center"}}>Deals Worth Looking At This Week</div>
-            <div style={{fontSize:12,color:"#4B5563",textAlign:"center",marginBottom:10}}>
+            <div style={{fontSize:12,color:"#E7E9E9",textAlign:"center",marginBottom:10}}>
               Score 65+ with favorable pricing signals
             </div>
             <div style={{display:"grid",gridTemplateColumns:"1.4fr 1fr 1fr 1fr 80px",gap:"0 8px",
               borderBottom:"1px solid rgba(255,255,255,0.12)",paddingBottom:8,marginBottom:4}}>
               {["Industry","SDE","Asking","Fair Value","Signal"].map(h=>(
-                <span key={h} style={{fontSize:12,color:"#94A3B8",textTransform:"uppercase",
+                <span key={h} style={{fontSize:12,color:"#E7E9E9",textTransform:"uppercase",
                   fontWeight:600}}>{h}</span>
               ))}
             </div>
@@ -384,7 +384,7 @@ function AllSlides({ report }: { report: any }) {
               {report.buyer_pain_index?.toFixed(2)||"—"}
             </div>
             <div style={{fontSize:18,color:"#94A3B8",textTransform:"uppercase",
-              letterSpacing:"0.15em",marginTop:30}}>Buyer Pain Index</div>
+              letterSpacing:"0.15em",marginTop:32}}>Buyer Pain Index</div>
           </div>
 
           {/* Scale — shifted down from number */}
@@ -398,7 +398,7 @@ function AllSlides({ report }: { report: any }) {
               <div key={s.v} style={{padding:"16px 10px",background:"rgba(255,255,255,0.03)",
                 borderRadius:12,border:`1px solid ${s.c}20`,textAlign:"center"}}>
                 <div style={{fontSize:32,fontWeight:800,color:s.c,fontFamily:"monospace"}}>{s.v}</div>
-                <div style={{fontSize:13,color:"#6B7280",marginTop:5,whiteSpace:"pre-line",lineHeight:1.3}}>
+                <div style={{fontSize:13,color:"#E7E9E9",marginTop:5,whiteSpace:"pre-line",lineHeight:1.3}}>
                   {s.l}
                 </div>
               </div>
@@ -421,7 +421,7 @@ function AllSlides({ report }: { report: any }) {
               ].map((item)=>(
                 <div key={item.label} style={{display:"flex",justifyContent:"space-between",
                   borderBottom:"1px solid rgba(255,255,255,0.04)",paddingBottom:6}}>
-                  <span style={{fontSize:13,color:"#6B7280"}}>{item.label}</span>
+                  <span style={{fontSize:13,color:"#E7E9E9"}}>{item.label}</span>
                   <span style={{fontSize:14,fontWeight:700,color:"#E2E8F0",fontFamily:"monospace",
                     textTransform:"capitalize"}}>{item.value}</span>
                 </div>
@@ -461,7 +461,7 @@ function AllSlides({ report }: { report: any }) {
           </a>
 
           <div style={{fontSize:22,color:"#6366F1",fontWeight:600,marginBottom:44}}>
-            nextax.ai/deal-reality-check
+            www.nextax.ai/deal-reality-check
           </div>
 
           <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:16}}>
@@ -475,7 +475,7 @@ function AllSlides({ report }: { report: any }) {
                 <div style={{fontSize:48,fontWeight:800,color:"#E2E8F0",fontFamily:"monospace",lineHeight:1}}>
                   {val}
                 </div>
-                <div style={{fontSize:15,color:"#6B7280",marginTop:6}}>{label}</div>
+                <div style={{fontSize:15,color:"#E7E9E9",marginTop:6}}>{label}</div>
               </div>
             ))}
           </div>
