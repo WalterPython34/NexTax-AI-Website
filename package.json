@@ -56,6 +56,7 @@
     "framer-motion": "^11.18.2",
     "google-auth-library": "^9.0.0",
     "google-spreadsheet": "^4.1.0",
+    "html2canvas": "^1.4.1",
     "input-otp": "^1.4.2",
     "jspdf": "^3.0.1",
     "lucide-react": "^0.453.0",
