@@ -277,7 +277,7 @@ export async function GET(req: NextRequest) {
     doc.text(`+${gap}% above fair value this week`,PW/2,97,{align:"center"});
 
     // Sentiment — using text labels instead of emoji (jsPDF can't render emoji)
-    sectionLabel(doc,`Deal Pricing Distribution — ${report.total_deals_analyzed} Active Listings`,10,112,C.faint);
+    sectionLabel(doc,`Deal Pricing Distribution — ${report.total_deals_analyzed} Active Listings`,10,112,C.light);
     const sW=(PW-20)/3;
     [
       {label:"Overpriced",   pct:report.pct_deals_overpriced,  color:C.red,   dark:C.darkRed, marker:"OVER"},
@@ -326,7 +326,7 @@ export async function GET(req: NextRequest) {
     doc.text("BEST BUYING OPPORTUNITIES",25+colW,54);
 
     // Column headers
-    doc.setFont("helvetica","bold"); doc.setFontSize(6.5); doc.setTextColor(...C.faint);
+    doc.setFont("helvetica","bold"); doc.setFontSize(7); doc.setTextColor(...C.light);
     doc.text("INDUSTRY",13,63); doc.text("GAP",10+colW-26,63); doc.text("DRI",10+colW-8,63);
     doc.text("INDUSTRY",17+colW,63); doc.text("GAP",14+colW*2-26,63); doc.text("DRI",14+colW*2-8,63);
     doc.setDrawColor(...C.border); doc.setLineWidth(0.2);
@@ -340,10 +340,10 @@ export async function GET(req: NextRequest) {
     // Full table
     const allInds=(report.all_industries||[]).slice(0,16);
     const tableY=71+Math.max(overRows.length,underRows.length)*11+8;
-    sectionLabel(doc,"All Industries — Full DRI Rankings",10,tableY,C.faint);
+    sectionLabel(doc,"All Industries — Full Deal Reality Index (DRI) Rankings",10,tableY,C.light);
 
     const tCols={ind:10,dri:110,gap:130,ask:152,sold:174};
-    doc.setFont("helvetica","bold"); doc.setFontSize(6.5); doc.setTextColor(...C.faint);
+    doc.setFont("helvetica","bold"); doc.setFontSize(7); doc.setTextColor(...C.light);
     doc.text("INDUSTRY",tCols.ind+2,tableY+7);
     doc.text("DRI",tCols.dri,tableY+7);
     doc.text("GAP",tCols.gap,tableY+7);
@@ -380,7 +380,7 @@ export async function GET(req: NextRequest) {
 
     // Opportunities table headers
     const oC={ind:10,sde:74,ask:106,fv:140,score:168,sig:180};
-    doc.setFont("helvetica","bold"); doc.setFontSize(6.5); doc.setTextColor(...C.faint);
+    doc.setFont("helvetica","bold"); doc.setFontSize(7); doc.setTextColor(...C.light);
     ["INDUSTRY","SDE","ASKING PRICE","FAIR VALUE","SCORE","SIGNAL"].forEach((h,i)=>{
       doc.text(h,[oC.ind,oC.sde,oC.ask,oC.fv,oC.score,oC.sig][i]+2,51);
     });
@@ -412,7 +412,7 @@ export async function GET(req: NextRequest) {
 
     // Bottom two boxes
     const boxY=59+5*10+6;
-    const boxH=42;
+    const boxH=52;  // increased to fit scale
 
     // ── BUYER PAIN INDEX BOX
     doc.setFillColor(...C.darkAmb); doc.roundedRect(10,boxY,92,boxH,2,2,"F");
@@ -428,9 +428,9 @@ export async function GET(req: NextRequest) {
     doc.text(`Top concern: ${(report.top_pain_category||"").replace(/_/g," ")}`,56,boxY+28,{align:"center"});
     doc.text(`Based on ${report.pain_signal_count||0} community signals`,56,boxY+33,{align:"center"});
     // Scale legend
-    doc.setDrawColor(...C.border); doc.setLineWidth(0.2); doc.line(13,boxY+35,98,boxY+35);
-    doc.setFont("helvetica","bold"); doc.setFontSize(6); doc.setTextColor(...C.faint);
-    doc.text("SCALE",13,boxY+39.5);
+    doc.setDrawColor(...C.border); doc.setLineWidth(0.2); doc.line(13,boxY+37,98,boxY+37);
+    doc.setFont("helvetica","bold"); doc.setFontSize(7); doc.setTextColor(...C.muted);
+    doc.text("SCALE",13,boxY+41.5);
     const painScale=[
       {v:"1.0",l:"Balanced Market",c:C.green},
       {v:"1.3",l:"Seller Advantage",c:C.blue},
@@ -439,10 +439,10 @@ export async function GET(req: NextRequest) {
     ];
     painScale.forEach((s,i)=>{
       const px=13+i*20;
-      doc.setFont("helvetica","bold"); doc.setFontSize(6); doc.setTextColor(...s.c);
-      doc.text(s.v,px,boxY+43.5);
-      doc.setFont("helvetica","normal"); doc.setFontSize(5.5); doc.setTextColor(...C.faint);
-      doc.text(s.l,px,boxY+47.5);
+      doc.setFont("helvetica","bold"); doc.setFontSize(7.5); doc.setTextColor(...s.c);
+      doc.text(s.v,px,boxY+44);
+      doc.setFont("helvetica","normal"); doc.setFontSize(6.5); doc.setTextColor(...C.muted);
+      doc.text(s.l,px,boxY+49);
     });
 
     // ── CTA / DRI SUMMARY BOX
