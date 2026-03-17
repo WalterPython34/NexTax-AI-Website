@@ -16,6 +16,15 @@ const nextConfig = {
       "puppeteer-core",
     ],
   },
+  // Tell Vercel to include the Chromium binary in the deployment bundle
+  outputFileTracingIncludes: {
+    "/api/pulse/pdf": [
+      "./node_modules/@sparticuz/chromium-min/**/*",
+    ],
+    "/api/pulse/linkedin": [
+      "./node_modules/@sparticuz/chromium-min/**/*",
+    ],
+  },
   images: {
     domains: ['nextax.ai', 'vercel.com'],
     remotePatterns: [
