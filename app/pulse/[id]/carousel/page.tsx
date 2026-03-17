@@ -98,7 +98,7 @@ function AllSlides({ report }: { report: any }) {
       ══════════════════════════════════════════ */}
       <Slide num={1} accent={`linear-gradient(180deg,${col} 0%,transparent 100%)`} dateRange={dateRange}>
         <div style={{textAlign:"center",paddingTop:4}}>
-          <div style={{fontSize:17,color:"#6366F1",fontWeight:600,letterSpacing:"0.2em",
+          <div style={{fontSize:18,color:"#10B981",fontWeight:600,letterSpacing:"0.2em",
             textTransform:"uppercase",marginBottom:20}}>NexTax SMB Pulse Report</div>
 
           {/* DRI ring */}
@@ -115,7 +115,7 @@ function AllSlides({ report }: { report: any }) {
                 {dri.toFixed(2)}
               </span>
               <span style={{fontSize:14,color:"#6B7280",textTransform:"uppercase",letterSpacing:"0.15em",
-                marginTop:14}}>Deal Reality Index</span>
+                marginTop:16}}>Deal Reality Index</span>
             </div>
           </div>
 
@@ -283,7 +283,7 @@ function AllSlides({ report }: { report: any }) {
           <div style={{fontSize:15,color:"#EF4444",fontWeight:600,letterSpacing:"0.2em",
             textTransform:"uppercase",marginBottom:14}}>Industry Heat Map</div>
           <h2 style={{fontFamily:"Georgia,serif",fontSize:52,color:"#F8FAFC",lineHeight:1.0,
-            marginBottom:20,fontWeight:400}}>Who's Overpriced.<br/>Who's a Steal.</h2>
+            marginBottom:18,fontWeight:400}}>Who's Overpriced.<br/>Who's a Steal.</h2>
 
           {/* Two column heat map */}
           <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:14,marginBottom:16}}>
@@ -384,7 +384,7 @@ function AllSlides({ report }: { report: any }) {
               {report.buyer_pain_index?.toFixed(2)||"—"}
             </div>
             <div style={{fontSize:18,color:"#94A3B8",textTransform:"uppercase",
-              letterSpacing:"0.15em",marginTop:28}}>Buyer Pain Index</div>
+              letterSpacing:"0.15em",marginTop:30}}>Buyer Pain Index</div>
           </div>
 
           {/* Scale — shifted down from number */}
@@ -436,7 +436,7 @@ function AllSlides({ report }: { report: any }) {
       ══════════════════════════════════════════ */}
       <Slide num={6} accent={`linear-gradient(180deg,${col} 0%,transparent 100%)`} dateRange={dateRange}>
         <div style={{textAlign:"center",paddingTop:24}}>
-          <div style={{fontSize:16,color:"#6366F1",fontWeight:600,letterSpacing:"0.2em",
+          <div style={{fontSize:18,color:"#6366F1",fontWeight:600,letterSpacing:"0.2em",
             textTransform:"uppercase",marginBottom:28}}>Free Deal Analysis</div>
 
           <h2 style={{fontFamily:"Georgia,serif",fontSize:72,color:"#F8FAFC",lineHeight:1.05,
