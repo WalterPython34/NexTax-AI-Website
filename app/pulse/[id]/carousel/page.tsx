@@ -98,7 +98,7 @@ function AllSlides({ report }: { report: any }) {
       ══════════════════════════════════════════ */}
       <Slide num={1} accent={`linear-gradient(180deg,${col} 0%,transparent 100%)`} dateRange={dateRange}>
         <div style={{textAlign:"center",paddingTop:4}}>
-          <div style={{fontSize:18,color:"#10B981",fontWeight:600,letterSpacing:"0.2em",
+          <div style={{fontSize:18,color:"#0096C7",fontWeight:600,letterSpacing:"0.2em",
             textTransform:"uppercase",marginBottom:20}}>NexTax SMB Pulse Report</div>
 
           {/* DRI ring */}
@@ -114,8 +114,8 @@ function AllSlides({ report }: { report: any }) {
                 marginTop:-14}}>
                 {dri.toFixed(2)}
               </span>
-              <span style={{fontSize:14,color:"#6B7280",textTransform:"uppercase",letterSpacing:"0.15em",
-                marginTop:16}}>Deal Reality Index</span>
+              <span style={{fontSize:14,color:"#FAFAFA",textTransform:"uppercase",letterSpacing:"0.15em",
+                marginTop:20}}>Deal Reality Index</span>
             </div>
           </div>
 
