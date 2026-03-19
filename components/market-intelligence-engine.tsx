@@ -421,8 +421,45 @@ export default function MarketIntelligenceEngine() {
 
                       {/* Title */}
                       <div style={{ fontSize: 15, fontWeight: 600, color: "#E2E8F0", marginBottom: 4, lineHeight: 1.3 }}>
-                        {sig.url ? <a href={sig.url} target="_blank" rel="noopener" style={{ color: "#E2E8F0", textDecoration: "none" }}>{sig.title}</a> : sig.title}
+                        {sig.url ? (
+                          <a
+                            href={sig.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{ color: "#E2E8F0", textDecoration: "none" }}
+                            onMouseEnter={(e) => { e.currentTarget.style.color = "#A5B4FC"; e.currentTarget.style.textDecoration = "underline"; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.color = "#E2E8F0"; e.currentTarget.style.textDecoration = "none"; }}
+                          >
+                            {sig.title}
+                            <span style={{ fontSize: 10, color: "#6366F1", marginLeft: 4, verticalAlign: "middle" }}>↗</span>
+                          </a>
+                        ) : sig.title}
                       </div>
+
+                      {/* View Post button */}
+                      {sig.url ? (
+                        <div style={{ marginBottom: 6 }}>
+                          <a
+                            href={sig.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "3px 10px", borderRadius: 6, fontSize: 11, fontWeight: 600, color: "#818CF8", background: "rgba(99,102,241,0.1)", border: "1px solid rgba(99,102,241,0.2)", textDecoration: "none" }}
+                            onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(99,102,241,0.22)"; e.currentTarget.style.color = "#A5B4FC"; }}
+                            onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(99,102,241,0.1)"; e.currentTarget.style.color = "#818CF8"; }}
+                          >
+                            View Post →
+                          </a>
+                          <span style={{ fontSize: 10, color: "#374151", marginLeft: 8 }}>
+                            {sig.platform === "searchfunder" ? "Searchfunder" : sig.platform === "reddit" ? "Reddit" : sig.platform === "twitter" ? "Twitter/X" : sig.platform || "Community"}
+                          </span>
+                        </div>
+                      ) : (
+                        <div style={{ marginBottom: 6 }}>
+                          <span style={{ fontSize: 10, color: "#374151" }}>
+                            Via {sig.platform === "searchfunder" ? "Searchfunder" : sig.platform === "reddit" ? "Reddit" : sig.platform === "twitter" ? "Twitter/X" : sig.platform || "Community"} · No direct link
+                          </span>
+                        </div>
+                      )}
 
                       {/* Summary */}
                       <div style={{ fontSize: 12, color: "#94A3B8", lineHeight: 1.5, marginBottom: 8 }}>{sig.summary}</div>
