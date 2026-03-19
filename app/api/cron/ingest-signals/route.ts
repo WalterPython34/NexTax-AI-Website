@@ -55,7 +55,7 @@ Return ONLY valid JSON (no markdown, no backticks):
   "title": "exact post title",
   "summary": "2-3 sentence summary",
   "platform": "reddit or searchfunder or twitter or other",
-  "url": "direct URL or null",
+  "url": "the EXACT direct URL to this specific post or thread (e.g. https://www.reddit.com/r/smallbusiness/comments/... or https://searchfunder.com/...). You must search for and include this. Only null if no public URL exists",
   "pain_category": "valuation or financial_modeling or diligence or seller_addbacks or dscr or market_saturation or competitive or deal_structure",
   "signal_type": "question or deal_share or complaint or advice or success_story or market_insight",
   "sentiment": "bullish or bearish or frustrated or excited or neutral",
