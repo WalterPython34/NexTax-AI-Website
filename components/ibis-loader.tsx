@@ -52,122 +52,94 @@ export default function IBISLoader() {
   const parseData = () => {
     setError("");
     setRecords([]);
-
     if (!industryKey || !ibisName) {
       setError("Please select an industry and enter the source industry name");
       return;
     }
-
-    try {
-      // Use Claude to extract data from pasted text
-      extractWithAI();
-    } catch {
-      setError("Failed to parse data. Try the AI extraction.");
-    }
+    extractWithAI();
   };
 
   const extractWithAI = async () => {
     setLoading(true);
+    setError("");
     try {
-      const res = await fetch("https://api.anthropic.com/v1/messages", {
+      const res = await fetch("/api/extract-proxy", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-api-key": "", // Will be proxied through our API
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          model: "claude-sonnet-4-20250514",
-          max_tokens: 4000,
-          messages: [{ role: "user", content: `Extract IBISWorld industry data from the following pasted text. The industry is "${ibisName}" (code: ${ibisCode || "unknown"}).
+          prompt: `You are extracting structured data from an industry report (IBISWorld format).
 
-For each year of data found, return a JSON array. Each object should have:
-{
-  "data_year": 2025,
-  "revenue_millions": number or null,
-  "enterprises": number or null,
-  "establishments": number or null,
-  "employment": number or null,
-  "wages_millions": number or null,
-  "iva_millions": number or null,
-  "revenue_growth_pct": number or null,
-  "enterprise_growth_pct": number or null,
-  "establishment_growth_pct": number or null,
-  "employment_growth_pct": number or null,
-  "wage_growth_pct": number or null,
-  "revenue_per_employee": number or null,
-  "revenue_per_enterprise_millions": number or null,
-  "employees_per_establishment": number or null,
-  "employees_per_enterprise": number or null,
-  "average_wage": number or null,
-  "wages_to_revenue_pct": number or null,
-  "establishments_per_enterprise": number or null,
-  "iva_to_revenue_pct": number or null
-}
+The pasted content contains THREE tables that must be joined by Year:
+1. "Industry Data" — Year, Revenue ($M), Enterprises, Establishments, Employment, Wages ($M), IVA ($M)
+2. "Annual Change" — Year, Revenue%, Enterprises%, Establishments%, Employment%, Wages%, IVA%
+3. "Key Ratios" — Year, Revenue/Employee, Revenue/Enterprise ($M), Employees/Establishment, Employees/Enterprise, Avg Wage, Wages/Revenue%, Establishments/Enterprise, IVA/Revenue%
 
-Parse all numeric values. Remove commas from numbers. Convert percentages to decimal form (e.g., 3.5% = 3.5, not 0.035).
+Instructions:
+- Parse ALL three tables and join them on Year into one record per year
+- Include ALL years (historical and forecast)
+- "N/A" values become null
+- Revenue and Wages are already in millions — keep as-is
+- Average Wage is in full dollars (e.g. 22023 not 22.023)
+- Revenue per Employee is in full dollars (e.g. 59000 not 59)
+- Percentages stay as plain numbers (3.5% = 3.5, not 0.035)
+- Return ONLY a valid JSON array, no markdown, no explanation
 
-ONLY return the JSON array. No other text.
+JSON structure — one object per year:
+[{"data_year":2024,"revenue_millions":14936,"enterprises":8860,"establishments":181513,"employment":176894,"wages_millions":335.243,"iva_millions":7383,"revenue_growth_pct":2.46,"enterprise_growth_pct":3.65,"establishment_growth_pct":5.34,"employment_growth_pct":5.27,"wage_growth_pct":4.15,"iva_growth_pct":3.82,"revenue_per_employee":59000,"revenue_per_enterprise_millions":44.552,"employees_per_establishment":49,"employees_per_enterprise":2,"average_wage":22023,"wages_to_revenue_pct":2.24,"establishments_per_enterprise":2,"iva_to_revenue_pct":1.0}]
 
-Data to parse:
-${pastedData}` }],
+PASTED DATA:
+${pastedData.slice(0, 8000)}`,
         }),
       });
 
-      // If direct API fails (no key in browser), use our proxy
       if (!res.ok) {
-        const proxyRes = await fetch("/api/extract-proxy", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            prompt: `Extract IBISWorld industry data from the following pasted text. The industry is "${ibisName}".
-
-For each year of data found, return a JSON array with objects containing: data_year, revenue_millions, enterprises, establishments, employment, wages_millions, iva_millions, revenue_growth_pct, enterprise_growth_pct, establishment_growth_pct, employment_growth_pct, wage_growth_pct, revenue_per_employee, revenue_per_enterprise_millions, employees_per_establishment, employees_per_enterprise, average_wage, wages_to_revenue_pct, establishments_per_enterprise, iva_to_revenue_pct.
-
-Parse all numbers (remove commas). Percentages as plain numbers (3.5% = 3.5). ONLY return JSON array.
-
-Data:
-${pastedData}`,
-          }),
-        });
-
-        const proxyData = await proxyRes.json();
-        const text = proxyData.content || proxyData.text || "";
-        const cleaned = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
-        const match = cleaned.match(/\[[\s\S]*\]/);
-        if (match) {
-          const parsed = JSON.parse(match[0]);
-          const mapped = parsed.map((r: Record<string, unknown>) => ({
-            ...r,
-            industry_key: industryKey,
-            ibis_industry_name: ibisName,
-            ibis_industry_code: ibisCode,
-          }));
-          setRecords(mapped);
-        } else {
-          setError("Could not parse AI response");
-        }
+        const errText = await res.text();
+        console.error("Proxy error:", res.status, errText);
+        setError(`Extraction failed (${res.status}). Check that /api/extract-proxy is deployed.`);
         setLoading(false);
         return;
       }
 
-      const data = await res.json();
-      const text = data.content?.[0]?.text || "";
+      const proxyData = await res.json();
+      const text = proxyData.content || proxyData.text || proxyData.result || "";
+
+      if (!text) {
+        console.error("Empty proxy response:", proxyData);
+        setError("AI returned empty response. Try pasting all three tables.");
+        setLoading(false);
+        return;
+      }
+
       const cleaned = text.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
-      const match = cleaned.match(/\[[\s\S]*\]/);
-      if (match) {
-        const parsed = JSON.parse(match[0]);
-        const mapped = parsed.map((r: Record<string, unknown>) => ({
+      const arrMatch = cleaned.match(/\[[\s\S]*\]/);
+
+      if (!arrMatch) {
+        console.error("No JSON array in response:", text.slice(0, 400));
+        setError("Could not parse AI response. Make sure all three tables are pasted (Industry Data, Annual Change, Key Ratios).");
+        setLoading(false);
+        return;
+      }
+
+      const parsed = JSON.parse(arrMatch[0]);
+      const mapped = parsed
+        .filter((r: Record<string, unknown>) => r.data_year && Number(r.data_year) > 2000)
+        .map((r: Record<string, unknown>) => ({
           ...r,
           industry_key: industryKey,
           ibis_industry_name: ibisName,
           ibis_industry_code: ibisCode,
         }));
-        setRecords(mapped);
-      } else {
-        setError("Could not parse AI response");
+
+      if (mapped.length === 0) {
+        setError("No valid year records extracted. Ensure you pasted the Industry Data table.");
+        setLoading(false);
+        return;
       }
-    } catch {
-      setError("AI extraction failed. Check your data format.");
+
+      setRecords(mapped);
+    } catch (err: unknown) {
+      console.error("Extraction error:", err);
+      setError("AI extraction failed. Check the browser console for details.");
     }
     setLoading(false);
   };
@@ -222,11 +194,11 @@ ${pastedData}`,
           </div>
           <div>
             <div style={{ fontSize: 11, color: "#6B7280", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>Source Industry Name</div>
-            <input type="text" placeholder="e.g., Plumbing Services in the US" value={ibisName} onChange={(e) => setIbisName(e.target.value)} style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.03)", color: "#E2E8F0", fontSize: 13 }} />
+            <input type="text" placeholder="e.g., Pet Grooming & Care" value={ibisName} onChange={(e) => setIbisName(e.target.value)} style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.03)", color: "#E2E8F0", fontSize: 13 }} />
           </div>
           <div>
             <div style={{ fontSize: 11, color: "#6B7280", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>Source Industry Code (optional)</div>
-            <input type="text" placeholder="e.g., 23822" value={ibisCode} onChange={(e) => setIbisCode(e.target.value)} style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.03)", color: "#E2E8F0", fontSize: 13 }} />
+            <input type="text" placeholder="e.g., 812910" value={ibisCode} onChange={(e) => setIbisCode(e.target.value)} style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.03)", color: "#E2E8F0", fontSize: 13 }} />
           </div>
         </div>
 
@@ -237,7 +209,7 @@ ${pastedData}`,
             <div style={{ fontSize: 10, color: "#4B5563" }}>{pastedData.length} chars</div>
           </div>
           <textarea
-            placeholder={"Paste industry data tables here...\n\nYou can paste:\n• The full Datatables & Glossary section\n• Industry Data table (Year, Revenue, Enterprises, etc.)\n• Annual Change table\n• Key Ratios table\n\nPaste all tables at once — AI will extract everything."}
+            placeholder={"Paste industry data tables here...\n\nPaste all three tables at once:\n• Industry Data (Year, Revenue, Enterprises...)\n• Annual Change (Year, Revenue%, Enterprises%...)\n• Key Ratios (Revenue/Employee, Avg Wage...)\n\nAI will extract and join everything automatically."}
             value={pastedData}
             onChange={(e) => setPastedData(e.target.value)}
             style={{ width: "100%", minHeight: 250, padding: "14px 16px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.03)", color: "#E2E8F0", fontSize: 12, lineHeight: 1.6, resize: "vertical", fontFamily: "'JetBrains Mono', monospace" }}
@@ -265,7 +237,7 @@ ${pastedData}`,
             <div style={{ overflowX: "auto" }}>
               <table style={{ width: "100%", borderCollapse: "collapse" }}>
                 <thead><tr>
-                  {["Year", "Revenue ($M)", "Enterprises", "Employment", "Rev/Employee", "Rev Growth", "Wages/Rev %", "IVA/Rev %"].map((h) => (
+                  {["Year","Revenue ($M)","Enterprises","Employment","Rev/Employee","Rev Growth","Wages/Rev %","IVA/Rev %"].map((h) => (
                     <th key={h} style={{ padding: "6px 10px", fontSize: 10, color: "#6B7280", fontWeight: 600, textTransform: "uppercase", textAlign: "center", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>{h}</th>
                   ))}
                 </tr></thead>
@@ -285,7 +257,6 @@ ${pastedData}`,
                 </tbody>
               </table>
             </div>
-
             <button onClick={handleUpload} disabled={uploading} style={{
               width: "100%", padding: "14px", borderRadius: 10, border: "none", marginTop: 14,
               background: uploading ? "rgba(255,255,255,0.05)" : "linear-gradient(135deg, #10B981, #059669)",
@@ -311,7 +282,7 @@ ${pastedData}`,
           <div style={{ fontSize: 12, fontWeight: 600, color: "#94A3B8", marginBottom: 8 }}>📋 How to Load Industry Benchmark Data</div>
           <div style={{ fontSize: 12, color: "#6B7280", lineHeight: 1.7 }}>
             1. Open an industry report (e.g., "Plumbing Services in the US")<br />
-            2. Navigate to the <strong style={{ color: "#94A3B8" }}>Datatables & Glossary</strong> section<br />
+            2. Navigate to the <strong style={{ color: "#94A3B8" }}>Datatables &amp; Glossary</strong> section<br />
             3. Select and copy ALL three tables: Industry Data, Annual Change, and Key Ratios<br />
             4. Select the matching NexTax industry from the dropdown<br />
             5. Enter the industry name and code<br />
@@ -334,7 +305,7 @@ ${pastedData}`,
         </div>
 
         <div style={{ display: "flex", gap: 8, marginTop: 16 }}>
-          <a href="/intelligence" style={{ flex: 1, padding: "12px", borderRadius: 10, border: "1px solid rgba(99,102,241,0.2)", background: "rgba(99,102,241,0.08)", color: "#818CF8", fontSize: 13, fontWeight: 600, textAlign: "center", textDecoration: "none" }}>← Intelligence Dashboard</a>
+          <a href="/admin/isbenchmark" style={{ flex: 1, padding: "12px", borderRadius: 10, border: "1px solid rgba(99,102,241,0.2)", background: "rgba(99,102,241,0.08)", color: "#818CF8", fontSize: 13, fontWeight: 600, textAlign: "center", textDecoration: "none" }}>← ISBenchmark Loader</a>
           <a href="/admin/import" style={{ flex: 1, padding: "12px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.08)", background: "transparent", color: "#6B7280", fontSize: 13, fontWeight: 500, textAlign: "center", textDecoration: "none" }}>Deal Import Tool →</a>
         </div>
       </div>
