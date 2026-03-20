@@ -46,8 +46,13 @@ const SEARCH_QUERIES = [
 async function ingestSignal(): Promise<{ ingested: boolean; title: string | null; reason: string }> {
   const query = SEARCH_QUERIES[Math.floor(Math.random() * SEARCH_QUERIES.length)];
 
-  const prompt = `Search for a recent Reddit post, Searchfunder thread, or forum discussion about: "${query}"
+  const now = new Date();
+  const monthYear = now.toLocaleString("en-US", { month: "long", year: "numeric" });
+  const prevMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1).toLocaleString("en-US", { month: "long", year: "numeric" });
 
+  const prompt = `Search for a Reddit post, Searchfunder thread, or forum discussion posted in ${monthYear} or ${prevMonth} about: "${query}"
+
+IMPORTANT: Only return posts from the last 60 days. Do not return posts older than 2 months.
 Find one highly relevant post from a real business buyer discussing SMB acquisition pain points.
 
 Return ONLY valid JSON (no markdown, no backticks):
