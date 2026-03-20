@@ -101,7 +101,20 @@ ${pastedData.slice(0, 8000)}`,
       }
 
       const proxyData = await res.json();
-      const text = proxyData.content || proxyData.text || proxyData.result || "";
+      // Handle both proxy response shapes:
+      // New proxy: { content: "plain string" }
+      // Old proxy: { content: [{type:"text", text:"..."}], ... } (raw Anthropic format)
+      let text = "";
+      if (typeof proxyData.content === "string") {
+        text = proxyData.content;
+      } else if (Array.isArray(proxyData.content)) {
+        text = proxyData.content
+          .filter((b: {type: string}) => b.type === "text")
+          .map((b: {text: string}) => b.text)
+          .join("") || "";
+      } else {
+        text = proxyData.text || proxyData.result || "";
+      }
 
       if (!text) {
         console.error("Empty proxy response:", proxyData);
