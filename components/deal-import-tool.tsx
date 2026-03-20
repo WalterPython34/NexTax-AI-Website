@@ -10,7 +10,6 @@ const TRACKED_INDUSTRIES = [
 
 const SOURCE_PLATFORMS = ["BizBuySell", "Flippa", "Empire Flippers", "Acquire.com", "BizQuest", "BusinessBroker.net", "Other"];
 
-// Column mapping presets per marketplace
 const COLUMN_MAPS: Record<string, Record<string, string>> = {
   BizBuySell: { title: "Title", industry: "Category", location: "Location", revenue: "Gross Revenue", sde: "Cash Flow", price: "Asking Price", employees: "Employees", year_established: "Year Established" },
   Flippa: { title: "Title", industry: "Type", revenue: "Revenue", sde: "Profit", price: "Asking Price" },
@@ -79,37 +78,31 @@ export default function DealImportTool() {
     setScraping(true); setError(""); setScrapeResult(null); setResult(null);
     try {
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 15000); // 15s client timeout
-
+      const timeout = setTimeout(() => controller.abort(), 15000);
       const res = await fetch("/api/scrape-marketplace", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ url: scrapeUrl.trim(), platform: source.toLowerCase().replace(/[\s.]/g, ""), pages_to_scrape: parseInt(scrapePages) || 1 }),
         signal: controller.signal,
       });
       clearTimeout(timeout);
-
       if (!res.ok) {
         const errData = await res.json().catch(() => ({ error: `Server returned ${res.status}` }));
-        setError(errData.error || `Server error (${res.status}). Try the "Paste Page Source" method below.`);
+        setError(errData.error || `Server error (${res.status}). Try the "Paste Page Content" method below.`);
         setScraping(false);
         return;
       }
-
       const data = await res.json();
-      if (data.success && data.listings?.length > 0) {
+      if (data.success && Array.isArray(data.listings) && data.listings.length > 0) {
         setScrapeResult({ count: data.count, listings: data.listings });
-        const headers = Object.keys(data.listings[0]);
-        const csv = [headers.join(","), ...data.listings.map((l: Record<string, string>) => headers.map((h) => `"${(l[h] || "").replace(/"/g, '""')}"`).join(","))].join("\n");
-        setRawText(csv);
         setParsedCount(data.count);
       } else {
-        setError(data.error || "No listings extracted. BizBuySell may require JavaScript rendering. Try the page source method below.");
+        setError(data.error || "No listings extracted. Try the paste method below.");
       }
     } catch (err) {
       if (err instanceof DOMException && err.name === "AbortError") {
-        setError("Request timed out (Vercel Hobby has a 10s limit). Try scraping just 1 page, or use the page source method below.");
+        setError("Request timed out. Try the paste method below.");
       } else {
-        setError("Scraping failed: " + String(err) + ". Try the page source method below.");
+        setError("Scraping failed. Try the paste method below.");
       }
     }
     setScraping(false);
@@ -119,84 +112,39 @@ export default function DealImportTool() {
     if (!rawText.trim()) return;
     setScraping(true); setError(""); setScrapeResult(null);
 
-    // Split pasted content into chunks if very large
-    const text = rawText.trim();
-    const maxChunk = 12000; // Stay well within token limits
-    const chunks = text.length > maxChunk
-      ? [text.slice(0, maxChunk), text.slice(maxChunk, maxChunk * 2)].filter((c) => c.length > 50)
-      : [text];
+    try {
+      const res = await fetch("/api/bulk-extract", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: rawText.trim(), source_platform: source }),
+      });
 
-    const allListings: Record<string, string>[] = [];
+      const data = await res.json();
 
-    for (const chunk of chunks) {
-      try {
-        const res = await fetch("/api/extract-proxy", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            messages: [{
-              role: "user",
-              content: `You are a data extraction system. Extract ALL business-for-sale listings from this marketplace page content.
+      // Always check Array.isArray before calling .map() — never trust API shape
+      const listings = Array.isArray(data.listings) ? data.listings : [];
 
-Return ONLY a JSON array. No markdown, no backticks, no explanation. Each listing:
-{"Title":"string","Location":"City, ST","Category":"business type","Asking Price":number,"Cash Flow":number_or_null,"Gross Revenue":number_or_null,"Employees":number_or_null}
-
-Rules:
-- Extract EVERY listing. There may be 10-30+.
-- Numbers must be plain integers: 450000 not "$450,000"
-- "Cash Flow" = SDE = Seller's Discretionary Earnings
-- null for missing fields
-
-CONTENT:
-${chunk}`,
-            }],
-          }),
-        });
-
-        if (!res.ok) {
-          const errText = await res.text();
-          console.error("Anthropic error:", errText);
-          setError("AI extraction failed. Check your Anthropic API key.");
-          setScraping(false);
-          return;
-        }
-
-        const data = await res.json();
-        const rawResponse = data.content
-          ?.map((b: { type: string; text?: string }) => (b.type === "text" ? b.text : ""))
-          .join("")
-          .trim();
-
-        try {
-          const cleaned = rawResponse.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
-          const parsed = JSON.parse(cleaned);
-          if (Array.isArray(parsed)) {
-            const normalized = parsed.map((item: Record<string, unknown>) => {
-              const obj: Record<string, string> = {};
-              Object.entries(item).forEach(([k, v]) => {
-                if (v !== null && v !== undefined) obj[k] = String(v);
-              });
-              obj.source_platform = source;
-              return obj;
-            });
-            allListings.push(...normalized);
-          }
-        } catch (parseErr) {
-          console.error("JSON parse error:", rawResponse?.slice(0, 200));
-        }
-      } catch (fetchErr) {
-        console.error("Fetch error:", fetchErr);
-        setError("Network error calling AI. Check console for details.");
+      if (!res.ok || listings.length === 0) {
+        setError(data.error || "No listings found. Try pasting the full listing text including titles, revenues, and asking prices.");
         setScraping(false);
         return;
       }
-    }
 
-    if (allListings.length > 0) {
-      setScrapeResult({ count: allListings.length, listings: allListings });
-      setParsedCount(allListings.length);
-    } else {
-      setError("No listings found. Try selecting just the listing titles, prices, and cash flow from the search results page.");
+      // Normalize all values to strings for the editable table
+      const normalized = listings.map((item: Record<string, unknown>) => {
+        const obj: Record<string, string> = {};
+        Object.entries(item).forEach(([k, v]) => {
+          if (v !== null && v !== undefined) obj[k] = String(v);
+        });
+        obj.source_platform = source;
+        return obj;
+      });
+
+      setScrapeResult({ count: normalized.length, listings: normalized });
+      setParsedCount(normalized.length);
+    } catch (err) {
+      console.error("Extract error:", err);
+      setError("Extraction failed. Check the browser console for details.");
     }
     setScraping(false);
   };
@@ -218,33 +166,26 @@ ${chunk}`,
 
   const handleImport = async () => {
     setImporting(true); setError(""); setResult(null);
-
     try {
       const listings = parseCSV(rawText);
       if (listings.length === 0) { setError("No valid data found. Check your CSV format."); setImporting(false); return; }
-
-      // Map columns based on source platform
       const colMap = COLUMN_MAPS[source] || {};
       const normalized = listings.map((row) => {
         const mapped: Record<string, string> = {};
-        // Try mapped column names first, then fall back to standard names
         for (const [standard, marketplace] of Object.entries(colMap)) {
           mapped[standard] = row[marketplace] || row[standard] || "";
         }
-        // Also pass through any unmapped fields
         Object.entries(row).forEach(([k, v]) => { if (!mapped[k]) mapped[k] = v; });
         return mapped;
       });
-
       const res = await fetch("/api/bulk-import", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ listings: normalized, source_platform: source, batch_name: batchName.trim() || null }),
       });
-
       const data = await res.json();
-      if (data.success) { setResult(data.results); }
-      else { setError(data.error || "Import failed."); }
+      if (data.success) setResult(data.results);
+      else setError(data.error || "Import failed.");
     } catch (err) {
       setError("Import failed: " + String(err));
     }
@@ -289,12 +230,11 @@ ${chunk}`,
           <div style={{ marginBottom: 20 }}>
             <label style={{ display: "block", fontSize: 11, color: "#8896A6", marginBottom: 6, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.05em" }}>Batch Name</label>
             <input
-              type="text" value={batchName}
-              onChange={(e) => setBatchName(e.target.value)}
+              type="text" value={batchName} onChange={(e) => setBatchName(e.target.value)}
               placeholder={`${new Date().toISOString().split("T")[0]}-${source.toLowerCase().replace(/[.\s]/g, "")}-industry`}
               style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.04)", color: "#E2E8F0", fontSize: 13, fontFamily: "'JetBrains Mono', monospace", outline: "none" }}
             />
-            <div style={{ fontSize: 10, color: "#4B5563", marginTop: 4 }}>Used for tracking, debugging, and undoing imports. Example: 2026-03-10-bizbuysell-hvac</div>
+            <div style={{ fontSize: 10, color: "#4B5563", marginTop: 4 }}>Used for tracking and debugging. Example: 2026-03-10-bizbuysell-hvac</div>
           </div>
 
           {/* Input Mode Toggle */}
@@ -344,11 +284,13 @@ ${chunk}`,
               {/* Page Source Fallback */}
               <div style={{ marginTop: 16, padding: "14px 16px", borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)" }}>
                 <div style={{ fontSize: 12, fontWeight: 600, color: "#94A3B8", marginBottom: 4 }}>Alternative: Paste Page Content</div>
-                <div style={{ fontSize: 11, color: "#6B7280", marginBottom: 10 }}>Go to BizBuySell search results → Select all the listings on the page (Ctrl+A) → Copy (Ctrl+C) → Paste below. The AI will extract all deal data automatically.</div>
+                <div style={{ fontSize: 11, color: "#6B7280", marginBottom: 10 }}>
+                  Go to BizBuySell search results → Select all listings on the page (Ctrl+A) → Copy (Ctrl+C) → Paste below. The AI will extract all deal data automatically.
+                </div>
                 <textarea
                   value={rawText}
                   onChange={(e) => { setRawText(e.target.value); setScrapeResult(null); }}
-                  placeholder="Paste the full HTML page source here..."
+                  placeholder="Paste listing content here — titles, revenues, asking prices, locations..."
                   style={{ width: "100%", minHeight: 80, padding: "10px 12px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.03)", color: "#E2E8F0", fontSize: 11, fontFamily: "'JetBrains Mono', monospace", resize: "vertical", outline: "none" }}
                 />
                 {rawText.trim() && !scrapeResult && (
@@ -358,6 +300,13 @@ ${chunk}`,
                   </button>
                 )}
               </div>
+
+              {/* Error */}
+              {error && (
+                <div style={{ marginTop: 12, padding: "12px 16px", borderRadius: 8, background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.15)", fontSize: 13, color: "#FCA5A5" }}>
+                  {error}
+                </div>
+              )}
 
               {/* Scrape Results */}
               {scrapeResult && (
@@ -432,16 +381,14 @@ ${chunk}`,
                     </table>
                   </div>
 
-                  {/* Import Button */}
                   <div style={{ marginTop: 12, display: "flex", gap: 8 }}>
                     <button onClick={handleScrapeAndImport} disabled={importing}
                       style={{ flex: 1, padding: "12px", borderRadius: 8, border: "none", background: "linear-gradient(135deg, #10B981, #059669)", color: "#fff", fontSize: 14, fontWeight: 700, cursor: importing ? "wait" : "pointer", opacity: importing ? 0.7 : 1 }}>
                       {importing ? "Importing..." : `🚀 Import ${scrapeResult.count} Listings to Database`}
                     </button>
                   </div>
-
                   <div style={{ marginTop: 8, fontSize: 10, color: "#4B5563" }}>
-                    Tip: Open each listing on BizBuySell in a new tab to fill in missing Revenue and Cash Flow numbers before importing.
+                    Tip: Open each listing in a new tab to fill in missing Revenue and Cash Flow before importing.
                   </div>
                 </div>
               )}
@@ -450,104 +397,65 @@ ${chunk}`,
 
           {/* MANUAL CSV MODE */}
           {inputMode === "manual" && (
-          <>
-          {/* Download Template */}
-          <div style={{ marginBottom: 20, padding: "14px 18px", borderRadius: 10, background: "rgba(99,102,241,0.06)", border: "1px solid rgba(99,102,241,0.12)" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: "#818CF8" }}>Download Import Template</div>
-                <div style={{ fontSize: 11, color: "#6B7280", marginTop: 2 }}>Excel template with per-marketplace sheets and column mapping</div>
+            <>
+              <div style={{ marginBottom: 20, padding: "14px 18px", borderRadius: 10, background: "rgba(99,102,241,0.06)", border: "1px solid rgba(99,102,241,0.12)" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                  <div>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: "#818CF8" }}>Download Import Template</div>
+                    <div style={{ fontSize: 11, color: "#6B7280", marginTop: 2 }}>Excel template with per-marketplace sheets and column mapping</div>
+                  </div>
+                  <a href="/NexTax-Deal-Import-Template.xlsx" download style={{ padding: "8px 16px", borderRadius: 8, background: "rgba(99,102,241,0.15)", color: "#818CF8", fontSize: 12, fontWeight: 600, textDecoration: "none", border: "1px solid rgba(99,102,241,0.2)" }}>
+                    📥 Download .xlsx
+                  </a>
+                </div>
               </div>
-              <a href="/NexTax-Deal-Import-Template.xlsx" download style={{
-                padding: "8px 16px", borderRadius: 8, background: "rgba(99,102,241,0.15)", color: "#818CF8",
-                fontSize: 12, fontWeight: 600, textDecoration: "none", border: "1px solid rgba(99,102,241,0.2)",
+
+              <div style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 14, padding: "22px 22px 16px", marginBottom: 20 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: "#E2E8F0", marginBottom: 14 }}>Paste CSV Data or Upload File</div>
+                <div style={{ marginBottom: 14 }}>
+                  <label style={{ display: "block", fontSize: 11, color: "#8896A6", marginBottom: 5, fontWeight: 500, textTransform: "uppercase" }}>Paste CSV / Tab-Separated Data</label>
+                  <textarea
+                    value={rawText} onChange={(e) => handlePasteChange(e.target.value)}
+                    placeholder={"Title,Location,Category,Asking Price,Gross Revenue,Cash Flow,Employees\nHVAC Company,Dallas TX,HVAC,850000,1200000,320000,15"}
+                    style={{ width: "100%", minHeight: 180, padding: "12px 14px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.03)", color: "#E2E8F0", fontSize: 12, fontFamily: "'JetBrains Mono', monospace", resize: "vertical", outline: "none", lineHeight: 1.6 }}
+                  />
+                  {parsedCount > 0 && <div style={{ fontSize: 11, color: "#10B981", marginTop: 4 }}>✓ {parsedCount} rows detected</div>}
+                </div>
+
+                <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "12px 0" }}>
+                  <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.06)" }} />
+                  <span style={{ fontSize: 11, color: "#4B5563" }}>OR</span>
+                  <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.06)" }} />
+                </div>
+
+                <label style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 8, padding: "14px 16px", borderRadius: 10, border: "1.5px dashed rgba(255,255,255,0.12)", background: "rgba(255,255,255,0.02)", cursor: "pointer" }}>
+                  <input ref={fileRef} type="file" accept=".csv,.tsv,.txt" style={{ display: "none" }} onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFileUpload(f); }} />
+                  {file ? <span style={{ fontSize: 13, color: "#10B981", fontWeight: 500 }}>📄 {file.name} ({parsedCount} rows)</span> : <span style={{ fontSize: 13, color: "#6B7280" }}>📤 Upload CSV file</span>}
+                </label>
+              </div>
+
+              <div style={{ marginBottom: 20, padding: "14px 18px", borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)" }}>
+                <div style={{ fontSize: 11, color: "#6B7280", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8, fontWeight: 500 }}>Only these industries will be imported</div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+                  {TRACKED_INDUSTRIES.map((ind) => (
+                    <span key={ind} style={{ padding: "3px 10px", borderRadius: 6, background: "rgba(255,255,255,0.04)", fontSize: 11, color: "#94A3B8" }}>{ind}</span>
+                  ))}
+                </div>
+              </div>
+
+              {error && (
+                <div style={{ marginBottom: 16, padding: "12px 16px", borderRadius: 10, background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.15)", fontSize: 13, color: "#FCA5A5" }}>{error}</div>
+              )}
+
+              <button onClick={handleImport} disabled={importing || !rawText.trim()} style={{
+                width: "100%", padding: "14px", borderRadius: 10, border: "none",
+                background: rawText.trim() && !importing ? "linear-gradient(135deg, #6366F1, #8B5CF6)" : "rgba(255,255,255,0.08)",
+                color: rawText.trim() ? "#fff" : "#6B7280", fontSize: 15, fontWeight: 700,
+                cursor: rawText.trim() && !importing ? "pointer" : "not-allowed", opacity: importing ? 0.7 : 1,
               }}>
-                📥 Download .xlsx
-              </a>
-            </div>
-          </div>
-
-          {/* Input Methods */}
-          <div style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 14, padding: "22px 22px 16px", marginBottom: 20 }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: "#E2E8F0", marginBottom: 14 }}>Paste CSV Data or Upload File</div>
-
-            {/* Paste area */}
-            <div style={{ marginBottom: 14 }}>
-              <label style={{ display: "block", fontSize: 11, color: "#8896A6", marginBottom: 5, fontWeight: 500, textTransform: "uppercase" }}>
-                Paste CSV / Tab-Separated Data
-              </label>
-              <textarea
-                value={rawText}
-                onChange={(e) => handlePasteChange(e.target.value)}
-                placeholder={"Title,Location,Category,Asking Price,Gross Revenue,Cash Flow,Employees\nHVAC Company,Dallas TX,HVAC,850000,1200000,320000,15\nCleaning Service,Austin TX,Cleaning,475000,520000,145000,12"}
-                style={{
-                  width: "100%", minHeight: 180, padding: "12px 14px", borderRadius: 10,
-                  border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.03)",
-                  color: "#E2E8F0", fontSize: 12, fontFamily: "'JetBrains Mono', monospace",
-                  resize: "vertical", outline: "none", lineHeight: 1.6,
-                }}
-              />
-              {parsedCount > 0 && (
-                <div style={{ fontSize: 11, color: "#10B981", marginTop: 4 }}>✓ {parsedCount} rows detected</div>
-              )}
-            </div>
-
-            {/* File upload */}
-            <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "12px 0" }}>
-              <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.06)" }} />
-              <span style={{ fontSize: 11, color: "#4B5563" }}>OR</span>
-              <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.06)" }} />
-            </div>
-
-            <label style={{
-              display: "flex", alignItems: "center", justifyContent: "center", gap: 8,
-              padding: "14px 16px", borderRadius: 10, border: "1.5px dashed rgba(255,255,255,0.12)",
-              background: "rgba(255,255,255,0.02)", cursor: "pointer",
-            }}>
-              <input ref={fileRef} type="file" accept=".csv,.tsv,.txt" style={{ display: "none" }}
-                onChange={(e) => { const f = e.target.files?.[0]; if (f) handleFileUpload(f); }} />
-              {file ? (
-                <span style={{ fontSize: 13, color: "#10B981", fontWeight: 500 }}>📄 {file.name} ({parsedCount} rows)</span>
-              ) : (
-                <span style={{ fontSize: 13, color: "#6B7280" }}>📤 Upload CSV file</span>
-              )}
-            </label>
-          </div>
-
-          {/* Industry Filter Info */}
-          <div style={{ marginBottom: 20, padding: "14px 18px", borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)" }}>
-            <div style={{ fontSize: 11, color: "#6B7280", textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 8, fontWeight: 500 }}>
-              Only these industries will be imported
-            </div>
-            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
-              {TRACKED_INDUSTRIES.map((ind) => (
-                <span key={ind} style={{
-                  padding: "3px 10px", borderRadius: 6, background: "rgba(255,255,255,0.04)",
-                  fontSize: 11, color: "#94A3B8",
-                }}>{ind}</span>
-              ))}
-            </div>
-          </div>
-
-          {/* Error */}
-          {error && (
-            <div style={{ marginBottom: 16, padding: "12px 16px", borderRadius: 10, background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.15)", fontSize: 13, color: "#FCA5A5" }}>
-              {error}
-            </div>
-          )}
-
-          {/* Import Button */}
-          <button onClick={handleImport} disabled={importing || !rawText.trim()}
-            style={{
-              width: "100%", padding: "14px", borderRadius: 10, border: "none",
-              background: rawText.trim() && !importing ? "linear-gradient(135deg, #6366F1, #8B5CF6)" : "rgba(255,255,255,0.08)",
-              color: rawText.trim() ? "#fff" : "#6B7280", fontSize: 15, fontWeight: 700,
-              cursor: rawText.trim() && !importing ? "pointer" : "not-allowed",
-              fontFamily: "'DM Sans', sans-serif", opacity: importing ? 0.7 : 1,
-            }}>
-            {importing ? "Importing..." : `🚀 Import ${parsedCount > 0 ? parsedCount + " Listings" : "Data"} from ${source}`}
-          </button>
-          </>
+                {importing ? "Importing..." : `🚀 Import ${parsedCount > 0 ? parsedCount + " Listings" : "Data"} from ${source}`}
+              </button>
+            </>
           )}
 
           {/* Results */}
@@ -569,8 +477,6 @@ ${chunk}`,
                   </div>
                 ))}
               </div>
-
-              {/* Confidence Breakdown */}
               {result.imported > 0 && (
                 <div style={{ marginBottom: 14, padding: "12px 16px", borderRadius: 8, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)" }}>
                   <div style={{ fontSize: 11, color: "#6B7280", textTransform: "uppercase", marginBottom: 8, fontWeight: 500 }}>Data Confidence</div>
@@ -580,14 +486,10 @@ ${chunk}`,
                     <div style={{ fontSize: 12, color: "#F97316" }}>Low: <span style={{ fontWeight: 700, fontFamily: "'JetBrains Mono', monospace" }}>{result.confidence.low}</span></div>
                   </div>
                   {result.estimated_sde > 0 && (
-                    <div style={{ fontSize: 11, color: "#F59E0B", marginTop: 6 }}>
-                      ⚠ {result.estimated_sde} listings had SDE estimated from revenue × industry margin
-                    </div>
+                    <div style={{ fontSize: 11, color: "#F59E0B", marginTop: 6 }}>⚠ {result.estimated_sde} listings had SDE estimated from revenue × industry margin</div>
                   )}
                 </div>
               )}
-
-              {/* Rejection Log */}
               {result.rejections.length > 0 && (
                 <div style={{ marginTop: 12 }}>
                   <div style={{ fontSize: 11, color: "#6B7280", textTransform: "uppercase", marginBottom: 8, fontWeight: 500 }}>Rejection Log ({result.rejections.length} items)</div>
@@ -595,17 +497,11 @@ ${chunk}`,
                     {result.rejections.slice(0, 50).map((r, i) => (
                       <div key={i} style={{ padding: "8px 12px", borderBottom: "1px solid rgba(255,255,255,0.03)", display: "flex", gap: 8, alignItems: "baseline" }}>
                         <span style={{ fontSize: 10, color: "#4B5563", fontFamily: "'JetBrains Mono', monospace", minWidth: 36 }}>Row {r.row}</span>
-                        <span style={{
-                          fontSize: 10, padding: "1px 6px", borderRadius: 4, fontWeight: 500,
-                          background: r.reason === "unknown_industry" ? "rgba(245,158,11,0.1)" : r.reason === "below_threshold" ? "rgba(249,115,22,0.1)" : r.reason === "duplicate" ? "rgba(107,114,128,0.1)" : "rgba(239,68,68,0.1)",
-                          color: r.reason === "unknown_industry" ? "#F59E0B" : r.reason === "below_threshold" ? "#F97316" : r.reason === "duplicate" ? "#6B7280" : "#EF4444",
-                        }}>{r.reason}</span>
+                        <span style={{ fontSize: 10, padding: "1px 6px", borderRadius: 4, fontWeight: 500, background: r.reason === "unknown_industry" ? "rgba(245,158,11,0.1)" : r.reason === "below_threshold" ? "rgba(249,115,22,0.1)" : r.reason === "duplicate" ? "rgba(107,114,128,0.1)" : "rgba(239,68,68,0.1)", color: r.reason === "unknown_industry" ? "#F59E0B" : r.reason === "below_threshold" ? "#F97316" : r.reason === "duplicate" ? "#6B7280" : "#EF4444" }}>{r.reason}</span>
                         <span style={{ fontSize: 11, color: "#8896A6" }}>{r.details}</span>
                       </div>
                     ))}
-                    {result.rejections.length > 50 && (
-                      <div style={{ padding: "8px 12px", fontSize: 11, color: "#4B5563" }}>...and {result.rejections.length - 50} more</div>
-                    )}
+                    {result.rejections.length > 50 && <div style={{ padding: "8px 12px", fontSize: 11, color: "#4B5563" }}>...and {result.rejections.length - 50} more</div>}
                   </div>
                 </div>
               )}
