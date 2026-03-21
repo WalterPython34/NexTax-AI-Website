@@ -11,7 +11,14 @@ interface DealInputs {
 
 interface ScoreBreakdown {
   overall: number;
-  valuation: { score: number; multiple: number; marketRange: [number, number]; fairValue: number; recommendedOffer: [number, number]; verdict: string };
+  // PATCH 2: fairValueLow + fairValueHigh + rangePosition added to valuation
+  valuation: {
+    score: number; multiple: number; marketRange: [number, number];
+    fairValue: number; fairValueLow: number; fairValueHigh: number;
+    rangePosition: "Below Range" | "Within Range" | "Above Range";
+    recommendedOffer: [number, number]; verdict: string;
+    benchmarkSource: string; sampleSize: number;
+  };
   debtRisk: { score: number; dscr: number; annualPayment: number; monthlyPayment: number; verdict: string };
   marketRisk: { score: number; industryGrowth: string; verdict: string };
   industryRisk: { score: number; marginRange: [number, number]; verdict: string };
@@ -20,7 +27,7 @@ interface ScoreBreakdown {
   redFlags: string[]; greenFlags: string[];
   riskLevel: "Low" | "Moderate" | "High" | "Critical";
   aiInsight: string | null;
-  // Three-lens additions
+  nextStep: "advance" | "validate" | "reprice";
   threeLens?: {
     listing: { medianMultiple: number; sampleSize: number } | null;
     transaction: { cashflowMultiple: number; saleToAskRatio: number; daysOnMarket: number; reportedSales: number; subsector: string } | null;
@@ -38,38 +45,41 @@ interface ScoreBreakdown {
   };
 }
 
-// ─── INDUSTRY DATA ───────────────────────────────────────────────────────────
+// ─── PATCH 1: INDUSTRY DATA — added benchmarkLow/Mid/High and sampleSize ─────
 
 const INDUSTRIES: Record<string, {
-  label: string; typicalMultiple: [number, number]; marginRange: [number, number];
-  growth: string; riskFactor: number; demandScore: number; buyerInterestRank: number; competitionLevel: string;
+  label: string; typicalMultiple: [number, number];
+  benchmarkLow: number; benchmarkMid: number; benchmarkHigh: number;
+  marginRange: [number, number]; growth: string; riskFactor: number;
+  demandScore: number; buyerInterestRank: number; competitionLevel: string;
+  sampleSize: number; benchmarkSource: string;
 }> = {
-  laundromat: { label: "Laundromat", typicalMultiple: [2.5, 4.0], marginRange: [25, 40], growth: "Stable", riskFactor: 0.85, demandScore: 82, buyerInterestRank: 3, competitionLevel: "Moderate" },
-  hvac: { label: "HVAC", typicalMultiple: [2.5, 4.5], marginRange: [15, 30], growth: "Growing", riskFactor: 0.75, demandScore: 88, buyerInterestRank: 2, competitionLevel: "Low-Moderate" },
-  landscaping: { label: "Landscaping", typicalMultiple: [1.5, 3.0], marginRange: [10, 25], growth: "Stable", riskFactor: 0.90, demandScore: 70, buyerInterestRank: 7, competitionLevel: "High" },
-  carwash: { label: "Car Wash", typicalMultiple: [3.0, 5.0], marginRange: [25, 45], growth: "Growing", riskFactor: 0.80, demandScore: 79, buyerInterestRank: 5, competitionLevel: "Moderate" },
-  dental: { label: "Dental Practice", typicalMultiple: [3.0, 5.5], marginRange: [20, 40], growth: "Growing", riskFactor: 0.65, demandScore: 74, buyerInterestRank: 8, competitionLevel: "Low" },
-  gym: { label: "Gym / Fitness Center", typicalMultiple: [2.0, 4.0], marginRange: [15, 35], growth: "Stable", riskFactor: 0.95, demandScore: 71, buyerInterestRank: 9, competitionLevel: "Moderate-High" },
-  restaurant: { label: "Restaurant", typicalMultiple: [1.5, 3.0], marginRange: [5, 15], growth: "Volatile", riskFactor: 1.10, demandScore: 65, buyerInterestRank: 11, competitionLevel: "Very High" },
-  autorepair: { label: "Auto Repair", typicalMultiple: [2.0, 3.5], marginRange: [15, 30], growth: "Stable", riskFactor: 0.85, demandScore: 73, buyerInterestRank: 6, competitionLevel: "Moderate" },
-  cleaning: { label: "Cleaning Service", typicalMultiple: [1.5, 3.0], marginRange: [15, 30], growth: "Growing", riskFactor: 0.80, demandScore: 76, buyerInterestRank: 4, competitionLevel: "High" },
-  ecommerce: { label: "Ecommerce Brand", typicalMultiple: [2.5, 4.5], marginRange: [15, 35], growth: "Variable", riskFactor: 0.95, demandScore: 83, buyerInterestRank: 1, competitionLevel: "Very High" },
-  saas: { label: "SaaS Product", typicalMultiple: [3.0, 6.0], marginRange: [60, 85], growth: "Growing", riskFactor: 0.70, demandScore: 91, buyerInterestRank: 1, competitionLevel: "High" },
-  insurance: { label: "Insurance Agency", typicalMultiple: [2.0, 3.5], marginRange: [20, 40], growth: "Stable", riskFactor: 0.70, demandScore: 68, buyerInterestRank: 10, competitionLevel: "Low" },
-  plumbing: { label: "Plumbing", typicalMultiple: [2.0, 4.0], marginRange: [15, 30], growth: "Growing", riskFactor: 0.75, demandScore: 85, buyerInterestRank: 3, competitionLevel: "Low-Moderate" },
-  roofing: { label: "Roofing", typicalMultiple: [1.5, 3.5], marginRange: [15, 30], growth: "Stable", riskFactor: 0.90, demandScore: 72, buyerInterestRank: 6, competitionLevel: "Moderate" },
-  petcare: { label: "Pet Care / Grooming", typicalMultiple: [2.0, 4.0], marginRange: [20, 40], growth: "Growing", riskFactor: 0.80, demandScore: 77, buyerInterestRank: 5, competitionLevel: "Moderate" },
-  pharmacy: { label: "Pharmacy", typicalMultiple: [2.5, 4.0], marginRange: [18, 30], growth: "Stable", riskFactor: 0.75, demandScore: 62, buyerInterestRank: 14, competitionLevel: "Low" },
-  daycare: { label: "Daycare / Childcare", typicalMultiple: [2.0, 4.0], marginRange: [15, 30], growth: "Growing", riskFactor: 0.80, demandScore: 74, buyerInterestRank: 10, competitionLevel: "Moderate" },
-  medspa: { label: "Med Spa / Aesthetics", typicalMultiple: [3.0, 5.0], marginRange: [25, 45], growth: "Growing", riskFactor: 0.75, demandScore: 80, buyerInterestRank: 7, competitionLevel: "Moderate" },
-  accounting: { label: "Accounting / Tax Firm", typicalMultiple: [1.5, 3.5], marginRange: [30, 55], growth: "Stable", riskFactor: 0.60, demandScore: 86, buyerInterestRank: 3, competitionLevel: "Low-Moderate" },
-  electrical: { label: "Electrical Contractor", typicalMultiple: [2.0, 4.0], marginRange: [15, 30], growth: "Growing", riskFactor: 0.75, demandScore: 82, buyerInterestRank: 5, competitionLevel: "Low-Moderate" },
-  healthcare: { label: "Healthcare / Home Health", typicalMultiple: [3.0, 6.0], marginRange: [15, 35], growth: "Growing", riskFactor: 0.70, demandScore: 79, buyerInterestRank: 6, competitionLevel: "Moderate" },
-  transportation: { label: "Transportation / Trucking", typicalMultiple: [2.0, 4.0], marginRange: [10, 25], growth: "Stable", riskFactor: 0.85, demandScore: 68, buyerInterestRank: 11, competitionLevel: "Moderate" },
-  printing: { label: "Printing / Marketing", typicalMultiple: [1.5, 3.0], marginRange: [15, 30], growth: "Variable", riskFactor: 0.90, demandScore: 55, buyerInterestRank: 18, competitionLevel: "High" },
-  storage: { label: "Self-Storage", typicalMultiple: [4.0, 8.0], marginRange: [40, 65], growth: "Growing", riskFactor: 0.60, demandScore: 84, buyerInterestRank: 4, competitionLevel: "Moderate" },
-  painting: { label: "Painting Contractor", typicalMultiple: [1.5, 3.0], marginRange: [15, 30], growth: "Stable", riskFactor: 0.90, demandScore: 64, buyerInterestRank: 15, competitionLevel: "High" },
-  security: { label: "Security Services", typicalMultiple: [2.5, 4.5], marginRange: [15, 30], growth: "Growing", riskFactor: 0.75, demandScore: 72, buyerInterestRank: 9, competitionLevel: "Low-Moderate" },
+  laundromat:     { label:"Laundromat",             typicalMultiple:[2.5,4.0], benchmarkLow:2.8, benchmarkMid:3.48, benchmarkHigh:4.4,  marginRange:[25,40], growth:"Stable",   riskFactor:0.85, demandScore:82, buyerInterestRank:3,  competitionLevel:"Moderate",       sampleSize:112, benchmarkSource:"DealStats" },
+  hvac:           { label:"HVAC",                   typicalMultiple:[2.5,4.5], benchmarkLow:1.8, benchmarkMid:2.45, benchmarkHigh:3.2,  marginRange:[15,30], growth:"Growing",  riskFactor:0.75, demandScore:88, buyerInterestRank:2,  competitionLevel:"Low-Moderate",   sampleSize:312, benchmarkSource:"DealStats" },
+  landscaping:    { label:"Landscaping",            typicalMultiple:[1.5,3.0], benchmarkLow:1.7, benchmarkMid:2.21, benchmarkHigh:2.9,  marginRange:[10,25], growth:"Stable",   riskFactor:0.90, demandScore:70, buyerInterestRank:7,  competitionLevel:"High",           sampleSize:189, benchmarkSource:"DealStats" },
+  carwash:        { label:"Car Wash",               typicalMultiple:[3.0,5.0], benchmarkLow:2.0, benchmarkMid:2.74, benchmarkHigh:3.6,  marginRange:[25,45], growth:"Growing",  riskFactor:0.80, demandScore:79, buyerInterestRank:5,  competitionLevel:"Moderate",       sampleSize:98,  benchmarkSource:"DealStats" },
+  dental:         { label:"Dental Practice",        typicalMultiple:[3.0,5.5], benchmarkLow:0.8, benchmarkMid:1.30, benchmarkHigh:1.9,  marginRange:[20,40], growth:"Growing",  riskFactor:0.65, demandScore:74, buyerInterestRank:8,  competitionLevel:"Low",            sampleSize:167, benchmarkSource:"DealStats" },
+  gym:            { label:"Gym / Fitness Center",   typicalMultiple:[2.0,4.0], benchmarkLow:1.8, benchmarkMid:2.32, benchmarkHigh:3.0,  marginRange:[15,35], growth:"Stable",   riskFactor:0.95, demandScore:71, buyerInterestRank:9,  competitionLevel:"Moderate-High",  sampleSize:178, benchmarkSource:"DealStats" },
+  restaurant:     { label:"Restaurant",             typicalMultiple:[1.5,3.0], benchmarkLow:1.4, benchmarkMid:1.85, benchmarkHigh:2.4,  marginRange:[5,15],  growth:"Volatile", riskFactor:1.10, demandScore:65, buyerInterestRank:11, competitionLevel:"Very High",      sampleSize:892, benchmarkSource:"DealStats" },
+  autorepair:     { label:"Auto Repair",            typicalMultiple:[2.0,3.5], benchmarkLow:1.6, benchmarkMid:2.11, benchmarkHigh:2.8,  marginRange:[15,30], growth:"Stable",   riskFactor:0.85, demandScore:73, buyerInterestRank:6,  competitionLevel:"Moderate",       sampleSize:445, benchmarkSource:"DealStats" },
+  cleaning:       { label:"Cleaning Service",       typicalMultiple:[1.5,3.0], benchmarkLow:1.8, benchmarkMid:2.22, benchmarkHigh:2.9,  marginRange:[15,30], growth:"Growing",  riskFactor:0.80, demandScore:76, buyerInterestRank:4,  competitionLevel:"High",           sampleSize:267, benchmarkSource:"DealStats" },
+  ecommerce:      { label:"Ecommerce Brand",        typicalMultiple:[2.5,4.5], benchmarkLow:1.9, benchmarkMid:2.41, benchmarkHigh:3.1,  marginRange:[15,35], growth:"Variable", riskFactor:0.95, demandScore:83, buyerInterestRank:1,  competitionLevel:"Very High",      sampleSize:345, benchmarkSource:"DealStats" },
+  saas:           { label:"SaaS Product",           typicalMultiple:[3.0,6.0], benchmarkLow:2.1, benchmarkMid:2.60, benchmarkHigh:3.4,  marginRange:[60,85], growth:"Growing",  riskFactor:0.70, demandScore:91, buyerInterestRank:1,  competitionLevel:"High",           sampleSize:156, benchmarkSource:"DealStats" },
+  insurance:      { label:"Insurance Agency",       typicalMultiple:[2.0,3.5], benchmarkLow:1.4, benchmarkMid:1.82, benchmarkHigh:2.4,  marginRange:[20,40], growth:"Stable",   riskFactor:0.70, demandScore:68, buyerInterestRank:10, competitionLevel:"Low",            sampleSize:89,  benchmarkSource:"DealStats" },
+  plumbing:       { label:"Plumbing",               typicalMultiple:[2.0,4.0], benchmarkLow:1.7, benchmarkMid:2.30, benchmarkHigh:3.0,  marginRange:[15,30], growth:"Growing",  riskFactor:0.75, demandScore:85, buyerInterestRank:3,  competitionLevel:"Low-Moderate",   sampleSize:198, benchmarkSource:"DealStats" },
+  roofing:        { label:"Roofing",                typicalMultiple:[1.5,3.5], benchmarkLow:1.7, benchmarkMid:2.21, benchmarkHigh:2.9,  marginRange:[15,30], growth:"Stable",   riskFactor:0.90, demandScore:72, buyerInterestRank:6,  competitionLevel:"Moderate",       sampleSize:134, benchmarkSource:"DealStats" },
+  petcare:        { label:"Pet Care / Grooming",    typicalMultiple:[2.0,4.0], benchmarkLow:2.0, benchmarkMid:2.46, benchmarkHigh:3.2,  marginRange:[20,40], growth:"Growing",  riskFactor:0.80, demandScore:77, buyerInterestRank:5,  competitionLevel:"Moderate",       sampleSize:223, benchmarkSource:"DealStats" },
+  pharmacy:       { label:"Pharmacy",               typicalMultiple:[2.5,4.0], benchmarkLow:0.5, benchmarkMid:0.66, benchmarkHigh:0.9,  marginRange:[18,30], growth:"Stable",   riskFactor:0.75, demandScore:62, buyerInterestRank:14, competitionLevel:"Low",            sampleSize:67,  benchmarkSource:"DealStats" },
+  daycare:        { label:"Daycare / Childcare",    typicalMultiple:[2.0,4.0], benchmarkLow:1.9, benchmarkMid:2.29, benchmarkHigh:3.0,  marginRange:[15,30], growth:"Growing",  riskFactor:0.80, demandScore:74, buyerInterestRank:10, competitionLevel:"Moderate",       sampleSize:134, benchmarkSource:"DealStats" },
+  medspa:         { label:"Med Spa / Aesthetics",   typicalMultiple:[3.0,5.0], benchmarkLow:2.0, benchmarkMid:2.75, benchmarkHigh:3.6,  marginRange:[25,45], growth:"Growing",  riskFactor:0.75, demandScore:80, buyerInterestRank:7,  competitionLevel:"Moderate",       sampleSize:89,  benchmarkSource:"DealStats" },
+  accounting:     { label:"Accounting / Tax Firm",  typicalMultiple:[1.5,3.5], benchmarkLow:1.0, benchmarkMid:1.30, benchmarkHigh:1.7,  marginRange:[30,55], growth:"Stable",   riskFactor:0.60, demandScore:86, buyerInterestRank:3,  competitionLevel:"Low-Moderate",   sampleSize:134, benchmarkSource:"DealStats" },
+  electrical:     { label:"Electrical Contractor",  typicalMultiple:[2.0,4.0], benchmarkLow:1.8, benchmarkMid:2.40, benchmarkHigh:3.1,  marginRange:[15,30], growth:"Growing",  riskFactor:0.75, demandScore:82, buyerInterestRank:5,  competitionLevel:"Low-Moderate",   sampleSize:156, benchmarkSource:"DealStats" },
+  healthcare:     { label:"Healthcare / Home Health",typicalMultiple:[3.0,6.0], benchmarkLow:1.1, benchmarkMid:1.72, benchmarkHigh:2.3,  marginRange:[15,35], growth:"Growing",  riskFactor:0.70, demandScore:79, buyerInterestRank:6,  competitionLevel:"Moderate",       sampleSize:145, benchmarkSource:"DealStats" },
+  transportation: { label:"Transportation / Trucking",typicalMultiple:[2.0,4.0],benchmarkLow:2.0, benchmarkMid:2.65, benchmarkHigh:3.4,  marginRange:[10,25], growth:"Stable",   riskFactor:0.85, demandScore:68, buyerInterestRank:11, competitionLevel:"Moderate",       sampleSize:112, benchmarkSource:"DealStats" },
+  printing:       { label:"Printing / Marketing",   typicalMultiple:[1.5,3.0], benchmarkLow:1.4, benchmarkMid:1.90, benchmarkHigh:2.5,  marginRange:[15,30], growth:"Variable", riskFactor:0.90, demandScore:55, buyerInterestRank:18, competitionLevel:"High",           sampleSize:78,  benchmarkSource:"DealStats" },
+  storage:        { label:"Self-Storage",           typicalMultiple:[4.0,8.0], benchmarkLow:4.0, benchmarkMid:5.50, benchmarkHigh:7.2,  marginRange:[40,65], growth:"Growing",  riskFactor:0.60, demandScore:84, buyerInterestRank:4,  competitionLevel:"Moderate",       sampleSize:56,  benchmarkSource:"DealStats" },
+  painting:       { label:"Painting Contractor",    typicalMultiple:[1.5,3.0], benchmarkLow:1.6, benchmarkMid:2.05, benchmarkHigh:2.7,  marginRange:[15,30], growth:"Stable",   riskFactor:0.90, demandScore:64, buyerInterestRank:15, competitionLevel:"High",           sampleSize:112, benchmarkSource:"DealStats" },
+  security:       { label:"Security Services",      typicalMultiple:[2.5,4.5], benchmarkLow:1.4, benchmarkMid:1.94, benchmarkHigh:2.6,  marginRange:[15,30], growth:"Growing",  riskFactor:0.75, demandScore:72, buyerInterestRank:9,  competitionLevel:"Low-Moderate",   sampleSize:89,  benchmarkSource:"DealStats" },
 };
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
@@ -86,6 +96,8 @@ function generateCommunityData(industry: string, userScore: number) {
   return { avgScore: Math.round(scores.reduce((a, b) => a + b, 0) / scores.length), topScore: Math.max(...scores), lowestScore: Math.min(...scores), percentile: Math.round((rank / scores.length) * 100), totalDeals: scores.length };
 }
 
+// ─── PATCH 3: calculateScores — range-based valuation + institutional flags ──
+
 function calculateScores(inputs: DealInputs): ScoreBreakdown | null {
   const revenue = parseFloat(inputs.revenue.replace(/,/g, ""));
   const sde = parseFloat(inputs.sde.replace(/,/g, ""));
@@ -96,83 +108,151 @@ function calculateScores(inputs: DealInputs): ScoreBreakdown | null {
   const industry = INDUSTRIES[inputs.industry];
   if (!revenue || !sde || !price || !industry || isNaN(debtPct) || isNaN(rate) || isNaN(term)) return null;
 
-  const redFlags: string[] = []; const greenFlags: string[] = [];
+  const redFlags: string[] = [];
+  const greenFlags: string[] = [];
   const multiple = price / sde;
-  const [lowMult, highMult] = industry.typicalMultiple;
-  const midMult = (lowMult + highMult) / 2;
-  let valuationScore: number;
-  if (multiple <= midMult) valuationScore = Math.min(95, 70 + (midMult - multiple) / midMult * 50);
-  else if (multiple <= highMult) valuationScore = 70 - ((multiple - midMult) / (highMult - midMult)) * 30;
-  else valuationScore = Math.max(5, 40 - ((multiple - highMult) / highMult) * 60);
-  valuationScore = Math.round(Math.max(5, Math.min(98, valuationScore)));
-  const fairValue = Math.round(sde * midMult);
-  const fairRangeLow = Math.round(sde * lowMult);
-  const fairRangeHigh = Math.round(sde * highMult * 0.9);
 
-  // Smart offer logic: never recommend above asking price
+  // ── Range-based valuation using DealStats benchmarks
+  const { benchmarkLow, benchmarkMid, benchmarkHigh, sampleSize, benchmarkSource } = industry;
+  const fairValueLow  = Math.round(sde * benchmarkLow);
+  const fairValue     = Math.round(sde * benchmarkMid);   // mid = legacy "fairValue" for backward compat
+  const fairValueHigh = Math.round(sde * benchmarkHigh);
+
+  // Range position classification
+  let rangePosition: "Below Range" | "Within Range" | "Above Range";
+  if (multiple < benchmarkLow)        rangePosition = "Below Range";
+  else if (multiple > benchmarkHigh)  rangePosition = "Above Range";
+  else                                 rangePosition = "Within Range";
+
+  // Valuation score — continuous, range-aware
+  let valuationScore: number;
+  if (multiple <= benchmarkLow * 0.85)      valuationScore = Math.min(95, 85 + (benchmarkLow - multiple) / benchmarkLow * 20);
+  else if (multiple <= benchmarkMid)         valuationScore = Math.min(90, 70 + (benchmarkMid - multiple) / benchmarkMid * 40);
+  else if (multiple <= benchmarkHigh)        valuationScore = 70 - ((multiple - benchmarkMid) / (benchmarkHigh - benchmarkMid)) * 25;
+  else                                       valuationScore = Math.max(5, 40 - ((multiple - benchmarkHigh) / benchmarkHigh) * 60);
+  valuationScore = Math.round(Math.max(5, Math.min(98, valuationScore)));
+
+  // Gap % vs median for negotiation
+  const gapVsMedian = ((multiple - benchmarkMid) / benchmarkMid) * 100;
+
+  // Smart offer — never above asking, anchored to range
   let recommendedOffer: [number, number];
-  if (price <= fairRangeLow) {
-    // Deal appears significantly undervalued — offer 80-100% of asking
+  if (price <= fairValueLow) {
     recommendedOffer = [Math.round(price * 0.80), Math.round(price * 1.0)];
   } else if (price <= fairValue) {
-    // Deal is below fair value — offer 85-100% of asking
     recommendedOffer = [Math.round(price * 0.85), Math.round(price * 1.0)];
-  } else if (price <= fairRangeHigh) {
-    // Deal is fairly priced — offer 90-100% of fair value
+  } else if (price <= fairValueHigh) {
     recommendedOffer = [Math.round(fairValue * 0.90), fairValue];
   } else {
-    // Deal is overpriced — offer at fair value range
-    recommendedOffer = [fairRangeLow, fairValue];
+    recommendedOffer = [fairValueLow, fairValue];
   }
 
-  if (multiple > highMult * 1.15) redFlags.push("Valuation " + Math.round(((multiple / highMult) - 1) * 100) + "% above industry ceiling");
-  else if (multiple > highMult) redFlags.push("Asking price at top of market range");
-  else if (multiple <= lowMult) greenFlags.push("Priced below market — strong negotiating position");
-  else if (multiple <= midMult) greenFlags.push("Fair valuation within market range");
-
+  // ── PATCH 7 (flags): institutional, analytical tone — not deal killers
   const sdeMargin = (sde / revenue) * 100;
-  if (sdeMargin < industry.marginRange[0] * 0.75) redFlags.push("SDE margin below industry average (" + sdeMargin.toFixed(0) + "% vs " + industry.marginRange[0] + "-" + industry.marginRange[1] + "%)");
-  else if (sdeMargin > industry.marginRange[1]) greenFlags.push("Above-average profitability margins");
 
-  const valuationVerdict = multiple <= lowMult ? "Below market — strong negotiating position" : multiple <= midMult ? "Fair value — solid entry point" : multiple <= highMult ? "Upper range — negotiate aggressively" : "Above market — significant overpayment risk";
+  if (rangePosition === "Above Range") {
+    const pctAbove = Math.round(((multiple / benchmarkHigh) - 1) * 100);
+    redFlags.push(`Asking multiple of ${multiple.toFixed(2)}x appears ${pctAbove}% above the ${benchmarkHigh.toFixed(2)}x high end of observed ${industry.label} transactions`);
+  } else if (multiple > benchmarkMid * 1.05 && multiple <= benchmarkHigh) {
+    redFlags.push(`Pricing in the upper portion of the ${benchmarkLow.toFixed(2)}–${benchmarkHigh.toFixed(2)}x observed range — may require justification through earnings quality or growth trajectory`);
+  } else if (rangePosition === "Below Range") {
+    greenFlags.push(`Asking multiple of ${multiple.toFixed(2)}x is below the ${benchmarkLow.toFixed(2)}x low end of observed transactions — warrants investigation of seller motivation`);
+  } else {
+    greenFlags.push(`Pricing is consistent with the ${benchmarkLow.toFixed(2)}–${benchmarkHigh.toFixed(2)}x range observed across ${sampleSize.toLocaleString()} comparable ${industry.label} transactions`);
+  }
 
+  if (sdeMargin < industry.marginRange[0] * 0.75) {
+    redFlags.push(`SDE margin of ${sdeMargin.toFixed(0)}% is below the ${industry.marginRange[0]}–${industry.marginRange[1]}% observed range for ${industry.label} — buyers should evaluate cost structure and add-back sustainability`);
+  } else if (sdeMargin > industry.marginRange[1]) {
+    greenFlags.push(`Operating margin of ${sdeMargin.toFixed(0)}% is above the typical ${industry.marginRange[0]}–${industry.marginRange[1]}% range, supporting earnings quality`);
+  } else if (sdeMargin >= industry.marginRange[0]) {
+    greenFlags.push(`Operating margin of ${sdeMargin.toFixed(0)}% is consistent with ${industry.label} benchmarks`);
+  }
+
+  // Valuation verdict — institutional language
+  const valuationVerdict =
+    rangePosition === "Below Range"  ? `${multiple.toFixed(2)}x is below the observed low end of ${benchmarkLow.toFixed(2)}x — pricing appears favorable relative to market comps` :
+    multiple <= benchmarkMid         ? `${multiple.toFixed(2)}x is within range and below the ${benchmarkMid.toFixed(2)}x median — consistent with market-rate entry` :
+    rangePosition === "Within Range" ? `${multiple.toFixed(2)}x is in the upper portion of the observed range — buyers should evaluate whether earnings quality supports the premium` :
+    `${multiple.toFixed(2)}x appears above the ${benchmarkHigh.toFixed(2)}x high end of comparable transactions — ask may require negotiation or structural adjustment`;
+
+  // ── Debt scoring (unchanged logic, updated verdicts)
   const loanAmount = price * debtPct;
-  const monthlyRate = rate / 12; const numPayments = term * 12;
-  const monthlyPayment = monthlyRate > 0 ? (loanAmount * monthlyRate * Math.pow(1 + monthlyRate, numPayments)) / (Math.pow(1 + monthlyRate, numPayments) - 1) : loanAmount / numPayments;
+  const monthlyRate = rate / 12;
+  const numPayments = term * 12;
+  const monthlyPayment = monthlyRate > 0
+    ? (loanAmount * monthlyRate * Math.pow(1 + monthlyRate, numPayments)) / (Math.pow(1 + monthlyRate, numPayments) - 1)
+    : loanAmount / numPayments;
   const annualPayment = monthlyPayment * 12;
   const dscr = annualPayment > 0 ? sde / annualPayment : 99;
-  let debtScore: number;
-  if (dscr >= 2.0) debtScore = 92; else if (dscr >= 1.5) debtScore = 75 + (dscr - 1.5) * 34;
-  else if (dscr >= 1.25) debtScore = 55 + (dscr - 1.25) * 80; else if (dscr >= 1.0) debtScore = 30 + (dscr - 1.0) * 100;
-  else debtScore = Math.max(5, dscr * 30);
-  debtScore = Math.round(Math.max(5, Math.min(98, debtScore)));
-  if (dscr < 1.0) redFlags.push("DSCR below 1.0 — deal cannot service its debt");
-  else if (dscr < 1.25) redFlags.push("DSCR below SBA minimum of 1.25");
-  else if (dscr >= 1.5) greenFlags.push("Healthy debt service coverage ratio");
-  const debtVerdict = dscr >= 1.5 ? "Healthy debt coverage" : dscr >= 1.25 ? "Acceptable — meets lender minimums" : dscr >= 1.0 ? "Tight — minimal margin" : "Insufficient — cannot service debt";
 
+  let debtScore: number;
+  if (dscr >= 2.0)       debtScore = 92;
+  else if (dscr >= 1.5)  debtScore = 75 + (dscr - 1.5) * 34;
+  else if (dscr >= 1.25) debtScore = 55 + (dscr - 1.25) * 80;
+  else if (dscr >= 1.0)  debtScore = 30 + (dscr - 1.0) * 100;
+  else                   debtScore = Math.max(5, dscr * 30);
+  debtScore = Math.round(Math.max(5, Math.min(98, debtScore)));
+
+  // Debt flags — institutional tone
+  if (dscr < 1.0) {
+    redFlags.push(`Projected DSCR of ${dscr.toFixed(2)}x falls below 1.0 — deal cash flow does not cover estimated debt service at proposed terms`);
+  } else if (dscr < 1.25) {
+    redFlags.push(`DSCR of ${dscr.toFixed(2)}x is below the standard 1.25x lender threshold — financing terms may require adjustment or additional equity`);
+  } else if (dscr >= 1.5) {
+    greenFlags.push(`DSCR of ${dscr.toFixed(2)}x provides comfortable coverage above lender minimums — supports SBA eligibility`);
+  }
+
+  const debtVerdict =
+    dscr >= 1.5  ? `DSCR of ${dscr.toFixed(2)}x — debt service is well-covered at proposed terms` :
+    dscr >= 1.25 ? `DSCR of ${dscr.toFixed(2)}x — meets standard lender minimums with limited buffer` :
+    dscr >= 1.0  ? `DSCR of ${dscr.toFixed(2)}x — marginal coverage; buyers should evaluate sensitivity to revenue variance` :
+    `DSCR of ${dscr.toFixed(2)}x — projected cash flow does not service proposed debt at current terms`;
+
+  // ── Market and industry scores (unchanged logic)
   const growthScores: Record<string, number> = { Growing: 80, Stable: 65, Variable: 45, Volatile: 30 };
   const marketScore = growthScores[industry.growth] || 50;
-  if (industry.growth === "Volatile") redFlags.push("Industry has volatile demand patterns");
-  if (industry.growth === "Growing") greenFlags.push("Industry shows growth trajectory");
-  const marketVerdict = marketScore >= 70 ? "Favorable market conditions" : marketScore >= 50 ? "Stable market" : "Challenging market";
+  if (industry.growth === "Volatile") redFlags.push(`${industry.label} has historically exhibited volatile demand — buyers should evaluate revenue predictability across economic cycles`);
+  if (industry.growth === "Growing")  greenFlags.push(`${industry.label} shows favorable growth indicators in current market data`);
+  const marketVerdict = marketScore >= 70 ? "Industry conditions are broadly favorable" : marketScore >= 50 ? "Industry conditions are stable" : "Industry conditions present elevated cyclical risk";
 
   let industryScore = Math.round(Math.max(15, Math.min(95, (1 - industry.riskFactor) * 100 + 40)));
   if (sdeMargin < industry.marginRange[0]) industryScore -= 8;
   else if (sdeMargin > industry.marginRange[1]) industryScore += 5;
   industryScore = Math.round(Math.max(10, Math.min(95, industryScore)));
-  const industryVerdict = industryScore >= 70 ? "Lower-risk industry" : industryScore >= 45 ? "Moderate industry risk" : "Higher-risk industry";
+  const industryVerdict =
+    industryScore >= 70 ? `${industry.label} presents below-average operational risk relative to SMB peers` :
+    industryScore >= 45 ? `${industry.label} carries moderate operational and market risk` :
+    `${industry.label} warrants elevated diligence given historical risk profile`;
 
-  const overall = Math.round(Math.max(5, Math.min(98, valuationScore * 0.30 + debtScore * 0.30 + marketScore * 0.20 + industryScore * 0.20)));
+  const overall = Math.round(Math.max(5, Math.min(98,
+    valuationScore * 0.30 + debtScore * 0.30 + marketScore * 0.20 + industryScore * 0.20
+  )));
   const riskLevel: ScoreBreakdown["riskLevel"] = overall >= 70 ? "Low" : overall >= 50 ? "Moderate" : overall >= 30 ? "High" : "Critical";
 
+  // Next step classification
+  const nextStep: ScoreBreakdown["nextStep"] = overall >= 65 ? "advance" : overall >= 45 ? "validate" : "reprice";
+
   return {
-    overall, riskLevel, redFlags, greenFlags,
-    valuation: { score: valuationScore, multiple, marketRange: [lowMult, highMult], fairValue, recommendedOffer, verdict: valuationVerdict },
+    overall, riskLevel, redFlags, greenFlags, nextStep,
+    valuation: {
+      score: valuationScore, multiple,
+      marketRange: [benchmarkLow, benchmarkHigh],
+      fairValue, fairValueLow, fairValueHigh,
+      rangePosition,
+      recommendedOffer,
+      verdict: valuationVerdict,
+      benchmarkSource, sampleSize,
+    },
     debtRisk: { score: debtScore, dscr, annualPayment, monthlyPayment, verdict: debtVerdict },
     marketRisk: { score: marketScore, industryGrowth: industry.growth, verdict: marketVerdict },
     industryRisk: { score: industryScore, marginRange: industry.marginRange, verdict: industryVerdict },
-    marketIntel: { demandLevel: industry.demandScore >= 80 ? "HIGH" : industry.demandScore >= 65 ? "MODERATE" : "LOW", buyerInterestRank: industry.buyerInterestRank, competitionLevel: industry.competitionLevel, demandScore: industry.demandScore },
+    marketIntel: {
+      demandLevel: industry.demandScore >= 80 ? "HIGH" : industry.demandScore >= 65 ? "MODERATE" : "LOW",
+      buyerInterestRank: industry.buyerInterestRank,
+      competitionLevel: industry.competitionLevel,
+      demandScore: industry.demandScore,
+    },
     communityComparison: generateCommunityData(inputs.industry, overall),
     aiInsight: null,
   };
@@ -221,55 +301,25 @@ function generateShareCard(results: ScoreBreakdown, industry: string, inputs: De
   const canvas = document.createElement("canvas");
   canvas.width = 1200; canvas.height = 630;
   const ctx = canvas.getContext("2d")!;
-
-  // ── BACKGROUND: Bloomberg terminal dark
-  ctx.fillStyle = "#0A0E14";
-  ctx.fillRect(0, 0, 1200, 630);
-
-  // Subtle grid pattern
-  ctx.strokeStyle = "rgba(255,255,255,0.02)";
-  ctx.lineWidth = 1;
+  ctx.fillStyle = "#0A0E14"; ctx.fillRect(0, 0, 1200, 630);
+  ctx.strokeStyle = "rgba(255,255,255,0.02)"; ctx.lineWidth = 1;
   for (let x = 0; x < 1200; x += 40) { ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, 630); ctx.stroke(); }
   for (let y = 0; y < 630; y += 40) { ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(1200, y); ctx.stroke(); }
-
-  // Left accent bar
-  ctx.fillStyle = col;
-  ctx.fillRect(0, 0, 4, 630);
-
-  // ── TOP BAR
-  ctx.fillStyle = "rgba(255,255,255,0.03)";
-  ctx.fillRect(0, 0, 1200, 56);
-  ctx.fillStyle = "#6366F1";
-  ctx.font = "bold 16px monospace";
-  ctx.fillText("NEXTAX", 24, 36);
-  ctx.fillStyle = "#94A3B8";
-  ctx.font = "400 16px monospace";
-  ctx.fillText(".AI", 96, 36);
-  ctx.fillStyle = "#4B5563";
-  ctx.font = "400 12px monospace";
-  ctx.fillText("DEAL INTELLIGENCE PLATFORM", 160, 36);
-  // Right side: date
-  ctx.textAlign = "right";
-  ctx.fillStyle = "#4B5563";
-  ctx.font = "400 12px monospace";
+  ctx.fillStyle = col; ctx.fillRect(0, 0, 4, 630);
+  ctx.fillStyle = "rgba(255,255,255,0.03)"; ctx.fillRect(0, 0, 1200, 56);
+  ctx.fillStyle = "#6366F1"; ctx.font = "bold 16px monospace"; ctx.fillText("NEXTAX", 24, 36);
+  ctx.fillStyle = "#94A3B8"; ctx.font = "400 16px monospace"; ctx.fillText(".AI", 96, 36);
+  ctx.fillStyle = "#4B5563"; ctx.font = "400 12px monospace"; ctx.fillText("DEAL INTELLIGENCE PLATFORM", 160, 36);
+  ctx.textAlign = "right"; ctx.fillStyle = "#4B5563"; ctx.font = "400 12px monospace";
   ctx.fillText(new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }).toUpperCase(), 1176, 36);
   ctx.textAlign = "left";
-
-  // ── DEAL IDENTITY
-  ctx.fillStyle = "#F59E0B";
-  ctx.font = "bold 13px monospace";
-  ctx.fillText("DEAL REALITY CHECK", 32, 90);
-  ctx.fillStyle = "#E2E8F0";
-  ctx.font = "bold 26px sans-serif";
-  ctx.fillText(ind?.label || "Unknown Industry", 32, 124);
-  ctx.fillStyle = "#6B7280";
-  ctx.font = "400 14px sans-serif";
+  ctx.fillStyle = "#F59E0B"; ctx.font = "bold 13px monospace"; ctx.fillText("PRE-LOI SCREENING", 32, 90);
+  ctx.fillStyle = "#E2E8F0"; ctx.font = "bold 26px sans-serif"; ctx.fillText(ind?.label || "Unknown Industry", 32, 124);
+  ctx.fillStyle = "#6B7280"; ctx.font = "400 14px sans-serif";
   const price = parseFloat(inputs.askingPrice.replace(/,/g, ""));
   const sde = parseFloat(inputs.sde.replace(/,/g, ""));
   const rev = parseFloat(inputs.revenue.replace(/,/g, ""));
   ctx.fillText(`Revenue: ${fmt(rev)}  |  SDE: ${fmt(sde)}  |  Asking: ${fmt(price)}`, 32, 150);
-
-  // ── SCORE RING (large, left side)
   const scx = 150, scy = 310, sr = 90;
   ctx.beginPath(); ctx.arc(scx, scy, sr, 0, Math.PI * 2);
   ctx.strokeStyle = "rgba(255,255,255,0.06)"; ctx.lineWidth = 12; ctx.stroke();
@@ -277,77 +327,51 @@ function generateShareCard(results: ScoreBreakdown, industry: string, inputs: De
   ctx.strokeStyle = col; ctx.lineWidth = 12; ctx.lineCap = "round"; ctx.stroke();
   ctx.fillStyle = col; ctx.font = "bold 56px monospace"; ctx.textAlign = "center";
   ctx.fillText(String(results.overall), scx, scy + 16);
-  ctx.fillStyle = "#6B7280"; ctx.font = "500 10px sans-serif";
-  ctx.fillText("DEAL SCORE", scx, scy + 36);
+  ctx.fillStyle = "#6B7280"; ctx.font = "500 10px sans-serif"; ctx.fillText("DEAL SCORE", scx, scy + 36);
   ctx.textAlign = "left";
-
-  // Risk badge below ring
   ctx.fillStyle = col;
-  ctx.beginPath(); ctx.roundRect(scx - 55, scy + 55, 110, 28, 14); ctx.fill();
+  ctx.beginPath(); (ctx as any).roundRect(scx - 55, scy + 55, 110, 28, 14); ctx.fill();
   ctx.fillStyle = "#fff"; ctx.font = "bold 12px sans-serif"; ctx.textAlign = "center";
   ctx.fillText(results.riskLevel + " Risk", scx, scy + 73); ctx.textAlign = "left";
-
-  // ── METRICS PANEL (right side, terminal style)
   const mx = 310, my = 190;
-  const dri = results.valuation.fairValue > 0 ? (price / results.valuation.fairValue) : 0;
-  const gapPct = Math.round((dri - 1) * 100);
-
-  // Metric rows
+  const gapPct = Math.round(((results.valuation.multiple / results.valuation.fairValue) - 1) * 100);
   const metrics = [
-    { label: "MULTIPLE", value: results.valuation.multiple.toFixed(2) + "x", range: `MKT ${results.valuation.marketRange[0]}-${results.valuation.marketRange[1]}x` },
-    { label: "DSCR", value: results.debtRisk.dscr.toFixed(2), range: results.debtRisk.dscr >= 1.25 ? "PASS" : "FAIL" },
-    { label: "FAIR VALUE", value: fmt(results.valuation.fairValue), range: "" },
-    { label: "MONTHLY DEBT", value: fmt(results.debtRisk.monthlyPayment), range: "" },
-    { label: "VAL GAP", value: (gapPct >= 0 ? "+" : "") + gapPct + "%", range: gapPct > 15 ? "OVERPRICED" : gapPct < 0 ? "UNDERVALUED" : "FAIR" },
+    { label: "MULTIPLE", value: results.valuation.multiple.toFixed(2) + "x", range: `MKT ${results.valuation.marketRange[0].toFixed(1)}-${results.valuation.marketRange[1].toFixed(1)}x` },
+    { label: "DSCR",     value: results.debtRisk.dscr.toFixed(2),             range: results.debtRisk.dscr >= 1.25 ? "PASS" : "BELOW MIN" },
+    { label: "FAIR MID", value: fmt(results.valuation.fairValue),              range: "" },
+    { label: "RANGE",    value: `${fmt(results.valuation.fairValueLow)}–${fmt(results.valuation.fairValueHigh)}`, range: "" },
+    { label: "VS MEDIAN",value: (gapPct >= 0 ? "+" : "") + gapPct + "%",      range: results.valuation.rangePosition },
   ];
-
   ctx.fillStyle = "rgba(255,255,255,0.03)";
-  ctx.beginPath(); ctx.roundRect(mx, my, 520, metrics.length * 44 + 16, 8); ctx.fill();
-
+  (ctx as any).beginPath(); (ctx as any).roundRect(mx, my, 520, metrics.length * 44 + 16, 8); ctx.fill();
   metrics.forEach((m, i) => {
     const y = my + 28 + i * 44;
     ctx.fillStyle = "#4B5563"; ctx.font = "500 11px monospace"; ctx.fillText(m.label, mx + 16, y);
     ctx.fillStyle = "#E2E8F0"; ctx.font = "bold 18px monospace"; ctx.fillText(m.value, mx + 160, y);
     if (m.range) {
-      const rc = m.range === "PASS" ? "#10B981" : m.range === "FAIL" ? "#EF4444" : m.range === "OVERPRICED" ? "#F59E0B" : m.range === "UNDERVALUED" ? "#10B981" : "#6B7280";
+      const rc = m.range === "PASS" ? "#10B981" : m.range === "BELOW MIN" ? "#EF4444" : m.range === "Above Range" ? "#F59E0B" : m.range === "Below Range" ? "#10B981" : "#6B7280";
       ctx.fillStyle = rc; ctx.font = "500 11px monospace"; ctx.fillText(m.range, mx + 380, y);
     }
-    if (i < metrics.length - 1) {
-      ctx.fillStyle = "rgba(255,255,255,0.04)"; ctx.fillRect(mx + 16, y + 14, 488, 1);
-    }
+    if (i < metrics.length - 1) { ctx.fillStyle = "rgba(255,255,255,0.04)"; ctx.fillRect(mx + 16, y + 14, 488, 1); }
   });
-
-  // ── RECOMMENDED OFFER
   ctx.fillStyle = "rgba(99,102,241,0.08)";
-  ctx.beginPath(); ctx.roundRect(mx, my + metrics.length * 44 + 30, 520, 50, 8); ctx.fill();
-  ctx.fillStyle = "#818CF8"; ctx.font = "500 11px monospace";
-  ctx.fillText("INVESTOR RANGE", mx + 16, my + metrics.length * 44 + 52);
+  (ctx as any).beginPath(); (ctx as any).roundRect(mx, my + metrics.length * 44 + 30, 520, 50, 8); ctx.fill();
+  ctx.fillStyle = "#818CF8"; ctx.font = "500 11px monospace"; ctx.fillText("OFFER RANGE", mx + 16, my + metrics.length * 44 + 52);
   ctx.fillStyle = "#10B981"; ctx.font = "bold 16px monospace";
   ctx.fillText(`${fmt(results.valuation.recommendedOffer[0])} – ${fmt(results.valuation.recommendedOffer[1])}`, mx + 160, my + metrics.length * 44 + 54);
-
-  // ── KEY INSIGHTS (bottom)
   const insights = [...results.redFlags.slice(0, 2), ...results.greenFlags.slice(0, 1)];
   const iy = 500;
   ctx.fillStyle = "#4B5563"; ctx.font = "500 11px monospace"; ctx.fillText("SIGNALS", 32, iy);
   insights.forEach((ins, i) => {
     const isR = results.redFlags.includes(ins);
-    ctx.fillStyle = isR ? "#FCA5A5" : "#6EE7B7";
-    ctx.font = "400 13px sans-serif";
-    ctx.fillText((isR ? "▸ " : "▸ ") + ins, 32, iy + 20 + i * 22);
+    ctx.fillStyle = isR ? "#FCA5A5" : "#6EE7B7"; ctx.font = "400 13px sans-serif";
+    ctx.fillText("▸ " + ins.substring(0, 72) + (ins.length > 72 ? "…" : ""), 32, iy + 20 + i * 22);
   });
-
-  // ── BOTTOM BAR
-  ctx.fillStyle = "rgba(255,255,255,0.03)";
-  ctx.fillRect(0, 584, 1200, 46);
-  ctx.fillStyle = "#374151"; ctx.font = "400 11px monospace";
-  ctx.fillText("FREE ANALYSIS", 24, 612);
-  ctx.fillStyle = "#6366F1"; ctx.font = "500 11px monospace";
-  ctx.fillText("nextax.ai/deal-reality-check", 140, 612);
-  ctx.textAlign = "right";
-  ctx.fillStyle = "#374151"; ctx.font = "400 11px monospace";
-  ctx.fillText("DEAL INTELLIGENCE PLATFORM", 1176, 612);
-  ctx.textAlign = "left";
-
+  ctx.fillStyle = "rgba(255,255,255,0.03)"; ctx.fillRect(0, 584, 1200, 46);
+  ctx.fillStyle = "#374151"; ctx.font = "400 11px monospace"; ctx.fillText("PRE-LOI SCREENING TOOL", 24, 612);
+  ctx.fillStyle = "#6366F1"; ctx.font = "500 11px monospace"; ctx.fillText("nextax.ai/deal-reality-check", 200, 612);
+  ctx.textAlign = "right"; ctx.fillStyle = "#374151"; ctx.font = "400 11px monospace";
+  ctx.fillText("DEAL INTELLIGENCE PLATFORM", 1176, 612); ctx.textAlign = "left";
   return canvas.toDataURL("image/png");
 }
 
@@ -371,14 +395,11 @@ export default function DealRealityCheck() {
   const [shareMenuOpen, setShareMenuOpen] = useState(false);
   const [dealPageUrl, setDealPageUrl] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
-
-  // EMAIL GATE STATE
   const [showGate, setShowGate] = useState(false);
   const [gateEmail, setGateEmail] = useState("");
   const [gateName, setGateName] = useState("");
   const [gateLoading, setGateLoading] = useState(false);
   const [pendingResults, setPendingResults] = useState<ScoreBreakdown | null>(null);
-
   const resultsRef = useRef<HTMLDivElement>(null);
 
   const set = (f: keyof DealInputs, v: string) => setInputs((p) => ({ ...p, [f]: v }));
@@ -405,7 +426,6 @@ export default function DealRealityCheck() {
       if (e.industry_key && INDUSTRIES[e.industry_key]) set("industry", e.industry_key);
       if (e.summary) setExtractSummary(e.summary);
       if (e.confidence) setExtractConfidence(e.confidence);
-      // Detect missing fields and notify user
       const missing: string[] = [];
       if (!e.revenue) missing.push("Revenue");
       if (!e.sde && !e.cash_flow) missing.push("SDE");
@@ -427,7 +447,7 @@ export default function DealRealityCheck() {
     const scores = calculateScores(inputs);
     if (scores) {
       setPendingResults(scores);
-      setShowGate(true); // Show email gate instead of results
+      setShowGate(true);
     }
     setLoading(false);
   };
@@ -435,14 +455,12 @@ export default function DealRealityCheck() {
   const handleGateSubmit = async () => {
     if (!gateEmail) return;
     setGateLoading(true);
-    // Capture lead
     try {
       await fetch("/api/capture-lead", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ name: gateName, email: gateEmail, source: "reality-check", industry: inputs.industry, dealScore: pendingResults?.overall, metadata: { multiple: pendingResults?.valuation.multiple, dscr: pendingResults?.debtRisk.dscr } }),
       });
     } catch { /* non-blocking */ }
-
     setResults(pendingResults);
     setShowGate(false);
     setShowResults(true);
@@ -465,23 +483,20 @@ export default function DealRealityCheck() {
       const res = await fetch("/api/deal-page", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          industry: inputs.industry,
-          industry_label: ind?.label || inputs.industry,
+          industry: inputs.industry, industry_label: ind?.label || inputs.industry,
           revenue, sde, asking_price: price,
           valuation_multiple: scores.valuation.multiple,
-          dscr: scores.debtRisk.dscr,
-          monthly_payment: scores.debtRisk.monthlyPayment,
+          dscr: scores.debtRisk.dscr, monthly_payment: scores.debtRisk.monthlyPayment,
           fair_value: scores.valuation.fairValue,
+          fair_value_low: scores.valuation.fairValueLow,
+          fair_value_high: scores.valuation.fairValueHigh,
+          range_position: scores.valuation.rangePosition,
           recommended_offer_low: scores.valuation.recommendedOffer[0],
           recommended_offer_high: scores.valuation.recommendedOffer[1],
-          overall_score: scores.overall,
-          risk_level: scores.riskLevel,
-          valuation_score: scores.valuation.score,
-          debt_score: scores.debtRisk.score,
-          market_score: scores.marketRisk.score,
-          industry_score: scores.industryRisk.score,
-          red_flags: scores.redFlags,
-          green_flags: scores.greenFlags,
+          overall_score: scores.overall, risk_level: scores.riskLevel,
+          valuation_score: scores.valuation.score, debt_score: scores.debtRisk.score,
+          market_score: scores.marketRisk.score, industry_score: scores.industryRisk.score,
+          red_flags: scores.redFlags, green_flags: scores.greenFlags,
           ai_insight: scores.aiInsight,
           community_avg_score: scores.communityComparison.avgScore,
           community_top_score: scores.communityComparison.topScore,
@@ -495,9 +510,7 @@ export default function DealRealityCheck() {
         }),
       });
       const data = await res.json();
-      if (data.success && data.url) {
-        setDealPageUrl(data.url);
-      }
+      if (data.success && data.url) setDealPageUrl(data.url);
     } catch { /* non-blocking */ }
   };
 
@@ -506,9 +519,6 @@ export default function DealRealityCheck() {
       const revenue = parseFloat(inputs.revenue.replace(/,/g, ""));
       const sde = parseFloat(inputs.sde.replace(/,/g, ""));
       const price = parseFloat(inputs.askingPrice.replace(/,/g, ""));
-      const ind = INDUSTRIES[inputs.industry];
-      const location = ind ? undefined : undefined; // state not available in reality check
-
       const res = await fetch("/api/benchmark-lookup", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ industry: inputs.industry, state: null, revenue, sde, asking_price: price }),
@@ -516,94 +526,58 @@ export default function DealRealityCheck() {
       if (!res.ok) return;
       const data = await res.json();
       if (!data.success) return;
-
-      const b = data.benchmarks;
-      const a = data.analysis;
-      const c = data.confidence;
-
-      // Update results with three-lens data
+      const b = data.benchmarks, a = data.analysis, c = data.confidence;
       setResults((prev) => {
         if (!prev) return prev;
-
-        // Recompute scores using real benchmark data if transaction data is available
         let newValScore = prev.valuation.score;
         let newMarketRange = prev.valuation.marketRange;
         let newFairValue = prev.valuation.fairValue;
         let newOverall = prev.overall;
-
         if (b.transaction) {
           const txnMult = b.transaction.cashflowMultiple;
           newMarketRange = a.effectiveMultipleRange;
           newFairValue = a.effectiveFairValue;
-          const midMult = txnMult;
           const dealMult = a.dealMultiple;
-
-          if (dealMult <= midMult * 0.85) newValScore = Math.min(95, 85 + (midMult - dealMult) / midMult * 20);
-          else if (dealMult <= midMult) newValScore = Math.min(90, 70 + (midMult - dealMult) / midMult * 40);
-          else if (dealMult <= midMult * 1.15) newValScore = 70 - ((dealMult - midMult) / midMult) * 50;
-          else if (dealMult <= midMult * 1.3) newValScore = 50 - ((dealMult - midMult * 1.15) / midMult) * 60;
-          else newValScore = Math.max(5, 30 - ((dealMult - midMult * 1.3) / midMult) * 50);
+          if (dealMult <= txnMult * 0.85) newValScore = Math.min(95, 85 + (txnMult - dealMult) / txnMult * 20);
+          else if (dealMult <= txnMult) newValScore = Math.min(90, 70 + (txnMult - dealMult) / txnMult * 40);
+          else if (dealMult <= txnMult * 1.15) newValScore = 70 - ((dealMult - txnMult) / txnMult) * 50;
+          else if (dealMult <= txnMult * 1.3) newValScore = 50 - ((dealMult - txnMult * 1.15) / txnMult) * 60;
+          else newValScore = Math.max(5, 30 - ((dealMult - txnMult * 1.3) / txnMult) * 50);
           newValScore = Math.round(Math.max(5, Math.min(98, newValScore)));
-
-          // Recompute overall with dynamic weights
           const w = c.weights;
           newOverall = Math.round(Math.max(5, Math.min(98,
-            newValScore * (w.valuation / 100) +
-            prev.debtRisk.score * (w.debt / 100) +
+            newValScore * (w.valuation / 100) + prev.debtRisk.score * (w.debt / 100) +
             prev.marketRisk.score * ((w.financial + w.liquidity) / 200) +
             prev.industryRisk.score * ((w.financial + w.liquidity) / 200)
           )));
         }
-
         const newRiskLevel: ScoreBreakdown["riskLevel"] = newOverall >= 70 ? "Low" : newOverall >= 50 ? "Moderate" : newOverall >= 30 ? "High" : "Critical";
-
-        // Add/update flags based on transaction data
         const newRedFlags = [...prev.redFlags];
         const newGreenFlags = [...prev.greenFlags];
-
         if (b.transaction && a.sellerBuyerGap && a.sellerBuyerGap > 20) {
-          newRedFlags.push(`Sellers in this industry typically overask by ${a.sellerBuyerGap.toFixed(0)}%`);
+          newRedFlags.push(`Sellers in this industry have historically listed ${a.sellerBuyerGap.toFixed(0)}% above closed transaction prices — buyers should factor typical negotiation discount into offer strategy`);
         }
         if (b.transaction && b.transaction.saleToAskRatio < 0.90) {
-          newGreenFlags.push(`Typical negotiation: ${Math.round((1 - b.transaction.saleToAskRatio) * 100)}% off asking price`);
+          newGreenFlags.push(`Comparable transactions closed at approximately ${Math.round((1 - b.transaction.saleToAskRatio) * 100)}% below asking — supports an anchored offer below list`);
         }
         if (b.transaction && b.transaction.daysOnMarket > 250) {
-          newGreenFlags.push("Long average days on market — leverage for negotiation");
+          newGreenFlags.push(`Median days on market of ${b.transaction.daysOnMarket} days suggests extended listing periods — buyers may have negotiating leverage`);
         }
-
         return {
-          ...prev,
-          overall: newOverall,
-          riskLevel: newRiskLevel,
+          ...prev, overall: newOverall, riskLevel: newRiskLevel,
           valuation: { ...prev.valuation, score: newValScore, marketRange: newMarketRange, fairValue: newFairValue, recommendedOffer: a.smartOfferRange },
-          redFlags: newRedFlags,
-          greenFlags: newGreenFlags,
+          redFlags: newRedFlags, greenFlags: newGreenFlags,
           threeLens: {
             listing: b.listing ? { medianMultiple: b.listing.medianMultiple, sampleSize: b.listing.sampleSize } : null,
-            transaction: b.transaction ? {
-              cashflowMultiple: b.transaction.cashflowMultiple,
-              saleToAskRatio: b.transaction.saleToAskRatio,
-              daysOnMarket: b.transaction.daysOnMarket,
-              reportedSales: b.transaction.reportedSales,
-              subsector: b.transaction.subsector,
-            } : null,
+            transaction: b.transaction ? { cashflowMultiple: b.transaction.cashflowMultiple, saleToAskRatio: b.transaction.saleToAskRatio, daysOnMarket: b.transaction.daysOnMarket, reportedSales: b.transaction.reportedSales, subsector: b.transaction.subsector } : null,
             financial: b.financial ? { sdeMargin: b.financial.sdeMargin } : null,
-            sellerBuyerGap: a.sellerBuyerGap,
-            estimatedNegotiatedPrice: a.estimatedNegotiatedPrice,
+            sellerBuyerGap: a.sellerBuyerGap, estimatedNegotiatedPrice: a.estimatedNegotiatedPrice,
             smartOfferRange: a.smartOfferRange,
-            confidence: {
-              overall: c.overall,
-              listing: { grade: c.listing.grade, description: c.listing.description, sampleSize: c.listing.sampleSize },
-              transaction: { grade: c.transaction.grade, description: c.transaction.description, sampleSize: c.transaction.sampleSize },
-              financial: { grade: c.financial.grade, description: c.financial.description, sampleSize: c.financial.sampleSize },
-              weights: c.weights,
-            },
+            confidence: { overall: c.overall, listing: { grade: c.listing.grade, description: c.listing.description, sampleSize: c.listing.sampleSize }, transaction: { grade: c.transaction.grade, description: c.transaction.description, sampleSize: c.transaction.sampleSize }, financial: { grade: c.financial.grade, description: c.financial.description, sampleSize: c.financial.sampleSize }, weights: c.weights },
           },
         };
       });
-    } catch (err) {
-      console.error("Benchmark fetch error:", err);
-    }
+    } catch (err) { console.error("Benchmark fetch error:", err); }
   };
 
   const recordDeal = async (scores: ScoreBreakdown) => {
@@ -611,65 +585,85 @@ export default function DealRealityCheck() {
       await fetch("/api/record-deal", {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          tool_used: "reality_check",
-          industry: inputs.industry,
-          revenue: inputs.revenue,
-          sde: inputs.sde,
-          asking_price: inputs.askingPrice,
-          debt_percent: parseFloat(inputs.debtPercent),
-          interest_rate: parseFloat(inputs.interestRate),
+          tool_used: "reality_check", industry: inputs.industry,
+          revenue: inputs.revenue, sde: inputs.sde, asking_price: inputs.askingPrice,
+          debt_percent: parseFloat(inputs.debtPercent), interest_rate: parseFloat(inputs.interestRate),
           term_years: parseInt(inputs.loanTermYears),
           valuation_multiple: +scores.valuation.multiple.toFixed(2),
           dscr: +scores.debtRisk.dscr.toFixed(2),
           monthly_payment: Math.round(scores.debtRisk.monthlyPayment),
           fair_value: scores.valuation.fairValue,
+          fair_value_low: scores.valuation.fairValueLow,
+          fair_value_high: scores.valuation.fairValueHigh,
+          range_position: scores.valuation.rangePosition,
           recommended_offer_low: scores.valuation.recommendedOffer[0],
           recommended_offer_high: scores.valuation.recommendedOffer[1],
-          overall_score: scores.overall,
-          risk_level: scores.riskLevel,
-          valuation_score: scores.valuation.score,
-          debt_score: scores.debtRisk.score,
-          market_score: scores.marketRisk.score,
-          industry_score: scores.industryRisk.score,
-          red_flags: scores.redFlags,
-          green_flags: scores.greenFlags,
+          overall_score: scores.overall, risk_level: scores.riskLevel,
+          valuation_score: scores.valuation.score, debt_score: scores.debtRisk.score,
+          market_score: scores.marketRisk.score, industry_score: scores.industryRisk.score,
+          red_flags: scores.redFlags, green_flags: scores.greenFlags,
+          next_step: scores.nextStep,
         }),
       });
     } catch { /* non-blocking */ }
   };
 
+  // ── PATCH 7: fetchAI — 3-paragraph structured institutional memo ──────────
   const fetchAI = async (scores: ScoreBreakdown) => {
     setAiLoading(true);
     const ind = INDUSTRIES[inputs.industry];
+    const sdeMargin = inputs.revenue ? ((parseFloat(inputs.sde.replace(/,/g,"")) / parseFloat(inputs.revenue.replace(/,/g,""))) * 100).toFixed(1) : "N/A";
+    const gapVsMedian = (((scores.valuation.multiple / scores.valuation.marketRange[0]) - 1) * 100);
     try {
       const res = await fetch("/api/deal-reality-check", {
         method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: [{ role: "user", content: `You are a senior M&A advisor for small business acquisitions. Do NOT use any markdown formatting — no asterisks, no bold, no headers. Write in plain text only.
+        body: JSON.stringify({
+          messages: [{
+            role: "user",
+            content: `You are a senior M&A advisor writing a pre-LOI acquisition memo. Respond in plain text only — no markdown, no asterisks, no headers.
 
-Analyze this deal and provide exactly 5 lines:
-Line 1: Overall assessment (1 sentence)
-Line 2: Biggest risk and why it matters
-Line 3: Biggest opportunity
-Line 4: Recommended counter-offer with specific dollar amount
-Line 5: One critical thing to verify in diligence
+Write exactly 3 paragraphs separated by blank lines:
 
-DEAL: ${ind?.label} | Revenue: $${inputs.revenue} | SDE: $${inputs.sde} | Asking: $${inputs.askingPrice}
-Multiple: ${scores.valuation.multiple.toFixed(2)}x (Market: ${scores.valuation.marketRange[0]}-${scores.valuation.marketRange[1]}x)
-Fair Value: ${fmt(scores.valuation.fairValue)} | DSCR: ${scores.debtRisk.dscr.toFixed(2)}
-Score: ${scores.overall}/100 (${scores.riskLevel}) | Demand: ${scores.marketIntel.demandLevel}
-Red flags: ${scores.redFlags.join("; ") || "None"} | Green flags: ${scores.greenFlags.join("; ") || "None"}` }] }),
+PARAGRAPH 1 — PRICING CONTEXT:
+The ${ind?.label} asking price reflects a ${scores.valuation.multiple.toFixed(2)}x SDE multiple. The observed market range based on ${scores.valuation.sampleSize.toLocaleString()} comparable transactions (${scores.valuation.benchmarkSource}) is ${scores.valuation.marketRange[0].toFixed(2)}–${scores.valuation.marketRange[1].toFixed(2)}x, with a median of ${((scores.valuation.marketRange[0] + scores.valuation.marketRange[1]) / 2).toFixed(2)}x. The ask is ${scores.valuation.rangePosition.toLowerCase()}. Compare the ask to market multiples. Use institutional language: "appears above observed market ranges", "is consistent with comparable transactions", "may require justification". Never say "bad deal" or "overpriced". 2-3 sentences.
+
+PARAGRAPH 2 — BUSINESS QUALITY:
+Operating margin is ${sdeMargin}% vs the ${ind?.marginRange[0]}–${ind?.marginRange[1]}% industry range. DSCR is ${scores.debtRisk.dscr.toFixed(2)}x. Industry: ${ind?.label} (${ind?.growth} growth). Identify one notable strength and one area buyers should evaluate further. Be specific and data-grounded. 2-3 sentences.
+
+PARAGRAPH 3 — BUYER INTERPRETATION:
+What specific assumptions must be true for this deal to work at the asking price? Where does the primary risk concentrate — in pricing, coverage, or business quality? Name one critical diligence item the buyer should validate before LOI. Be analytical and specific. Never recommend walking away. 2-3 sentences.
+
+TONE: Analytical, balanced, institutional. Write as an investment memo, not a blog post.`
+          }]
+        }),
       });
       const data = await res.json();
       const insight = data.content?.map((b: { type: string; text?: string }) => (b.type === "text" ? b.text : "")).join("") || null;
       setResults((p) => p ? { ...p, aiInsight: insight } : p);
     } catch {
-      setResults((p) => p ? { ...p, aiInsight: `This ${ind?.label.toLowerCase()} deal at ${scores.valuation.multiple.toFixed(1)}x SDE ${scores.valuation.multiple > scores.valuation.marketRange[1] ? "exceeds" : "is within"} market range. DSCR of ${scores.debtRisk.dscr.toFixed(2)} ${scores.debtRisk.dscr >= 1.25 ? "supports the debt" : "raises concerns"}. Consider offering ${fmt(scores.valuation.recommendedOffer[0])}-${fmt(scores.valuation.recommendedOffer[1])} based on market data.` } : p);
+      const fallback = `The ${ind?.label.toLowerCase()} asking price of ${scores.valuation.multiple.toFixed(2)}x SDE is ${scores.valuation.rangePosition.toLowerCase()} the ${scores.valuation.marketRange[0].toFixed(2)}–${scores.valuation.marketRange[1].toFixed(2)}x range observed across ${scores.valuation.sampleSize.toLocaleString()} comparable transactions.
+
+Operating margin of ${sdeMargin}% ${parseFloat(sdeMargin) >= (ind?.marginRange[0] || 0) ? "is consistent with" : "falls below"} the ${ind?.marginRange[0]}–${ind?.marginRange[1]}% industry range. Projected DSCR of ${scores.debtRisk.dscr.toFixed(2)}x ${scores.debtRisk.dscr >= 1.25 ? "meets standard lender thresholds" : "falls below the standard 1.25x lender minimum"}.
+
+Buyers should validate the sustainability of reported add-backs, confirm customer concentration risk, and obtain normalized financials before submitting an LOI.`;
+      setResults((p) => p ? { ...p, aiInsight: fallback } : p);
     }
     setAiLoading(false);
   };
 
   const handleShareImage = () => { if (!results) return; const d = generateShareCard(results, inputs.industry, inputs); const l = document.createElement("a"); l.download = `nextax-deal-score-${results.overall}.png`; l.href = d; l.click(); setShareMenuOpen(false); };
-  const handleShareText = (p: string) => { const ind = INDUSTRIES[inputs.industry]; const t = `I just ran a Deal Reality Check on a ${ind?.label} acquisition:\n\nScore: ${results?.overall}/100 (${results?.riskLevel} Risk)\nMultiple: ${results?.valuation.multiple.toFixed(2)}x | DSCR: ${results?.debtRisk.dscr.toFixed(2)}\nFair Value: ${fmt(results?.valuation.fairValue || 0)}\n\nFree tool: nextax.ai/deal-reality-check`; const urls: Record<string, string> = { twitter: `https://twitter.com/intent/tweet?text=${encodeURIComponent(t)}`, linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent("https://nextax.ai/deal-reality-check")}`, copy: "" }; if (p === "copy") { navigator.clipboard.writeText(t); setCopied(true); setTimeout(() => setCopied(false), 2000); } else { window.open(urls[p], "_blank"); } setShareMenuOpen(false); };
+  const handleShareText = (p: string) => {
+    const ind = INDUSTRIES[inputs.industry];
+    const t = `I ran a pre-LOI screening on a ${ind?.label} acquisition:\n\nDeal Score: ${results?.overall}/100 (${results?.riskLevel} Risk)\nMultiple: ${results?.valuation.multiple.toFixed(2)}x | DSCR: ${results?.debtRisk.dscr.toFixed(2)}\nFair Value Range: ${fmt(results?.valuation.fairValueLow || 0)}–${fmt(results?.valuation.fairValueHigh || 0)}\n\nFree screening tool: nextax.ai/deal-reality-check`;
+    const urls: Record<string, string> = {
+      twitter: `https://twitter.com/intent/tweet?text=${encodeURIComponent(t)}`,
+      linkedin: `https://www.linkedin.com/sharing/share-offsite/?url=${encodeURIComponent("https://nextax.ai/deal-reality-check")}`,
+      copy: "",
+    };
+    if (p === "copy") { navigator.clipboard.writeText(t); setCopied(true); setTimeout(() => setCopied(false), 2000); }
+    else { window.open(urls[p], "_blank"); }
+    setShareMenuOpen(false);
+  };
 
   const isValid = inputs.revenue && inputs.sde && inputs.askingPrice && inputs.industry;
 
@@ -681,25 +675,23 @@ Red flags: ${scores.redFlags.join("; ") || "None"} | Green flags: ${scores.green
         @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
         .fu{animation:fadeUp .4s ease-out forwards}.fd1{animation-delay:.08s;opacity:0}.fd2{animation-delay:.16s;opacity:0}.fd3{animation-delay:.24s;opacity:0}.fd4{animation-delay:.32s;opacity:0}.fd5{animation-delay:.4s;opacity:0}.fd6{animation-delay:.48s;opacity:0}.fd7{animation-delay:.56s;opacity:0}.fd8{animation-delay:.64s;opacity:0}
         @keyframes pulseGlow{0%,100%{box-shadow:0 0 20px rgba(99,102,241,0.1)}50%{box-shadow:0 0 40px rgba(99,102,241,0.25)}}
-        @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
       `}</style>
 
-      {/* Hero */}
+      {/* ── HERO ── */}
       <div style={{ padding: "44px 24px 36px", textAlign: "center", background: "radial-gradient(ellipse at center top, rgba(99,102,241,0.07) 0%, transparent 60%)" }}>
         <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "5px 14px", borderRadius: 20, background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.2)", fontSize: 12, color: "#F59E0B", fontWeight: 600, marginBottom: 18 }}>
-          ⚡ Free 10-Second Deal Analysis
+          ⚡ Pre-LOI Acquisition Screening
         </div>
         <h1 style={{ fontSize: "clamp(28px, 5vw, 44px)", fontWeight: 800, margin: "0 0 10px", fontFamily: "'Instrument Serif', serif", background: "linear-gradient(135deg, #F8FAFC 0%, #94A3B8 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", lineHeight: 1.15 }}>
-          Analyze any SMB deal in seconds.
+          Deal Reality Check
         </h1>
         <p style={{ fontSize: 15, color: "#8896A6", maxWidth: 520, margin: "0 auto", lineHeight: 1.6 }}>
-          Paste a listing, drop a URL, upload a CIM, or enter numbers manually. AI extracts the financials and runs a full valuation sanity check instantly.
+          Paste a listing, drop a URL, upload a CIM, or enter numbers manually. AI extracts the financials and runs a full valuation screening instantly.
         </p>
       </div>
 
-      {/* Input Section */}
+      {/* ── INPUT SECTION ── */}
       <div style={{ maxWidth: 680, margin: "0 auto", padding: "0 24px 40px" }}>
-        {/* Mode Toggle */}
         <div style={{ display: "flex", gap: 4, marginBottom: 16, background: "rgba(255,255,255,0.03)", borderRadius: 10, padding: 4, border: "1px solid rgba(255,255,255,0.06)" }}>
           <button onClick={() => setInputMode("paste")} style={{ flex: 1, padding: "10px 16px", borderRadius: 8, border: "none", background: inputMode === "paste" ? "rgba(245,158,11,0.15)" : "transparent", color: inputMode === "paste" ? "#F59E0B" : "#6B7280", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
             📋 Paste a Listing
@@ -717,26 +709,22 @@ Red flags: ${scores.redFlags.join("; ") || "None"} | Green flags: ${scores.green
               <span style={{ fontSize: 11, fontWeight: 400, color: "#6B7280" }}>— paste text, URL, or upload PDF</span>
             </div>
             <div style={{ marginBottom: 14 }}>
-              <label style={{ display: "block", fontSize: 11, color: "#8896A6", marginBottom: 5, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.05em" }}>Paste Listing Description, Broker Email, or Deal Memo</label>
+              <label style={{ display: "block", fontSize: 11, color: "#8896A6", marginBottom: 5, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.05em" }}>Paste Listing, Broker Email, or Deal Memo</label>
               <textarea value={pasteText} onChange={(e) => { setPasteText(e.target.value); setPasteUrl(""); setPdfFile(null); }}
                 placeholder={"Example:\n\nWell-established cleaning service in Austin, TX. Revenue $520,000. SDE $145,000. Asking $475,000. 12 employees, owner-operated, 8 years in business..."}
                 style={{ width: "100%", minHeight: 130, padding: "12px 14px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.04)", color: "#E2E8F0", fontSize: 13, fontFamily: "'DM Sans', sans-serif", resize: "vertical", outline: "none", lineHeight: 1.6 }} />
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "14px 0" }}>
-              <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.06)" }} />
-              <span style={{ fontSize: 11, color: "#4B5563" }}>OR</span>
-              <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.06)" }} />
+              <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.06)" }} /><span style={{ fontSize: 11, color: "#4B5563" }}>OR</span><div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.06)" }} />
             </div>
             <div style={{ marginBottom: 14 }}>
-              <label style={{ display: "block", fontSize: 11, color: "#8896A6", marginBottom: 5, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.05em" }}>Paste a BizBuySell, Acquire.com, or Listing URL</label>
+              <label style={{ display: "block", fontSize: 11, color: "#8896A6", marginBottom: 5, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.05em" }}>Paste a Listing URL</label>
               <input type="url" value={pasteUrl} onChange={(e) => { setPasteUrl(e.target.value); setPasteText(""); setPdfFile(null); }}
                 placeholder="https://www.bizbuysell.com/Business-Opportunity/..."
                 style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.04)", color: "#E2E8F0", fontSize: 14, outline: "none" }} />
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 12, margin: "14px 0" }}>
-              <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.06)" }} />
-              <span style={{ fontSize: 11, color: "#4B5563" }}>OR</span>
-              <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.06)" }} />
+              <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.06)" }} /><span style={{ fontSize: 11, color: "#4B5563" }}>OR</span><div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.06)" }} />
             </div>
             <div style={{ marginBottom: 18 }}>
               <label style={{ display: "block", fontSize: 11, color: "#8896A6", marginBottom: 5, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.05em" }}>Upload CIM or Deal Memo (PDF)</label>
@@ -765,73 +753,73 @@ Red flags: ${scores.redFlags.join("; ") || "None"} | Green flags: ${scores.green
         {/* MANUAL MODE */}
         {inputMode === "manual" && (
           <div style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 16, padding: "24px 24px 18px" }}>
-          {extractNotice && (
-            <div style={{ marginBottom: 16, padding: "12px 16px", borderRadius: 10, background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.2)", display: "flex", alignItems: "flex-start", gap: 10 }}>
-              <span style={{ fontSize: 18, flexShrink: 0 }}>⚠️</span>
-              <div>
-                <div style={{ fontSize: 12, fontWeight: 600, color: "#F59E0B", marginBottom: 2 }}>Missing Data From Listing</div>
-                <div style={{ fontSize: 12, color: "#FBBF24", lineHeight: 1.5 }}>{extractNotice}</div>
-              </div>
-              <button onClick={() => setExtractNotice("")} style={{ marginLeft: "auto", background: "none", border: "none", color: "#6B7280", cursor: "pointer", fontSize: 14, flexShrink: 0 }}>✕</button>
-            </div>
-          )}
-          {extractSummary && !extractNotice && (
-            <div style={{ marginBottom: 16, padding: "10px 14px", borderRadius: 8, background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.15)" }}>
-              <div style={{ fontSize: 11, color: "#10B981", fontWeight: 600, textTransform: "uppercase", marginBottom: 2 }}>✓ Data Extracted — Verify & Submit</div>
-              <div style={{ fontSize: 12, color: "#6EE7B7" }}>{extractSummary}</div>
-            </div>
-          )}
-          <div style={{ marginBottom: 16 }}>
-            <label style={{ display: "block", fontSize: 11, color: "#8896A6", marginBottom: 5, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.05em" }}>Industry</label>
-            <select value={inputs.industry} onChange={(e) => set("industry", e.target.value)} style={{ width: "100%", padding: "11px 12px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.04)", color: "#E2E8F0", fontSize: 14 }}>
-              <option value="">Select industry...</option>
-              {Object.entries(INDUSTRIES).sort((a, b) => a[1].label.localeCompare(b[1].label)).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
-            </select>
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 4 }}>
-            {[["revenue", "Annual Revenue", "500,000"], ["sde", "SDE", "150,000"]].map(([f, l, p]) => (
-              <div key={f} style={{ marginBottom: 12 }}>
-                <label style={{ display: "block", fontSize: 11, color: "#8896A6", marginBottom: 5, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.05em" }}>{l}</label>
-                <div style={{ position: "relative" }}>
-                  <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#6B7280", fontSize: 14 }}>$</span>
-                  <input type="text" placeholder={p} value={(inputs as Record<string, string>)[f]} onChange={(e) => setCurrency(f as keyof DealInputs, e.target.value)} style={{ width: "100%", padding: "11px 12px 11px 26px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.04)", color: "#E2E8F0", fontSize: 14 }} />
+            {extractNotice && (
+              <div style={{ marginBottom: 16, padding: "12px 16px", borderRadius: 10, background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.2)", display: "flex", alignItems: "flex-start", gap: 10 }}>
+                <span style={{ fontSize: 18, flexShrink: 0 }}>⚠️</span>
+                <div>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: "#F59E0B", marginBottom: 2 }}>Missing Data From Listing</div>
+                  <div style={{ fontSize: 12, color: "#FBBF24", lineHeight: 1.5 }}>{extractNotice}</div>
                 </div>
+                <button onClick={() => setExtractNotice("")} style={{ marginLeft: "auto", background: "none", border: "none", color: "#6B7280", cursor: "pointer", fontSize: 14, flexShrink: 0 }}>✕</button>
               </div>
-            ))}
-          </div>
-          <div style={{ marginBottom: 16 }}>
-            <label style={{ display: "block", fontSize: 11, color: "#8896A6", marginBottom: 5, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.05em" }}>Asking Price</label>
-            <div style={{ position: "relative" }}>
-              <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#6B7280", fontSize: 14 }}>$</span>
-              <input type="text" placeholder="450,000" value={inputs.askingPrice} onChange={(e) => setCurrency("askingPrice", e.target.value)} style={{ width: "100%", padding: "11px 12px 11px 26px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.04)", color: "#E2E8F0", fontSize: 14 }} />
+            )}
+            {extractSummary && !extractNotice && (
+              <div style={{ marginBottom: 16, padding: "10px 14px", borderRadius: 8, background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.15)" }}>
+                <div style={{ fontSize: 11, color: "#10B981", fontWeight: 600, textTransform: "uppercase", marginBottom: 2 }}>✓ Data Extracted — Verify & Submit</div>
+                <div style={{ fontSize: 12, color: "#6EE7B7" }}>{extractSummary}</div>
+              </div>
+            )}
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: "block", fontSize: 11, color: "#8896A6", marginBottom: 5, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.05em" }}>Industry</label>
+              <select value={inputs.industry} onChange={(e) => set("industry", e.target.value)} style={{ width: "100%", padding: "11px 12px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.04)", color: "#E2E8F0", fontSize: 14 }}>
+                <option value="">Select industry...</option>
+                {Object.entries(INDUSTRIES).sort((a, b) => a[1].label.localeCompare(b[1].label)).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+              </select>
             </div>
-          </div>
-          <div style={{ padding: "14px 16px", borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)", marginBottom: 20 }}>
-            <div style={{ fontSize: 11, color: "#6B7280", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10, fontWeight: 500 }}>Debt Terms</div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
-              {[["debtPercent", "Debt %"], ["interestRate", "Rate %"], ["loanTermYears", "Term (Yr)"]].map(([f, l]) => (
-                <div key={f}>
-                  <label style={{ display: "block", fontSize: 10, color: "#8896A6", marginBottom: 4 }}>{l}</label>
-                  <input type="text" value={(inputs as Record<string, string>)[f]} onChange={(e) => set(f as keyof DealInputs, e.target.value.replace(/[^0-9.]/g, ""))} style={{ width: "100%", padding: "9px 10px", borderRadius: 7, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.03)", color: "#E2E8F0", fontSize: 14, textAlign: "center" }} />
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, marginBottom: 4 }}>
+              {[["revenue", "Annual Revenue", "500,000"], ["sde", "SDE / Cash Flow", "150,000"]].map(([f, l, p]) => (
+                <div key={f} style={{ marginBottom: 12 }}>
+                  <label style={{ display: "block", fontSize: 11, color: "#8896A6", marginBottom: 5, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.05em" }}>{l}</label>
+                  <div style={{ position: "relative" }}>
+                    <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#6B7280", fontSize: 14 }}>$</span>
+                    <input type="text" placeholder={p} value={(inputs as Record<string, string>)[f]} onChange={(e) => setCurrency(f as keyof DealInputs, e.target.value)} style={{ width: "100%", padding: "11px 12px 11px 26px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.04)", color: "#E2E8F0", fontSize: 14 }} />
+                  </div>
                 </div>
               ))}
             </div>
-          </div>
-          <button onClick={handleSubmit} disabled={!isValid || loading} style={{ width: "100%", padding: "13px", borderRadius: 10, border: "none", background: isValid && !loading ? "linear-gradient(135deg, #F59E0B, #D97706)" : "rgba(255,255,255,0.08)", color: isValid ? "#fff" : "#6B7280", fontSize: 15, fontWeight: 700, cursor: isValid && !loading ? "pointer" : "not-allowed", fontFamily: "'DM Sans', sans-serif", opacity: loading ? 0.7 : 1 }}>
-            {loading ? "Analyzing Deal..." : "⚡ Check My Deal"}
-          </button>
+            <div style={{ marginBottom: 16 }}>
+              <label style={{ display: "block", fontSize: 11, color: "#8896A6", marginBottom: 5, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.05em" }}>Asking Price</label>
+              <div style={{ position: "relative" }}>
+                <span style={{ position: "absolute", left: 12, top: "50%", transform: "translateY(-50%)", color: "#6B7280", fontSize: 14 }}>$</span>
+                <input type="text" placeholder="450,000" value={inputs.askingPrice} onChange={(e) => setCurrency("askingPrice", e.target.value)} style={{ width: "100%", padding: "11px 12px 11px 26px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.04)", color: "#E2E8F0", fontSize: 14 }} />
+              </div>
+            </div>
+            <div style={{ padding: "14px 16px", borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)", marginBottom: 20 }}>
+              <div style={{ fontSize: 11, color: "#6B7280", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10, fontWeight: 500 }}>Debt Terms</div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
+                {[["debtPercent", "Debt %"], ["interestRate", "Rate %"], ["loanTermYears", "Term (Yr)"]].map(([f, l]) => (
+                  <div key={f}>
+                    <label style={{ display: "block", fontSize: 10, color: "#8896A6", marginBottom: 4 }}>{l}</label>
+                    <input type="text" value={(inputs as Record<string, string>)[f]} onChange={(e) => set(f as keyof DealInputs, e.target.value.replace(/[^0-9.]/g, ""))} style={{ width: "100%", padding: "9px 10px", borderRadius: 7, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.03)", color: "#E2E8F0", fontSize: 14, textAlign: "center" }} />
+                  </div>
+                ))}
+              </div>
+            </div>
+            <button onClick={handleSubmit} disabled={!isValid || loading} style={{ width: "100%", padding: "13px", borderRadius: 10, border: "none", background: isValid && !loading ? "linear-gradient(135deg, #F59E0B, #D97706)" : "rgba(255,255,255,0.08)", color: isValid ? "#fff" : "#6B7280", fontSize: 15, fontWeight: 700, cursor: isValid && !loading ? "pointer" : "not-allowed", fontFamily: "'DM Sans', sans-serif", opacity: loading ? 0.7 : 1 }}>
+              {loading ? "Analyzing Deal..." : "⚡ Check My Deal"}
+            </button>
           </div>
         )}
       </div>
 
-      {/* ═══ EMAIL GATE ═══ */}
+      {/* ── EMAIL GATE ── */}
       {showGate && (
         <div style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.7)", backdropFilter: "blur(8px)", display: "flex", alignItems: "center", justifyContent: "center", zIndex: 100, padding: 24 }}>
           <div className="fu" style={{ background: "#141922", border: "1px solid rgba(255,255,255,0.1)", borderRadius: 20, padding: "36px 32px", maxWidth: 440, width: "100%", textAlign: "center" }}>
             <div style={{ fontSize: 48, marginBottom: 12 }}>📊</div>
-            <h2 style={{ fontSize: 22, fontWeight: 700, margin: "0 0 6px", color: "#E2E8F0", fontFamily: "'Instrument Serif', serif" }}>Your results are ready</h2>
+            <h2 style={{ fontSize: 22, fontWeight: 700, margin: "0 0 6px", color: "#E2E8F0", fontFamily: "'Instrument Serif', serif" }}>Your screening results are ready</h2>
             <p style={{ fontSize: 14, color: "#8896A6", margin: "0 0 24px", lineHeight: 1.5 }}>
-              Enter your email to see your Deal Health Score, AI analysis, and investor valuation range.
+              Enter your email to view your Deal Health Score, AI assessment, and valuation range analysis.
             </p>
             <div style={{ textAlign: "left", marginBottom: 12 }}>
               <label style={{ display: "block", fontSize: 11, color: "#8896A6", marginBottom: 4, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.05em" }}>First Name</label>
@@ -849,15 +837,26 @@ Red flags: ${scores.redFlags.join("; ") || "None"} | Green flags: ${scores.green
         </div>
       )}
 
-      {/* ═══ RESULTS ═══ */}
+      {/* ══════════════════════════════════════════════════════════════
+          RESULTS SECTION
+      ══════════════════════════════════════════════════════════════ */}
       {showResults && results && (
         <div ref={resultsRef} style={{ maxWidth: 680, margin: "0 auto", padding: "0 24px 60px" }}>
-          {/* Score Hero */}
+
+          {/* ── Score Hero ── */}
           <div className="fu" style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 16, padding: "28px 24px", marginBottom: 14, textAlign: "center", animation: "pulseGlow 3s ease-in-out infinite" }}>
             <div style={{ display: "flex", justifyContent: "center", marginBottom: 14 }}><ScoreRing score={results.overall} size={155} sw={9} /></div>
             <div style={{ display: "inline-block", padding: "5px 18px", borderRadius: 20, background: rg(results.riskLevel), fontSize: 13, fontWeight: 700, color: "#fff", marginBottom: 14 }}>{results.riskLevel} Risk</div>
+            <div style={{ fontSize: 10, color: "#4B5563", marginBottom: 12, fontStyle: "italic" }}>
+              Screening based on {results.valuation.sampleSize.toLocaleString()} comparable {INDUSTRIES[inputs.industry]?.label} transactions — {results.valuation.benchmarkSource}
+            </div>
             <div style={{ display: "flex", justifyContent: "center", gap: 20, flexWrap: "wrap" }}>
-              {[{ l: "Multiple", v: results.valuation.multiple.toFixed(2) + "x" }, { l: "DSCR", v: results.debtRisk.dscr.toFixed(2) }, { l: "Monthly Debt", v: fmt(results.debtRisk.monthlyPayment) }, { l: "Fair Value", v: fmt(results.valuation.fairValue) }].map((m) => (
+              {[
+                { l: "Multiple", v: results.valuation.multiple.toFixed(2) + "x" },
+                { l: "DSCR", v: results.debtRisk.dscr.toFixed(2) },
+                { l: "Monthly Debt", v: fmt(results.debtRisk.monthlyPayment) },
+                { l: "Fair Value Mid", v: fmt(results.valuation.fairValue) },
+              ].map((m) => (
                 <div key={m.l} style={{ textAlign: "center" }}>
                   <div style={{ fontSize: 18, fontWeight: 700, color: "#E2E8F0", fontFamily: "'JetBrains Mono', monospace" }}>{m.v}</div>
                   <div style={{ fontSize: 9, color: "#6B7280", textTransform: "uppercase" }}>{m.l}</div>
@@ -866,90 +865,252 @@ Red flags: ${scores.redFlags.join("; ") || "None"} | Green flags: ${scores.green
             </div>
           </div>
 
-          {/* Pro Valuation — Three-Value Display */}
+          {/* ── PATCH 5: What Would Pros Pay — range display ── */}
           <div className="fu fd1" style={{ background: "rgba(99,102,241,0.06)", border: "1px solid rgba(99,102,241,0.15)", borderRadius: 14, padding: "18px 22px", marginBottom: 14 }}>
-            <div style={{ fontSize: 11, color: "#818CF8", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 14, fontWeight: 600 }}>💰 What Would Pros Pay?</div>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 14, marginBottom: 14 }}>
-              <div style={{ padding: "12px 14px", borderRadius: 10, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
-                <div style={{ fontSize: 10, color: "#6B7280", marginBottom: 4 }}>ASKING PRICE</div>
-                <div style={{ fontSize: 18, fontWeight: 700, color: "#E2E8F0", fontFamily: "'JetBrains Mono', monospace" }}>{fmt(parseFloat(inputs.askingPrice.replace(/,/g, "")))}</div>
-                <div style={{ fontSize: 10, color: "#6B7280", marginTop: 2 }}>{results.valuation.multiple.toFixed(2)}x SDE</div>
+            <div style={{ fontSize: 11, color: "#818CF8", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 14, fontWeight: 600 }}>💰 Implied Fair Value Range</div>
+
+            {/* Three-value range display */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginBottom: 14 }}>
+              {[
+                { label: "LOW END", val: results.valuation.fairValueLow, sub: `${results.valuation.marketRange[0].toFixed(2)}x SDE`, color: "#10B981" },
+                { label: "MEDIAN (MID)", val: results.valuation.fairValue, sub: `${((results.valuation.marketRange[0]+results.valuation.marketRange[1])/2).toFixed(2)}x SDE`, color: "#818CF8" },
+                { label: "HIGH END", val: results.valuation.fairValueHigh, sub: `${results.valuation.marketRange[1].toFixed(2)}x SDE`, color: "#F59E0B" },
+              ].map(({ label, val, sub, color }) => (
+                <div key={label} style={{ padding: "12px 14px", borderRadius: 10, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", textAlign: "center" }}>
+                  <div style={{ fontSize: 9, color: "#6B7280", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 4 }}>{label}</div>
+                  <div style={{ fontSize: 17, fontWeight: 700, color, fontFamily: "'JetBrains Mono', monospace" }}>{fmt(val)}</div>
+                  <div style={{ fontSize: 10, color: "#4B5563", marginTop: 2 }}>{sub}</div>
+                </div>
+              ))}
+            </div>
+
+            {/* Range position badge */}
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+              <div style={{ padding: "4px 12px", borderRadius: 20, fontSize: 11, fontWeight: 700,
+                background: results.valuation.rangePosition === "Above Range" ? "rgba(239,68,68,0.12)" : results.valuation.rangePosition === "Below Range" ? "rgba(16,185,129,0.12)" : "rgba(59,130,246,0.12)",
+                color: results.valuation.rangePosition === "Above Range" ? "#EF4444" : results.valuation.rangePosition === "Below Range" ? "#10B981" : "#3B82F6",
+                border: `1px solid ${results.valuation.rangePosition === "Above Range" ? "rgba(239,68,68,0.25)" : results.valuation.rangePosition === "Below Range" ? "rgba(16,185,129,0.25)" : "rgba(59,130,246,0.25)"}` }}>
+                {results.valuation.rangePosition}
               </div>
-              <div style={{ padding: "12px 14px", borderRadius: 10, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
-                <div style={{ fontSize: 10, color: "#6B7280", marginBottom: 4 }}>FAIR MARKET VALUE</div>
-                <div style={{ fontSize: 18, fontWeight: 700, color: "#C4B5FD", fontFamily: "'JetBrains Mono', monospace" }}>{fmt(results.valuation.fairValue)}</div>
-                <div style={{ fontSize: 10, color: "#6B7280", marginTop: 2 }}>{results.valuation.marketRange[0]}–{results.valuation.marketRange[1]}x range</div>
-              </div>
-              <div style={{ padding: "12px 14px", borderRadius: 10, background: "rgba(16,185,129,0.06)", border: "1px solid rgba(16,185,129,0.15)" }}>
-                <div style={{ fontSize: 10, color: "#10B981", marginBottom: 4, fontWeight: 600 }}>SMART OFFER RANGE</div>
-                <div style={{ fontSize: 18, fontWeight: 700, color: "#10B981", fontFamily: "'JetBrains Mono', monospace" }}>{fmt(results.valuation.recommendedOffer[0])}</div>
-                <div style={{ fontSize: 10, color: "#6B7280", marginTop: 2 }}>to {fmt(results.valuation.recommendedOffer[1])}</div>
+              <div style={{ fontSize: 11, color: "#4B5563" }}>
+                Asking: {fmt(parseFloat(inputs.askingPrice.replace(/,/g, "")))} — {results.valuation.multiple.toFixed(2)}x SDE
               </div>
             </div>
-            {/* Negotiation Insight */}
-            <div style={{ padding: "10px 14px", borderRadius: 8, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.04)" }}>
-              <div style={{ fontSize: 10, color: "#6B7280", textTransform: "uppercase", marginBottom: 4, fontWeight: 500 }}>Negotiation Insight</div>
-              <div style={{ fontSize: 12, color: "#94A3B8", lineHeight: 1.5 }}>
-                {results.valuation.multiple < results.valuation.marketRange[0]
-                  ? "Listing appears significantly under market value. This may indicate a motivated seller, missing financial details, or operational risk. Submit offer near asking price but include diligence protections."
-                  : results.valuation.multiple <= (results.valuation.marketRange[0] + results.valuation.marketRange[1]) / 2
-                  ? "Deal is priced within fair market range. Negotiate toward the lower end of your offer range and justify with comparable market data."
-                  : results.valuation.multiple <= results.valuation.marketRange[1]
-                  ? "Asking price is at the upper end of market range. Use fair value estimate as your anchor and negotiate aggressively on terms if not on price."
-                  : "Deal is priced above market. Lead with your fair value analysis and be prepared to walk away. Consider seller financing to bridge the gap."}
-              </div>
+
+            {/* PATCH 4: Negotiation Insight — gap%, anchor, walk-away ── */}
+            <div style={{ padding: "12px 16px", borderRadius: 10, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.05)" }}>
+              <div style={{ fontSize: 10, color: "#6B7280", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6, fontWeight: 600 }}>Negotiation Guidance</div>
+              {(() => {
+                const askPrice = parseFloat(inputs.askingPrice.replace(/,/g, ""));
+                const fairMid  = results.valuation.fairValue;
+                const fairLow  = results.valuation.fairValueLow;
+                const fairHigh = results.valuation.fairValueHigh;
+                const gapPct   = ((askPrice - fairMid) / fairMid * 100);
+                const absPct   = Math.abs(gapPct).toFixed(1);
+                let guidance   = "";
+                let anchorNote = "";
+                let walkNote   = "";
+                if (gapPct > 30) {
+                  guidance   = `Ask is ${absPct}% above the observed median. Anchor your initial offer at the low-end fair value. Justify counter with closed transaction data from comparable ${INDUSTRIES[inputs.industry]?.label} sales.`;
+                  anchorNote = `Anchor: ${fmt(fairLow)} (low-end range)`;
+                  walkNote   = `Walk-away zone above: ${fmt(Math.round(fairMid * 1.1))}`;
+                } else if (gapPct > 10) {
+                  guidance   = `Ask is ${absPct}% above the observed median. Counter near the midpoint and propose an earn-out or seller note to bridge the gap. Buyer should quantify add-back risk before firming a number.`;
+                  anchorNote = `Anchor: ${fmt(Math.round(fairMid * 0.92))}`;
+                  walkNote   = `Walk-away zone above: ${fmt(fairHigh)}`;
+                } else if (gapPct >= -10) {
+                  guidance   = `Ask is within ${absPct}% of the observed median. Pricing is broadly consistent with market comps. Negotiate terms — working capital, transition period, and deal structure — rather than leading on price.`;
+                  anchorNote = `Anchor: ${fmt(fairMid)} (median)`;
+                  walkNote   = `Walk-away zone above: ${fmt(Math.round(fairHigh * 1.08))}`;
+                } else {
+                  guidance   = `Ask is ${absPct}% below the observed median. Understand the seller's motivation before proceeding — favorable pricing may reflect undisclosed risk. Anchor at asking and protect through diligence conditions.`;
+                  anchorNote = `Anchor: ${fmt(askPrice)} (at ask)`;
+                  walkNote   = `Market comps support up to: ${fmt(fairMid)}`;
+                }
+                return (
+                  <>
+                    <div style={{ fontSize: 12, color: "#94A3B8", lineHeight: 1.6, marginBottom: 8 }}>{guidance}</div>
+                    <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
+                      <span style={{ fontSize: 11, color: "#10B981", fontWeight: 600 }}>📌 {anchorNote}</span>
+                      <span style={{ fontSize: 11, color: "#F97316", fontWeight: 600 }}>⚠ {walkNote}</span>
+                    </div>
+                  </>
+                );
+              })()}
+            </div>
+
+            {/* Smart offer range */}
+            <div style={{ marginTop: 10, padding: "10px 14px", borderRadius: 8, background: "rgba(16,185,129,0.06)", border: "1px solid rgba(16,185,129,0.15)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <span style={{ fontSize: 11, color: "#6B7280", textTransform: "uppercase", letterSpacing: "0.06em" }}>Smart Offer Range</span>
+              <span style={{ fontSize: 15, fontWeight: 700, color: "#10B981", fontFamily: "'JetBrains Mono', monospace" }}>
+                {fmt(results.valuation.recommendedOffer[0])} – {fmt(results.valuation.recommendedOffer[1])}
+              </span>
             </div>
           </div>
 
-          {/* Score Breakdown */}
+          {/* ── Risk Scores ── */}
           <div className="fu fd2" style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 14, padding: "18px 22px", marginBottom: 14 }}>
             <h3 style={{ fontSize: 13, fontWeight: 600, color: "#94A3B8", margin: "0 0 12px" }}>Risk Scores</h3>
             <SBar label="Valuation" score={results.valuation.score} icon="⚖️" />
             <SBar label="Debt Risk" score={results.debtRisk.score} icon="🏦" />
             <SBar label="Market Risk" score={results.marketRisk.score} icon="📈" />
             <SBar label="Industry Risk" score={results.industryRisk.score} icon="🏭" />
+            <div style={{ marginTop: 10, fontSize: 11, color: "#4B5563", fontStyle: "italic" }}>
+              Valuation benchmarked against {results.valuation.sampleSize.toLocaleString()} comparable transactions — {results.valuation.benchmarkSource}
+            </div>
           </div>
 
-          {/* Red/Green Flags */}
+          {/* ── PATCH 7: Red/Green Flags — analytical language ── */}
           {(results.redFlags.length > 0 || results.greenFlags.length > 0) && (
             <div className="fu fd3" style={{ display: "grid", gridTemplateColumns: results.redFlags.length > 0 && results.greenFlags.length > 0 ? "1fr 1fr" : "1fr", gap: 12, marginBottom: 14 }}>
-              {results.redFlags.length > 0 && (<div style={{ background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.12)", borderRadius: 12, padding: 16 }}><div style={{ fontSize: 11, color: "#EF4444", fontWeight: 600, textTransform: "uppercase", marginBottom: 8 }}>🚩 Red Flags</div>{results.redFlags.map((f, i) => <div key={i} style={{ fontSize: 12, color: "#FCA5A5", lineHeight: 1.5, marginBottom: 5, paddingLeft: 10, borderLeft: "2px solid rgba(239,68,68,0.2)" }}>{f}</div>)}</div>)}
-              {results.greenFlags.length > 0 && (<div style={{ background: "rgba(16,185,129,0.06)", border: "1px solid rgba(16,185,129,0.12)", borderRadius: 12, padding: 16 }}><div style={{ fontSize: 11, color: "#10B981", fontWeight: 600, textTransform: "uppercase", marginBottom: 8 }}>✅ Green Flags</div>{results.greenFlags.map((f, i) => <div key={i} style={{ fontSize: 12, color: "#6EE7B7", lineHeight: 1.5, marginBottom: 5, paddingLeft: 10, borderLeft: "2px solid rgba(16,185,129,0.2)" }}>{f}</div>)}</div>)}
+              {results.redFlags.length > 0 && (
+                <div style={{ background: "rgba(239,68,68,0.05)", border: "1px solid rgba(239,68,68,0.1)", borderRadius: 12, padding: 16 }}>
+                  <div style={{ fontSize: 11, color: "#94A3B8", fontWeight: 600, textTransform: "uppercase", marginBottom: 8 }}>Diligence Considerations</div>
+                  {results.redFlags.map((f, i) => (
+                    <div key={i} style={{ fontSize: 12, color: "#FCA5A5", lineHeight: 1.5, marginBottom: 6, paddingLeft: 10, borderLeft: "2px solid rgba(239,68,68,0.25)" }}>{f}</div>
+                  ))}
+                </div>
+              )}
+              {results.greenFlags.length > 0 && (
+                <div style={{ background: "rgba(16,185,129,0.05)", border: "1px solid rgba(16,185,129,0.1)", borderRadius: 12, padding: 16 }}>
+                  <div style={{ fontSize: 11, color: "#94A3B8", fontWeight: 600, textTransform: "uppercase", marginBottom: 8 }}>Supporting Indicators</div>
+                  {results.greenFlags.map((f, i) => (
+                    <div key={i} style={{ fontSize: 12, color: "#6EE7B7", lineHeight: 1.5, marginBottom: 6, paddingLeft: 10, borderLeft: "2px solid rgba(16,185,129,0.25)" }}>{f}</div>
+                  ))}
+                </div>
+              )}
             </div>
           )}
 
-          {/* Market Intelligence */}
+          {/* ── Market Intelligence ── */}
           <div className="fu fd4" style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 14, padding: "18px 22px", marginBottom: 14 }}>
             <h3 style={{ fontSize: 13, fontWeight: 600, color: "#94A3B8", margin: "0 0 12px" }}>🗺️ Market Intelligence</h3>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
-              <div style={{ padding: "12px 14px", borderRadius: 8, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)" }}><div style={{ fontSize: 10, color: "#6B7280", textTransform: "uppercase", marginBottom: 4 }}>Buyer Demand</div><div style={{ fontSize: 18, fontWeight: 800, color: dc(results.marketIntel.demandLevel), fontFamily: "'JetBrains Mono', monospace" }}>{results.marketIntel.demandLevel}</div><div style={{ fontSize: 10, color: "#6B7280" }}>Score: {results.marketIntel.demandScore}/100</div></div>
-              <div style={{ padding: "12px 14px", borderRadius: 8, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)" }}><div style={{ fontSize: 10, color: "#6B7280", textTransform: "uppercase", marginBottom: 4 }}>Interest Rank</div><div style={{ fontSize: 18, fontWeight: 800, color: "#E2E8F0", fontFamily: "'JetBrains Mono', monospace" }}>#{results.marketIntel.buyerInterestRank}</div><div style={{ fontSize: 10, color: "#6B7280" }}>of {Object.keys(INDUSTRIES).length} industries</div></div>
-              <div style={{ padding: "12px 14px", borderRadius: 8, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)" }}><div style={{ fontSize: 10, color: "#6B7280", textTransform: "uppercase", marginBottom: 4 }}>Competition</div><div style={{ fontSize: 16, fontWeight: 700, color: "#F59E0B", fontFamily: "'JetBrains Mono', monospace" }}>{results.marketIntel.competitionLevel}</div><div style={{ fontSize: 10, color: "#6B7280" }}>Buyer competition</div></div>
+              <div style={{ padding: "12px 14px", borderRadius: 8, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)" }}>
+                <div style={{ fontSize: 10, color: "#6B7280", textTransform: "uppercase", marginBottom: 4 }}>Buyer Demand</div>
+                <div style={{ fontSize: 18, fontWeight: 800, color: dc(results.marketIntel.demandLevel), fontFamily: "'JetBrains Mono', monospace" }}>{results.marketIntel.demandLevel}</div>
+                <div style={{ fontSize: 10, color: "#6B7280" }}>Score: {results.marketIntel.demandScore}/100</div>
+              </div>
+              <div style={{ padding: "12px 14px", borderRadius: 8, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)" }}>
+                <div style={{ fontSize: 10, color: "#6B7280", textTransform: "uppercase", marginBottom: 4 }}>Interest Rank</div>
+                <div style={{ fontSize: 18, fontWeight: 800, color: "#E2E8F0", fontFamily: "'JetBrains Mono', monospace" }}>#{results.marketIntel.buyerInterestRank}</div>
+                <div style={{ fontSize: 10, color: "#6B7280" }}>of {Object.keys(INDUSTRIES).length} industries</div>
+              </div>
+              <div style={{ padding: "12px 14px", borderRadius: 8, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)" }}>
+                <div style={{ fontSize: 10, color: "#6B7280", textTransform: "uppercase", marginBottom: 4 }}>Competition</div>
+                <div style={{ fontSize: 16, fontWeight: 700, color: "#F59E0B", fontFamily: "'JetBrains Mono', monospace" }}>{results.marketIntel.competitionLevel}</div>
+                <div style={{ fontSize: 10, color: "#6B7280" }}>Buyer competition</div>
+              </div>
             </div>
           </div>
 
-          {/* Community Comparison */}
+          {/* ── Community Comparison ── */}
           <div className="fu fd5" style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 14, padding: "18px 22px", marginBottom: 14 }}>
             <h3 style={{ fontSize: 13, fontWeight: 600, color: "#94A3B8", margin: "0 0 12px" }}>📊 Deals Similar to Yours</h3>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: 10, marginBottom: 12 }}>
               {[{ l: "Your Score", v: results.overall, c: sc(results.overall) }, { l: "Average", v: results.communityComparison.avgScore, c: "#94A3B8" }, { l: "Top Score", v: results.communityComparison.topScore, c: "#10B981" }, { l: "Lowest", v: results.communityComparison.lowestScore, c: "#EF4444" }].map((m) => (
-                <div key={m.l} style={{ textAlign: "center", padding: "10px 8px", borderRadius: 8, background: "rgba(255,255,255,0.02)" }}><div style={{ fontSize: 22, fontWeight: 800, color: m.c, fontFamily: "'JetBrains Mono', monospace" }}>{m.v}</div><div style={{ fontSize: 9, color: "#6B7280", textTransform: "uppercase" }}>{m.l}</div></div>
+                <div key={m.l} style={{ textAlign: "center", padding: "10px 8px", borderRadius: 8, background: "rgba(255,255,255,0.02)" }}>
+                  <div style={{ fontSize: 22, fontWeight: 800, color: m.c, fontFamily: "'JetBrains Mono', monospace" }}>{m.v}</div>
+                  <div style={{ fontSize: 9, color: "#6B7280", textTransform: "uppercase" }}>{m.l}</div>
+                </div>
               ))}
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <div style={{ flex: 1, height: 6, background: "rgba(255,255,255,0.06)", borderRadius: 3, overflow: "hidden" }}><div style={{ height: "100%", width: `${results.communityComparison.percentile}%`, background: "linear-gradient(90deg, #6366F1, #8B5CF6)", borderRadius: 3, transition: "width 1s ease-out" }} /></div>
+              <div style={{ flex: 1, height: 6, background: "rgba(255,255,255,0.06)", borderRadius: 3, overflow: "hidden" }}>
+                <div style={{ height: "100%", width: `${results.communityComparison.percentile}%`, background: "linear-gradient(90deg, #6366F1, #8B5CF6)", borderRadius: 3, transition: "width 1s ease-out" }} />
+              </div>
               <span style={{ fontSize: 12, fontWeight: 600, color: "#818CF8", fontFamily: "'JetBrains Mono', monospace", minWidth: 60 }}>Top {100 - results.communityComparison.percentile}%</span>
             </div>
             <div style={{ fontSize: 11, color: "#6B7280", marginTop: 6 }}>Based on {results.communityComparison.totalDeals} similar {INDUSTRIES[inputs.industry]?.label.toLowerCase()} deals analyzed</div>
           </div>
 
-          {/* AI Insight */}
+          {/* ── AI Assessment — 3-paragraph structured ── */}
           <div className="fu fd6" style={{ background: "rgba(99,102,241,0.06)", border: "1px solid rgba(99,102,241,0.15)", borderRadius: 14, padding: "18px 22px", marginBottom: 14 }}>
-            <div style={{ fontSize: 11, color: "#818CF8", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 8, fontWeight: 600 }}>🤖 AI Deal Assessment</div>
-            {aiLoading ? <div style={{ fontSize: 13, color: "#A5B4FC", fontStyle: "italic" }}>Analyzing deal fundamentals...</div> : results.aiInsight ? <p style={{ margin: 0, fontSize: 14, color: "#C4B5FD", lineHeight: 1.7 }}>{renderMd(results.aiInsight)}</p> : null}
+            <div style={{ fontSize: 11, color: "#818CF8", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 14, fontWeight: 600 }}>AI Deal Assessment</div>
+            {aiLoading ? (
+              <div style={{ fontSize: 13, color: "#A5B4FC", fontStyle: "italic" }}>Composing deal memo...</div>
+            ) : results.aiInsight ? (
+              <div>
+                {results.aiInsight.split(/\n\n+/).filter(p => p.trim()).map((para, i) => {
+                  const labels = ["Pricing Context", "Business Quality", "Buyer Interpretation"];
+                  return (
+                    <div key={i} style={{ marginBottom: i < 2 ? 14 : 0, paddingBottom: i < 2 ? 14 : 0, borderBottom: i < 2 ? "1px solid rgba(99,102,241,0.1)" : "none" }}>
+                      {labels[i] && (
+                        <div style={{ fontSize: 10, color: "#6366F1", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 4 }}>{labels[i]}</div>
+                      )}
+                      <p style={{ margin: 0, fontSize: 13, color: "#C4B5FD", lineHeight: 1.7 }}>{para.trim()}</p>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : null}
           </div>
 
-          {/* DATA SOURCES + CONFIDENCE */}
+          {/* ── PATCH 8: Recommended Next Steps ── */}
+          {(() => {
+            const ns = results.nextStep;
+            const stepConfig = {
+              advance: {
+                color: "#10B981", bg: "rgba(16,185,129,0.06)", border: "rgba(16,185,129,0.2)",
+                label: "Advance to Diligence",
+                summary: "Deal metrics are broadly supportive for proceeding. The valuation, coverage, and industry profile are consistent with a viable acquisition at or near these terms.",
+                actions: [
+                  "Request 3 years of normalized financials and tax returns",
+                  "Validate all seller add-backs with documentation",
+                  "Confirm customer concentration — no single customer >20% of revenue",
+                  "Obtain a Quality of Earnings review before finalizing LOI terms",
+                ],
+              },
+              validate: {
+                color: "#F59E0B", bg: "rgba(245,158,11,0.06)", border: "rgba(245,158,11,0.2)",
+                label: "Validate Key Assumptions",
+                summary: "One or more metrics require clarification before advancing. The deal may work at these terms — but key assumptions must be confirmed before LOI submission.",
+                actions: [
+                  "Stress-test SDE under two adverse revenue scenarios",
+                  "Verify add-back sustainability and owner compensation normalization",
+                  "Confirm debt service coverage with actual monthly cash flow data",
+                  "Request comparable transaction data from broker to justify ask multiple",
+                ],
+              },
+              reprice: {
+                color: "#F97316", bg: "rgba(249,115,22,0.06)", border: "rgba(249,115,22,0.2)",
+                label: "Reprice or Reassess",
+                summary: "At the current ask, return assumptions are difficult to underwrite on standard terms. A structured counter or repricing discussion is warranted before proceeding.",
+                actions: [
+                  "Present closed transaction comps to reframe seller's pricing expectations",
+                  "Model a counter-offer at or below the observed median multiple",
+                  "Explore seller financing, earn-out, or equity rollover to bridge the valuation gap",
+                  "If seller is firm on price, request access to financial records to identify upside assumptions",
+                ],
+              },
+            };
+            const cfg = stepConfig[ns];
+            return (
+              <div className="fu fd6" style={{ background: cfg.bg, border: `1px solid ${cfg.border}`, borderRadius: 14, padding: "18px 22px", marginBottom: 14 }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
+                  <div style={{ width: 8, height: 8, borderRadius: 4, background: cfg.color, flexShrink: 0 }} />
+                  <div style={{ fontSize: 11, color: cfg.color, textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: 700 }}>
+                    Recommended Next Step — {cfg.label}
+                  </div>
+                </div>
+                <p style={{ fontSize: 13, color: "#94A3B8", lineHeight: 1.6, margin: "0 0 12px" }}>{cfg.summary}</p>
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  {cfg.actions.map((action, i) => (
+                    <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
+                      <span style={{ color: cfg.color, fontSize: 11, flexShrink: 0, marginTop: 2 }}>→</span>
+                      <span style={{ fontSize: 12, color: "#94A3B8", lineHeight: 1.5 }}>{action}</span>
+                    </div>
+                  ))}
+                </div>
+                {/* PATCH 9: Monetization bridge */}
+                <div style={{ marginTop: 14, paddingTop: 14, borderTop: `1px solid ${cfg.border}`, fontSize: 12, color: "#4B5563", lineHeight: 1.6, fontStyle: "italic" }}>
+                  Many buyers at this stage transition from initial screening to structured underwriting — including financial normalization, add-back validation, and return modeling based on deal-specific assumptions.
+                </div>
+              </div>
+            );
+          })()}
+
+          {/* ── Data Sources + Confidence (Three-lens) ── */}
           <div className="fu fd7" style={{ background: "linear-gradient(135deg, rgba(59,130,246,0.08) 0%, rgba(99,102,241,0.06) 100%)", border: "1px solid rgba(59,130,246,0.2)", borderRadius: 14, padding: "22px 24px", marginBottom: 14 }}>
             {results.threeLens ? (
               <>
@@ -957,7 +1118,7 @@ Red flags: ${scores.redFlags.join("; ") || "None"} | Green flags: ${scores.green
                   <div style={{ padding: "3px 10px", borderRadius: 6, background: results.threeLens.confidence.overall === "HIGH" ? "rgba(16,185,129,0.15)" : results.threeLens.confidence.overall === "MEDIUM" ? "rgba(245,158,11,0.15)" : "rgba(239,68,68,0.15)", border: `1px solid ${results.threeLens.confidence.overall === "HIGH" ? "rgba(16,185,129,0.25)" : results.threeLens.confidence.overall === "MEDIUM" ? "rgba(245,158,11,0.25)" : "rgba(239,68,68,0.25)"}`, fontSize: 11, fontWeight: 700, color: results.threeLens.confidence.overall === "HIGH" ? "#10B981" : results.threeLens.confidence.overall === "MEDIUM" ? "#F59E0B" : "#EF4444" }}>
                     CONFIDENCE: {results.threeLens.confidence.overall}
                   </div>
-                  <span style={{ fontSize: 12, color: "#8896A6" }}>Three-lens intelligence</span>
+                  <span style={{ fontSize: 12, color: "#8896A6" }}>Three-lens market intelligence</span>
                 </div>
                 <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 12 }}>
                   {[
@@ -993,19 +1154,19 @@ Red flags: ${scores.redFlags.join("; ") || "None"} | Green flags: ${scores.green
               </>
             ) : (
               <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
-                <div style={{ padding: "3px 10px", borderRadius: 6, background: "rgba(245,158,11,0.15)", border: "1px solid rgba(245,158,11,0.25)", fontSize: 11, fontWeight: 700, color: "#F59E0B" }}>CONFIDENCE: LOW</div>
-                <span style={{ fontSize: 12, color: "#8896A6" }}>This estimate uses industry averages only.</span>
+                <div style={{ padding: "3px 10px", borderRadius: 6, background: "rgba(245,158,11,0.15)", border: "1px solid rgba(245,158,11,0.25)", fontSize: 11, fontWeight: 700, color: "#F59E0B" }}>CONFIDENCE: BASELINE</div>
+                <span style={{ fontSize: 12, color: "#8896A6" }}>Benchmarked against {results.valuation.sampleSize.toLocaleString()} {INDUSTRIES[inputs.industry]?.label} transactions — {results.valuation.benchmarkSource}</span>
               </div>
             )}
             <p style={{ fontSize: 14, color: "#C9D1D9", margin: "0 0 4px", lineHeight: 1.5 }}>
-              Your deal passed the quick test. Run a full Deal Risk Analyzer to evaluate operational risks, market saturation, location data, and business-specific factors before submitting an LOI.
+              This screening does not account for location-specific market conditions, individual add-back quality, or operational risk factors. A full Deal Risk Analyzer evaluation incorporates market saturation data, location comps, and business-specific diligence factors.
             </p>
             <a href="/deal-check" style={{ display: "block", marginTop: 14, padding: "13px", borderRadius: 10, background: "linear-gradient(135deg, #3B82F6, #6366F1)", color: "#fff", fontSize: 15, fontWeight: 700, textAlign: "center", textDecoration: "none", fontFamily: "'DM Sans', sans-serif" }}>
               🔎 Run Full Deal Risk Analyzer →
             </a>
           </div>
 
-          {/* Share */}
+          {/* ── Share ── */}
           <div className="fu fd7" style={{ position: "relative", marginBottom: 14 }}>
             <button onClick={() => setShareMenuOpen(!shareMenuOpen)} style={{ width: "100%", padding: "12px 20px", borderRadius: 10, border: "1px solid rgba(99,102,241,0.3)", background: "rgba(99,102,241,0.08)", color: "#818CF8", fontSize: 14, fontWeight: 600, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>
               📤 Share My Deal Score
@@ -1020,13 +1181,11 @@ Red flags: ${scores.redFlags.join("; ") || "None"} | Green flags: ${scores.green
             )}
           </div>
 
-          {/* Deal Intelligence Page Link */}
+          {/* ── Deal Intelligence Page ── */}
           {dealPageUrl && (
             <div className="fu fd8" style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(99,102,241,0.15)", borderRadius: 14, padding: "16px 20px", marginBottom: 14, textAlign: "center" }}>
               <div style={{ fontSize: 10, color: "#6B7280", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 6 }}>Your Deal Intelligence Page</div>
-              <a href={dealPageUrl} style={{ fontSize: 15, fontWeight: 700, color: "#818CF8", fontFamily: "'JetBrains Mono', monospace", textDecoration: "none" }}>
-                nextax.ai{dealPageUrl}
-              </a>
+              <a href={dealPageUrl} style={{ fontSize: 15, fontWeight: 700, color: "#818CF8", fontFamily: "'JetBrains Mono', monospace", textDecoration: "none" }}>nextax.ai{dealPageUrl}</a>
               <div style={{ display: "flex", justifyContent: "center", gap: 8, marginTop: 10 }}>
                 <button onClick={() => { navigator.clipboard.writeText(`https://nextax.ai${dealPageUrl}`); }} style={{ padding: "6px 14px", borderRadius: 6, border: "1px solid rgba(99,102,241,0.2)", background: "rgba(99,102,241,0.08)", color: "#818CF8", fontSize: 11, fontWeight: 500, cursor: "pointer" }}>📋 Copy Link</button>
                 <button onClick={() => window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(`Just analyzed this deal on NexTax — scored ${results?.overall}/100`)}&url=${encodeURIComponent(`https://nextax.ai${dealPageUrl}`)}`, "_blank")} style={{ padding: "6px 14px", borderRadius: 6, border: "1px solid rgba(99,102,241,0.2)", background: "rgba(99,102,241,0.08)", color: "#818CF8", fontSize: 11, fontWeight: 500, cursor: "pointer" }}>🐦 Tweet</button>
@@ -1036,7 +1195,7 @@ Red flags: ${scores.redFlags.join("; ") || "None"} | Green flags: ${scores.green
             </div>
           )}
 
-          {/* Monetization CTA */}
+          {/* ── Monetization CTA ── */}
           <div className="fu fd8" style={{ background: "linear-gradient(135deg, rgba(99,102,241,0.1), rgba(139,92,246,0.08))", border: "1px solid rgba(99,102,241,0.2)", borderRadius: 14, padding: 24, marginBottom: 14 }}>
             <h3 style={{ fontSize: 17, fontWeight: 700, margin: "0 0 6px", color: "#E2E8F0" }}>Want a full diligence report?</h3>
             <p style={{ fontSize: 13, color: "#8896A6", margin: "0 0 16px", lineHeight: 1.5 }}>Go deeper with NexTax professional deal underwriting.</p>
@@ -1051,7 +1210,7 @@ Red flags: ${scores.redFlags.join("; ") || "None"} | Green flags: ${scores.green
           </div>
 
           <button onClick={() => { setShowResults(false); setResults(null); window.scrollTo({ top: 0, behavior: "smooth" }); }} style={{ width: "100%", padding: "12px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.08)", background: "transparent", color: "#6B7280", fontSize: 13, fontWeight: 500, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>↺ Analyze Another Deal</button>
-          <p style={{ fontSize: 11, color: "#4B5563", marginTop: 16, lineHeight: 1.5, textAlign: "center" }}>This tool provides estimates based on industry averages. Not financial advice.</p>
+          <p style={{ fontSize: 11, color: "#4B5563", marginTop: 16, lineHeight: 1.5, textAlign: "center" }}>This tool provides a preliminary screening based on market benchmarks. Not financial or legal advice.</p>
         </div>
       )}
 
@@ -1059,7 +1218,7 @@ Red flags: ${scores.redFlags.join("; ") || "None"} | Green flags: ${scores.green
         <div style={{ textAlign: "center", padding: 24, borderTop: "1px solid rgba(255,255,255,0.04)" }}>
           <div style={{ fontSize: 12, color: "#4B5563", marginBottom: 8 }}>Trusted by acquisition entrepreneurs</div>
           <div style={{ display: "flex", justifyContent: "center", gap: 20, flexWrap: "wrap" }}>
-            {["Paste any listing", "AI extraction", "Instant results", "15 industries", "Shareable scores"].map((t) => <span key={t} style={{ fontSize: 11, color: "#374151" }}>✓ {t}</span>)}
+            {["Paste any listing", "AI extraction", "Instant screening", "26 industries", "Shareable scores"].map((t) => <span key={t} style={{ fontSize: 11, color: "#374151" }}>✓ {t}</span>)}
           </div>
         </div>
       )}
