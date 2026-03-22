@@ -26,7 +26,8 @@ interface ScoreBreakdown {
   communityComparison: { avgScore: number; topScore: number; lowestScore: number; percentile: number; totalDeals: number };
   redFlags: string[]; greenFlags: string[];
   riskLevel: "Low" | "Moderate" | "High" | "Critical";
-  aiInsight: string | null;
+  aiInsight: string | null; // kept for fallback compat
+  dealMemo: DealMemo | null;
   nextStep: "advance" | "validate" | "reprice";
   threeLens?: {
     listing: { medianMultiple: number; sampleSize: number } | null;
@@ -43,6 +44,33 @@ interface ScoreBreakdown {
       weights: { valuation: number; debt: number; financial: number; liquidity: number };
     };
   };
+}
+
+// ─── DEAL MEMO INTERFACE ─────────────────────────────────────────────────────
+
+interface DealMemo {
+  positioning: {
+    marketPosition: string;       // "Above Market" | "Inline" | "Discounted"
+    buyerFit: string;             // "Operator" | "Strategic" | "Beginner" | "Operator / Strategic"
+    executionDifficulty: string;  // "Low" | "Moderate" | "High"
+    negotiationLeverage: string;  // "Low" | "Moderate" | "High"
+  };
+  whatMustBeTrue: string[];       // 3–5 conditional assumptions
+  decisionPath: {
+    steps: string[];              // ordered next steps
+    ifValidated: string;
+    ifNot: string;
+  };
+  negotiationPlaybook: {
+    anchorRange: string;
+    structureIdeas: string[];
+    walkAway: string;
+  };
+  dealBreakers: string[];         // 3–5 critical risks
+  confidenceNote: string;         // what data supports this + limitations
+  pricingContext: string;         // Para 1
+  businessQuality: string;        // Para 2
+  buyerInterpretation: string;    // Para 3
 }
 
 // ─── PATCH 1: INDUSTRY DATA — added benchmarkLow/Mid/High and sampleSize ─────
@@ -235,6 +263,8 @@ function calculateScores(inputs: DealInputs): ScoreBreakdown | null {
 
   return {
     overall, riskLevel, redFlags, greenFlags, nextStep,
+    aiInsight: null,
+    dealMemo: null,
     valuation: {
       score: valuationScore, multiple,
       marketRange: [benchmarkLow, benchmarkHigh],
@@ -391,6 +421,7 @@ export default function DealRealityCheck() {
   const [results, setResults] = useState<ScoreBreakdown | null>(null);
   const [loading, setLoading] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
+  const [dealMemo, setDealMemo] = useState<DealMemo | null>(null);
   const [showResults, setShowResults] = useState(false);
   const [shareMenuOpen, setShareMenuOpen] = useState(false);
   const [dealPageUrl, setDealPageUrl] = useState<string | null>(null);
@@ -608,48 +639,150 @@ export default function DealRealityCheck() {
     } catch { /* non-blocking */ }
   };
 
-  // ── PATCH 7: fetchAI — 3-paragraph structured institutional memo ──────────
+  // ── fetchAI — structured decision-intelligence memo ──────────────────────
   const fetchAI = async (scores: ScoreBreakdown) => {
     setAiLoading(true);
+    setDealMemo(null);
     const ind = INDUSTRIES[inputs.industry];
-    const sdeMargin = inputs.revenue ? ((parseFloat(inputs.sde.replace(/,/g,"")) / parseFloat(inputs.revenue.replace(/,/g,""))) * 100).toFixed(1) : "N/A";
-    const gapVsMedian = (((scores.valuation.multiple / scores.valuation.marketRange[0]) - 1) * 100);
+    const sdeMargin = inputs.revenue
+      ? ((parseFloat(inputs.sde.replace(/,/g,"")) / parseFloat(inputs.revenue.replace(/,/g,""))) * 100).toFixed(1)
+      : "N/A";
+    const askPrice = parseFloat(inputs.askingPrice.replace(/,/g,""));
+    const fairMid  = scores.valuation.fairValue;
+    const fairLow  = scores.valuation.fairValueLow;
+    const fairHigh = scores.valuation.fairValueHigh;
+    const gapPct   = ((askPrice - fairMid) / fairMid * 100).toFixed(1);
+    const mktLow   = scores.valuation.marketRange[0].toFixed(2);
+    const mktHigh  = scores.valuation.marketRange[1].toFixed(2);
+    const mktMid   = ((scores.valuation.marketRange[0] + scores.valuation.marketRange[1]) / 2).toFixed(2);
+
+    const systemPrompt = `You are a senior M&A advisor producing a pre-LOI deal screening memo. Your output must be a single valid JSON object — no markdown, no backticks, no text before or after the JSON. Be analytical, conditional, and institutional. Never use absolute language. Use ranges and conditional statements. Keep every field concise.`;
+
+    const userPrompt = `Produce a deal screening memo for this ${ind?.label} acquisition.
+
+DEAL METRICS:
+- Asking: $${askPrice.toLocaleString()} (${scores.valuation.multiple.toFixed(2)}x SDE)
+- Fair Value Range: $${fairLow.toLocaleString()}–$${fairHigh.toLocaleString()} (median $${fairMid.toLocaleString()})
+- Market Range: ${mktLow}–${mktHigh}x median ${mktMid}x — ${scores.valuation.sampleSize.toLocaleString()} transactions (${scores.valuation.benchmarkSource})
+- Range Position: ${scores.valuation.rangePosition} (${Number(gapPct)>0?"+":""}${gapPct}% vs median)
+- SDE Margin: ${sdeMargin}% (industry: ${ind?.marginRange[0]}–${ind?.marginRange[1]}%)
+- DSCR: ${scores.debtRisk.dscr.toFixed(2)}x
+- Score: ${scores.overall}/100 (${scores.riskLevel} Risk) — Industry: ${ind?.label}, ${ind?.growth} growth
+
+Return ONLY this JSON (all fields required):
+{
+  "positioning": {
+    "marketPosition": "Above Market or Inline with Market or Below Market",
+    "buyerFit": "best fit: Operator or Strategic or First-Time Buyer or Operator / Strategic",
+    "executionDifficulty": "Low or Moderate or High",
+    "negotiationLeverage": "Low or Moderate or High"
+  },
+  "whatMustBeTrue": [
+    "If X fails, valuation likely falls into Y range — use conditional language",
+    "assumption 2",
+    "assumption 3",
+    "assumption 4"
+  ],
+  "decisionPath": {
+    "steps": ["Step 1 — specific action", "Step 2", "Step 3"],
+    "ifValidated": "If assumptions hold → specific next action",
+    "ifNot": "If assumptions fail → specific recourse"
+  },
+  "negotiationPlaybook": {
+    "anchorRange": "Opening offer range with brief rationale",
+    "structureIdeas": ["idea 1 e.g. seller note", "idea 2 e.g. earn-out tied to metric"],
+    "walkAway": "The price or condition beyond which return assumptions cannot be supported"
+  },
+  "dealBreakers": ["critical risk 1", "critical risk 2", "critical risk 3"],
+  "confidenceNote": "One sentence on supporting data. One sentence on limitations.",
+  "pricingContext": "2-3 sentences comparing ask to market multiples. Institutional tone.",
+  "businessQuality": "2-3 sentences on margin vs industry, DSCR, one strength one risk.",
+  "buyerInterpretation": "2-3 sentences on assumptions, risk concentration, one diligence priority."
+}`;
+
     try {
       const res = await fetch("/api/deal-reality-check", {
-        method: "POST", headers: { "Content-Type": "application/json" },
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          messages: [{
-            role: "user",
-            content: `You are a senior M&A advisor writing a pre-LOI acquisition memo. Respond in plain text only — no markdown, no asterisks, no headers.
-
-Write exactly 3 paragraphs separated by blank lines:
-
-PARAGRAPH 1 — PRICING CONTEXT:
-The ${ind?.label} asking price reflects a ${scores.valuation.multiple.toFixed(2)}x SDE multiple. The observed market range based on ${scores.valuation.sampleSize.toLocaleString()} comparable transactions (${scores.valuation.benchmarkSource}) is ${scores.valuation.marketRange[0].toFixed(2)}–${scores.valuation.marketRange[1].toFixed(2)}x, with a median of ${((scores.valuation.marketRange[0] + scores.valuation.marketRange[1]) / 2).toFixed(2)}x. The ask is ${scores.valuation.rangePosition.toLowerCase()}. Compare the ask to market multiples. Use institutional language: "appears above observed market ranges", "is consistent with comparable transactions", "may require justification". Never say "bad deal" or "overpriced". 2-3 sentences.
-
-PARAGRAPH 2 — BUSINESS QUALITY:
-Operating margin is ${sdeMargin}% vs the ${ind?.marginRange[0]}–${ind?.marginRange[1]}% industry range. DSCR is ${scores.debtRisk.dscr.toFixed(2)}x. Industry: ${ind?.label} (${ind?.growth} growth). Identify one notable strength and one area buyers should evaluate further. Be specific and data-grounded. 2-3 sentences.
-
-PARAGRAPH 3 — BUYER INTERPRETATION:
-What specific assumptions must be true for this deal to work at the asking price? Where does the primary risk concentrate — in pricing, coverage, or business quality? Name one critical diligence item the buyer should validate before LOI. Be analytical and specific. Never recommend walking away. 2-3 sentences.
-
-TONE: Analytical, balanced, institutional. Write as an investment memo, not a blog post.`
-          }]
+          system: systemPrompt,
+          messages: [{ role: "user", content: userPrompt }],
         }),
       });
       const data = await res.json();
-      const insight = data.content?.map((b: { type: string; text?: string }) => (b.type === "text" ? b.text : "")).join("") || null;
-      setResults((p) => p ? { ...p, aiInsight: insight } : p);
-    } catch {
-      const fallback = `The ${ind?.label.toLowerCase()} asking price of ${scores.valuation.multiple.toFixed(2)}x SDE is ${scores.valuation.rangePosition.toLowerCase()} the ${scores.valuation.marketRange[0].toFixed(2)}–${scores.valuation.marketRange[1].toFixed(2)}x range observed across ${scores.valuation.sampleSize.toLocaleString()} comparable transactions.
-
-Operating margin of ${sdeMargin}% ${parseFloat(sdeMargin) >= (ind?.marginRange[0] || 0) ? "is consistent with" : "falls below"} the ${ind?.marginRange[0]}–${ind?.marginRange[1]}% industry range. Projected DSCR of ${scores.debtRisk.dscr.toFixed(2)}x ${scores.debtRisk.dscr >= 1.25 ? "meets standard lender thresholds" : "falls below the standard 1.25x lender minimum"}.
-
-Buyers should validate the sustainability of reported add-backs, confirm customer concentration risk, and obtain normalized financials before submitting an LOI.`;
-      setResults((p) => p ? { ...p, aiInsight: fallback } : p);
-    }
+      const raw = data.content?.map((b: { type: string; text?: string }) => (b.type === "text" ? b.text : "")).join("") || "";
+      const jsonMatch = raw.match(/\{[\s\S]*\}/);
+      if (jsonMatch) {
+        try {
+          const memo: DealMemo = JSON.parse(jsonMatch[0]);
+          setDealMemo(memo);
+          setResults((p) => p ? { ...p, dealMemo: memo, aiInsight: [memo.pricingContext, memo.businessQuality, memo.buyerInterpretation].join("\n\n") } : p);
+          setAiLoading(false);
+          return;
+        } catch { /* fall through to fallback */ }
+      }
+    } catch { /* fall through to fallback */ }
+    buildFallbackMemo(scores, ind, sdeMargin, gapPct, mktLow, mktHigh, mktMid, askPrice, fairLow, fairMid, fairHigh);
     setAiLoading(false);
   };
+
+  const buildFallbackMemo = (
+    scores: ScoreBreakdown, ind: typeof INDUSTRIES[string] | undefined,
+    sdeMargin: string, gapPct: string, mktLow: string, mktHigh: string, mktMid: string,
+    askPrice: number, fairLow: number, fairMid: number, fairHigh: number
+  ) => {
+    const isAbove  = scores.valuation.rangePosition === "Above Range";
+    const isBelow  = scores.valuation.rangePosition === "Below Range";
+    const dscrOk   = scores.debtRisk.dscr >= 1.25;
+    const marginOk = parseFloat(sdeMargin) >= (ind?.marginRange[0] || 0);
+    const gapN     = parseFloat(gapPct);
+    const sdeNum   = parseFloat(inputs.sde.replace(/,/g,"")) || 0;
+
+    const memo: DealMemo = {
+      positioning: {
+        marketPosition: isAbove ? "Above Market" : isBelow ? "Below Market" : "Inline with Market",
+        buyerFit: scores.overall >= 65 ? "Operator / Strategic" : scores.overall >= 45 ? "Operator" : "First-Time Buyer",
+        executionDifficulty: isAbove || !dscrOk ? "High" : scores.overall >= 65 ? "Low" : "Moderate",
+        negotiationLeverage: isAbove ? "High" : isBelow ? "Low" : "Moderate",
+      },
+      whatMustBeTrue: [
+        `Revenue and SDE must remain at or above reported levels — if SDE declines 10%, implied fair value falls to approximately $${Math.round(fairLow * 0.9).toLocaleString()}`,
+        `All seller add-backs must be documented and non-recurring — unsupported add-backs would reduce effective SDE and compress the justified multiple`,
+        `DSCR of ${scores.debtRisk.dscr.toFixed(2)}x must hold under stress — a 15% revenue decline would pressure coverage toward the 1.0x threshold at current debt terms`,
+        `Customer concentration must be within acceptable limits — revenue from any single account above 25% introduces meaningful volatility risk`,
+      ],
+      decisionPath: {
+        steps: [
+          "Execute NDA and request 3 years of tax returns, P&L statements, and owner compensation detail",
+          "Validate all reported add-backs with supporting documentation",
+          "Confirm customer concentration and split between recurring and project-based revenue",
+        ],
+        ifValidated: `If financials confirm reported SDE and add-backs are documented → proceed to LOI targeting ${fmt(Math.round(fairMid * 0.95))}–${fmt(fairMid)}`,
+        ifNot: `If SDE is lower than reported or add-backs are unsupported → renegotiate toward ${fmt(fairLow)}–${fmt(Math.round(fairMid * 0.9))} or restructure with a seller note covering the valuation gap`,
+      },
+      negotiationPlaybook: {
+        anchorRange: `Open at ${fmt(Math.round(fairLow * (gapN > 20 ? 0.95 : 1.0)))}–${fmt(fairMid)}, anchored to ${scores.valuation.sampleSize.toLocaleString()} comparable closed transactions (${scores.valuation.benchmarkSource})`,
+        structureIdeas: [
+          gapN > 15 ? `Seller note covering ${Math.min(30, Math.round(gapN / 2))}% of the gap above median fair value` : "Standard SBA structure with 90-day seller transition",
+          `Earn-out tied to Year 1 SDE at or above $${Math.round(sdeNum * 0.95).toLocaleString()} — limits downside if performance lags representations`,
+        ],
+        walkAway: `If seller will not move below ${fmt(Math.round(fairHigh * 1.15))} and financials do not support the represented SDE, return assumptions become difficult to underwrite on standard terms`,
+      },
+      dealBreakers: [
+        "SDE materially lower than represented after owner compensation normalization and add-back review",
+        `DSCR falls below 1.0x under a 15% revenue stress scenario at current debt terms`,
+        "Customer concentration above 30% in a single account without a binding multi-year contract",
+        "Owner performing non-transferable technical or relationship functions with no identified successor",
+      ],
+      confidenceNote: `Analysis benchmarked against ${scores.valuation.sampleSize.toLocaleString()} comparable ${ind?.label || ""} transactions (${scores.valuation.benchmarkSource}). Limitations: add-backs, customer concentration, and operational risk factors are not verified at this stage — this is a screening analysis only, not a final underwriting determination.`,
+      pricingContext: `The ${ind?.label} asking price of ${scores.valuation.multiple.toFixed(2)}x SDE is ${scores.valuation.rangePosition.toLowerCase()} the ${mktLow}–${mktHigh}x range observed across ${scores.valuation.sampleSize.toLocaleString()} comparable transactions, with the ask ${Math.abs(gapN).toFixed(1)}% ${gapN > 0 ? "above" : "below"} the ${mktMid}x median. ${isAbove ? "The premium may require justification through demonstrable earnings quality or identifiable growth trajectory." : isBelow ? "Below-range pricing warrants investigation of seller motivation before assuming it represents upside." : "Pricing appears broadly consistent with market norms for this industry."}`,
+      businessQuality: `Operating margin of ${sdeMargin}% ${marginOk ? "is within" : "falls below"} the ${ind?.marginRange[0]}–${ind?.marginRange[1]}% industry range${marginOk ? ", supporting the quality of reported earnings" : " — buyers should evaluate cost structure and add-back reliability before accepting reported SDE"}. Projected DSCR of ${scores.debtRisk.dscr.toFixed(2)}x ${dscrOk ? "meets standard lender thresholds, supporting SBA financing eligibility" : "falls below the 1.25x lender minimum and may require additional equity or a revised debt structure"}.`,
+      buyerInterpretation: `For the deal to underwrite at the asking price, reported SDE must be confirmed as normalized and sustainable, and debt coverage must hold under at least a 10–15% revenue stress scenario. ${isAbove ? "The primary risk concentrates in valuation — the ask requires above-median earnings quality to support the implied multiple." : "The primary risk concentrates in operational reliability — buyers should validate revenue predictability and owner dependency before advancing."} Priority diligence action: obtain 3 years of tax returns and normalize owner compensation before submitting an LOI.`,
+    };
+    setDealMemo(memo);
+    setResults((p) => p ? { ...p, dealMemo: memo, aiInsight: [memo.pricingContext, memo.businessQuality, memo.buyerInterpretation].join("\n\n") } : p);
+  };
+
 
   const handleShareImage = () => { if (!results) return; const d = generateShareCard(results, inputs.industry, inputs); const l = document.createElement("a"); l.download = `nextax-deal-score-${results.overall}.png`; l.href = d; l.click(); setShareMenuOpen(false); };
   const handleShareText = (p: string) => {
@@ -1024,91 +1157,155 @@ Buyers should validate the sustainability of reported add-backs, confirm custome
             <div style={{ fontSize: 11, color: "#6B7280", marginTop: 6 }}>Based on {results.communityComparison.totalDeals} similar {INDUSTRIES[inputs.industry]?.label.toLowerCase()} deals analyzed</div>
           </div>
 
-          {/* ── AI Assessment — 3-paragraph structured ── */}
-          <div className="fu fd6" style={{ background: "rgba(99,102,241,0.06)", border: "1px solid rgba(99,102,241,0.15)", borderRadius: 14, padding: "18px 22px", marginBottom: 14 }}>
-            <div style={{ fontSize: 11, color: "#818CF8", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 14, fontWeight: 600 }}>AI Deal Assessment</div>
-            {aiLoading ? (
-              <div style={{ fontSize: 13, color: "#A5B4FC", fontStyle: "italic" }}>Composing deal memo...</div>
-            ) : results.aiInsight ? (
-              <div>
-                {results.aiInsight.split(/\n\n+/).filter(p => p.trim()).map((para, i) => {
-                  const labels = ["Pricing Context", "Business Quality", "Buyer Interpretation"];
-                  return (
-                    <div key={i} style={{ marginBottom: i < 2 ? 14 : 0, paddingBottom: i < 2 ? 14 : 0, borderBottom: i < 2 ? "1px solid rgba(99,102,241,0.1)" : "none" }}>
-                      {labels[i] && (
-                        <div style={{ fontSize: 10, color: "#6366F1", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 4 }}>{labels[i]}</div>
-                      )}
-                      <p style={{ margin: 0, fontSize: 13, color: "#C4B5FD", lineHeight: 1.7 }}>{para.trim()}</p>
-                    </div>
-                  );
-                })}
-              </div>
-            ) : null}
-          </div>
-
-          {/* ── PATCH 8: Recommended Next Steps ── */}
-          {(() => {
-            const ns = results.nextStep;
-            const stepConfig = {
-              advance: {
-                color: "#10B981", bg: "rgba(16,185,129,0.06)", border: "rgba(16,185,129,0.2)",
-                label: "Advance to Diligence",
-                summary: "Deal metrics are broadly supportive for proceeding. The valuation, coverage, and industry profile are consistent with a viable acquisition at or near these terms.",
-                actions: [
-                  "Request 3 years of normalized financials and tax returns",
-                  "Validate all seller add-backs with documentation",
-                  "Confirm customer concentration — no single customer >20% of revenue",
-                  "Obtain a Quality of Earnings review before finalizing LOI terms",
-                ],
-              },
-              validate: {
-                color: "#F59E0B", bg: "rgba(245,158,11,0.06)", border: "rgba(245,158,11,0.2)",
-                label: "Validate Key Assumptions",
-                summary: "One or more metrics require clarification before advancing. The deal may work at these terms — but key assumptions must be confirmed before LOI submission.",
-                actions: [
-                  "Stress-test SDE under two adverse revenue scenarios",
-                  "Verify add-back sustainability and owner compensation normalization",
-                  "Confirm debt service coverage with actual monthly cash flow data",
-                  "Request comparable transaction data from broker to justify ask multiple",
-                ],
-              },
-              reprice: {
-                color: "#F97316", bg: "rgba(249,115,22,0.06)", border: "rgba(249,115,22,0.2)",
-                label: "Reprice or Reassess",
-                summary: "At the current ask, return assumptions are difficult to underwrite on standard terms. A structured counter or repricing discussion is warranted before proceeding.",
-                actions: [
-                  "Present closed transaction comps to reframe seller's pricing expectations",
-                  "Model a counter-offer at or below the observed median multiple",
-                  "Explore seller financing, earn-out, or equity rollover to bridge the valuation gap",
-                  "If seller is firm on price, request access to financial records to identify upside assumptions",
-                ],
-              },
-            };
-            const cfg = stepConfig[ns];
-            return (
-              <div className="fu fd6" style={{ background: cfg.bg, border: `1px solid ${cfg.border}`, borderRadius: 14, padding: "18px 22px", marginBottom: 14 }}>
-                <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 10 }}>
-                  <div style={{ width: 8, height: 8, borderRadius: 4, background: cfg.color, flexShrink: 0 }} />
-                  <div style={{ fontSize: 11, color: cfg.color, textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: 700 }}>
-                    Recommended Next Step — {cfg.label}
-                  </div>
-                </div>
-                <p style={{ fontSize: 13, color: "#94A3B8", lineHeight: 1.6, margin: "0 0 12px" }}>{cfg.summary}</p>
-                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                  {cfg.actions.map((action, i) => (
-                    <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
-                      <span style={{ color: cfg.color, fontSize: 11, flexShrink: 0, marginTop: 2 }}>→</span>
-                      <span style={{ fontSize: 12, color: "#94A3B8", lineHeight: 1.5 }}>{action}</span>
+          {/* ══ DEAL MEMO — 6-section decision intelligence ══ */}
+          {aiLoading ? (
+            <div className="fu fd6" style={{ background: "rgba(99,102,241,0.05)", border: "1px solid rgba(99,102,241,0.12)", borderRadius: 14, padding: "24px 22px", marginBottom: 14 }}>
+              <div style={{ fontSize: 11, color: "#818CF8", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 10, fontWeight: 600 }}>Deal Screening Memo</div>
+              <div style={{ fontSize: 13, color: "#A5B4FC", fontStyle: "italic" }}>Composing decision-intelligence memo...</div>
+            </div>
+          ) : dealMemo ? (
+            <>
+              {/* ── 1. Deal Positioning ── */}
+              <div className="fu fd6" style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, padding: "18px 22px", marginBottom: 12 }}>
+                <div style={{ fontSize: 11, color: "#94A3B8", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 14, fontWeight: 600 }}>Deal Positioning</div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+                  {[
+                    { label: "Market Position",      value: dealMemo.positioning.marketPosition,
+                      color: dealMemo.positioning.marketPosition === "Above Market" ? "#F59E0B" : dealMemo.positioning.marketPosition === "Below Market" ? "#10B981" : "#3B82F6" },
+                    { label: "Buyer Fit",            value: dealMemo.positioning.buyerFit,            color: "#C4B5FD" },
+                    { label: "Execution Difficulty", value: dealMemo.positioning.executionDifficulty,
+                      color: dealMemo.positioning.executionDifficulty === "High" ? "#F97316" : dealMemo.positioning.executionDifficulty === "Low" ? "#10B981" : "#F59E0B" },
+                    { label: "Negotiation Leverage", value: dealMemo.positioning.negotiationLeverage,
+                      color: dealMemo.positioning.negotiationLeverage === "High" ? "#10B981" : dealMemo.positioning.negotiationLeverage === "Low" ? "#F97316" : "#F59E0B" },
+                  ].map(({ label, value, color }) => (
+                    <div key={label} style={{ padding: "10px 14px", borderRadius: 8, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.05)" }}>
+                      <div style={{ fontSize: 9, color: "#6B7280", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 4 }}>{label}</div>
+                      <div style={{ fontSize: 14, fontWeight: 700, color }}>{value}</div>
                     </div>
                   ))}
                 </div>
-                {/* PATCH 9: Monetization bridge */}
-                <div style={{ marginTop: 14, paddingTop: 14, borderTop: `1px solid ${cfg.border}`, fontSize: 12, color: "#4B5563", lineHeight: 1.6, fontStyle: "italic" }}>
-                  Many buyers at this stage transition from initial screening to structured underwriting — including financial normalization, add-back validation, and return modeling based on deal-specific assumptions.
+              </div>
+
+              {/* ── 2. AI Assessment — 3 paragraphs ── */}
+              <div className="fu fd6" style={{ background: "rgba(99,102,241,0.05)", border: "1px solid rgba(99,102,241,0.14)", borderRadius: 14, padding: "18px 22px", marginBottom: 12 }}>
+                <div style={{ fontSize: 11, color: "#818CF8", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 14, fontWeight: 600 }}>Deal Assessment</div>
+                {[
+                  { label: "Pricing Context",      text: dealMemo.pricingContext },
+                  { label: "Business Quality",     text: dealMemo.businessQuality },
+                  { label: "Buyer Interpretation", text: dealMemo.buyerInterpretation },
+                ].map(({ label, text }, i) => (
+                  <div key={label} style={{ marginBottom: i < 2 ? 14 : 0, paddingBottom: i < 2 ? 14 : 0, borderBottom: i < 2 ? "1px solid rgba(99,102,241,0.1)" : "none" }}>
+                    <div style={{ fontSize: 10, color: "#6366F1", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 5 }}>{label}</div>
+                    <p style={{ margin: 0, fontSize: 13, color: "#C4B5FD", lineHeight: 1.7 }}>{text}</p>
+                  </div>
+                ))}
+              </div>
+
+              {/* ── 3. What Must Be True ── */}
+              <div className="fu fd6" style={{ background: "rgba(245,158,11,0.04)", border: "1px solid rgba(245,158,11,0.15)", borderRadius: 14, padding: "18px 22px", marginBottom: 12 }}>
+                <div style={{ fontSize: 11, color: "#F59E0B", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 12, fontWeight: 600 }}>What Must Be True</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {dealMemo.whatMustBeTrue.map((assumption, i) => (
+                    <div key={i} style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+                      <span style={{ fontSize: 11, color: "#F59E0B", fontWeight: 700, flexShrink: 0, marginTop: 2, fontFamily: "'JetBrains Mono', monospace" }}>{i + 1}</span>
+                      <span style={{ fontSize: 12, color: "#FBBF24", lineHeight: 1.6 }}>{assumption}</span>
+                    </div>
+                  ))}
                 </div>
               </div>
-            );
-          })()}
+
+              {/* ── 4. Buyer Decision Path ── */}
+              <div className="fu fd6" style={{ background: "rgba(59,130,246,0.04)", border: "1px solid rgba(59,130,246,0.15)", borderRadius: 14, padding: "18px 22px", marginBottom: 12 }}>
+                <div style={{ fontSize: 11, color: "#3B82F6", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 12, fontWeight: 600 }}>Buyer Decision Path</div>
+                <div style={{ marginBottom: 12 }}>
+                  {dealMemo.decisionPath.steps.map((step, i) => (
+                    <div key={i} style={{ display: "flex", gap: 10, alignItems: "flex-start", marginBottom: 7 }}>
+                      <div style={{ width: 20, height: 20, borderRadius: 10, background: "rgba(59,130,246,0.15)", border: "1px solid rgba(59,130,246,0.3)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, color: "#3B82F6", flexShrink: 0 }}>{i + 1}</div>
+                      <span style={{ fontSize: 12, color: "#94A3B8", lineHeight: 1.5, paddingTop: 2 }}>{step}</span>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                  {[
+                    { prefix: "If validated →", text: dealMemo.decisionPath.ifValidated, color: "#10B981", bg: "rgba(16,185,129,0.06)", border: "rgba(16,185,129,0.2)" },
+                    { prefix: "If not →",       text: dealMemo.decisionPath.ifNot,       color: "#F97316", bg: "rgba(249,115,22,0.06)",  border: "rgba(249,115,22,0.2)"  },
+                  ].map(({ prefix, text, color, bg, border }) => (
+                    <div key={prefix} style={{ padding: "10px 14px", borderRadius: 8, background: bg, border: `1px solid ${border}` }}>
+                      <span style={{ fontSize: 11, fontWeight: 700, color, marginRight: 6 }}>{prefix}</span>
+                      <span style={{ fontSize: 12, color: "#94A3B8" }}>{text.replace(/^if (validated|not)[^→]*→\s*/i, "")}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* ── 5. Negotiation Playbook ── */}
+              <div className="fu fd6" style={{ background: "rgba(16,185,129,0.04)", border: "1px solid rgba(16,185,129,0.15)", borderRadius: 14, padding: "18px 22px", marginBottom: 12 }}>
+                <div style={{ fontSize: 11, color: "#10B981", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 12, fontWeight: 600 }}>Negotiation Playbook</div>
+                <div style={{ marginBottom: 10 }}>
+                  <div style={{ fontSize: 10, color: "#6B7280", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4 }}>Anchor Range</div>
+                  <div style={{ fontSize: 13, color: "#6EE7B7", lineHeight: 1.5 }}>{dealMemo.negotiationPlaybook.anchorRange}</div>
+                </div>
+                <div style={{ marginBottom: 10 }}>
+                  <div style={{ fontSize: 10, color: "#6B7280", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 6 }}>Structure Ideas</div>
+                  {dealMemo.negotiationPlaybook.structureIdeas.map((idea, i) => (
+                    <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: 5 }}>
+                      <span style={{ color: "#10B981", fontSize: 11, flexShrink: 0 }}>→</span>
+                      <span style={{ fontSize: 12, color: "#94A3B8", lineHeight: 1.5 }}>{idea}</span>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ padding: "8px 12px", borderRadius: 7, background: "rgba(249,115,22,0.07)", border: "1px solid rgba(249,115,22,0.18)" }}>
+                  <span style={{ fontSize: 10, color: "#F97316", fontWeight: 600, textTransform: "uppercase", marginRight: 6 }}>Walk-Away</span>
+                  <span style={{ fontSize: 12, color: "#94A3B8" }}>{dealMemo.negotiationPlaybook.walkAway}</span>
+                </div>
+              </div>
+
+              {/* ── 6. Deal Breakers ── */}
+              <div className="fu fd6" style={{ background: "rgba(239,68,68,0.04)", border: "1px solid rgba(239,68,68,0.14)", borderRadius: 14, padding: "18px 22px", marginBottom: 12 }}>
+                <div style={{ fontSize: 11, color: "#EF4444", textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 12, fontWeight: 600 }}>Deal Breakers</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 7 }}>
+                  {dealMemo.dealBreakers.map((risk, i) => (
+                    <div key={i} style={{ display: "flex", gap: 10, alignItems: "flex-start" }}>
+                      <span style={{ fontSize: 11, color: "#EF4444", flexShrink: 0, marginTop: 2 }}>✕</span>
+                      <span style={{ fontSize: 12, color: "#FCA5A5", lineHeight: 1.5 }}>{risk}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* ── 7. Recommended Next Step ── */}
+              {(() => {
+                const ns = results.nextStep;
+                const cfg = {
+                  advance: { color: "#10B981", bg: "rgba(16,185,129,0.06)", border: "rgba(16,185,129,0.2)", label: "Advance to Diligence",
+                    summary: "Deal metrics are broadly supportive for proceeding. Valuation, coverage, and industry profile are consistent with a viable acquisition at or near current terms." },
+                  validate: { color: "#F59E0B", bg: "rgba(245,158,11,0.06)", border: "rgba(245,158,11,0.2)", label: "Validate Key Assumptions",
+                    summary: "One or more metrics require clarification. The deal may work at these terms — key assumptions must be confirmed before LOI submission." },
+                  reprice:  { color: "#F97316", bg: "rgba(249,115,22,0.06)", border: "rgba(249,115,22,0.2)", label: "Reprice or Reassess",
+                    summary: "At the current ask, return assumptions are difficult to underwrite on standard terms. A structured counter or repricing discussion is warranted." },
+                }[ns];
+                return (
+                  <div className="fu fd6" style={{ background: cfg.bg, border: `1px solid ${cfg.border}`, borderRadius: 14, padding: "18px 22px", marginBottom: 12 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8 }}>
+                      <div style={{ width: 8, height: 8, borderRadius: 4, background: cfg.color, flexShrink: 0 }} />
+                      <div style={{ fontSize: 11, color: cfg.color, textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: 700 }}>Recommended Next Step — {cfg.label}</div>
+                    </div>
+                    <p style={{ fontSize: 13, color: "#94A3B8", lineHeight: 1.6, margin: "0 0 10px" }}>{cfg.summary}</p>
+                    <div style={{ marginTop: 12, paddingTop: 12, borderTop: `1px solid ${cfg.border}`, fontSize: 12, color: "#4B5563", lineHeight: 1.6, fontStyle: "italic" }}>
+                      Many buyers at this stage transition from initial screening to structured underwriting — including financial normalization, add-back validation, and return modeling based on deal-specific assumptions.
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* ── 8. Confidence Note ── */}
+              <div className="fu fd6" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 12, padding: "14px 18px", marginBottom: 14 }}>
+                <div style={{ fontSize: 10, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 5, fontWeight: 600 }}>Confidence & Limitations</div>
+                <p style={{ margin: 0, fontSize: 12, color: "#6B7280", lineHeight: 1.6 }}>{dealMemo.confidenceNote}</p>
+              </div>
+            </>
+          ) : null}
+
 
           {/* ── Data Sources + Confidence (Three-lens) ── */}
           <div className="fu fd7" style={{ background: "linear-gradient(135deg, rgba(59,130,246,0.08) 0%, rgba(99,102,241,0.06) 100%)", border: "1px solid rgba(59,130,246,0.2)", borderRadius: 14, padding: "22px 24px", marginBottom: 14 }}>
@@ -1209,7 +1406,7 @@ Buyers should validate the sustainability of reported add-backs, confirm custome
             </a>
           </div>
 
-          <button onClick={() => { setShowResults(false); setResults(null); window.scrollTo({ top: 0, behavior: "smooth" }); }} style={{ width: "100%", padding: "12px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.08)", background: "transparent", color: "#6B7280", fontSize: 13, fontWeight: 500, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>↺ Analyze Another Deal</button>
+          <button onClick={() => { setShowResults(false); setResults(null); setDealMemo(null); window.scrollTo({ top: 0, behavior: "smooth" }); }} style={{ width: "100%", padding: "12px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.08)", background: "transparent", color: "#6B7280", fontSize: 13, fontWeight: 500, cursor: "pointer", fontFamily: "'DM Sans', sans-serif" }}>↺ Analyze Another Deal</button>
           <p style={{ fontSize: 11, color: "#4B5563", marginTop: 16, lineHeight: 1.5, textAlign: "center" }}>This tool provides a preliminary screening based on market benchmarks. Not financial or legal advice.</p>
         </div>
       )}
