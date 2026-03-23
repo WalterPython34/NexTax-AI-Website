@@ -499,9 +499,17 @@ export default function DealRealityCheck() {
     setTimeout(() => resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
     if (pendingResults) {
       fetchAI(pendingResults);
-      fetchBenchmarks(pendingResults);
-      recordDeal(pendingResults);
-      createDealPage(pendingResults);
+      // fetchBenchmarks updates scores asynchronously; createDealPage and
+      // recordDeal run inside .then() so they capture the final updated scores
+      fetchBenchmarks(pendingResults).then(() => {
+        setResults((finalScores) => {
+          if (finalScores) {
+            createDealPage(finalScores);
+            recordDeal(finalScores);
+          }
+          return finalScores;
+        });
+      });
     }
   };
 
