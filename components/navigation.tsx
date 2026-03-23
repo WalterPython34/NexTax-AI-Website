@@ -45,17 +45,13 @@ export default function Navigation() {
               {isAcquisitionsOpen && (
                 <div className="absolute top-full left-0 mt-1 w-48 bg-slate-800 border border-slate-700 rounded-lg shadow-xl py-2 z-50">
                   <a
-                    href="https://valuationhub.emergent.host/"
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    href="/deal-reality-check"
                     className="block px-4 py-2 text-sm hover:bg-slate-700 hover:text-blue-400 transition-colors"
                   >
                     Analyze a Deal
                   </a>
                   <a
-                    href="https://valuationhub.emergent.host/"
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    href="/deal-check"
                     className="block px-4 py-2 text-sm hover:bg-slate-700 hover:text-blue-400 transition-colors"
                   >
                     Full Deal Report
