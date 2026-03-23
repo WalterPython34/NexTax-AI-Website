@@ -4,10 +4,12 @@ import { useState } from "react"
 import Link from "next/link"
 import Image from "next/image"
 import { Button } from "@/components/ui/button"
-import { Menu, X } from "lucide-react"
+import { Menu, X, ChevronDown } from "lucide-react"
 
 export default function Navigation() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [isAcquisitionsOpen, setIsAcquisitionsOpen] = useState(false)
+  const [isMobileAcquisitionsOpen, setIsMobileAcquisitionsOpen] = useState(false)
 
   return (
     <nav className="bg-slate-900 text-white sticky top-0 z-50">
@@ -31,6 +33,42 @@ export default function Navigation() {
             <Link href="/resources" className="hover:text-teal-400 transition-colors">
               Resources
             </Link>
+            <div 
+              className="relative"
+              onMouseEnter={() => setIsAcquisitionsOpen(true)}
+              onMouseLeave={() => setIsAcquisitionsOpen(false)}
+            >
+              <button className="flex items-center gap-1 hover:text-blue-400 transition-colors">
+                Acquisitions
+                <ChevronDown className={`w-4 h-4 transition-transform ${isAcquisitionsOpen ? "rotate-180" : ""}`} />
+              </button>
+              {isAcquisitionsOpen && (
+                <div className="absolute top-full left-0 mt-1 w-48 bg-slate-800 border border-slate-700 rounded-lg shadow-xl py-2 z-50">
+                  <a
+                    href="https://valuationhub.emergent.host/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block px-4 py-2 text-sm hover:bg-slate-700 hover:text-blue-400 transition-colors"
+                  >
+                    Analyze a Deal
+                  </a>
+                  <a
+                    href="https://valuationhub.emergent.host/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="block px-4 py-2 text-sm hover:bg-slate-700 hover:text-blue-400 transition-colors"
+                  >
+                    Full Deal Report
+                  </a>
+                  <Link
+                    href="/acquisitions"
+                    className="block px-4 py-2 text-sm hover:bg-slate-700 hover:text-blue-400 transition-colors"
+                  >
+                    Buy-Side Advisory
+                  </Link>
+                </div>
+              )}
+            </div>
             <Link href="/about" className="hover:text-teal-400 transition-colors">
               About
             </Link>
@@ -94,11 +132,48 @@ export default function Navigation() {
               >
                 Resources
               </Link>
+
+              <div>
+                <button
+                  className="flex items-center justify-between w-full px-3 py-2 text-base font-medium hover:text-blue-400 transition-colors"
+                  onClick={() => setIsMobileAcquisitionsOpen(!isMobileAcquisitionsOpen)}
+                >
+                  Acquisitions
+                  <ChevronDown className={`w-4 h-4 transition-transform ${isMobileAcquisitionsOpen ? "rotate-180" : ""}`} />
+                </button>
+                {isMobileAcquisitionsOpen && (
+                  <div className="pl-6 space-y-1">
+                    <a
+                      href="/deal-reality-check"
+                      className="block px-3 py-2 text-sm text-slate-300 hover:text-blue-400 transition-colors"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      Analyze a Deal
+                    </a>
+                    <a
+                      href="/deal-check"
+                      className="block px-3 py-2 text-sm text-slate-300 hover:text-blue-400 transition-colors"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      Full Deal Report
+                    </a>
+                    <Link
+                      href="/acquisitions"
+                      className="block px-3 py-2 text-sm text-slate-300 hover:text-blue-400 transition-colors"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      Buy-Side Advisory
+                    </Link>
+                  </div>
+                )}
+              </div>
+              
               <Link
                 href="/about"
                 className="block px-4 py-4 text-white hover:text-teal-400 hover:bg-slate-800 rounded-lg transition-colors text-lg"
                 onClick={() => setIsMenuOpen(false)}
               >
+                              
                 About
               </Link>
               <Link
@@ -137,3 +212,4 @@ export default function Navigation() {
   )
 }
 
+export default Navigation
