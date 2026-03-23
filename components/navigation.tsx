@@ -44,6 +44,10 @@ export default function Navigation() {
               </button>
               {isAcquisitionsOpen && (
                 <div className="absolute top-full left-0 mt-1 w-48 bg-slate-800 border border-slate-700 rounded-lg shadow-xl py-2 z-50">
+                  {/* FOR BUYERS */}
+                  <div className="px-4 py-1.5">
+                    <span className="text-xs font-semibold text-blue-400 uppercase tracking-wide">For Buyers</span>
+                  </div>
                   <a
                     href="/deal-reality-check"
                     className="block px-4 py-2 text-sm hover:bg-slate-700 hover:text-blue-400 transition-colors"
@@ -61,6 +65,32 @@ export default function Navigation() {
                     className="block px-4 py-2 text-sm hover:bg-slate-700 hover:text-blue-400 transition-colors"
                   >
                     Buy-Side Advisory
+                  </Link>
+
+                  {/* Divider */}
+                  <div className="my-2 border-t border-slate-600" />
+
+                  {/* FOR SELLERS */}
+                  <div className="px-4 py-1.5">
+                    <span className="text-xs font-semibold text-emerald-400 uppercase tracking-wide">For Sellers</span>
+                  </div>
+                  <Link
+                    href="/sell/thinking-about-selling"
+                    className="block px-4 py-2 text-sm hover:bg-slate-700 hover:text-blue-400 transition-colors"
+                  >
+                    Thinking About Selling?
+                  </Link>
+                  <Link
+                    href="/sell/get-market-ready"
+                    className="block px-4 py-2 text-sm hover:bg-slate-700 hover:text-blue-400 transition-colors"
+                  >
+                    Get Your Business Market-Ready
+                  </Link>
+                  <Link
+                    href="/sell/sell-side-advisory"
+                    className="block px-4 py-2 text-sm hover:bg-slate-700 hover:text-blue-400 transition-colors"
+                  >
+                    Sell-Side Advisory
                   </Link>
                 </div>
               )}
@@ -139,6 +169,10 @@ export default function Navigation() {
                 </button>
                 {isMobileAcquisitionsOpen && (
                   <div className="pl-6 space-y-1">
+                    {/* FOR BUYERS */}
+                    <div className="px-3 py-1.5">
+                      <span className="text-xs font-semibold text-blue-400 uppercase tracking-wide">For Buyers</span>
+                    </div>
                     <a
                       href="/deal-reality-check"
                       className="block px-3 py-2 text-sm text-slate-300 hover:text-blue-400 transition-colors"
@@ -159,6 +193,35 @@ export default function Navigation() {
                       onClick={() => setIsMenuOpen(false)}
                     >
                       Buy-Side Advisory
+                    </Link>
+                    
+                   {/* Divider */}
+                    <div className="my-2 mx-3 border-t border-slate-600" />
+                    
+                    {/* FOR SELLERS */}
+                    <div className="px-3 py-1.5">
+                      <span className="text-xs font-semibold text-emerald-400 uppercase tracking-wide">For Sellers</span>
+                    </div>
+                    <Link
+                      href="/sell/thinking-about-selling"
+                      className="block px-3 py-2 text-sm text-slate-300 hover:text-blue-400 transition-colors"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      Thinking About Selling?
+                    </Link>
+                    <Link
+                      href="/sell/get-market-ready"
+                      className="block px-3 py-2 text-sm text-slate-300 hover:text-blue-400 transition-colors"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      Get Your Business Market-Ready
+                    </Link>
+                    <Link
+                      href="/sell/sell-side-advisory"
+                      className="block px-3 py-2 text-sm text-slate-300 hover:text-blue-400 transition-colors"
+                      onClick={() => setIsMenuOpen(false)}
+                    >
+                      Sell-Side Advisory
                     </Link>
                   </div>
                 )}
