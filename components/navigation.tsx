@@ -54,7 +54,7 @@ export default function Navigation() {
                     href="/deal-check"
                     className="block px-4 py-2 text-sm hover:bg-slate-700 hover:text-blue-400 transition-colors"
                   >
-                    Full Deal Report
+                    Validate This Deal
                   </a>
                   <Link
                     href="/acquisitions"
@@ -151,7 +151,7 @@ export default function Navigation() {
                       className="block px-3 py-2 text-sm text-slate-300 hover:text-blue-400 transition-colors"
                       onClick={() => setIsMenuOpen(false)}
                     >
-                      Full Deal Report
+                      Validate This Deal
                     </a>
                     <Link
                       href="/acquisitions"
