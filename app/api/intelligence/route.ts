@@ -142,9 +142,13 @@ export async function GET() {
       d.txnSales > 0 || d.listingSampleSize > 0 || d.dstatsSampleSize > 0
     );
 
-    const driValues = driByIndustry.filter((d) => d.dri !== null).map((d) => d.dri!);
-    const overallDRI = driValues.length > 0
-      ? +(driValues.reduce((s, v) => s + v, 0) / driValues.length).toFixed(2)
+    // Weighted DRI — weight each industry by sqrt(dealCount) so high-volume
+    // industries matter more without letting one dominant industry swamp everything
+    const driWithCounts = driByIndustry.filter((d) => d.dri !== null);
+    const sqrtWeights = driWithCounts.map((d) => Math.sqrt(Math.max(d.dealCount, 1)));
+    const totalWeight = sqrtWeights.reduce((s, w) => s + w, 0);
+    const overallDRI = driWithCounts.length > 0 && totalWeight > 0
+      ? +(driWithCounts.reduce((s, d, i) => s + d.dri! * (sqrtWeights[i] / totalWeight), 0)).toFixed(2)
       : null;
 
     // DRI trend (simulated — will become real once dri_snapshots table is added)
