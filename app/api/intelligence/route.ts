@@ -142,10 +142,15 @@ export async function GET() {
       d.txnSales > 0 || d.listingSampleSize > 0 || d.dstatsSampleSize > 0
     );
 
-    // Weighted DRI — weight each industry by sqrt(dealCount) so high-volume
-    // industries matter more without letting one dominant industry swamp everything
+    // Weighted DRI — weight by sqrt(closed transaction volume) per industry.
+    // Uses DealStats sample size + BizBuySell reported sales as the volume proxy.
+    // sqrt() compresses the range so no single high-volume industry dominates.
+    // Falls back to dealCount (listings) if neither transaction source has data.
     const driWithCounts = driByIndustry.filter((d) => d.dri !== null);
-    const sqrtWeights = driWithCounts.map((d) => Math.sqrt(Math.max(d.dealCount, 1)));
+    const sqrtWeights = driWithCounts.map((d) => {
+      const txnVolume = (d.dstatsSampleSize || 0) + (d.txnSales || 0);
+      return Math.sqrt(txnVolume > 0 ? txnVolume : Math.max(d.dealCount, 1));
+    });
     const totalWeight = sqrtWeights.reduce((s, w) => s + w, 0);
     const overallDRI = driWithCounts.length > 0 && totalWeight > 0
       ? +(driWithCounts.reduce((s, d, i) => s + d.dri! * (sqrtWeights[i] / totalWeight), 0)).toFixed(2)
