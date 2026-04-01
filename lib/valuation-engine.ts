@@ -4,13 +4,19 @@
  * Centralized benchmark lookup and fair value logic for all NexTax tools.
  *
  * Data source hierarchy (most → least precise):
+ *   0. Live blended benchmark     — industry_benchmarks_live: blends deal_runs +
+ *                                   dealstats_transactions + dealstats_benchmarks
+ *                                   into a single computed layer. Refreshed every 6hrs.
  *   1. DealStats size-band specific  — individual closed SMB transactions, sliced by revenue band
  *   2. DealStats industry aggregate  — same dataset, national/all-sizes rollup
  *   3. BizBuySell 2025 annual report — pre-aggregated industry medians from closed-market report
  *   4. Listing-derived fallback      — computed from deal_runs asking prices (last resort)
  *
- * GOVERNANCE: Raw DealStats or BizBuySell records are never returned to callers.
+ * GOVERNANCE: Raw DealStats or BizBuySell records are never returned to API consumers.
  * All outputs are derived NexTax Market Intelligence metrics.
+ *
+ * MIGRATION NOTE: Tier 0 (industry_benchmarks_live) was added 2026-04.
+ * Tiers 1–4 remain as fallbacks for industries not yet represented in the live layer.
  */
 
 import { createClient } from "@supabase/supabase-js";
@@ -20,6 +26,7 @@ import { createClient } from "@supabase/supabase-js";
 // ─────────────────────────────────────────────────────────────────────────────
 
 export type BenchmarkSource =
+  | "live_blended"     // industry_benchmarks_live — live computed blend (Tier 0)
   | "dstats_band"      // DealStats size-band specific — highest precision
   | "dstats_national"  // DealStats industry aggregate — broad sample
   | "bizbuysell"       // BizBuySell 2025 annual report — last external fallback
@@ -53,6 +60,12 @@ export interface ValuationBenchmark {
   sampleSize: number;
   sizeBand: string | null;
   industryKey: string;
+
+  // Tier 0 extras — only populated when source === "live_blended"
+  liveBenchmarkLow?: number | null;
+  liveBenchmarkHigh?: number | null;
+  liveBenchmarkSource?: string | null;
+  liveConfidenceScore?: number | null;
 }
 
 export interface FairValueResult {
@@ -116,6 +129,33 @@ interface ListingRow {
   sample_size: number;
 }
 
+// Tier 0: live blended benchmark row shape
+interface LiveBenchmarkRow {
+  industry_key: string;
+  size_band: string;
+  blended_benchmark_low: number | null;
+  blended_benchmark_mid: number | null;
+  blended_benchmark_high: number | null;
+  listing_p50_sde_multiple: number | null;
+  transaction_median_sde_multiple: number | null;
+  reference_median_mvic_to_sde: number | null;
+  reference_p25_mvic_to_sde: number | null;
+  reference_p75_mvic_to_sde: number | null;
+  listing_count: number;
+  transaction_count: number;
+  reference_sample_size: number;
+  confidence_score: number;
+  confidence_grade: string;
+  benchmark_source: string;
+  median_sde_margin: number | null;
+  median_ebitda_margin: number | null;
+  median_operating_margin: number | null;
+  listing_median_revenue: number | null;
+  listing_median_sde: number | null;
+  naics_code: string | null;
+  computed_at: string;
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // In-memory cache structure
 // Populated once per request via loadBenchmarkData() and passed to functions.
@@ -123,13 +163,18 @@ interface ListingRow {
 // ─────────────────────────────────────────────────────────────────────────────
 
 export interface BenchmarkDataset {
+  // Tier 0: live blended benchmarks — { [industry_key]: { [size_band]: row } }
+  live: Record<string, Record<string, LiveBenchmarkRow>>;
+
   // DealStats rows organized for fast lookup
   dstats: Record<string, {
     national: DStatsRow | null;
     byBand: Record<string, DStatsRow>;
   }>;
+
   // BizBuySell rows keyed by industry_key (multiple rows per industry = subsectors)
   bb: Record<string, BBRow[]>;
+
   // Listing benchmarks keyed by industry_key
   listing: Record<string, ListingRow>;
 }
@@ -145,7 +190,19 @@ export async function loadBenchmarkData(): Promise<BenchmarkDataset> {
     process.env.SUPABASE_SERVICE_ROLE_KEY!
   );
 
-  const [dstatsRes, bbRes, listingRes] = await Promise.all([
+  const [liveRes, dstatsRes, bbRes, listingRes] = await Promise.all([
+    // Tier 0: live blended benchmarks
+    supabase.from("industry_benchmarks_live").select(
+      "industry_key, size_band, " +
+      "blended_benchmark_low, blended_benchmark_mid, blended_benchmark_high, " +
+      "listing_p50_sde_multiple, transaction_median_sde_multiple, " +
+      "reference_median_mvic_to_sde, reference_p25_mvic_to_sde, reference_p75_mvic_to_sde, " +
+      "listing_count, transaction_count, reference_sample_size, " +
+      "confidence_score, confidence_grade, benchmark_source, " +
+      "median_sde_margin, median_ebitda_margin, median_operating_margin, " +
+      "listing_median_revenue, listing_median_sde, naics_code, computed_at"
+    ),
+    // Tier 1+2: DealStats
     supabase.from("dealstats_benchmarks").select(
       "industry_key, size_band, sample_size, " +
       "median_mvic_to_sde, median_mvic_to_revenue, median_mvic_to_ebitda, " +
@@ -153,14 +210,24 @@ export async function loadBenchmarkData(): Promise<BenchmarkDataset> {
       "median_revenue, median_sde, median_ebitda, median_mvic, " +
       "median_sde_margin, median_ebitda_margin, median_operating_margin"
     ),
+    // Tier 3: BizBuySell
     supabase.from("industry_transaction_benchmarks").select(
       "industry_key, reported_sales, cashflow_multiple_avg, " +
       "median_sale_price, sale_to_asking_ratio, median_days_on_market"
     ).not("industry_key", "is", null),
+    // Tier 4: Listing-derived fallback
     supabase.from("industry_listing_benchmarks").select(
       "industry_key, median_multiple, median_asking_price, sample_size"
     ).is("state", null).is("size_band", null),
   ]);
+
+  // Organize Tier 0 live benchmarks: { [industry_key]: { [size_band]: row } }
+  const live: BenchmarkDataset["live"] = {};
+  for (const row of (liveRes.data || []) as LiveBenchmarkRow[]) {
+    if (!row.industry_key || !row.size_band) continue;
+    if (!live[row.industry_key]) live[row.industry_key] = {};
+    live[row.industry_key][row.size_band] = row;
+  }
 
   // Organize DealStats into fast lookup: { [industry_key]: { national, byBand } }
   const dstats: BenchmarkDataset["dstats"] = {};
@@ -188,7 +255,7 @@ export async function loadBenchmarkData(): Promise<BenchmarkDataset> {
     if (row.industry_key) listing[row.industry_key] = row;
   }
 
-  return { dstats, bb, listing };
+  return { live, dstats, bb, listing };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -197,8 +264,16 @@ export async function loadBenchmarkData(): Promise<BenchmarkDataset> {
 
 export function getBenchmarkConfidence(
   sampleSize: number,
-  fallbackLevel: "dstats_band" | "dstats_national" | "bizbuysell" | "listing"
+  fallbackLevel: "live_blended" | "dstats_band" | "dstats_national" | "bizbuysell" | "listing"
 ): ConfidenceLevel {
+  // Live blended: maps directly from confidence_grade stored in the table
+  // This overload is only used when building from live data without a stored grade
+  if (fallbackLevel === "live_blended") {
+    if (sampleSize >= 75) return "HIGH";
+    if (sampleSize >= 50) return "MEDIUM";
+    if (sampleSize >= 20) return "LOW";
+    return "INSUFFICIENT";
+  }
   // DealStats band-specific: tightest distribution, highest precision
   if (fallbackLevel === "dstats_band") {
     if (sampleSize >= 25) return "HIGH";
@@ -227,6 +302,15 @@ export function getBenchmarkConfidence(
 // CORE: getValuationBenchmark
 // Returns the full benchmark record for a given industry + size band.
 // This is the single source of truth for all downstream valuation functions.
+//
+// Tier 0 (live_blended) is used when:
+//   - confidence_grade is HIGH or MEDIUM
+//   - blended_benchmark_mid is present
+//   - The live row exists for the given industry+size_band
+//
+// Tier 0 is skipped (falls through to Tier 1) when:
+//   - confidence_grade is LOW or missing
+//   - No live row exists for the exact size_band (tries industry-wide live first)
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function getValuationBenchmark(
@@ -234,9 +318,30 @@ export function getValuationBenchmark(
   sizeBand: string | null | undefined,
   data: BenchmarkDataset
 ): ValuationBenchmark {
+  const liveByBand = data.live[industryKey] || {};
   const ds = data.dstats[industryKey];
   const bbRows = data.bb[industryKey] || [];
   const listingRow = data.listing[industryKey] || null;
+
+  // ── Tier 0a: Live blended — exact size band match
+  if (sizeBand && liveByBand[sizeBand]) {
+    const row = liveByBand[sizeBand];
+    if (row.blended_benchmark_mid && row.confidence_grade !== "LOW") {
+      return buildFromLive(row, sizeBand, industryKey);
+    }
+  }
+
+  // ── Tier 0b: Live blended — best available band for this industry
+  // (use highest-confidence row when exact band is missing or LOW)
+  const liveBands = Object.values(liveByBand);
+  if (liveBands.length > 0) {
+    const best = liveBands
+      .filter(r => r.blended_benchmark_mid && r.confidence_grade !== "LOW")
+      .sort((a, b) => (b.confidence_score || 0) - (a.confidence_score || 0))[0];
+    if (best) {
+      return buildFromLive(best, best.size_band, industryKey);
+    }
+  }
 
   // ── Tier 1: DealStats size-band specific
   if (sizeBand && ds?.byBand?.[sizeBand]) {
@@ -257,7 +362,9 @@ export function getValuationBenchmark(
   // ── Tier 3: BizBuySell annual report (cashflow multiple)
   const bbSales = bbRows.reduce((s, t) => s + (t.reported_sales || 0), 0);
   if (bbSales > 0) {
-    const bbMultiple = bbRows.reduce((s, t) => s + (t.cashflow_multiple_avg || 0) * (t.reported_sales || 0), 0) / bbSales;
+    const bbMultiple = bbRows.reduce(
+      (s, t) => s + (t.cashflow_multiple_avg || 0) * (t.reported_sales || 0), 0
+    ) / bbSales;
     const confidence = getBenchmarkConfidence(bbSales, "bizbuysell");
     return {
       medianSdeMultiple: bbMultiple > 0 ? +bbMultiple.toFixed(2) : null,
@@ -269,7 +376,9 @@ export function getValuationBenchmark(
       medianSde: null,
       medianEbitda: null,
       medianMvic: bbSales > 0
-        ? Math.round(bbRows.reduce((s, t) => s + (t.median_sale_price || 0) * (t.reported_sales || 0), 0) / bbSales)
+        ? Math.round(
+            bbRows.reduce((s, t) => s + (t.median_sale_price || 0) * (t.reported_sales || 0), 0) / bbSales
+          )
         : null,
       medianSdeMargin: null,
       medianEbitdaMargin: null,
@@ -294,7 +403,9 @@ export function getValuationBenchmark(
       medianRevenue: null,
       medianSde: null,
       medianEbitda: null,
-      medianMvic: listingRow.median_asking_price ? Math.round(listingRow.median_asking_price) : null,
+      medianMvic: listingRow.median_asking_price
+        ? Math.round(listingRow.median_asking_price)
+        : null,
       medianSdeMargin: null,
       medianEbitdaMargin: null,
       medianOperatingMargin: null,
@@ -318,7 +429,14 @@ export function getValuationMultiple(
   industryKey: string,
   sizeBand: string | null | undefined,
   data: BenchmarkDataset
-): { multiple: number | null; p25: number | null; p75: number | null; source: BenchmarkSource; confidence: ConfidenceLevel; sampleSize: number } {
+): {
+  multiple: number | null;
+  p25: number | null;
+  p75: number | null;
+  source: BenchmarkSource;
+  confidence: ConfidenceLevel;
+  sampleSize: number;
+} {
   const b = getValuationBenchmark(industryKey, sizeBand, data);
   return {
     multiple: b.medianSdeMultiple,
@@ -341,13 +459,19 @@ export function getFairValue(
   data: BenchmarkDataset
 ): FairValueResult {
   if (!sde || sde <= 0) {
-    return { fairValue: null, p25FairValue: null, p75FairValue: null, multiple: null, source: null, confidence: "INSUFFICIENT", sampleSize: 0 };
+    return {
+      fairValue: null, p25FairValue: null, p75FairValue: null,
+      multiple: null, source: null, confidence: "INSUFFICIENT", sampleSize: 0,
+    };
   }
 
   const b = getValuationBenchmark(industryKey, sizeBand, data);
 
   if (!b.medianSdeMultiple) {
-    return { fairValue: null, p25FairValue: null, p75FairValue: null, multiple: null, source: b.source, confidence: "INSUFFICIENT", sampleSize: b.sampleSize };
+    return {
+      fairValue: null, p25FairValue: null, p75FairValue: null,
+      multiple: null, source: b.source, confidence: "INSUFFICIENT", sampleSize: b.sampleSize,
+    };
   }
 
   return {
@@ -375,23 +499,25 @@ export function getDealRealityScore(
   const fv = getFairValue(industryKey, sizeBand, sde, data);
 
   if (!fv.fairValue || !askPrice || askPrice <= 0) {
-    return { dri: null, gapPct: null, condition: null, fairValue: fv.fairValue, askPrice, source: fv.source, confidence: fv.confidence };
+    return {
+      dri: null, gapPct: null, condition: null,
+      fairValue: fv.fairValue, askPrice, source: fv.source, confidence: fv.confidence,
+    };
   }
 
   const dri = +(askPrice / fv.fairValue).toFixed(2);
   const gapPct = Math.round((dri - 1) * 100);
   const condition: DRICondition =
-    dri < 1.0 ? "Undervalued"
+    dri < 1.0    ? "Undervalued"
     : dri <= 1.15 ? "Healthy Market"
-    : dri <= 1.3 ? "Moderately Overpriced"
-    : "Highly Overpriced";
+    : dri <= 1.3  ? "Moderately Overpriced"
+    :               "Highly Overpriced";
 
   return { dri, gapPct, condition, fairValue: fv.fairValue, askPrice, source: fv.source, confidence: fv.confidence };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// UTILITY: classify a deal into overpriced / fair / undervalued bucket
-// Uses DealStats fair value when available, falls back to score-based bucketing
+// classifyDealSentiment — overpriced / fair / undervalued bucket
 // ─────────────────────────────────────────────────────────────────────────────
 
 export type SentimentBucket = "overpriced" | "fair" | "undervalued";
@@ -420,42 +546,123 @@ export function classifyDealSentiment(
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// UTILITY: infer size band from revenue (mirrors get_size_band() in Supabase)
+// getSizeBand — infer size band from revenue (mirrors Supabase get_size_band())
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function getSizeBand(revenue: number | null | undefined): string | null {
   if (!revenue || revenue <= 0) return null;
-  if (revenue < 500_000)   return "under_500k";
-  if (revenue < 1_000_000) return "500k_1m";
-  if (revenue < 3_000_000) return "1m_3m";
+  if (revenue < 500_000)    return "under_500k";
+  if (revenue < 1_000_000)  return "500k_1m";
+  if (revenue < 3_000_000)  return "1m_3m";
   if (revenue < 10_000_000) return "3m_10m";
   return "10m_plus";
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// UTILITY: get BizBuySell stats for an industry (days on market, sale-to-ask)
+// getBBMarketStats — BizBuySell-only stats (days on market, sale-to-ask)
 // These metrics only exist in the BizBuySell layer — DealStats doesn't have them
 // ─────────────────────────────────────────────────────────────────────────────
 
 export function getBBMarketStats(
   industryKey: string,
   data: BenchmarkDataset
-): { bbReportedSales: number; medianDaysOnMarket: number | null; saleToAsk: number | null; medianSalePrice: number | null } {
+): {
+  bbReportedSales: number;
+  medianDaysOnMarket: number | null;
+  saleToAsk: number | null;
+  medianSalePrice: number | null;
+} {
   const bbRows = data.bb[industryKey] || [];
   const bbSales = bbRows.reduce((s, t) => s + (t.reported_sales || 0), 0);
-  if (bbSales === 0) return { bbReportedSales: 0, medianDaysOnMarket: null, saleToAsk: null, medianSalePrice: null };
+  if (bbSales === 0) {
+    return { bbReportedSales: 0, medianDaysOnMarket: null, saleToAsk: null, medianSalePrice: null };
+  }
 
   return {
     bbReportedSales: bbSales,
-    medianDaysOnMarket: Math.round(bbRows.reduce((s, t) => s + (t.median_days_on_market || 0) * (t.reported_sales || 0), 0) / bbSales),
-    saleToAsk: +(bbRows.reduce((s, t) => s + (t.sale_to_asking_ratio || 0) * (t.reported_sales || 0), 0) / bbSales).toFixed(2),
-    medianSalePrice: Math.round(bbRows.reduce((s, t) => s + (t.median_sale_price || 0) * (t.reported_sales || 0), 0) / bbSales),
+    medianDaysOnMarket: Math.round(
+      bbRows.reduce((s, t) => s + (t.median_days_on_market || 0) * (t.reported_sales || 0), 0) / bbSales
+    ),
+    saleToAsk: +(
+      bbRows.reduce((s, t) => s + (t.sale_to_asking_ratio || 0) * (t.reported_sales || 0), 0) / bbSales
+    ).toFixed(2),
+    medianSalePrice: Math.round(
+      bbRows.reduce((s, t) => s + (t.median_sale_price || 0) * (t.reported_sales || 0), 0) / bbSales
+    ),
   };
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Internal helpers
 // ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * Build a ValuationBenchmark from a live blended row (Tier 0).
+ * Maps confidence_grade string from DB → ConfidenceLevel type.
+ */
+function buildFromLive(
+  row: LiveBenchmarkRow,
+  sizeBand: string,
+  industryKey: string
+): ValuationBenchmark {
+  const confidenceMap: Record<string, ConfidenceLevel> = {
+    HIGH: "HIGH",
+    MEDIUM: "MEDIUM",
+    LOW: "LOW",
+  };
+  const confidence: ConfidenceLevel = confidenceMap[row.confidence_grade] ?? "LOW";
+
+  // Total sample size = sum of all contributing sources
+  const sampleSize =
+    (row.listing_count || 0) +
+    (row.transaction_count || 0) +
+    (row.reference_sample_size || 0);
+
+  return {
+    medianSdeMultiple: row.blended_benchmark_mid
+      ? +row.blended_benchmark_mid.toFixed(2)
+      : null,
+    p25SdeMultiple: row.reference_p25_mvic_to_sde
+      ? +row.reference_p25_mvic_to_sde.toFixed(2)
+      : row.blended_benchmark_low
+      ? +row.blended_benchmark_low.toFixed(2)
+      : null,
+    p75SdeMultiple: row.reference_p75_mvic_to_sde
+      ? +row.reference_p75_mvic_to_sde.toFixed(2)
+      : row.blended_benchmark_high
+      ? +row.blended_benchmark_high.toFixed(2)
+      : null,
+    medianRevenueMultiple: null,   // Not computed in live layer
+    medianEbitdaMultiple: null,    // Not computed in live layer
+    medianRevenue: row.listing_median_revenue
+      ? Math.round(row.listing_median_revenue)
+      : null,
+    medianSde: row.listing_median_sde
+      ? Math.round(row.listing_median_sde)
+      : null,
+    medianEbitda: null,
+    medianMvic: null,
+    medianSdeMargin: row.median_sde_margin
+      ? +row.median_sde_margin.toFixed(3)
+      : null,
+    medianEbitdaMargin: row.median_ebitda_margin
+      ? +row.median_ebitda_margin.toFixed(3)
+      : null,
+    medianOperatingMargin: row.median_operating_margin
+      ? +row.median_operating_margin.toFixed(3)
+      : null,
+    source: "live_blended",
+    confidence,
+    sampleSize,
+    sizeBand,
+    industryKey,
+    // Tier 0 extras for _qa transparency fields
+    liveBenchmarkLow: row.blended_benchmark_low,
+    liveBenchmarkHigh: row.blended_benchmark_high,
+    liveBenchmarkSource: row.benchmark_source,
+    liveConfidenceScore: row.confidence_score,
+  };
+}
 
 function buildFromDStats(
   row: DStatsRow,
