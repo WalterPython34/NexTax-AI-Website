@@ -3,6 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 import {
   loadBenchmarkData,
   getValuationMultiple,
+  getSizeBand,
 } from "@/lib/valuation-engine";
 
 const supabase = createClient(
@@ -42,18 +43,17 @@ const SEARCH_QUERIES = [
   "roofing company acquisition risks 2026",
 ];
 
+// ─────────────────────────────────────────────────────────────────────────────
 // Task 1: Ingest one community signal
+// ─────────────────────────────────────────────────────────────────────────────
 async function ingestSignal(): Promise<{ ingested: boolean; title: string | null; reason: string }> {
   const query = SEARCH_QUERIES[Math.floor(Math.random() * SEARCH_QUERIES.length)];
 
-  // FIX 1: Broader, more flexible date window — last 90 days with preference for recent
   const now = new Date();
   const monthYear  = now.toLocaleString("en-US", { month: "long", year: "numeric" });
   const prevMonth  = new Date(now.getFullYear(), now.getMonth() - 1, 1).toLocaleString("en-US", { month: "long", year: "numeric" });
   const prev2Month = new Date(now.getFullYear(), now.getMonth() - 2, 1).toLocaleString("en-US", { month: "long", year: "numeric" });
 
-  // FIX 2: Rewritten prompt — instructs Claude to ALWAYS return a valid post,
-  // never return null title. Fallback to best available if nothing perfectly recent.
   const prompt = `Search the web for a Reddit post, Searchfunder thread, or forum discussion about: "${query}"
 
 Find the most relevant post from a real SMB acquisition buyer or seller discussing pain points, challenges, or insights. Prefer posts from ${monthYear} or ${prevMonth}, but if nothing recent is available, use the best post from ${prev2Month} or earlier — do NOT return null fields.
@@ -74,7 +74,6 @@ Return ONLY a valid JSON object with no markdown formatting, no backticks, no ex
       body: JSON.stringify({
         model: "claude-sonnet-4-20250514",
         max_tokens: 1000,
-        // FIX 3: stop_sequences prevents Claude from adding prose after the JSON
         stop_sequences: ["\n\nNote:", "\n\nPlease", "\n\nI ", "\n\nThis "],
         tools: [{ type: "web_search_20250305", name: "web_search" }],
         messages: [{ role: "user", content: prompt }],
@@ -85,7 +84,6 @@ Return ONLY a valid JSON object with no markdown formatting, no backticks, no ex
 
     const data = await res.json();
 
-    // FIX 4: More robust text extraction — join ALL text blocks, not just filter
     const textBlocks = (data.content || [])
       .filter((b: any) => b.type === "text")
       .map((b: any) => b.text || "")
@@ -93,7 +91,6 @@ Return ONLY a valid JSON object with no markdown formatting, no backticks, no ex
 
     if (!textBlocks) return { ingested: false, title: null, reason: "No text in response" };
 
-    // FIX 5: More permissive JSON extraction — handles JSON buried in any surrounding text
     const jsonMatch = textBlocks.match(/\{[\s\S]*\}/);
     if (!jsonMatch) return { ingested: false, title: null, reason: "No JSON in response" };
 
@@ -101,10 +98,9 @@ Return ONLY a valid JSON object with no markdown formatting, no backticks, no ex
     try {
       signal = JSON.parse(jsonMatch[0]);
     } catch {
-      // FIX 6: Try cleaning the JSON before failing
       const cleaned = jsonMatch[0]
-        .replace(/[\u0000-\u001F\u007F-\u009F]/g, " ") // strip control chars
-        .replace(/,\s*}/g, "}")                          // trailing commas
+        .replace(/[\u0000-\u001F\u007F-\u009F]/g, " ")
+        .replace(/,\s*}/g, "}")
         .replace(/,\s*]/g, "]");
       try {
         signal = JSON.parse(cleaned);
@@ -113,7 +109,6 @@ Return ONLY a valid JSON object with no markdown formatting, no backticks, no ex
       }
     }
 
-    // FIX 7: Validate with better error reporting — check each field
     if (!signal.title || signal.title === "null" || signal.title.trim() === "") {
       return { ingested: false, title: null, reason: "Claude returned null title — no qualifying post found" };
     }
@@ -133,10 +128,12 @@ Return ONLY a valid JSON object with no markdown formatting, no backticks, no ex
       return { ingested: false, title: signal.title, reason: "Duplicate" };
     }
 
-    // FIX 8: Sanitize numeric fields — Claude sometimes returns strings or nulls
-    const safeInt  = (v: any, fallback: number) => typeof v === "number" ? Math.round(Math.max(0, Math.min(100, v))) : fallback;
-    const safeStr  = (v: any, fallback: string) => (typeof v === "string" && v.trim()) ? v.trim() : fallback;
-    const safeArr  = (v: any) => Array.isArray(v) ? v.filter((x: any) => typeof x === "string") : [];
+    const safeInt = (v: any, fallback: number) =>
+      typeof v === "number" ? Math.round(Math.max(0, Math.min(100, v))) : fallback;
+    const safeStr = (v: any, fallback: string) =>
+      typeof v === "string" && v.trim() ? v.trim() : fallback;
+    const safeArr = (v: any) =>
+      Array.isArray(v) ? v.filter((x: any) => typeof x === "string") : [];
 
     const { error } = await supabase.from("community_signals").insert({
       title:               signal.title.trim(),
@@ -166,34 +163,41 @@ Return ONLY a valid JSON object with no markdown formatting, no backticks, no ex
   }
 }
 
-// Task 2: Recompute listing benchmarks
-async function recomputeListingBenchmarks(): Promise<{ success: boolean; error?: string }> {
-  const { error } = await supabase.rpc("compute_listing_benchmarks");
-  return error ? { success: false, error: error.message } : { success: true };
+// ─────────────────────────────────────────────────────────────────────────────
+// Task 2: Refresh live benchmark layer
+// Replaces the old compute_listing_benchmarks() call.
+// Calls the new refresh_industry_benchmarks_live() SQL function which blends:
+//   deal_runs + dealstats_transactions + dealstats_benchmarks
+// into industry_benchmarks_live. Safe to call repeatedly (upsert semantics).
+// ─────────────────────────────────────────────────────────────────────────────
+async function refreshLiveBenchmarks(): Promise<{ success: boolean; error?: string }> {
+  const { error } = await supabase.rpc("refresh_industry_benchmarks_live");
+  if (error) {
+    console.error("[CRON Task 2] Live benchmark refresh error:", error.message);
+    return { success: false, error: error.message };
+  }
+  console.log("[CRON Task 2] industry_benchmarks_live refreshed successfully");
+  return { success: true };
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
 // Task 3: Write DRI snapshot for today
+// Reads from the updated loadBenchmarkData() which now includes Tier 0
+// (industry_benchmarks_live) as the preferred benchmark source.
+// ─────────────────────────────────────────────────────────────────────────────
 async function writeDRISnapshots(): Promise<{ written: number; skipped: number }> {
   const today = new Date().toISOString().split("T")[0];
 
-  const [benchmarkData, listingRes, dealCountRes] = await Promise.all([
+  const [benchmarkData, dealCountRes] = await Promise.all([
+    // loadBenchmarkData now loads industry_benchmarks_live as Tier 0
     loadBenchmarkData(),
     supabase
-      .from("industry_listing_benchmarks")
-      .select("industry_key, median_multiple, sample_size")
-      .is("state", null)
-      .is("size_band", null),
-    supabase
       .from("deal_runs")
-      .select("industry")
+      .select("industry, revenue")
       .eq("is_valid", true),
   ]);
 
-  const listingByIndustry: Record<string, any> = {};
-  (listingRes.data || []).forEach((r: any) => {
-    if (r.industry_key) listingByIndustry[r.industry_key] = r;
-  });
-
+  // Count deals per industry
   const dealCounts: Record<string, number> = {};
   (dealCountRes.data || []).forEach((r: any) => {
     if (r.industry) dealCounts[r.industry] = (dealCounts[r.industry] || 0) + 1;
@@ -203,18 +207,55 @@ async function writeDRISnapshots(): Promise<{ written: number; skipped: number }
   let skipped = 0;
 
   for (const key of INDUSTRY_KEYS) {
-    const listing = listingByIndustry[key];
+    // Use getValuationMultiple which now routes through Tier 0 first
+    // Pass null for sizeBand here — DRI is a market-level snapshot, not deal-specific
     const vm = getValuationMultiple(key, null, benchmarkData);
 
-    if (!listing?.median_multiple || !vm.multiple) { skipped++; continue; }
+    if (!vm.multiple) {
+      skipped++;
+      continue;
+    }
 
-    const dri = +(listing.median_multiple / vm.multiple).toFixed(4);
+    // Get the listing-side multiple from industry_benchmarks_live if available,
+    // otherwise fall back to the old industry_listing_benchmarks approach
+    const liveByBand = benchmarkData.live[key] || {};
+    const liveBands = Object.values(liveByBand);
+
+    let listingMultiple: number | null = null;
+    let listingSampleSize = 0;
+
+    if (liveBands.length > 0) {
+      // Aggregate listing_p50 across all size bands, weighted by listing_count
+      const totalListings = liveBands.reduce((s, r) => s + (r.listing_count || 0), 0);
+      if (totalListings > 0) {
+        listingMultiple = liveBands.reduce(
+          (s, r) => s + (r.listing_p50_sde_multiple || 0) * (r.listing_count || 0), 0
+        ) / totalListings;
+        listingSampleSize = totalListings;
+      }
+    }
+
+    // Fallback to old industry_listing_benchmarks if live layer has no listing data
+    if (!listingMultiple) {
+      const oldListing = benchmarkData.listing[key];
+      if (oldListing?.median_multiple) {
+        listingMultiple = oldListing.median_multiple;
+        listingSampleSize = oldListing.sample_size || 0;
+      }
+    }
+
+    if (!listingMultiple) {
+      skipped++;
+      continue;
+    }
+
+    const dri = +(listingMultiple / vm.multiple).toFixed(4);
     const gapPct = Math.round((dri - 1) * 100);
     const condition =
-      dri < 1.0   ? "Undervalued" :
-      dri <= 1.15 ? "Healthy Market" :
-      dri <= 1.30 ? "Moderately Overpriced" :
-                    "Highly Overpriced";
+      dri < 1.0    ? "Undervalued"
+      : dri <= 1.15 ? "Healthy Market"
+      : dri <= 1.30 ? "Moderately Overpriced"
+      :               "Highly Overpriced";
 
     snapshots.push({
       snapshot_date:       today,
@@ -222,10 +263,10 @@ async function writeDRISnapshots(): Promise<{ written: number; skipped: number }
       dri,
       gap_pct:             gapPct,
       condition,
-      listing_multiple:    +listing.median_multiple.toFixed(4),
+      listing_multiple:    +listingMultiple.toFixed(4),
       sold_multiple:       +vm.multiple.toFixed(4),
       benchmark_source:    vm.source,
-      listing_sample_size: listing.sample_size,
+      listing_sample_size: listingSampleSize,
       sold_sample_size:    vm.sampleSize,
       deal_count:          dealCounts[key] || 0,
     });
@@ -238,14 +279,16 @@ async function writeDRISnapshots(): Promise<{ written: number; skipped: number }
     .upsert(snapshots, { onConflict: "snapshot_date,industry_key" });
 
   if (error) {
-    console.error("DRI snapshot error:", error);
+    console.error("[CRON Task 3] DRI snapshot error:", error);
     return { written: 0, skipped };
   }
 
   return { written: snapshots.length, skipped };
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
 // Task 4: Clean stale signals older than 90 days
+// ─────────────────────────────────────────────────────────────────────────────
 async function cleanStaleSignals(): Promise<{ deleted: number }> {
   const cutoff = new Date(Date.now() - 90 * 86400000).toISOString();
   const { data, error } = await supabase
@@ -256,6 +299,9 @@ async function cleanStaleSignals(): Promise<{ deleted: number }> {
   return { deleted: error ? 0 : (data?.length || 0) };
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Handler
+// ─────────────────────────────────────────────────────────────────────────────
 export async function GET(req: NextRequest) {
   const secret =
     req.headers.get("authorization")?.replace("Bearer ", "") ||
@@ -268,8 +314,8 @@ export async function GET(req: NextRequest) {
   const results: Record<string, any> = {};
 
   results.signal     = await ingestSignal();
-  results.benchmarks = await recomputeListingBenchmarks();
-  results.dri        = await writeDRISnapshots();
+  results.benchmarks = await refreshLiveBenchmarks();   // ← now calls refresh_industry_benchmarks_live
+  results.dri        = await writeDRISnapshots();        // ← now reads Tier 0 live data
   results.cleanup    = await cleanStaleSignals();
 
   console.log("Cron completed:", JSON.stringify(results));
