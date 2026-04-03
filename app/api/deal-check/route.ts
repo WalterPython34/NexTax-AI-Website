@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 
+export const maxDuration = 30;
+
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
@@ -13,26 +14,20 @@ export async function POST(req: NextRequest) {
       },
       body: JSON.stringify({
         model: "claude-sonnet-4-20250514",
-        max_tokens: 1500,
+        max_tokens: 2000,
+        // Support both structured memo (system + messages) and legacy (messages only)
+        ...(body.system ? { system: body.system } : {}),
         messages: body.messages,
       }),
     });
-
     if (!response.ok) {
       const error = await response.text();
-      return NextResponse.json(
-        { error: "API error", details: error },
-        { status: response.status }
-      );
+      return NextResponse.json({ error: "API error", details: error }, { status: response.status });
     }
-
     const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
     console.error("Deal Check API error:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
