@@ -960,18 +960,30 @@ Structure your response as:
 
   const handleReset = () => { setStep(1); setResults(null); };
 
-  const handleGateSubmit = async () => {
-    if (!gateEmail) return;
-    setGateLoading(true);
-    try {
-      await fetch("/api/capture-lead", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: gateName, email: gateEmail, source: "risk-analyzer", industry: "", dealScore: null, metadata: {} }),
-      });
-    } catch { /* non-blocking */ }
-    setGated(false);
-    setGateLoading(false);
-  };
+const handleGateSubmit = async () => {
+  if (!gateEmail) return;
+  setGateLoading(true);
+  try {
+    await fetch("/api/capture-lead", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: gateName,
+        email: gateEmail,
+        source: "risk-analyzer",
+        industry: inputs.industry || null,
+        dealScore: null,
+        metadata: {
+          revenue: inputs.revenue || null,
+          sde: inputs.sde || null,
+          asking_price: inputs.askingPrice || null,
+          state: inputs.state || null,
+        },
+      }),
+    });
+  } catch { /* non-blocking */ }
+  setGated(false);
+  setGateLoading(false);
+};
 
   return (
     <div className="min-h-screen" style={{ background: "#0B0F17", color: "#E2E8F0" }}>
