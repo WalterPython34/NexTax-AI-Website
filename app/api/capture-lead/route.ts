@@ -29,7 +29,6 @@ export async function POST(req: NextRequest) {
     });
 
     if (insertError) {
-      // Log the real error server-side but don't expose it to client
       console.error("[capture-lead] Supabase insert error:", insertError.message, insertError.details);
     } else {
       console.log(`[capture-lead] Lead saved: ${email} | source: ${source} | industry: ${industry}`);
@@ -58,13 +57,6 @@ export async function POST(req: NextRequest) {
 
   } catch (err: any) {
     console.error("[capture-lead] Unexpected error:", err.message);
-    // Still return success — lead capture should never break the tool flow
     return NextResponse.json({ success: true });
-  }
-}
-    return NextResponse.json({ success: true });
-  } catch (error) {
-    console.error("Lead capture error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
