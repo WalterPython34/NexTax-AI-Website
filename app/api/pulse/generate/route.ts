@@ -152,11 +152,9 @@ async function generate(req: NextRequest) {
    // ── Top opportunities: high-score deals from FULL database (not week-filtered)
     const { data: allTopDeals } = await supabase
       .from("deal_runs")
-      .select("industry, sde, asking_price, fair_value, fair_value_low, fair_value_high, overall_score, valuation_multiple, range_position, risk_level")
+      .select("industry, sde, asking_price, fair_value, overall_score, valuation_multiple, range_position, risk_level")
       .gte("overall_score", 65)
       .eq("is_valid", true)
-      .not("fair_value", "is", null)
-      .not("asking_price", "is", null)
       .gt("sde", 0)
       .gt("asking_price", 0)
       .order("overall_score", { ascending: false })
@@ -165,7 +163,8 @@ async function generate(req: NextRequest) {
     const topOpportunities = (allTopDeals || [])
       .map((d) => {
         const snap = snapshots.find((s) => s.industry_key === d.industry);
-        const fairValue = d.fair_value || (snap?.sold_multiple ? Math.round(snap.sold_multiple * d.sde) : null);
+        const fairValue = d.fair_value
+          || (snap?.sold_multiple ? Math.round(snap.sold_multiple * d.sde) : null);
         return {
           industry: INDUSTRY_LABELS[d.industry] || d.industry,
           sde: d.sde,
