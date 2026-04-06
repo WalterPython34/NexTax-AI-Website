@@ -14,10 +14,15 @@ const supabase = createClient(
 export const maxDuration = 60;
 
 const INDUSTRY_KEYS = [
+  // ── Original 26 ──────────────────────────────────────────────────────────
   "laundromat","hvac","landscaping","carwash","dental","gym","restaurant",
   "autorepair","cleaning","ecommerce","saas","insurance","plumbing","roofing",
   "petcare","pharmacy","daycare","medspa","accounting","electrical","healthcare",
   "transportation","printing","storage","painting","security",
+  // ── New 15 ───────────────────────────────────────────────────────────────
+  "signmaking","hairsalon","clothing","construction","grocery","pestcontrol",
+  "marketing","engineering","veterinary","realestatebrok","propertymanage",
+  "seniorcare","physicaltherapy","remodeling","staffing",
 ];
 
 const SEARCH_QUERIES = [
