@@ -45,7 +45,24 @@ const HARDCODED: Record<string, { multipleRange: [number, number]; marginRange: 
   storage: { multipleRange: [4.0, 8.0], marginRange: [40, 65] },
   painting: { multipleRange: [1.5, 3.0], marginRange: [15, 30] },
   security: { multipleRange: [2.5, 4.5], marginRange: [15, 30] },
+  security: { multipleRange: [2.5, 4.5], marginRange: [15, 30] },
+  // ── New 14 industries (DealStats-derived) ──────────────────────────────
+  signmaking:      { multipleRange: [1.9, 3.3], marginRange: [15, 30] },
+  hairsalon:       { multipleRange: [1.1, 2.3], marginRange: [15, 30] },
+  construction:    { multipleRange: [1.8, 3.2], marginRange: [15, 30] },
+  grocery:         { multipleRange: [1.6, 3.3], marginRange: [10, 15] },
+  pestcontrol:     { multipleRange: [2.0, 4.2], marginRange: [20, 35] },
+  marketing:       { multipleRange: [1.8, 3.1], marginRange: [20, 35] },
+  engineering:     { multipleRange: [1.8, 3.3], marginRange: [20, 40] },
+  veterinary:      { multipleRange: [2.4, 4.1], marginRange: [15, 30] },
+  realestatebrok:  { multipleRange: [1.7, 2.6], marginRange: [15, 30] },
+  propertymanage:  { multipleRange: [1.9, 3.1], marginRange: [20, 40] },
+  seniorcare:      { multipleRange: [2.0, 3.8], marginRange: [10, 20] },
+  physicaltherapy: { multipleRange: [1.6, 2.9], marginRange: [20, 35] },
+  remodeling:      { multipleRange: [1.4, 2.7], marginRange: [15, 25] },
+  staffing:        { multipleRange: [1.5, 3.0], marginRange: [15, 25] },
 };
+
 
 // ─── CONFIDENCE SCORING ──────────────────────────────────────────────────────
 // Preserved exactly from original — this logic is sound.
