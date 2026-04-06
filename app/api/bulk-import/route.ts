@@ -9,77 +9,205 @@ const supabase = createClient(
 // ─── INDUSTRY CLASSIFIER ────────────────────────────────────────────────────
 
 const INDUSTRY_MAP: Record<string, string> = {
-  // ── Original 18 industries
-  laundromat: "laundromat", laundry: "laundromat", "coin laundry": "laundromat", "wash and fold": "laundromat", "dry clean": "laundromat", "dry cleaning": "laundromat",
-  hvac: "hvac", heating: "hvac", "air conditioning": "hvac", "heating and cooling": "hvac", "hvac/r": "hvac", refrigeration: "hvac",
-  landscaping: "landscaping", "lawn care": "landscaping", "lawn service": "landscaping", "lawn maintenance": "landscaping", "tree service": "landscaping", "tree care": "landscaping", "irrigation": "landscaping", "pool service": "landscaping", "pool and spa": "landscaping", "pool cleaning": "landscaping", "pool maintenance": "landscaping", "pool & spa": "landscaping",
-  "car wash": "carwash", carwash: "carwash", "auto wash": "carwash", "car detailing": "carwash", detailing: "carwash",
-  dental: "dental", dentist: "dental", "dental practice": "dental", "dental office": "dental", orthodont: "dental",
-  gym: "gym", fitness: "gym", "fitness center": "gym", "health club": "gym", crossfit: "gym", "yoga studio": "gym", pilates: "gym", "martial arts": "gym", boxing: "gym",
-  restaurant: "restaurant", "food service": "restaurant", "bar and grill": "restaurant", cafe: "restaurant", "coffee shop": "restaurant", bakery: "restaurant", pizzeria: "restaurant", "fast food": "restaurant", catering: "restaurant", "food truck": "restaurant", brewery: "restaurant", "ice cream": "restaurant", "juice bar": "restaurant",
-  "auto repair": "autorepair", "auto body": "autorepair", automotive: "autorepair", mechanic: "autorepair", "tire shop": "autorepair", transmission: "autorepair", "oil change": "autorepair", "auto glass": "autorepair",
-  cleaning: "cleaning", janitorial: "cleaning", "maid service": "cleaning", "carpet cleaning": "cleaning", "pressure washing": "cleaning", "commercial cleaning": "cleaning", "window cleaning": "cleaning", restoration: "cleaning", "water and fire restoration": "cleaning", "fire restoration": "cleaning", "water restoration": "cleaning", "disaster restoration": "cleaning", "hospitality maintenance": "cleaning",
-  ecommerce: "ecommerce", "e-commerce": "ecommerce", "online store": "ecommerce", amazon: "ecommerce", shopify: "ecommerce", fba: "ecommerce", dropship: "ecommerce", "online retail": "ecommerce",
-  saas: "saas", software: "saas", "software platform": "saas",
-  insurance: "insurance", "insurance agency": "insurance", "insurance broker": "insurance",
-  plumbing: "plumbing", plumber: "plumbing", drain: "plumbing", "water heater": "plumbing", septic: "plumbing", "septic service": "plumbing", "water service": "plumbing", "water treatment": "plumbing", "well service": "plumbing",
-  roofing: "roofing", roofer: "roofing", roof: "roofing", siding: "roofing", remodeling: "roofing", "home remodeling": "roofing", handyman: "roofing", "handyman services": "roofing", "general contractor": "roofing", construction: "roofing",
-  "pet care": "petcare", "pet grooming": "petcare", "dog grooming": "petcare", veterinary: "petcare", "pet sitting": "petcare", kennel: "petcare", "doggy daycare": "petcare", "pet supply": "petcare", "pet store": "petcare",
-  pharmacy: "pharmacy", "drug store": "pharmacy", compounding: "pharmacy",
-  daycare: "daycare", childcare: "daycare", preschool: "daycare", "child care": "daycare", "learning center": "daycare", "montessori": "daycare", "after school": "daycare",
-  "med spa": "medspa", medspa: "medspa", aesthetics: "medspa", "medical spa": "medspa", botox: "medspa", laser: "medspa", "cosmetic": "medspa", dermatology: "medspa", salon: "medspa", "hair salon": "medspa", "beauty salon": "medspa", "nail salon": "medspa", barbershop: "medspa", "barber shop": "medspa", spa: "medspa", tanning: "medspa",
+  // ── Laundromat
+  laundromat: "laundromat", laundry: "laundromat", "coin laundry": "laundromat",
+  "wash and fold": "laundromat", "dry clean": "laundromat", "dry cleaning": "laundromat",
 
-  // ── NEW: Accounting & Tax (huge ETA category)
-  accounting: "accounting", "accounting firm": "accounting", "tax firm": "accounting", "tax preparation": "accounting", "tax service": "accounting",
-  bookkeeping: "accounting", cpa: "accounting", "cpa firm": "accounting", "financial services": "accounting", "tax accounting": "accounting",
-  "tax & accounting": "accounting", "accounting & consulting": "accounting", "accounting & tax": "accounting", "tax return": "accounting",
+  // ── HVAC
+  hvac: "hvac", heating: "hvac", "air conditioning": "hvac", "heating and cooling": "hvac",
+  "hvac/r": "hvac", refrigeration: "hvac",
 
-  // ── NEW: Electrical
-  electrical: "electrical", electrician: "electrical", "electrical contractor": "electrical", "electrical service": "electrical",
-  "electrical company": "electrical", wiring: "electrical",
+  // ── Landscaping
+  landscaping: "landscaping", "lawn care": "landscaping", "lawn service": "landscaping",
+  "lawn maintenance": "landscaping", "tree service": "landscaping", "tree care": "landscaping",
+  irrigation: "landscaping", "pool service": "landscaping", "pool and spa": "landscaping",
+  "pool cleaning": "landscaping", "pool maintenance": "landscaping", "pool & spa": "landscaping",
 
-  // ── NEW: Healthcare
-  "home healthcare": "healthcare", "home health": "healthcare", "healthcare staffing": "healthcare", "medical staffing": "healthcare",
-  "physical therapy": "healthcare", "occupational therapy": "healthcare", "speech therapy": "healthcare", "therapy practice": "healthcare",
-  "urgent care": "healthcare", clinic: "healthcare", "medical practice": "healthcare", "medical clinic": "healthcare",
-  "home care": "healthcare", "senior care": "healthcare", "elder care": "healthcare", "assisted living": "healthcare",
-  "mental health": "healthcare", counseling: "healthcare", "behavioral health": "healthcare", chiropractic: "healthcare", chiropractor: "healthcare",
-  "staffing agency": "healthcare", "nurse staffing": "healthcare", hospice: "healthcare",
+  // ── Car Wash
+  "car wash": "carwash", carwash: "carwash", "auto wash": "carwash",
+  "car detailing": "carwash", detailing: "carwash",
 
-  // ── NEW: Transportation & Logistics
-  transportation: "transportation", trucking: "transportation", logistics: "transportation", freight: "transportation",
-  "moving company": "transportation", moving: "transportation", courier: "transportation", delivery: "transportation",
-  "freight broker": "transportation", hauling: "transportation", "dump truck": "transportation", towing: "transportation",
-  "limo": "transportation", "limousine": "transportation", "shuttle": "transportation", "charter": "transportation",
+  // ── Dental
+  dental: "dental", dentist: "dental", "dental practice": "dental",
+  "dental office": "dental", orthodont: "dental",
 
-  // ── NEW: Printing & Marketing
-  printing: "printing", "print shop": "printing", "print & marketing": "printing", "b2b print": "printing",
-  "marketing services": "printing", "marketing agency": "printing", "digital marketing": "printing", "sign shop": "printing",
-  "promotional products": "printing", "graphic design": "printing", signage: "printing", "screen printing": "printing",
-  "print/marketing": "printing",
+  // ── Gym
+  gym: "gym", fitness: "gym", "fitness center": "gym", "health club": "gym",
+  crossfit: "gym", "yoga studio": "gym", pilates: "gym", "martial arts": "gym", boxing: "gym",
 
-  // ── NEW: Self-Storage
-  "self storage": "storage", "self-storage": "storage", storage: "storage", "storage facility": "storage",
-  "mini storage": "storage", "storage solutions": "storage", "rv storage": "storage", "boat storage": "storage",
-  warehouse: "storage",
+  // ── Restaurant
+  restaurant: "restaurant", "food service": "restaurant", "bar and grill": "restaurant",
+  cafe: "restaurant", "coffee shop": "restaurant", bakery: "restaurant", pizzeria: "restaurant",
+  "fast food": "restaurant", catering: "restaurant", "food truck": "restaurant",
+  brewery: "restaurant", "ice cream": "restaurant", "juice bar": "restaurant",
+  "food route": "restaurant", "food distribution": "restaurant",
+  "beverage distribution": "restaurant", beverage: "restaurant",
+  franchise: "restaurant", vending: "restaurant",
 
-  // ── NEW: Painting
-  painting: "painting", painter: "painting", "painting company": "painting", "painting contractor": "painting",
-  "residential painting": "painting", "commercial painting": "painting", "paint contractor": "painting",
-
-  // ── NEW: Security
-  "security services": "security", security: "security", "alarm company": "security", "alarm system": "security",
-  "security guard": "security", "security company": "security", surveillance: "security", "fire protection": "security",
-  "fire alarm": "security",
-
-  // ── Catch-all mappings for borderline categories
-  consulting: "accounting", "engineering services": "electrical",
-  "home improvement": "roofing", "general contractor": "roofing", "construction": "roofing",
+  // ── Auto Repair
+  "auto repair": "autorepair", "auto body": "autorepair", automotive: "autorepair",
+  mechanic: "autorepair", "tire shop": "autorepair", transmission: "autorepair",
+  "oil change": "autorepair", "auto glass": "autorepair",
   "garage improvement": "autorepair", "auto dealership": "autorepair", "auto salvage": "autorepair",
-  "food route": "restaurant", "food distribution": "restaurant", "beverage distribution": "restaurant", beverage: "restaurant",
-  franchise: "restaurant", "vending": "restaurant",
+
+  // ── Cleaning
+  cleaning: "cleaning", janitorial: "cleaning", "maid service": "cleaning",
+  "carpet cleaning": "cleaning", "pressure washing": "cleaning",
+  "commercial cleaning": "cleaning", "window cleaning": "cleaning",
   "waste management": "cleaning", "junk removal": "cleaning", "dumpster": "cleaning",
+  "hospitality maintenance": "cleaning",
+
+  // ── Ecommerce
+  ecommerce: "ecommerce", "e-commerce": "ecommerce", "online store": "ecommerce",
+  amazon: "ecommerce", shopify: "ecommerce", fba: "ecommerce",
+  dropship: "ecommerce", "online retail": "ecommerce",
+
+  // ── SaaS
+  saas: "saas", software: "saas", "software platform": "saas",
   app: "saas", platform: "saas", subscription: "saas",
+
+  // ── Insurance
+  insurance: "insurance", "insurance agency": "insurance", "insurance broker": "insurance",
+
+  // ── Plumbing
+  plumbing: "plumbing", plumber: "plumbing", drain: "plumbing", "water heater": "plumbing",
+  septic: "plumbing", "septic service": "plumbing", "water service": "plumbing",
+  "water treatment": "plumbing", "well service": "plumbing",
+
+  // ── Roofing
+  roofing: "roofing", roofer: "roofing", roof: "roofing", siding: "roofing",
+
+  // ── Pet Care
+  "pet care": "petcare", "pet grooming": "petcare", "dog grooming": "petcare",
+  "pet sitting": "petcare", kennel: "petcare", "doggy daycare": "petcare",
+  "pet supply": "petcare", "pet store": "petcare",
+
+  // ── Pharmacy
+  pharmacy: "pharmacy", "drug store": "pharmacy", compounding: "pharmacy",
+
+  // ── Daycare
+  daycare: "daycare", childcare: "daycare", preschool: "daycare", "child care": "daycare",
+  "learning center": "daycare", montessori: "daycare", "after school": "daycare",
+
+  // ── Med Spa
+  "med spa": "medspa", medspa: "medspa", aesthetics: "medspa", "medical spa": "medspa",
+  botox: "medspa", laser: "medspa", cosmetic: "medspa", dermatology: "medspa",
+  spa: "medspa", tanning: "medspa",
+
+  // ── Accounting
+  accounting: "accounting", "accounting firm": "accounting", "tax firm": "accounting",
+  "tax preparation": "accounting", "tax service": "accounting", bookkeeping: "accounting",
+  cpa: "accounting", "cpa firm": "accounting", "financial services": "accounting",
+  "tax accounting": "accounting", "tax & accounting": "accounting",
+  "accounting & consulting": "accounting", "accounting & tax": "accounting",
+  "tax return": "accounting", consulting: "accounting",
+
+  // ── Electrical
+  electrical: "electrical", electrician: "electrical", "electrical contractor": "electrical",
+  "electrical service": "electrical", "electrical company": "electrical", wiring: "electrical",
+
+  // ── Healthcare (generic — kept for truly unclassifiable medical)
+  "medical practice": "healthcare", "medical clinic": "healthcare", "urgent care": "healthcare",
+  clinic: "healthcare", "mental health": "healthcare", counseling: "healthcare",
+  "behavioral health": "healthcare", "healthcare staffing": "healthcare",
+  "medical staffing": "healthcare", "nurse staffing": "healthcare",
+
+  // ── Transportation
+  transportation: "transportation", trucking: "transportation", logistics: "transportation",
+  freight: "transportation", "moving company": "transportation", moving: "transportation",
+  courier: "transportation", delivery: "transportation", "freight broker": "transportation",
+  hauling: "transportation", "dump truck": "transportation", towing: "transportation",
+  limo: "transportation", limousine: "transportation", shuttle: "transportation",
+  charter: "transportation",
+
+  // ── Printing
+  printing: "printing", "print shop": "printing", "print & marketing": "printing",
+  "b2b print": "printing", "print/marketing": "printing",
+
+  // ── Self-Storage
+  "self storage": "storage", "self-storage": "storage", storage: "storage",
+  "storage facility": "storage", "mini storage": "storage", "storage solutions": "storage",
+  "rv storage": "storage", "boat storage": "storage", warehouse: "storage",
+
+  // ── Painting
+  painting: "painting", painter: "painting", "painting company": "painting",
+  "painting contractor": "painting", "residential painting": "painting",
+  "commercial painting": "painting", "paint contractor": "painting",
+
+  // ── Security
+  "security services": "security", security: "security", "alarm company": "security",
+  "alarm system": "security", "security guard": "security", "security company": "security",
+  surveillance: "security", "fire protection": "security", "fire alarm": "security",
+
+  // ── NEW: Sign Making
+  "sign making": "signmaking", "sign manufacturer": "signmaking", "sign company": "signmaking",
+  "sign shop": "signmaking", signage: "signmaking", "screen printing": "signmaking",
+  "promotional products": "signmaking",
+
+  // ── NEW: Hair Salon
+  "hair salon": "hairsalon", "beauty salon": "hairsalon", barbershop: "hairsalon",
+  "barber shop": "hairsalon", "hair care": "hairsalon", "hair studio": "hairsalon",
+  "nail salon": "hairsalon", "hair and nail": "hairsalon", salon: "hairsalon",
+
+  // ── NEW: Construction
+  "general contractor": "construction", "home improvement": "construction",
+  handyman: "construction", "handyman services": "construction",
+  construction: "construction",
+
+  // ── NEW: Grocery
+  grocery: "grocery", "grocery store": "grocery", supermarket: "grocery",
+  "food market": "grocery", "convenience store": "grocery",
+
+  // ── NEW: Pest Control
+  "pest control": "pestcontrol", exterminator: "pestcontrol",
+  "pest management": "pestcontrol", termite: "pestcontrol", "bug control": "pestcontrol",
+
+  // ── NEW: Marketing Agency
+  "marketing agency": "marketing", "digital marketing": "marketing",
+  "marketing services": "marketing", "advertising agency": "marketing",
+  "seo agency": "marketing", "social media agency": "marketing",
+
+  // ── NEW: Engineering
+  "engineering firm": "engineering", "engineering services": "engineering",
+  "civil engineering": "engineering", "mechanical engineering": "engineering",
+  "environmental engineering": "engineering", "structural engineering": "engineering",
+
+  // ── NEW: Veterinary
+  veterinary: "veterinary", vet: "veterinary", "veterinary practice": "veterinary",
+  "animal hospital": "veterinary", "animal clinic": "veterinary", "vet clinic": "veterinary",
+
+  // ── NEW: Real Estate Brokerage
+  "real estate brokerage": "realestatebrok", "real estate agency": "realestatebrok",
+  "real estate office": "realestatebrok", "real estate broker": "realestatebrok",
+  realty: "realestatebrok",
+
+  // ── NEW: Property Management
+  "property management": "propertymanage", "property manager": "propertymanage",
+  "property management company": "propertymanage", "hoa management": "propertymanage",
+  "rental management": "propertymanage",
+
+  // ── NEW: Senior Care
+  "senior care": "seniorcare", "elder care": "seniorcare", "home health": "seniorcare",
+  "home healthcare": "seniorcare", "assisted living": "seniorcare", hospice: "seniorcare",
+  "senior living": "seniorcare", "home care": "seniorcare",
+
+  // ── NEW: Physical Therapy / Chiropractic
+  "physical therapy": "physicaltherapy", chiropractic: "physicaltherapy",
+  chiropractor: "physicaltherapy", "physical therapist": "physicaltherapy",
+  "occupational therapy": "physicaltherapy", "speech therapy": "physicaltherapy",
+  "therapy practice": "physicaltherapy", "rehab clinic": "physicaltherapy",
+  "sports medicine": "physicaltherapy",
+
+  // ── NEW: Remodeling
+  remodeling: "remodeling", "home remodeling": "remodeling", "home renovation": "remodeling",
+  renovation: "remodeling", "kitchen remodel": "remodeling", "bathroom remodel": "remodeling",
+  "disaster restoration": "remodeling", "water restoration": "remodeling",
+  "fire restoration": "remodeling", restoration: "remodeling",
+
+  // ── NEW: Staffing
+  "staffing agency": "staffing", "staffing firm": "staffing", recruiting: "staffing",
+  "recruiting firm": "staffing", "temp agency": "staffing", "employment agency": "staffing",
+  "workforce solutions": "staffing", "hr staffing": "staffing",
 };
 
 const INDUSTRY_MARGINS: Record<string, [number, number]> = {
@@ -88,10 +216,24 @@ const INDUSTRY_MARGINS: Record<string, [number, number]> = {
   cleaning: [15, 30], ecommerce: [15, 35], saas: [60, 85], insurance: [20, 40],
   plumbing: [15, 30], roofing: [15, 30], petcare: [20, 40], pharmacy: [18, 30],
   daycare: [15, 30], medspa: [25, 45],
-  // New industries
   accounting: [30, 55], electrical: [15, 30], healthcare: [15, 35],
   transportation: [10, 25], printing: [15, 30], storage: [40, 65],
   painting: [15, 30], security: [15, 30],
+  // ── New 14 industries ──────────────────────────────────────────────────
+  signmaking:      [15, 30],
+  hairsalon:       [15, 30],
+  construction:    [15, 30],
+  grocery:         [10, 15],
+  pestcontrol:     [20, 35],
+  marketing:       [20, 35],
+  engineering:     [20, 40],
+  veterinary:      [15, 30],
+  realestatebrok:  [15, 30],
+  propertymanage:  [20, 40],
+  seniorcare:      [10, 20],
+  physicaltherapy: [20, 35],
+  remodeling:      [15, 25],
+  staffing:        [15, 25],
 };
 
 const MULTIPLES: Record<string, [number, number]> = {
@@ -100,15 +242,24 @@ const MULTIPLES: Record<string, [number, number]> = {
   cleaning: [1.5, 3.0], ecommerce: [2.5, 4.5], saas: [3.0, 6.0], insurance: [2.0, 3.5],
   plumbing: [2.0, 4.0], roofing: [1.5, 3.5], petcare: [2.0, 4.0], pharmacy: [2.5, 4.0],
   daycare: [2.0, 4.0], medspa: [3.0, 5.0],
-  // New industries
-  accounting: [1.5, 3.5],   // Recurring revenue makes these valuable
-  electrical: [2.0, 4.0],   // Similar to HVAC/plumbing trades
-  healthcare: [3.0, 6.0],   // High margins, recurring patients
-  transportation: [2.0, 4.0], // Asset-heavy but steady
-  printing: [1.5, 3.0],     // Declining but cash-flowing
-  storage: [4.0, 8.0],      // Premium asset, very stable income
-  painting: [1.5, 3.0],     // Low barrier, service-based
-  security: [2.5, 4.5],     // Recurring monitoring contracts
+  accounting: [1.5, 3.5], electrical: [2.0, 4.0], healthcare: [3.0, 6.0],
+  transportation: [2.0, 4.0], printing: [1.5, 3.0], storage: [4.0, 8.0],
+  painting: [1.5, 3.0], security: [2.5, 4.5],
+  // ── New 14 industries ──────────────────────────────────────────────────
+  signmaking:      [1.9, 3.3],
+  hairsalon:       [1.1, 2.3],
+  construction:    [1.8, 3.2],
+  grocery:         [1.6, 3.3],
+  pestcontrol:     [2.0, 4.2],
+  marketing:       [1.8, 3.1],
+  engineering:     [1.8, 3.3],
+  veterinary:      [2.4, 4.1],
+  realestatebrok:  [1.7, 2.6],
+  propertymanage:  [1.9, 3.1],
+  seniorcare:      [2.0, 3.8],
+  physicaltherapy: [1.6, 2.9],
+  remodeling:      [1.4, 2.7],
+  staffing:        [1.5, 3.0],
 };
 
 function classifyIndustry(text: string): string | null {
@@ -156,27 +307,22 @@ function extractFields(row: Record<string, string>, industry: string | null): Fi
   const revenue = parseNumber(row.revenue || row.Revenue || row.gross_revenue || row["Gross Revenue"] || row["Annual Revenue"] || row["Net Revenue"] || row.ARR);
   const price = parseNumber(row.asking_price || row.price || row.Price || row["Asking Price"] || row["List Price"]);
 
-  // SDE extraction with source tracking
   let sde: number | null = null;
   let sdeSource: FieldExtraction["sdeSource"] = "none";
 
-  // Priority 1: Direct SDE
   const directSDE = parseNumber(row.sde || row.SDE || row["Seller's Discretionary Earnings"] || row["Owner Benefit"]);
   if (directSDE) { sde = directSDE; sdeSource = "direct_sde"; }
 
-  // Priority 2: Cash Flow
   if (!sde) {
     const cashFlow = parseNumber(row.cash_flow || row["Cash Flow"] || row["Discretionary Cash Flow"]);
     if (cashFlow) { sde = cashFlow; sdeSource = "cash_flow"; }
   }
 
-  // Priority 3: Profit / Net Profit
   if (!sde) {
     const profit = parseNumber(row.profit || row.Profit || row["Net Profit"] || row["Net Income"]);
     if (profit) { sde = profit; sdeSource = "profit"; }
   }
 
-  // Priority 4: Estimate from revenue × industry margin midpoint
   if (!sde && revenue && industry) {
     const margins = INDUSTRY_MARGINS[industry];
     if (margins) {
@@ -256,11 +402,9 @@ export async function POST(req: NextRequest) {
     for (let idx = 0; idx < listings.length; idx++) {
       const row = listings[idx];
       try {
-        // Extract source tracking fields
         const sourceUrl = row.source_url || row.url || row.URL || row.Link || row.link || null;
         const sourceListingId = row.listing_id || row.id || row.ID || null;
 
-        // Classify industry from multiple fields
         const industryText = String(row.industry || row.Industry || row.category || row.Category || row.type || row.Type || row.title || row.Title || row.name || row.Name || "");
         const titleText = String(row.title || row.Title || row.name || row.Name || "");
         const industry = classifyIndustry(industryText) || classifyIndustry(titleText);
@@ -268,7 +412,6 @@ export async function POST(req: NextRequest) {
         if (!industry) {
           results.skipped_industry++;
           results.rejections.push({ row: idx + 1, reason: "unknown_industry", details: `Could not classify "${industryText.slice(0, 60)}"`, industry: industryText.slice(0, 40) });
-          // Log rejection
           await supabase.from("import_rejections").insert({
             source_platform, source_url: sourceUrl, source_listing_id: sourceListingId,
             raw_data: row, extracted_industry: industryText.slice(0, 100),
@@ -279,7 +422,6 @@ export async function POST(req: NextRequest) {
           continue;
         }
 
-        // Extract fields with confidence tracking
         const extracted = extractFields(row, industry);
         const location = String(row.location || row.Location || row.city || row.City || "");
         const state = parseState(location);
@@ -287,7 +429,6 @@ export async function POST(req: NextRequest) {
         const employees = parseNumber(row.employees || row.Employees || row["Number of Employees"]);
         const yearEstablished = parseNumber(row.year_established || row["Year Established"] || row.established || row.Founded);
 
-        // Check missing critical fields
         if (!extracted.revenue) {
           results.skipped_missing++;
           results.rejections.push({ row: idx + 1, reason: "missing_revenue", details: "No revenue field found", industry });
@@ -324,7 +465,6 @@ export async function POST(req: NextRequest) {
           continue;
         }
 
-        // Threshold check
         const rev = extracted.revenue!, sde = extracted.sde!, price = extracted.price!;
         if (rev < 200000 || sde < 75000 || price < 150000 || sde > rev || sde / rev > 0.9) {
           results.skipped_threshold++;
@@ -339,7 +479,6 @@ export async function POST(req: NextRequest) {
           continue;
         }
 
-        // Dedup: check fingerprint AND source_listing_id
         const fingerprint = generateFingerprint(industry, rev, sde, price, state);
 
         if (sourceListingId) {
@@ -357,13 +496,11 @@ export async function POST(req: NextRequest) {
           .from("deal_runs").select("id").eq("fingerprint", fingerprint).limit(1).single();
         if (existingByFingerprint) { results.duplicates++; continue; }
 
-        // Score the deal
         const scores = scoreDeal(industry, rev, sde, price);
         const confidence = getConfidenceScore(extracted.sdeSource, true, true);
         results.confidence[confidence]++;
         if (extracted.sdeSource === "estimated") results.estimated_sde++;
 
-        // Find or create cluster
         let clusterId: string | null = null;
         const { data: cluster } = await supabase.from("deal_clusters").select("id, runs_count, median_revenue, median_sde, median_price")
           .eq("industry", industry).gte("median_revenue", rev * 0.9).lte("median_revenue", rev * 1.1)
@@ -392,7 +529,6 @@ export async function POST(req: NextRequest) {
           clusterId = nc?.id || null;
         }
 
-        // Insert deal run with all enhanced fields
         await supabase.from("deal_runs").insert({
           tool_used: "marketplace_import",
           industry, revenue: rev, sde, asking_price: price,
@@ -408,7 +544,6 @@ export async function POST(req: NextRequest) {
           market_score: 55, industry_score: 55,
           fingerprint, cluster_id: clusterId, is_valid: true,
           red_flags: [], green_flags: [],
-          // Enhanced fields
           source_platform,
           source_url: sourceUrl,
           source_listing_id: sourceListingId,
