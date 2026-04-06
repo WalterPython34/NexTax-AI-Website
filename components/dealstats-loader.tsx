@@ -3,13 +3,51 @@
 import React, { useState, useRef } from "react";
 
 const INDUSTRIES: Record<string, string> = {
-  plumbing: "Plumbing", hvac: "HVAC", landscaping: "Landscaping", carwash: "Car Wash",
-  dental: "Dental Practice", gym: "Gym / Fitness", restaurant: "Restaurant", autorepair: "Auto Repair",
-  cleaning: "Cleaning Service", ecommerce: "Ecommerce", saas: "SaaS", insurance: "Insurance",
-  roofing: "Roofing", petcare: "Pet Care", pharmacy: "Pharmacy", daycare: "Daycare",
-  medspa: "Med Spa", accounting: "Accounting", electrical: "Electrical",
-  healthcare: "Healthcare", transportation: "Transportation", printing: "Printing",
-  storage: "Self-Storage", painting: "Painting", security: "Security", laundromat: "Laundromat",
+  // ── Original 26 industries ───────────────────────────────────────────────
+  plumbing:       "Plumbing",
+  hvac:           "HVAC",
+  landscaping:    "Landscaping",
+  carwash:        "Car Wash",
+  dental:         "Dental Practice",
+  gym:            "Gym / Fitness",
+  restaurant:     "Restaurant",
+  autorepair:     "Auto Repair",
+  cleaning:       "Cleaning Service",
+  ecommerce:      "Ecommerce",
+  saas:           "SaaS",
+  insurance:      "Insurance",
+  roofing:        "Roofing",
+  petcare:        "Pet Care",
+  pharmacy:       "Pharmacy",
+  daycare:        "Daycare",
+  medspa:         "Med Spa",
+  accounting:     "Accounting",
+  electrical:     "Electrical",
+  healthcare:     "Healthcare",
+  transportation: "Transportation",
+  printing:       "Printing",
+  storage:        "Self-Storage",
+  painting:       "Painting",
+  security:       "Security",
+  laundromat:     "Laundromat",
+  // ── New industries ───────────────────────────────────────────────────────
+  signmaking:      "Sign Manufacturing",
+  hairsalon:       "Hair Salon",
+  clothing:        "Clothing & Accessories",
+  construction:    "Other Construction (Fence / Pool / Pavers)",
+  grocery:         "Grocery Store",
+  pestcontrol:     "Pest Control",
+  marketing:       "Marketing Agency",
+  engineering:     "Engineering Services",
+  veterinary:      "Veterinary Practice",
+  realestatebrok:  "Real Estate Brokerage",
+  propertymanage:  "Property Management",
+  seniorcare:      "Senior Care / Home Health",
+  physicaltherapy: "Physical Therapy / Chiropractic",
+  gasstation:      "Gas Station",
+  sportinggoods:   "Sporting Goods",
+  remodeling:      "Home Remodeling & Restoration",
+  staffing:        "Staffing / Recruiting",
 };
 
 function mapColumn(header: string): string | null {
@@ -301,6 +339,9 @@ export default function DealStatsLoader() {
   const pct = (v: number | null) => v != null ? `${v.toFixed(1)}%` : "—";
   const mult = (a: number | null, b: number | null) => a && b && b > 0 ? `${(a / b).toFixed(2)}x` : "—";
 
+  // Sort industries alphabetically by label for the dropdown
+  const sortedIndustries = Object.entries(INDUSTRIES).sort((a, b) => a[1].localeCompare(b[1]));
+
   return (
     <div style={{ minHeight: "100vh", background: "#0B0F17", color: "#E2E8F0" }}>
       <style>{`
@@ -321,7 +362,7 @@ export default function DealStatsLoader() {
             <div style={{ fontSize: 11, color: "#6B7280", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>NexTax Industry *</div>
             <select value={industryKey} onChange={(e) => setIndustryKey(e.target.value)} style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.05)", color: "#E2E8F0", fontSize: 13 }}>
               <option value="">Select industry...</option>
-              {Object.entries(INDUSTRIES).map(([key, label]) => (
+              {sortedIndustries.map(([key, label]) => (
                 <option key={key} value={key}>{label}</option>
               ))}
             </select>
@@ -442,11 +483,11 @@ export default function DealStatsLoader() {
             {/* Summary Stats */}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 10, marginTop: 14, padding: "12px 0", borderTop: "1px solid rgba(255,255,255,0.06)" }}>
               {[
-                { label: "Median MVIC", value: fmt(median(records.map((r) => r.mvic_price))) },
+                { label: "Median MVIC",    value: fmt(median(records.map((r) => r.mvic_price))) },
                 { label: "Median Revenue", value: fmt(median(records.map((r) => r.revenue))) },
-                { label: "Median SDE", value: fmt(median(records.map((r) => r.sde))) },
+                { label: "Median SDE",     value: fmt(median(records.map((r) => r.sde))) },
                 { label: "Median MVIC/SDE", value: medianMult(records) },
-                { label: "Transactions", value: String(records.length) },
+                { label: "Transactions",   value: String(records.length) },
               ].map((s) => (
                 <div key={s.label} style={{ textAlign: "center" }}>
                   <div style={{ fontSize: 16, fontWeight: 700, color: "#818CF8", fontFamily: "'JetBrains Mono', monospace" }}>{s.value}</div>
