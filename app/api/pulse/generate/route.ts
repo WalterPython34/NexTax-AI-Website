@@ -149,12 +149,23 @@ async function generate(req: NextRequest) {
     const mostUndervalued = allIndustries.filter((i) => i.dri < 1.0)
       .sort((a, b) => a.dri - b.dri).slice(0, 5);
 
-    // ── Top opportunities: high-score deals with favorable pricing
-    const topOpportunities = deals
-      .filter((d) => d.overall_score >= 65 && d.sde > 0 && d.asking_price > 0)
+   // ── Top opportunities: high-score deals from FULL database (not week-filtered)
+    const { data: allTopDeals } = await supabase
+      .from("deal_runs")
+      .select("industry, sde, asking_price, fair_value, fair_value_low, fair_value_high, overall_score, valuation_multiple, range_position, risk_level")
+      .gte("overall_score", 65)
+      .eq("is_valid", true)
+      .not("fair_value", "is", null)
+      .not("asking_price", "is", null)
+      .gt("sde", 0)
+      .gt("asking_price", 0)
+      .order("overall_score", { ascending: false })
+      .limit(10);
+
+    const topOpportunities = (allTopDeals || [])
       .map((d) => {
         const snap = snapshots.find((s) => s.industry_key === d.industry);
-        const fairValue = snap?.sold_multiple ? Math.round(snap.sold_multiple * d.sde) : null;
+        const fairValue = d.fair_value || (snap?.sold_multiple ? Math.round(snap.sold_multiple * d.sde) : null);
         return {
           industry: INDUSTRY_LABELS[d.industry] || d.industry,
           sde: d.sde,
@@ -162,6 +173,7 @@ async function generate(req: NextRequest) {
           fair_value: fairValue,
           score: d.overall_score,
           multiple: d.valuation_multiple ? +d.valuation_multiple.toFixed(2) : null,
+          range_position: d.range_position || null,
         };
       })
       .sort((a, b) => b.score - a.score)
