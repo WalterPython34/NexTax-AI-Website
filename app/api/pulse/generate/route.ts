@@ -13,13 +13,23 @@ const supabase = createClient(
 );
 
 const INDUSTRY_LABELS: Record<string, string> = {
-  laundromat:"Laundromat",hvac:"HVAC",landscaping:"Landscaping",carwash:"Car Wash",
-  dental:"Dental",gym:"Gym/Fitness",restaurant:"Restaurant",autorepair:"Auto Repair",
-  cleaning:"Cleaning",ecommerce:"Ecommerce",saas:"SaaS",insurance:"Insurance",
-  plumbing:"Plumbing",roofing:"Roofing",petcare:"Pet Care",pharmacy:"Pharmacy",
-  daycare:"Daycare",medspa:"Med Spa",accounting:"Accounting",electrical:"Electrical",
-  healthcare:"Healthcare",transportation:"Transportation",printing:"Printing",
-  storage:"Self-Storage",painting:"Painting",security:"Security",
+  // ── Original 26 ──────────────────────────────────────────────────────────
+  laundromat:"Laundromat", hvac:"HVAC", landscaping:"Landscaping", carwash:"Car Wash",
+  dental:"Dental", gym:"Gym/Fitness", restaurant:"Restaurant", autorepair:"Auto Repair",
+  cleaning:"Cleaning", ecommerce:"Ecommerce", saas:"SaaS", insurance:"Insurance",
+  plumbing:"Plumbing", roofing:"Roofing", petcare:"Pet Care", pharmacy:"Pharmacy",
+  daycare:"Daycare", medspa:"Med Spa", accounting:"Accounting", electrical:"Electrical",
+  healthcare:"Healthcare", transportation:"Transportation", printing:"Printing",
+  storage:"Self-Storage", painting:"Painting", security:"Security",
+  // ── New 15 ───────────────────────────────────────────────────────────────
+  signmaking:"Sign Manufacturing", hairsalon:"Hair Salon",
+  clothing:"Clothing & Accessories", construction:"Other Construction",
+  grocery:"Grocery Store", pestcontrol:"Pest Control",
+  marketing:"Marketing Agency", engineering:"Engineering Services",
+  veterinary:"Veterinary Practice", realestatebrok:"Real Estate Brokerage",
+  propertymanage:"Property Management", seniorcare:"Senior Care / Home Health",
+  physicaltherapy:"Physical Therapy / Chiropractic",
+  remodeling:"Home Remodeling & Restoration", staffing:"Staffing / Recruiting",
 };
 
 function driCondition(dri: number): string {
