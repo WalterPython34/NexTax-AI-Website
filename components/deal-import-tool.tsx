@@ -3,9 +3,17 @@
 import React, { useState, useRef } from "react";
 
 const TRACKED_INDUSTRIES = [
+  // ── Original 26 ──────────────────────────────────────────────────────────
   "Laundromat", "HVAC", "Landscaping", "Car Wash", "Dental Practice", "Gym/Fitness",
   "Restaurant", "Auto Repair", "Cleaning Service", "Ecommerce", "SaaS", "Insurance Agency",
   "Plumbing", "Roofing", "Pet Care", "Pharmacy", "Daycare", "Med Spa",
+  "Accounting", "Electrical", "Healthcare", "Transportation", "Printing",
+  "Self-Storage", "Painting", "Security",
+  // ── New 14 ───────────────────────────────────────────────────────────────
+  "Sign Manufacturing", "Hair Salon", "Other Construction", "Grocery Store",
+  "Pest Control", "Marketing Agency", "Engineering Services", "Veterinary Practice",
+  "Real Estate Brokerage", "Property Management", "Senior Care / Home Health",
+  "Physical Therapy / Chiropractic", "Home Remodeling & Restoration", "Staffing / Recruiting",
 ];
 
 const SOURCE_PLATFORMS = ["BizBuySell", "Flippa", "Empire Flippers", "Acquire.com", "BizQuest", "BusinessBroker.net", "Other"];
