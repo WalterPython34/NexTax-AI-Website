@@ -7,6 +7,7 @@ function sc(s: number) { return s >= 70 ? "#10B981" : s >= 50 ? "#F59E0B" : s >=
 function rl(s: number) { return s >= 70 ? "Low Risk" : s >= 50 ? "Moderate" : s >= 30 ? "High Risk" : "Critical"; }
 
 const INDUSTRY_LABELS: Record<string, string> = {
+  // ── Original 26 ──────────────────────────────────────────────────────────
   laundromat: "Laundromat", hvac: "HVAC", landscaping: "Landscaping", carwash: "Car Wash",
   dental: "Dental Practice", gym: "Gym / Fitness", restaurant: "Restaurant", autorepair: "Auto Repair",
   cleaning: "Cleaning Service", ecommerce: "Ecommerce", saas: "SaaS", insurance: "Insurance",
@@ -14,6 +15,15 @@ const INDUSTRY_LABELS: Record<string, string> = {
   daycare: "Daycare", medspa: "Med Spa", accounting: "Accounting", electrical: "Electrical",
   healthcare: "Healthcare", transportation: "Transportation", printing: "Printing",
   storage: "Self-Storage", painting: "Painting", security: "Security",
+  // ── New 15 ───────────────────────────────────────────────────────────────
+  signmaking: "Sign Manufacturing", hairsalon: "Hair Salon",
+  clothing: "Clothing & Accessories", construction: "Other Construction",
+  grocery: "Grocery Store", pestcontrol: "Pest Control",
+  marketing: "Marketing Agency", engineering: "Engineering Services",
+  veterinary: "Veterinary Practice", realestatebrok: "Real Estate Brokerage",
+  propertymanage: "Property Management", seniorcare: "Senior Care / Home Health",
+  physicaltherapy: "Physical Therapy / Chiropractic",
+  remodeling: "Home Remodeling & Restoration", staffing: "Staffing / Recruiting",
 };
 
 const PRICE_RANGES = [
