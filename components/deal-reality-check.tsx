@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 // ── PATCH 1: Add supabase client import at the top of the file ───────────────
 // Add this line after the existing React import:
  
