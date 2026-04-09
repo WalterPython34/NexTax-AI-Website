@@ -1165,47 +1165,83 @@ Return ONLY this JSON (all fields required, no markdown):
   return (
     <div className="min-h-screen" style={{ background: "#0B0F17", color: "#E2E8F0" }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800&family=JetBrains+Mono:wght@400;500;600;700;800&family=Instrument+Serif:ital@0;1&display=swap');
-        *{box-sizing:border-box}select,input{font-family:'DM Sans',sans-serif}select:focus,input:focus{border-color:rgba(99,102,241,0.5)!important;outline:none}
-        @keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
-        .fu{animation:fadeUp .4s ease-out forwards}
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Inter+Tight:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap');
+        *{box-sizing:border-box}
+        body,select,input,button,textarea{font-family:'Inter',sans-serif}
+        select:focus,input:focus{border-color:rgba(99,102,241,0.5)!important;outline:none}
+        @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+        .fu{animation:fadeUp .35s ease-out forwards}
         .fd1{animation-delay:.08s;opacity:0}.fd2{animation-delay:.16s;opacity:0}.fd3{animation-delay:.24s;opacity:0}
         .fd4{animation-delay:.32s;opacity:0}.fd5{animation-delay:.4s;opacity:0}.fd6{animation-delay:.48s;opacity:0}
         @keyframes pulseGlow{0%,100%{box-shadow:0 0 20px rgba(99,102,241,0.1)}50%{box-shadow:0 0 40px rgba(99,102,241,0.25)}}
       `}</style>
 
       {/* Header */}
-      <div style={{ padding: "40px 24px 32px", textAlign: "center", background: "radial-gradient(ellipse at center top, rgba(59,130,246,0.06) 0%, transparent 60%)" }}>
-        <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "5px 14px", borderRadius: 20, background: "rgba(59,130,246,0.1)", border: "1px solid rgba(59,130,246,0.2)", fontSize: 12, color: "#60A5FA", fontWeight: 600, marginBottom: 16 }}>
+      <div style={{ padding: "48px 24px 36px", textAlign: "center", background: "radial-gradient(ellipse at center top, rgba(59,130,246,0.05) 0%, transparent 60%)" }}>
+        <div style={{ display: "inline-flex", alignItems: "center", gap: 7, padding: "5px 14px", borderRadius: 20, background: "rgba(59,130,246,0.08)", border: "1px solid rgba(59,130,246,0.18)", fontSize: 11, color: "#60A5FA", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", opacity: 0.85, marginBottom: 20, fontFamily: "'Inter', sans-serif" }}>
           🔎 Full Acquisition Underwriting
         </div>
-        <h1 style={{ fontSize: "clamp(26px, 4.5vw, 40px)", fontWeight: 800, margin: "0 0 10px", fontFamily: "'Instrument Serif', serif", background: "linear-gradient(135deg, #F8FAFC 0%, #94A3B8 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", lineHeight: 1.15 }}>
+        <h1 style={{ fontSize: "clamp(28px, 4.5vw, 42px)", fontWeight: 600, margin: "0 0 14px", fontFamily: "'Inter Tight', sans-serif", letterSpacing: "-0.02em", color: "#F1F5F9", lineHeight: 1.1 }}>
           Deal Risk Analyzer
         </h1>
-        <p style={{ fontSize: 15, color: "#8896A6", maxWidth: 560, margin: "0 auto", lineHeight: 1.6 }}>
+        <p style={{ fontSize: 15, color: "#8896A6", maxWidth: 520, margin: "0 auto", lineHeight: 1.65, fontFamily: "'Inter', sans-serif", fontWeight: 400, opacity: 0.85 }}>
           Full decision-grade underwriting with stress tests, negotiation playbook, and institutional-quality deal memo. Enter your deal details to get a buy-side assessment.
         </p>
       </div>
 
       {/* EMAIL GATE */}
       {gated && (
-        <div style={{ maxWidth: 440, margin: "0 auto", padding: "0 24px 40px" }}>
-          <div className="fu" style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 16, padding: "32px 28px", textAlign: "center" }}>
-            <div style={{ fontSize: 36, marginBottom: 12 }}>🔎</div>
-            <h2 style={{ fontSize: 20, fontWeight: 700, margin: "0 0 6px", color: "#E2E8F0", fontFamily: "'Instrument Serif', serif" }}>Get your full underwriting report.</h2>
-            <p style={{ fontSize: 14, color: "#8896A6", margin: "0 0 24px", lineHeight: 1.5 }}>Enter your email to access the Deal Risk Analyzer with AI underwriting, stress tests, and negotiation memo.</p>
-            <div style={{ textAlign: "left", marginBottom: 12 }}>
-              <label style={{ display: "block", fontSize: 11, color: "#8896A6", marginBottom: 4, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.05em" }}>First Name</label>
-              <input type="text" placeholder="Steve" value={gateName} onChange={(e) => setGateName(e.target.value)} style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.04)", color: "#E2E8F0", fontSize: 14 }} />
+        <div style={{ maxWidth: 420, margin: "0 auto", padding: "0 24px 48px" }}>
+          <div className="fu" style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 16, padding: "36px 32px", textAlign: "center" }}>
+
+            {/* Icon */}
+            <div style={{ width: 52, height: 52, borderRadius: "50%", background: "linear-gradient(135deg, rgba(59,130,246,0.2), rgba(99,102,241,0.15))", border: "1px solid rgba(99,102,241,0.2)", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px", fontSize: 22 }}>
+              🔎
             </div>
-            <div style={{ textAlign: "left", marginBottom: 20 }}>
-              <label style={{ display: "block", fontSize: 11, color: "#8896A6", marginBottom: 4, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.05em" }}>Email</label>
-              <input type="email" placeholder="you@email.com" value={gateEmail} onChange={(e) => setGateEmail(e.target.value)} style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.04)", color: "#E2E8F0", fontSize: 14 }} />
+
+            {/* Headline */}
+            <h2 style={{ fontSize: 22, fontWeight: 600, margin: "0 0 8px", color: "#F1F5F9", fontFamily: "'Inter Tight', sans-serif", letterSpacing: "-0.02em", lineHeight: 1.2 }}>
+              Get your full underwriting report.
+            </h2>
+            <p style={{ fontSize: 14, color: "#6B7280", margin: "0 0 28px", lineHeight: 1.6, fontFamily: "'Inter', sans-serif", fontWeight: 400, opacity: 0.85 }}>
+              Enter your email to access the Deal Risk Analyzer with AI underwriting, stress tests, and negotiation memo.
+            </p>
+
+            {/* Fields */}
+            <div style={{ textAlign: "left", marginBottom: 14 }}>
+              <label style={{ display: "block", fontSize: 11, color: "#6B7280", marginBottom: 6, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "'Inter', sans-serif", opacity: 0.7 }}>First Name</label>
+              <input
+                type="text"
+                placeholder="Steve"
+                value={gateName}
+                onChange={(e) => setGateName(e.target.value)}
+                style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.09)", background: "rgba(255,255,255,0.04)", color: "#E2E8F0", fontSize: 14, fontFamily: "'Inter', sans-serif", outline: "none" }}
+              />
             </div>
-            <button onClick={handleGateSubmit} disabled={!gateEmail || gateLoading} style={{ width: "100%", padding: "13px", borderRadius: 10, border: "none", background: gateEmail ? "linear-gradient(135deg, #3B82F6, #6366F1)" : "rgba(255,255,255,0.08)", color: gateEmail ? "#fff" : "#6B7280", fontSize: 15, fontWeight: 700, cursor: gateEmail ? "pointer" : "not-allowed" }}>
+            <div style={{ textAlign: "left", marginBottom: 22 }}>
+              <label style={{ display: "block", fontSize: 11, color: "#6B7280", marginBottom: 6, fontWeight: 500, textTransform: "uppercase", letterSpacing: "0.08em", fontFamily: "'Inter', sans-serif", opacity: 0.7 }}>Email</label>
+              <input
+                type="email"
+                placeholder="you@email.com"
+                value={gateEmail}
+                onChange={(e) => setGateEmail(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && gateEmail && !gateLoading && handleGateSubmit()}
+                style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.09)", background: "rgba(255,255,255,0.04)", color: "#E2E8F0", fontSize: 14, fontFamily: "'Inter', sans-serif", outline: "none" }}
+              />
+            </div>
+
+            {/* CTA */}
+            <button
+              onClick={handleGateSubmit}
+              disabled={!gateEmail || gateLoading}
+              style={{ width: "100%", padding: "13px", borderRadius: 10, border: "none", background: gateEmail ? "linear-gradient(135deg, #3B82F6, #6366F1)" : "rgba(255,255,255,0.06)", color: gateEmail ? "#fff" : "#4B5563", fontSize: 15, fontWeight: 600, cursor: gateEmail ? "pointer" : "not-allowed", fontFamily: "'Inter', sans-serif", letterSpacing: "-0.01em", transition: "opacity 0.15s" }}
+            >
               {gateLoading ? "Loading..." : "🔎 Start Analysis"}
             </button>
-            <p style={{ fontSize: 11, color: "#4B5563", marginTop: 12 }}>No spam. Unsubscribe anytime.</p>
+
+            <p style={{ fontSize: 11, color: "#374151", marginTop: 14, fontFamily: "'Inter', sans-serif", letterSpacing: "0.02em" }}>
+              No spam. Unsubscribe anytime.
+            </p>
           </div>
         </div>
       )}
