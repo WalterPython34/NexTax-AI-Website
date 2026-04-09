@@ -860,22 +860,31 @@ export default function DealRealityCheck() {
                 </div>
 
                 {/* Score bar */}
-                <div style={{ marginTop: 16 }}>
-                  <svg viewBox="0 0 300 28" xmlns="http://www.w3.org/2000/svg" style={{ width: "100%", height: 28, display: "block" }}>
-                    <rect x="0"  y="8" width="58" height="12" rx="2" fill="#EAF3DE"/>
-                    <rect x="60" y="8" width="58" height="12" rx="2" fill="#E6F1FB"/>
-                    <rect x="120" y="5" width="72" height="18" rx="3" fill="#FAEEDA"/>
-                    <rect x="194" y="8" width="106" height="12" rx="2" fill="#FCEBEB"/>
-                    <text x="29"  y="7" fontSize="8" fill="#3B6D11" textAnchor="middle" fontFamily="sans-serif">Under</text>
-                    <text x="89"  y="7" fontSize="8" fill="#185FA5" textAnchor="middle" fontFamily="sans-serif">Fair</text>
-                    <text x="156" y="7" fontSize="8" fill="#854F0B" textAnchor="middle" fontFamily="sans-serif">Mod. Over</text>
-                    <text x="247" y="7" fontSize="8" fill="#A32D2D" textAnchor="middle" fontFamily="sans-serif">High Over</text>
-                    {/* Marker position: map multiple to bar. Under <1.0, Fair 1.0-1.15, Mod 1.15-1.30, High >1.30 */}
-                    <circle cx={Math.min(290, Math.max(10, (() => { const m = results.valuation.multiple; if (m < 1.0) return 10 + (m / 1.0) * 48; if (m < 1.15) return 60 + ((m - 1.0) / 0.15) * 58; if (m < 1.30) return 120 + ((m - 1.15) / 0.15) * 72; return 194 + Math.min(96, ((m - 1.30) / 0.5) * 96); })())} cy="14" r="7" fill={heroColor}/>
-                    <text x={Math.min(290, Math.max(10, (() => { const m = results.valuation.multiple; if (m < 1.0) return 10 + (m / 1.0) * 48; if (m < 1.15) return 60 + ((m - 1.0) / 0.15) * 58; if (m < 1.30) return 120 + ((m - 1.15) / 0.15) * 72; return 194 + Math.min(96, ((m - 1.30) / 0.5) * 96); })())} y="18" fontSize="7" fill="white" textAnchor="middle" fontWeight="500" fontFamily="sans-serif">{results.valuation.multiple.toFixed(2)}</text>
-                  </svg>
-                </div>
-              </div>
+                {(() => {
+                  const m = results.valuation.multiple;
+                  const markerX = Math.min(290, Math.max(10,
+                    m < 1.0  ? 10 + (m / 1.0) * 48 :
+                    m < 1.15 ? 60 + ((m - 1.0) / 0.15) * 58 :
+                    m < 1.30 ? 120 + ((m - 1.15) / 0.15) * 72 :
+                    194 + Math.min(96, ((m - 1.30) / 0.5) * 96)
+                  ));
+                  return (
+                    <div style={{ marginTop: 16 }}>
+                      <svg viewBox="0 0 300 28" xmlns="http://www.w3.org/2000/svg" style={{ width: "100%", height: 28, display: "block" }}>
+                        <rect x="0"   y="8" width="58"  height="12" rx="2" fill="#EAF3DE"/>
+                        <rect x="60"  y="8" width="58"  height="12" rx="2" fill="#E6F1FB"/>
+                        <rect x="120" y="5" width="72"  height="18" rx="3" fill="#FAEEDA"/>
+                        <rect x="194" y="8" width="106" height="12" rx="2" fill="#FCEBEB"/>
+                        <text x="29"  y="7" fontSize="8" fill="#3B6D11" textAnchor="middle" fontFamily="sans-serif">Under</text>
+                        <text x="89"  y="7" fontSize="8" fill="#185FA5" textAnchor="middle" fontFamily="sans-serif">Fair</text>
+                        <text x="156" y="7" fontSize="8" fill="#854F0B" textAnchor="middle" fontFamily="sans-serif">Mod. Over</text>
+                        <text x="247" y="7" fontSize="8" fill="#A32D2D" textAnchor="middle" fontFamily="sans-serif">High Over</text>
+                        <circle cx={markerX} cy="14" r="7" fill={heroColor}/>
+                        <text x={markerX} y="18" fontSize="7" fill="white" textAnchor="middle" fontWeight="500" fontFamily="sans-serif">{results.valuation.multiple.toFixed(2)}</text>
+                      </svg>
+                    </div>
+                  );
+                })()}
 
               {/* Right: 4 metric cards stacked */}
               <div style={{ display: "flex", flexDirection: "column", gap: 8, minWidth: 150 }}>
