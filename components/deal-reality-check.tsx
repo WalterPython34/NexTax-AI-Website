@@ -351,7 +351,7 @@ function generateShareCard(results: ScoreBreakdown, industry: string, inputs: De
   return canvas.toDataURL("image/png");
 }
 
-// ─── MAIN COMPONENT ──────────────────────────────────────────────────────────
+// ─── SCORE BAR COMPONENT ─────────────────────────────────────────────────────
 
 function ScoreBar({ multiple, heroColor }: { multiple: number; heroColor: string }) {
   const markerX = Math.min(290, Math.max(10,
@@ -377,6 +377,9 @@ function ScoreBar({ multiple, heroColor }: { multiple: number; heroColor: string
     </div>
   );
 }
+
+// ─── MAIN COMPONENT ──────────────────────────────────────────────────────────
+
 export default function DealRealityCheck() {
   const [inputs, setInputs] = useState<DealInputs>({ revenue: "", sde: "", askingPrice: "", industry: "", debtPercent: "80", interestRate: "10.5", loanTermYears: "10" });
   const [inputMode, setInputMode] = useState<"paste" | "manual">("paste");
@@ -885,6 +888,7 @@ export default function DealRealityCheck() {
 
                 {/* Score bar */}
                 <ScoreBar multiple={results.valuation.multiple} heroColor={heroColor} />
+              </div>
 
               {/* Right: 4 metric cards stacked */}
               <div style={{ display: "flex", flexDirection: "column", gap: 8, minWidth: 150 }}>
