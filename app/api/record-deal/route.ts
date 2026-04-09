@@ -1,7 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
 
-const supabase = createClient(
+// Service role client — used for cluster writes (bypasses RLS intentionally)
+const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
@@ -32,6 +35,16 @@ function isValidDeal(revenue: number, sde: number, price: number): boolean {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
+
+    // Read auth session from cookie (works in Next.js App Router)
+    const cookieStore = cookies();
+    const supabaseAuth = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+      { cookies: { get: (name) => cookieStore.get(name)?.value } }
+    );
+    const { data: { user } } = await supabaseAuth.auth.getUser();
+    const lead_id = user?.id ?? null;
 
     const {
       tool_used,
@@ -85,7 +98,7 @@ export async function POST(req: NextRequest) {
 
     if (is_valid) {
       // Look for existing cluster
-      const { data: existingCluster } = await supabase
+      const { data: existingCluster } = await supabaseAdmin
         .from("deal_clusters")
         .select("id, runs_count, median_revenue, median_sde, median_price, unique_tools")
         .eq("industry", industry)
@@ -111,7 +124,7 @@ export async function POST(req: NextRequest) {
         const newMedianSde = (existingCluster.median_sde * existingCluster.runs_count + sdeNum) / newCount;
         const newMedianPrice = (existingCluster.median_price * existingCluster.runs_count + priceNum) / newCount;
 
-        await supabase
+        await supabaseAdmin
           .from("deal_clusters")
           .update({
             runs_count: newCount,
@@ -129,7 +142,7 @@ export async function POST(req: NextRequest) {
           .eq("id", cluster_id);
       } else {
         // Create new cluster
-        const { data: newCluster } = await supabase
+        const { data: newCluster } = await supabaseAdmin
           .from("deal_clusters")
           .insert({
             industry,
@@ -153,7 +166,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Insert deal run
-    const { error } = await supabase.from("deal_runs").insert({
+    const { error } = await supabaseAdmin.from("deal_runs").insert({
       tool_used,
       industry,
       revenue: revNum,
@@ -189,6 +202,7 @@ export async function POST(req: NextRequest) {
       fingerprint,
       cluster_id,
       is_valid,
+      lead_id,   // ← populated from session, null if not logged in
     });
 
     if (error) {
