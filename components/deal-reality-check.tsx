@@ -1,6 +1,15 @@
 "use client";
 
 import React, { useState, useRef } from "react";
+// ── PATCH 1: Add supabase client import at the top of the file ───────────────
+// Add this line after the existing React import:
+ 
+import { createClient } from "@supabase/supabase-js";
+ 
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 // ─── TYPES ───────────────────────────────────────────────────────────────────
 
@@ -405,6 +414,15 @@ export default function DealRealityCheck() {
   const [pendingResults, setPendingResults] = useState<ScoreBreakdown | null>(null);
   const resultsRef = useRef<HTMLDivElement>(null);
 
+  const [magicLinkSent, setMagicLinkSent] = useState(false);
+  const [authUser, setAuthUser] = useState<{ id: string; email: string } | null>(null);
+  useEffect(() => {
+  supabase.auth.getUser().then(({ data }) => {
+    if (data?.user) {
+      setAuthUser({ id: data.user.id, email: data.user.email! });
+    }
+  });
+}, []);
   const set = (f: keyof DealInputs, v: string) => setInputs((p) => ({ ...p, [f]: v }));
   const setCurrency = (f: keyof DealInputs, v: string) => { const c = v.replace(/[^0-9]/g, ""); set(f, c ? parseInt(c).toLocaleString() : ""); };
 
@@ -450,30 +468,73 @@ export default function DealRealityCheck() {
     setLoading(false);
   };
 
-  const handleGateSubmit = async () => {
-    if (!gateEmail) return;
-    setGateLoading(true);
-    try {
-      await fetch("/api/capture-lead", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: gateName, email: gateEmail, source: "reality-check", industry: inputs.industry, dealScore: pendingResults?.overall, metadata: { multiple: pendingResults?.valuation.multiple, dscr: pendingResults?.debtRisk.dscr } }),
+// ── PATCH 3: Replace handleGateSubmit entirely ────────────────────────────────
+// FIND the existing handleGateSubmit function and replace it with this:
+ 
+const handleGateSubmit = async () => {
+  if (!gateEmail) return;
+  setGateLoading(true);
+ 
+  const emailClean = gateEmail.trim().toLowerCase();
+ 
+  // ── Step 1: Capture lead (existing behavior, non-blocking)
+  try {
+    await fetch("/api/capture-lead", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: gateName,
+        email: emailClean,
+        source: "reality-check",
+        industry: inputs.industry,
+        dealScore: pendingResults?.overall,
+        metadata: {
+          multiple: pendingResults?.valuation.multiple,
+          dscr: pendingResults?.debtRisk.dscr,
+        },
+      }),
+    });
+  } catch {
+    // Non-blocking — never prevent results from showing
+  }
+ 
+  // ── Step 2: Trigger magic link (fire and forget — do NOT await blocking)
+  // User sees results immediately regardless of whether this succeeds
+  supabase.auth.signInWithOtp({
+    email: emailClean,
+    options: {
+      emailRedirectTo: `${window.location.origin}/auth/callback?next=/buyer-dashboard`,
+    },
+  }).then(({ error }) => {
+    if (!error) setMagicLinkSent(true);
+    // If OTP fails silently, results still show — no degraded UX
+  });
+ 
+  // ── Step 3: Show results immediately (do not wait for auth)
+  setResults(pendingResults);
+  setShowGate(false);
+  setShowResults(true);
+  setGateLoading(false);
+ 
+  setTimeout(() => resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
+ 
+  if (pendingResults) {
+    // Pass pending_email for anonymous runs so /api/auth/link-deals can backfill later
+    // Pass user_id if they happen to already be authenticated
+    const currentUserId = authUser?.id ?? null;
+ 
+    fetchAI(pendingResults);
+    fetchBenchmarks(pendingResults).then(() => {
+      setResults((finalScores) => {
+        if (finalScores) {
+          createDealPage(finalScores);
+          recordDeal(finalScores, currentUserId, currentUserId ? null : emailClean);
+        }
+        return finalScores;
       });
-    } catch { /* non-blocking */ }
-    setResults(pendingResults);
-    setShowGate(false);
-    setShowResults(true);
-    setGateLoading(false);
-    setTimeout(() => resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
-    if (pendingResults) {
-      fetchAI(pendingResults);
-      fetchBenchmarks(pendingResults).then(() => {
-        setResults((finalScores) => {
-          if (finalScores) { createDealPage(finalScores); recordDeal(finalScores); }
-          return finalScores;
-        });
-      });
-    }
-  };
+    });
+  }
+};
 
   const createDealPage = async (scores: ScoreBreakdown) => {
     try {
@@ -578,28 +639,54 @@ export default function DealRealityCheck() {
     } catch (err) { console.error("Benchmark fetch error:", err); }
   };
 
-  const recordDeal = async (scores: ScoreBreakdown) => {
-    try {
-      await fetch("/api/record-deal", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          tool_used: "reality_check", industry: inputs.industry,
-          revenue: inputs.revenue, sde: inputs.sde, asking_price: inputs.askingPrice,
-          debt_percent: parseFloat(inputs.debtPercent), interest_rate: parseFloat(inputs.interestRate),
-          term_years: parseInt(inputs.loanTermYears),
-          valuation_multiple: +results!.valuation.multiple.toFixed(2),
-          dscr: +scores.debtRisk.dscr.toFixed(2), monthly_payment: Math.round(scores.debtRisk.monthlyPayment),
-          fair_value: scores.valuation.fairValue, fair_value_low: scores.valuation.fairValueLow,
-          fair_value_high: scores.valuation.fairValueHigh, range_position: scores.valuation.rangePosition,
-          recommended_offer_low: scores.valuation.recommendedOffer[0], recommended_offer_high: scores.valuation.recommendedOffer[1],
-          overall_score: scores.overall, risk_level: scores.riskLevel,
-          valuation_score: scores.valuation.score, debt_score: scores.debtRisk.score,
-          market_score: scores.marketRisk.score, industry_score: scores.industryRisk.score,
-          red_flags: scores.redFlags, green_flags: scores.greenFlags, next_step: scores.nextStep,
-        }),
-      });
-    } catch { /* non-blocking */ }
-  };
+ // ── PATCH 4: Update recordDeal to accept user_id and pending_email ────────────
+// FIND the existing recordDeal function and replace it with this:
+ 
+const recordDeal = async (
+  scores: ScoreBreakdown,
+  user_id: string | null = null,
+  pending_email: string | null = null
+) => {
+  try {
+    await fetch("/api/record-deal", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        tool_used: "reality_check",
+        industry: inputs.industry,
+        revenue: inputs.revenue,
+        sde: inputs.sde,
+        asking_price: inputs.askingPrice,
+        debt_percent: parseFloat(inputs.debtPercent),
+        interest_rate: parseFloat(inputs.interestRate),
+        term_years: parseInt(inputs.loanTermYears),
+        valuation_multiple: +scores.valuation.multiple.toFixed(2),
+        dscr: +scores.debtRisk.dscr.toFixed(2),
+        monthly_payment: Math.round(scores.debtRisk.monthlyPayment),
+        fair_value: scores.valuation.fairValue,
+        fair_value_low: scores.valuation.fairValueLow,
+        fair_value_high: scores.valuation.fairValueHigh,
+        range_position: scores.valuation.rangePosition,
+        recommended_offer_low: scores.valuation.recommendedOffer[0],
+        recommended_offer_high: scores.valuation.recommendedOffer[1],
+        overall_score: scores.overall,
+        risk_level: scores.riskLevel,
+        valuation_score: scores.valuation.score,
+        debt_score: scores.debtRisk.score,
+        market_score: scores.marketRisk.score,
+        industry_score: scores.industryRisk.score,
+        red_flags: scores.redFlags,
+        green_flags: scores.greenFlags,
+        next_step: scores.nextStep,
+        // Auth fields
+        user_id,
+        pending_email,
+      }),
+    });
+  } catch {
+    // Non-blocking
+  }
+};
 
   const fetchAI = async (scores: ScoreBreakdown) => {
     setAiLoading(true); setDealMemo(null);
@@ -839,6 +926,68 @@ export default function DealRealityCheck() {
       ══════════════════════════════════════════════════════════════ */}
       {showResults && results && (
         <div ref={resultsRef} style={{ maxWidth: 680, margin: "0 auto", padding: "0 24px 60px" }}>
+          {magicLinkSent && (
+  <div
+    className="fu"
+    style={{
+      marginBottom: 14,
+      padding: "14px 18px",
+      borderRadius: 12,
+      background: "rgba(99,102,241,0.07)",
+      border: "1px solid rgba(99,102,241,0.18)",
+      display: "flex",
+      alignItems: "flex-start",
+      gap: 12,
+    }}
+  >
+    <span style={{ fontSize: 18, flexShrink: 0 }}>📬</span>
+    <div>
+      <div
+        style={{
+          fontSize: 13,
+          fontWeight: 600,
+          color: "#C4B5FD",
+          marginBottom: 3,
+          fontFamily: "'Inter', sans-serif",
+        }}
+      >
+        Magic link sent — check your inbox
+      </div>
+      <div
+        style={{
+          fontSize: 12,
+          color: "#6B7280",
+          lineHeight: 1.6,
+          fontFamily: "'Inter', sans-serif",
+        }}
+      >
+        Click the link in your email to save this deal to your dashboard and access it anytime at{" "}
+        <a
+          href="/buyer-dashboard"
+          style={{ color: "#818CF8", textDecoration: "none" }}
+        >
+          nextax.ai/buyer-dashboard
+        </a>
+        .
+      </div>
+    </div>
+    <button
+      onClick={() => setMagicLinkSent(false)}
+      style={{
+        marginLeft: "auto",
+        background: "none",
+        border: "none",
+        color: "#4B5563",
+        cursor: "pointer",
+        fontSize: 14,
+        flexShrink: 0,
+        paddingTop: 2,
+      }}
+    >
+      ✕
+    </button>
+  </div>
+)}
 
           {/* ── SECTION 1: HERO DECISION BLOCK ── */}
           <div className="fu" style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.07)", borderLeft: `3px solid ${heroColor}`, borderRadius: 16, padding: "28px 24px", marginBottom: 14 }}>
