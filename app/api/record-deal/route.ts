@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { createServerClient } from "@supabase/ssr";
-import { cookies } from "next/headers";
 
-// Service role client — used for cluster writes (bypasses RLS intentionally)
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -35,16 +32,7 @@ function isValidDeal(revenue: number, sde: number, price: number): boolean {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-
-    // Read auth session from cookie (works in Next.js App Router)
-    const cookieStore = cookies();
-    const supabaseAuth = createServerClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-      { cookies: { get: (name) => cookieStore.get(name)?.value } }
-    );
-    const { data: { user } } = await supabaseAuth.auth.getUser();
-    const lead_id = user?.id ?? null;
+    const lead_id = body.lead_id ?? null;  // passed from client
 
     const {
       tool_used,
