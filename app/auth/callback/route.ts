@@ -47,5 +47,6 @@ export async function GET(request: NextRequest) {
   }
 
   // Redirect to the `next` param if present, otherwise fall back to home
-  return NextResponse.redirect(`${requestUrl.origin}${next}`);
+  const next = requestUrl.searchParams.get("next") ?? "/buyer-dashboard";
+return NextResponse.redirect(`${requestUrl.origin}${next}`);
 }
