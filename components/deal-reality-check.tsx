@@ -391,7 +391,7 @@ function ScoreBar({ multiple, heroColor }: { multiple: number; heroColor: string
 
 export default function DealRealityCheck() {
   const [inputs, setInputs] = useState<DealInputs>({ revenue: "", sde: "", askingPrice: "", industry: "", debtPercent: "80", interestRate: "10.5", loanTermYears: "10" });
-  const [inputMode, setInputMode] = useState<"paste" | "manual">("paste");
+  const [inputMode, setInputMode] = useState<"paste" | "manual">("manual");
   const [pasteText, setPasteText] = useState("");
   const [pasteUrl, setPasteUrl] = useState("");
   const [extracting, setExtracting] = useState(false);
@@ -771,21 +771,21 @@ const recordDeal = async (
   return (
     <div className="min-h-screen" style={{ background: "#0B0F17", color: "#E2E8F0" }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;0,9..40,800&family=JetBrains+Mono:wght@400;500;600;700;800&family=Instrument+Serif:ital@0;1&display=swap');
-        *{box-sizing:border-box}select,input{font-family:'DM Sans',sans-serif}select:focus,input:focus{border-color:rgba(99,102,241,0.5)!important;outline:none}
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Inter+Tight:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap');
+        *{box-sizing:border-box}select,input{font-family:'Inter',sans-serif}select:focus,input:focus{border-color:rgba(99,102,241,0.5)!important;outline:none}
         @keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
         .fu{animation:fadeUp .35s ease-out forwards}.fd1{animation-delay:.06s;opacity:0}.fd2{animation-delay:.12s;opacity:0}.fd3{animation-delay:.18s;opacity:0}.fd4{animation-delay:.24s;opacity:0}.fd5{animation-delay:.30s;opacity:0}.fd6{animation-delay:.36s;opacity:0}.fd7{animation-delay:.42s;opacity:0}.fd8{animation-delay:.48s;opacity:0}
       `}</style>
 
       {/* ── HERO ── */}
       <div style={{ padding: "44px 24px 36px", textAlign: "center", background: "radial-gradient(ellipse at center top, rgba(99,102,241,0.07) 0%, transparent 60%)" }}>
-        <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "5px 14px", borderRadius: 20, background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.2)", fontSize: 12, color: "#F59E0B", fontWeight: 600, marginBottom: 18 }}>
+        <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "5px 14px", borderRadius: 20, background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.18)", fontSize: 11, color: "#F59E0B", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase" as const, opacity: 0.85, marginBottom: 18, fontFamily: "'Inter', sans-serif" }}>
           ⚡ Pre-LOI Acquisition Screening
         </div>
-        <h1 style={{ fontSize: "clamp(28px, 5vw, 44px)", fontWeight: 800, margin: "0 0 10px", fontFamily: "'Instrument Serif', serif", background: "linear-gradient(135deg, #F8FAFC 0%, #94A3B8 100%)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", lineHeight: 1.15 }}>
+        <h1 style={{ fontSize: "clamp(28px, 5vw, 42px)", fontWeight: 600, margin: "0 0 10px", fontFamily: "'Inter Tight', sans-serif", letterSpacing: "-0.02em", color: "#F1F5F9", lineHeight: 1.1 }}>
           Deal Reality Check
         </h1>
-        <p style={{ fontSize: 15, color: "#8896A6", maxWidth: 520, margin: "0 auto", lineHeight: 1.6 }}>
+        <p style={{ fontSize: 15, color: "#8896A6", maxWidth: 520, margin: "0 0 10px", lineHeight: 1.65, fontFamily: "'Inter', sans-serif", fontWeight: 400, opacity: 0.85 }}>
           Paste a listing, drop a URL, upload a CIM, or enter numbers manually. AI extracts the financials and runs a full valuation screening instantly.
         </p>
       </div>
