@@ -792,13 +792,15 @@ function NotesPanel({
 // ─── TOP OPPORTUNITIES ────────────────────────────────────────────────────────
 
 function TopOpportunities({
-  deals, favorites, isPro, onToggleFav, onOpenNotes,
+  deals, favorites, isPro, onToggleFav, onOpenNotes, onOpenDetail, onOpenUnderwriting,
 }: {
   deals: DealRun[];
   favorites: Set<string>;
   isPro: boolean;
   onToggleFav: (id: string) => void;
   onOpenNotes: (deal: DealRun) => void;
+  onOpenDetail: (deal: DealRun) => void;
+  onOpenUnderwriting: (deal: DealRun) => void;
 }) {
   const top = [...deals]
     .filter(d => (d.gap_pct ?? 0) <= 0 || d.overall_score >= 65)
@@ -874,17 +876,17 @@ function TopOpportunities({
 
               {/* Actions */}
               <div style={{ display: "flex", gap: 4, flexShrink: 0, alignItems: "center" }}>
-                <a
-                  href={`/deal-reality-check?run=${deal.id}`}
+                <button
+                  onClick={() => onOpenDetail(deal)}
                   style={{
-                    padding: "5px 10px", borderRadius: 7,
+                    padding: "5px 10px", borderRadius: 7, border: "none",
                     border: "1px solid rgba(255,255,255,0.08)",
                     background: "rgba(255,255,255,0.03)",
-                    color: "#6B7280", fontSize: 11, textDecoration: "none",
+                    color: "#6B7280", fontSize: 11, cursor: "pointer",
                   }}
                 >
                   View
-                </a>
+                </button>
                 <StarButton dealId={deal.id} favorites={favorites} onToggle={onToggleFav} />
                 <button
                   onClick={() => onOpenNotes(deal)}
@@ -897,20 +899,19 @@ function TopOpportunities({
                 >
                   📝
                 </button>
-                <a
-                  href={isPro ? `/deal-check?run=${deal.id}` : "#"}
+                <button
+                  onClick={() => onOpenUnderwriting(deal)}
                   title={isPro ? "Run Full Analysis" : "Pro feature"}
                   style={{
-                    padding: "5px 10px", borderRadius: 7,
+                    padding: "5px 10px", borderRadius: 7, border: "none",
                     border: isPro ? "1px solid rgba(99,102,241,0.25)" : "1px solid rgba(255,255,255,0.05)",
                     background: isPro ? "rgba(99,102,241,0.08)" : "rgba(255,255,255,0.02)",
                     color: isPro ? "#818CF8" : "#2D3748",
-                    fontSize: 11, textDecoration: "none",
-                    cursor: isPro ? "pointer" : "not-allowed",
+                    fontSize: 11, cursor: isPro ? "pointer" : "not-allowed",
                   }}
                 >
                   {isPro ? "⚡ Full" : "🔒"}
-                </a>
+                </button>
               </div>
             </div>
           );
@@ -923,11 +924,12 @@ function TopOpportunities({
 // ─── PRIORITY DEALS (dashboard watchlist section) ────────────────────────────
 
 function PriorityDeals({
-  deals, favorites, onOpenNotes,
+  deals, favorites, onOpenNotes, onOpenDetail,
 }: {
   deals: DealRun[];
   favorites: Set<string>;
   onOpenNotes: (deal: DealRun) => void;
+  onOpenDetail: (deal: DealRun) => void;
 }) {
   const starred = deals.filter(d => favorites.has(d.id)).slice(0, 5);
   if (starred.length === 0) return null;
@@ -975,17 +977,17 @@ function PriorityDeals({
                 {sig.label}
               </span>
               <div style={{ display: "flex", gap: 4 }}>
-                <a
-                  href={`/deal-reality-check?run=${deal.id}`}
+                <button
+                  onClick={() => onOpenDetail(deal)}
                   style={{
                     padding: "4px 9px", borderRadius: 6,
                     border: "1px solid rgba(255,255,255,0.08)",
                     background: "rgba(255,255,255,0.03)",
-                    color: "#6B7280", fontSize: 11, textDecoration: "none",
+                    color: "#6B7280", fontSize: 11, cursor: "pointer",
                   }}
                 >
                   View
-                </a>
+                </button>
                 <button
                   onClick={() => onOpenNotes(deal)}
                   style={{
@@ -1005,6 +1007,951 @@ function PriorityDeals({
     </div>
   );
 }
+
+
+// ─── SCORING ENGINE (shared by AnalyzeDealModal) ─────────────────────────────
+
+const SCORE_INDUSTRIES: Record<string, {
+  label: string; benchmarkLow: number; benchmarkMid: number; benchmarkHigh: number;
+  marginRange: [number, number]; growth: string; riskFactor: number;
+  demandScore: number; buyerInterestRank: number; competitionLevel: string;
+}> = {
+  laundromat:     { label:"Laundromat",           benchmarkLow:2.8, benchmarkMid:3.48, benchmarkHigh:4.4,  marginRange:[25,40], growth:"Stable",   riskFactor:0.85, demandScore:82, buyerInterestRank:3,  competitionLevel:"Moderate"      },
+  hvac:           { label:"HVAC",                 benchmarkLow:1.8, benchmarkMid:2.45, benchmarkHigh:3.2,  marginRange:[15,30], growth:"Growing",  riskFactor:0.75, demandScore:88, buyerInterestRank:2,  competitionLevel:"Low-Moderate"  },
+  landscaping:    { label:"Landscaping",          benchmarkLow:1.7, benchmarkMid:2.21, benchmarkHigh:2.9,  marginRange:[10,25], growth:"Stable",   riskFactor:0.90, demandScore:70, buyerInterestRank:7,  competitionLevel:"High"          },
+  carwash:        { label:"Car Wash",             benchmarkLow:2.0, benchmarkMid:2.74, benchmarkHigh:3.6,  marginRange:[25,45], growth:"Growing",  riskFactor:0.80, demandScore:79, buyerInterestRank:5,  competitionLevel:"Moderate"      },
+  dental:         { label:"Dental Practice",      benchmarkLow:0.8, benchmarkMid:1.30, benchmarkHigh:1.9,  marginRange:[20,40], growth:"Growing",  riskFactor:0.65, demandScore:74, buyerInterestRank:8,  competitionLevel:"Low"           },
+  gym:            { label:"Gym / Fitness",        benchmarkLow:1.8, benchmarkMid:2.32, benchmarkHigh:3.0,  marginRange:[15,35], growth:"Stable",   riskFactor:0.95, demandScore:71, buyerInterestRank:9,  competitionLevel:"Moderate-High" },
+  restaurant:     { label:"Restaurant",           benchmarkLow:1.4, benchmarkMid:1.85, benchmarkHigh:2.4,  marginRange:[5,15],  growth:"Volatile", riskFactor:1.10, demandScore:65, buyerInterestRank:11, competitionLevel:"Very High"     },
+  autorepair:     { label:"Auto Repair",          benchmarkLow:1.6, benchmarkMid:2.11, benchmarkHigh:2.8,  marginRange:[15,30], growth:"Stable",   riskFactor:0.85, demandScore:73, buyerInterestRank:6,  competitionLevel:"Moderate"      },
+  cleaning:       { label:"Cleaning Service",     benchmarkLow:1.8, benchmarkMid:2.22, benchmarkHigh:2.9,  marginRange:[15,30], growth:"Growing",  riskFactor:0.80, demandScore:76, buyerInterestRank:4,  competitionLevel:"High"          },
+  ecommerce:      { label:"Ecommerce Brand",      benchmarkLow:1.9, benchmarkMid:2.41, benchmarkHigh:3.1,  marginRange:[15,35], growth:"Variable", riskFactor:0.95, demandScore:83, buyerInterestRank:1,  competitionLevel:"Very High"     },
+  saas:           { label:"SaaS Product",         benchmarkLow:2.1, benchmarkMid:2.60, benchmarkHigh:3.4,  marginRange:[60,85], growth:"Growing",  riskFactor:0.70, demandScore:91, buyerInterestRank:1,  competitionLevel:"High"          },
+  insurance:      { label:"Insurance Agency",     benchmarkLow:1.4, benchmarkMid:1.82, benchmarkHigh:2.4,  marginRange:[20,40], growth:"Stable",   riskFactor:0.70, demandScore:68, buyerInterestRank:10, competitionLevel:"Low"           },
+  plumbing:       { label:"Plumbing",             benchmarkLow:1.7, benchmarkMid:2.30, benchmarkHigh:3.0,  marginRange:[15,30], growth:"Growing",  riskFactor:0.75, demandScore:85, buyerInterestRank:3,  competitionLevel:"Low-Moderate"  },
+  roofing:        { label:"Roofing",              benchmarkLow:1.7, benchmarkMid:2.21, benchmarkHigh:2.9,  marginRange:[15,30], growth:"Stable",   riskFactor:0.90, demandScore:72, buyerInterestRank:6,  competitionLevel:"Moderate"      },
+  petcare:        { label:"Pet Care / Grooming",  benchmarkLow:2.0, benchmarkMid:2.46, benchmarkHigh:3.2,  marginRange:[20,40], growth:"Growing",  riskFactor:0.80, demandScore:77, buyerInterestRank:5,  competitionLevel:"Moderate"      },
+  pharmacy:       { label:"Pharmacy",             benchmarkLow:0.5, benchmarkMid:0.66, benchmarkHigh:0.9,  marginRange:[18,30], growth:"Stable",   riskFactor:0.75, demandScore:62, buyerInterestRank:14, competitionLevel:"Low"           },
+  daycare:        { label:"Daycare / Childcare",  benchmarkLow:1.9, benchmarkMid:2.29, benchmarkHigh:3.0,  marginRange:[15,30], growth:"Growing",  riskFactor:0.80, demandScore:74, buyerInterestRank:10, competitionLevel:"Moderate"      },
+  medspa:         { label:"Med Spa",              benchmarkLow:2.0, benchmarkMid:2.75, benchmarkHigh:3.6,  marginRange:[25,45], growth:"Growing",  riskFactor:0.75, demandScore:80, buyerInterestRank:7,  competitionLevel:"Moderate"      },
+  accounting:     { label:"Accounting / Tax",     benchmarkLow:1.0, benchmarkMid:1.30, benchmarkHigh:1.7,  marginRange:[30,55], growth:"Stable",   riskFactor:0.60, demandScore:86, buyerInterestRank:3,  competitionLevel:"Low-Moderate"  },
+  electrical:     { label:"Electrical",           benchmarkLow:1.7, benchmarkMid:2.30, benchmarkHigh:3.0,  marginRange:[15,30], growth:"Growing",  riskFactor:0.75, demandScore:84, buyerInterestRank:3,  competitionLevel:"Low-Moderate"  },
+  healthcare:     { label:"Healthcare",           benchmarkLow:1.8, benchmarkMid:2.50, benchmarkHigh:3.3,  marginRange:[10,25], growth:"Growing",  riskFactor:0.70, demandScore:80, buyerInterestRank:4,  competitionLevel:"Moderate"      },
+  transportation: { label:"Transportation",       benchmarkLow:1.5, benchmarkMid:2.10, benchmarkHigh:2.8,  marginRange:[10,20], growth:"Stable",   riskFactor:0.90, demandScore:68, buyerInterestRank:8,  competitionLevel:"Moderate"      },
+  printing:       { label:"Printing / Signage",   benchmarkLow:1.5, benchmarkMid:2.00, benchmarkHigh:2.7,  marginRange:[15,30], growth:"Stable",   riskFactor:0.85, demandScore:60, buyerInterestRank:12, competitionLevel:"Moderate"      },
+  storage:        { label:"Self-Storage",         benchmarkLow:2.5, benchmarkMid:3.20, benchmarkHigh:4.2,  marginRange:[35,55], growth:"Growing",  riskFactor:0.70, demandScore:85, buyerInterestRank:2,  competitionLevel:"Low-Moderate"  },
+  painting:       { label:"Painting",             benchmarkLow:1.5, benchmarkMid:2.10, benchmarkHigh:2.8,  marginRange:[15,30], growth:"Stable",   riskFactor:0.85, demandScore:68, buyerInterestRank:8,  competitionLevel:"High"          },
+  security:       { label:"Security Services",    benchmarkLow:1.8, benchmarkMid:2.40, benchmarkHigh:3.2,  marginRange:[15,30], growth:"Growing",  riskFactor:0.75, demandScore:74, buyerInterestRank:6,  competitionLevel:"Moderate"      },
+  construction:   { label:"Construction",         benchmarkLow:1.5, benchmarkMid:2.10, benchmarkHigh:2.8,  marginRange:[10,20], growth:"Growing",  riskFactor:0.90, demandScore:75, buyerInterestRank:5,  competitionLevel:"High"          },
+  engineering:    { label:"Engineering",          benchmarkLow:1.8, benchmarkMid:2.50, benchmarkHigh:3.3,  marginRange:[20,40], growth:"Stable",   riskFactor:0.65, demandScore:72, buyerInterestRank:7,  competitionLevel:"Low"           },
+  grocery:        { label:"Grocery",              benchmarkLow:0.8, benchmarkMid:1.10, benchmarkHigh:1.5,  marginRange:[2,8],   growth:"Stable",   riskFactor:0.90, demandScore:60, buyerInterestRank:13, competitionLevel:"Very High"     },
+  propertymanage: { label:"Property Management",  benchmarkLow:2.0, benchmarkMid:2.80, benchmarkHigh:3.7,  marginRange:[20,40], growth:"Growing",  riskFactor:0.70, demandScore:78, buyerInterestRank:4,  competitionLevel:"Moderate"      },
+  realestatebrok: { label:"Real Estate Brok.",    benchmarkLow:1.5, benchmarkMid:2.10, benchmarkHigh:2.8,  marginRange:[20,40], growth:"Growing",  riskFactor:0.75, demandScore:72, buyerInterestRank:6,  competitionLevel:"Moderate"      },
+  remodeling:     { label:"Remodeling",           benchmarkLow:1.5, benchmarkMid:2.10, benchmarkHigh:2.8,  marginRange:[12,25], growth:"Growing",  riskFactor:0.85, demandScore:74, buyerInterestRank:5,  competitionLevel:"High"          },
+  seniorcare:     { label:"Senior Care",          benchmarkLow:2.0, benchmarkMid:2.80, benchmarkHigh:3.7,  marginRange:[15,30], growth:"Growing",  riskFactor:0.70, demandScore:82, buyerInterestRank:3,  competitionLevel:"Moderate"      },
+  staffing:       { label:"Staffing Agency",      benchmarkLow:1.2, benchmarkMid:1.70, benchmarkHigh:2.3,  marginRange:[5,15],  growth:"Stable",   riskFactor:0.80, demandScore:70, buyerInterestRank:7,  competitionLevel:"Moderate-High" },
+  veterinary:     { label:"Veterinary Practice",  benchmarkLow:1.5, benchmarkMid:2.10, benchmarkHigh:2.9,  marginRange:[15,30], growth:"Growing",  riskFactor:0.70, demandScore:78, buyerInterestRank:5,  competitionLevel:"Moderate"      },
+  marketing:      { label:"Marketing Agency",     benchmarkLow:1.5, benchmarkMid:2.20, benchmarkHigh:3.0,  marginRange:[20,40], growth:"Growing",  riskFactor:0.80, demandScore:72, buyerInterestRank:6,  competitionLevel:"High"          },
+  pestcontrol:    { label:"Pest Control",         benchmarkLow:1.8, benchmarkMid:2.50, benchmarkHigh:3.3,  marginRange:[20,35], growth:"Stable",   riskFactor:0.75, demandScore:76, buyerInterestRank:5,  competitionLevel:"Moderate"      },
+  physicaltherapy:{ label:"Physical Therapy",     benchmarkLow:1.5, benchmarkMid:2.10, benchmarkHigh:2.8,  marginRange:[15,30], growth:"Stable",   riskFactor:0.70, demandScore:74, buyerInterestRank:6,  competitionLevel:"Low-Moderate"  },
+  signmaking:     { label:"Sign Mfg.",            benchmarkLow:1.5, benchmarkMid:2.00, benchmarkHigh:2.7,  marginRange:[15,30], growth:"Stable",   riskFactor:0.85, demandScore:60, buyerInterestRank:12, competitionLevel:"Moderate"      },
+  hairsalon:      { label:"Hair Salon",           benchmarkLow:0.8, benchmarkMid:1.20, benchmarkHigh:1.8,  marginRange:[15,35], growth:"Stable",   riskFactor:0.90, demandScore:65, buyerInterestRank:10, competitionLevel:"High"          },
+};
+
+interface ModalDealInputs {
+  industry: string;
+  revenue: string;
+  sde: string;
+  askingPrice: string;
+  city: string;
+  state: string;
+  debtPercent: string;
+  interestRate: string;
+  termYears: string;
+}
+
+interface ModalScore {
+  overall: number;
+  riskLevel: "Low" | "Moderate" | "High" | "Critical";
+  fairValue: number;
+  fairValueLow: number;
+  fairValueHigh: number;
+  multiple: number;
+  dscr: number;
+  monthlyPayment: number;
+  gap_pct: number;
+  signal: "overpriced" | "fair" | "opportunity";
+  recommendedOfferLow: number;
+  recommendedOfferHigh: number;
+  redFlags: string[];
+  greenFlags: string[];
+  valuationScore: number;
+  debtScore: number;
+  marketScore: number;
+  industryScore: number;
+}
+
+function computeModalScore(inputs: ModalDealInputs): ModalScore | null {
+  const revenue = parseFloat(inputs.revenue.replace(/,/g, ""));
+  const sde     = parseFloat(inputs.sde.replace(/,/g, ""));
+  const price   = parseFloat(inputs.askingPrice.replace(/,/g, ""));
+  const debtPct = parseFloat(inputs.debtPercent) / 100;
+  const rate    = parseFloat(inputs.interestRate) / 100;
+  const term    = parseFloat(inputs.termYears);
+  const ind     = SCORE_INDUSTRIES[inputs.industry];
+  if (!revenue || !sde || !price || !ind || isNaN(debtPct) || isNaN(rate) || isNaN(term)) return null;
+
+  const redFlags: string[]   = [];
+  const greenFlags: string[] = [];
+  const multiple             = price / sde;
+  const { benchmarkLow, benchmarkMid, benchmarkHigh } = ind;
+
+  const fairValueLow  = Math.round(sde * benchmarkLow);
+  const fairValue     = Math.round(sde * benchmarkMid);
+  const fairValueHigh = Math.round(sde * benchmarkHigh);
+
+  // Valuation score
+  let valuationScore: number;
+  if (multiple <= benchmarkLow * 0.85)    valuationScore = Math.min(95, 85 + (benchmarkLow - multiple) / benchmarkLow * 20);
+  else if (multiple <= benchmarkMid)       valuationScore = Math.min(90, 70 + (benchmarkMid - multiple) / benchmarkMid * 40);
+  else if (multiple <= benchmarkHigh)      valuationScore = 70 - ((multiple - benchmarkMid) / (benchmarkHigh - benchmarkMid)) * 25;
+  else                                     valuationScore = Math.max(5, 40 - ((multiple - benchmarkHigh) / benchmarkHigh) * 60);
+  valuationScore = Math.round(Math.max(5, Math.min(98, valuationScore)));
+
+  // Recommended offer
+  let recommendedOfferLow: number, recommendedOfferHigh: number;
+  if (price <= fairValueLow)       { recommendedOfferLow = Math.round(price * 0.80); recommendedOfferHigh = Math.round(price * 1.0); }
+  else if (price <= fairValue)     { recommendedOfferLow = Math.round(price * 0.85); recommendedOfferHigh = Math.round(price * 1.0); }
+  else if (price <= fairValueHigh) { recommendedOfferLow = Math.round(fairValue * 0.90); recommendedOfferHigh = fairValue; }
+  else                             { recommendedOfferLow = fairValueLow; recommendedOfferHigh = fairValue; }
+
+  const sdeMargin = (sde / revenue) * 100;
+  if (multiple > benchmarkHigh) redFlags.push(`Asking multiple of ${multiple.toFixed(2)}x is above the ${benchmarkHigh.toFixed(2)}x high end of observed ${ind.label} transactions`);
+  else if (multiple < benchmarkLow) greenFlags.push(`Asking multiple of ${multiple.toFixed(2)}x is below the ${benchmarkLow.toFixed(2)}x market low end — favorable pricing`);
+  else greenFlags.push(`${multiple.toFixed(2)}x is within the ${benchmarkLow.toFixed(2)}–${benchmarkHigh.toFixed(2)}x observed range`);
+  if (sdeMargin < ind.marginRange[0]) redFlags.push(`SDE margin of ${sdeMargin.toFixed(0)}% is below the ${ind.marginRange[0]}–${ind.marginRange[1]}% typical range`);
+
+  // DSCR
+  const loanAmount   = price * debtPct;
+  const monthlyRate  = rate / 12;
+  const numPayments  = term * 12;
+  const monthlyPayment = monthlyRate > 0
+    ? (loanAmount * monthlyRate * Math.pow(1 + monthlyRate, numPayments)) / (Math.pow(1 + monthlyRate, numPayments) - 1)
+    : loanAmount / numPayments;
+  const annualPayment = monthlyPayment * 12;
+  const dscr = annualPayment > 0 ? +(sde / annualPayment).toFixed(2) : 99;
+
+  let debtScore: number;
+  if (dscr >= 2.0)       debtScore = 92;
+  else if (dscr >= 1.5)  debtScore = 75 + (dscr - 1.5) * 34;
+  else if (dscr >= 1.25) debtScore = 55 + (dscr - 1.25) * 80;
+  else if (dscr >= 1.0)  debtScore = 30 + (dscr - 1.0) * 100;
+  else                   debtScore = Math.max(5, dscr * 30);
+  debtScore = Math.round(Math.max(5, Math.min(98, debtScore)));
+
+  if (dscr < 1.25) redFlags.push(`DSCR of ${dscr.toFixed(2)}x is below the 1.25x lender minimum`);
+  else if (dscr >= 1.5) greenFlags.push(`DSCR of ${dscr.toFixed(2)}x is well above lender minimums`);
+
+  const growthScores: Record<string, number> = { Growing: 80, Stable: 65, Variable: 45, Volatile: 30 };
+  const marketScore = growthScores[ind.growth] || 50;
+  if (ind.growth === "Volatile") redFlags.push(`${ind.label} has historically volatile demand`);
+  if (ind.growth === "Growing")  greenFlags.push(`${ind.label} shows favorable growth indicators`);
+
+  let industryScore = Math.round(Math.max(15, Math.min(95, (1 - ind.riskFactor) * 100 + 40)));
+  if (sdeMargin < ind.marginRange[0]) industryScore -= 8;
+  industryScore = Math.round(Math.max(10, Math.min(95, industryScore)));
+
+  const overall = Math.round(Math.max(5, Math.min(98,
+    valuationScore * 0.30 + debtScore * 0.30 + marketScore * 0.20 + industryScore * 0.20
+  )));
+  const riskLevel = overall >= 70 ? "Low" : overall >= 50 ? "Moderate" : overall >= 30 ? "High" : "Critical";
+
+  const gap_pct = fairValue > 0 ? Math.round(((price - fairValue) / fairValue) * 100) : 0;
+  const signal: "overpriced" | "fair" | "opportunity" =
+    gap_pct > 10 ? "overpriced" : gap_pct < -5 ? "opportunity" : "fair";
+
+  return {
+    overall, riskLevel, fairValue, fairValueLow, fairValueHigh, multiple,
+    dscr, monthlyPayment, gap_pct, signal,
+    recommendedOfferLow, recommendedOfferHigh,
+    redFlags, greenFlags,
+    valuationScore, debtScore, marketScore, industryScore,
+  };
+}
+
+// ─── ANALYZE DEAL MODAL ───────────────────────────────────────────────────────
+
+function AnalyzeDealModal({
+  userId, isPro, onClose, onDealSaved,
+}: {
+  userId: string;
+  isPro: boolean;
+  onClose: () => void;
+  onDealSaved: (deal: DealRun) => void;
+}) {
+  const [step, setStep] = useState<"input" | "results">("input");
+  const [inputs, setInputs] = useState<ModalDealInputs>({
+    industry: "", revenue: "", sde: "", askingPrice: "",
+    city: "", state: "",
+    debtPercent: "80", interestRate: "10.5", termYears: "10",
+  });
+  const [score, setScore]     = useState<ModalScore | null>(null);
+  const [saving, setSaving]   = useState(false);
+  const [saved, setSaved]     = useState(false);
+  const [saveError, setSaveError] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const set = (k: keyof ModalDealInputs, v: string) => setInputs(p => ({ ...p, [k]: v }));
+  const setCurr = (k: keyof ModalDealInputs, v: string) => {
+    const n = v.replace(/[^0-9]/g, "");
+    set(k, n ? parseInt(n).toLocaleString() : "");
+  };
+
+  const canScore = inputs.industry && inputs.revenue && inputs.sde && inputs.askingPrice;
+
+  function handleScore() {
+    setLoading(true);
+    const result = computeModalScore(inputs);
+    setTimeout(() => { setScore(result); setStep("results"); setLoading(false); }, 300);
+  }
+
+  async function handleSave() {
+    if (!score) return;
+    setSaving(true);
+    setSaveError("");
+    try {
+      const rev   = parseFloat(inputs.revenue.replace(/,/g, ""));
+      const sde   = parseFloat(inputs.sde.replace(/,/g, ""));
+      const price = parseFloat(inputs.askingPrice.replace(/,/g, ""));
+      const res = await fetch("/api/record-deal", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tool_used:            "dashboard_modal",
+          industry:             inputs.industry,
+          revenue:              rev,
+          sde,
+          asking_price:         price,
+          city:                 inputs.city || null,
+          state:                inputs.state || null,
+          debt_percent:         parseFloat(inputs.debtPercent),
+          interest_rate:        parseFloat(inputs.interestRate),
+          term_years:           parseFloat(inputs.termYears),
+          valuation_multiple:   +score.multiple.toFixed(2),
+          dscr:                 score.dscr,
+          monthly_payment:      Math.round(score.monthlyPayment),
+          fair_value:           score.fairValue,
+          recommended_offer_low:  score.recommendedOfferLow,
+          recommended_offer_high: score.recommendedOfferHigh,
+          overall_score:        score.overall,
+          risk_level:           score.riskLevel,
+          valuation_score:      score.valuationScore,
+          debt_score:           score.debtScore,
+          market_score:         score.marketScore,
+          industry_score:       score.industryScore,
+          red_flags:            score.redFlags,
+          green_flags:          score.greenFlags,
+          user_id:              userId,
+        }),
+      });
+      const json = await res.json();
+      if (!json.success) throw new Error(json.error || "Save failed");
+      if (json.deal) {
+        onDealSaved(json.deal as DealRun);
+        setSaved(true);
+      }
+    } catch (err) {
+      setSaveError((err as Error).message);
+    }
+    setSaving(false);
+  }
+
+  const sigCfgM = (s: string) => {
+    if (s === "overpriced")  return { color: "#D85A30", bg: "rgba(216,90,48,0.1)",  label: "Overpriced"  };
+    if (s === "opportunity") return { color: "#10B981", bg: "rgba(16,185,129,0.1)", label: "Opportunity" };
+    return                          { color: "#3B82F6", bg: "rgba(59,130,246,0.1)", label: "Fair Market"  };
+  };
+
+  const scoreColor = (s: number) => s >= 70 ? "#10B981" : s >= 50 ? "#F59E0B" : s >= 30 ? "#F97316" : "#EF4444";
+
+  const inputStyle: React.CSSProperties = {
+    width: "100%", padding: "9px 12px", borderRadius: 8,
+    border: "1px solid rgba(255,255,255,0.09)",
+    background: "rgba(255,255,255,0.03)",
+    color: "#E2E8F0", fontSize: 13, outline: "none",
+  };
+  const labelStyle: React.CSSProperties = {
+    display: "block", fontSize: 10, color: "#4B5563",
+    textTransform: "uppercase", letterSpacing: "0.08em",
+    fontWeight: 600, marginBottom: 5,
+  };
+
+  return (
+    <>
+      {/* Backdrop */}
+      <div
+        onClick={onClose}
+        style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 200, backdropFilter: "blur(3px)" }}
+      />
+
+      {/* Modal */}
+      <div style={{
+        position: "fixed", top: "50%", left: "50%",
+        transform: "translate(-50%,-50%)",
+        width: "min(680px, 96vw)", maxHeight: "90vh",
+        background: "#0D1117",
+        border: "1px solid rgba(255,255,255,0.1)",
+        borderRadius: 16, zIndex: 201,
+        display: "flex", flexDirection: "column",
+        animation: "fadeUp 0.2s ease-out",
+        overflow: "hidden",
+      }}>
+        {/* Header */}
+        <div style={{
+          padding: "18px 24px 14px",
+          borderBottom: "1px solid rgba(255,255,255,0.06)",
+          display: "flex", justifyContent: "space-between", alignItems: "center",
+          flexShrink: 0,
+        }}>
+          <div>
+            <div style={{ fontSize: 15, fontWeight: 700, color: "#F1F5F9", fontFamily: "'Inter Tight',sans-serif" }}>
+              {step === "input" ? "Analyze a Deal" : "Deal Analysis Results"}
+            </div>
+            <div style={{ fontSize: 11, color: "#4B5563", marginTop: 2 }}>
+              {step === "input" ? "Enter deal details to score and save" : "Review score, then save to your dashboard"}
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            style={{ background: "none", border: "none", color: "#4B5563", fontSize: 22, cursor: "pointer", lineHeight: 1, padding: "2px 6px" }}
+          >
+            ×
+          </button>
+        </div>
+
+        {/* Body */}
+        <div style={{ overflowY: "auto", flex: 1 }}>
+
+          {/* ── STEP 1: INPUT ── */}
+          {step === "input" && (
+            <div style={{ padding: "20px 24px" }}>
+              {/* Industry */}
+              <div style={{ marginBottom: 14 }}>
+                <label style={labelStyle}>Industry</label>
+                <select
+                  value={inputs.industry}
+                  onChange={e => set("industry", e.target.value)}
+                  style={{ ...inputStyle, appearance: "none" as any, cursor: "pointer" }}
+                >
+                  <option value="">Select industry...</option>
+                  {Object.entries(SCORE_INDUSTRIES).map(([k, v]) => (
+                    <option key={k} value={k}>{v.label}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Financial inputs */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginBottom: 14 }}>
+                {([
+                  { k: "revenue" as const,     label: "Annual Revenue ($)" },
+                  { k: "sde" as const,          label: "SDE / Cash Flow ($)" },
+                  { k: "askingPrice" as const,  label: "Asking Price ($)" },
+                ] as { k: keyof ModalDealInputs; label: string }[]).map(({ k, label }) => (
+                  <div key={k}>
+                    <label style={labelStyle}>{label}</label>
+                    <input
+                      type="text" inputMode="numeric" placeholder="0"
+                      value={inputs[k]}
+                      onChange={e => setCurr(k, e.target.value)}
+                      style={inputStyle}
+                    />
+                  </div>
+                ))}
+              </div>
+
+              {/* Location */}
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10, marginBottom: 14 }}>
+                <div>
+                  <label style={labelStyle}>City (optional)</label>
+                  <input type="text" placeholder="e.g. Tampa" value={inputs.city} onChange={e => set("city", e.target.value)} style={inputStyle} />
+                </div>
+                <div>
+                  <label style={labelStyle}>State (optional)</label>
+                  <input type="text" placeholder="e.g. FL" maxLength={2} value={inputs.state} onChange={e => set("state", e.target.value.toUpperCase())} style={inputStyle} />
+                </div>
+              </div>
+
+              {/* Debt terms */}
+              <div style={{
+                padding: "12px 14px", borderRadius: 10, marginBottom: 18,
+                background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
+              }}>
+                <div style={{ fontSize: 10, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600, marginBottom: 10 }}>
+                  Debt Terms (for DSCR)
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
+                  {([
+                    { k: "debtPercent" as const,  label: "Debt %",   placeholder: "80" },
+                    { k: "interestRate" as const,  label: "Rate %",   placeholder: "10.5" },
+                    { k: "termYears" as const,     label: "Term (yr)", placeholder: "10" },
+                  ] as { k: keyof ModalDealInputs; label: string; placeholder: string }[]).map(({ k, label, placeholder }) => (
+                    <div key={k}>
+                      <label style={labelStyle}>{label}</label>
+                      <input
+                        type="number" placeholder={placeholder}
+                        value={inputs[k]}
+                        onChange={e => set(k, e.target.value)}
+                        style={{ ...inputStyle, fontFamily: "'JetBrains Mono',monospace" }}
+                      />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <button
+                onClick={handleScore}
+                disabled={!canScore || loading}
+                style={{
+                  width: "100%", padding: "12px", borderRadius: 10, border: "none",
+                  background: canScore ? "linear-gradient(135deg,#3B82F6,#6366F1)" : "rgba(255,255,255,0.05)",
+                  color: canScore ? "#fff" : "#374151",
+                  fontSize: 14, fontWeight: 600, cursor: canScore ? "pointer" : "not-allowed",
+                }}
+              >
+                {loading ? "Scoring..." : "Score This Deal →"}
+              </button>
+            </div>
+          )}
+
+          {/* ── STEP 2: RESULTS ── */}
+          {step === "results" && score && (
+            <div style={{ padding: "20px 24px" }}>
+
+              {/* Hero row */}
+              <div style={{
+                display: "grid", gridTemplateColumns: "auto 1fr", gap: 20,
+                padding: "16px 18px", borderRadius: 12, marginBottom: 16,
+                background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)",
+                alignItems: "center",
+              }}>
+                {/* Score ring */}
+                <div style={{ textAlign: "center" }}>
+                  <div style={{ position: "relative", width: 80, height: 80 }}>
+                    <svg width="80" height="80" style={{ transform: "rotate(-90deg)" }}>
+                      <circle cx="40" cy="40" r="34" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="6" />
+                      <circle cx="40" cy="40" r="34" fill="none"
+                        stroke={scoreColor(score.overall)} strokeWidth="6"
+                        strokeDasharray={`${2 * Math.PI * 34}`}
+                        strokeDashoffset={`${2 * Math.PI * 34 * (1 - score.overall / 100)}`}
+                        strokeLinecap="round"
+                      />
+                    </svg>
+                    <div style={{
+                      position: "absolute", inset: 0, display: "flex", flexDirection: "column",
+                      alignItems: "center", justifyContent: "center",
+                    }}>
+                      <span style={{ fontSize: 22, fontWeight: 800, color: scoreColor(score.overall), fontFamily: "'JetBrains Mono',monospace", lineHeight: 1 }}>{score.overall}</span>
+                      <span style={{ fontSize: 9, color: "#4B5563", marginTop: 1 }}>/ 100</span>
+                    </div>
+                  </div>
+                  <div style={{
+                    marginTop: 6, fontSize: 10, fontWeight: 700, color: scoreColor(score.overall),
+                    textTransform: "uppercase", letterSpacing: "0.06em",
+                  }}>
+                    {score.riskLevel} Risk
+                  </div>
+                </div>
+
+                {/* Key metrics */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
+                  {[
+                    { label: "Fair Value",    value: fmt(score.fairValue),           color: "#10B981" },
+                    { label: "Multiple",      value: score.multiple.toFixed(2) + "x", color: "#E2E8F0" },
+                    { label: "DSCR",          value: score.dscr.toFixed(2) + "x",   color: score.dscr >= 1.25 ? "#10B981" : "#F97316" },
+                    { label: "Gap vs Market", value: (score.gap_pct > 0 ? "+" : "") + score.gap_pct + "%", color: score.gap_pct > 0 ? "#D85A30" : "#10B981" },
+                    { label: "Offer Low",     value: fmt(score.recommendedOfferLow), color: "#818CF8" },
+                    { label: "Offer High",    value: fmt(score.recommendedOfferHigh),color: "#818CF8" },
+                  ].map(m => (
+                    <div key={m.label} style={{ textAlign: "center", padding: "8px 6px", borderRadius: 8, background: "rgba(255,255,255,0.02)" }}>
+                      <div style={{ fontSize: 9, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 3 }}>{m.label}</div>
+                      <div style={{ fontSize: 14, fontWeight: 700, color: m.color, fontFamily: "'JetBrains Mono',monospace" }}>{m.value}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Signal + fair value range */}
+              <div style={{ display: "flex", gap: 10, marginBottom: 14 }}>
+                <div style={{
+                  flex: 1, padding: "10px 14px", borderRadius: 10,
+                  background: sigCfgM(score.signal).bg,
+                  border: `1px solid ${sigCfgM(score.signal).color}33`,
+                  display: "flex", alignItems: "center", gap: 8,
+                }}>
+                  <span style={{ fontSize: 18 }}>
+                    {score.signal === "opportunity" ? "🟢" : score.signal === "overpriced" ? "🔴" : "🟡"}
+                  </span>
+                  <div>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: sigCfgM(score.signal).color }}>{sigCfgM(score.signal).label}</div>
+                    <div style={{ fontSize: 10, color: "#4B5563" }}>
+                      FV Range: {fmt(score.fairValueLow)} – {fmt(score.fairValueHigh)}
+                    </div>
+                  </div>
+                </div>
+                {/* Sub-score pills */}
+                <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                  {[
+                    { label: "Val", value: score.valuationScore },
+                    { label: "Debt", value: score.debtScore },
+                    { label: "Mkt", value: score.marketScore },
+                    { label: "Ind", value: score.industryScore },
+                  ].map(s => (
+                    <div key={s.label} style={{ textAlign: "center", padding: "6px 8px", borderRadius: 8, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", minWidth: 42 }}>
+                      <div style={{ fontSize: 8, color: "#4B5563", textTransform: "uppercase", marginBottom: 2 }}>{s.label}</div>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: scoreColor(s.value), fontFamily: "'JetBrains Mono',monospace" }}>{s.value}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Flags */}
+              {(score.redFlags.length > 0 || score.greenFlags.length > 0) && (
+                <div style={{ display: "flex", flexDirection: "column", gap: 5, marginBottom: 16 }}>
+                  {score.redFlags.map((f, i) => (
+                    <div key={i} style={{ display: "flex", gap: 7, fontSize: 11, color: "#FCA5A5", lineHeight: 1.5 }}>
+                      <span style={{ flexShrink: 0, color: "#EF4444" }}>⚠</span>{f}
+                    </div>
+                  ))}
+                  {score.greenFlags.map((f, i) => (
+                    <div key={i} style={{ display: "flex", gap: 7, fontSize: 11, color: "#6EE7B7", lineHeight: 1.5 }}>
+                      <span style={{ flexShrink: 0, color: "#10B981" }}>✓</span>{f}
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Actions */}
+              {saveError && (
+                <div style={{ marginBottom: 10, padding: "8px 12px", borderRadius: 8, background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)", color: "#FCA5A5", fontSize: 12 }}>
+                  {saveError}
+                </div>
+              )}
+              {saved ? (
+                <div style={{
+                  padding: "12px", borderRadius: 10, textAlign: "center",
+                  background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.2)",
+                  fontSize: 13, fontWeight: 600, color: "#10B981",
+                }}>
+                  ✓ Deal saved to My Deals
+                </div>
+              ) : (
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button
+                    onClick={() => setStep("input")}
+                    style={{
+                      flex: 1, padding: "11px", borderRadius: 9,
+                      border: "1px solid rgba(255,255,255,0.1)",
+                      background: "rgba(255,255,255,0.03)",
+                      color: "#6B7280", fontSize: 13, cursor: "pointer",
+                    }}
+                  >
+                    ← Edit Inputs
+                  </button>
+                  <button
+                    onClick={handleSave}
+                    disabled={saving}
+                    style={{
+                      flex: 2, padding: "11px", borderRadius: 9, border: "none",
+                      background: "linear-gradient(135deg,#3B82F6,#6366F1)",
+                      color: "#fff", fontSize: 13, fontWeight: 600, cursor: saving ? "not-allowed" : "pointer",
+                    }}
+                  >
+                    {saving ? "Saving..." : "Save Deal to Dashboard →"}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
+    </>
+  );
+}
+
+// ─── DEAL DETAIL PANEL ────────────────────────────────────────────────────────
+
+function DealDetailPanel({
+  deal, favorites, dealStatuses, isPro,
+  onClose, onToggleFav, onOpenNotes, onOpenUnderwriting, onStatusChange,
+}: {
+  deal: DealRun;
+  favorites: Set<string>;
+  dealStatuses: Record<string, DealStatus>;
+  isPro: boolean;
+  onClose: () => void;
+  onToggleFav: (id: string) => void;
+  onOpenNotes: (deal: DealRun) => void;
+  onOpenUnderwriting: (deal: DealRun) => void;
+  onStatusChange: (id: string, s: DealStatus) => void;
+}) {
+  const gp     = deal.gap_pct ?? 0;
+  const sc     = sigCfg(deal.signal ?? "fair");
+  const status = dealStatuses[deal.id] ?? "New";
+  const isFav  = favorites.has(deal.id);
+  const col    = (s: number) => s >= 70 ? "#10B981" : s >= 50 ? "#F59E0B" : s >= 30 ? "#F97316" : "#EF4444";
+
+  return (
+    <>
+      <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 200, backdropFilter: "blur(2px)" }} />
+      <div style={{
+        position: "fixed", top: 0, right: 0,
+        width: 420, height: "100vh",
+        background: "#0D1117", borderLeft: "1px solid rgba(255,255,255,0.08)",
+        zIndex: 201, display: "flex", flexDirection: "column",
+        animation: "slideIn 0.22s ease-out", overflowY: "auto",
+      }}>
+        {/* Header */}
+        <div style={{ padding: "18px 20px 14px", borderBottom: "1px solid rgba(255,255,255,0.06)", flexShrink: 0 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                <span style={{ fontSize: 14, fontWeight: 700, color: "#F1F5F9", fontFamily: "'Inter Tight',sans-serif" }}>
+                  {IL[deal.industry] || deal.industry}
+                </span>
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 3, padding: "2px 7px", borderRadius: 20, fontSize: 10, fontWeight: 600, background: sc.bg, color: sc.color, border: `1px solid ${sc.border}` }}>
+                  <span style={{ width: 4, height: 4, borderRadius: "50%", background: sc.dot }} />{sc.label}
+                </span>
+              </div>
+              <div style={{ fontSize: 11, color: "#4B5563" }}>
+                {fmt(deal.asking_price)} asking · {deal.valuation_multiple.toFixed(2)}x · {ago(deal.created_at)}
+                {(deal.city || deal.state) && ` · ${[deal.city, deal.state].filter(Boolean).join(", ")}`}
+              </div>
+            </div>
+            <button onClick={onClose} style={{ background: "none", border: "none", color: "#4B5563", fontSize: 20, cursor: "pointer", padding: "2px 6px", lineHeight: 1 }}>×</button>
+          </div>
+        </div>
+
+        {/* Body */}
+        <div style={{ padding: "16px 20px", flex: 1, overflowY: "auto" }}>
+
+          {/* Score + metrics */}
+          <div style={{ display: "grid", gridTemplateColumns: "auto 1fr", gap: 16, alignItems: "center", marginBottom: 16, padding: "14px 16px", borderRadius: 12, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
+            <Ring score={deal.overall_score} size={64} />
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px 12px" }}>
+              {[
+                { label: "Fair Value",    value: fmt(deal.fair_value),     color: "#10B981" },
+                { label: "Gap vs Mkt",   value: (gp > 0 ? "+" : "") + gp + "%", color: gp > 0 ? "#D85A30" : "#10B981" },
+                { label: "DSCR",         value: deal.dscr.toFixed(2) + "x",     color: deal.dscr >= 1.25 ? "#10B981" : "#F97316" },
+                { label: "Risk",         value: deal.risk_level,                 color: col(deal.overall_score) },
+              ].map(m => (
+                <div key={m.label}>
+                  <div style={{ fontSize: 9, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 2 }}>{m.label}</div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: m.color, fontFamily: "'JetBrains Mono',monospace" }}>{m.value}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Status + favorite */}
+          <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
+            <span style={{ fontSize: 10, color: "#4B5563" }}>Status:</span>
+            <select
+              value={status}
+              onChange={e => onStatusChange(deal.id, e.target.value as DealStatus)}
+              style={{ padding: "5px 9px", borderRadius: 6, border: `1px solid ${STATUS_COLORS[status].border}`, background: STATUS_COLORS[status].bg, color: STATUS_COLORS[status].color, fontSize: 10, fontWeight: 600, outline: "none", cursor: "pointer", appearance: "none" as any }}
+            >
+              {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
+            <StarButton dealId={deal.id} favorites={favorites} onToggle={onToggleFav} />
+            <span style={{ fontSize: 11, color: isFav ? "#F59E0B" : "#4B5563" }}>{isFav ? "Watchlisted" : "Add to watchlist"}</span>
+          </div>
+
+          {/* Actions */}
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            <button
+              onClick={() => { onOpenNotes(deal); onClose(); }}
+              style={{ width: "100%", padding: "10px 14px", borderRadius: 9, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.03)", color: "#E2E8F0", fontSize: 13, fontWeight: 500, cursor: "pointer", textAlign: "left" as any, display: "flex", alignItems: "center", gap: 8 }}
+            >
+              <span>📝</span> View Notes & Intelligence
+            </button>
+            <button
+              onClick={() => { onOpenUnderwriting(deal); onClose(); }}
+              style={{ width: "100%", padding: "10px 14px", borderRadius: 9, border: isPro ? "1px solid rgba(99,102,241,0.3)" : "1px solid rgba(255,255,255,0.08)", background: isPro ? "rgba(99,102,241,0.08)" : "rgba(255,255,255,0.03)", color: isPro ? "#818CF8" : "#6B7280", fontSize: 13, fontWeight: 600, cursor: "pointer", textAlign: "left" as any, display: "flex", alignItems: "center", gap: 8 }}
+            >
+              <span>⚡</span> Full Underwriting Analysis {!isPro && "🔒"}
+            </button>
+          </div>
+        </div>
+      </div>
+    </>
+  );
+}
+
+// ─── UNDERWRITING PANEL ───────────────────────────────────────────────────────
+
+type UwTab = "stress" | "sba" | "negotiation" | "memo";
+
+function UnderwritingPanel({
+  deal, isPro, onClose,
+}: {
+  deal: DealRun;
+  isPro: boolean;
+  onClose: () => void;
+}) {
+  const [activeTab, setActiveTab] = useState<UwTab>("stress");
+
+  const ind = SCORE_INDUSTRIES[deal.industry];
+  const gp  = deal.gap_pct ?? 0;
+  const fv  = deal.fair_value ?? 0;
+
+  // ── Derived underwriting metrics ──────────────────────────────────────────
+  const stressDscr15 = +(deal.dscr * 0.85).toFixed(2);
+  const stressDscr25 = +(deal.dscr * 0.75).toFixed(2);
+  const recOffer     = fv * 0.92;
+  const walkAway     = fv * 1.08;
+  const sbaLoan      = deal.asking_price * 0.90;
+  const sbaDown      = deal.asking_price * 0.10;
+  const sbaEligible  = deal.dscr >= 1.25 && deal.asking_price <= 5_000_000;
+  const sbaMonthly   = sbaLoan > 0 ? (sbaLoan * (0.1075 / 12) * Math.pow(1 + 0.1075 / 12, 120)) / (Math.pow(1 + 0.1075 / 12, 120) - 1) : 0;
+  const sbaDscr      = sbaMonthly > 0 ? +((deal.sde ?? 0) / (sbaMonthly * 12)).toFixed(2) : 0;
+
+  const UW_TABS: { id: UwTab; label: string; icon: string }[] = [
+    { id: "stress",      label: "Stress Test",   icon: "📉" },
+    { id: "sba",         label: "SBA Finance",   icon: "🏦" },
+    { id: "negotiation", label: "Negotiation",   icon: "🤝" },
+    { id: "memo",        label: "Deal Memo",      icon: "📄" },
+  ];
+
+  const col = (s: number) => s >= 1.5 ? "#10B981" : s >= 1.25 ? "#F59E0B" : "#EF4444";
+
+  const BlurredContent = ({ children }: { children: React.ReactNode }) => (
+    <div style={{ position: "relative" }}>
+      <div style={{ filter: isPro ? "none" : "blur(5px)", pointerEvents: isPro ? "auto" : "none", opacity: isPro ? 1 : 0.4 }}>
+        {children}
+      </div>
+      {!isPro && (
+        <div style={{
+          position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 10,
+        }}>
+          <div style={{ padding: "16px 24px", borderRadius: 12, background: "rgba(8,12,19,0.9)", border: "1px solid rgba(99,102,241,0.2)", textAlign: "center" }}>
+            <div style={{ fontSize: 20, marginBottom: 6 }}>🔒</div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: "#F1F5F9", marginBottom: 4 }}>Pro Feature</div>
+            <div style={{ fontSize: 11, color: "#6B7280", marginBottom: 12, maxWidth: 220 }}>Upgrade to unlock full underwriting analysis</div>
+            <button style={{ padding: "7px 16px", borderRadius: 8, border: "none", background: "linear-gradient(135deg,#6366F1,#8B5CF6)", color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
+              Upgrade to Pro
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+
+  const MetricRow = ({ label, value, sub, color = "#E2E8F0" }: { label: string; value: string; sub?: string; color?: string }) => (
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "9px 0", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+      <div>
+        <div style={{ fontSize: 12, color: "#94A3B8" }}>{label}</div>
+        {sub && <div style={{ fontSize: 10, color: "#4B5563", marginTop: 1 }}>{sub}</div>}
+      </div>
+      <div style={{ fontSize: 14, fontWeight: 700, color, fontFamily: "'JetBrains Mono',monospace" }}>{value}</div>
+    </div>
+  );
+
+  return (
+    <>
+      <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 200, backdropFilter: "blur(2px)" }} />
+      <div style={{
+        position: "fixed", top: 0, right: 0,
+        width: 460, height: "100vh",
+        background: "#0D1117", borderLeft: "1px solid rgba(255,255,255,0.08)",
+        zIndex: 201, display: "flex", flexDirection: "column",
+        animation: "slideIn 0.22s ease-out",
+      }}>
+        {/* Header */}
+        <div style={{ padding: "16px 20px 12px", borderBottom: "1px solid rgba(255,255,255,0.06)", flexShrink: 0 }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3 }}>
+                <span style={{ fontSize: 13, fontWeight: 700, color: "#F1F5F9", fontFamily: "'Inter Tight',sans-serif" }}>
+                  Underwriting — {IL[deal.industry] || deal.industry}
+                </span>
+                {isPro && <ProBadge />}
+              </div>
+              <div style={{ fontSize: 11, color: "#4B5563" }}>
+                {fmt(deal.asking_price)} · {deal.valuation_multiple.toFixed(2)}x · Score {deal.overall_score} · DSCR {deal.dscr.toFixed(2)}
+              </div>
+            </div>
+            <button onClick={onClose} style={{ background: "none", border: "none", color: "#4B5563", fontSize: 20, cursor: "pointer", lineHeight: 1, padding: "2px 6px" }}>×</button>
+          </div>
+
+          {/* Tab bar */}
+          <div style={{ display: "flex", gap: 2, marginTop: 12 }}>
+            {UW_TABS.map(t => (
+              <button
+                key={t.id}
+                onClick={() => setActiveTab(t.id)}
+                style={{
+                  flex: 1, padding: "6px 4px", borderRadius: 7, border: "none",
+                  background: activeTab === t.id ? "rgba(99,102,241,0.15)" : "transparent",
+                  color: activeTab === t.id ? "#C4B5FD" : "#4B5563",
+                  fontSize: 11, fontWeight: activeTab === t.id ? 600 : 400,
+                  cursor: "pointer",
+                }}
+              >
+                {t.icon} {t.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Tab content */}
+        <div style={{ flex: 1, overflowY: "auto", padding: "16px 20px" }}>
+
+          {/* ── STRESS TEST ── */}
+          {activeTab === "stress" && (
+            <BlurredContent>
+              <div style={{ marginBottom: 16, padding: "12px 14px", borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                <div style={{ fontSize: 11, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600, marginBottom: 10 }}>Base Case</div>
+                <MetricRow label="DSCR at Current Terms"  value={deal.dscr.toFixed(2) + "x"}     color={col(deal.dscr)} />
+                <MetricRow label="Annual Debt Service"    value={fmt((deal.sde ?? 0) / deal.dscr)} sub="SDE ÷ DSCR" />
+                <MetricRow label="Monthly Payment"        value={fmt(deal.monthly_payment ?? (deal.sde ?? 0) / deal.dscr / 12)} />
+              </div>
+              <div style={{ marginBottom: 16, padding: "12px 14px", borderRadius: 10, background: "rgba(239,68,68,0.04)", border: "1px solid rgba(239,68,68,0.12)" }}>
+                <div style={{ fontSize: 11, color: "#F97316", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600, marginBottom: 10 }}>Downside Scenarios</div>
+                <MetricRow label="−15% Revenue Stress"   value={stressDscr15 + "x DSCR"}  color={col(stressDscr15)} sub={`SDE drops to ~${fmt((deal.sde ?? 0) * 0.85)}`} />
+                <MetricRow label="−25% Revenue Stress"   value={stressDscr25 + "x DSCR"}  color={col(stressDscr25)} sub={`SDE drops to ~${fmt((deal.sde ?? 0) * 0.75)}`} />
+                <MetricRow label="Break-Even SDE"        value={fmt((deal.sde ?? 0) / deal.dscr)}  sub="Minimum SDE to cover debt service" color="#F59E0B" />
+                <MetricRow label="Revenue Break-Even"    value={fmt((deal.sde ?? 0) / deal.dscr / ((deal.sde ?? 0) / Math.max(deal.revenue ?? 1, 1)))}  sub="Estimated revenue needed at break-even" color="#F59E0B" />
+              </div>
+              <div style={{ padding: "10px 12px", borderRadius: 8, background: stressDscr15 >= 1.25 ? "rgba(16,185,129,0.06)" : "rgba(245,158,11,0.06)", border: `1px solid ${stressDscr15 >= 1.25 ? "rgba(16,185,129,0.15)" : "rgba(245,158,11,0.15)"}`, fontSize: 12, color: "#94A3B8", lineHeight: 1.6 }}>
+                {stressDscr15 >= 1.25
+                  ? `This deal maintains lender-minimum DSCR even at −15% revenue. Stress resilience is solid.`
+                  : `A −15% revenue decline pushes DSCR below 1.25x. Validate revenue stability before proceeding.`}
+              </div>
+            </BlurredContent>
+          )}
+
+          {/* ── SBA FINANCE ── */}
+          {activeTab === "sba" && (
+            <BlurredContent>
+              <div style={{ marginBottom: 14, padding: "10px 14px", borderRadius: 10, background: sbaEligible ? "rgba(16,185,129,0.06)" : "rgba(245,158,11,0.06)", border: `1px solid ${sbaEligible ? "rgba(16,185,129,0.2)" : "rgba(245,158,11,0.2)"}`, display: "flex", alignItems: "center", gap: 10 }}>
+                <span style={{ fontSize: 20 }}>{sbaEligible ? "✅" : "⚠️"}</span>
+                <div>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: sbaEligible ? "#10B981" : "#F59E0B" }}>
+                    SBA 7(a) {sbaEligible ? "Appears Eligible" : "May Require Review"}
+                  </div>
+                  <div style={{ fontSize: 11, color: "#4B5563" }}>
+                    {sbaEligible ? `DSCR ${deal.dscr.toFixed(2)}x exceeds 1.25x minimum, ask under $5M` : deal.dscr < 1.25 ? `DSCR ${deal.dscr.toFixed(2)}x is below the 1.25x lender minimum` : `Deal size exceeds typical SBA 7(a) range`}
+                  </div>
+                </div>
+              </div>
+              <div style={{ padding: "12px 14px", borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", marginBottom: 16 }}>
+                <div style={{ fontSize: 11, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600, marginBottom: 10 }}>Loan Sizing (90% LTV)</div>
+                <MetricRow label="Loan Amount"           value={fmt(sbaLoan)}    color="#60A5FA" />
+                <MetricRow label="Down Payment (10%)"    value={fmt(sbaDown)}    color="#F59E0B" />
+                <MetricRow label="Est. Monthly Payment"  value={fmt(sbaMonthly)} sub="10yr @ 10.75% (SBA prime+2.75)" />
+                <MetricRow label="DSCR at SBA Terms"     value={sbaDscr.toFixed(2) + "x"} color={col(sbaDscr)} />
+                <MetricRow label="Annual Debt Service"   value={fmt(sbaMonthly * 12)} />
+              </div>
+              <div style={{ padding: "10px 12px", borderRadius: 8, background: "rgba(99,102,241,0.05)", border: "1px solid rgba(99,102,241,0.12)", fontSize: 11, color: "#94A3B8", lineHeight: 1.6 }}>
+                SBA 7(a) rates typically prime + 2.25–2.75%. Current estimates use 10.75%. Equity injection, goodwill caps, and lender overlays may affect final terms. Consult an SBA-preferred lender for formal qualification.
+              </div>
+            </BlurredContent>
+          )}
+
+          {/* ── NEGOTIATION ── */}
+          {activeTab === "negotiation" && (
+            <BlurredContent>
+              <div style={{ padding: "12px 14px", borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", marginBottom: 14 }}>
+                <div style={{ fontSize: 11, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600, marginBottom: 10 }}>Pricing Position</div>
+                <MetricRow label="Asking Price"         value={fmt(deal.asking_price)}  />
+                <MetricRow label="NexTax Fair Value"    value={fmt(fv)}         color="#10B981" />
+                <MetricRow label="Gap vs Market"        value={(gp > 0 ? "+" : "") + gp + "%"} color={gp > 0 ? "#D85A30" : "#10B981"} />
+                <MetricRow label="Anchor Offer"         value={fmt(recOffer)}   color="#818CF8" sub="~8% below fair value — opens negotiation" />
+                <MetricRow label="Walk-Away Price"      value={fmt(walkAway)}   color="#F97316" sub="~8% above fair value — max justified" />
+              </div>
+              <div style={{ padding: "12px 14px", borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", marginBottom: 14 }}>
+                <div style={{ fontSize: 11, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600, marginBottom: 10 }}>Structure Ideas</div>
+                {[
+                  { title: "Seller Note",      desc: `Ask seller to carry 10–15% (${fmt(deal.asking_price * 0.12)}) over 3–5 years — reduces day-1 debt service` },
+                  { title: "Earnout Clause",   desc: "Tie 10–20% of price to Year 1 revenue hitting stated levels" },
+                  { title: "Working Capital",  desc: "Negotiate minimum working capital at close — protects first-90-days cash flow" },
+                  { title: "Training Period",  desc: `Standard is 30–90 days paid owner training — request 90 days given ${ind?.competitionLevel ?? "market"} competition level` },
+                ].map(s => (
+                  <div key={s.title} style={{ padding: "8px 0", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+                    <div style={{ fontSize: 12, fontWeight: 600, color: "#E2E8F0", marginBottom: 2 }}>{s.title}</div>
+                    <div style={{ fontSize: 11, color: "#6B7280", lineHeight: 1.5 }}>{s.desc}</div>
+                  </div>
+                ))}
+              </div>
+              <div style={{ padding: "10px 12px", borderRadius: 8, background: gp > 10 ? "rgba(239,68,68,0.06)" : "rgba(16,185,129,0.06)", border: `1px solid ${gp > 10 ? "rgba(239,68,68,0.15)" : "rgba(16,185,129,0.15)"}`, fontSize: 12, color: "#94A3B8", lineHeight: 1.6 }}>
+                {gp > 10
+                  ? `Deal is priced ${gp}% above market fair value. Lead with the anchor at ${fmt(recOffer)} and reference comparable transactions. Seller motivation matters here.`
+                  : gp < -5
+                  ? `Deal is priced ${Math.abs(gp)}% below market fair value. Strong position — investigate seller motivation before moving to LOI.`
+                  : `Pricing is near market median. Focus negotiation on terms (seller note, earnout) rather than price.`}
+              </div>
+            </BlurredContent>
+          )}
+
+          {/* ── DEAL MEMO ── */}
+          {activeTab === "memo" && (
+            <BlurredContent>
+              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+                {[
+                  {
+                    title: "Deal Summary",
+                    content: `${IL[deal.industry] || deal.industry} located in ${[deal.city, deal.state].filter(Boolean).join(", ") || "undisclosed market"}. Asking ${fmt(deal.asking_price)} at ${deal.valuation_multiple.toFixed(2)}x SDE, ${gp > 0 ? `${gp}% above` : `${Math.abs(gp)}% below`} the NexTax market fair value of ${fmt(fv)}. Overall score ${deal.overall_score}/100 — ${deal.risk_level} Risk.`,
+                  },
+                  {
+                    title: "What Must Be True",
+                    bullets: [
+                      `SDE of ${fmt(deal.sde ?? 0)} is verified and add-backs are documented`,
+                      `DSCR of ${deal.dscr.toFixed(2)}x holds under normalized owner compensation`,
+                      `Revenue trend is stable or growing — no single-customer concentration above 20%`,
+                      `No undisclosed liabilities, lease assignment issues, or pending litigation`,
+                    ],
+                  },
+                  {
+                    title: "Key Diligence Priorities",
+                    bullets: [
+                      "Request 3 years of tax returns and P&Ls prior to LOI",
+                      "Validate customer list and contract transferability",
+                      "Confirm lease terms and assignment clause",
+                      `Stress-test SDE to ${fmt((deal.sde ?? 0) * 0.85)} (−15%) — DSCR at ${stressDscr15}x`,
+                    ],
+                  },
+                  {
+                    title: "Recommended Next Step",
+                    content: deal.overall_score >= 65
+                      ? `Score of ${deal.overall_score} and DSCR of ${deal.dscr.toFixed(2)}x support advancing to LOI. Anchor at ${fmt(recOffer)} and request 3 years of financials before submission.`
+                      : deal.overall_score >= 45
+                      ? `Validate key assumptions before LOI. Confirm SDE add-backs and request 2 years of tax returns to verify stated earnings.`
+                      : `Score of ${deal.overall_score} indicates elevated risk. Reprice or request significant seller concessions before proceeding.`,
+                  },
+                ].map(s => (
+                  <div key={s.title} style={{ padding: "12px 14px", borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                    <div style={{ fontSize: 10, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600, marginBottom: 7 }}>{s.title}</div>
+                    {"content" in s && <div style={{ fontSize: 12, color: "#94A3B8", lineHeight: 1.7 }}>{s.content}</div>}
+                    {"bullets" in s && (
+                      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                        {s.bullets!.map((b, i) => (
+                          <div key={i} style={{ display: "flex", gap: 8, fontSize: 12, color: "#94A3B8", lineHeight: 1.5 }}>
+                            <span style={{ color: "#6366F1", flexShrink: 0 }}>→</span>{b}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </BlurredContent>
+          )}
+        </div>
+      </div>
+    </>
+  );
+}
+
 
 // ─── SIGN IN REQUIRED ─────────────────────────────────────────────────────────
 
@@ -1169,7 +2116,7 @@ function StatCards({ deals, loading }: { deals: DealRun[]; loading: boolean }) {
 
 // ─── PRO COMMAND MODULE ───────────────────────────────────────────────────────
 
-function ProCommandModule({ deals }: { deals: DealRun[] }) {
+function ProCommandModule({ deals, onOpenUnderwriting }: { deals: DealRun[]; onOpenUnderwriting: (deal: DealRun) => void }) {
   const lastAnalysis = deals.find(d => d.tool_used === "risk_analyzer") ?? deals[0];
 
   return (
@@ -1239,30 +2186,31 @@ function ProCommandModule({ deals }: { deals: DealRun[] }) {
               {ago(lastAnalysis.created_at)} · {lastAnalysis.valuation_multiple.toFixed(2)}x · DSCR {lastAnalysis.dscr.toFixed(2)}
             </div>
           </div>
-          <a
-            href={`/deal-check?run=${lastAnalysis.id}`}
+          <button
+            onClick={() => onOpenUnderwriting(lastAnalysis)}
             style={{
               padding: "6px 12px", borderRadius: 7,
               border: "1px solid rgba(99,102,241,0.25)",
               background: "rgba(99,102,241,0.08)",
-              color: "#818CF8", fontSize: 11, fontWeight: 500, textDecoration: "none",
+              color: "#818CF8", fontSize: 11, fontWeight: 500, cursor: "pointer",
             }}
           >
-            Rerun
-          </a>
+            Open Analysis
+          </button>
         </div>
       )}
 
       {/* Action grid */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 14 }}>
-        {[
-          { icon: "📉", label: "Stress Test Summary",  sub: "−15% & −25% scenarios"        },
-          { icon: "🤝", label: "Negotiation Strategy", sub: "Anchor, walk-away, structure"  },
-          { icon: "🏦", label: "SBA Finance Snapshot", sub: "Loan sizing & eligibility"     },
-          { icon: "📄", label: "Download Memo",        sub: "Full underwriting PDF"          },
-        ].map(a => (
+        {([
+          { icon: "📉", label: "Stress Test Summary",  sub: "−15% & −25% scenarios",       tab: "stress"      },
+          { icon: "🤝", label: "Negotiation Strategy", sub: "Anchor, walk-away, structure", tab: "negotiation" },
+          { icon: "🏦", label: "SBA Finance Snapshot", sub: "Loan sizing & eligibility",    tab: "sba"         },
+          { icon: "📄", label: "Deal Memo",            sub: "Summary, diligence, next step",tab: "memo"        },
+        ] as { icon: string; label: string; sub: string; tab: string }[]).map(a => (
           <button
             key={a.label}
+            onClick={() => { if (lastAnalysis) onOpenUnderwriting(lastAnalysis); }}
             style={{
               display: "flex", alignItems: "center", gap: 10,
               padding: "12px 14px", borderRadius: 10,
@@ -1280,24 +2228,24 @@ function ProCommandModule({ deals }: { deals: DealRun[] }) {
         ))}
       </div>
 
-      <a
-        href="/deal-check"
+      <button
+        onClick={() => { if (lastAnalysis) onOpenUnderwriting(lastAnalysis); }}
         style={{
-          display: "block", padding: "12px", borderRadius: 10,
+          display: "block", width: "100%", padding: "12px", borderRadius: 10, border: "none",
           background: "linear-gradient(135deg,#6366F1,#8B5CF6)",
-          color: "#fff", fontSize: 14, fontWeight: 600,
-          textDecoration: "none", textAlign: "center" as const,
+          color: "#fff", fontSize: 14, fontWeight: 600, cursor: "pointer",
+          textAlign: "center" as const,
         }}
       >
-        Generate Underwriting Report →
-      </a>
+        Open Full Underwriting →
+      </button>
     </Card>
   );
 }
 
 // ─── PRO UPSELL CARD ─────────────────────────────────────────────────────────
 
-function ProUpsellCard() {
+function ProUpsellCard({ deals, onOpenUnderwriting }: { deals: DealRun[]; onOpenUnderwriting: (deal: DealRun) => void }) {
   return (
     <Card style={{ border: "1px solid rgba(99,102,241,0.15)", background: "rgba(99,102,241,0.04)" }}>
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 20, flexWrap: "wrap" }}>
@@ -1335,16 +2283,16 @@ function ProUpsellCard() {
             }}>
               Upgrade to Pro
             </button>
-            <a
-              href="/deal-check"
+            <button
+              onClick={() => { if (deals[0]) onOpenUnderwriting(deals[0]); }}
               style={{
                 display: "inline-block", padding: "10px 16px", borderRadius: 9,
                 border: "1px solid rgba(99,102,241,0.25)", background: "transparent",
-                color: "#818CF8", fontSize: 13, fontWeight: 500, textDecoration: "none",
+                color: "#818CF8", fontSize: 13, fontWeight: 500, cursor: "pointer",
               }}
             >
-              Try Full Analysis →
-            </a>
+              Preview Analysis →
+            </button>
           </div>
         </div>
 
@@ -1392,7 +2340,8 @@ function ProUpsellCard() {
 // ─── TAB: DASHBOARD ───────────────────────────────────────────────────────────
 
 function TabDashboard({
-  deals, dri, trending, loading, loadingMkt, isPro, favorites, onTabChange, onToggleFav, onOpenNotes,
+  deals, dri, trending, loading, loadingMkt, isPro, favorites,
+  onTabChange, onToggleFav, onOpenNotes, onOpenDetail, onOpenUnderwriting, onAnalyzeNew,
 }: {
   deals: DealRun[];
   dri: DriSnapshot[];
@@ -1404,6 +2353,9 @@ function TabDashboard({
   onTabChange: (tab: TabId) => void;
   onToggleFav: (id: string) => void;
   onOpenNotes: (deal: DealRun) => void;
+  onOpenDetail: (deal: DealRun) => void;
+  onOpenUnderwriting: (deal: DealRun) => void;
+  onAnalyzeNew: () => void;
 }) {
   const recent  = deals.slice(0, 3);
   const opps    = deals.filter(d => (d.gap_pct ?? 0) < -5).slice(0, 3);
@@ -1416,6 +2368,7 @@ function TabDashboard({
         deals={deals}
         favorites={favorites}
         onOpenNotes={onOpenNotes}
+        onOpenDetail={onOpenDetail}
       />
 
       {/* Recent Deals */}
@@ -1442,16 +2395,16 @@ function TabDashboard({
               <div style={{ fontSize: 24, marginBottom: 8 }}>📋</div>
               <div style={{ fontSize: 14, fontWeight: 600, color: "#E2E8F0", marginBottom: 4 }}>No deals yet</div>
               <div style={{ fontSize: 12, color: "#4B5563", marginBottom: 14 }}>Analyze your first deal to get started.</div>
-              <a
-                href="/deal-reality-check"
+              <button
+                onClick={() => onAnalyzeNew()}
                 style={{
-                  display: "inline-block", padding: "8px 16px", borderRadius: 8,
+                  display: "inline-block", padding: "8px 16px", borderRadius: 8, border: "none",
                   background: "linear-gradient(135deg,#3B82F6,#6366F1)",
-                  color: "#fff", fontSize: 13, fontWeight: 600, textDecoration: "none",
+                  color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer",
                 }}
               >
                 Analyze a Deal →
-              </a>
+              </button>
             </div>
           ) : recent.map((deal, i) => {
             const gp  = deal.gap_pct ?? 0;
@@ -1500,17 +2453,17 @@ function TabDashboard({
                   >
                     📝
                   </button>
-                  <a
-                    href={`/deal-reality-check?run=${deal.id}`}
+                  <button
+                    onClick={() => onOpenDetail(deal)}
                     style={{
                       padding: "5px 10px", borderRadius: 7,
                       border: "1px solid rgba(255,255,255,0.08)",
                       background: "rgba(255,255,255,0.03)",
-                      color: "#6B7280", fontSize: 11, textDecoration: "none",
+                      color: "#6B7280", fontSize: 11, cursor: "pointer",
                     }}
                   >
                     View
-                  </a>
+                  </button>
                 </div>
               </div>
             );
@@ -1668,7 +2621,7 @@ function TabDashboard({
       </div>
 
       {/* Pro block */}
-      {isPro ? <ProCommandModule deals={deals} /> : <ProUpsellCard />}
+      {isPro ? <ProCommandModule deals={deals} onOpenUnderwriting={onOpenUnderwriting} /> : <ProUpsellCard deals={deals} onOpenUnderwriting={onOpenUnderwriting} />}
     </div>
   );
 }
@@ -1676,7 +2629,8 @@ function TabDashboard({
 // ─── TAB: MY DEALS ────────────────────────────────────────────────────────────
 
 function TabMyDeals({
-  deals, loading, isPro, dealStatuses, favorites, onStatusChange, onToggleFav, onOpenNotes,
+  deals, loading, isPro, dealStatuses, favorites,
+  onStatusChange, onToggleFav, onOpenNotes, onOpenDetail, onOpenUnderwriting, onAnalyzeNew,
 }: {
   deals: DealRun[];
   loading: boolean;
@@ -1686,6 +2640,9 @@ function TabMyDeals({
   onStatusChange: (id: string, status: DealStatus) => void;
   onToggleFav: (id: string) => void;
   onOpenNotes: (deal: DealRun) => void;
+  onOpenDetail: (deal: DealRun) => void;
+  onOpenUnderwriting: (deal: DealRun) => void;
+  onAnalyzeNew: () => void;
 }) {
   const [search, setSearch]       = useState("");
   const [sortKey, setSortKey]     = useState<SortKey>("date");
@@ -1722,6 +2679,8 @@ function TabMyDeals({
         isPro={isPro}
         onToggleFav={onToggleFav}
         onOpenNotes={onOpenNotes}
+        onOpenDetail={onOpenDetail}
+        onOpenUnderwriting={onOpenUnderwriting}
       />
 
       {/* Search + filter bar */}
@@ -1807,16 +2766,16 @@ function TabMyDeals({
               {search ? "Try a different search term." : "Analyze your first deal to get started."}
             </div>
             {!search && (
-              <a
-                href="/deal-reality-check"
+              <button
+                onClick={() => onAnalyzeNew()}
                 style={{
-                  display: "inline-block", padding: "8px 16px", borderRadius: 8,
+                  display: "inline-block", padding: "8px 16px", borderRadius: 8, border: "none",
                   background: "linear-gradient(135deg,#3B82F6,#6366F1)",
-                  color: "#fff", fontSize: 13, fontWeight: 600, textDecoration: "none",
+                  color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer",
                 }}
               >
                 Analyze a Deal →
-              </a>
+              </button>
             )}
           </div>
         )}
@@ -1928,31 +2887,30 @@ function TabMyDeals({
                 >
                   📝
                 </button>
-                <a
-                  href={`/deal-reality-check?run=${deal.id}`}
+                <button
+                  onClick={() => onOpenDetail(deal)}
                   style={{
                     padding: "4px 8px", borderRadius: 6,
                     border: "1px solid rgba(255,255,255,0.08)",
                     background: "rgba(255,255,255,0.03)",
-                    color: "#6B7280", fontSize: 10, textDecoration: "none",
+                    color: "#6B7280", fontSize: 10, cursor: "pointer",
                   }}
                 >
                   View
-                </a>
-                <a
-                  href={`/deal-check?run=${deal.id}`}
-                  title={isPro ? "Run Full Analysis" : "Pro feature"}
+                </button>
+                <button
+                  onClick={() => onOpenUnderwriting(deal)}
+                  title={isPro ? "Full Underwriting" : "Pro feature"}
                   style={{
                     padding: "4px 8px", borderRadius: 6,
                     border: isPro ? "1px solid rgba(99,102,241,0.25)" : "1px solid rgba(255,255,255,0.05)",
                     background: isPro ? "rgba(99,102,241,0.08)" : "rgba(255,255,255,0.02)",
                     color: isPro ? "#818CF8" : "#374151",
-                    fontSize: 10, textDecoration: "none",
-                    cursor: isPro ? "pointer" : "not-allowed",
+                    fontSize: 10, cursor: isPro ? "pointer" : "not-allowed",
                   }}
                 >
-                  {isPro ? "Full" : "🔒"}
-                </a>
+                  {isPro ? "⚡" : "🔒"}
+                </button>
               </div>
             </div>
           );
@@ -1970,7 +2928,7 @@ function TabMyDeals({
 
 // ─── TAB: COMPARE ─────────────────────────────────────────────────────────────
 
-function TabCompare({ deals, isPro }: { deals: DealRun[]; isPro: boolean }) {
+function TabCompare({ deals, isPro, onAnalyzeNew }: { deals: DealRun[]; isPro: boolean; onAnalyzeNew: () => void }) {
   const [mode, setMode] = useState<CompareMode>("my-deals");
   const [ai, setAi]     = useState(0);
   const [bi, setBi]     = useState(Math.min(1, deals.length - 1));
@@ -2040,16 +2998,16 @@ function TabCompare({ deals, isPro }: { deals: DealRun[]; isPro: boolean }) {
         <div style={{ fontSize: 13, color: "#4B5563", marginBottom: 16 }}>
           You need at least two saved deals to use the comparison engine.
         </div>
-        <a
-          href="/deal-reality-check"
+        <button
+          onClick={() => onAnalyzeNew()}
           style={{
-            display: "inline-block", padding: "9px 18px", borderRadius: 9,
+            display: "inline-block", padding: "9px 18px", borderRadius: 9, border: "none",
             background: "linear-gradient(135deg,#3B82F6,#6366F1)",
-            color: "#fff", fontSize: 13, fontWeight: 600, textDecoration: "none",
+            color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer",
           }}
         >
           Analyze a Deal →
-        </a>
+        </button>
       </Card>
     );
   }
@@ -3041,6 +3999,10 @@ export default function BuyerDashboard() {
   const [notesDeal, setNotesDeal]       = useState<DealRun | null>(null);
   const [dealNotes, setDealNotes]       = useState<Record<string, DealNote[]>>({});
   const [dealIntel, setDealIntel]       = useState<Record<string, DealIntel>>({});
+  // ── New modal/panel state ─────────────────────────────────────────────────
+  const [analyzeModal, setAnalyzeModal]         = useState(false);
+  const [detailDeal, setDetailDeal]             = useState<DealRun | null>(null);
+  const [underwritingDeal, setUnderwritingDeal] = useState<DealRun | null>(null);
 
   const isPro       = profile?.plan === "pro" || profile?.plan === "premium";
   const userInitial = user?.email?.charAt(0)?.toUpperCase() ?? "?";
@@ -3194,6 +4156,18 @@ export default function BuyerDashboard() {
   const handleStatusChange = (id: string, status: DealStatus) => {
     setDealStatuses(prev => ({ ...prev, [id]: status }));
   };
+
+  // ── New deal saved from modal → prepend to deals state immediately ────────
+  const handleDealSaved = (deal: DealRun) => {
+    setDeals(prev => [deal, ...prev]);
+    setAnalyzeModal(false);
+  };
+
+  // ── Open underwriting panel ───────────────────────────────────────────────
+  const openUnderwriting = (deal: DealRun) => setUnderwritingDeal(deal);
+
+  // ── Open deal detail panel ────────────────────────────────────────────────
+  const openDetail = (deal: DealRun) => setDetailDeal(deal);
 
   const TABS: { id: TabId; label: string }[] = [
     { id: "dashboard",    label: "Dashboard"   },
@@ -3351,18 +4325,18 @@ export default function BuyerDashboard() {
                 {activeTab === "market-intel" && "Market Intelligence"}
               </h1>
             </div>
-            <a
-              href="/deal-reality-check"
+            <button
+              onClick={() => setAnalyzeModal(true)}
               className="btn-action"
               style={{
                 display: "inline-flex", alignItems: "center", gap: 6,
-                padding: "9px 18px", borderRadius: 9,
+                padding: "9px 18px", borderRadius: 9, border: "none",
                 background: "linear-gradient(135deg,#3B82F6,#6366F1)",
-                color: "#fff", fontSize: 13, fontWeight: 600, textDecoration: "none",
+                color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer",
               }}
             >
               <span style={{ fontSize: 14 }}>+</span> Analyze New Deal
-            </a>
+            </button>
           </div>
 
           {/* Stat cards — dashboard + my-deals only */}
@@ -3384,6 +4358,9 @@ export default function BuyerDashboard() {
                 onTabChange={setActiveTab}
                 onToggleFav={toggleFavorite}
                 onOpenNotes={openNotes}
+                onOpenDetail={openDetail}
+                onOpenUnderwriting={openUnderwriting}
+                onAnalyzeNew={() => setAnalyzeModal(true)}
               />
             )}
             {activeTab === "my-deals" && (
@@ -3396,10 +4373,13 @@ export default function BuyerDashboard() {
                 onStatusChange={handleStatusChange}
                 onToggleFav={toggleFavorite}
                 onOpenNotes={openNotes}
+                onOpenDetail={openDetail}
+                onOpenUnderwriting={openUnderwriting}
+                onAnalyzeNew={() => setAnalyzeModal(true)}
               />
             )}
             {activeTab === "compare" && (
-              <TabCompare deals={deals} isPro={isPro} />
+              <TabCompare deals={deals} isPro={isPro} onAnalyzeNew={() => setAnalyzeModal(true)} />
             )}
             {activeTab === "market-intel" && (
               <TabMarketIntel dri={dri} trending={trending} loading={loadingMkt} isPro={isPro} deals={deals} />
@@ -3422,6 +4402,40 @@ export default function BuyerDashboard() {
           onStatusChange={handleStatusChange}
           dealStatuses={dealStatuses}
           onIntelGenerated={handleIntelGenerated}
+        />
+      )}
+
+      {/* ── ANALYZE DEAL MODAL ── */}
+      {analyzeModal && user && (
+        <AnalyzeDealModal
+          userId={user.id}
+          isPro={isPro}
+          onClose={() => setAnalyzeModal(false)}
+          onDealSaved={handleDealSaved}
+        />
+      )}
+
+      {/* ── DEAL DETAIL PANEL ── */}
+      {detailDeal && (
+        <DealDetailPanel
+          deal={detailDeal}
+          favorites={favorites}
+          dealStatuses={dealStatuses}
+          isPro={isPro}
+          onClose={() => setDetailDeal(null)}
+          onToggleFav={toggleFavorite}
+          onOpenNotes={(deal) => { openNotes(deal); setDetailDeal(null); }}
+          onOpenUnderwriting={(deal) => { setUnderwritingDeal(deal); setDetailDeal(null); }}
+          onStatusChange={handleStatusChange}
+        />
+      )}
+
+      {/* ── UNDERWRITING PANEL ── */}
+      {underwritingDeal && (
+        <UnderwritingPanel
+          deal={underwritingDeal}
+          isPro={isPro}
+          onClose={() => setUnderwritingDeal(null)}
         />
       )}
     </div>
