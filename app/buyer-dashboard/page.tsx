@@ -10,10 +10,10 @@ const supabase = createClient(
 
 // ─── TYPES ───────────────────────────────────────────────────────────────────
 
-type TabId = "dashboard" | "my-deals" | "compare" | "market-intel";
+type TabId       = "dashboard" | "my-deals" | "compare" | "market-intel";
 type CompareMode = "my-deals" | "market" | "closed";
-type DealStatus = "New" | "Reviewing" | "Under LOI" | "Paused" | "Passed";
-type SortKey = "date" | "score" | "gap" | "asking";
+type DealStatus  = "New" | "Reviewing" | "Under LOI" | "Paused" | "Passed";
+type SortKey     = "date" | "score" | "gap" | "asking";
 
 interface DealRun {
   id: string;
@@ -29,8 +29,28 @@ interface DealRun {
   state: string | null;
   created_at: string;
   confidence_grade: string | null;
+  red_flags?: string[];
+  green_flags?: string[];
+  revenue?: number;
+  sde?: number;
   gap_pct?: number;
   signal?: "overpriced" | "fair" | "opportunity";
+}
+
+interface DealNote {
+  id: string;
+  deal_id: string;
+  content: string;
+  status_tag: string | null;
+  created_at: string;
+}
+
+interface DealIntel {
+  what_it_means: string;
+  key_risks: string[];
+  must_be_true: string[];
+  suggested_approach: string;
+  generated_at: string;
 }
 
 interface DriSnapshot {
@@ -58,16 +78,46 @@ interface Profile {
 // ─── CONSTANTS ────────────────────────────────────────────────────────────────
 
 const IL: Record<string, string> = {
-  laundromat:"Laundromat",hvac:"HVAC",landscaping:"Landscaping",carwash:"Car Wash",
-  dental:"Dental Practice",gym:"Gym / Fitness",restaurant:"Restaurant",autorepair:"Auto Repair",
-  cleaning:"Cleaning",ecommerce:"Ecommerce",saas:"SaaS",insurance:"Insurance Agency",
-  plumbing:"Plumbing",roofing:"Roofing",petcare:"Pet Care",pharmacy:"Pharmacy",
-  daycare:"Daycare",medspa:"Med Spa",accounting:"Accounting",electrical:"Electrical",
-  healthcare:"Healthcare",transportation:"Transportation",printing:"Printing",storage:"Self-Storage",
-  painting:"Painting",security:"Security",construction:"Construction",engineering:"Engineering",
-  grocery:"Grocery",hairsalon:"Hair Salon",marketing:"Marketing Agency",pestcontrol:"Pest Control",
-  physicaltherapy:"Physical Therapy",propertymanage:"Property Mgmt",realestatebrok:"Real Estate Brok.",
-  remodeling:"Remodeling",seniorcare:"Senior Care",signmaking:"Sign Mfg.",staffing:"Staffing",veterinary:"Veterinary",
+  laundromat:      "Laundromat",
+  hvac:            "HVAC",
+  landscaping:     "Landscaping",
+  carwash:         "Car Wash",
+  dental:          "Dental Practice",
+  gym:             "Gym / Fitness",
+  restaurant:      "Restaurant",
+  autorepair:      "Auto Repair",
+  cleaning:        "Cleaning",
+  ecommerce:       "Ecommerce",
+  saas:            "SaaS",
+  insurance:       "Insurance Agency",
+  plumbing:        "Plumbing",
+  roofing:         "Roofing",
+  petcare:         "Pet Care",
+  pharmacy:        "Pharmacy",
+  daycare:         "Daycare",
+  medspa:          "Med Spa",
+  accounting:      "Accounting",
+  electrical:      "Electrical",
+  healthcare:      "Healthcare",
+  transportation:  "Transportation",
+  printing:        "Printing",
+  storage:         "Self-Storage",
+  painting:        "Painting",
+  security:        "Security",
+  construction:    "Construction",
+  engineering:     "Engineering",
+  grocery:         "Grocery",
+  hairsalon:       "Hair Salon",
+  marketing:       "Marketing Agency",
+  pestcontrol:     "Pest Control",
+  physicaltherapy: "Physical Therapy",
+  propertymanage:  "Property Mgmt",
+  realestatebrok:  "Real Estate Brok.",
+  remodeling:      "Remodeling",
+  seniorcare:      "Senior Care",
+  signmaking:      "Sign Mfg.",
+  staffing:        "Staffing",
+  veterinary:      "Veterinary",
 };
 
 const STATUS_COLORS: Record<DealStatus, { color: string; bg: string; border: string }> = {
@@ -78,32 +128,50 @@ const STATUS_COLORS: Record<DealStatus, { color: string; bg: string; border: str
   "Passed":    { color: "#EF4444", bg: "rgba(239,68,68,0.1)",   border: "rgba(239,68,68,0.2)"   },
 };
 
+const STATUS_OPTIONS: DealStatus[] = ["New", "Reviewing", "Under LOI", "Paused", "Passed"];
+
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
 
 function fmt(v: number) {
   if (!v && v !== 0) return "—";
   if (v >= 1_000_000) return `$${(v / 1_000_000).toFixed(2)}M`;
-  if (v >= 1_000) return `$${(v / 1_000).toFixed(0)}K`;
+  if (v >= 1_000)     return `$${(v / 1_000).toFixed(0)}K`;
   return `$${v}`;
 }
+
 function fmtFull(v: number) {
-  return new Intl.NumberFormat("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 }).format(v);
+  return new Intl.NumberFormat("en-US", {
+    style: "currency", currency: "USD", maximumFractionDigits: 0,
+  }).format(v);
 }
+
+function fmtTs(d: string) {
+  return new Date(d).toLocaleDateString("en-US", {
+    month: "short", day: "numeric", hour: "numeric", minute: "2-digit",
+  });
+}
+
 function deriveSignal(g: number): "overpriced" | "fair" | "opportunity" {
   return g > 10 ? "overpriced" : g < -5 ? "opportunity" : "fair";
 }
+
 function sigCfg(s: string) {
   if (s === "overpriced")  return { color: "#D85A30", bg: "rgba(216,90,48,0.08)",  border: "rgba(216,90,48,0.18)",  label: "Overpriced",  dot: "#D85A30" };
   if (s === "opportunity") return { color: "#10B981", bg: "rgba(16,185,129,0.08)", border: "rgba(16,185,129,0.18)", label: "Opportunity", dot: "#10B981" };
   return                          { color: "#3B82F6", bg: "rgba(59,130,246,0.08)", border: "rgba(59,130,246,0.18)", label: "Fair Market",  dot: "#3B82F6" };
 }
-function scoreCol(s: number) { return s >= 70 ? "#10B981" : s >= 50 ? "#F59E0B" : "#EF4444"; }
+
+function scoreCol(s: number) {
+  return s >= 70 ? "#10B981" : s >= 50 ? "#F59E0B" : "#EF4444";
+}
+
 function condSig(c: string): "overpriced" | "fair" | "opportunity" {
   const l = (c || "").toLowerCase();
-  return l.includes("over") || l.includes("seller") ? "overpriced"
+  return l.includes("over") || l.includes("seller")  ? "overpriced"
        : l.includes("opport") || l.includes("buyer") || l.includes("under") ? "opportunity"
        : "fair";
 }
+
 function ago(d: string) {
   const diff = Math.floor((Date.now() - new Date(d).getTime()) / 1000);
   if (diff < 3600)   return `${Math.floor(diff / 60)}m ago`;
@@ -112,31 +180,64 @@ function ago(d: string) {
   return new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
+/** Opportunity score used to rank deals in Top Opportunities */
+function oppScore(d: DealRun) {
+  return (100 - (d.gap_pct ?? 0) * 2) + d.overall_score + (d.dscr * 10);
+}
+
 // ─── UI ATOMS ─────────────────────────────────────────────────────────────────
 
 function Ring({ score, size = 36 }: { score: number; size?: number }) {
-  const sw = 3, r = (size - sw) / 2, c = r * 2 * Math.PI, o = c - (score / 100) * c, col = scoreCol(score);
+  const sw  = 3;
+  const r   = (size - sw) / 2;
+  const c   = r * 2 * Math.PI;
+  const o   = c - (score / 100) * c;
+  const col = scoreCol(score);
   return (
     <div style={{ position: "relative", width: size, height: size, flexShrink: 0 }}>
       <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }}>
-        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth={sw}/>
-        <circle cx={size/2} cy={size/2} r={r} fill="none" stroke={col} strokeWidth={sw} strokeDasharray={c} strokeDashoffset={o} strokeLinecap="round" style={{ transition: "stroke-dashoffset 1s ease" }}/>
+        <circle cx={size / 2} cy={size / 2} r={r} fill="none" stroke="rgba(255,255,255,0.05)" strokeWidth={sw} />
+        <circle
+          cx={size / 2} cy={size / 2} r={r}
+          fill="none" stroke={col} strokeWidth={sw}
+          strokeDasharray={c} strokeDashoffset={o}
+          strokeLinecap="round"
+          style={{ transition: "stroke-dashoffset 1s ease" }}
+        />
       </svg>
-      <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: size * 0.28, fontWeight: 700, color: col, fontFamily: "'JetBrains Mono',monospace" }}>{score}</div>
+      <div style={{
+        position: "absolute", inset: 0, display: "flex",
+        alignItems: "center", justifyContent: "center",
+        fontSize: size * 0.28, fontWeight: 700, color: col,
+        fontFamily: "'JetBrains Mono',monospace",
+      }}>
+        {score}
+      </div>
     </div>
   );
 }
 
 function Skel({ w = "100%", h = 12 }: { w?: string | number; h?: number }) {
-  return <div style={{ width: w, height: h, borderRadius: 6, background: "rgba(255,255,255,0.05)", animation: "pulse 1.5s ease-in-out infinite" }} />;
+  return (
+    <div style={{
+      width: w, height: h, borderRadius: 6,
+      background: "rgba(255,255,255,0.05)",
+      animation: "pulse 1.5s ease-in-out infinite",
+    }} />
+  );
 }
 
 function SectionHeader({ title, sub, action }: { title: string; sub?: string; action?: React.ReactNode }) {
   return (
-    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 16 }}>
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 14 }}>
       <div>
-        <h2 style={{ fontSize: 16, fontWeight: 700, margin: "0 0 3px", fontFamily: "'Inter Tight',sans-serif", letterSpacing: "-0.02em", color: "#F1F5F9" }}>{title}</h2>
-        {sub && <p style={{ fontSize: 12, color: "#4B5563", margin: 0 }}>{sub}</p>}
+        <h2 style={{
+          fontSize: 15, fontWeight: 700, margin: "0 0 3px",
+          fontFamily: "'Inter Tight',sans-serif", letterSpacing: "-0.02em", color: "#F1F5F9",
+        }}>
+          {title}
+        </h2>
+        {sub && <p style={{ fontSize: 11, color: "#4B5563", margin: 0 }}>{sub}</p>}
       </div>
       {action}
     </div>
@@ -145,7 +246,10 @@ function SectionHeader({ title, sub, action }: { title: string; sub?: string; ac
 
 function Card({ children, style }: { children: React.ReactNode; style?: React.CSSProperties }) {
   return (
-    <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", borderRadius: 14, padding: "20px 22px", ...style }}>
+    <div style={{
+      background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
+      borderRadius: 14, padding: "20px 22px", ...style,
+    }}>
       {children}
     </div>
   );
@@ -153,15 +257,750 @@ function Card({ children, style }: { children: React.ReactNode; style?: React.CS
 
 function ProBadge() {
   return (
-    <span style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "2px 8px", borderRadius: 20, background: "rgba(99,102,241,0.12)", border: "1px solid rgba(99,102,241,0.25)", fontSize: 10, color: "#818CF8", fontWeight: 700, letterSpacing: "0.06em", textTransform: "uppercase" as const }}>⚡ PRO</span>
+    <span style={{
+      display: "inline-flex", alignItems: "center", gap: 4,
+      padding: "2px 8px", borderRadius: 20,
+      background: "rgba(99,102,241,0.12)", border: "1px solid rgba(99,102,241,0.25)",
+      fontSize: 10, color: "#818CF8", fontWeight: 700,
+      letterSpacing: "0.06em", textTransform: "uppercase" as const,
+    }}>
+      ⚡ PRO
+    </span>
   );
 }
 
 function LockOverlay({ label = "Pro feature" }: { label?: string }) {
   return (
-    <div style={{ position: "absolute", inset: 0, background: "rgba(8,12,19,0.7)", backdropFilter: "blur(4px)", borderRadius: 14, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 8, zIndex: 10 }}>
+    <div style={{
+      position: "absolute", inset: 0,
+      background: "rgba(8,12,19,0.7)", backdropFilter: "blur(4px)",
+      borderRadius: 14, display: "flex", alignItems: "center",
+      justifyContent: "center", flexDirection: "column", gap: 8, zIndex: 10,
+    }}>
       <span style={{ fontSize: 20 }}>🔒</span>
       <span style={{ fontSize: 12, color: "#818CF8", fontWeight: 600 }}>{label}</span>
+    </div>
+  );
+}
+
+// ─── STAR BUTTON ─────────────────────────────────────────────────────────────
+
+function StarButton({
+  dealId, favorites, onToggle,
+}: {
+  dealId: string;
+  favorites: Set<string>;
+  onToggle: (id: string) => void;
+}) {
+  const isFav = favorites.has(dealId);
+  return (
+    <button
+      onClick={(e) => { e.stopPropagation(); onToggle(dealId); }}
+      title={isFav ? "Remove from watchlist" : "Add to watchlist"}
+      style={{
+        background: "none", border: "none", cursor: "pointer",
+        padding: "4px 6px", borderRadius: 5,
+        fontSize: 15, color: isFav ? "#F59E0B" : "#2D3748",
+        transition: "color 0.15s", lineHeight: 1,
+      }}
+    >
+      {isFav ? "★" : "☆"}
+    </button>
+  );
+}
+
+// ─── NOTES PANEL ─────────────────────────────────────────────────────────────
+
+function NotesPanel({
+  deal, userId, isPro, notes, intel,
+  onClose, onNoteAdded, onNoteDeleted, onStatusChange, dealStatuses, onIntelGenerated,
+}: {
+  deal: DealRun;
+  userId: string;
+  isPro: boolean;
+  notes: DealNote[];
+  intel: DealIntel | null;
+  onClose: () => void;
+  onNoteAdded: (note: DealNote) => void;
+  onNoteDeleted: (noteId: string) => void;
+  onStatusChange: (id: string, status: DealStatus) => void;
+  dealStatuses: Record<string, DealStatus>;
+  onIntelGenerated: (intel: DealIntel) => void;
+}) {
+  const [noteText, setNoteText]     = useState("");
+  const [noteTag, setNoteTag]       = useState<DealStatus | "">("");
+  const [saving, setSaving]         = useState(false);
+  const [loadingNotes, setLoadingNotes] = useState(false);
+  const [loadingIntel, setLoadingIntel] = useState(false);
+
+  const sc     = sigCfg(deal.signal ?? "fair");
+  const gp     = deal.gap_pct ?? 0;
+  const status = dealStatuses[deal.id] ?? "New";
+
+  const selStyle: React.CSSProperties = {
+    padding: "5px 9px", borderRadius: 6,
+    border: "1px solid rgba(255,255,255,0.09)",
+    background: "rgba(255,255,255,0.03)",
+    color: "#94A3B8", fontSize: 11, outline: "none",
+    cursor: "pointer", appearance: "none" as any,
+  };
+
+  async function handleSaveNote() {
+    if (!noteText.trim()) return;
+    setSaving(true);
+    const { data, error } = await supabase
+      .from("deal_notes")
+      .insert({
+        user_id:    userId,
+        deal_id:    deal.id,
+        content:    noteText.trim(),
+        status_tag: noteTag || null,
+      })
+      .select()
+      .single();
+    if (!error && data) {
+      onNoteAdded(data as DealNote);
+      setNoteText("");
+      setNoteTag("");
+    }
+    setSaving(false);
+  }
+
+  async function handleDeleteNote(noteId: string) {
+    await supabase.from("deal_notes").delete().eq("id", noteId).eq("user_id", userId);
+    onNoteDeleted(noteId);
+  }
+
+  async function handleGenerateIntel(regenerate = false) {
+    setLoadingIntel(true);
+    try {
+      const res = await fetch("/api/deal-intelligence", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_id:    userId,
+          deal_id:    deal.id,
+          regenerate,
+          deal: {
+            industry:            deal.industry,
+            asking_price:        deal.asking_price,
+            fair_value:          deal.fair_value,
+            gap_pct:             deal.gap_pct,
+            valuation_multiple:  deal.valuation_multiple,
+            dscr:                deal.dscr,
+            overall_score:       deal.overall_score,
+            risk_level:          deal.risk_level,
+            city:                deal.city,
+            state:               deal.state,
+            revenue:             deal.revenue,
+            sde:                 deal.sde,
+            red_flags:           deal.red_flags,
+            green_flags:         deal.green_flags,
+          },
+        }),
+      });
+      const json = await res.json();
+      if (json.success && json.intelligence) {
+        onIntelGenerated(json.intelligence as DealIntel);
+      }
+    } catch (err) {
+      console.error("Intel generation failed:", err);
+    }
+    setLoadingIntel(false);
+  }
+
+  return (
+    <>
+      {/* Backdrop */}
+      <div
+        onClick={onClose}
+        style={{
+          position: "fixed", inset: 0,
+          background: "rgba(0,0,0,0.5)",
+          zIndex: 100, backdropFilter: "blur(2px)",
+        }}
+      />
+
+      {/* Panel */}
+      <div style={{
+        position: "fixed", top: 0, right: 0,
+        width: 440, height: "100vh",
+        background: "#0D1117",
+        borderLeft: "1px solid rgba(255,255,255,0.08)",
+        zIndex: 101, display: "flex", flexDirection: "column",
+        animation: "slideIn 0.22s ease-out",
+        overflowY: "auto",
+      }}>
+
+        {/* Panel header */}
+        <div style={{
+          padding: "18px 20px 14px",
+          borderBottom: "1px solid rgba(255,255,255,0.06)",
+          flexShrink: 0,
+        }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+            <div>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 4 }}>
+                <span style={{
+                  fontSize: 14, fontWeight: 700, color: "#F1F5F9",
+                  fontFamily: "'Inter Tight',sans-serif",
+                }}>
+                  {IL[deal.industry] || deal.industry}
+                </span>
+                <span style={{
+                  display: "inline-flex", alignItems: "center", gap: 3,
+                  padding: "2px 7px", borderRadius: 20,
+                  fontSize: 10, fontWeight: 600,
+                  background: sc.bg, color: sc.color, border: `1px solid ${sc.border}`,
+                }}>
+                  <span style={{ width: 4, height: 4, borderRadius: "50%", background: sc.dot }} />
+                  {sc.label}
+                </span>
+              </div>
+              <div style={{ fontSize: 11, color: "#4B5563" }}>
+                {fmt(deal.asking_price)} · {deal.valuation_multiple.toFixed(2)}x · DSCR {deal.dscr.toFixed(2)} · Score {deal.overall_score}
+                {gp !== 0 && (
+                  <span style={{ color: gp > 0 ? "#D85A30" : "#10B981", marginLeft: 6, fontWeight: 600 }}>
+                    {gp > 0 ? "+" : ""}{gp}% vs mkt
+                  </span>
+                )}
+              </div>
+            </div>
+            <button
+              onClick={onClose}
+              style={{
+                background: "none", border: "none", color: "#4B5563",
+                fontSize: 20, cursor: "pointer", padding: "2px 6px", lineHeight: 1,
+              }}
+            >
+              ×
+            </button>
+          </div>
+
+          {/* Status dropdown */}
+          <div style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontSize: 10, color: "#4B5563" }}>Status:</span>
+            <select
+              value={status}
+              onChange={(e) => onStatusChange(deal.id, e.target.value as DealStatus)}
+              style={{
+                ...selStyle,
+                color: STATUS_COLORS[status].color,
+                background: STATUS_COLORS[status].bg,
+                border: `1px solid ${STATUS_COLORS[status].border}`,
+                fontWeight: 600,
+              }}
+            >
+              {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
+          </div>
+        </div>
+
+        {/* Add note */}
+        <div style={{
+          padding: "14px 20px 12px",
+          borderBottom: "1px solid rgba(255,255,255,0.05)",
+          flexShrink: 0,
+        }}>
+          <div style={{
+            fontSize: 10, fontWeight: 600, color: "#4B5563",
+            textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8,
+          }}>
+            Add Note
+          </div>
+          <textarea
+            value={noteText}
+            onChange={(e) => setNoteText(e.target.value)}
+            placeholder="Observations, questions, next steps..."
+            rows={3}
+            style={{
+              width: "100%", padding: "9px 12px", borderRadius: 8,
+              border: "1px solid rgba(255,255,255,0.08)",
+              background: "rgba(255,255,255,0.03)",
+              color: "#E2E8F0", fontSize: 13,
+              fontFamily: "'Inter',sans-serif",
+              resize: "vertical" as any, outline: "none", lineHeight: 1.6,
+            }}
+          />
+          <div style={{ display: "flex", gap: 8, marginTop: 8, alignItems: "center" }}>
+            <select
+              value={noteTag}
+              onChange={(e) => setNoteTag(e.target.value as DealStatus | "")}
+              style={{ ...selStyle, flex: 1 }}
+            >
+              <option value="">No tag</option>
+              {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
+            </select>
+            <button
+              onClick={handleSaveNote}
+              disabled={!noteText.trim() || saving}
+              style={{
+                padding: "7px 16px", borderRadius: 7, border: "none",
+                background: noteText.trim() ? "linear-gradient(135deg,#3B82F6,#6366F1)" : "rgba(255,255,255,0.05)",
+                color: noteText.trim() ? "#fff" : "#374151",
+                fontSize: 12, fontWeight: 600,
+                cursor: noteText.trim() && !saving ? "pointer" : "not-allowed",
+              }}
+            >
+              {saving ? "Saving..." : "Save"}
+            </button>
+          </div>
+        </div>
+
+        {/* Notes list */}
+        <div style={{ padding: "12px 20px", flex: 1, overflowY: "auto" }}>
+          {notes.length > 0 && (
+            <div style={{
+              fontSize: 10, fontWeight: 600, color: "#374151",
+              textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10,
+            }}>
+              {notes.length} Note{notes.length !== 1 ? "s" : ""}
+            </div>
+          )}
+
+          {loadingNotes ? (
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              <Skel h={56} />
+              <Skel h={56} />
+            </div>
+          ) : notes.length === 0 ? (
+            <div style={{ textAlign: "center", padding: "20px 0", color: "#374151", fontSize: 12 }}>
+              No notes yet. Add one above.
+            </div>
+          ) : (
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {notes.map(note => (
+                <div
+                  key={note.id}
+                  style={{
+                    padding: "11px 13px", borderRadius: 10,
+                    background: "rgba(255,255,255,0.02)",
+                    border: "1px solid rgba(255,255,255,0.05)",
+                  }}
+                >
+                  <div style={{
+                    display: "flex", justifyContent: "space-between",
+                    alignItems: "center", marginBottom: 6,
+                  }}>
+                    <span style={{ fontSize: 10, color: "#2D3748" }}>{fmtTs(note.created_at)}</span>
+                    <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                      {note.status_tag && (
+                        <span style={{
+                          fontSize: 9, padding: "1px 6px", borderRadius: 20,
+                          background: STATUS_COLORS[note.status_tag as DealStatus]?.bg ?? "rgba(255,255,255,0.05)",
+                          color:      STATUS_COLORS[note.status_tag as DealStatus]?.color ?? "#6B7280",
+                          border:    `1px solid ${STATUS_COLORS[note.status_tag as DealStatus]?.border ?? "rgba(255,255,255,0.1)"}`,
+                          fontWeight: 600,
+                        }}>
+                          {note.status_tag}
+                        </span>
+                      )}
+                      <button
+                        onClick={() => handleDeleteNote(note.id)}
+                        style={{
+                          background: "none", border: "none", color: "#374151",
+                          cursor: "pointer", fontSize: 11, padding: "0 2px",
+                        }}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  </div>
+                  <div style={{ fontSize: 12, color: "#C9D1D9", lineHeight: 1.6 }}>
+                    {note.content}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Deal Intelligence — Pro only */}
+        {isPro && (
+          <div style={{
+            padding: "14px 20px 24px",
+            borderTop: "1px solid rgba(255,255,255,0.06)",
+            flexShrink: 0,
+          }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
+              <span style={{
+                fontSize: 13, fontWeight: 700, color: "#F1F5F9",
+                fontFamily: "'Inter Tight',sans-serif",
+              }}>
+                Deal Intelligence
+              </span>
+              <ProBadge />
+            </div>
+
+            {/* Empty state */}
+            {!intel && !loadingIntel && (
+              <div style={{ textAlign: "center", padding: "10px 0" }}>
+                <div style={{ fontSize: 12, color: "#4B5563", marginBottom: 14, lineHeight: 1.6 }}>
+                  AI-generated analysis — risks, deal assumptions, and negotiation strategy.
+                </div>
+                <button
+                  onClick={() => handleGenerateIntel(false)}
+                  style={{
+                    padding: "9px 20px", borderRadius: 9, border: "none",
+                    background: "linear-gradient(135deg,#6366F1,#8B5CF6)",
+                    color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer",
+                  }}
+                >
+                  Generate Intelligence →
+                </button>
+              </div>
+            )}
+
+            {/* Loading state */}
+            {loadingIntel && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                <Skel h={12} w="80%" />
+                <Skel h={12} w="65%" />
+                <Skel h={12} w="90%" />
+                <Skel h={12} w="72%" />
+                <div style={{ fontSize: 10, color: "#374151", textAlign: "center", marginTop: 4 }}>
+                  Analyzing deal with AI...
+                </div>
+              </div>
+            )}
+
+            {/* Populated state */}
+            {intel && !loadingIntel && (
+              <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+
+                {/* What This Means */}
+                <div>
+                  <div style={{
+                    fontSize: 10, color: "#6B7280", textTransform: "uppercase",
+                    letterSpacing: "0.08em", fontWeight: 600, marginBottom: 5,
+                  }}>
+                    💡 What This Means
+                  </div>
+                  <div style={{ fontSize: 12, color: "#C9D1D9", lineHeight: 1.7 }}>
+                    {intel.what_it_means}
+                  </div>
+                </div>
+
+                {/* Key Risks */}
+                <div>
+                  <div style={{
+                    fontSize: 10, color: "#6B7280", textTransform: "uppercase",
+                    letterSpacing: "0.08em", fontWeight: 600, marginBottom: 6,
+                  }}>
+                    ⚠️ Key Risks
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                    {intel.key_risks.map((risk, i) => (
+                      <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+                        <span style={{ color: "#EF4444", fontSize: 9, flexShrink: 0, marginTop: 3 }}>⚠</span>
+                        <span style={{ fontSize: 11, color: "#94A3B8", lineHeight: 1.5 }}>{risk}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* What Must Be True */}
+                <div>
+                  <div style={{
+                    fontSize: 10, color: "#6B7280", textTransform: "uppercase",
+                    letterSpacing: "0.08em", fontWeight: 600, marginBottom: 6,
+                  }}>
+                    ✅ What Must Be True
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
+                    {intel.must_be_true.map((item, i) => (
+                      <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+                        <span style={{ color: "#10B981", fontSize: 9, flexShrink: 0, marginTop: 3 }}>✓</span>
+                        <span style={{ fontSize: 11, color: "#94A3B8", lineHeight: 1.5 }}>{item}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Suggested Approach */}
+                <div>
+                  <div style={{
+                    fontSize: 10, color: "#6B7280", textTransform: "uppercase",
+                    letterSpacing: "0.08em", fontWeight: 600, marginBottom: 5,
+                  }}>
+                    🎯 Suggested Approach
+                  </div>
+                  <div style={{ fontSize: 12, color: "#C9D1D9", lineHeight: 1.7 }}>
+                    {intel.suggested_approach}
+                  </div>
+                </div>
+
+                {/* Actions */}
+                <div style={{ display: "flex", gap: 8, marginTop: 4 }}>
+                  <button
+                    onClick={() => handleGenerateIntel(true)}
+                    disabled={loadingIntel}
+                    style={{
+                      flex: 1, padding: "7px", borderRadius: 7,
+                      border: "1px solid rgba(99,102,241,0.2)",
+                      background: "transparent", color: "#818CF8",
+                      fontSize: 11, cursor: "pointer",
+                    }}
+                  >
+                    ↺ Regenerate
+                  </button>
+                </div>
+                <div style={{ fontSize: 10, color: "#2D3748", textAlign: "right" }}>
+                  Generated {ago(intel.generated_at)}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Lock teaser for free users */}
+        {!isPro && (
+          <div style={{
+            padding: "14px 20px 24px",
+            borderTop: "1px solid rgba(255,255,255,0.06)",
+            flexShrink: 0,
+          }}>
+            <div style={{
+              padding: "14px", borderRadius: 10,
+              background: "rgba(99,102,241,0.04)",
+              border: "1px solid rgba(99,102,241,0.12)",
+              textAlign: "center",
+            }}>
+              <div style={{ fontSize: 18, marginBottom: 6 }}>⚡</div>
+              <div style={{ fontSize: 12, fontWeight: 600, color: "#818CF8", marginBottom: 4 }}>
+                Deal Intelligence is a Pro feature
+              </div>
+              <div style={{ fontSize: 11, color: "#4B5563", marginBottom: 12 }}>
+                Get AI-generated risks, assumptions, and negotiation strategy for every deal.
+              </div>
+              <button style={{
+                padding: "7px 16px", borderRadius: 8, border: "none",
+                background: "linear-gradient(135deg,#6366F1,#8B5CF6)",
+                color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer",
+              }}>
+                Upgrade to Pro
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    </>
+  );
+}
+
+// ─── TOP OPPORTUNITIES ────────────────────────────────────────────────────────
+
+function TopOpportunities({
+  deals, favorites, isPro, onToggleFav, onOpenNotes,
+}: {
+  deals: DealRun[];
+  favorites: Set<string>;
+  isPro: boolean;
+  onToggleFav: (id: string) => void;
+  onOpenNotes: (deal: DealRun) => void;
+}) {
+  const top = [...deals]
+    .filter(d => (d.gap_pct ?? 0) <= 0 || d.overall_score >= 65)
+    .sort((a, b) => oppScore(b) - oppScore(a))
+    .slice(0, 5);
+
+  if (top.length === 0) return null;
+
+  return (
+    <div style={{ marginBottom: 24 }}>
+      <SectionHeader
+        title="Top Opportunities"
+        sub="Ranked by pricing gap, score, and DSCR"
+      />
+      <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+        {top.map((deal, i) => {
+          const gp  = deal.gap_pct ?? 0;
+          const sig = sigCfg(deal.signal ?? "fair");
+          const isTop = i === 0;
+          return (
+            <div
+              key={deal.id}
+              style={{
+                display: "flex", alignItems: "center", gap: 12,
+                padding: "13px 16px", borderRadius: 12,
+                background: isTop ? "rgba(16,185,129,0.04)" : "rgba(255,255,255,0.02)",
+                border: isTop ? "1px solid rgba(16,185,129,0.15)" : "1px solid rgba(255,255,255,0.06)",
+              }}
+            >
+              {/* Rank badge */}
+              <div style={{
+                width: 24, height: 24, borderRadius: "50%",
+                background: isTop ? "rgba(16,185,129,0.15)" : "rgba(255,255,255,0.05)",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                fontSize: 11, fontWeight: 700,
+                color: isTop ? "#10B981" : "#4B5563",
+                flexShrink: 0, fontFamily: "'JetBrains Mono',monospace",
+              }}>
+                {i + 1}
+              </div>
+
+              <Ring score={deal.overall_score} size={32} />
+
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: "#F1F5F9" }}>
+                  {IL[deal.industry] || deal.industry}
+                </div>
+                <div style={{ fontSize: 11, color: "#4B5563", marginTop: 1 }}>
+                  {fmt(deal.asking_price)} · {deal.valuation_multiple.toFixed(2)}x · DSCR {deal.dscr.toFixed(2)}
+                </div>
+              </div>
+
+              {/* Gap */}
+              <div style={{
+                fontSize: 14, fontWeight: 700,
+                color: gp <= 0 ? "#10B981" : "#D85A30",
+                fontFamily: "'JetBrains Mono',monospace", flexShrink: 0,
+              }}>
+                {gp > 0 ? "+" : ""}{gp}%
+              </div>
+
+              {/* Signal badge */}
+              <span style={{
+                display: "inline-flex", alignItems: "center", gap: 3,
+                padding: "3px 9px", borderRadius: 20,
+                fontSize: 10, fontWeight: 600,
+                background: sig.bg, color: sig.color, border: `1px solid ${sig.border}`,
+                flexShrink: 0,
+              }}>
+                <span style={{ width: 4, height: 4, borderRadius: "50%", background: sig.dot }} />
+                {sig.label}
+              </span>
+
+              {/* Actions */}
+              <div style={{ display: "flex", gap: 4, flexShrink: 0, alignItems: "center" }}>
+                <a
+                  href={`/deal-reality-check?run=${deal.id}`}
+                  style={{
+                    padding: "5px 10px", borderRadius: 7,
+                    border: "1px solid rgba(255,255,255,0.08)",
+                    background: "rgba(255,255,255,0.03)",
+                    color: "#6B7280", fontSize: 11, textDecoration: "none",
+                  }}
+                >
+                  View
+                </a>
+                <StarButton dealId={deal.id} favorites={favorites} onToggle={onToggleFav} />
+                <button
+                  onClick={() => onOpenNotes(deal)}
+                  title="Notes"
+                  style={{
+                    background: "none", border: "1px solid rgba(255,255,255,0.08)",
+                    borderRadius: 7, cursor: "pointer", padding: "5px 8px",
+                    fontSize: 12, color: "#4B5563",
+                  }}
+                >
+                  📝
+                </button>
+                <a
+                  href={isPro ? `/deal-check?run=${deal.id}` : "#"}
+                  title={isPro ? "Run Full Analysis" : "Pro feature"}
+                  style={{
+                    padding: "5px 10px", borderRadius: 7,
+                    border: isPro ? "1px solid rgba(99,102,241,0.25)" : "1px solid rgba(255,255,255,0.05)",
+                    background: isPro ? "rgba(99,102,241,0.08)" : "rgba(255,255,255,0.02)",
+                    color: isPro ? "#818CF8" : "#2D3748",
+                    fontSize: 11, textDecoration: "none",
+                    cursor: isPro ? "pointer" : "not-allowed",
+                  }}
+                >
+                  {isPro ? "⚡ Full" : "🔒"}
+                </a>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ─── PRIORITY DEALS (dashboard watchlist section) ────────────────────────────
+
+function PriorityDeals({
+  deals, favorites, onOpenNotes,
+}: {
+  deals: DealRun[];
+  favorites: Set<string>;
+  onOpenNotes: (deal: DealRun) => void;
+}) {
+  const starred = deals.filter(d => favorites.has(d.id)).slice(0, 5);
+  if (starred.length === 0) return null;
+
+  return (
+    <div style={{ marginBottom: 28 }}>
+      <SectionHeader title="Priority Deals" sub="Your starred watchlist" />
+      <Card>
+        {starred.map((deal, i) => {
+          const gp  = deal.gap_pct ?? 0;
+          const sig = sigCfg(deal.signal ?? "fair");
+          return (
+            <div
+              key={deal.id}
+              style={{
+                display: "flex", alignItems: "center", gap: 12,
+                padding: "10px 0",
+                borderBottom: i < starred.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none",
+              }}
+            >
+              <span style={{ fontSize: 14, color: "#F59E0B" }}>★</span>
+              <Ring score={deal.overall_score} size={30} />
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: "#E2E8F0" }}>
+                  {IL[deal.industry] || deal.industry}
+                </div>
+                <div style={{ fontSize: 11, color: "#374151" }}>
+                  {fmt(deal.asking_price)} · {deal.valuation_multiple.toFixed(2)}x
+                </div>
+              </div>
+              <div style={{
+                fontSize: 12, fontWeight: 700,
+                color: gp > 0 ? "#D85A30" : "#10B981",
+                fontFamily: "'JetBrains Mono',monospace",
+              }}>
+                {gp > 0 ? "+" : ""}{gp}%
+              </div>
+              <span style={{
+                display: "inline-flex", alignItems: "center", gap: 3,
+                padding: "2px 8px", borderRadius: 20,
+                fontSize: 10, fontWeight: 600,
+                background: sig.bg, color: sig.color, border: `1px solid ${sig.border}`,
+              }}>
+                <span style={{ width: 4, height: 4, borderRadius: "50%", background: sig.dot }} />
+                {sig.label}
+              </span>
+              <div style={{ display: "flex", gap: 4 }}>
+                <a
+                  href={`/deal-reality-check?run=${deal.id}`}
+                  style={{
+                    padding: "4px 9px", borderRadius: 6,
+                    border: "1px solid rgba(255,255,255,0.08)",
+                    background: "rgba(255,255,255,0.03)",
+                    color: "#6B7280", fontSize: 11, textDecoration: "none",
+                  }}
+                >
+                  View
+                </a>
+                <button
+                  onClick={() => onOpenNotes(deal)}
+                  style={{
+                    padding: "4px 8px", borderRadius: 6,
+                    border: "1px solid rgba(255,255,255,0.08)",
+                    background: "rgba(255,255,255,0.03)",
+                    color: "#4B5563", fontSize: 11, cursor: "pointer",
+                  }}
+                >
+                  📝
+                </button>
+              </div>
+            </div>
+          );
+        })}
+      </Card>
     </div>
   );
 }
@@ -169,10 +1008,11 @@ function LockOverlay({ label = "Pro feature" }: { label?: string }) {
 // ─── SIGN IN REQUIRED ─────────────────────────────────────────────────────────
 
 function SignInRequired() {
-  const [email, setEmail] = useState("");
-  const [sent, setSent]   = useState(false);
+  const [email, setEmail]     = useState("");
+  const [sent, setSent]       = useState(false);
   const [loading, setLoading] = useState(false);
-  const handleMagicLink = async () => {
+
+  async function handleMagicLink() {
     if (!email.includes("@")) return;
     setLoading(true);
     const { error } = await supabase.auth.signInWithOtp({
@@ -181,30 +1021,75 @@ function SignInRequired() {
     });
     if (!error) setSent(true);
     setLoading(false);
-  };
+  }
+
   return (
     <div style={{ minHeight: "70vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 40 }}>
       <div style={{ maxWidth: 400, width: "100%", textAlign: "center" }}>
         <div style={{ fontSize: 40, marginBottom: 16 }}>🔒</div>
-        <h2 style={{ fontSize: 22, fontWeight: 700, color: "#F1F5F9", margin: "0 0 8px", fontFamily: "'Inter Tight',sans-serif", letterSpacing: "-0.02em" }}>Sign in to access your dashboard</h2>
-        <p style={{ fontSize: 14, color: "#6B7280", margin: "0 0 28px", lineHeight: 1.6 }}>Your deal history, comparison tools, and market intelligence live here.</p>
+        <h2 style={{
+          fontSize: 22, fontWeight: 700, color: "#F1F5F9", margin: "0 0 8px",
+          fontFamily: "'Inter Tight',sans-serif", letterSpacing: "-0.02em",
+        }}>
+          Sign in to access your dashboard
+        </h2>
+        <p style={{ fontSize: 14, color: "#6B7280", margin: "0 0 28px", lineHeight: 1.6 }}>
+          Your deal history, comparison tools, and market intelligence live here.
+        </p>
+
         {!sent ? (
-          <div style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 14, padding: 24 }}>
-            <input type="email" placeholder="you@email.com" value={email} onChange={(e) => setEmail(e.target.value)} onKeyDown={(e) => e.key === "Enter" && handleMagicLink()} style={{ width: "100%", padding: "11px 14px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.04)", color: "#E2E8F0", fontSize: 14, marginBottom: 12, outline: "none" }} />
-            <button onClick={handleMagicLink} disabled={!email || loading} style={{ width: "100%", padding: "12px", borderRadius: 9, border: "none", background: email ? "linear-gradient(135deg,#3B82F6,#6366F1)" : "rgba(255,255,255,0.06)", color: email ? "#fff" : "#4B5563", fontSize: 14, fontWeight: 600, cursor: email && !loading ? "pointer" : "not-allowed" }}>
+          <div style={{
+            background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.08)",
+            borderRadius: 14, padding: 24,
+          }}>
+            <input
+              type="email"
+              placeholder="you@email.com"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleMagicLink()}
+              style={{
+                width: "100%", padding: "11px 14px", borderRadius: 8,
+                border: "1px solid rgba(255,255,255,0.1)",
+                background: "rgba(255,255,255,0.04)",
+                color: "#E2E8F0", fontSize: 14, marginBottom: 12, outline: "none",
+              }}
+            />
+            <button
+              onClick={handleMagicLink}
+              disabled={!email || loading}
+              style={{
+                width: "100%", padding: "12px", borderRadius: 9, border: "none",
+                background: email ? "linear-gradient(135deg,#3B82F6,#6366F1)" : "rgba(255,255,255,0.06)",
+                color: email ? "#fff" : "#4B5563",
+                fontSize: 14, fontWeight: 600,
+                cursor: email && !loading ? "pointer" : "not-allowed",
+              }}
+            >
               {loading ? "Sending..." : "Send Magic Link →"}
             </button>
-            <p style={{ fontSize: 11, color: "#374151", marginTop: 10 }}>Have a password? <a href="/login" style={{ color: "#6366F1", textDecoration: "none" }}>Sign in here →</a></p>
+            <p style={{ fontSize: 11, color: "#374151", marginTop: 10 }}>
+              Have a password? <a href="/login" style={{ color: "#6366F1", textDecoration: "none" }}>Sign in here →</a>
+            </p>
           </div>
         ) : (
-          <div style={{ background: "rgba(99,102,241,0.06)", border: "1px solid rgba(99,102,241,0.18)", borderRadius: 14, padding: 24 }}>
+          <div style={{
+            background: "rgba(99,102,241,0.06)", border: "1px solid rgba(99,102,241,0.18)",
+            borderRadius: 14, padding: 24,
+          }}>
             <div style={{ fontSize: 32, marginBottom: 10 }}>📬</div>
-            <div style={{ fontSize: 14, fontWeight: 600, color: "#E2E8F0", marginBottom: 6 }}>Magic link sent to {email}</div>
+            <div style={{ fontSize: 14, fontWeight: 600, color: "#E2E8F0", marginBottom: 6 }}>
+              Magic link sent to {email}
+            </div>
             <div style={{ fontSize: 12, color: "#818CF8" }}>Click it to access your dashboard.</div>
           </div>
         )}
+
         <div style={{ marginTop: 20, fontSize: 13, color: "#4B5563" }}>
-          No account? <a href="/deal-reality-check" style={{ color: "#6366F1", textDecoration: "none" }}>Run a free deal analysis →</a>
+          No account?{" "}
+          <a href="/deal-reality-check" style={{ color: "#6366F1", textDecoration: "none" }}>
+            Run a free deal analysis →
+          </a>
         </div>
       </div>
     </div>
@@ -214,23 +1099,66 @@ function SignInRequired() {
 // ─── STAT CARDS ───────────────────────────────────────────────────────────────
 
 function StatCards({ deals, loading }: { deals: DealRun[]; loading: boolean }) {
-  const avgGap   = deals.length ? Math.round(deals.reduce((a, d) => a + (d.gap_pct ?? 0), 0) / deals.length) : 0;
-  const best     = deals.length ? deals.reduce((a, b) => b.overall_score > a.overall_score ? b : a) : null;
-  const opps     = deals.filter(d => (d.gap_pct ?? 0) < -5).length;
+  const avgGap = deals.length
+    ? Math.round(deals.reduce((a, d) => a + (d.gap_pct ?? 0), 0) / deals.length)
+    : 0;
+  const best = deals.length
+    ? deals.reduce((a, b) => b.overall_score > a.overall_score ? b : a)
+    : null;
+  const opps = deals.filter(d => (d.gap_pct ?? 0) < -5).length;
 
   const cards = [
-    { label: "Deals Analyzed",   value: String(deals.length),                             sub: "Total in account",          color: "#E2E8F0" },
-    { label: "Avg Pricing Gap",  value: deals.length ? `${avgGap > 0 ? "+" : ""}${avgGap}%` : "—", sub: "vs market median",  color: avgGap > 5 ? "#D85A30" : avgGap < -3 ? "#10B981" : "#F59E0B" },
-    { label: "Opportunities",    value: String(opps),                                      sub: "Priced below market",       color: opps > 0 ? "#10B981" : "#E2E8F0" },
-    { label: "Best Score",       value: best ? String(best.overall_score) : "—",          sub: best ? IL[best.industry] || best.industry : "No deals yet", color: best ? scoreCol(best.overall_score) : "#E2E8F0" },
+    {
+      label: "Deals Analyzed",
+      value: String(deals.length),
+      sub:   "Total in account",
+      color: "#E2E8F0",
+    },
+    {
+      label: "Avg Pricing Gap",
+      value: deals.length ? `${avgGap > 0 ? "+" : ""}${avgGap}%` : "—",
+      sub:   "vs market median",
+      color: avgGap > 5 ? "#D85A30" : avgGap < -3 ? "#10B981" : "#F59E0B",
+    },
+    {
+      label: "Opportunities",
+      value: String(opps),
+      sub:   "Priced below market",
+      color: opps > 0 ? "#10B981" : "#E2E8F0",
+    },
+    {
+      label: "Best Score",
+      value: best ? String(best.overall_score) : "—",
+      sub:   best ? IL[best.industry] || best.industry : "No deals yet",
+      color: best ? scoreCol(best.overall_score) : "#E2E8F0",
+    },
   ];
 
   return (
     <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10, marginBottom: 28 }}>
-      {cards.map((c) => (
-        <div key={c.label} style={{ padding: "16px 18px", borderRadius: 12, background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)" }}>
-          <div style={{ fontSize: 10, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: 600, marginBottom: 8 }}>{c.label}</div>
-          {loading ? <Skel h={24} w={60} /> : <div style={{ fontSize: 24, fontWeight: 700, color: c.color, fontFamily: "'Inter Tight',sans-serif", letterSpacing: "-0.02em", lineHeight: 1, marginBottom: 4 }}>{c.value}</div>}
+      {cards.map(c => (
+        <div key={c.label} style={{
+          padding: "16px 18px", borderRadius: 12,
+          background: "rgba(255,255,255,0.025)",
+          border: "1px solid rgba(255,255,255,0.06)",
+        }}>
+          <div style={{
+            fontSize: 10, color: "#4B5563", textTransform: "uppercase",
+            letterSpacing: "0.1em", fontWeight: 600, marginBottom: 8,
+          }}>
+            {c.label}
+          </div>
+          {loading ? (
+            <Skel h={24} w={60} />
+          ) : (
+            <div style={{
+              fontSize: 24, fontWeight: 700, color: c.color,
+              fontFamily: "'Inter Tight',sans-serif",
+              letterSpacing: "-0.02em", lineHeight: 1, marginBottom: 4,
+            }}>
+              {c.value}
+            </div>
+          )}
           <div style={{ fontSize: 11, color: "#374151" }}>{c.sub}</div>
         </div>
       ))}
@@ -242,50 +1170,106 @@ function StatCards({ deals, loading }: { deals: DealRun[]; loading: boolean }) {
 
 function ProCommandModule({ deals }: { deals: DealRun[] }) {
   const lastAnalysis = deals.find(d => d.tool_used === "risk_analyzer") ?? deals[0];
+
   return (
-    <Card style={{ background: "linear-gradient(135deg,rgba(99,102,241,0.08),rgba(139,92,246,0.05))", border: "1px solid rgba(99,102,241,0.2)", position: "relative", overflow: "hidden" }}>
-      <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2, background: "linear-gradient(90deg,transparent,rgba(99,102,241,0.6),rgba(139,92,246,0.6),transparent)" }} />
+    <Card style={{
+      background: "linear-gradient(135deg,rgba(99,102,241,0.08),rgba(139,92,246,0.05))",
+      border: "1px solid rgba(99,102,241,0.2)",
+      position: "relative", overflow: "hidden",
+    }}>
+      {/* Top accent line */}
+      <div style={{
+        position: "absolute", top: 0, left: 0, right: 0, height: 2,
+        background: "linear-gradient(90deg,transparent,rgba(99,102,241,0.6),rgba(139,92,246,0.6),transparent)",
+      }} />
+
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
         <ProBadge />
-        <span style={{ fontSize: 15, fontWeight: 700, color: "#F1F5F9", fontFamily: "'Inter Tight',sans-serif", letterSpacing: "-0.01em" }}>Full Underwriting Center</span>
+        <span style={{
+          fontSize: 15, fontWeight: 700, color: "#F1F5F9",
+          fontFamily: "'Inter Tight',sans-serif", letterSpacing: "-0.01em",
+        }}>
+          Full Underwriting Center
+        </span>
       </div>
 
       {/* Summary strip */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 8, marginBottom: 18, padding: "14px 16px", borderRadius: 10, background: "rgba(0,0,0,0.25)", border: "1px solid rgba(255,255,255,0.06)" }}>
+      <div style={{
+        display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8, marginBottom: 18,
+        padding: "14px 16px", borderRadius: 10,
+        background: "rgba(0,0,0,0.25)", border: "1px solid rgba(255,255,255,0.06)",
+      }}>
         {[
-          { label: "Rec. Offer",   value: lastAnalysis ? fmt(lastAnalysis.fair_value * 0.92) : "—", color: "#10B981" },
-          { label: "Walk-Away",    value: lastAnalysis ? fmt(lastAnalysis.fair_value * 1.08) : "—", color: "#F97316" },
-          { label: "Base DSCR",    value: lastAnalysis ? lastAnalysis.dscr.toFixed(2) + "x"  : "—", color: lastAnalysis && lastAnalysis.dscr >= 1.25 ? "#10B981" : "#F59E0B" },
-          { label: "Stress DSCR",  value: lastAnalysis ? (lastAnalysis.dscr * 0.82).toFixed(2) + "x" : "—", color: "#F59E0B" },
+          { label: "Rec. Offer",  value: lastAnalysis ? fmt(lastAnalysis.fair_value * 0.92) : "—",  color: "#10B981" },
+          { label: "Walk-Away",   value: lastAnalysis ? fmt(lastAnalysis.fair_value * 1.08) : "—",  color: "#F97316" },
+          { label: "Base DSCR",   value: lastAnalysis ? lastAnalysis.dscr.toFixed(2) + "x" : "—",  color: lastAnalysis && lastAnalysis.dscr >= 1.25 ? "#10B981" : "#F59E0B" },
+          { label: "Stress DSCR", value: lastAnalysis ? (lastAnalysis.dscr * 0.82).toFixed(2) + "x" : "—", color: "#F59E0B" },
         ].map(m => (
           <div key={m.label} style={{ textAlign: "center" }}>
-            <div style={{ fontSize: 10, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 4 }}>{m.label}</div>
-            <div style={{ fontSize: 16, fontWeight: 700, color: m.color, fontFamily: "'JetBrains Mono',monospace" }}>{m.value}</div>
+            <div style={{
+              fontSize: 10, color: "#4B5563", textTransform: "uppercase",
+              letterSpacing: "0.08em", marginBottom: 4,
+            }}>
+              {m.label}
+            </div>
+            <div style={{
+              fontSize: 16, fontWeight: 700, color: m.color,
+              fontFamily: "'JetBrains Mono',monospace",
+            }}>
+              {m.value}
+            </div>
           </div>
         ))}
       </div>
 
-      {/* Last analysis */}
+      {/* Last analysis row */}
       {lastAnalysis && (
-        <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "10px 14px", borderRadius: 8, background: "rgba(255,255,255,0.03)", marginBottom: 14 }}>
+        <div style={{
+          display: "flex", alignItems: "center", gap: 10,
+          padding: "10px 14px", borderRadius: 8,
+          background: "rgba(255,255,255,0.03)", marginBottom: 14,
+        }}>
           <Ring score={lastAnalysis.overall_score} size={32} />
           <div style={{ flex: 1 }}>
-            <div style={{ fontSize: 13, fontWeight: 600, color: "#E2E8F0" }}>Last Full Analysis — {IL[lastAnalysis.industry] || lastAnalysis.industry}</div>
-            <div style={{ fontSize: 11, color: "#4B5563" }}>{ago(lastAnalysis.created_at)} · {lastAnalysis.valuation_multiple.toFixed(2)}x · DSCR {lastAnalysis.dscr.toFixed(2)}</div>
+            <div style={{ fontSize: 13, fontWeight: 600, color: "#E2E8F0" }}>
+              Last Full Analysis — {IL[lastAnalysis.industry] || lastAnalysis.industry}
+            </div>
+            <div style={{ fontSize: 11, color: "#4B5563" }}>
+              {ago(lastAnalysis.created_at)} · {lastAnalysis.valuation_multiple.toFixed(2)}x · DSCR {lastAnalysis.dscr.toFixed(2)}
+            </div>
           </div>
-          <a href={`/deal-check?run=${lastAnalysis.id}`} style={{ padding: "6px 12px", borderRadius: 7, border: "1px solid rgba(99,102,241,0.25)", background: "rgba(99,102,241,0.08)", color: "#818CF8", fontSize: 11, fontWeight: 500, textDecoration: "none" }}>Rerun</a>
+          <a
+            href={`/deal-check?run=${lastAnalysis.id}`}
+            style={{
+              padding: "6px 12px", borderRadius: 7,
+              border: "1px solid rgba(99,102,241,0.25)",
+              background: "rgba(99,102,241,0.08)",
+              color: "#818CF8", fontSize: 11, fontWeight: 500, textDecoration: "none",
+            }}
+          >
+            Rerun
+          </a>
         </div>
       )}
 
       {/* Action grid */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8, marginBottom: 14 }}>
         {[
-          { icon: "📉", label: "Stress Test Summary",   sub: "−15% & −25% scenarios" },
-          { icon: "🤝", label: "Negotiation Strategy",  sub: "Anchor, walk-away, structure" },
-          { icon: "🏦", label: "SBA Finance Snapshot",  sub: "Loan sizing & eligibility" },
-          { icon: "📄", label: "Download Memo",         sub: "Full underwriting PDF" },
+          { icon: "📉", label: "Stress Test Summary",  sub: "−15% & −25% scenarios"        },
+          { icon: "🤝", label: "Negotiation Strategy", sub: "Anchor, walk-away, structure"  },
+          { icon: "🏦", label: "SBA Finance Snapshot", sub: "Loan sizing & eligibility"     },
+          { icon: "📄", label: "Download Memo",        sub: "Full underwriting PDF"          },
         ].map(a => (
-          <button key={a.label} style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 14px", borderRadius: 10, border: "1px solid rgba(255,255,255,0.07)", background: "rgba(255,255,255,0.03)", cursor: "pointer", textAlign: "left" }}>
+          <button
+            key={a.label}
+            style={{
+              display: "flex", alignItems: "center", gap: 10,
+              padding: "12px 14px", borderRadius: 10,
+              border: "1px solid rgba(255,255,255,0.07)",
+              background: "rgba(255,255,255,0.03)",
+              cursor: "pointer", textAlign: "left" as const,
+            }}
+          >
             <span style={{ fontSize: 18, flexShrink: 0 }}>{a.icon}</span>
             <div>
               <div style={{ fontSize: 12, fontWeight: 600, color: "#E2E8F0" }}>{a.label}</div>
@@ -295,7 +1279,15 @@ function ProCommandModule({ deals }: { deals: DealRun[] }) {
         ))}
       </div>
 
-      <a href="/deal-check" style={{ display: "block", padding: "12px", borderRadius: 10, background: "linear-gradient(135deg,#6366F1,#8B5CF6)", color: "#fff", fontSize: 14, fontWeight: 600, textDecoration: "none", textAlign: "center" }}>
+      <a
+        href="/deal-check"
+        style={{
+          display: "block", padding: "12px", borderRadius: 10,
+          background: "linear-gradient(135deg,#6366F1,#8B5CF6)",
+          color: "#fff", fontSize: 14, fontWeight: 600,
+          textDecoration: "none", textAlign: "center" as const,
+        }}
+      >
         Generate Underwriting Report →
       </a>
     </Card>
@@ -309,36 +1301,87 @@ function ProUpsellCard() {
     <Card style={{ border: "1px solid rgba(99,102,241,0.15)", background: "rgba(99,102,241,0.04)" }}>
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 20, flexWrap: "wrap" }}>
         <div style={{ flex: 1, minWidth: 220 }}>
-          <div style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "3px 10px", borderRadius: 20, background: "rgba(99,102,241,0.12)", border: "1px solid rgba(99,102,241,0.25)", fontSize: 10, color: "#818CF8", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase" as const, marginBottom: 12 }}>⚡ Upgrade to Pro</div>
-          <h3 style={{ fontSize: 17, fontWeight: 700, color: "#F1F5F9", margin: "0 0 6px", fontFamily: "'Inter Tight',sans-serif", letterSpacing: "-0.01em" }}>Unlock Full Underwriting</h3>
-          <p style={{ fontSize: 13, color: "#6B7280", margin: "0 0 14px", lineHeight: 1.6 }}>Decision-grade analysis — not just a score. Built for serious acquirers.</p>
+          <div style={{
+            display: "inline-flex", alignItems: "center", gap: 6,
+            padding: "3px 10px", borderRadius: 20,
+            background: "rgba(99,102,241,0.12)", border: "1px solid rgba(99,102,241,0.25)",
+            fontSize: 10, color: "#818CF8", fontWeight: 600,
+            letterSpacing: "0.08em", textTransform: "uppercase" as const, marginBottom: 12,
+          }}>
+            ⚡ Upgrade to Pro
+          </div>
+          <h3 style={{
+            fontSize: 17, fontWeight: 700, color: "#F1F5F9", margin: "0 0 6px",
+            fontFamily: "'Inter Tight',sans-serif", letterSpacing: "-0.01em",
+          }}>
+            Unlock Full Underwriting
+          </h3>
+          <p style={{ fontSize: 13, color: "#6B7280", margin: "0 0 14px", lineHeight: 1.6 }}>
+            Decision-grade analysis — not just a score. Built for serious acquirers.
+          </p>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "5px 16px", marginBottom: 18 }}>
-            {["DSCR modeling","Downside scenarios","Negotiation strategy","SBA loan estimates","Stress testing","Downloadable memo"].map(f => (
+            {["DSCR modeling", "Downside scenarios", "Negotiation strategy", "SBA loan estimates", "Stress testing", "Downloadable memo"].map(f => (
               <div key={f} style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 12, color: "#818CF8" }}>
                 <span style={{ color: "#6366F1", fontSize: 10 }}>✓</span>{f}
               </div>
             ))}
           </div>
           <div style={{ display: "flex", gap: 8 }}>
-            <button style={{ padding: "10px 20px", borderRadius: 9, border: "none", background: "linear-gradient(135deg,#6366F1,#8B5CF6)", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>Upgrade to Pro</button>
-            <a href="/deal-check" style={{ display: "inline-block", padding: "10px 16px", borderRadius: 9, border: "1px solid rgba(99,102,241,0.25)", background: "transparent", color: "#818CF8", fontSize: 13, fontWeight: 500, textDecoration: "none" }}>Try Full Analysis →</a>
+            <button style={{
+              padding: "10px 20px", borderRadius: 9, border: "none",
+              background: "linear-gradient(135deg,#6366F1,#8B5CF6)",
+              color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer",
+            }}>
+              Upgrade to Pro
+            </button>
+            <a
+              href="/deal-check"
+              style={{
+                display: "inline-block", padding: "10px 16px", borderRadius: 9,
+                border: "1px solid rgba(99,102,241,0.25)", background: "transparent",
+                color: "#818CF8", fontSize: 13, fontWeight: 500, textDecoration: "none",
+              }}
+            >
+              Try Full Analysis →
+            </a>
           </div>
         </div>
+
         {/* Blurred preview */}
-        <div style={{ width: 180, flexShrink: 0, padding: "14px", borderRadius: 10, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
-          <div style={{ fontSize: 10, color: "#374151", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10, fontWeight: 600 }}>Preview</div>
+        <div style={{
+          width: 180, flexShrink: 0, padding: 14, borderRadius: 10,
+          background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)",
+        }}>
+          <div style={{
+            fontSize: 10, color: "#374151", textTransform: "uppercase",
+            letterSpacing: "0.08em", marginBottom: 10, fontWeight: 600,
+          }}>
+            Preview
+          </div>
           {[
-            { label: "Stress DSCR",  val: "1.09x at −15%",   warn: true  },
-            { label: "Walk-Away",    val: "$1.08M max",       warn: true  },
-            { label: "SBA Eligible", val: "Yes — 1.41x",      warn: false },
-            { label: "Negotiation",  val: "Anchor $920K",     warn: false },
+            { label: "Stress DSCR",  val: "1.09x at −15%", warn: true  },
+            { label: "Walk-Away",    val: "$1.08M max",     warn: true  },
+            { label: "SBA Eligible", val: "Yes — 1.41x",   warn: false },
+            { label: "Negotiation",  val: "Anchor $920K",  warn: false },
           ].map(r => (
-            <div key={r.label} style={{ display: "flex", justifyContent: "space-between", padding: "6px 0", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+            <div key={r.label} style={{
+              display: "flex", justifyContent: "space-between",
+              padding: "6px 0", borderBottom: "1px solid rgba(255,255,255,0.04)",
+            }}>
               <span style={{ fontSize: 10, color: "#4B5563" }}>{r.label}</span>
-              <span style={{ fontSize: 10, fontWeight: 600, color: r.warn ? "#F59E0B" : "#10B981", fontFamily: "'JetBrains Mono',monospace", filter: "blur(3px)", userSelect: "none" }}>{r.val}</span>
+              <span style={{
+                fontSize: 10, fontWeight: 600,
+                color: r.warn ? "#F59E0B" : "#10B981",
+                fontFamily: "'JetBrains Mono',monospace",
+                filter: "blur(3px)", userSelect: "none" as const,
+              }}>
+                {r.val}
+              </span>
             </div>
           ))}
-          <div style={{ marginTop: 8, fontSize: 10, color: "#374151", textAlign: "center" }}>🔒 Upgrade to unlock</div>
+          <div style={{ marginTop: 8, fontSize: 10, color: "#374151", textAlign: "center" }}>
+            🔒 Upgrade to unlock
+          </div>
         </div>
       </div>
     </Card>
@@ -348,78 +1391,176 @@ function ProUpsellCard() {
 // ─── TAB: DASHBOARD ───────────────────────────────────────────────────────────
 
 function TabDashboard({
-  deals, dri, trending, loading, loadingMkt, isPro, onTabChange
+  deals, dri, trending, loading, loadingMkt, isPro, favorites, onTabChange, onToggleFav, onOpenNotes,
 }: {
-  deals: DealRun[]; dri: DriSnapshot[]; trending: TrendingMultiple[];
-  loading: boolean; loadingMkt: boolean; isPro: boolean;
+  deals: DealRun[];
+  dri: DriSnapshot[];
+  trending: TrendingMultiple[];
+  loading: boolean;
+  loadingMkt: boolean;
+  isPro: boolean;
+  favorites: Set<string>;
   onTabChange: (tab: TabId) => void;
+  onToggleFav: (id: string) => void;
+  onOpenNotes: (deal: DealRun) => void;
 }) {
-  const recent = deals.slice(0, 3);
-  const opps   = deals.filter(d => (d.gap_pct ?? 0) < -5).slice(0, 3);
-  const overDri  = [...dri].sort((a, b) => (b.gap_pct ?? 0) - (a.gap_pct ?? 0)).slice(0, 4);
+  const recent  = deals.slice(0, 3);
+  const opps    = deals.filter(d => (d.gap_pct ?? 0) < -5).slice(0, 3);
+  const overDri = [...dri].sort((a, b) => (b.gap_pct ?? 0) - (a.gap_pct ?? 0)).slice(0, 4);
 
   return (
     <div>
+      {/* Priority Deals (starred watchlist) — only shows if user has favorites */}
+      <PriorityDeals
+        deals={deals}
+        favorites={favorites}
+        onOpenNotes={onOpenNotes}
+      />
+
       {/* Recent Deals */}
       <div style={{ marginBottom: 28 }}>
         <SectionHeader
           title="Recent Deals"
           sub="Your latest analyzed deals"
-          action={<button onClick={() => onTabChange("my-deals")} style={{ background: "none", border: "none", color: "#6366F1", fontSize: 12, cursor: "pointer", fontWeight: 500 }}>View all →</button>}
+          action={
+            <button
+              onClick={() => onTabChange("my-deals")}
+              style={{ background: "none", border: "none", color: "#6366F1", fontSize: 12, cursor: "pointer", fontWeight: 500 }}
+            >
+              View all →
+            </button>
+          }
         />
         <Card>
           {loading ? (
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>{[0,1,2].map(i => <Skel key={i} h={44} />)}</div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
+              {[0, 1, 2].map(i => <Skel key={i} h={44} />)}
+            </div>
           ) : recent.length === 0 ? (
             <div style={{ textAlign: "center", padding: "28px 0" }}>
               <div style={{ fontSize: 24, marginBottom: 8 }}>📋</div>
               <div style={{ fontSize: 14, fontWeight: 600, color: "#E2E8F0", marginBottom: 4 }}>No deals yet</div>
               <div style={{ fontSize: 12, color: "#4B5563", marginBottom: 14 }}>Analyze your first deal to get started.</div>
-              <a href="/deal-reality-check" style={{ display: "inline-block", padding: "8px 16px", borderRadius: 8, background: "linear-gradient(135deg,#3B82F6,#6366F1)", color: "#fff", fontSize: 13, fontWeight: 600, textDecoration: "none" }}>Analyze a Deal →</a>
+              <a
+                href="/deal-reality-check"
+                style={{
+                  display: "inline-block", padding: "8px 16px", borderRadius: 8,
+                  background: "linear-gradient(135deg,#3B82F6,#6366F1)",
+                  color: "#fff", fontSize: 13, fontWeight: 600, textDecoration: "none",
+                }}
+              >
+                Analyze a Deal →
+              </a>
             </div>
           ) : recent.map((deal, i) => {
             const gp  = deal.gap_pct ?? 0;
             const sig = sigCfg(deal.signal ?? "fair");
             return (
-              <div key={deal.id} style={{ display: "flex", alignItems: "center", gap: 14, padding: "12px 0", borderBottom: i < recent.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none" }}>
+              <div
+                key={deal.id}
+                style={{
+                  display: "flex", alignItems: "center", gap: 14, padding: "12px 0",
+                  borderBottom: i < recent.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none",
+                }}
+              >
                 <Ring score={deal.overall_score} size={34} />
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: "#E2E8F0" }}>{IL[deal.industry] || deal.industry}</div>
-                  <div style={{ fontSize: 11, color: "#4B5563" }}>{fmt(deal.asking_price)} · {deal.valuation_multiple.toFixed(2)}x · {ago(deal.created_at)}</div>
+                  <div style={{ fontSize: 13, fontWeight: 600, color: "#E2E8F0" }}>
+                    {IL[deal.industry] || deal.industry}
+                  </div>
+                  <div style={{ fontSize: 11, color: "#4B5563" }}>
+                    {fmt(deal.asking_price)} · {deal.valuation_multiple.toFixed(2)}x · {ago(deal.created_at)}
+                  </div>
                 </div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: gp > 0 ? "#D85A30" : "#10B981", fontFamily: "'JetBrains Mono',monospace" }}>{gp > 0 ? "+" : ""}{gp}%</div>
-                <span style={{ display: "inline-flex", alignItems: "center", gap: 4, padding: "3px 10px", borderRadius: 20, fontSize: 11, fontWeight: 600, background: sig.bg, color: sig.color, border: `1px solid ${sig.border}` }}>
-                  <span style={{ width: 4, height: 4, borderRadius: "50%", background: sig.dot, flexShrink: 0 }} />{sig.label}
+                <div style={{
+                  fontSize: 13, fontWeight: 700,
+                  color: gp > 0 ? "#D85A30" : "#10B981",
+                  fontFamily: "'JetBrains Mono',monospace",
+                }}>
+                  {gp > 0 ? "+" : ""}{gp}%
+                </div>
+                <span style={{
+                  display: "inline-flex", alignItems: "center", gap: 4,
+                  padding: "3px 10px", borderRadius: 20,
+                  fontSize: 11, fontWeight: 600,
+                  background: sig.bg, color: sig.color, border: `1px solid ${sig.border}`,
+                }}>
+                  <span style={{ width: 4, height: 4, borderRadius: "50%", background: sig.dot, flexShrink: 0 }} />
+                  {sig.label}
                 </span>
-                <a href={`/deal-reality-check?run=${deal.id}`} style={{ padding: "5px 10px", borderRadius: 7, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.03)", color: "#6B7280", fontSize: 11, textDecoration: "none" }}>View</a>
+                <div style={{ display: "flex", gap: 4 }}>
+                  <StarButton dealId={deal.id} favorites={favorites} onToggle={onToggleFav} />
+                  <button
+                    onClick={() => onOpenNotes(deal)}
+                    style={{
+                      background: "none", border: "1px solid rgba(255,255,255,0.08)",
+                      borderRadius: 6, cursor: "pointer", padding: "4px 7px", fontSize: 11, color: "#4B5563",
+                    }}
+                  >
+                    📝
+                  </button>
+                  <a
+                    href={`/deal-reality-check?run=${deal.id}`}
+                    style={{
+                      padding: "5px 10px", borderRadius: 7,
+                      border: "1px solid rgba(255,255,255,0.08)",
+                      background: "rgba(255,255,255,0.03)",
+                      color: "#6B7280", fontSize: 11, textDecoration: "none",
+                    }}
+                  >
+                    View
+                  </a>
+                </div>
               </div>
             );
           })}
         </Card>
       </div>
 
-      {/* Two columns: Market Snap + Opportunities */}
+      {/* Market Signals + Best Opportunities */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 28 }}>
-        {/* Market Signals Snapshot */}
+        {/* Market Signals */}
         <div>
           <SectionHeader
             title="Market Signals"
             sub="Live from DRI snapshots"
-            action={<button onClick={() => onTabChange("market-intel")} style={{ background: "none", border: "none", color: "#6366F1", fontSize: 12, cursor: "pointer", fontWeight: 500 }}>Full intel →</button>}
+            action={
+              <button
+                onClick={() => onTabChange("market-intel")}
+                style={{ background: "none", border: "none", color: "#6366F1", fontSize: 12, cursor: "pointer", fontWeight: 500 }}
+              >
+                Full intel →
+              </button>
+            }
           />
           <Card>
             {loadingMkt ? (
-              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>{[0,1,2,3].map(i => <Skel key={i} h={28} />)}</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                {[0, 1, 2, 3].map(i => <Skel key={i} h={28} />)}
+              </div>
             ) : overDri.map(s => {
               const ss   = sigCfg(condSig(s.condition));
               const barW = Math.min(100, Math.abs(s.gap_pct ?? 0) * 3.5 + 6);
               return (
-                <div key={s.industry_key} style={{ display: "flex", alignItems: "center", gap: 8, padding: "7px 0", borderBottom: "1px solid rgba(255,255,255,0.03)" }}>
-                  <div style={{ width: 100, fontSize: 12, color: "#94A3B8", fontWeight: 500, flexShrink: 0 }}>{IL[s.industry_key] || s.industry_key}</div>
+                <div
+                  key={s.industry_key}
+                  style={{
+                    display: "flex", alignItems: "center", gap: 8, padding: "7px 0",
+                    borderBottom: "1px solid rgba(255,255,255,0.03)",
+                  }}
+                >
+                  <div style={{ width: 100, fontSize: 12, color: "#94A3B8", fontWeight: 500, flexShrink: 0 }}>
+                    {IL[s.industry_key] || s.industry_key}
+                  </div>
                   <div style={{ flex: 1, height: 3, background: "rgba(255,255,255,0.04)", borderRadius: 2 }}>
                     <div style={{ height: "100%", width: `${barW}%`, background: ss.dot, borderRadius: 2 }} />
                   </div>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: ss.color, fontFamily: "'JetBrains Mono',monospace", minWidth: 40, textAlign: "right" }}>{(s.gap_pct ?? 0) > 0 ? "+" : ""}{(s.gap_pct ?? 0).toFixed(0)}%</div>
+                  <div style={{
+                    fontSize: 12, fontWeight: 700, color: ss.color,
+                    fontFamily: "'JetBrains Mono',monospace", minWidth: 40, textAlign: "right",
+                  }}>
+                    {(s.gap_pct ?? 0) > 0 ? "+" : ""}{(s.gap_pct ?? 0).toFixed(0)}%
+                  </div>
                 </div>
               );
             })}
@@ -431,24 +1572,55 @@ function TabDashboard({
           <SectionHeader
             title="Best Opportunities"
             sub="Your deals priced below market"
-            action={<button onClick={() => onTabChange("my-deals")} style={{ background: "none", border: "none", color: "#6366F1", fontSize: 12, cursor: "pointer", fontWeight: 500 }}>All deals →</button>}
+            action={
+              <button
+                onClick={() => onTabChange("my-deals")}
+                style={{ background: "none", border: "none", color: "#6366F1", fontSize: 12, cursor: "pointer", fontWeight: 500 }}
+              >
+                All deals →
+              </button>
+            }
           />
           <Card>
             {loading ? (
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>{[0,1,2].map(i => <Skel key={i} h={44} />)}</div>
+              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                {[0, 1, 2].map(i => <Skel key={i} h={44} />)}
+              </div>
             ) : opps.length === 0 ? (
               <div style={{ textAlign: "center", padding: "20px 0" }}>
                 <div style={{ fontSize: 22, marginBottom: 8 }}>🔍</div>
-                <div style={{ fontSize: 13, color: "#4B5563" }}>No below-market deals yet. Analyze more deals to find opportunities.</div>
+                <div style={{ fontSize: 13, color: "#4B5563" }}>
+                  No below-market deals yet. Analyze more deals to find opportunities.
+                </div>
               </div>
             ) : opps.map((deal, i) => (
-              <div key={deal.id} style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 0", borderBottom: i < opps.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none" }}>
-                <div style={{ width: 22, height: 22, borderRadius: "50%", background: "rgba(16,185,129,0.1)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10, fontWeight: 700, color: "#10B981", flexShrink: 0 }}>{i + 1}</div>
+              <div
+                key={deal.id}
+                style={{
+                  display: "flex", alignItems: "center", gap: 12, padding: "10px 0",
+                  borderBottom: i < opps.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none",
+                }}
+              >
+                <div style={{
+                  width: 22, height: 22, borderRadius: "50%",
+                  background: "rgba(16,185,129,0.1)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: 10, fontWeight: 700, color: "#10B981", flexShrink: 0,
+                }}>
+                  {i + 1}
+                </div>
                 <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: "#E2E8F0" }}>{IL[deal.industry] || deal.industry}</div>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: "#E2E8F0" }}>
+                    {IL[deal.industry] || deal.industry}
+                  </div>
                   <div style={{ fontSize: 10, color: "#4B5563" }}>{fmt(deal.asking_price)}</div>
                 </div>
-                <div style={{ fontSize: 13, fontWeight: 700, color: "#10B981", fontFamily: "'JetBrains Mono',monospace" }}>{deal.gap_pct}%</div>
+                <div style={{
+                  fontSize: 13, fontWeight: 700, color: "#10B981",
+                  fontFamily: "'JetBrains Mono',monospace",
+                }}>
+                  {deal.gap_pct}%
+                </div>
                 <Ring score={deal.overall_score} size={30} />
               </div>
             ))}
@@ -463,14 +1635,31 @@ function TabDashboard({
           {!isPro && <LockOverlay label="Compare is a Pro feature — upgrade to unlock" />}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, opacity: isPro ? 1 : 0.3 }}>
             {["Deal A", "Deal B"].map(label => (
-              <div key={label} style={{ padding: "12px 14px", borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
-                <div style={{ fontSize: 10, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>{label}</div>
+              <div key={label} style={{
+                padding: "12px 14px", borderRadius: 10,
+                background: "rgba(255,255,255,0.02)",
+                border: "1px solid rgba(255,255,255,0.06)",
+              }}>
+                <div style={{
+                  fontSize: 10, color: "#4B5563", textTransform: "uppercase",
+                  letterSpacing: "0.08em", marginBottom: 6,
+                }}>
+                  {label}
+                </div>
                 <div style={{ fontSize: 13, color: "#6B7280" }}>Select a deal to compare</div>
               </div>
             ))}
           </div>
           {isPro && (
-            <button onClick={() => onTabChange("compare")} style={{ marginTop: 12, width: "100%", padding: "10px", borderRadius: 9, border: "1px solid rgba(99,102,241,0.25)", background: "rgba(99,102,241,0.06)", color: "#818CF8", fontSize: 13, fontWeight: 500, cursor: "pointer" }}>
+            <button
+              onClick={() => onTabChange("compare")}
+              style={{
+                marginTop: 12, width: "100%", padding: "10px", borderRadius: 9,
+                border: "1px solid rgba(99,102,241,0.25)",
+                background: "rgba(99,102,241,0.06)",
+                color: "#818CF8", fontSize: 13, fontWeight: 500, cursor: "pointer",
+              }}
+            >
               Open Compare Engine →
             </button>
           )}
@@ -485,45 +1674,84 @@ function TabDashboard({
 
 // ─── TAB: MY DEALS ────────────────────────────────────────────────────────────
 
-function TabMyDeals({ deals, loading, isPro, dealStatuses, onStatusChange }: {
-  deals: DealRun[]; loading: boolean; isPro: boolean;
-  dealStatuses: Record<string, DealStatus>; onStatusChange: (id: string, status: DealStatus) => void;
+function TabMyDeals({
+  deals, loading, isPro, dealStatuses, favorites, onStatusChange, onToggleFav, onOpenNotes,
+}: {
+  deals: DealRun[];
+  loading: boolean;
+  isPro: boolean;
+  dealStatuses: Record<string, DealStatus>;
+  favorites: Set<string>;
+  onStatusChange: (id: string, status: DealStatus) => void;
+  onToggleFav: (id: string) => void;
+  onOpenNotes: (deal: DealRun) => void;
 }) {
-  const [search, setSearch]   = useState("");
-  const [sortKey, setSortKey] = useState<SortKey>("date");
+  const [search, setSearch]       = useState("");
+  const [sortKey, setSortKey]     = useState<SortKey>("date");
   const [filterSig, setFilterSig] = useState<string>("all");
 
   const filtered = deals
     .filter(d => {
-      const q = search.toLowerCase();
-      const match = !q || (IL[d.industry] || d.industry).toLowerCase().includes(q) || (d.city || "").toLowerCase().includes(q);
+      const q        = search.toLowerCase();
+      const match    = !q || (IL[d.industry] || d.industry).toLowerCase().includes(q) || (d.city || "").toLowerCase().includes(q);
       const sigMatch = filterSig === "all" || d.signal === filterSig;
       return match && sigMatch;
     })
     .sort((a, b) => {
-      if (sortKey === "score") return b.overall_score - a.overall_score;
-      if (sortKey === "gap")   return (a.gap_pct ?? 0) - (b.gap_pct ?? 0);
+      if (sortKey === "score")  return b.overall_score - a.overall_score;
+      if (sortKey === "gap")    return (a.gap_pct ?? 0) - (b.gap_pct ?? 0);
       if (sortKey === "asking") return b.asking_price - a.asking_price;
       return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
     });
 
-  const selStyle: React.CSSProperties = { padding: "7px 10px", borderRadius: 7, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.03)", color: "#94A3B8", fontSize: 12, outline: "none", cursor: "pointer", appearance: "none" as any };
+  const selStyle: React.CSSProperties = {
+    padding: "7px 10px", borderRadius: 7,
+    border: "1px solid rgba(255,255,255,0.08)",
+    background: "rgba(255,255,255,0.03)",
+    color: "#94A3B8", fontSize: 12, outline: "none",
+    cursor: "pointer", appearance: "none" as any,
+  };
 
   return (
     <div>
+      {/* Top Opportunities */}
+      <TopOpportunities
+        deals={deals}
+        favorites={favorites}
+        isPro={isPro}
+        onToggleFav={onToggleFav}
+        onOpenNotes={onOpenNotes}
+      />
+
       {/* Search + filter bar */}
       <div style={{ display: "flex", gap: 8, marginBottom: 16, flexWrap: "wrap" }}>
         <div style={{ flex: 1, minWidth: 200, position: "relative" }}>
-          <span style={{ position: "absolute", left: 10, top: "50%", transform: "translateY(-50%)", fontSize: 13, color: "#4B5563" }}>🔍</span>
-          <input type="text" placeholder="Search by industry or city..." value={search} onChange={e => setSearch(e.target.value)} style={{ width: "100%", padding: "8px 12px 8px 30px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.03)", color: "#E2E8F0", fontSize: 13, outline: "none" }} />
+          <span style={{
+            position: "absolute", left: 10, top: "50%",
+            transform: "translateY(-50%)", fontSize: 13, color: "#4B5563",
+          }}>
+            🔍
+          </span>
+          <input
+            type="text"
+            placeholder="Search by industry or city..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            style={{
+              width: "100%", padding: "8px 12px 8px 30px", borderRadius: 8,
+              border: "1px solid rgba(255,255,255,0.08)",
+              background: "rgba(255,255,255,0.03)",
+              color: "#E2E8F0", fontSize: 13, outline: "none",
+            }}
+          />
         </div>
-        <select value={filterSig} onChange={e => setFilterSig(e.target.value)} style={selStyle}>
+        <select value={filterSig} onChange={(e) => setFilterSig(e.target.value)} style={selStyle}>
           <option value="all">All signals</option>
           <option value="opportunity">Opportunity</option>
           <option value="fair">Fair Market</option>
           <option value="overpriced">Overpriced</option>
         </select>
-        <select value={sortKey} onChange={e => setSortKey(e.target.value as SortKey)} style={selStyle}>
+        <select value={sortKey} onChange={(e) => setSortKey(e.target.value as SortKey)} style={selStyle}>
           <option value="date">Sort: Newest</option>
           <option value="score">Sort: Score</option>
           <option value="gap">Sort: Best Gap</option>
@@ -532,62 +1760,196 @@ function TabMyDeals({ deals, loading, isPro, dealStatuses, onStatusChange }: {
       </div>
 
       <Card style={{ padding: 0, overflow: "hidden" }}>
-        {/* Header */}
-        <div style={{ display: "grid", gridTemplateColumns: "1.6fr 0.8fr 1fr 1fr 60px 48px 100px 90px 1fr", gap: "0 8px", padding: "10px 18px", borderBottom: "1px solid rgba(255,255,255,0.06)", background: "rgba(255,255,255,0.015)" }}>
-          {["Deal","Industry","Asking","Fair Value","Gap","Score","Signal","Status","Actions"].map(h => (
-            <div key={h} style={{ fontSize: 10, color: "#374151", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600 }}>{h}</div>
+        {/* Table header */}
+        <div style={{
+          display: "grid",
+          gridTemplateColumns: "1.6fr 0.8fr 1fr 1fr 60px 48px 100px 90px auto",
+          gap: "0 8px", padding: "10px 18px",
+          borderBottom: "1px solid rgba(255,255,255,0.06)",
+          background: "rgba(255,255,255,0.015)",
+        }}>
+          {["Deal", "Industry", "Asking", "Fair Value", "Gap", "Score", "Signal", "Status", "Actions"].map(h => (
+            <div key={h} style={{
+              fontSize: 10, color: "#374151", textTransform: "uppercase",
+              letterSpacing: "0.08em", fontWeight: 600,
+            }}>
+              {h}
+            </div>
           ))}
         </div>
 
-        {loading && [0,1,2].map(i => (
-          <div key={i} style={{ display: "grid", gridTemplateColumns: "1.6fr 0.8fr 1fr 1fr 60px 48px 100px 90px 1fr", gap: "0 8px", padding: "14px 18px", borderBottom: "1px solid rgba(255,255,255,0.04)", alignItems: "center" }}>
-            {[70,60,70,70,40,34,90,80,100].map((w, j) => <Skel key={j} h={j === 5 ? 34 : 12} w={w} />)}
+        {/* Loading skeletons */}
+        {loading && [0, 1, 2].map(i => (
+          <div
+            key={i}
+            style={{
+              display: "grid",
+              gridTemplateColumns: "1.6fr 0.8fr 1fr 1fr 60px 48px 100px 90px auto",
+              gap: "0 8px", padding: "14px 18px",
+              borderBottom: "1px solid rgba(255,255,255,0.04)", alignItems: "center",
+            }}
+          >
+            {[70, 60, 70, 70, 40, 34, 90, 80, 100].map((w, j) => (
+              <Skel key={j} h={j === 5 ? 34 : 12} w={w} />
+            ))}
           </div>
         ))}
 
+        {/* Empty state */}
         {!loading && filtered.length === 0 && (
           <div style={{ padding: "48px 24px", textAlign: "center" }}>
             <div style={{ fontSize: 26, marginBottom: 10 }}>📋</div>
-            <div style={{ fontSize: 14, fontWeight: 600, color: "#E2E8F0", marginBottom: 4 }}>{search ? "No deals match your search" : "No deals yet"}</div>
-            <div style={{ fontSize: 12, color: "#4B5563", marginBottom: 14 }}>{search ? "Try a different search term." : "Analyze your first deal to get started."}</div>
-            {!search && <a href="/deal-reality-check" style={{ display: "inline-block", padding: "8px 16px", borderRadius: 8, background: "linear-gradient(135deg,#3B82F6,#6366F1)", color: "#fff", fontSize: 13, fontWeight: 600, textDecoration: "none" }}>Analyze a Deal →</a>}
+            <div style={{ fontSize: 14, fontWeight: 600, color: "#E2E8F0", marginBottom: 4 }}>
+              {search ? "No deals match your search" : "No deals yet"}
+            </div>
+            <div style={{ fontSize: 12, color: "#4B5563", marginBottom: 14 }}>
+              {search ? "Try a different search term." : "Analyze your first deal to get started."}
+            </div>
+            {!search && (
+              <a
+                href="/deal-reality-check"
+                style={{
+                  display: "inline-block", padding: "8px 16px", borderRadius: 8,
+                  background: "linear-gradient(135deg,#3B82F6,#6366F1)",
+                  color: "#fff", fontSize: 13, fontWeight: 600, textDecoration: "none",
+                }}
+              >
+                Analyze a Deal →
+              </a>
+            )}
           </div>
         )}
 
+        {/* Deal rows */}
         {!loading && filtered.map((deal, i) => {
-          const gp       = deal.gap_pct ?? 0;
-          const sig      = sigCfg(deal.signal ?? "fair");
-          const status   = dealStatuses[deal.id] ?? "New";
-          const statusC  = STATUS_COLORS[status];
-          const loc      = [deal.city, deal.state].filter(Boolean).join(", ");
+          const gp      = deal.gap_pct ?? 0;
+          const sig     = sigCfg(deal.signal ?? "fair");
+          const status  = dealStatuses[deal.id] ?? "New";
+          const statusC = STATUS_COLORS[status];
+          const loc     = [deal.city, deal.state].filter(Boolean).join(", ");
+          const isFav   = favorites.has(deal.id);
 
           return (
-            <div key={deal.id} style={{ display: "grid", gridTemplateColumns: "1.6fr 0.8fr 1fr 1fr 60px 48px 100px 90px 1fr", gap: "0 8px", padding: "13px 18px", borderBottom: i < filtered.length - 1 ? "1px solid rgba(255,255,255,0.03)" : "none", alignItems: "center", transition: "background 0.12s" }}>
+            <div
+              key={deal.id}
+              style={{
+                display: "grid",
+                gridTemplateColumns: "1.6fr 0.8fr 1fr 1fr 60px 48px 100px 90px auto",
+                gap: "0 8px", padding: "13px 18px",
+                borderBottom: i < filtered.length - 1 ? "1px solid rgba(255,255,255,0.03)" : "none",
+                alignItems: "center", transition: "background 0.12s",
+              }}
+            >
+              {/* Deal name + meta */}
               <div>
-                <div style={{ fontSize: 13, fontWeight: 600, color: "#E2E8F0" }}>{IL[deal.industry] || deal.industry}</div>
-                <div style={{ fontSize: 10, color: "#374151", marginTop: 2 }}>{deal.valuation_multiple.toFixed(2)}x · DSCR {deal.dscr.toFixed(2)}{loc ? ` · ${loc}` : ""}</div>
-                <div style={{ fontSize: 10, color: "#2D3748" }}>{ago(deal.created_at)} · {deal.tool_used === "risk_analyzer" ? "Full" : "Quick"}</div>
+                <div style={{
+                  fontSize: 13, fontWeight: 600,
+                  color: isFav ? "#F1F5F9" : "#E2E8F0",
+                  display: "flex", alignItems: "center", gap: 4,
+                }}>
+                  {isFav && <span style={{ color: "#F59E0B", fontSize: 11 }}>★</span>}
+                  {IL[deal.industry] || deal.industry}
+                </div>
+                <div style={{ fontSize: 10, color: "#374151", marginTop: 2 }}>
+                  {deal.valuation_multiple.toFixed(2)}x · DSCR {deal.dscr.toFixed(2)}{loc ? ` · ${loc}` : ""}
+                </div>
+                <div style={{ fontSize: 10, color: "#2D3748" }}>
+                  {ago(deal.created_at)} · {deal.tool_used === "risk_analyzer" ? "Full" : "Quick"}
+                </div>
               </div>
-              <div style={{ fontSize: 11, color: "#4B5563" }}>{IL[deal.industry] || deal.industry}</div>
-              <div style={{ fontSize: 12, fontWeight: 500, color: "#E2E8F0", fontFamily: "'JetBrains Mono',monospace" }}>{fmt(deal.asking_price)}</div>
-              <div style={{ fontSize: 12, color: "#10B981", fontFamily: "'JetBrains Mono',monospace" }}>{fmt(deal.fair_value)}</div>
-              <div style={{ fontSize: 12, fontWeight: 700, color: gp > 0 ? "#D85A30" : "#10B981", fontFamily: "'JetBrains Mono',monospace" }}>{gp > 0 ? "+" : ""}{gp}%</div>
+
+              {/* Industry */}
+              <div style={{ fontSize: 11, color: "#4B5563" }}>
+                {IL[deal.industry] || deal.industry}
+              </div>
+
+              {/* Asking */}
+              <div style={{
+                fontSize: 12, fontWeight: 500, color: "#E2E8F0",
+                fontFamily: "'JetBrains Mono',monospace",
+              }}>
+                {fmt(deal.asking_price)}
+              </div>
+
+              {/* Fair Value */}
+              <div style={{ fontSize: 12, color: "#10B981", fontFamily: "'JetBrains Mono',monospace" }}>
+                {fmt(deal.fair_value)}
+              </div>
+
+              {/* Gap */}
+              <div style={{
+                fontSize: 12, fontWeight: 700,
+                color: gp > 0 ? "#D85A30" : "#10B981",
+                fontFamily: "'JetBrains Mono',monospace",
+              }}>
+                {gp > 0 ? "+" : ""}{gp}%
+              </div>
+
+              {/* Score ring */}
               <Ring score={deal.overall_score} size={32} />
-              <span style={{ display: "inline-flex", alignItems: "center", gap: 3, padding: "3px 8px", borderRadius: 20, fontSize: 10, fontWeight: 600, background: sig.bg, color: sig.color, border: `1px solid ${sig.border}` }}>
-                <span style={{ width: 4, height: 4, borderRadius: "50%", background: sig.dot }} />{sig.label}
+
+              {/* Signal badge */}
+              <span style={{
+                display: "inline-flex", alignItems: "center", gap: 3,
+                padding: "3px 8px", borderRadius: 20,
+                fontSize: 10, fontWeight: 600,
+                background: sig.bg, color: sig.color, border: `1px solid ${sig.border}`,
+              }}>
+                <span style={{ width: 4, height: 4, borderRadius: "50%", background: sig.dot }} />
+                {sig.label}
               </span>
+
               {/* Status dropdown */}
               <select
                 value={status}
-                onChange={e => onStatusChange(deal.id, e.target.value as DealStatus)}
-                style={{ padding: "4px 8px", borderRadius: 6, border: `1px solid ${statusC.border}`, background: statusC.bg, color: statusC.color, fontSize: 10, fontWeight: 600, outline: "none", cursor: "pointer", appearance: "none" as any }}
+                onChange={(e) => onStatusChange(deal.id, e.target.value as DealStatus)}
+                style={{
+                  padding: "4px 8px", borderRadius: 6,
+                  border: `1px solid ${statusC.border}`,
+                  background: statusC.bg, color: statusC.color,
+                  fontSize: 10, fontWeight: 600, outline: "none",
+                  cursor: "pointer", appearance: "none" as any,
+                }}
               >
-                {(["New","Reviewing","Under LOI","Paused","Passed"] as DealStatus[]).map(s => <option key={s} value={s}>{s}</option>)}
+                {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
+
               {/* Actions */}
-              <div style={{ display: "flex", gap: 4 }}>
-                <a href={`/deal-reality-check?run=${deal.id}`} style={{ padding: "4px 8px", borderRadius: 6, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.03)", color: "#6B7280", fontSize: 10, textDecoration: "none" }}>View</a>
-                <a href={`/deal-check?run=${deal.id}`} title={isPro ? "Run Full Analysis" : "Pro feature"} style={{ padding: "4px 8px", borderRadius: 6, border: isPro ? "1px solid rgba(99,102,241,0.25)" : "1px solid rgba(255,255,255,0.05)", background: isPro ? "rgba(99,102,241,0.08)" : "rgba(255,255,255,0.02)", color: isPro ? "#818CF8" : "#374151", fontSize: 10, textDecoration: "none", cursor: isPro ? "pointer" : "not-allowed" }}>
+              <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+                <StarButton dealId={deal.id} favorites={favorites} onToggle={onToggleFav} />
+                <button
+                  onClick={() => onOpenNotes(deal)}
+                  title="Notes"
+                  style={{
+                    background: "none", border: "1px solid rgba(255,255,255,0.08)",
+                    borderRadius: 6, cursor: "pointer", padding: "3px 6px", fontSize: 11, color: "#4B5563",
+                  }}
+                >
+                  📝
+                </button>
+                <a
+                  href={`/deal-reality-check?run=${deal.id}`}
+                  style={{
+                    padding: "4px 8px", borderRadius: 6,
+                    border: "1px solid rgba(255,255,255,0.08)",
+                    background: "rgba(255,255,255,0.03)",
+                    color: "#6B7280", fontSize: 10, textDecoration: "none",
+                  }}
+                >
+                  View
+                </a>
+                <a
+                  href={`/deal-check?run=${deal.id}`}
+                  title={isPro ? "Run Full Analysis" : "Pro feature"}
+                  style={{
+                    padding: "4px 8px", borderRadius: 6,
+                    border: isPro ? "1px solid rgba(99,102,241,0.25)" : "1px solid rgba(255,255,255,0.05)",
+                    background: isPro ? "rgba(99,102,241,0.08)" : "rgba(255,255,255,0.02)",
+                    color: isPro ? "#818CF8" : "#374151",
+                    fontSize: 10, textDecoration: "none",
+                    cursor: isPro ? "pointer" : "not-allowed",
+                  }}
+                >
                   {isPro ? "Full" : "🔒"}
                 </a>
               </div>
@@ -597,7 +1959,9 @@ function TabMyDeals({ deals, loading, isPro, dealStatuses, onStatusChange }: {
       </Card>
 
       {!loading && filtered.length > 0 && (
-        <div style={{ marginTop: 10, fontSize: 11, color: "#374151", textAlign: "right" }}>{filtered.length} deal{filtered.length !== 1 ? "s" : ""}</div>
+        <div style={{ marginTop: 10, fontSize: 11, color: "#374151", textAlign: "right" }}>
+          {filtered.length} deal{filtered.length !== 1 ? "s" : ""}
+        </div>
       )}
     </div>
   );
@@ -610,15 +1974,26 @@ function TabCompare({ deals, isPro }: { deals: DealRun[]; isPro: boolean }) {
   const [ai, setAi]     = useState(0);
   const [bi, setBi]     = useState(Math.min(1, deals.length - 1));
 
+  // Free user gate
   if (!isPro) {
     return (
       <div style={{ position: "relative" }}>
         <Card style={{ filter: "blur(2px)", pointerEvents: "none", opacity: 0.4 }}>
           <div style={{ display: "grid", gridTemplateColumns: "90px 1fr 1fr", gap: "0 12px" }}>
-            {["",  "Deal A", "Deal B"].map((h, i) => (
-              <div key={i} style={{ padding: "8px 12px", background: i > 0 ? "rgba(99,102,241,0.08)" : "transparent", borderRadius: i > 0 ? "8px 8px 0 0" : 0, fontSize: 12, fontWeight: 600, color: "#60A5FA", textAlign: "center" }}>{h}</div>
+            {["", "Deal A", "Deal B"].map((h, i) => (
+              <div
+                key={i}
+                style={{
+                  padding: "8px 12px",
+                  background: i > 0 ? "rgba(99,102,241,0.08)" : "transparent",
+                  borderRadius: i > 0 ? "8px 8px 0 0" : 0,
+                  fontSize: 12, fontWeight: 600, color: "#60A5FA", textAlign: "center",
+                }}
+              >
+                {h}
+              </div>
             ))}
-            {["Score","Asking","Fair Value","Gap vs Mkt","Multiple","DSCR"].map((r) => (
+            {["Score", "Asking", "Fair Value", "Gap vs Mkt", "Multiple", "DSCR"].map(r => (
               <React.Fragment key={r}>
                 <div style={{ padding: "10px 0", fontSize: 11, color: "#4B5563" }}>{r}</div>
                 <div style={{ padding: "10px 12px", fontSize: 13, fontWeight: 600, color: "#818CF8", textAlign: "center", background: "rgba(59,130,246,0.04)", border: "1px solid rgba(59,130,246,0.1)", borderTop: "none" }}>—</div>
@@ -627,57 +2002,110 @@ function TabCompare({ deals, isPro }: { deals: DealRun[]; isPro: boolean }) {
             ))}
           </div>
         </Card>
-        <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 12 }}>
-          <div style={{ padding: "28px 36px", borderRadius: 14, background: "rgba(8,12,19,0.92)", border: "1px solid rgba(99,102,241,0.2)", textAlign: "center" }}>
+        <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{
+            padding: "28px 36px", borderRadius: 14,
+            background: "rgba(8,12,19,0.92)", border: "1px solid rgba(99,102,241,0.2)",
+            textAlign: "center",
+          }}>
             <div style={{ fontSize: 32, marginBottom: 12 }}>🔒</div>
-            <div style={{ fontSize: 16, fontWeight: 700, color: "#F1F5F9", marginBottom: 6, fontFamily: "'Inter Tight',sans-serif" }}>Compare is a Pro feature</div>
-            <div style={{ fontSize: 13, color: "#6B7280", marginBottom: 16, maxWidth: 280 }}>Upgrade to compare any two deals side-by-side against your portfolio and market comps.</div>
-            <button style={{ padding: "10px 24px", borderRadius: 9, border: "none", background: "linear-gradient(135deg,#6366F1,#8B5CF6)", color: "#fff", fontSize: 14, fontWeight: 600, cursor: "pointer" }}>Upgrade to Pro</button>
+            <div style={{ fontSize: 16, fontWeight: 700, color: "#F1F5F9", marginBottom: 6, fontFamily: "'Inter Tight',sans-serif" }}>
+              Compare is a Pro feature
+            </div>
+            <div style={{ fontSize: 13, color: "#6B7280", marginBottom: 16, maxWidth: 280 }}>
+              Upgrade to compare any two deals side-by-side against your portfolio and market comps.
+            </div>
+            <button style={{
+              padding: "10px 24px", borderRadius: 9, border: "none",
+              background: "linear-gradient(135deg,#6366F1,#8B5CF6)",
+              color: "#fff", fontSize: 14, fontWeight: 600, cursor: "pointer",
+            }}>
+              Upgrade to Pro
+            </button>
           </div>
         </div>
       </div>
     );
   }
 
-  if (deals.length < 2) return (
-    <Card style={{ textAlign: "center", padding: "48px 24px" }}>
-      <div style={{ fontSize: 32, marginBottom: 12 }}>⇄</div>
-      <div style={{ fontSize: 15, fontWeight: 600, color: "#E2E8F0", marginBottom: 6 }}>Analyze 2+ deals to compare</div>
-      <div style={{ fontSize: 13, color: "#4B5563", marginBottom: 16 }}>You need at least two saved deals to use the comparison engine.</div>
-      <a href="/deal-reality-check" style={{ display: "inline-block", padding: "9px 18px", borderRadius: 9, background: "linear-gradient(135deg,#3B82F6,#6366F1)", color: "#fff", fontSize: 13, fontWeight: 600, textDecoration: "none" }}>Analyze a Deal →</a>
-    </Card>
-  );
+  // Need 2+ deals
+  if (deals.length < 2) {
+    return (
+      <Card style={{ textAlign: "center", padding: "48px 24px" }}>
+        <div style={{ fontSize: 32, marginBottom: 12 }}>⇄</div>
+        <div style={{ fontSize: 15, fontWeight: 600, color: "#E2E8F0", marginBottom: 6 }}>
+          Analyze 2+ deals to compare
+        </div>
+        <div style={{ fontSize: 13, color: "#4B5563", marginBottom: 16 }}>
+          You need at least two saved deals to use the comparison engine.
+        </div>
+        <a
+          href="/deal-reality-check"
+          style={{
+            display: "inline-block", padding: "9px 18px", borderRadius: 9,
+            background: "linear-gradient(135deg,#3B82F6,#6366F1)",
+            color: "#fff", fontSize: 13, fontWeight: 600, textDecoration: "none",
+          }}
+        >
+          Analyze a Deal →
+        </a>
+      </Card>
+    );
+  }
 
-  const a = deals[ai], b = deals[bi];
-  const aGap = a?.gap_pct ?? 0, bGap = b?.gap_pct ?? 0;
-  const selStyle: React.CSSProperties = { padding: "9px 12px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.04)", color: "#E2E8F0", fontSize: 13, outline: "none", width: "100%", appearance: "none" as any };
+  const a    = deals[ai];
+  const b    = deals[bi];
+  const aGap = a?.gap_pct ?? 0;
+  const bGap = b?.gap_pct ?? 0;
+  const aLbl = IL[a?.industry] || a?.industry;
+  const bLbl = IL[b?.industry] || b?.industry;
+
+  const selStyle: React.CSSProperties = {
+    padding: "9px 12px", borderRadius: 8,
+    border: "1px solid rgba(255,255,255,0.1)",
+    background: "rgba(255,255,255,0.04)",
+    color: "#E2E8F0", fontSize: 13, outline: "none",
+    width: "100%", appearance: "none" as any,
+  };
 
   const rows = [
-    { label: "Score",      aV: String(a?.overall_score ?? "—"),              bV: String(b?.overall_score ?? "—"),              aC: scoreCol(a?.overall_score ?? 0), bC: scoreCol(b?.overall_score ?? 0) },
-    { label: "Asking",     aV: fmtFull(a?.asking_price ?? 0),               bV: fmtFull(b?.asking_price ?? 0),               aC: "#E2E8F0", bC: "#E2E8F0" },
-    { label: "Fair Value", aV: fmtFull(a?.fair_value ?? 0),                 bV: fmtFull(b?.fair_value ?? 0),                 aC: "#10B981", bC: "#10B981" },
-    { label: "Gap vs Mkt", aV: (aGap > 0 ? "+" : "") + aGap + "%",         bV: (bGap > 0 ? "+" : "") + bGap + "%",         aC: aGap > 0 ? "#D85A30" : "#10B981", bC: bGap > 0 ? "#D85A30" : "#10B981" },
-    { label: "Multiple",   aV: (a?.valuation_multiple ?? 0).toFixed(2) + "x", bV: (b?.valuation_multiple ?? 0).toFixed(2) + "x", aC: "#E2E8F0", bC: "#E2E8F0" },
-    { label: "DSCR",       aV: (a?.dscr ?? 0).toFixed(2),                   bV: (b?.dscr ?? 0).toFixed(2),                   aC: (a?.dscr ?? 0) >= 1.25 ? "#10B981" : "#F97316", bC: (b?.dscr ?? 0) >= 1.25 ? "#10B981" : "#F97316" },
-    { label: "Risk Level", aV: a?.risk_level ?? "—",                        bV: b?.risk_level ?? "—",                        aC: "#94A3B8", bC: "#94A3B8" },
+    { label: "Score",      aV: String(a?.overall_score ?? "—"),                 bV: String(b?.overall_score ?? "—"),                 aC: scoreCol(a?.overall_score ?? 0), bC: scoreCol(b?.overall_score ?? 0) },
+    { label: "Asking",     aV: fmtFull(a?.asking_price ?? 0),                   bV: fmtFull(b?.asking_price ?? 0),                   aC: "#E2E8F0",                       bC: "#E2E8F0" },
+    { label: "Fair Value", aV: fmtFull(a?.fair_value ?? 0),                     bV: fmtFull(b?.fair_value ?? 0),                     aC: "#10B981",                       bC: "#10B981" },
+    { label: "Gap vs Mkt", aV: (aGap > 0 ? "+" : "") + aGap + "%",             bV: (bGap > 0 ? "+" : "") + bGap + "%",             aC: aGap > 0 ? "#D85A30" : "#10B981", bC: bGap > 0 ? "#D85A30" : "#10B981" },
+    { label: "Multiple",   aV: (a?.valuation_multiple ?? 0).toFixed(2) + "x",  bV: (b?.valuation_multiple ?? 0).toFixed(2) + "x",  aC: "#E2E8F0",                       bC: "#E2E8F0" },
+    { label: "DSCR",       aV: (a?.dscr ?? 0).toFixed(2),                      bV: (b?.dscr ?? 0).toFixed(2),                      aC: (a?.dscr ?? 0) >= 1.25 ? "#10B981" : "#F97316", bC: (b?.dscr ?? 0) >= 1.25 ? "#10B981" : "#F97316" },
+    { label: "Risk Level", aV: a?.risk_level ?? "—",                           bV: b?.risk_level ?? "—",                           aC: "#94A3B8",                       bC: "#94A3B8" },
   ];
 
   const gapDiff = Math.abs(aGap - bGap);
-  const aLbl = IL[a?.industry] || a?.industry;
-  const bLbl = IL[b?.industry] || b?.industry;
-  const winner = aGap < bGap ? aLbl : bLbl;
-  const insight = a && b ? (
-    aGap === bGap ? "Both deals sit at similar pricing positions relative to their market benchmarks."
-    : `${winner} has the stronger pricing position — priced ${gapDiff}% closer to (or below) the market median. ${aGap < -5 || bGap < -5 ? "The below-market deal warrants a closer look at seller motivation." : "Neither deal is dramatically mispriced — negotiate on terms and structure."}`
-  ) : "";
+  const winner  = aGap < bGap ? aLbl : bLbl;
+  const insight = aGap === bGap
+    ? "Both deals sit at similar pricing positions relative to their market benchmarks."
+    : `${winner} has the stronger pricing position — priced ${gapDiff}% closer to (or below) the market median. ${aGap < -5 || bGap < -5 ? "The below-market deal warrants a closer look at seller motivation." : "Neither deal is dramatically mispriced — negotiate on terms and structure."}`;
 
   return (
     <div>
       {/* Mode tabs */}
-      <div style={{ display: "flex", gap: 4, marginBottom: 18, background: "rgba(255,255,255,0.03)", borderRadius: 10, padding: 4, border: "1px solid rgba(255,255,255,0.06)", width: "fit-content" }}>
-        {([["my-deals","My Deals"],["market","Market Comps"],["closed","Closed Comps"]] as [CompareMode, string][]).map(([m, label]) => (
-          <button key={m} onClick={() => setMode(m)} style={{ padding: "7px 14px", borderRadius: 7, border: "none", background: mode === m ? "rgba(99,102,241,0.18)" : "transparent", color: mode === m ? "#C4B5FD" : "#4B5563", fontSize: 12, fontWeight: mode === m ? 600 : 400, cursor: "pointer", transition: "all 0.15s" }}>
-            {label} {m !== "my-deals" && <span style={{ fontSize: 9, color: "#374151", marginLeft: 2 }}>🔒</span>}
+      <div style={{
+        display: "flex", gap: 4, marginBottom: 18,
+        background: "rgba(255,255,255,0.03)", borderRadius: 10, padding: 4,
+        border: "1px solid rgba(255,255,255,0.06)", width: "fit-content",
+      }}>
+        {([["my-deals", "My Deals"], ["market", "Market Comps"], ["closed", "Closed Comps"]] as [CompareMode, string][]).map(([m, label]) => (
+          <button
+            key={m}
+            onClick={() => setMode(m)}
+            style={{
+              padding: "7px 14px", borderRadius: 7, border: "none",
+              background: mode === m ? "rgba(99,102,241,0.18)" : "transparent",
+              color: mode === m ? "#C4B5FD" : "#4B5563",
+              fontSize: 12, fontWeight: mode === m ? 600 : 400,
+              cursor: "pointer", transition: "all 0.15s",
+            }}
+          >
+            {label}
+            {m !== "my-deals" && <span style={{ fontSize: 9, color: "#374151", marginLeft: 2 }}>🔒</span>}
           </button>
         ))}
       </div>
@@ -686,16 +2114,30 @@ function TabCompare({ deals, isPro }: { deals: DealRun[]; isPro: boolean }) {
         {/* Deal selectors */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 40px 1fr", gap: 12, alignItems: "center", marginBottom: 20 }}>
           <div>
-            <label style={{ display: "block", fontSize: 10, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 5 }}>Deal A</label>
-            <select value={ai} onChange={e => setAi(Number(e.target.value))} style={selStyle}>
-              {deals.map((d, i) => <option key={d.id} value={i}>{IL[d.industry] || d.industry} — {fmt(d.asking_price)}</option>)}
+            <label style={{
+              display: "block", fontSize: 10, color: "#4B5563",
+              textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 5,
+            }}>
+              Deal A
+            </label>
+            <select value={ai} onChange={(e) => setAi(Number(e.target.value))} style={selStyle}>
+              {deals.map((d, i) => (
+                <option key={d.id} value={i}>{IL[d.industry] || d.industry} — {fmt(d.asking_price)}</option>
+              ))}
             </select>
           </div>
           <div style={{ textAlign: "center", fontSize: 20, color: "#4B5563", marginTop: 18 }}>⇄</div>
           <div>
-            <label style={{ display: "block", fontSize: 10, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 5 }}>Deal B</label>
-            <select value={bi} onChange={e => setBi(Number(e.target.value))} style={selStyle}>
-              {deals.map((d, i) => <option key={d.id} value={i}>{IL[d.industry] || d.industry} — {fmt(d.asking_price)}</option>)}
+            <label style={{
+              display: "block", fontSize: 10, color: "#4B5563",
+              textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 5,
+            }}>
+              Deal B
+            </label>
+            <select value={bi} onChange={(e) => setBi(Number(e.target.value))} style={selStyle}>
+              {deals.map((d, i) => (
+                <option key={d.id} value={i}>{IL[d.industry] || d.industry} — {fmt(d.asking_price)}</option>
+              ))}
             </select>
           </div>
         </div>
@@ -703,24 +2145,50 @@ function TabCompare({ deals, isPro }: { deals: DealRun[]; isPro: boolean }) {
         {/* Comparison grid */}
         <div style={{ display: "grid", gridTemplateColumns: "90px 1fr 1fr", gap: "0 12px" }}>
           <div />
-          <div style={{ padding: "8px 12px", borderRadius: "8px 8px 0 0", background: "rgba(59,130,246,0.08)", border: "1px solid rgba(59,130,246,0.15)", borderBottom: "none", fontSize: 12, fontWeight: 600, color: "#60A5FA", textAlign: "center" }}>{aLbl}</div>
-          <div style={{ padding: "8px 12px", borderRadius: "8px 8px 0 0", background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.15)", borderBottom: "none", fontSize: 12, fontWeight: 600, color: "#A5B4FC", textAlign: "center" }}>{bLbl}</div>
+          <div style={{ padding: "8px 12px", borderRadius: "8px 8px 0 0", background: "rgba(59,130,246,0.08)", border: "1px solid rgba(59,130,246,0.15)", borderBottom: "none", fontSize: 12, fontWeight: 600, color: "#60A5FA", textAlign: "center" }}>
+            {aLbl}
+          </div>
+          <div style={{ padding: "8px 12px", borderRadius: "8px 8px 0 0", background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.15)", borderBottom: "none", fontSize: 12, fontWeight: 600, color: "#A5B4FC", textAlign: "center" }}>
+            {bLbl}
+          </div>
           {rows.map((row, i) => (
             <React.Fragment key={row.label}>
-              <div style={{ padding: "10px 0", fontSize: 11, color: "#4B5563", display: "flex", alignItems: "center", borderBottom: i < rows.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none" }}>{row.label}</div>
-              <div style={{ padding: "10px 12px", fontSize: 13, fontWeight: 600, color: row.aC, textAlign: "center", fontFamily: "'JetBrains Mono',monospace", background: "rgba(59,130,246,0.03)", border: "1px solid rgba(59,130,246,0.08)", borderTop: "none", borderBottom: i < rows.length - 1 ? "none" : "1px solid rgba(59,130,246,0.08)" }}>{row.aV}</div>
-              <div style={{ padding: "10px 12px", fontSize: 13, fontWeight: 600, color: row.bC, textAlign: "center", fontFamily: "'JetBrains Mono',monospace", background: "rgba(99,102,241,0.03)", border: "1px solid rgba(99,102,241,0.08)", borderTop: "none", borderBottom: i < rows.length - 1 ? "none" : "1px solid rgba(99,102,241,0.08)" }}>{row.bV}</div>
+              <div style={{
+                padding: "10px 0", fontSize: 11, color: "#4B5563",
+                display: "flex", alignItems: "center",
+                borderBottom: i < rows.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none",
+              }}>
+                {row.label}
+              </div>
+              <div style={{
+                padding: "10px 12px", fontSize: 13, fontWeight: 600, color: row.aC,
+                textAlign: "center", fontFamily: "'JetBrains Mono',monospace",
+                background: "rgba(59,130,246,0.03)", border: "1px solid rgba(59,130,246,0.08)",
+                borderTop: "none", borderBottom: i < rows.length - 1 ? "none" : "1px solid rgba(59,130,246,0.08)",
+              }}>
+                {row.aV}
+              </div>
+              <div style={{
+                padding: "10px 12px", fontSize: 13, fontWeight: 600, color: row.bC,
+                textAlign: "center", fontFamily: "'JetBrains Mono',monospace",
+                background: "rgba(99,102,241,0.03)", border: "1px solid rgba(99,102,241,0.08)",
+                borderTop: "none", borderBottom: i < rows.length - 1 ? "none" : "1px solid rgba(99,102,241,0.08)",
+              }}>
+                {row.bV}
+              </div>
             </React.Fragment>
           ))}
         </div>
 
         {/* Insight bar */}
-        {insight && (
-          <div style={{ marginTop: 16, padding: "12px 16px", borderRadius: 10, background: "rgba(245,158,11,0.05)", border: "1px solid rgba(245,158,11,0.12)", display: "flex", gap: 10 }}>
-            <span style={{ fontSize: 14, flexShrink: 0 }}>💡</span>
-            <span style={{ fontSize: 13, color: "#FBBF24", lineHeight: 1.6 }}>{insight}</span>
-          </div>
-        )}
+        <div style={{
+          marginTop: 16, padding: "12px 16px", borderRadius: 10,
+          background: "rgba(245,158,11,0.05)", border: "1px solid rgba(245,158,11,0.12)",
+          display: "flex", gap: 10,
+        }}>
+          <span style={{ fontSize: 14, flexShrink: 0 }}>💡</span>
+          <span style={{ fontSize: 13, color: "#FBBF24", lineHeight: 1.6 }}>{insight}</span>
+        </div>
       </Card>
     </div>
   );
@@ -728,26 +2196,49 @@ function TabCompare({ deals, isPro }: { deals: DealRun[]; isPro: boolean }) {
 
 // ─── TAB: MARKET INTEL ───────────────────────────────────────────────────────
 
-function TabMarketIntel({ dri, trending, loading, isPro }: {
-  dri: DriSnapshot[]; trending: TrendingMultiple[]; loading: boolean; isPro: boolean;
+function TabMarketIntel({
+  dri, trending, loading, isPro,
+}: {
+  dri: DriSnapshot[];
+  trending: TrendingMultiple[];
+  loading: boolean;
+  isPro: boolean;
 }) {
-  const overpriced   = [...dri].sort((a, b) => (b.gap_pct ?? 0) - (a.gap_pct ?? 0)).slice(0, 6);
-  const undervalued  = [...dri].sort((a, b) => (a.gap_pct ?? 0) - (b.gap_pct ?? 0)).slice(0, 6);
-  const avgDri       = dri.length ? (dri.reduce((a, s) => a + (s.dri ?? 0), 0) / dri.length).toFixed(2) : "—";
+  const overpriced  = [...dri].sort((a, b) => (b.gap_pct ?? 0) - (a.gap_pct ?? 0)).slice(0, 6);
+  const undervalued = [...dri].sort((a, b) => (a.gap_pct ?? 0) - (b.gap_pct ?? 0)).slice(0, 6);
+  const avgDri      = dri.length
+    ? (dri.reduce((a, s) => a + (s.dri ?? 0), 0) / dri.length).toFixed(2)
+    : "—";
   const totalListings = dri.reduce((a, s) => a + (s.deal_count ?? 0), 0);
 
   return (
     <div>
-      {/* Buyer Pain Metrics */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 10, marginBottom: 28 }}>
+      {/* KPI cards */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, marginBottom: 28 }}>
         {[
-          { label: "Avg Market DRI",        value: avgDri,              sub: "Deal Reality Index",      color: "#F59E0B" },
-          { label: "Active Listings Tracked",value: totalListings.toLocaleString(), sub: "Across all industries", color: "#60A5FA" },
-          { label: "Overpriced Industries", value: String(dri.filter(s => condSig(s.condition) === "overpriced").length), sub: "Currently above median", color: "#D85A30" },
+          { label: "Avg Market DRI",         value: avgDri,                            sub: "Deal Reality Index",      color: "#F59E0B" },
+          { label: "Active Listings Tracked", value: totalListings.toLocaleString(),    sub: "Across all industries",   color: "#60A5FA" },
+          { label: "Overpriced Industries",   value: String(dri.filter(s => condSig(s.condition) === "overpriced").length), sub: "Currently above median", color: "#D85A30" },
         ].map(c => (
-          <div key={c.label} style={{ padding: "16px 18px", borderRadius: 12, background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)" }}>
-            <div style={{ fontSize: 10, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: 600, marginBottom: 8 }}>{c.label}</div>
-            {loading ? <Skel h={22} w={60} /> : <div style={{ fontSize: 22, fontWeight: 700, color: c.color, fontFamily: "'Inter Tight',sans-serif", letterSpacing: "-0.02em", marginBottom: 4 }}>{c.value}</div>}
+          <div key={c.label} style={{
+            padding: "16px 18px", borderRadius: 12,
+            background: "rgba(255,255,255,0.025)",
+            border: "1px solid rgba(255,255,255,0.06)",
+          }}>
+            <div style={{
+              fontSize: 10, color: "#4B5563", textTransform: "uppercase",
+              letterSpacing: "0.1em", fontWeight: 600, marginBottom: 8,
+            }}>
+              {c.label}
+            </div>
+            {loading ? <Skel h={22} w={60} /> : (
+              <div style={{
+                fontSize: 22, fontWeight: 700, color: c.color,
+                fontFamily: "'Inter Tight',sans-serif", letterSpacing: "-0.02em", marginBottom: 4,
+              }}>
+                {c.value}
+              </div>
+            )}
             <div style={{ fontSize: 11, color: "#374151" }}>{c.sub}</div>
           </div>
         ))}
@@ -755,48 +2246,111 @@ function TabMarketIntel({ dri, trending, loading, isPro }: {
 
       {/* Most Overpriced + Best Opportunities */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 28 }}>
+        {/* Most Overpriced */}
         <div>
           <SectionHeader title="Most Overpriced" sub="Buyers paying above market — avoid or negotiate hard" />
           <Card style={{ padding: 0, overflow: "hidden" }}>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 56px 100px", padding: "8px 16px", borderBottom: "1px solid rgba(255,255,255,0.05)", background: "rgba(255,255,255,0.01)" }}>
-              {["Industry","Gap","Signal"].map(h => <div key={h} style={{ fontSize: 10, color: "#374151", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600 }}>{h}</div>)}
+            <div style={{
+              display: "grid", gridTemplateColumns: "1fr 56px 100px",
+              padding: "8px 16px", borderBottom: "1px solid rgba(255,255,255,0.05)",
+              background: "rgba(255,255,255,0.01)",
+            }}>
+              {["Industry", "Gap", "Signal"].map(h => (
+                <div key={h} style={{ fontSize: 10, color: "#374151", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600 }}>
+                  {h}
+                </div>
+              ))}
             </div>
-            {loading ? <div style={{ padding: 16 }}>{[0,1,2,3].map(i => <Skel key={i} h={28} style={{ marginBottom: 8 }} />)}</div>
-              : overpriced.map((s, i) => {
-                const ss = sigCfg("overpriced");
-                return (
-                  <div key={s.industry_key} style={{ display: "grid", gridTemplateColumns: "1fr 56px 100px", padding: "10px 16px", borderBottom: i < overpriced.length - 1 ? "1px solid rgba(255,255,255,0.03)" : "none", background: i % 2 === 0 ? "rgba(216,90,48,0.02)" : "transparent" }}>
-                    <div style={{ fontSize: 13, color: "#E2E8F0", fontWeight: 500 }}>{IL[s.industry_key] || s.industry_key}</div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: "#D85A30", fontFamily: "'JetBrains Mono',monospace" }}>+{(s.gap_pct ?? 0).toFixed(0)}%</div>
-                    <span style={{ display: "inline-flex", alignItems: "center", gap: 3, padding: "2px 8px", borderRadius: 20, fontSize: 10, fontWeight: 600, background: ss.bg, color: ss.color, border: `1px solid ${ss.border}` }}>
-                      <span style={{ width: 4, height: 4, borderRadius: "50%", background: ss.dot }} />Overpriced
-                    </span>
+            {loading ? (
+              <div style={{ padding: 16, display: "flex", flexDirection: "column", gap: 8 }}>
+                {[0, 1, 2, 3].map(i => <Skel key={i} h={28} />)}
+              </div>
+            ) : overpriced.map((s, i) => {
+              const ss = sigCfg("overpriced");
+              return (
+                <div
+                  key={s.industry_key}
+                  style={{
+                    display: "grid", gridTemplateColumns: "1fr 56px 100px",
+                    padding: "10px 16px",
+                    borderBottom: i < overpriced.length - 1 ? "1px solid rgba(255,255,255,0.03)" : "none",
+                    background: i % 2 === 0 ? "rgba(216,90,48,0.02)" : "transparent",
+                    alignItems: "center",
+                  }}
+                >
+                  <div style={{ fontSize: 13, color: "#E2E8F0", fontWeight: 500 }}>
+                    {IL[s.industry_key] || s.industry_key}
                   </div>
-                );
-              })
-            }
+                  <div style={{ fontSize: 13, fontWeight: 700, color: "#D85A30", fontFamily: "'JetBrains Mono',monospace" }}>
+                    +{(s.gap_pct ?? 0).toFixed(0)}%
+                  </div>
+                  <span style={{
+                    display: "inline-flex", alignItems: "center", gap: 3,
+                    padding: "2px 8px", borderRadius: 20,
+                    fontSize: 10, fontWeight: 600,
+                    background: ss.bg, color: ss.color, border: `1px solid ${ss.border}`,
+                  }}>
+                    <span style={{ width: 4, height: 4, borderRadius: "50%", background: ss.dot }} />
+                    Overpriced
+                  </span>
+                </div>
+              );
+            })}
           </Card>
         </div>
 
+        {/* Best Opportunities */}
         <div>
           <SectionHeader title="Best Opportunities" sub="Industries priced below median — buyer's market" />
           <Card style={{ padding: 0, overflow: "hidden" }}>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 56px 100px", padding: "8px 16px", borderBottom: "1px solid rgba(255,255,255,0.05)", background: "rgba(255,255,255,0.01)" }}>
-              {["Industry","Gap","Signal"].map(h => <div key={h} style={{ fontSize: 10, color: "#374151", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600 }}>{h}</div>)}
+            <div style={{
+              display: "grid", gridTemplateColumns: "1fr 56px 100px",
+              padding: "8px 16px", borderBottom: "1px solid rgba(255,255,255,0.05)",
+              background: "rgba(255,255,255,0.01)",
+            }}>
+              {["Industry", "Gap", "Signal"].map(h => (
+                <div key={h} style={{ fontSize: 10, color: "#374151", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600 }}>
+                  {h}
+                </div>
+              ))}
             </div>
-            {loading ? <div style={{ padding: 16 }}>{[0,1,2,3].map(i => <Skel key={i} h={28} style={{ marginBottom: 8 }} />)}</div>
-              : undervalued.filter(s => condSig(s.condition) === "opportunity").map((s, i, arr) => {
-                const ss = sigCfg("opportunity");
-                return (
-                  <div key={s.industry_key} style={{ display: "grid", gridTemplateColumns: "1fr 56px 100px", padding: "10px 16px", borderBottom: i < arr.length - 1 ? "1px solid rgba(255,255,255,0.03)" : "none", background: i % 2 === 0 ? "rgba(16,185,129,0.02)" : "transparent" }}>
-                    <div style={{ fontSize: 13, color: "#E2E8F0", fontWeight: 500 }}>{IL[s.industry_key] || s.industry_key}</div>
-                    <div style={{ fontSize: 13, fontWeight: 700, color: "#10B981", fontFamily: "'JetBrains Mono',monospace" }}>{(s.gap_pct ?? 0).toFixed(0)}%</div>
-                    <span style={{ display: "inline-flex", alignItems: "center", gap: 3, padding: "2px 8px", borderRadius: 20, fontSize: 10, fontWeight: 600, background: ss.bg, color: ss.color, border: `1px solid ${ss.border}` }}>
-                      <span style={{ width: 4, height: 4, borderRadius: "50%", background: ss.dot }} />Opportunity
-                    </span>
-                  </div>
-                );
-              })
+            {loading ? (
+              <div style={{ padding: 16, display: "flex", flexDirection: "column", gap: 8 }}>
+                {[0, 1, 2, 3].map(i => <Skel key={i} h={28} />)}
+              </div>
+            ) : undervalued
+                .filter(s => condSig(s.condition) === "opportunity")
+                .map((s, i, arr) => {
+                  const ss = sigCfg("opportunity");
+                  return (
+                    <div
+                      key={s.industry_key}
+                      style={{
+                        display: "grid", gridTemplateColumns: "1fr 56px 100px",
+                        padding: "10px 16px",
+                        borderBottom: i < arr.length - 1 ? "1px solid rgba(255,255,255,0.03)" : "none",
+                        background: i % 2 === 0 ? "rgba(16,185,129,0.02)" : "transparent",
+                        alignItems: "center",
+                      }}
+                    >
+                      <div style={{ fontSize: 13, color: "#E2E8F0", fontWeight: 500 }}>
+                        {IL[s.industry_key] || s.industry_key}
+                      </div>
+                      <div style={{ fontSize: 13, fontWeight: 700, color: "#10B981", fontFamily: "'JetBrains Mono',monospace" }}>
+                        {(s.gap_pct ?? 0).toFixed(0)}%
+                      </div>
+                      <span style={{
+                        display: "inline-flex", alignItems: "center", gap: 3,
+                        padding: "2px 8px", borderRadius: 20,
+                        fontSize: 10, fontWeight: 600,
+                        background: ss.bg, color: ss.color, border: `1px solid ${ss.border}`,
+                      }}>
+                        <span style={{ width: 4, height: 4, borderRadius: "50%", background: ss.dot }} />
+                        Opportunity
+                      </span>
+                    </div>
+                  );
+                })
             }
           </Card>
         </div>
@@ -806,35 +2360,60 @@ function TabMarketIntel({ dri, trending, loading, isPro }: {
       <div style={{ marginBottom: 28 }}>
         <SectionHeader title="Trending Multiples" sub="From DealStats closed transaction database" />
         <Card>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 10 }}>
-            {loading ? [0,1,2,3].map(i => <Skel key={i} h={52} />)
-              : trending.slice(0, 8).map(t => (
-                <div key={t.industry_key} style={{ padding: "12px 14px", borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)" }}>
-                  <div style={{ fontSize: 10, color: "#4B5563", marginBottom: 4 }}>{IL[t.industry_key] || t.industry_key}</div>
-                  <div style={{ fontSize: 16, fontWeight: 700, color: "#E2E8F0", fontFamily: "'JetBrains Mono',monospace", marginBottom: 2 }}>{t.median_multiple.toFixed(2)}x</div>
-                  <div style={{ fontSize: 10, color: "#2D3748" }}>{t.sample_size} closed deals</div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10 }}>
+            {loading ? (
+              [0, 1, 2, 3].map(i => <Skel key={i} h={52} />)
+            ) : trending.slice(0, 8).map(t => (
+              <div key={t.industry_key} style={{
+                padding: "12px 14px", borderRadius: 10,
+                background: "rgba(255,255,255,0.02)",
+                border: "1px solid rgba(255,255,255,0.05)",
+              }}>
+                <div style={{ fontSize: 10, color: "#4B5563", marginBottom: 4 }}>
+                  {IL[t.industry_key] || t.industry_key}
                 </div>
-              ))
-            }
+                <div style={{
+                  fontSize: 16, fontWeight: 700, color: "#E2E8F0",
+                  fontFamily: "'JetBrains Mono',monospace", marginBottom: 2,
+                }}>
+                  {t.median_multiple.toFixed(2)}x
+                </div>
+                <div style={{ fontSize: 10, color: "#2D3748" }}>{t.sample_size} closed deals</div>
+              </div>
+            ))}
           </div>
         </Card>
       </div>
 
-      {/* Deals worth reviewing — Pro only */}
+      {/* Deals Worth Reviewing — Pro only */}
       <div style={{ marginBottom: 20 }}>
-        <SectionHeader title="Deals Worth Reviewing This Week" sub="Based on market signals and your deal history" action={<ProBadge />} />
+        <SectionHeader
+          title="Deals Worth Reviewing This Week"
+          sub="Based on market signals and your deal history"
+          action={<ProBadge />}
+        />
         <Card style={{ position: "relative" }}>
           {!isPro && <LockOverlay label="Upgrade to Pro to unlock deal recommendations" />}
           <div style={{ opacity: isPro ? 1 : 0.2 }}>
             <div style={{ fontSize: 13, color: "#4B5563", textAlign: "center", padding: "20px 0" }}>
-              {isPro ? "Recommendations will appear here based on your deal history and live DRI signals." : "Pro feature — upgrade to unlock."}
+              {isPro
+                ? "Recommendations will appear here based on your deal history and live DRI signals."
+                : "Pro feature — upgrade to unlock."}
             </div>
           </div>
         </Card>
       </div>
 
       <div style={{ textAlign: "center" }}>
-        <a href="/market-intelligence" style={{ display: "inline-block", padding: "11px 24px", borderRadius: 10, border: "1px solid rgba(59,130,246,0.25)", background: "rgba(59,130,246,0.06)", color: "#60A5FA", fontSize: 14, fontWeight: 500, textDecoration: "none" }}>
+        <a
+          href="/market-intelligence"
+          style={{
+            display: "inline-block", padding: "11px 24px", borderRadius: 10,
+            border: "1px solid rgba(59,130,246,0.25)",
+            background: "rgba(59,130,246,0.06)",
+            color: "#60A5FA", fontSize: 14, fontWeight: 500, textDecoration: "none",
+          }}
+        >
           Explore Full Market Intelligence →
         </a>
       </div>
@@ -845,34 +2424,44 @@ function TabMarketIntel({ dri, trending, loading, isPro }: {
 // ─── MAIN DASHBOARD ───────────────────────────────────────────────────────────
 
 export default function BuyerDashboard() {
-  const [user, setUser]             = useState<any>(null);
-  const [profile, setProfile]       = useState<Profile | null>(null);
+  const [user, setUser]               = useState<any>(null);
+  const [profile, setProfile]         = useState<Profile | null>(null);
   const [loadingUser, setLoadingUser] = useState(true);
-  const [activeTab, setActiveTab]   = useState<TabId>("dashboard");
-  const [deals, setDeals]           = useState<DealRun[]>([]);
-  const [dri, setDri]               = useState<DriSnapshot[]>([]);
-  const [trending, setTrending]     = useState<TrendingMultiple[]>([]);
+  const [activeTab, setActiveTab]     = useState<TabId>("dashboard");
+
+  const [deals, setDeals]             = useState<DealRun[]>([]);
+  const [dri, setDri]                 = useState<DriSnapshot[]>([]);
+  const [trending, setTrending]       = useState<TrendingMultiple[]>([]);
   const [loadingDeals, setLoadingDeals] = useState(true);
   const [loadingMkt, setLoadingMkt]     = useState(true);
+
   const [dealStatuses, setDealStatuses] = useState<Record<string, DealStatus>>({});
+  const [favorites, setFavorites]       = useState<Set<string>>(new Set());
+  const [notesDeal, setNotesDeal]       = useState<DealRun | null>(null);
+  const [dealNotes, setDealNotes]       = useState<Record<string, DealNote[]>>({});
+  const [dealIntel, setDealIntel]       = useState<Record<string, DealIntel>>({});
 
-  const isPro = profile?.plan === "pro" || profile?.plan === "premium";
+  const isPro       = profile?.plan === "pro" || profile?.plan === "premium";
+  const userInitial = user?.email?.charAt(0)?.toUpperCase() ?? "?";
 
-  // Auth
+  // ── Auth ────────────────────────────────────────────────────────────────────
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => { setUser(data?.user ?? null); setLoadingUser(false); });
+    supabase.auth.getUser().then(({ data }) => {
+      setUser(data?.user ?? null);
+      setLoadingUser(false);
+    });
     const { data: sub } = supabase.auth.onAuthStateChange((_e, s) => setUser(s?.user ?? null));
     return () => sub.subscription.unsubscribe();
   }, []);
 
-  // Profile
+  // ── Profile ─────────────────────────────────────────────────────────────────
   useEffect(() => {
     if (!user) return;
     supabase.from("profiles").select("id,email,plan").eq("id", user.id).single()
       .then(({ data }) => setProfile(data as Profile));
   }, [user]);
 
-  // Deals
+  // ── Deals ───────────────────────────────────────────────────────────────────
   const fetchDeals = useCallback(async (uid: string) => {
     setLoadingDeals(true);
     const { data } = await supabase
@@ -883,65 +2472,170 @@ export default function BuyerDashboard() {
       .order("created_at", { ascending: false })
       .limit(50);
     const enriched: DealRun[] = (data || []).map(d => {
-      const gap_pct = d.fair_value > 0 ? Math.round(((d.asking_price - d.fair_value) / d.fair_value) * 100) : 0;
+      const gap_pct = d.fair_value > 0
+        ? Math.round(((d.asking_price - d.fair_value) / d.fair_value) * 100)
+        : 0;
       return { ...d, gap_pct, signal: deriveSignal(gap_pct) };
     });
     setDeals(enriched);
     setLoadingDeals(false);
   }, []);
 
-  // Market data
+  // ── Favorites ───────────────────────────────────────────────────────────────
+  const fetchFavorites = useCallback(async (uid: string) => {
+    const { data } = await supabase
+      .from("deal_favorites")
+      .select("deal_id")
+      .eq("user_id", uid);
+    setFavorites(new Set((data || []).map((r: any) => r.deal_id)));
+  }, []);
+
+  const toggleFavorite = useCallback(async (dealId: string) => {
+    if (!user) return;
+    const isFav = favorites.has(dealId);
+    // Optimistic update
+    setFavorites(prev => {
+      const next = new Set(prev);
+      isFav ? next.delete(dealId) : next.add(dealId);
+      return next;
+    });
+    if (isFav) {
+      await supabase.from("deal_favorites").delete().eq("user_id", user.id).eq("deal_id", dealId);
+    } else {
+      await supabase.from("deal_favorites").upsert(
+        { user_id: user.id, deal_id: dealId },
+        { onConflict: "user_id,deal_id" }
+      );
+    }
+  }, [user, favorites]);
+
+  // ── Notes panel ─────────────────────────────────────────────────────────────
+  const openNotes = useCallback(async (deal: DealRun) => {
+    setNotesDeal(deal);
+    // Fetch notes if not already loaded
+    if (!dealNotes[deal.id]) {
+      const { data } = await supabase
+        .from("deal_notes")
+        .select("id,deal_id,content,status_tag,created_at")
+        .eq("deal_id", deal.id)
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+      setDealNotes(prev => ({ ...prev, [deal.id]: (data as DealNote[]) || [] }));
+    }
+    // Check for cached intelligence
+    if (!dealIntel[deal.id]) {
+      const { data: intelData } = await supabase
+        .from("deal_intelligence")
+        .select("*")
+        .eq("deal_id", deal.id)
+        .eq("user_id", user.id)
+        .single();
+      if (intelData) {
+        setDealIntel(prev => ({ ...prev, [deal.id]: intelData as DealIntel }));
+      }
+    }
+  }, [user, dealNotes, dealIntel]);
+
+  const handleNoteAdded = useCallback((note: DealNote) => {
+    setDealNotes(prev => ({
+      ...prev,
+      [note.deal_id]: [note, ...(prev[note.deal_id] ?? [])],
+    }));
+  }, []);
+
+  const handleNoteDeleted = useCallback((noteId: string) => {
+    if (!notesDeal) return;
+    setDealNotes(prev => ({
+      ...prev,
+      [notesDeal.id]: (prev[notesDeal.id] ?? []).filter(n => n.id !== noteId),
+    }));
+  }, [notesDeal]);
+
+  const handleIntelGenerated = useCallback((intel: DealIntel) => {
+    if (!notesDeal) return;
+    setDealIntel(prev => ({ ...prev, [notesDeal.id]: intel }));
+  }, [notesDeal]);
+
+  // ── Market data ─────────────────────────────────────────────────────────────
   const fetchMarket = useCallback(async () => {
     setLoadingMkt(true);
-    const { data: driRaw } = await supabase.from("dri_snapshots").select("industry_key,dri,gap_pct,condition,deal_count,listing_multiple,snapshot_date").order("snapshot_date", { ascending: false }).limit(120);
-    const seen = new Set<string>(), latest: DriSnapshot[] = [];
-    for (const r of (driRaw || [])) { if (!seen.has(r.industry_key)) { seen.add(r.industry_key); latest.push(r); } }
+    const { data: driRaw } = await supabase
+      .from("dri_snapshots")
+      .select("industry_key,dri,gap_pct,condition,deal_count,listing_multiple,snapshot_date")
+      .order("snapshot_date", { ascending: false })
+      .limit(120);
+    const seen = new Set<string>();
+    const latest: DriSnapshot[] = [];
+    for (const r of (driRaw || [])) {
+      if (!seen.has(r.industry_key)) { seen.add(r.industry_key); latest.push(r); }
+    }
     setDri(latest.sort((a, b) => (b.gap_pct ?? 0) - (a.gap_pct ?? 0)));
-    const { data: bm } = await supabase.from("dealstats_benchmarks").select("industry_key,median_multiple,sample_size").is("state", null).eq("size_band", "mid").order("sample_size", { ascending: false }).limit(12);
+
+    const { data: bm } = await supabase
+      .from("dealstats_benchmarks")
+      .select("industry_key,median_multiple,sample_size")
+      .is("state", null)
+      .eq("size_band", "mid")
+      .order("sample_size", { ascending: false })
+      .limit(12);
     setTrending(bm || []);
     setLoadingMkt(false);
   }, []);
 
-  useEffect(() => { if (user) fetchDeals(user.id); else setLoadingDeals(false); }, [user, fetchDeals]);
+  // ── Effects ─────────────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (user) { fetchDeals(user.id); fetchFavorites(user.id); }
+    else setLoadingDeals(false);
+  }, [user, fetchDeals, fetchFavorites]);
+
   useEffect(() => { fetchMarket(); }, [fetchMarket]);
 
+  // ── Handlers ────────────────────────────────────────────────────────────────
   const handleStatusChange = (id: string, status: DealStatus) => {
     setDealStatuses(prev => ({ ...prev, [id]: status }));
   };
 
-  const userInitial = user?.email?.charAt(0)?.toUpperCase() ?? "?";
-
   const TABS: { id: TabId; label: string }[] = [
-    { id: "dashboard",   label: "Dashboard"   },
-    { id: "my-deals",    label: "My Deals"    },
-    { id: "compare",     label: "Compare"     },
-    { id: "market-intel",label: "Market Intel" },
+    { id: "dashboard",    label: "Dashboard"   },
+    { id: "my-deals",     label: "My Deals"    },
+    { id: "compare",      label: "Compare"     },
+    { id: "market-intel", label: "Market Intel" },
   ];
 
   return (
     <div style={{ minHeight: "100vh", background: "#080C13", color: "#E2E8F0", fontFamily: "'Inter',sans-serif" }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Inter+Tight:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap');
-        *{box-sizing:border-box}select{cursor:pointer;appearance:none}select:focus{outline:none}
-        input:focus{outline:none;border-color:rgba(99,102,241,0.4)!important}
-        @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-        @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
-        .tab-content{animation:fadeUp .25s ease-out}
-        .row-hover:hover{background:rgba(255,255,255,0.02)!important}
-        .btn-action:hover{opacity:0.85}
-        .btn-action{transition:opacity .12s}
+        * { box-sizing: border-box }
+        select { cursor: pointer; appearance: none }
+        select:focus { outline: none }
+        input:focus  { outline: none; border-color: rgba(99,102,241,0.4) !important }
+        textarea:focus { outline: none; border-color: rgba(99,102,241,0.4) !important }
+        @keyframes fadeUp  { from { opacity: 0; transform: translateY(8px) } to { opacity: 1; transform: translateY(0) } }
+        @keyframes slideIn { from { transform: translateX(100%) } to { transform: translateX(0) } }
+        @keyframes pulse   { 0%, 100% { opacity: 1 } 50% { opacity: 0.3 } }
+        .tab-content { animation: fadeUp 0.25s ease-out }
+        .btn-action  { transition: opacity 0.12s }
+        .btn-action:hover { opacity: 0.85 }
       `}</style>
 
       {/* ── NAV ── */}
-      <nav style={{ position: "sticky", top: 0, zIndex: 50, background: "rgba(8,12,19,0.95)", backdropFilter: "blur(16px)", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-        <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 24px", display: "flex", alignItems: "center", height: 54 }}>
+      <nav style={{
+        position: "sticky", top: 0, zIndex: 50,
+        background: "rgba(8,12,19,0.95)", backdropFilter: "blur(16px)",
+        borderBottom: "1px solid rgba(255,255,255,0.06)",
+      }}>
+        <div style={{
+          maxWidth: 1200, margin: "0 auto", padding: "0 24px",
+          display: "flex", alignItems: "center", height: 54,
+        }}>
           {/* Logo */}
           <a href="/" style={{ textDecoration: "none", display: "flex", alignItems: "center", gap: 2, marginRight: 40, flexShrink: 0 }}>
             <span style={{ fontSize: 14, fontWeight: 700, color: "#F1F5F9", fontFamily: "'Inter Tight',sans-serif", letterSpacing: "-0.02em" }}>NexTax</span>
             <span style={{ fontSize: 14, fontWeight: 700, color: "#6366F1", fontFamily: "'Inter Tight',sans-serif" }}>.AI</span>
           </a>
 
-          {/* Tabs */}
+          {/* Tab buttons */}
           <div style={{ display: "flex", gap: 2, flex: 1 }}>
             {TABS.map(tab => (
               <button
@@ -957,7 +2651,11 @@ export default function BuyerDashboard() {
               >
                 {tab.label}
                 {activeTab === tab.id && (
-                  <div style={{ position: "absolute", bottom: -1, left: "50%", transform: "translateX(-50%)", width: 20, height: 2, borderRadius: 1, background: "#6366F1" }} />
+                  <div style={{
+                    position: "absolute", bottom: -1, left: "50%",
+                    transform: "translateX(-50%)",
+                    width: 20, height: 2, borderRadius: 1, background: "#6366F1",
+                  }} />
                 )}
                 {tab.id === "compare" && !isPro && (
                   <span style={{ marginLeft: 4, fontSize: 9, color: "#374151" }}>🔒</span>
@@ -966,23 +2664,54 @@ export default function BuyerDashboard() {
             ))}
           </div>
 
-          {/* Right */}
+          {/* Right side */}
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+            {favorites.size > 0 && (
+              <span style={{ fontSize: 11, color: "#F59E0B" }}>★ {favorites.size}</span>
+            )}
             {isPro ? (
-              <div style={{ padding: "3px 10px", borderRadius: 20, background: "rgba(99,102,241,0.15)", border: "1px solid rgba(99,102,241,0.3)", fontSize: 11, color: "#818CF8", fontWeight: 700, letterSpacing: "0.04em" }}>⚡ PRO</div>
+              <div style={{
+                padding: "3px 10px", borderRadius: 20,
+                background: "rgba(99,102,241,0.15)", border: "1px solid rgba(99,102,241,0.3)",
+                fontSize: 11, color: "#818CF8", fontWeight: 700, letterSpacing: "0.04em",
+              }}>
+                ⚡ PRO
+              </div>
             ) : (
-              <div style={{ padding: "3px 10px", borderRadius: 20, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", fontSize: 11, color: "#4B5563", fontWeight: 600 }}>Free</div>
+              <div style={{
+                padding: "3px 10px", borderRadius: 20,
+                background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)",
+                fontSize: 11, color: "#4B5563", fontWeight: 600,
+              }}>
+                Free
+              </div>
             )}
             {user ? (
               <div
                 onClick={() => supabase.auth.signOut().then(() => { window.location.href = "/login"; })}
                 title={`${user.email} — click to sign out`}
-                style={{ width: 30, height: 30, borderRadius: "50%", background: "linear-gradient(135deg,#6366F1,#8B5CF6)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 12, fontWeight: 700, color: "#fff", cursor: "pointer", flexShrink: 0 }}
+                style={{
+                  width: 30, height: 30, borderRadius: "50%",
+                  background: "linear-gradient(135deg,#6366F1,#8B5CF6)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  fontSize: 12, fontWeight: 700, color: "#fff",
+                  cursor: "pointer", flexShrink: 0,
+                }}
               >
                 {userInitial}
               </div>
             ) : (
-              <a href="/login" style={{ padding: "5px 12px", borderRadius: 8, border: "1px solid rgba(99,102,241,0.25)", background: "rgba(99,102,241,0.08)", color: "#818CF8", fontSize: 12, fontWeight: 500, textDecoration: "none" }}>Sign In</a>
+              <a
+                href="/login"
+                style={{
+                  padding: "5px 12px", borderRadius: 8,
+                  border: "1px solid rgba(99,102,241,0.25)",
+                  background: "rgba(99,102,241,0.08)",
+                  color: "#818CF8", fontSize: 12, fontWeight: 500, textDecoration: "none",
+                }}
+              >
+                Sign In
+              </a>
             )}
           </div>
         </div>
@@ -1001,24 +2730,42 @@ export default function BuyerDashboard() {
         <div style={{ maxWidth: 1200, margin: "0 auto", padding: "28px 24px 60px" }}>
 
           {/* Hero row */}
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 24, flexWrap: "wrap", gap: 16 }}>
+          <div style={{
+            display: "flex", justifyContent: "space-between", alignItems: "flex-end",
+            marginBottom: 24, flexWrap: "wrap", gap: 16,
+          }}>
             <div>
-              <div style={{ fontSize: 10, color: "#374151", textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: 600, marginBottom: 6 }}>
+              <div style={{
+                fontSize: 10, color: "#374151", textTransform: "uppercase",
+                letterSpacing: "0.1em", fontWeight: 600, marginBottom: 6,
+              }}>
                 {TABS.find(t => t.id === activeTab)?.label}
               </div>
-              <h1 style={{ fontSize: "clamp(20px,2.5vw,28px)", fontWeight: 700, margin: 0, fontFamily: "'Inter Tight',sans-serif", letterSpacing: "-0.02em", color: "#F1F5F9" }}>
+              <h1 style={{
+                fontSize: "clamp(20px,2.5vw,28px)", fontWeight: 700, margin: 0,
+                fontFamily: "'Inter Tight',sans-serif", letterSpacing: "-0.02em", color: "#F1F5F9",
+              }}>
                 {activeTab === "dashboard"    && "Deal Command Center"}
                 {activeTab === "my-deals"     && "My Deals"}
                 {activeTab === "compare"      && "Compare Deals"}
                 {activeTab === "market-intel" && "Market Intelligence"}
               </h1>
             </div>
-            <a href="/deal-reality-check" className="btn-action" style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "9px 18px", borderRadius: 9, background: "linear-gradient(135deg,#3B82F6,#6366F1)", color: "#fff", fontSize: 13, fontWeight: 600, textDecoration: "none" }}>
+            <a
+              href="/deal-reality-check"
+              className="btn-action"
+              style={{
+                display: "inline-flex", alignItems: "center", gap: 6,
+                padding: "9px 18px", borderRadius: 9,
+                background: "linear-gradient(135deg,#3B82F6,#6366F1)",
+                color: "#fff", fontSize: 13, fontWeight: 600, textDecoration: "none",
+              }}
+            >
               <span style={{ fontSize: 14 }}>+</span> Analyze New Deal
             </a>
           </div>
 
-          {/* Stats (show on dashboard + my-deals) */}
+          {/* Stat cards — dashboard + my-deals only */}
           {(activeTab === "dashboard" || activeTab === "my-deals") && (
             <StatCards deals={deals} loading={loadingDeals} />
           )}
@@ -1027,15 +2774,28 @@ export default function BuyerDashboard() {
           <div className="tab-content">
             {activeTab === "dashboard" && (
               <TabDashboard
-                deals={deals} dri={dri} trending={trending}
-                loading={loadingDeals} loadingMkt={loadingMkt}
-                isPro={isPro} onTabChange={setActiveTab}
+                deals={deals}
+                dri={dri}
+                trending={trending}
+                loading={loadingDeals}
+                loadingMkt={loadingMkt}
+                isPro={isPro}
+                favorites={favorites}
+                onTabChange={setActiveTab}
+                onToggleFav={toggleFavorite}
+                onOpenNotes={openNotes}
               />
             )}
             {activeTab === "my-deals" && (
               <TabMyDeals
-                deals={deals} loading={loadingDeals} isPro={isPro}
-                dealStatuses={dealStatuses} onStatusChange={handleStatusChange}
+                deals={deals}
+                loading={loadingDeals}
+                isPro={isPro}
+                dealStatuses={dealStatuses}
+                favorites={favorites}
+                onStatusChange={handleStatusChange}
+                onToggleFav={toggleFavorite}
+                onOpenNotes={openNotes}
               />
             )}
             {activeTab === "compare" && (
@@ -1046,6 +2806,23 @@ export default function BuyerDashboard() {
             )}
           </div>
         </div>
+      )}
+
+      {/* ── NOTES PANEL (portal overlay) ── */}
+      {notesDeal && user && (
+        <NotesPanel
+          deal={notesDeal}
+          userId={user.id}
+          isPro={isPro}
+          notes={dealNotes[notesDeal.id] ?? []}
+          intel={dealIntel[notesDeal.id] ?? null}
+          onClose={() => setNotesDeal(null)}
+          onNoteAdded={handleNoteAdded}
+          onNoteDeleted={handleNoteDeleted}
+          onStatusChange={handleStatusChange}
+          dealStatuses={dealStatuses}
+          onIntelGenerated={handleIntelGenerated}
+        />
       )}
     </div>
   );
