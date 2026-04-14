@@ -2229,9 +2229,14 @@ function LocalMarketRealityCheck({
   const selectedDeal = deals.find(d => d.id === selectedDealId) ?? null;
 
   // Derive a location string from the deal for the MarketView API
+  // Prefer "City, State" — warn if city looks like a county name
   const dealLocation = selectedDeal
     ? [selectedDeal.city, selectedDeal.state].filter(Boolean).join(", ")
     : "";
+
+  const locationLooksLikeCounty = selectedDeal?.city
+    ? /county|parish|borough/i.test(selectedDeal.city)
+    : false;
 
   // Map NexTax industry key to MarketView category string
   function toMarketViewCategory(industry: string): string {
@@ -2289,28 +2294,22 @@ function LocalMarketRealityCheck({
         throw new Error(err.error || "Analysis failed");
       }
       const data = await res.json();
-
-      // DEBUG: remove after confirming field names are correct
-      console.log("[MarketCheck] Raw API response:", JSON.stringify(data.metrics ?? data, null, 2));
-
-      // Normalize field names — computeMetrics may return 'score' instead of
-      // 'saturationScore', and type counts may be top-level rather than nested.
-      const raw = data.metrics ?? data;
+      const m = data.metrics ?? data;
       const normalized: SaturationResult = {
-        saturationScore:    raw.saturationScore  ?? raw.score          ?? 0,
-        riskBand:           raw.riskBand         ?? raw.risk_band      ?? "",
-        totalCompetitors:   raw.totalCompetitors ?? raw.total          ?? 0,
-        directCompetitors:  raw.directCompetitors   ?? raw.direct      ?? 0,
-        indirectCompetitors: raw.indirectCompetitors ?? raw.indirect   ?? 0,
-        franchiseCount:     raw.franchiseCount   ?? raw.franchise      ?? 0,
-        densityPer10k:      raw.densityPer10k    ?? raw.density        ?? 0,
-        popPerCompetitor:   raw.popPerCompetitor ?? raw.popPerComp     ?? 0,
-        populationEstimate: raw.populationEstimate ?? raw.population   ?? 0,
+        saturationScore:     m.saturationScore    ?? 0,
+        riskBand:            m.riskBand           ?? "",
+        totalCompetitors:    m.totalCompetitors   ?? 0,
+        directCompetitors:   m.directCompetitors  ?? 0,
+        indirectCompetitors: m.indirectCompetitors ?? 0,
+        franchiseCount:      m.franchiseSiblings  ?? m.franchiseCount ?? 0,
+        densityPer10k:       m.densityPer10k      ?? 0,
+        popPerCompetitor:    m.popPerCompetitor   ?? 0,
+        populationEstimate:  m.populationEstimate ?? 0,
         typeBreakdown: {
-          direct:    raw.typeBreakdown?.direct    ?? raw.directCompetitors   ?? raw.direct   ?? 0,
-          indirect:  raw.typeBreakdown?.indirect  ?? raw.indirectCompetitors ?? raw.indirect ?? 0,
-          franchise: raw.typeBreakdown?.franchise ?? raw.franchiseCount      ?? raw.franchise ?? 0,
-          adjacent:  raw.typeBreakdown?.adjacent  ?? raw.adjacentCount       ?? raw.adjacent  ?? 0,
+          direct:    m.typeBreakdown?.direct    ?? 0,
+          indirect:  m.typeBreakdown?.indirect  ?? 0,
+          franchise: m.typeBreakdown?.franchise ?? 0,
+          adjacent:  m.typeBreakdown?.adjacent  ?? 0,
         },
       };
       setResult(normalized);
@@ -2477,19 +2476,36 @@ function LocalMarketRealityCheck({
 
           {/* Deal context pill */}
           {selectedDeal && (
-            <div style={{
-              display: "inline-flex", alignItems: "center", gap: 8,
-              padding: "5px 12px", borderRadius: 20, marginBottom: 16,
-              background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)",
-              fontSize: 11, color: "#6B7280",
-            }}>
-              <span style={{ color: "#818CF8" }}>{IL[selectedDeal.industry] || selectedDeal.industry}</span>
-              <span>·</span>
-              <span>{dealLocation}</span>
-              <span>·</span>
-              <span>{radius}mi radius</span>
-              <span>·</span>
-              <span style={{ fontFamily: "'JetBrains Mono',monospace" }}>{toMarketViewCategory(selectedDeal.industry)}</span>
+            <div style={{ marginBottom: 16 }}>
+              <div style={{
+                display: "inline-flex", alignItems: "center", gap: 8,
+                padding: "5px 12px", borderRadius: 20, marginBottom: 8,
+                background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)",
+                fontSize: 11, color: "#6B7280",
+              }}>
+                <span style={{ color: "#818CF8" }}>{IL[selectedDeal.industry] || selectedDeal.industry}</span>
+                <span>·</span>
+                <span>{dealLocation}</span>
+                <span>·</span>
+                <span>{radius}mi radius</span>
+                <span>·</span>
+                <span style={{ fontFamily: "'JetBrains Mono',monospace" }}>{toMarketViewCategory(selectedDeal.industry)}</span>
+              </div>
+              {locationLooksLikeCounty && (
+                <div style={{
+                  display: "flex", alignItems: "flex-start", gap: 7,
+                  padding: "8px 12px", borderRadius: 8,
+                  background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.18)",
+                  fontSize: 11, color: "#FBBF24", lineHeight: 1.5,
+                }}>
+                  <span style={{ flexShrink: 0 }}>⚠</span>
+                  <span>
+                    <strong>County-level location detected.</strong> MarketView works best with a specific city name.
+                    Results may show zero competitors if the geocoder can't resolve "{selectedDeal.city}" to a precise point.
+                    Edit your deal to add a city (e.g. "Orlando" instead of "Orange County") for accurate results.
+                  </span>
+                </div>
+              )}
             </div>
           )}
 
@@ -2520,6 +2536,23 @@ function LocalMarketRealityCheck({
           {/* Results */}
           {result && !loading && (
             <div style={{ animation: "fadeUp 0.3s ease-out" }}>
+
+              {/* Zero results warning */}
+              {result.totalCompetitors === 0 && (
+                <div style={{
+                  display: "flex", alignItems: "flex-start", gap: 8,
+                  padding: "10px 14px", borderRadius: 8, marginBottom: 14,
+                  background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.18)",
+                  fontSize: 12, color: "#FBBF24", lineHeight: 1.6,
+                }}>
+                  <span style={{ flexShrink: 0, marginTop: 1 }}>⚠</span>
+                  <span>
+                    <strong>Zero competitors returned.</strong> This usually means the location wasn't precise enough for the Places API,
+                    or the category didn't match any nearby listings. Try a deal with a specific city name, or verify
+                    the address resolves correctly in MarketView directly.
+                  </span>
+                </div>
+              )}
 
               {/* Score + gauge */}
               <div style={{
