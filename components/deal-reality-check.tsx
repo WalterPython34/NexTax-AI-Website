@@ -785,7 +785,7 @@ const recordDeal = async (
         <h1 style={{ fontSize: "clamp(28px, 5vw, 42px)", fontWeight: 600, margin: "0 0 10px", fontFamily: "'Inter Tight', sans-serif", letterSpacing: "-0.02em", color: "#F1F5F9", lineHeight: 1.1 }}>
           Deal Reality Check
         </h1>
-        <p style={{ fontSize: 15, color: "#8896A6", maxWidth: 520, margin: "0 0 10px", lineHeight: 1.65, fontFamily: "'Inter', sans-serif", fontWeight: 400, opacity: 0.85 }}>
+        <p style={{ fontSize: 15, color: "#8896A6", maxWidth: 520, margin: "0 auto 10px", lineHeight: 1.65, fontFamily: "'Inter', sans-serif", fontWeight: 400, opacity: 0.85, textAlign: "center" }}>
           Paste a listing, drop a URL, upload a CIM, or enter numbers manually. AI extracts the financials and runs a full valuation screening instantly.
         </p>
       </div>
