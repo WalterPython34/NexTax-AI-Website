@@ -197,7 +197,39 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }
 
-    return NextResponse.json({ success: true, cluster_id, fingerprint, is_valid });
+    // Fetch the inserted row so callers get the full scored deal object back.
+    // This powers the AnalyzeDealModal instant results display + dashboard state update.
+    const { data: inserted } = await supabaseAdmin
+      .from("deal_runs")
+      .select(
+        "id, tool_used, industry, asking_price, fair_value, valuation_multiple, " +
+        "dscr, overall_score, risk_level, city, state, created_at, confidence_grade, " +
+        "revenue, sde, red_flags, green_flags, recommended_offer_low, recommended_offer_high, " +
+        "valuation_score, debt_score, market_score, industry_score, monthly_payment, " +
+        "interest_rate, term_years, debt_percent"
+      )
+      .eq("fingerprint", fingerprint)
+      .eq("industry", industry)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .single();
+
+    // Derive gap_pct and signal for immediate UI use
+    const gap_pct = inserted?.fair_value && inserted.fair_value > 0
+      ? Math.round(((inserted.asking_price - inserted.fair_value) / inserted.fair_value) * 100)
+      : 0;
+    const signal =
+      gap_pct > 10  ? "overpriced" :
+      gap_pct < -5  ? "opportunity" :
+      "fair";
+
+    return NextResponse.json({
+      success: true,
+      cluster_id,
+      fingerprint,
+      is_valid,
+      deal: inserted ? { ...inserted, gap_pct, signal } : null,
+    });
   } catch (error) {
     console.error("Record deal error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
