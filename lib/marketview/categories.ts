@@ -5,8 +5,15 @@ import { CategoryMapping } from "@/types/marketview";
 // ===========================================
 // Each category maps to the correct Google Places types,
 // Yelp categories, and industry-specific revenue multipliers.
+//
+// Original: 20 categories
+// Added:    23 categories covering remaining NexTax industries
+// Total:    43 categories
 
 export const CATEGORY_MAPPINGS: Record<string, CategoryMapping> = {
+
+  // ─── ORIGINAL 20 (unchanged) ─────────────────────────────────────────────
+
   "Fitness / Gym": {
     label: "Fitness / Gym",
     googleTypes: ["gym", "health"],
@@ -166,6 +173,193 @@ export const CATEGORY_MAPPINGS: Record<string, CategoryMapping> = {
     keywords: ["real estate", "realty", "broker", "homes", "property"],
     revenueMultiplier: 4500,
     franchiseKeywords: ["RE/MAX", "Keller Williams", "Century 21", "Coldwell Banker", "eXp Realty", "Berkshire Hathaway"],
+  },
+
+  // ─── NEW: 23 NexTax industries ────────────────────────────────────────────
+
+  "Landscaping / Lawn Care": {
+    label: "Landscaping / Lawn Care",
+    googleTypes: ["general_contractor"],
+    yelpCategories: ["landscaping", "lawnservices", "irrigation", "treeservices", "snowremoval"],
+    keywords: ["landscaping", "lawn care", "lawn service", "tree service", "irrigation", "grounds"],
+    revenueMultiplier: 1400,
+    franchiseKeywords: ["TruGreen", "Lawn Doctor", "Spring-Green", "U.S. LawnsPlot Pros", "BrightView", "SavATree"],
+  },
+  "Car Wash": {
+    label: "Car Wash",
+    googleTypes: ["car_wash"],
+    yelpCategories: ["carwash", "auto_detailing"],
+    keywords: ["car wash", "auto wash", "detailing", "express wash", "tunnel wash"],
+    revenueMultiplier: 1300,
+    franchiseKeywords: ["Mister Car Wash", "Wash Depot", "Zips Car Wash", "Magnolia Car Wash", "Splash Car Wash", "Quick Quack"],
+  },
+  "Roofing / Exterior": {
+    label: "Roofing / Exterior",
+    googleTypes: ["roofing_contractor", "general_contractor"],
+    yelpCategories: ["roofing", "siding", "gutters"],
+    keywords: ["roofing", "roof repair", "shingles", "gutter", "siding", "exterior"],
+    revenueMultiplier: 2000,
+    franchiseKeywords: ["USA Roofing", "Tecta America", "Nation's Roof", "CentiMark", "WeatherTech Roofing"],
+  },
+  "Pharmacy / Compounding": {
+    label: "Pharmacy / Compounding",
+    googleTypes: ["pharmacy"],
+    yelpCategories: ["pharmacy", "drugstores"],
+    keywords: ["pharmacy", "drug store", "compounding", "prescription", "apothecary"],
+    revenueMultiplier: 3800,
+    franchiseKeywords: ["CVS", "Walgreens", "Rite Aid", "Walmart Pharmacy", "Costco Pharmacy", "Good Neighbor Pharmacy"],
+  },
+  "Electrical Services": {
+    label: "Electrical Services",
+    googleTypes: ["electrician"],
+    yelpCategories: ["electricians", "solar_installation", "evcharging"],
+    keywords: ["electrical", "electrician", "wiring", "panel", "solar"],
+    revenueMultiplier: 2600,
+    franchiseKeywords: ["Mr. Electric", "Mister Sparky", "Handyman Connection", "Facility Solutions Group"],
+  },
+  "Home Health / Healthcare": {
+    label: "Home Health / Healthcare",
+    googleTypes: ["doctor", "health"],
+    yelpCategories: ["homehealthcare", "hospice", "medicaltransport", "familypractice"],
+    keywords: ["home health", "healthcare", "medical", "nursing", "home care"],
+    revenueMultiplier: 3500,
+    franchiseKeywords: ["BrightSpring", "Amedisys", "LHC Group", "AccentCare", "Encompass Health"],
+  },
+  "Transportation / Logistics": {
+    label: "Transportation / Logistics",
+    googleTypes: ["moving_company", "storage"],
+    yelpCategories: ["movers", "couriers", "transport", "limos", "taxis"],
+    keywords: ["transportation", "logistics", "moving", "freight", "courier", "trucking"],
+    revenueMultiplier: 2000,
+    franchiseKeywords: ["Two Men and a Truck", "College Hunks", "1-800-GOT-JUNK", "PODS", "U-Haul", "Budget Truck"],
+  },
+  "Printing / Signage": {
+    label: "Printing / Signage",
+    googleTypes: ["store"],
+    yelpCategories: ["printing", "graphicdesign", "signmaking"],
+    keywords: ["printing", "signs", "signage", "graphics", "banners", "vinyl"],
+    revenueMultiplier: 1500,
+    franchiseKeywords: ["Minuteman Press", "AlphaGraphics", "Signarama", "FastSigns", "Sir Speedy", "Image 360"],
+  },
+  "Self-Storage": {
+    label: "Self-Storage",
+    googleTypes: ["storage"],
+    yelpCategories: ["selfstorage", "storage"],
+    keywords: ["storage", "self storage", "mini storage", "climate controlled", "storage units"],
+    revenueMultiplier: 2200,
+    franchiseKeywords: ["Public Storage", "Extra Space Storage", "CubeSmart", "Life Storage", "U-Haul Storage", "StorageMart"],
+  },
+  "Painting / Coatings": {
+    label: "Painting / Coatings",
+    googleTypes: ["painter"],
+    yelpCategories: ["painters", "epoxy_flooring"],
+    keywords: ["painting", "painter", "interior painting", "exterior painting", "epoxy", "coatings"],
+    revenueMultiplier: 1600,
+    franchiseKeywords: ["CertaPro Painters", "Five Star Painting", "Fresh Coat", "Wow 1 Day Painting", "N-Hance"],
+  },
+  "Security / Alarm Services": {
+    label: "Security / Alarm Services",
+    googleTypes: ["locksmith", "store"],
+    yelpCategories: ["security", "alarms", "homesecurity", "locksmiths"],
+    keywords: ["security", "alarm", "surveillance", "cameras", "monitoring", "locksmith"],
+    revenueMultiplier: 2400,
+    franchiseKeywords: ["ADT", "Vivint", "SimpliSafe", "Brinks", "Guardian Alarm", "Protection 1"],
+  },
+  "Construction / General Contractor": {
+    label: "Construction / General Contractor",
+    googleTypes: ["general_contractor"],
+    yelpCategories: ["general_contractors", "contractors", "buildingsupplies"],
+    keywords: ["construction", "contractor", "builder", "remodeling", "renovation", "build"],
+    revenueMultiplier: 2500,
+    franchiseKeywords: ["DreamMaker", "Grounds Guys", "Paul Davis Restoration", "Servpro", "Rainbow International"],
+  },
+  "Engineering / Environmental": {
+    label: "Engineering / Environmental",
+    googleTypes: ["establishment"],
+    yelpCategories: ["environmental_abatement", "civil_engineering"],
+    keywords: ["engineering", "environmental", "civil", "structural", "consulting", "survey"],
+    revenueMultiplier: 4000,
+    franchiseKeywords: [],
+  },
+  "Grocery / Specialty Food": {
+    label: "Grocery / Specialty Food",
+    googleTypes: ["grocery_or_supermarket", "supermarket"],
+    yelpCategories: ["grocery", "ethnic_grocery", "organicstores", "conveniencestores", "farmersmarket"],
+    keywords: ["grocery", "supermarket", "food store", "market", "deli", "specialty food"],
+    revenueMultiplier: 900,
+    franchiseKeywords: ["Whole Foods", "Trader Joe's", "Sprouts", "Aldi", "Lidl", "Fresh Market", "Natural Grocers"],
+  },
+  "Property Management": {
+    label: "Property Management",
+    googleTypes: ["real_estate_agency"],
+    yelpCategories: ["propertymgmt", "apartments", "realestate"],
+    keywords: ["property management", "property manager", "rental management", "HOA", "leasing"],
+    revenueMultiplier: 3500,
+    franchiseKeywords: ["Real Property Management", "HomeVestors", "Associa", "FirstService Residential"],
+  },
+  "Remodeling / Home Improvement": {
+    label: "Remodeling / Home Improvement",
+    googleTypes: ["general_contractor", "home_goods_store"],
+    yelpCategories: ["contractors", "kitchenremodeling", "bathroomremodeling", "flooring", "cabinetry"],
+    keywords: ["remodeling", "renovation", "kitchen remodel", "bathroom remodel", "home improvement"],
+    revenueMultiplier: 2200,
+    franchiseKeywords: ["DreamMaker Bath & Kitchen", "Bath Fitter", "Re-Bath", "Handyman Connection", "Mr. Handyman", "Case Design"],
+  },
+  "Senior Care / Assisted Living": {
+    label: "Senior Care / Assisted Living",
+    googleTypes: ["lodging", "health"],
+    yelpCategories: ["assistedliving", "seniorcenters", "homehealthcare", "hospice"],
+    keywords: ["senior care", "assisted living", "memory care", "nursing home", "elder care", "senior living"],
+    revenueMultiplier: 4500,
+    franchiseKeywords: ["Brookdale", "Sunrise Senior Living", "Atria", "Comfort Keepers", "Right at Home", "Home Instead", "Visiting Angels"],
+  },
+  "Staffing / Recruiting": {
+    label: "Staffing / Recruiting",
+    googleTypes: ["employment_agency"],
+    yelpCategories: ["employment", "staffingagencies", "careercounseling"],
+    keywords: ["staffing", "recruiting", "employment agency", "temp agency", "workforce", "placement"],
+    revenueMultiplier: 2800,
+    franchiseKeywords: ["Robert Half", "Kelly Services", "Manpower", "Adecco", "Express Employment", "Staffmark", "Spherion", "Insight Global"],
+  },
+  "Veterinary Practice": {
+    label: "Veterinary Practice",
+    googleTypes: ["veterinary_care"],
+    yelpCategories: ["veterinarians", "emergency_vets", "animalphysicaltherapy"],
+    keywords: ["veterinary", "vet", "animal hospital", "animal clinic", "pet hospital"],
+    revenueMultiplier: 3200,
+    franchiseKeywords: ["Banfield Pet Hospital", "VCA Animal Hospitals", "BluePearl", "National Veterinary Associates", "Thrive Pet Healthcare"],
+  },
+  "Marketing / Advertising Agency": {
+    label: "Marketing / Advertising Agency",
+    googleTypes: ["establishment"],
+    yelpCategories: ["advertising", "marketing", "seo", "graphicdesign", "webdesign"],
+    keywords: ["marketing", "advertising", "agency", "digital marketing", "SEO", "branding"],
+    revenueMultiplier: 3500,
+    franchiseKeywords: ["Piranha Marketing", "WSI", "Hibu", "Scorpion", "Thrive Agency"],
+  },
+  "Pest Control": {
+    label: "Pest Control",
+    googleTypes: ["establishment"],
+    yelpCategories: ["pestcontrol", "fumigation", "mosquitocontrol"],
+    keywords: ["pest control", "exterminator", "termite", "rodent", "fumigation"],
+    revenueMultiplier: 1800,
+    franchiseKeywords: ["Orkin", "Terminix", "Rentokil", "Ehrlich", "Western Pest Services", "Arrow Exterminators", "Anticimex"],
+  },
+  "Ecommerce / Fulfillment": {
+    label: "Ecommerce / Fulfillment",
+    googleTypes: ["storage", "moving_company"],
+    yelpCategories: ["fulfillmentservices", "warehousing", "shipping_centers"],
+    keywords: ["fulfillment", "ecommerce", "warehouse", "shipping", "3PL", "order fulfillment"],
+    revenueMultiplier: 2000,
+    franchiseKeywords: ["ShipBob", "Red Stag Fulfillment", "Whiplash", "ShipMonk"],
+  },
+  "SaaS / Software": {
+    label: "SaaS / Software",
+    googleTypes: ["establishment"],
+    yelpCategories: ["itservices", "softwaredev", "computerrepair"],
+    keywords: ["software", "SaaS", "technology", "app", "platform", "IT services"],
+    revenueMultiplier: 5000,
+    franchiseKeywords: [],
   },
 };
 
