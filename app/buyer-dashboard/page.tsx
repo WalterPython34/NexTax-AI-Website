@@ -2194,15 +2194,498 @@ function TabCompare({ deals, isPro }: { deals: DealRun[]; isPro: boolean }) {
   );
 }
 
+// ─── LOCAL MARKET REALITY CHECK ──────────────────────────────────────────────
+
+type SaturationResult = {
+  saturationScore: number;
+  riskBand: string;
+  totalCompetitors: number;
+  directCompetitors: number;
+  indirectCompetitors: number;
+  franchiseCount: number;
+  densityPer10k: number;
+  popPerCompetitor: number;
+  populationEstimate: number;
+  avgRating: number;
+  totalEstRevenue: number;
+  typeBreakdown: { direct: number; indirect: number; franchise: number; adjacent: number };
+};
+
+function LocalMarketRealityCheck({
+  deals, isPro,
+}: {
+  deals: DealRun[];
+  isPro: boolean;
+}) {
+  const [selectedDealId, setSelectedDealId] = useState<string>("");
+  const [radius, setRadius]                 = useState<number>(10);
+  const [loading, setLoading]               = useState(false);
+  const [result, setResult]                 = useState<SaturationResult | null>(null);
+  const [aiInsight, setAiInsight]           = useState<string>("");
+  const [error, setError]                   = useState<string>("");
+
+  const RADIUS_OPTIONS = [5, 10, 15, 25];
+
+  const selectedDeal = deals.find(d => d.id === selectedDealId) ?? null;
+
+  // Derive a location string from the deal for the MarketView API
+  const dealLocation = selectedDeal
+    ? [selectedDeal.city, selectedDeal.state].filter(Boolean).join(", ")
+    : "";
+
+  // Map NexTax industry key to MarketView category string
+  function toMarketViewCategory(industry: string): string {
+    const map: Record<string, string> = {
+      gym:             "Fitness / Gym",
+      autorepair:      "Auto Repair",
+      restaurant:      "Restaurant",
+      dental:          "Dental Practice",
+      hvac:            "HVAC",
+      landscaping:     "Landscaping",
+      cleaning:        "Cleaning Service",
+      plumbing:        "Plumbing",
+      roofing:         "Roofing",
+      petcare:         "Pet Care",
+      pharmacy:        "Pharmacy",
+      daycare:         "Daycare / Childcare",
+      medspa:          "Med Spa",
+      accounting:      "Accounting / CPA",
+      electrical:      "Electrical",
+      carwash:         "Car Wash",
+      laundromat:      "Laundromat",
+      painting:        "Painting",
+      pestcontrol:     "Pest Control",
+      hairsalon:       "Hair Salon",
+      veterinary:      "Veterinary",
+      remodeling:      "Remodeling / Contractor",
+      physicaltherapy: "Physical Therapy",
+      insurance:       "Insurance Agency",
+      marketing:       "Marketing Agency",
+      staffing:        "Staffing Agency",
+      seniorcare:      "Senior Care",
+      storage:         "Self-Storage",
+    };
+    return map[industry] ?? IL[industry] ?? industry;
+  }
+
+  async function runCheck() {
+    if (!selectedDeal || !dealLocation) return;
+    setLoading(true);
+    setResult(null);
+    setAiInsight("");
+    setError("");
+    try {
+      const res = await fetch("/api/marketview/analyze", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          address:  dealLocation,
+          category: toMarketViewCategory(selectedDeal.industry),
+          radius,
+        }),
+      });
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || "Analysis failed");
+      }
+      const data = await res.json();
+      setResult(data.metrics);
+      setAiInsight(data.aiInsight ?? "");
+    } catch (err) {
+      setError((err as Error).message);
+    }
+    setLoading(false);
+  }
+
+  // Saturation color scale
+  function satColor(score: number) {
+    if (score >= 75) return "#EF4444";
+    if (score >= 55) return "#F97316";
+    if (score >= 35) return "#F59E0B";
+    return "#10B981";
+  }
+
+  function satLabel(score: number) {
+    if (score >= 75) return "Critical";
+    if (score >= 55) return "High";
+    if (score >= 35) return "Moderate";
+    return "Low";
+  }
+
+  // Simple inline gauge bar
+  function GaugeBar({ score }: { score: number }) {
+    const col = satColor(score);
+    return (
+      <div style={{ marginBottom: 6 }}>
+        <div style={{
+          height: 8, borderRadius: 4,
+          background: "rgba(255,255,255,0.06)",
+          overflow: "hidden", position: "relative",
+        }}>
+          {/* Gradient track */}
+          <div style={{
+            position: "absolute", inset: 0,
+            background: "linear-gradient(90deg, #10B981 0%, #F59E0B 40%, #F97316 70%, #EF4444 100%)",
+            opacity: 0.25,
+          }} />
+          {/* Fill */}
+          <div style={{
+            height: "100%", width: `${score}%`,
+            background: col, borderRadius: 4,
+            transition: "width 1s ease",
+          }} />
+        </div>
+        <div style={{ display: "flex", justifyContent: "space-between", marginTop: 3 }}>
+          {["Low", "Moderate", "High", "Critical"].map(l => (
+            <span key={l} style={{ fontSize: 9, color: "#2D3748" }}>{l}</span>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  const selStyle: React.CSSProperties = {
+    padding: "8px 12px", borderRadius: 8,
+    border: "1px solid rgba(255,255,255,0.09)",
+    background: "rgba(255,255,255,0.03)",
+    color: "#E2E8F0", fontSize: 13, outline: "none",
+    cursor: "pointer", appearance: "none" as any, width: "100%",
+  };
+
+  return (
+    <div style={{ marginBottom: 28 }}>
+      <SectionHeader
+        title="Local Market Reality Check"
+        sub="Competitive density analysis powered by MarketView"
+        action={<ProBadge />}
+      />
+
+      {/* Free gate */}
+      {!isPro ? (
+        <Card style={{ position: "relative" }}>
+          <LockOverlay label="Upgrade to Pro to run local market saturation checks" />
+          <div style={{ opacity: 0.15 }}>
+            {/* Ghost UI */}
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr auto", gap: 10, marginBottom: 14 }}>
+              <div style={{ height: 38, borderRadius: 8, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }} />
+              <div style={{ height: 38, borderRadius: 8, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }} />
+              <div style={{ height: 38, width: 140, borderRadius: 8, background: "rgba(59,130,246,0.15)" }} />
+            </div>
+            <div style={{ height: 140, borderRadius: 10, background: "rgba(255,255,255,0.02)" }} />
+          </div>
+        </Card>
+      ) : (
+        <Card>
+          {/* Controls */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr auto auto", gap: 10, alignItems: "flex-end", marginBottom: 16 }}>
+            {/* Deal selector */}
+            <div>
+              <div style={{ fontSize: 10, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600, marginBottom: 6 }}>
+                Select Deal
+              </div>
+              <select
+                value={selectedDealId}
+                onChange={(e) => { setSelectedDealId(e.target.value); setResult(null); setAiInsight(""); }}
+                style={selStyle}
+              >
+                <option value="">Choose a deal...</option>
+                {deals
+                  .filter(d => d.city || d.state)
+                  .map(d => (
+                    <option key={d.id} value={d.id}>
+                      {IL[d.industry] || d.industry}
+                      {d.city ? ` — ${d.city}` : ""}
+                      {d.state ? `, ${d.state}` : ""}
+                    </option>
+                  ))
+                }
+              </select>
+              {deals.filter(d => !d.city && !d.state).length > 0 && (
+                <div style={{ fontSize: 10, color: "#374151", marginTop: 4 }}>
+                  {deals.filter(d => !d.city && !d.state).length} deal(s) hidden — no location data
+                </div>
+              )}
+            </div>
+
+            {/* Radius selector */}
+            <div>
+              <div style={{ fontSize: 10, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600, marginBottom: 6 }}>
+                Radius
+              </div>
+              <div style={{ display: "flex", gap: 4 }}>
+                {RADIUS_OPTIONS.map(r => (
+                  <button
+                    key={r}
+                    onClick={() => setRadius(r)}
+                    style={{
+                      padding: "8px 10px", borderRadius: 7, border: "none",
+                      background: radius === r ? "rgba(99,102,241,0.18)" : "rgba(255,255,255,0.04)",
+                      color: radius === r ? "#C4B5FD" : "#4B5563",
+                      fontSize: 12, fontWeight: radius === r ? 600 : 400,
+                      cursor: "pointer", fontFamily: "'JetBrains Mono',monospace",
+                    }}
+                  >
+                    {r}mi
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Run button */}
+            <button
+              onClick={runCheck}
+              disabled={!selectedDealId || loading}
+              style={{
+                padding: "9px 20px", borderRadius: 8, border: "none",
+                background: selectedDealId && !loading
+                  ? "linear-gradient(135deg,#3B82F6,#6366F1)"
+                  : "rgba(255,255,255,0.05)",
+                color: selectedDealId && !loading ? "#fff" : "#374151",
+                fontSize: 13, fontWeight: 600,
+                cursor: selectedDealId && !loading ? "pointer" : "not-allowed",
+                whiteSpace: "nowrap" as any,
+                alignSelf: "flex-end",
+              }}
+            >
+              {loading ? "Analyzing..." : "Run Check →"}
+            </button>
+          </div>
+
+          {/* Deal context pill */}
+          {selectedDeal && (
+            <div style={{
+              display: "inline-flex", alignItems: "center", gap: 8,
+              padding: "5px 12px", borderRadius: 20, marginBottom: 16,
+              background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)",
+              fontSize: 11, color: "#6B7280",
+            }}>
+              <span style={{ color: "#818CF8" }}>{IL[selectedDeal.industry] || selectedDeal.industry}</span>
+              <span>·</span>
+              <span>{dealLocation}</span>
+              <span>·</span>
+              <span>{radius}mi radius</span>
+              <span>·</span>
+              <span style={{ fontFamily: "'JetBrains Mono',monospace" }}>{toMarketViewCategory(selectedDeal.industry)}</span>
+            </div>
+          )}
+
+          {/* Error */}
+          {error && (
+            <div style={{
+              padding: "10px 14px", borderRadius: 8, marginBottom: 14,
+              background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)",
+              color: "#FCA5A5", fontSize: 13,
+            }}>
+              {error}
+            </div>
+          )}
+
+          {/* Loading state */}
+          {loading && (
+            <div style={{ display: "flex", flexDirection: "column", gap: 8, padding: "8px 0" }}>
+              <div style={{ fontSize: 11, color: "#374151", marginBottom: 4 }}>
+                Geocoding → Pulling competitors → AI classification → Computing metrics...
+              </div>
+              <Skel h={10} w="70%" />
+              <Skel h={10} w="50%" />
+              <Skel h={10} w="85%" />
+              <Skel h={90} />
+            </div>
+          )}
+
+          {/* Results */}
+          {result && !loading && (
+            <div style={{ animation: "fadeUp 0.3s ease-out" }}>
+
+              {/* Score + gauge */}
+              <div style={{
+                display: "grid", gridTemplateColumns: "180px 1fr", gap: 20,
+                padding: "16px 18px", borderRadius: 12, marginBottom: 16,
+                background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
+              }}>
+                <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center" }}>
+                  <div style={{
+                    fontSize: 52, fontWeight: 800, lineHeight: 1,
+                    color: satColor(result.saturationScore),
+                    fontFamily: "'Inter Tight',sans-serif", letterSpacing: "-0.04em",
+                    marginBottom: 6,
+                  }}>
+                    {result.saturationScore}
+                  </div>
+                  <div style={{ fontSize: 10, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>
+                    / 100
+                  </div>
+                  <span style={{
+                    display: "inline-block", padding: "3px 10px", borderRadius: 20,
+                    background: `${satColor(result.saturationScore)}22`,
+                    border: `1px solid ${satColor(result.saturationScore)}44`,
+                    fontSize: 11, fontWeight: 700,
+                    color: satColor(result.saturationScore),
+                    textTransform: "uppercase" as any, letterSpacing: "0.06em",
+                  }}>
+                    {satLabel(result.saturationScore)} Saturation
+                  </span>
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                  <GaugeBar score={result.saturationScore} />
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px 16px", marginTop: 10 }}>
+                    {[
+                      { label: "Total Competitors", value: String(result.totalCompetitors) },
+                      { label: "Density / 10K Pop", value: result.densityPer10k.toFixed(2) },
+                      { label: "Pop / Competitor",  value: result.popPerCompetitor.toLocaleString() },
+                      { label: "Est. Population",   value: `~${(result.populationEstimate / 1000).toFixed(0)}K` },
+                    ].map(m => (
+                      <div key={m.label}>
+                        <div style={{ fontSize: 9, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 2 }}>{m.label}</div>
+                        <div style={{ fontSize: 15, fontWeight: 700, color: "#E2E8F0", fontFamily: "'JetBrains Mono',monospace" }}>{m.value}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Competitor breakdown */}
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ fontSize: 10, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600, marginBottom: 10 }}>
+                  Competitor Breakdown
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8 }}>
+                  {[
+                    { label: "Direct",    value: result.typeBreakdown.direct,    color: "#EF4444", bg: "rgba(239,68,68,0.08)"   },
+                    { label: "Indirect",  value: result.typeBreakdown.indirect,  color: "#F59E0B", bg: "rgba(245,158,11,0.08)"  },
+                    { label: "Franchise", value: result.typeBreakdown.franchise, color: "#8B5CF6", bg: "rgba(139,92,246,0.08)"  },
+                    { label: "Adjacent",  value: result.typeBreakdown.adjacent,  color: "#6B7280", bg: "rgba(107,114,128,0.08)" },
+                  ].map(b => (
+                    <div
+                      key={b.label}
+                      style={{
+                        padding: "12px 14px", borderRadius: 10,
+                        background: b.bg,
+                        border: `1px solid ${b.color}22`,
+                        textAlign: "center",
+                      }}
+                    >
+                      <div style={{ fontSize: 24, fontWeight: 700, color: b.color, fontFamily: "'JetBrains Mono',monospace", lineHeight: 1, marginBottom: 4 }}>
+                        {b.value}
+                      </div>
+                      <div style={{ fontSize: 10, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                        {b.label}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Market density bar */}
+              <div style={{
+                padding: "12px 14px", borderRadius: 10, marginBottom: 16,
+                background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
+              }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
+                  <span style={{ fontSize: 10, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600 }}>
+                    Market Density Pressure
+                  </span>
+                  <span style={{ fontSize: 11, color: "#6B7280", fontFamily: "'JetBrains Mono',monospace" }}>
+                    {result.densityPer10k.toFixed(2)} per 10K · {result.popPerCompetitor.toLocaleString()} pop/comp
+                  </span>
+                </div>
+                {/* Segmented bar */}
+                {result.totalCompetitors > 0 && (
+                  <div style={{ display: "flex", height: 10, borderRadius: 5, overflow: "hidden", gap: 1 }}>
+                    {[
+                      { pct: result.typeBreakdown.direct    / result.totalCompetitors, color: "#EF4444" },
+                      { pct: result.typeBreakdown.indirect  / result.totalCompetitors, color: "#F59E0B" },
+                      { pct: result.typeBreakdown.franchise / result.totalCompetitors, color: "#8B5CF6" },
+                      { pct: result.typeBreakdown.adjacent  / result.totalCompetitors, color: "#6B7280" },
+                    ].filter(s => s.pct > 0).map((seg, i) => (
+                      <div
+                        key={i}
+                        style={{
+                          height: "100%",
+                          width: `${seg.pct * 100}%`,
+                          background: seg.color,
+                          borderRadius: i === 0 ? "5px 0 0 5px" : i === 3 ? "0 5px 5px 0" : 0,
+                        }}
+                      />
+                    ))}
+                  </div>
+                )}
+                <div style={{ display: "flex", gap: 12, marginTop: 6 }}>
+                  {[
+                    { label: "Direct",    color: "#EF4444" },
+                    { label: "Indirect",  color: "#F59E0B" },
+                    { label: "Franchise", color: "#8B5CF6" },
+                    { label: "Adjacent",  color: "#6B7280" },
+                  ].map(l => (
+                    <div key={l.label} style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                      <div style={{ width: 8, height: 8, borderRadius: "50%", background: l.color }} />
+                      <span style={{ fontSize: 10, color: "#4B5563" }}>{l.label}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* AI Plain-English Interpretation */}
+              {aiInsight && (
+                <div style={{
+                  padding: "14px 16px", borderRadius: 10,
+                  background: "linear-gradient(135deg,rgba(99,102,241,0.06),rgba(139,92,246,0.04))",
+                  border: "1px solid rgba(99,102,241,0.15)",
+                }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
+                    <span style={{ fontSize: 12 }}>◈</span>
+                    <span style={{ fontSize: 10, color: "#818CF8", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 700 }}>
+                      AI Market Interpretation
+                    </span>
+                  </div>
+                  <p style={{
+                    fontSize: 13, lineHeight: 1.7,
+                    color: "rgba(255,255,255,0.75)", margin: 0,
+                    // Strip any markdown bold markers from MarketView output
+                    whiteSpace: "pre-wrap" as any,
+                  }}>
+                    {aiInsight.replace(/\*\*/g, "")}
+                  </p>
+                </div>
+              )}
+
+              {/* Link to full MarketView tool */}
+              <div style={{ marginTop: 12, textAlign: "right" }}>
+                <a
+                  href="/marketview"
+                  style={{
+                    fontSize: 11, color: "#6366F1", textDecoration: "none",
+                    fontWeight: 500,
+                  }}
+                >
+                  Open full MarketView tool →
+                </a>
+              </div>
+            </div>
+          )}
+
+          {/* Empty state — no deal selected yet */}
+          {!result && !loading && !error && (
+            <div style={{ textAlign: "center", padding: "24px 0", color: "#374151", fontSize: 13 }}>
+              Select a deal above and choose a radius to run a local market saturation check.
+            </div>
+          )}
+        </Card>
+      )}
+    </div>
+  );
+}
+
 // ─── TAB: MARKET INTEL ───────────────────────────────────────────────────────
 
 function TabMarketIntel({
-  dri, trending, loading, isPro,
+  dri, trending, loading, isPro, deals,
 }: {
   dri: DriSnapshot[];
   trending: TrendingMultiple[];
   loading: boolean;
   isPro: boolean;
+  deals: DealRun[];
 }) {
   const overpriced  = [...dri].sort((a, b) => (b.gap_pct ?? 0) - (a.gap_pct ?? 0)).slice(0, 6);
   const undervalued = [...dri].sort((a, b) => (a.gap_pct ?? 0) - (b.gap_pct ?? 0)).slice(0, 6);
@@ -2403,6 +2886,9 @@ function TabMarketIntel({
           </div>
         </Card>
       </div>
+
+      {/* Local Market Reality Check */}
+      <LocalMarketRealityCheck deals={deals} isPro={isPro} />
 
       <div style={{ textAlign: "center" }}>
         <a
@@ -2802,7 +3288,7 @@ export default function BuyerDashboard() {
               <TabCompare deals={deals} isPro={isPro} />
             )}
             {activeTab === "market-intel" && (
-              <TabMarketIntel dri={dri} trending={trending} loading={loadingMkt} isPro={isPro} />
+              <TabMarketIntel dri={dri} trending={trending} loading={loadingMkt} isPro={isPro} deals={deals} />
             )}
           </div>
         </div>
