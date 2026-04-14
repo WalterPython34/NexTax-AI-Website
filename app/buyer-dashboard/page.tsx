@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect, useCallback } from "react";
 import { createClient } from "@supabase/supabase-js";
+import { CATEGORIES } from "@/lib/marketview/categories";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -2228,50 +2229,86 @@ function LocalMarketRealityCheck({
 
   const selectedDeal = deals.find(d => d.id === selectedDealId) ?? null;
 
-  // Derive a location string from the deal for the MarketView API
-  // Prefer "City, State" — warn if city looks like a county name
-  const dealLocation = selectedDeal
-    ? [selectedDeal.city, selectedDeal.state].filter(Boolean).join(", ")
-    : "";
+  // Derive a location string from the deal for the MarketView API.
+  // For county-level city fields, we format as "Orange County, FL, USA" which
+  // Google Geocoding API resolves reliably to a county centroid.
+  const dealLocation = (() => {
+    if (!selectedDeal) return "";
+    const city  = selectedDeal.city  ?? "";
+    const state = selectedDeal.state ?? "";
+    if (!city && !state) return "";
+    // If it looks like a county, format explicitly so Google resolves it correctly
+    const isCounty = /county|parish|borough/i.test(city);
+    const parts = [city, state].filter(Boolean);
+    return isCounty ? `${parts.join(", ")}, USA` : parts.join(", ");
+  })();
 
   const locationLooksLikeCounty = selectedDeal?.city
     ? /county|parish|borough/i.test(selectedDeal.city)
     : false;
 
-  // Map NexTax industry key to MarketView category string
+  const [categoryOverride, setCategoryOverride] = useState<string>("");
+
+  // Reset override when deal changes
+  useEffect(() => { setCategoryOverride(""); }, [selectedDealId]);
+
+  // Map NexTax industry key → best matching MarketView category string.
+  // Falls back to fuzzy substring match against CATEGORIES if no exact entry.
   function toMarketViewCategory(industry: string): string {
     const map: Record<string, string> = {
       gym:             "Fitness / Gym",
-      autorepair:      "Auto Repair",
-      restaurant:      "Restaurant",
+      restaurant:      "Restaurant / Fast Casual",
+      autorepair:      "Auto Repair / Service",
       dental:          "Dental Practice",
-      hvac:            "HVAC",
-      landscaping:     "Landscaping",
-      cleaning:        "Cleaning Service",
-      plumbing:        "Plumbing",
-      roofing:         "Roofing",
-      petcare:         "Pet Care",
-      pharmacy:        "Pharmacy",
-      daycare:         "Daycare / Childcare",
-      medspa:          "Med Spa",
-      accounting:      "Accounting / CPA",
-      electrical:      "Electrical",
-      carwash:         "Car Wash",
-      laundromat:      "Laundromat",
-      painting:        "Painting",
-      pestcontrol:     "Pest Control",
-      hairsalon:       "Hair Salon",
-      veterinary:      "Veterinary",
-      remodeling:      "Remodeling / Contractor",
-      physicaltherapy: "Physical Therapy",
+      medspa:          "Med Spa / Aesthetics",
+      hairsalon:       "Hair Salon / Barbershop",
+      daycare:         "Childcare / Daycare",
+      petcare:         "Pet Services / Grooming",
+      cleaning:        "Cleaning / Janitorial",
+      hvac:            "HVAC / Plumbing",
+      plumbing:        "HVAC / Plumbing",
+      accounting:      "Accounting / Tax Services",
+      physicaltherapy: "Physical Therapy / Chiropractic",
+      laundromat:      "Laundromat / Dry Cleaning",
       insurance:       "Insurance Agency",
-      marketing:       "Marketing Agency",
-      staffing:        "Staffing Agency",
-      seniorcare:      "Senior Care",
+      realestatebrok:  "Real Estate Brokerage",
+      landscaping:     "Landscaping / Lawn Care",
+      carwash:         "Car Wash",
+      roofing:         "Roofing / Exterior",
+      pharmacy:        "Pharmacy / Compounding",
+      electrical:      "Electrical Services",
+      healthcare:      "Home Health / Healthcare",
+      transportation:  "Transportation / Logistics",
+      printing:        "Printing / Signage",
+      signmaking:      "Printing / Signage",
       storage:         "Self-Storage",
+      painting:        "Painting / Coatings",
+      security:        "Security / Alarm Services",
+      construction:    "Construction / General Contractor",
+      engineering:     "Engineering / Environmental",
+      grocery:         "Grocery / Specialty Food",
+      propertymanage:  "Property Management",
+      remodeling:      "Remodeling / Home Improvement",
+      seniorcare:      "Senior Care / Assisted Living",
+      staffing:        "Staffing / Recruiting",
+      veterinary:      "Veterinary Practice",
+      marketing:       "Marketing / Advertising Agency",
+      pestcontrol:     "Pest Control",
+      ecommerce:       "Ecommerce / Fulfillment",
+      saas:            "SaaS / Software",
     };
-    return map[industry] ?? IL[industry] ?? industry;
+    const mapped = map[industry];
+    if (mapped && CATEGORIES.includes(mapped)) return mapped;
+    const label = (IL[industry] || industry).toLowerCase();
+    const fuzzy = CATEGORIES.find(c =>
+      c.toLowerCase().includes(label) ||
+      label.includes(c.toLowerCase().split(" ")[0])
+    );
+    return fuzzy ?? mapped ?? IL[industry] ?? industry;
   }
+
+  // The category actually sent — user override takes priority
+  const effectiveCategory = categoryOverride || (selectedDeal ? toMarketViewCategory(selectedDeal.industry) : "");
 
   async function runCheck() {
     if (!selectedDeal || !dealLocation) return;
@@ -2285,7 +2322,7 @@ function LocalMarketRealityCheck({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           address:  dealLocation,
-          category: toMarketViewCategory(selectedDeal.industry),
+          category: effectiveCategory,
           radius,
         }),
       });
@@ -2474,6 +2511,27 @@ function LocalMarketRealityCheck({
             </button>
           </div>
 
+          {/* Controls row 2 — category override */}
+          {selectedDeal && (
+            <div style={{ marginBottom: 14 }}>
+              <div style={{ fontSize: 10, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600, marginBottom: 6 }}>
+                MarketView Category
+                <span style={{ marginLeft: 6, fontSize: 9, color: "#374151", fontWeight: 400, textTransform: "none" as any }}>
+                  Auto-mapped from industry — change if results look wrong
+                </span>
+              </div>
+              <select
+                value={categoryOverride || toMarketViewCategory(selectedDeal.industry)}
+                onChange={(e) => setCategoryOverride(e.target.value)}
+                style={{ ...selStyle, maxWidth: 320 }}
+              >
+                {CATEGORIES.map(c => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+            </div>
+          )}
+
           {/* Deal context pill */}
           {selectedDeal && (
             <div style={{ marginBottom: 16 }}>
@@ -2489,20 +2547,20 @@ function LocalMarketRealityCheck({
                 <span>·</span>
                 <span>{radius}mi radius</span>
                 <span>·</span>
-                <span style={{ fontFamily: "'JetBrains Mono',monospace" }}>{toMarketViewCategory(selectedDeal.industry)}</span>
+                <span style={{ fontFamily: "'JetBrains Mono',monospace", color: "#10B981" }}>{effectiveCategory}</span>
               </div>
               {locationLooksLikeCounty && (
                 <div style={{
                   display: "flex", alignItems: "flex-start", gap: 7,
                   padding: "8px 12px", borderRadius: 8,
-                  background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.18)",
-                  fontSize: 11, color: "#FBBF24", lineHeight: 1.5,
+                  background: "rgba(99,102,241,0.06)", border: "1px solid rgba(99,102,241,0.18)",
+                  fontSize: 11, color: "#A5B4FC", lineHeight: 1.5,
                 }}>
-                  <span style={{ flexShrink: 0 }}>⚠</span>
+                  <span style={{ flexShrink: 0 }}>ℹ</span>
                   <span>
-                    <strong>County-level location detected.</strong> MarketView works best with a specific city name.
-                    Results may show zero competitors if the geocoder can't resolve "{selectedDeal.city}" to a precise point.
-                    Edit your deal to add a city (e.g. "Orlando" instead of "Orange County") for accurate results.
+                    County-level location detected. Searching from the county centroid — results
+                    may be slightly less precise than a specific city. If you see zero competitors,
+                    try editing the deal to use the primary city name (e.g. "Orlando" instead of "Orange County").
                   </span>
                 </div>
               )}
