@@ -2289,7 +2289,31 @@ function LocalMarketRealityCheck({
         throw new Error(err.error || "Analysis failed");
       }
       const data = await res.json();
-      setResult(data.metrics);
+
+      // DEBUG: remove after confirming field names are correct
+      console.log("[MarketCheck] Raw API response:", JSON.stringify(data.metrics ?? data, null, 2));
+
+      // Normalize field names — computeMetrics may return 'score' instead of
+      // 'saturationScore', and type counts may be top-level rather than nested.
+      const raw = data.metrics ?? data;
+      const normalized: SaturationResult = {
+        saturationScore:    raw.saturationScore  ?? raw.score          ?? 0,
+        riskBand:           raw.riskBand         ?? raw.risk_band      ?? "",
+        totalCompetitors:   raw.totalCompetitors ?? raw.total          ?? 0,
+        directCompetitors:  raw.directCompetitors   ?? raw.direct      ?? 0,
+        indirectCompetitors: raw.indirectCompetitors ?? raw.indirect   ?? 0,
+        franchiseCount:     raw.franchiseCount   ?? raw.franchise      ?? 0,
+        densityPer10k:      raw.densityPer10k    ?? raw.density        ?? 0,
+        popPerCompetitor:   raw.popPerCompetitor ?? raw.popPerComp     ?? 0,
+        populationEstimate: raw.populationEstimate ?? raw.population   ?? 0,
+        typeBreakdown: {
+          direct:    raw.typeBreakdown?.direct    ?? raw.directCompetitors   ?? raw.direct   ?? 0,
+          indirect:  raw.typeBreakdown?.indirect  ?? raw.indirectCompetitors ?? raw.indirect ?? 0,
+          franchise: raw.typeBreakdown?.franchise ?? raw.franchiseCount      ?? raw.franchise ?? 0,
+          adjacent:  raw.typeBreakdown?.adjacent  ?? raw.adjacentCount       ?? raw.adjacent  ?? 0,
+        },
+      };
+      setResult(normalized);
       setAiInsight(data.aiInsight ?? "");
     } catch (err) {
       setError((err as Error).message);
@@ -2892,7 +2916,7 @@ function TabMarketIntel({
 
       <div style={{ textAlign: "center" }}>
         <a
-          href="/market-intelligence"
+          href="/marketview"
           style={{
             display: "inline-block", padding: "11px 24px", borderRadius: 10,
             border: "1px solid rgba(59,130,246,0.25)",
@@ -3060,7 +3084,6 @@ export default function BuyerDashboard() {
     const { data: bm } = await supabase
       .from("dealstats_benchmarks")
       .select("industry_key,median_multiple,sample_size")
-      .is("state", null)
       .eq("size_band", "mid")
       .order("sample_size", { ascending: false })
       .limit(12);
