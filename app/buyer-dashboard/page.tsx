@@ -121,6 +121,7 @@ const IL: Record<string, string> = {
   realestatebrok:  "Real Estate Brok.",
   remodeling:      "Remodeling",
   seniorcare:      "Senior Care",
+  gasstation:      "Gas Station",
   signmaking:      "Sign Mfg.",
   staffing:        "Staffing",
   veterinary:      "Veterinary",
@@ -1175,6 +1176,7 @@ const SCORE_INDUSTRIES: Record<string, {
   marketing:      { label:"Marketing Agency",     benchmarkLow:1.5, benchmarkMid:2.20, benchmarkHigh:3.0,  marginRange:[20,40], growth:"Growing",  riskFactor:0.80, demandScore:72, buyerInterestRank:6,  competitionLevel:"High"          },
   pestcontrol:    { label:"Pest Control",         benchmarkLow:1.8, benchmarkMid:2.50, benchmarkHigh:3.3,  marginRange:[20,35], growth:"Stable",   riskFactor:0.75, demandScore:76, buyerInterestRank:5,  competitionLevel:"Moderate"      },
   physicaltherapy:{ label:"Physical Therapy",     benchmarkLow:1.5, benchmarkMid:2.10, benchmarkHigh:2.8,  marginRange:[15,30], growth:"Stable",   riskFactor:0.70, demandScore:74, buyerInterestRank:6,  competitionLevel:"Low-Moderate"  },
+  gasstation:     { label:"Gas Station / C-Store", benchmarkLow:2.5, benchmarkMid:3.20, benchmarkHigh:4.5,  marginRange:[3,8],   growth:"Stable",   riskFactor:0.85, demandScore:58, buyerInterestRank:13, competitionLevel:"Moderate"      },
   signmaking:     { label:"Sign Mfg.",            benchmarkLow:1.5, benchmarkMid:2.00, benchmarkHigh:2.7,  marginRange:[15,30], growth:"Stable",   riskFactor:0.85, demandScore:60, buyerInterestRank:12, competitionLevel:"Moderate"      },
   hairsalon:      { label:"Hair Salon",           benchmarkLow:0.8, benchmarkMid:1.20, benchmarkHigh:1.8,  marginRange:[15,35], growth:"Stable",   riskFactor:0.90, demandScore:65, buyerInterestRank:10, competitionLevel:"High"          },
 };
