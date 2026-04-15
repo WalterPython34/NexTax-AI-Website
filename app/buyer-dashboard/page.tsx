@@ -3801,10 +3801,19 @@ function LocalMarketRealityCheck({
   }
 
   function satLabel(score: number) {
-    if (score >= 75) return "Critical";
-    if (score >= 55) return "High";
-    if (score >= 35) return "Moderate";
-    return "Low";
+    if (score >= 80) return "Saturated";
+    if (score >= 60) return "Competitive";
+    if (score >= 30) return "Balanced";
+    return "Underserved";
+  }
+
+  /** Short interpretation under the saturation score */
+  function satInterpretation(score: number, total: number): string {
+    if (total === 0) return "No competitors found. Try a larger radius or verify the address resolves to a populated area.";
+    if (score >= 80) return "Heavily contested. Established players dominate — new entry requires significant differentiation or an acquisition strategy.";
+    if (score >= 60) return "Competitive market with multiple active operators. Niche positioning and execution quality are the deciding factors.";
+    if (score >= 30) return "Moderate competition with room for disciplined operators. Market can support a well-run entrant.";
+    return "Underserved market with minimal organized competition. Strong first-mover window for a capitalized operator.";
   }
 
   // Simple inline gauge bar
@@ -3849,11 +3858,28 @@ function LocalMarketRealityCheck({
 
   return (
     <div style={{ marginBottom: 28 }}>
-      <SectionHeader
-        title="Local Market Reality Check"
-        sub="Competitive density analysis powered by MarketView"
-        action={<ProBadge />}
-      />
+      <div style={{ marginBottom: 14 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline" }}>
+          <div>
+            <h2 style={{
+              fontSize: 15, fontWeight: 700, margin: "0 0 3px",
+              fontFamily: "'Inter Tight',sans-serif", letterSpacing: "-0.02em", color: "#F1F5F9",
+              display: "flex", alignItems: "center", gap: 8,
+            }}>
+              Local Market Saturation Analysis
+              <span style={{
+                fontSize: 10, fontWeight: 600, color: "#10B981",
+                background: "rgba(16,185,129,0.12)", border: "1px solid rgba(16,185,129,0.3)",
+                padding: "2px 8px", borderRadius: 20, letterSpacing: "0.06em", textTransform: "uppercase" as any,
+              }}>Core Feature</span>
+            </h2>
+            <p style={{ fontSize: 11, color: "#4B5563", margin: 0 }}>
+              Local competitive density for your selected deal — answer "is this market worth entering?"
+            </p>
+          </div>
+          <ProBadge />
+        </div>
+      </div>
 
       {/* Free gate */}
       {!isPro ? (
@@ -3870,7 +3896,10 @@ function LocalMarketRealityCheck({
           </div>
         </Card>
       ) : (
-        <Card>
+        <Card style={{
+          border: "1px solid rgba(16,185,129,0.3)",
+          boxShadow: "0 0 24px rgba(16,185,129,0.08), 0 0 48px rgba(16,185,129,0.04), 0 4px 24px rgba(16,185,129,0.06)",
+        }}>
           {/* Controls */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr auto auto", gap: 10, alignItems: "flex-end", marginBottom: 16 }}>
             {/* Deal selector */}
@@ -4030,6 +4059,17 @@ function LocalMarketRealityCheck({
           {result && !loading && (
             <div style={{ animation: "fadeUp 0.3s ease-out" }}>
 
+              {/* Saturation interpretation — brief line under score */}
+              {result.totalCompetitors > 0 && (
+                <div style={{
+                  padding: "8px 12px", borderRadius: 8, marginBottom: 10,
+                  background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)",
+                  fontSize: 12, color: "#6B7280", lineHeight: 1.5,
+                }}>
+                  {satInterpretation(result.saturationScore, result.totalCompetitors)}
+                </div>
+              )}
+
               {/* Zero results warning */}
               {result.totalCompetitors === 0 && (
                 <div style={{
@@ -4073,10 +4113,15 @@ function LocalMarketRealityCheck({
                     color: satColor(result.saturationScore),
                     textTransform: "uppercase" as any, letterSpacing: "0.06em",
                   }}>
-                    {satLabel(result.saturationScore)} Saturation
+                    {satLabel(result.saturationScore)}
                   </span>
                 </div>
-                <div style={{ display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                {/* Score interpretation */}
+                <div style={{ fontSize: 11, color: "#6B7280", marginTop: 8, lineHeight: 1.5, textAlign: "center" as any }}>
+                  {satInterpretation(result.saturationScore, result.totalCompetitors)}
+                </div>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", justifyContent: "center" }}>
                   <GaugeBar score={result.saturationScore} />
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px 16px", marginTop: 10 }}>
                     {[
@@ -4097,7 +4142,7 @@ function LocalMarketRealityCheck({
               {/* Competitor breakdown */}
               <div style={{ marginBottom: 16 }}>
                 <div style={{ fontSize: 10, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600, marginBottom: 10 }}>
-                  Competitor Breakdown
+                  Competitive Mix
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8 }}>
                   {[
@@ -4175,29 +4220,60 @@ function LocalMarketRealityCheck({
                 </div>
               </div>
 
-              {/* AI Plain-English Interpretation */}
-              {aiInsight && (
-                <div style={{
-                  padding: "14px 16px", borderRadius: 10,
-                  background: "linear-gradient(135deg,rgba(99,102,241,0.06),rgba(139,92,246,0.04))",
-                  border: "1px solid rgba(99,102,241,0.15)",
-                }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 6, marginBottom: 8 }}>
-                    <span style={{ fontSize: 12 }}>◈</span>
-                    <span style={{ fontSize: 10, color: "#818CF8", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 700 }}>
-                      AI Market Interpretation
-                    </span>
+              {/* Structured insight blocks — parsed from AI output */}
+              {aiInsight && (() => {
+                // Parse AI paragraphs into 4 structured blocks
+                const clean  = aiInsight.replace(/\*\*/g, "").trim();
+                const paras  = clean.split(/\n{2,}/).map(p => p.trim()).filter(Boolean);
+
+                // Extract Recommendation line (starts with "Recommendation:")
+                const recIdx  = paras.findIndex(p => /^recommendation[:\s]/i.test(p));
+                const recPara = recIdx !== -1 ? paras[recIdx].replace(/^recommendation[:\s]*/i, "").trim() : null;
+                const bodyParas = paras.filter((_, i) => i !== recIdx).slice(0, 3);
+
+                // Assign blocks: Competitive Position, Opportunity Angle, Risk
+                const blockDefs = [
+                  { icon: "🏁", label: "Competitive Position", color: "#60A5FA" },
+                  { icon: "💡", label: "Opportunity Angle",    color: "#10B981" },
+                  { icon: "⚠️", label: "Risk",                 color: "#F59E0B" },
+                ];
+
+                return (
+                  <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+                    <div style={{ fontSize: 10, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600, marginBottom: 2 }}>
+                      Market Intelligence
+                    </div>
+                    {blockDefs.map((def, i) => {
+                      const text = bodyParas[i];
+                      if (!text) return null;
+                      return (
+                        <div key={def.label} style={{
+                          padding: "10px 13px", borderRadius: 9,
+                          background: "rgba(255,255,255,0.02)",
+                          border: "1px solid rgba(255,255,255,0.06)",
+                        }}>
+                          <div style={{ fontSize: 10, fontWeight: 700, color: def.color, textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4 }}>
+                            {def.icon} {def.label}
+                          </div>
+                          <div style={{ fontSize: 12, color: "#94A3B8", lineHeight: 1.6 }}>{text}</div>
+                        </div>
+                      );
+                    })}
+                    {recPara && (
+                      <div style={{
+                        padding: "10px 13px", borderRadius: 9,
+                        background: "rgba(16,185,129,0.05)",
+                        border: "1px solid rgba(16,185,129,0.15)",
+                      }}>
+                        <div style={{ fontSize: 10, fontWeight: 700, color: "#10B981", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4 }}>
+                          🎯 Recommendation
+                        </div>
+                        <div style={{ fontSize: 12, color: "#94A3B8", lineHeight: 1.6 }}>{recPara}</div>
+                      </div>
+                    )}
                   </div>
-                  <p style={{
-                    fontSize: 13, lineHeight: 1.7,
-                    color: "rgba(255,255,255,0.75)", margin: 0,
-                    // Strip any markdown bold markers from MarketView output
-                    whiteSpace: "pre-wrap" as any,
-                  }}>
-                    {aiInsight.replace(/\*\*/g, "")}
-                  </p>
-                </div>
-              )}
+                );
+              })()}
 
               {/* Link to full MarketView tool */}
               <div style={{ marginTop: 12, textAlign: "right" }}>
@@ -4237,225 +4313,395 @@ function TabMarketIntel({
   isPro: boolean;
   deals: DealRun[];
 }) {
-  const overpriced  = [...dri].sort((a, b) => (b.gap_pct ?? 0) - (a.gap_pct ?? 0)).slice(0, 6);
-  const undervalued = [...dri].sort((a, b) => (a.gap_pct ?? 0) - (b.gap_pct ?? 0)).slice(0, 6);
-  const avgDri      = dri.length
-    ? (dri.reduce((a, s) => a + (s.dri ?? 0), 0) / dri.length).toFixed(2)
-    : "—";
-  const totalListings = dri.reduce((a, s) => a + (s.deal_count ?? 0), 0);
+  // ── Derived metrics ──────────────────────────────────────────────────────
+  const overpricedList  = [...dri].sort((a, b) => (b.gap_pct ?? 0) - (a.gap_pct ?? 0)).slice(0, 6);
+  const opportunityList = [...dri]
+    .filter(s => condSig(s.condition) === "opportunity")
+    .sort((a, b) => (a.gap_pct ?? 0) - (b.gap_pct ?? 0))
+    .slice(0, 6);
+
+  const avgDri = dri.length
+    ? (dri.reduce((a, s) => a + (s.dri ?? 0), 0) / dri.length)
+    : null;
+
+  const overpricedCount = dri.filter(s => condSig(s.condition) === "overpriced").length;
+  const overpricedPct   = dri.length ? Math.round((overpricedCount / dri.length) * 100) : null;
+
+  const medianGap = dri.length
+    ? (() => {
+        const sorted = [...dri].map(s => s.gap_pct ?? 0).sort((a, b) => a - b);
+        const mid    = Math.floor(sorted.length / 2);
+        return sorted.length % 2 !== 0
+          ? sorted[mid]
+          : Math.round((sorted[mid - 1] + sorted[mid]) / 2);
+      })()
+    : null;
+
+  // Market condition label from DRI
+  const marketConditionLabel = avgDri === null ? "—"
+    : avgDri < 0.95 ? "Buyer-Favorable"
+    : avgDri < 1.05 ? "Balanced"
+    : avgDri < 1.20 ? "Slightly Seller-Favored"
+    : "Seller-Favored";
+
+  const marketConditionColor = avgDri === null ? "#4B5563"
+    : avgDri < 0.95 ? "#10B981"
+    : avgDri < 1.05 ? "#F59E0B"
+    : "#D85A30";
+
+  const marketInterpretation = avgDri === null ? ""
+    : avgDri < 0.95
+      ? "Most industries are pricing below market median — favorable conditions for disciplined buyers."
+    : avgDri < 1.05
+      ? "Pricing is broadly balanced. Deal quality and structure matter more than timing right now."
+    : avgDri < 1.20
+      ? "Buyers are paying above market in most sectors — pricing discipline and negotiation are critical."
+    : "Heavy seller favoritism across the market. Expect resistance on price and limited motivated sellers.";
 
   return (
     <div>
-      {/* KPI cards */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, marginBottom: 28 }}>
-        {[
-          { label: "Avg Market DRI",         value: avgDri,                            sub: "Deal Reality Index",      color: "#F59E0B" },
-          { label: "Active Listings Tracked", value: totalListings.toLocaleString(),    sub: "Across all industries",   color: "#60A5FA" },
-          { label: "Overpriced Industries",   value: String(dri.filter(s => condSig(s.condition) === "overpriced").length), sub: "Currently above median", color: "#D85A30" },
-        ].map(c => (
-          <div key={c.label} style={{
+
+      {/* ══ SECTION 1: MARKET CONDITIONS ══════════════════════════════════════ */}
+      <div style={{ marginBottom: 24 }}>
+        <SectionHeader
+          title="Current Market Conditions"
+          sub="Live signals across all tracked industries"
+        />
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10, marginBottom: 12 }}>
+          {/* Market Heat */}
+          <div style={{
             padding: "16px 18px", borderRadius: 12,
             background: "rgba(255,255,255,0.025)",
             border: "1px solid rgba(255,255,255,0.06)",
           }}>
-            <div style={{
-              fontSize: 10, color: "#4B5563", textTransform: "uppercase",
-              letterSpacing: "0.1em", fontWeight: 600, marginBottom: 8,
-            }}>
-              {c.label}
+            <div style={{ fontSize: 10, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: 600, marginBottom: 8 }}>
+              Market Heat (DRI)
+            </div>
+            {loading ? <Skel h={22} w={60} /> : (
+              <div style={{ fontSize: 26, fontWeight: 700, color: marketConditionColor, fontFamily: "'Inter Tight',sans-serif", letterSpacing: "-0.02em", marginBottom: 4 }}>
+                {avgDri !== null ? avgDri.toFixed(2) : "—"}
+              </div>
+            )}
+            <div style={{ fontSize: 11, color: marketConditionColor, fontWeight: 600 }}>{marketConditionLabel}</div>
+          </div>
+
+          {/* % Overpriced */}
+          <div style={{
+            padding: "16px 18px", borderRadius: 12,
+            background: "rgba(255,255,255,0.025)",
+            border: "1px solid rgba(255,255,255,0.06)",
+          }}>
+            <div style={{ fontSize: 10, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: 600, marginBottom: 8 }}>
+              Overpriced Industries
+            </div>
+            {loading ? <Skel h={22} w={60} /> : (
+              <div style={{ fontSize: 26, fontWeight: 700, color: "#D85A30", fontFamily: "'Inter Tight',sans-serif", letterSpacing: "-0.02em", marginBottom: 4 }}>
+                {overpricedPct !== null ? `${overpricedPct}%` : "—"}
+              </div>
+            )}
+            <div style={{ fontSize: 11, color: "#374151" }}>of tracked industries</div>
+          </div>
+
+          {/* Median pricing gap */}
+          <div style={{
+            padding: "16px 18px", borderRadius: 12,
+            background: "rgba(255,255,255,0.025)",
+            border: "1px solid rgba(255,255,255,0.06)",
+          }}>
+            <div style={{ fontSize: 10, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: 600, marginBottom: 8 }}>
+              Median Pricing Gap
             </div>
             {loading ? <Skel h={22} w={60} /> : (
               <div style={{
-                fontSize: 22, fontWeight: 700, color: c.color,
+                fontSize: 26, fontWeight: 700,
+                color: medianGap !== null && medianGap > 0 ? "#D85A30" : "#10B981",
                 fontFamily: "'Inter Tight',sans-serif", letterSpacing: "-0.02em", marginBottom: 4,
               }}>
-                {c.value}
+                {medianGap !== null ? `${medianGap > 0 ? "+" : ""}${medianGap}%` : "—"}
               </div>
             )}
-            <div style={{ fontSize: 11, color: "#374151" }}>{c.sub}</div>
+            <div style={{ fontSize: 11, color: "#374151" }}>vs market median</div>
           </div>
-        ))}
+        </div>
+
+        {/* Market interpretation line */}
+        {!loading && marketInterpretation && (
+          <div style={{
+            padding: "10px 14px", borderRadius: 9,
+            background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
+            fontSize: 13, color: "#94A3B8", lineHeight: 1.5,
+          }}>
+            {marketInterpretation}
+          </div>
+        )}
       </div>
 
-      {/* Most Overpriced + Best Opportunities */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 28 }}>
+      {/* ══ SECTION 2: WHERE THE MARKET IS MISPRICED ═══════════════════════════ */}
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 24 }}>
+
         {/* Most Overpriced */}
         <div>
-          <SectionHeader title="Most Overpriced" sub="Buyers paying above market — avoid or negotiate hard" />
+          <SectionHeader
+            title="Most Overpriced"
+            sub="Buyers consistently paying above market — negotiate aggressively"
+          />
           <Card style={{ padding: 0, overflow: "hidden" }}>
             <div style={{
-              display: "grid", gridTemplateColumns: "1fr 56px 100px",
+              display: "grid", gridTemplateColumns: "1fr auto",
               padding: "8px 16px", borderBottom: "1px solid rgba(255,255,255,0.05)",
               background: "rgba(255,255,255,0.01)",
             }}>
-              {["Industry", "Gap", "Signal"].map(h => (
-                <div key={h} style={{ fontSize: 10, color: "#374151", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600 }}>
-                  {h}
-                </div>
+              {["Industry", "Gap vs Market"].map(h => (
+                <div key={h} style={{ fontSize: 10, color: "#374151", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600 }}>{h}</div>
               ))}
             </div>
             {loading ? (
               <div style={{ padding: 16, display: "flex", flexDirection: "column", gap: 8 }}>
-                {[0, 1, 2, 3].map(i => <Skel key={i} h={28} />)}
+                {[0,1,2,3].map(i => <Skel key={i} h={32} />)}
               </div>
-            ) : overpriced.map((s, i) => {
-              const ss = sigCfg("overpriced");
-              return (
-                <div
-                  key={s.industry_key}
-                  style={{
-                    display: "grid", gridTemplateColumns: "1fr 56px 100px",
-                    padding: "10px 16px",
-                    borderBottom: i < overpriced.length - 1 ? "1px solid rgba(255,255,255,0.03)" : "none",
-                    background: i % 2 === 0 ? "rgba(216,90,48,0.02)" : "transparent",
-                    alignItems: "center",
-                  }}
-                >
-                  <div style={{ fontSize: 13, color: "#E2E8F0", fontWeight: 500 }}>
+            ) : overpricedList.map((s, i) => (
+              <div
+                key={s.industry_key}
+                style={{
+                  display: "grid", gridTemplateColumns: "1fr auto",
+                  padding: "10px 16px",
+                  borderBottom: i < overpricedList.length - 1 ? "1px solid rgba(255,255,255,0.03)" : "none",
+                  alignItems: "center",
+                }}
+              >
+                <div>
+                  <div style={{ fontSize: 12, color: "#E2E8F0", fontWeight: 500 }}>
                     {IL[s.industry_key] || s.industry_key}
                   </div>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: "#D85A30", fontFamily: "'JetBrains Mono',monospace" }}>
-                    +{(s.gap_pct ?? 0).toFixed(0)}%
+                  <div style={{ fontSize: 10, color: "#D85A30", marginTop: 1 }}>
+                    +{(s.gap_pct ?? 0).toFixed(0)}% above median (buyers overpaying)
                   </div>
-                  <span style={{
-                    display: "inline-flex", alignItems: "center", gap: 3,
-                    padding: "2px 8px", borderRadius: 20,
-                    fontSize: 10, fontWeight: 600,
-                    background: ss.bg, color: ss.color, border: `1px solid ${ss.border}`,
-                  }}>
-                    <span style={{ width: 4, height: 4, borderRadius: "50%", background: ss.dot }} />
-                    Overpriced
-                  </span>
                 </div>
-              );
-            })}
+                <span style={{
+                  display: "inline-flex", alignItems: "center", gap: 3,
+                  padding: "2px 8px", borderRadius: 6,
+                  fontSize: 10, fontWeight: 700,
+                  background: "rgba(216,90,48,0.1)", color: "#D85A30", border: "1px solid rgba(216,90,48,0.2)",
+                }}>
+                  Overpriced
+                </span>
+              </div>
+            ))}
           </Card>
         </div>
 
         {/* Best Opportunities */}
         <div>
-          <SectionHeader title="Best Opportunities" sub="Industries priced below median — buyer's market" />
+          <SectionHeader
+            title="Best Opportunities"
+            sub="Industries priced below market median — favorable entry points"
+          />
           <Card style={{ padding: 0, overflow: "hidden" }}>
             <div style={{
-              display: "grid", gridTemplateColumns: "1fr 56px 100px",
+              display: "grid", gridTemplateColumns: "1fr auto",
               padding: "8px 16px", borderBottom: "1px solid rgba(255,255,255,0.05)",
               background: "rgba(255,255,255,0.01)",
             }}>
-              {["Industry", "Gap", "Signal"].map(h => (
-                <div key={h} style={{ fontSize: 10, color: "#374151", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600 }}>
-                  {h}
-                </div>
+              {["Industry", "Gap vs Market"].map(h => (
+                <div key={h} style={{ fontSize: 10, color: "#374151", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600 }}>{h}</div>
               ))}
             </div>
             {loading ? (
               <div style={{ padding: 16, display: "flex", flexDirection: "column", gap: 8 }}>
-                {[0, 1, 2, 3].map(i => <Skel key={i} h={28} />)}
+                {[0,1,2,3].map(i => <Skel key={i} h={32} />)}
               </div>
-            ) : undervalued
-                .filter(s => condSig(s.condition) === "opportunity")
-                .map((s, i, arr) => {
-                  const ss = sigCfg("opportunity");
-                  return (
-                    <div
-                      key={s.industry_key}
-                      style={{
-                        display: "grid", gridTemplateColumns: "1fr 56px 100px",
-                        padding: "10px 16px",
-                        borderBottom: i < arr.length - 1 ? "1px solid rgba(255,255,255,0.03)" : "none",
-                        background: i % 2 === 0 ? "rgba(16,185,129,0.02)" : "transparent",
-                        alignItems: "center",
-                      }}
-                    >
-                      <div style={{ fontSize: 13, color: "#E2E8F0", fontWeight: 500 }}>
-                        {IL[s.industry_key] || s.industry_key}
-                      </div>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: "#10B981", fontFamily: "'JetBrains Mono',monospace" }}>
-                        {(s.gap_pct ?? 0).toFixed(0)}%
-                      </div>
-                      <span style={{
-                        display: "inline-flex", alignItems: "center", gap: 3,
-                        padding: "2px 8px", borderRadius: 20,
-                        fontSize: 10, fontWeight: 600,
-                        background: ss.bg, color: ss.color, border: `1px solid ${ss.border}`,
-                      }}>
-                        <span style={{ width: 4, height: 4, borderRadius: "50%", background: ss.dot }} />
-                        Opportunity
-                      </span>
-                    </div>
-                  );
-                })
-            }
+            ) : opportunityList.length === 0 ? (
+              <div style={{ padding: "20px 16px", fontSize: 12, color: "#374151", textAlign: "center" }}>
+                No industries currently priced below market median.
+              </div>
+            ) : opportunityList.map((s, i) => (
+              <div
+                key={s.industry_key}
+                style={{
+                  display: "grid", gridTemplateColumns: "1fr auto",
+                  padding: "10px 16px",
+                  borderBottom: i < opportunityList.length - 1 ? "1px solid rgba(255,255,255,0.03)" : "none",
+                  alignItems: "center",
+                }}
+              >
+                <div>
+                  <div style={{ fontSize: 12, color: "#E2E8F0", fontWeight: 500 }}>
+                    {IL[s.industry_key] || s.industry_key}
+                  </div>
+                  <div style={{ fontSize: 10, color: "#10B981", marginTop: 1 }}>
+                    {(s.gap_pct ?? 0).toFixed(0)}% below median (favorable pricing)
+                  </div>
+                </div>
+                <span style={{
+                  display: "inline-flex", alignItems: "center", gap: 3,
+                  padding: "2px 8px", borderRadius: 6,
+                  fontSize: 10, fontWeight: 700,
+                  background: "rgba(16,185,129,0.1)", color: "#10B981", border: "1px solid rgba(16,185,129,0.2)",
+                }}>
+                  Opportunity
+                </span>
+              </div>
+            ))}
+            {opportunityList.length > 0 && (
+              <div style={{
+                padding: "10px 16px", borderTop: "1px solid rgba(255,255,255,0.04)",
+                fontSize: 11, color: "#10B981",
+                display: "flex", alignItems: "center", gap: 5,
+              }}>
+                <span>↓</span>
+                <span>Run a Local Market Saturation check below to validate entry conditions in these industries</span>
+              </div>
+            )}
           </Card>
         </div>
       </div>
 
-      {/* Trending Multiples */}
-      <div style={{ marginBottom: 28 }}>
-        <SectionHeader title="Trending Multiples" sub="From DealStats closed transaction database" />
-        <Card>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10 }}>
-            {loading ? (
-              [0, 1, 2, 3].map(i => <Skel key={i} h={52} />)
-            ) : trending.slice(0, 8).map(t => (
-              <div key={t.industry_key} style={{
-                padding: "12px 14px", borderRadius: 10,
-                background: "rgba(255,255,255,0.02)",
-                border: "1px solid rgba(255,255,255,0.05)",
-              }}>
-                <div style={{ fontSize: 10, color: "#4B5563", marginBottom: 4 }}>
-                  {IL[t.industry_key] || t.industry_key}
-                </div>
-                <div style={{
-                  fontSize: 16, fontWeight: 700, color: "#E2E8F0",
-                  fontFamily: "'JetBrains Mono',monospace", marginBottom: 2,
-                }}>
-                  {t.median_multiple.toFixed(2)}x
-                </div>
-                <div style={{ fontSize: 10, color: "#2D3748" }}>{t.sample_size} closed deals</div>
-              </div>
-            ))}
-          </div>
-        </Card>
+      {/* ══ SECTION 3: LOCAL MARKET SATURATION ANALYSIS (PRIMARY FEATURE) ══════ */}
+      <div style={{ marginBottom: 24 }}>
+        <LocalMarketRealityCheck deals={deals} isPro={isPro} />
       </div>
 
-      {/* Deals Worth Reviewing — Pro only */}
-      <div style={{ marginBottom: 20 }}>
-        <SectionHeader
-          title="Deals Worth Reviewing This Week"
-          sub="Based on market signals and your deal history"
-          action={<ProBadge />}
-        />
-        <Card style={{ position: "relative" }}>
-          {!isPro && <LockOverlay label="Upgrade to Pro to unlock deal recommendations" />}
-          <div style={{ opacity: isPro ? 1 : 0.2 }}>
-            <div style={{ fontSize: 13, color: "#4B5563", textAlign: "center", padding: "20px 0" }}>
-              {isPro
-                ? "Recommendations will appear here based on your deal history and live DRI signals."
-                : "Pro feature — upgrade to unlock."}
+      {/* ══ SECTION 4: PERSONALIZED DEAL FEED ═════════════════════════════════ */}
+      <div style={{ marginBottom: 8 }}>
+        {isPro ? (
+          // ── Pro: real feed ─────────────────────────────────────────────────
+          <div>
+            <SectionHeader
+              title="Deals Worth Reviewing"
+              sub="Surfaced based on your saved deal history and live market signals"
+              action={<ProBadge />}
+            />
+            {deals.length === 0 ? (
+              <Card>
+                <div style={{ fontSize: 13, color: "#4B5563", textAlign: "center", padding: "16px 0" }}>
+                  Save your first deal to start receiving personalized recommendations.
+                </div>
+              </Card>
+            ) : (
+              <Card style={{ padding: 0, overflow: "hidden" }}>
+                {deals
+                  .filter(d => (d.verdict ?? dealVerdict(d)) !== "pass")
+                  .sort((a, b) => oppScore(b) - oppScore(a))
+                  .slice(0, 5)
+                  .map((deal, i, arr) => {
+                    const vd  = verdictCfg(deal.verdict ?? dealVerdict(deal));
+                    const gp  = deal.gap_pct ?? 0;
+                    const why = (() => {
+                      if ((deal.verdict ?? dealVerdict(deal)) === "high_conviction") return "Rare pricing disconnect with strong debt coverage";
+                      if (gp < -20) return "Priced significantly below market median";
+                      if (deal.dscr >= 2.0 && gp < 0) return "Strong DSCR + favorable pricing alignment";
+                      if (deal.overall_score >= 80) return "High deal quality score across all dimensions";
+                      return "Balanced opportunity — pricing, coverage, and quality aligned";
+                    })();
+                    return (
+                      <div key={deal.id} style={{
+                        display: "flex", alignItems: "center", gap: 14, padding: "12px 18px",
+                        borderBottom: i < arr.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none",
+                      }}>
+                        <Ring score={deal.overall_score} size={36} />
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 13, fontWeight: 600, color: "#E2E8F0", marginBottom: 2 }}>
+                            {IL[deal.industry] || deal.industry}
+                            {(deal.city || deal.state) && (
+                              <span style={{ fontSize: 11, color: "#4B5563", fontWeight: 400, marginLeft: 6 }}>
+                                · {[deal.city, deal.state].filter(Boolean).join(", ")}
+                              </span>
+                            )}
+                          </div>
+                          <div style={{ fontSize: 10, color: "#4B5563" }}>
+                            {fmt(deal.asking_price)} · {deal.valuation_multiple.toFixed(2)}x · DSCR {deal.dscr.toFixed(2)}
+                          </div>
+                        </div>
+                        <div style={{
+                          fontSize: 12, fontWeight: 700,
+                          color: gp > 0 ? "#D85A30" : "#10B981",
+                          fontFamily: "'JetBrains Mono',monospace", flexShrink: 0,
+                        }}>
+                          {gp > 0 ? "+" : ""}{gp}%
+                        </div>
+                        <div style={{ flexShrink: 0, textAlign: "right" as any }}>
+                          <span style={{
+                            display: "inline-flex", alignItems: "center", gap: 4,
+                            padding: "2px 8px", borderRadius: 6,
+                            fontSize: 10, fontWeight: 700,
+                            background: vd.bg, color: vd.color, border: `1px solid ${vd.border}`,
+                          }}>
+                            {vd.emoji} {vd.label}
+                          </span>
+                          <div style={{
+                            fontSize: 9, color: "#374151", marginTop: 3,
+                            display: "flex", alignItems: "center", gap: 3, justifyContent: "flex-end",
+                          }}>
+                            <span style={{ color: "#6366F1", fontWeight: 600 }}>Why this surfaced:</span>
+                            <span>{why}</span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+              </Card>
+            )}
+          </div>
+        ) : (
+          // ── Locked: personalized deal feed ────────────────────────────────
+          <div>
+            <SectionHeader
+              title="Personalized Deal Feed"
+              sub="Opportunities surfaced from your deal history and market signals"
+              action={<ProBadge />}
+            />
+            <div style={{
+              borderRadius: 14, overflow: "hidden",
+              border: "1px solid rgba(99,102,241,0.2)",
+            }}>
+              <div style={{
+                padding: "20px 24px",
+                background: "linear-gradient(135deg,rgba(99,102,241,0.07),rgba(139,92,246,0.04))",
+              }}>
+                <div style={{ fontSize: 13, color: "#6B7280", lineHeight: 1.7, marginBottom: 20, maxWidth: 520 }}>
+                  Based on your saved deals, industries, and live market signals — we surface opportunities worth reviewing before others catch them.
+                </div>
+                {/* Blurred ghost rows */}
+                <div style={{ filter: "blur(4px)", pointerEvents: "none", userSelect: "none" as any, marginBottom: 20 }}>
+                  {[
+                    { ind: "Pest Control",    score: 84, gap: -18, label: "🟢 Pursue"          },
+                    { ind: "HVAC",            score: 77, gap: -11, label: "🟡 Investigate"     },
+                    { ind: "Senior Care",     score: 91, gap: -32, label: "🔥 High Conviction" },
+                  ].map((row, i) => (
+                    <div key={i} style={{
+                      display: "flex", alignItems: "center", gap: 14,
+                      padding: "10px 0", borderBottom: i < 2 ? "1px solid rgba(255,255,255,0.05)" : "none",
+                    }}>
+                      <div style={{ width: 36, height: 36, borderRadius: "50%", background: "rgba(99,102,241,0.15)", flexShrink: 0 }} />
+                      <div style={{ flex: 1 }}>
+                        <div style={{ height: 12, width: 120, borderRadius: 4, background: "rgba(255,255,255,0.08)", marginBottom: 5 }} />
+                        <div style={{ height: 9, width: 80, borderRadius: 3, background: "rgba(255,255,255,0.04)" }} />
+                      </div>
+                      <div style={{ height: 12, width: 40, borderRadius: 3, background: "rgba(255,255,255,0.06)" }} />
+                      <div style={{ height: 22, width: 90, borderRadius: 6, background: "rgba(99,102,241,0.12)" }} />
+                    </div>
+                  ))}
+                </div>
+                <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                  <button style={{
+                    padding: "10px 22px", borderRadius: 9, border: "none",
+                    background: "linear-gradient(135deg,#6366F1,#8B5CF6)",
+                    color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer",
+                  }}>
+                    Unlock Pro
+                  </button>
+                  <span style={{ fontSize: 12, color: "#374151" }}>Personalized feed across all your saved deals.</span>
+                </div>
+              </div>
             </div>
           </div>
-        </Card>
+        )}
       </div>
 
-      {/* Local Market Reality Check */}
-      <LocalMarketRealityCheck deals={deals} isPro={isPro} />
-
-      <div style={{ textAlign: "center" }}>
-        <a
-          href="/marketview"
-          style={{
-            display: "inline-block", padding: "11px 24px", borderRadius: 10,
-            border: "1px solid rgba(59,130,246,0.25)",
-            background: "rgba(59,130,246,0.06)",
-            color: "#60A5FA", fontSize: 14, fontWeight: 500, textDecoration: "none",
-          }}
-        >
-          Explore Full Market Intelligence →
-        </a>
-      </div>
     </div>
   );
 }
+
 
 // ─── MAIN DASHBOARD ───────────────────────────────────────────────────────────
 
