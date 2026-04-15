@@ -205,7 +205,17 @@ const INDUSTRY_MAP: Record<string, string> = {
   "fire restoration": "remodeling", restoration: "remodeling",
 
   // ── NEW: Staffing
-  "staffing agency": "staffing", "staffing firm": "staffing", recruiting: "staffing",
+  "staffing agency": "staffing",
+
+  // ── Gas Station / Convenience
+  "gas station": "gasstation", "gas station and convenience": "gasstation",
+  "gas station/c-store": "gasstation", "gas station & convenience": "gasstation",
+  "convenience store & gas": "gasstation", "fuel station": "gasstation",
+  "c-store": "gasstation", "service station": "gasstation",
+  "gasoline station": "gasstation", "petrol station": "gasstation",
+
+  // ── NEW: Staffing (continued)
+  "staffing firm": "staffing", recruiting: "staffing",
   "recruiting firm": "staffing", "temp agency": "staffing", "employment agency": "staffing",
   "workforce solutions": "staffing", "hr staffing": "staffing",
 };
@@ -234,6 +244,7 @@ const INDUSTRY_MARGINS: Record<string, [number, number]> = {
   physicaltherapy: [20, 35],
   remodeling:      [15, 25],
   staffing:        [15, 25],
+  gasstation:      [3,  8],   // Gas stations run thin margins on fuel; profit from c-store
 };
 
 const MULTIPLES: Record<string, [number, number]> = {
@@ -260,6 +271,7 @@ const MULTIPLES: Record<string, [number, number]> = {
   physicaltherapy: [1.6, 2.9],
   remodeling:      [1.4, 2.7],
   staffing:        [1.5, 3.0],
+  gasstation:      [2.5, 4.5],  // Gas stations trade on real estate + fuel volume + c-store
 };
 
 function classifyIndustry(text: string): string | null {
