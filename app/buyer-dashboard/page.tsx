@@ -1000,7 +1000,7 @@ function TopOpportunities({
                 <button
                   onClick={() => onOpenDetail(deal)}
                   style={{
-                    padding: "5px 10px", borderRadius: 7, border: "none",
+                    padding: "5px 10px", borderRadius: 7,
                     border: "1px solid rgba(255,255,255,0.08)",
                     background: "rgba(255,255,255,0.03)",
                     color: "#6B7280", fontSize: 11, cursor: "pointer",
@@ -1024,7 +1024,7 @@ function TopOpportunities({
                   onClick={() => onOpenUnderwriting(deal)}
                   title={isPro ? "Run Full Analysis" : "Pro feature"}
                   style={{
-                    padding: "5px 10px", borderRadius: 7, border: "none",
+                    padding: "5px 10px", borderRadius: 7,
                     border: isPro ? "1px solid rgba(99,102,241,0.25)" : "1px solid rgba(255,255,255,0.05)",
                     background: isPro ? "rgba(99,102,241,0.08)" : "rgba(255,255,255,0.02)",
                     color: isPro ? "#818CF8" : "#2D3748",
@@ -3421,7 +3421,7 @@ function TabCompare({ deals, isPro, onAnalyzeNew }: { deals: DealRun[]; isPro: b
                     border: "1px solid rgba(59,130,246,0.08)",
                     borderTop: "none",
                     borderBottom: i < rows.length - 1 ? "none" : "1px solid rgba(59,130,246,0.08)",
-                    position: "relative" as any,
+                    position: "relative",
                   }}>
                     {row.aV}
                     {row.aW && (
@@ -3435,7 +3435,7 @@ function TabCompare({ deals, isPro, onAnalyzeNew }: { deals: DealRun[]; isPro: b
                     border: "1px solid rgba(99,102,241,0.08)",
                     borderTop: "none",
                     borderBottom: i < rows.length - 1 ? "none" : "1px solid rgba(99,102,241,0.08)",
-                    position: "relative" as any,
+                    position: "relative",
                   }}>
                     {row.bV}
                     {row.bW && (
@@ -4059,17 +4059,6 @@ function LocalMarketRealityCheck({
           {result && !loading && (
             <div style={{ animation: "fadeUp 0.3s ease-out" }}>
 
-              {/* Saturation interpretation — brief line under score */}
-              {result.totalCompetitors > 0 && (
-                <div style={{
-                  padding: "8px 12px", borderRadius: 8, marginBottom: 10,
-                  background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)",
-                  fontSize: 12, color: "#6B7280", lineHeight: 1.5,
-                }}>
-                  {satInterpretation(result.saturationScore, result.totalCompetitors)}
-                </div>
-              )}
-
               {/* Zero results warning */}
               {result.totalCompetitors === 0 && (
                 <div style={{
@@ -4116,12 +4105,7 @@ function LocalMarketRealityCheck({
                     {satLabel(result.saturationScore)}
                   </span>
                 </div>
-                {/* Score interpretation */}
-                <div style={{ fontSize: 11, color: "#6B7280", marginTop: 8, lineHeight: 1.5, textAlign: "center" as any }}>
-                  {satInterpretation(result.saturationScore, result.totalCompetitors)}
-                </div>
-              </div>
-              <div style={{ display: "flex", flexDirection: "column", justifyContent: "center" }}>
+                <div style={{ display: "flex", flexDirection: "column", justifyContent: "center" }}>
                   <GaugeBar score={result.saturationScore} />
                   <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px 16px", marginTop: 10 }}>
                     {[
@@ -4137,6 +4121,11 @@ function LocalMarketRealityCheck({
                     ))}
                   </div>
                 </div>
+              </div>
+
+              {/* Saturation interpretation */}
+              <div style={{ padding: "8px 12px", borderRadius: 8, marginBottom: 14, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)", fontSize: 12, color: "#6B7280", lineHeight: 1.5 }}>
+                {satInterpretation(result.saturationScore, result.totalCompetitors)}
               </div>
 
               {/* Competitor breakdown */}
