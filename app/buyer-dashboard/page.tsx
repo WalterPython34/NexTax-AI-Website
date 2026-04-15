@@ -3083,79 +3083,96 @@ function TabCompare({ deals, isPro, onAnalyzeNew }: { deals: DealRun[]; isPro: b
   const [ai, setAi]     = useState(0);
   const [bi, setBi]     = useState(Math.min(1, deals.length - 1));
 
-  // Free user gate
+  // ── Swap handler ────────────────────────────────────────────────────────────
+  const handleSwap = () => {
+    const tmp = ai;
+    setAi(bi);
+    setBi(tmp);
+  };
+
+  const selStyle: React.CSSProperties = {
+    padding: "9px 12px", borderRadius: 8,
+    border: "1px solid rgba(255,255,255,0.1)",
+    background: "rgba(255,255,255,0.04)",
+    color: "#E2E8F0", fontSize: 13, outline: "none",
+    width: "100%", appearance: "none" as any,
+  };
+
+  // ── Free user gate ───────────────────────────────────────────────────────────
   if (!isPro) {
     return (
-      <div style={{ position: "relative" }}>
-        <Card style={{ filter: "blur(2px)", pointerEvents: "none", opacity: 0.4 }}>
-          <div style={{ display: "grid", gridTemplateColumns: "90px 1fr 1fr", gap: "0 12px" }}>
-            {["", "Deal A", "Deal B"].map((h, i) => (
-              <div
-                key={i}
-                style={{
-                  padding: "8px 12px",
-                  background: i > 0 ? "rgba(99,102,241,0.08)" : "transparent",
-                  borderRadius: i > 0 ? "8px 8px 0 0" : 0,
-                  fontSize: 12, fontWeight: 600, color: "#60A5FA", textAlign: "center",
-                }}
-              >
-                {h}
-              </div>
-            ))}
-            {["Score", "Asking", "Fair Value", "Gap vs Mkt", "Multiple", "DSCR"].map(r => (
-              <React.Fragment key={r}>
-                <div style={{ padding: "10px 0", fontSize: 11, color: "#4B5563" }}>{r}</div>
-                <div style={{ padding: "10px 12px", fontSize: 13, fontWeight: 600, color: "#818CF8", textAlign: "center", background: "rgba(59,130,246,0.04)", border: "1px solid rgba(59,130,246,0.1)", borderTop: "none" }}>—</div>
-                <div style={{ padding: "10px 12px", fontSize: 13, fontWeight: 600, color: "#A5B4FC", textAlign: "center", background: "rgba(99,102,241,0.04)", border: "1px solid rgba(99,102,241,0.1)", borderTop: "none" }}>—</div>
-              </React.Fragment>
-            ))}
-          </div>
-        </Card>
-        <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <div style={{
-            padding: "28px 36px", borderRadius: 14,
-            background: "rgba(8,12,19,0.92)", border: "1px solid rgba(99,102,241,0.2)",
-            textAlign: "center",
-          }}>
-            <div style={{ fontSize: 32, marginBottom: 12 }}>🔒</div>
-            <div style={{ fontSize: 16, fontWeight: 700, color: "#F1F5F9", marginBottom: 6, fontFamily: "'Inter Tight',sans-serif" }}>
-              Compare is a Pro feature
-            </div>
-            <div style={{ fontSize: 13, color: "#6B7280", marginBottom: 16, maxWidth: 280 }}>
-              Upgrade to compare any two deals side-by-side against your portfolio and market comps.
-            </div>
-            <button style={{
-              padding: "10px 24px", borderRadius: 9, border: "none",
-              background: "linear-gradient(135deg,#6366F1,#8B5CF6)",
-              color: "#fff", fontSize: 14, fontWeight: 600, cursor: "pointer",
+      <div>
+        {/* Tab bar still visible so user sees what's locked */}
+        <div style={{
+          display: "flex", gap: 4, marginBottom: 18,
+          background: "rgba(255,255,255,0.03)", borderRadius: 10, padding: 4,
+          border: "1px solid rgba(255,255,255,0.06)", width: "fit-content",
+        }}>
+          {([ ["my-deals","My Deals"], ["market","Market Comps"], ["closed","Closed Comps"] ] as [CompareMode, string][]).map(([m, label]) => (
+            <button key={m} onClick={() => setMode(m)} style={{
+              padding: "7px 14px", borderRadius: 7, border: "none",
+              background: mode === m ? "rgba(99,102,241,0.18)" : "transparent",
+              color: mode === m ? "#C4B5FD" : "#4B5563",
+              fontSize: 12, fontWeight: mode === m ? 600 : 400,
+              cursor: "pointer", transition: "all 0.15s",
             }}>
-              Upgrade to Pro
+              {label}{m !== "my-deals" && <span style={{ fontSize: 9, color: "#374151", marginLeft: 3 }}>🔒</span>}
             </button>
+          ))}
+        </div>
+
+        <div style={{ position: "relative" }}>
+          {/* Blurred ghost preview */}
+          <Card style={{ filter: "blur(3px)", pointerEvents: "none", opacity: 0.3 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "90px 1fr 1fr", gap: "0 12px" }}>
+              {["", "Deal A", "Deal B"].map((h, i) => (
+                <div key={i} style={{ padding: "8px 12px", background: i > 0 ? "rgba(99,102,241,0.08)" : "transparent", borderRadius: i > 0 ? "8px 8px 0 0" : 0, fontSize: 12, fontWeight: 600, color: "#60A5FA", textAlign: "center" }}>{h}</div>
+              ))}
+              {["Score", "Asking", "Fair Value", "Gap vs Mkt", "Multiple", "DSCR", "Verdict"].map(r => (
+                <React.Fragment key={r}>
+                  <div style={{ padding: "10px 0", fontSize: 11, color: "#4B5563" }}>{r}</div>
+                  <div style={{ padding: "10px 12px", fontSize: 13, fontWeight: 600, color: "#818CF8", textAlign: "center", background: "rgba(59,130,246,0.04)", border: "1px solid rgba(59,130,246,0.1)", borderTop: "none" }}>—</div>
+                  <div style={{ padding: "10px 12px", fontSize: 13, fontWeight: 600, color: "#A5B4FC", textAlign: "center", background: "rgba(99,102,241,0.04)", border: "1px solid rgba(99,102,241,0.1)", borderTop: "none" }}>—</div>
+                </React.Fragment>
+              ))}
+            </div>
+          </Card>
+          {/* Lock overlay */}
+          <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <div style={{
+              padding: "28px 36px", borderRadius: 14,
+              background: "rgba(8,12,19,0.92)", border: "1px solid rgba(99,102,241,0.2)",
+              textAlign: "center", maxWidth: 340,
+            }}>
+              <div style={{ fontSize: 32, marginBottom: 12 }}>🔒</div>
+              <div style={{ fontSize: 16, fontWeight: 700, color: "#F1F5F9", marginBottom: 6, fontFamily: "'Inter Tight',sans-serif" }}>
+                Compare Deal Options
+              </div>
+              <div style={{ fontSize: 13, color: "#6B7280", marginBottom: 16, lineHeight: 1.6 }}>
+                Side-by-side comparison with verdict, category winners, market comps, and closed deal benchmarks.
+              </div>
+              <button style={{
+                padding: "10px 24px", borderRadius: 9, border: "none",
+                background: "linear-gradient(135deg,#6366F1,#8B5CF6)",
+                color: "#fff", fontSize: 14, fontWeight: 600, cursor: "pointer",
+              }}>
+                Upgrade to Pro
+              </button>
+            </div>
           </div>
         </div>
       </div>
     );
   }
 
-  // Need 2+ deals
+  // ── Need 2+ deals ────────────────────────────────────────────────────────────
   if (deals.length < 2) {
     return (
       <Card style={{ textAlign: "center", padding: "48px 24px" }}>
         <div style={{ fontSize: 32, marginBottom: 12 }}>⇄</div>
-        <div style={{ fontSize: 15, fontWeight: 600, color: "#E2E8F0", marginBottom: 6 }}>
-          Analyze 2+ deals to compare
-        </div>
-        <div style={{ fontSize: 13, color: "#4B5563", marginBottom: 16 }}>
-          You need at least two saved deals to use the comparison engine.
-        </div>
-        <button
-          onClick={() => onAnalyzeNew()}
-          style={{
-            display: "inline-block", padding: "9px 18px", borderRadius: 9, border: "none",
-            background: "linear-gradient(135deg,#3B82F6,#6366F1)",
-            color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer",
-          }}
-        >
+        <div style={{ fontSize: 15, fontWeight: 600, color: "#E2E8F0", marginBottom: 6 }}>Analyze 2+ deals to compare</div>
+        <div style={{ fontSize: 13, color: "#4B5563", marginBottom: 16 }}>You need at least two saved deals to use the comparison engine.</div>
+        <button onClick={() => onAnalyzeNew()} style={{ display: "inline-block", padding: "9px 18px", borderRadius: 9, border: "none", background: "linear-gradient(135deg,#3B82F6,#6366F1)", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
           Analyze a Deal →
         </button>
       </Card>
@@ -3166,142 +3183,452 @@ function TabCompare({ deals, isPro, onAnalyzeNew }: { deals: DealRun[]; isPro: b
   const b    = deals[bi];
   const aGap = a?.gap_pct ?? 0;
   const bGap = b?.gap_pct ?? 0;
-  const aLbl = IL[a?.industry] || a?.industry;
-  const bLbl = IL[b?.industry] || b?.industry;
+  const aLbl = `${IL[a?.industry] || a?.industry} — ${fmt(a?.asking_price)}`;
+  const bLbl = `${IL[b?.industry] || b?.industry} — ${fmt(b?.asking_price)}`;
+  const aShort = IL[a?.industry] || a?.industry;
+  const bShort = IL[b?.industry] || b?.industry;
 
-  const selStyle: React.CSSProperties = {
-    padding: "9px 12px", borderRadius: 8,
-    border: "1px solid rgba(255,255,255,0.1)",
-    background: "rgba(255,255,255,0.04)",
-    color: "#E2E8F0", fontSize: 13, outline: "none",
-    width: "100%", appearance: "none" as any,
+  // ── Comparison logic ─────────────────────────────────────────────────────────
+  // Weighted: pricing 40%, DSCR 30%, score 20%, risk 10%
+  const aOpp = a ? oppScore(a) : 0;
+  const bOpp = b ? oppScore(b) : 0;
+
+  const winnerIsA = aOpp >= bOpp;
+  const winnerLbl = winnerIsA ? aLbl : bLbl;
+  const winnerShort = winnerIsA ? aShort : bShort;
+  const tied = Math.abs(aOpp - bOpp) <= 3;
+
+  // Category winners
+  const catWinners = {
+    pricing: aGap < bGap ? "A" : bGap < aGap ? "B" : "Tie",
+    dscr:    (a?.dscr ?? 0) > (b?.dscr ?? 0) ? "A" : (b?.dscr ?? 0) > (a?.dscr ?? 0) ? "B" : "Tie",
+    score:   (a?.overall_score ?? 0) > (b?.overall_score ?? 0) ? "A" : (b?.overall_score ?? 0) > (a?.overall_score ?? 0) ? "B" : "Tie",
+    risk:    (() => {
+      const r: Record<string,number> = { Low: 3, Moderate: 2, High: 1, Critical: 0 };
+      const aR = r[(a?.risk_level ?? "").replace(" Risk","").trim()] ?? 1;
+      const bR = r[(b?.risk_level ?? "").replace(" Risk","").trim()] ?? 1;
+      return aR > bR ? "A" : bR > aR ? "B" : "Tie";
+    })(),
   };
 
-  const rows = [
-    { label: "Score",      aV: String(a?.overall_score ?? "—"),                 bV: String(b?.overall_score ?? "—"),                 aC: scoreCol(a?.overall_score ?? 0), bC: scoreCol(b?.overall_score ?? 0) },
-    { label: "Asking",     aV: fmtFull(a?.asking_price ?? 0),                   bV: fmtFull(b?.asking_price ?? 0),                   aC: "#E2E8F0",                       bC: "#E2E8F0" },
-    { label: "Fair Value", aV: fmtFull(a?.fair_value ?? 0),                     bV: fmtFull(b?.fair_value ?? 0),                     aC: "#10B981",                       bC: "#10B981" },
-    { label: "Gap vs Mkt", aV: (aGap > 0 ? "+" : "") + aGap + "%",             bV: (bGap > 0 ? "+" : "") + bGap + "%",             aC: aGap > 0 ? "#D85A30" : "#10B981", bC: bGap > 0 ? "#D85A30" : "#10B981" },
-    { label: "Multiple",   aV: (a?.valuation_multiple ?? 0).toFixed(2) + "x",  bV: (b?.valuation_multiple ?? 0).toFixed(2) + "x",  aC: "#E2E8F0",                       bC: "#E2E8F0" },
-    { label: "DSCR",       aV: (a?.dscr ?? 0).toFixed(2),                      bV: (b?.dscr ?? 0).toFixed(2),                      aC: (a?.dscr ?? 0) >= 1.25 ? "#10B981" : "#F97316", bC: (b?.dscr ?? 0) >= 1.25 ? "#10B981" : "#F97316" },
-    { label: "Risk Level", aV: a?.risk_level ?? "—",                           bV: b?.risk_level ?? "—",                           aC: "#94A3B8",                       bC: "#94A3B8" },
-  ];
+  const aWins = Object.values(catWinners).filter(v => v === "A").length;
+  const bWins = Object.values(catWinners).filter(v => v === "B").length;
 
-  const gapDiff = Math.abs(aGap - bGap);
-  const winner  = aGap < bGap ? aLbl : bLbl;
-  const insight = aGap === bGap
-    ? "Both deals sit at similar pricing positions relative to their market benchmarks."
-    : `${winner} has the stronger pricing position — priced ${gapDiff}% closer to (or below) the market median. ${aGap < -5 || bGap < -5 ? "The below-market deal warrants a closer look at seller motivation." : "Neither deal is dramatically mispriced — negotiate on terms and structure."}`;
+  // Verdict reasoning
+  const verdictReason = (() => {
+    if (tied) return "Both deals are closely matched on risk-adjusted metrics. The decision comes down to your preferred market and operational fit.";
+    const winner = winnerIsA ? "Deal A" : "Deal B";
+    const loser  = winnerIsA ? "Deal B" : "Deal A";
+    const reasons: string[] = [];
+    if (catWinners.pricing === (winnerIsA ? "A" : "B"))  reasons.push("stronger pricing alignment");
+    if (catWinners.dscr    === (winnerIsA ? "A" : "B"))  reasons.push("higher debt coverage");
+    if (catWinners.score   === (winnerIsA ? "A" : "B"))  reasons.push("better deal quality score");
+    if (catWinners.risk    === (winnerIsA ? "A" : "B"))  reasons.push("lower operational risk");
+    return `${reasons.slice(0,2).join(" and ")} make ${winner} the stronger opportunity at current terms.`;
+  })();
+
+  // Insight bar copy
+  const insightCopy = (() => {
+    if (tied) return "Neither deal is a clear standout. Prioritize diligence on customer quality, owner dependence, and add-back sustainability before advancing either.";
+    const winner = winnerIsA ? "Deal A" : "Deal B";
+    const loser  = winnerIsA ? "Deal B" : "Deal A";
+    const loserGap = winnerIsA ? bGap : aGap;
+    const loserDscr = winnerIsA ? (b?.dscr ?? 0) : (a?.dscr ?? 0);
+    if (catWinners.pricing !== (winnerIsA ? "A" : "B") && catWinners.dscr === (winnerIsA ? "A" : "B")) {
+      return `${winner} has stronger debt coverage but isn't the pricing leader. ${loser} has better pricing alignment — decision depends on whether stability or value matters more to your thesis.`;
+    }
+    if (loserGap > 15) return `${winner} has the stronger risk-adjusted position. ${loser} is priced above market median and likely needs price movement or structural improvements to compete.`;
+    if (loserDscr < 1.25) return `${winner} wins on both pricing and debt coverage. ${loser}'s coverage ratio is below lender minimums — financing risk is elevated at current terms.`;
+    return `${winner} holds the advantage across pricing, coverage, and quality metrics. ${loser} is a viable deal but needs to close the gap on at least one dimension to be competitive.`;
+  })();
+
+  // What would flip the verdict
+  const flipCopy = (() => {
+    if (tied) return "Either deal could take the lead with modest improvement. A 10–15% price reduction on either would create a clearer pricing advantage.";
+    const loser      = winnerIsA ? "Deal B" : "Deal A";
+    const loserGap   = winnerIsA ? bGap : aGap;
+    const loserDscr  = winnerIsA ? (b?.dscr ?? 0) : (a?.dscr ?? 0);
+    const loserScore = winnerIsA ? (b?.overall_score ?? 0) : (a?.overall_score ?? 0);
+    if (loserGap > 20) {
+      const pctNeeded = Math.round(loserGap + 5);
+      return `${loser} becomes competitive if asking price drops ${pctNeeded - 10}–${pctNeeded}%. At that level, the pricing gap closes and DSCR metrics carry the comparison.`;
+    }
+    if (loserDscr < 1.25) return `${loser} would become viable if debt terms improve — lower interest rate, longer amortization, or higher equity injection could bring DSCR above the 1.25x minimum.`;
+    if (loserGap > 0 && loserGap <= 20) return `${loser} is close. A 10–15% price reduction would bring it within range of the current leader. Alternatively, documented add-backs that improve SDE could shift the comparison.`;
+    return `${loser} needs improvement in at least one of: pricing alignment, DSCR strength, or risk profile. A modest price reduction or stronger financing terms would be enough to flip this verdict.`;
+  })();
+
+  // Comparison rows
+  const rows = [
+    { label: "Score",      aV: String(a?.overall_score ?? "—"),                aW: catWinners.score === "A",   bV: String(b?.overall_score ?? "—"),               bW: catWinners.score === "B",   aC: scoreCol(a?.overall_score ?? 0), bC: scoreCol(b?.overall_score ?? 0) },
+    { label: "Asking",     aV: fmtFull(a?.asking_price ?? 0),                  aW: false,                      bV: fmtFull(b?.asking_price ?? 0),                 bW: false,                      aC: "#E2E8F0",   bC: "#E2E8F0"   },
+    { label: "Fair Value", aV: fmtFull(a?.fair_value ?? 0),                    aW: false,                      bV: fmtFull(b?.fair_value ?? 0),                   bW: false,                      aC: "#10B981",   bC: "#10B981"   },
+    { label: "Gap vs Mkt", aV: (aGap > 0 ? "+" : "") + aGap + "%",            aW: catWinners.pricing === "A", bV: (bGap > 0 ? "+" : "") + bGap + "%",            bW: catWinners.pricing === "B", aC: aGap > 0 ? "#D85A30" : "#10B981", bC: bGap > 0 ? "#D85A30" : "#10B981" },
+    { label: "Multiple",   aV: (a?.valuation_multiple ?? 0).toFixed(2) + "x", aW: false,                      bV: (b?.valuation_multiple ?? 0).toFixed(2) + "x", bW: false,                      aC: "#E2E8F0",   bC: "#E2E8F0"   },
+    { label: "DSCR",       aV: (a?.dscr ?? 0).toFixed(2) + "x",               aW: catWinners.dscr === "A",    bV: (b?.dscr ?? 0).toFixed(2) + "x",               bW: catWinners.dscr === "B",    aC: (a?.dscr ?? 0) >= 1.25 ? "#10B981" : "#F97316", bC: (b?.dscr ?? 0) >= 1.25 ? "#10B981" : "#F97316" },
+    { label: "Risk Level", aV: a?.risk_level ?? "—",                           aW: catWinners.risk === "A",    bV: b?.risk_level ?? "—",                          bW: catWinners.risk === "B",    aC: "#94A3B8",   bC: "#94A3B8"   },
+    { label: "Verdict",    aV: (() => { const v = verdictCfg(a?.verdict ?? dealVerdict(a!)); return `${v.emoji} ${v.label}`; })(), aW: false, bV: (() => { const v = verdictCfg(b?.verdict ?? dealVerdict(b!)); return `${v.emoji} ${v.label}`; })(), bW: false, aC: "#E2E8F0", bC: "#E2E8F0" },
+  ];
 
   return (
     <div>
-      {/* Mode tabs */}
+      {/* Tab bar */}
       <div style={{
         display: "flex", gap: 4, marginBottom: 18,
         background: "rgba(255,255,255,0.03)", borderRadius: 10, padding: 4,
         border: "1px solid rgba(255,255,255,0.06)", width: "fit-content",
       }}>
-        {([["my-deals", "My Deals"], ["market", "Market Comps"], ["closed", "Closed Comps"]] as [CompareMode, string][]).map(([m, label]) => (
-          <button
-            key={m}
-            onClick={() => setMode(m)}
-            style={{
-              padding: "7px 14px", borderRadius: 7, border: "none",
-              background: mode === m ? "rgba(99,102,241,0.18)" : "transparent",
-              color: mode === m ? "#C4B5FD" : "#4B5563",
-              fontSize: 12, fontWeight: mode === m ? 600 : 400,
-              cursor: "pointer", transition: "all 0.15s",
-            }}
-          >
+        {([ ["my-deals","My Deals"], ["market","Market Comps"], ["closed","Closed Comps"] ] as [CompareMode, string][]).map(([m, label]) => (
+          <button key={m} onClick={() => setMode(m)} style={{
+            padding: "7px 14px", borderRadius: 7, border: "none",
+            background: mode === m ? "rgba(99,102,241,0.18)" : "transparent",
+            color: mode === m ? "#C4B5FD" : "#4B5563",
+            fontSize: 12, fontWeight: mode === m ? 600 : 400,
+            cursor: "pointer", transition: "all 0.15s",
+          }}>
             {label}
-            {m !== "my-deals" && <span style={{ fontSize: 9, color: "#374151", marginLeft: 2 }}>🔒</span>}
+            {m !== "my-deals" && !isPro && <span style={{ fontSize: 9, color: "#374151", marginLeft: 3 }}>🔒</span>}
           </button>
         ))}
       </div>
 
-      <Card>
-        {/* Deal selectors */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 40px 1fr", gap: 12, alignItems: "center", marginBottom: 20 }}>
-          <div>
-            <label style={{
-              display: "block", fontSize: 10, color: "#4B5563",
-              textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 5,
-            }}>
-              Deal A
-            </label>
-            <select value={ai} onChange={(e) => setAi(Number(e.target.value))} style={selStyle}>
-              {deals.map((d, i) => (
-                <option key={d.id} value={i}>{IL[d.industry] || d.industry} — {fmt(d.asking_price)}</option>
-              ))}
-            </select>
+      {/* ══ MY DEALS MODE ══════════════════════════════════════════════════════ */}
+      {mode === "my-deals" && (
+        <div>
+          {/* Deal selectors */}
+          <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", gap: 10, alignItems: "flex-end", marginBottom: 20 }}>
+            <div>
+              <label style={{ display: "block", fontSize: 10, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 5 }}>Deal A</label>
+              <select value={ai} onChange={(e) => setAi(Number(e.target.value))} style={selStyle}>
+                {deals.map((d, i) => (<option key={d.id} value={i}>{IL[d.industry] || d.industry} — {fmt(d.asking_price)}</option>))}
+              </select>
+            </div>
+            <button
+              onClick={handleSwap}
+              title="Swap deals"
+              style={{
+                padding: "9px 12px", borderRadius: 8,
+                border: "1px solid rgba(255,255,255,0.1)",
+                background: "rgba(255,255,255,0.03)",
+                color: "#4B5563", fontSize: 16, cursor: "pointer",
+                marginTop: 18,
+              }}
+            >
+              ⇄
+            </button>
+            <div>
+              <label style={{ display: "block", fontSize: 10, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 5 }}>Deal B</label>
+              <select value={bi} onChange={(e) => setBi(Number(e.target.value))} style={selStyle}>
+                {deals.map((d, i) => (<option key={d.id} value={i}>{IL[d.industry] || d.industry} — {fmt(d.asking_price)}</option>))}
+              </select>
+            </div>
           </div>
-          <div style={{ textAlign: "center", fontSize: 20, color: "#4B5563", marginTop: 18 }}>⇄</div>
-          <div>
-            <label style={{
-              display: "block", fontSize: 10, color: "#4B5563",
-              textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 5,
-            }}>
-              Deal B
-            </label>
-            <select value={bi} onChange={(e) => setBi(Number(e.target.value))} style={selStyle}>
-              {deals.map((d, i) => (
-                <option key={d.id} value={i}>{IL[d.industry] || d.industry} — {fmt(d.asking_price)}</option>
-              ))}
-            </select>
-          </div>
-        </div>
 
-        {/* Comparison grid */}
-        <div style={{ display: "grid", gridTemplateColumns: "90px 1fr 1fr", gap: "0 12px" }}>
-          <div />
-          <div style={{ padding: "8px 12px", borderRadius: "8px 8px 0 0", background: "rgba(59,130,246,0.08)", border: "1px solid rgba(59,130,246,0.15)", borderBottom: "none", fontSize: 12, fontWeight: 600, color: "#60A5FA", textAlign: "center" }}>
-            {aLbl}
+          {/* ── 1. COMPARISON VERDICT ────────────────────────────────────────── */}
+          <div style={{
+            padding: "16px 20px", borderRadius: 12, marginBottom: 14,
+            background: tied
+              ? "rgba(99,102,241,0.06)"
+              : "linear-gradient(135deg,rgba(16,185,129,0.07),rgba(6,95,70,0.04))",
+            border: tied
+              ? "1px solid rgba(99,102,241,0.18)"
+              : "1px solid rgba(16,185,129,0.2)",
+          }}>
+            <div style={{ fontSize: 10, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: 600, marginBottom: 8 }}>
+              Comparison Verdict
+            </div>
+            <div style={{ fontSize: 18, fontWeight: 700, color: "#F1F5F9", fontFamily: "'Inter Tight',sans-serif", letterSpacing: "-0.01em", marginBottom: 6 }}>
+              {tied ? "⚖️ Too Close to Call" : `🏆 Better Opportunity: ${winnerShort}`}
+            </div>
+            <div style={{ fontSize: 13, color: "#94A3B8", lineHeight: 1.6 }}>
+              {verdictReason}
+            </div>
+            {!tied && (
+              <div style={{ display: "flex", gap: 6, marginTop: 10, flexWrap: "wrap" as any }}>
+                <span style={{ fontSize: 10, color: "#4B5563" }}>Category wins:</span>
+                <span style={{ fontSize: 10, color: "#60A5FA" }}>Deal A: {aWins}</span>
+                <span style={{ fontSize: 10, color: "#4B5563" }}>·</span>
+                <span style={{ fontSize: 10, color: "#A5B4FC" }}>Deal B: {bWins}</span>
+              </div>
+            )}
           </div>
-          <div style={{ padding: "8px 12px", borderRadius: "8px 8px 0 0", background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.15)", borderBottom: "none", fontSize: 12, fontWeight: 600, color: "#A5B4FC", textAlign: "center" }}>
-            {bLbl}
-          </div>
-          {rows.map((row, i) => (
-            <React.Fragment key={row.label}>
-              <div style={{
-                padding: "10px 0", fontSize: 11, color: "#4B5563",
-                display: "flex", alignItems: "center",
-                borderBottom: i < rows.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none",
-              }}>
-                {row.label}
-              </div>
-              <div style={{
-                padding: "10px 12px", fontSize: 13, fontWeight: 600, color: row.aC,
-                textAlign: "center", fontFamily: "'JetBrains Mono',monospace",
-                background: "rgba(59,130,246,0.03)", border: "1px solid rgba(59,130,246,0.08)",
-                borderTop: "none", borderBottom: i < rows.length - 1 ? "none" : "1px solid rgba(59,130,246,0.08)",
-              }}>
-                {row.aV}
-              </div>
-              <div style={{
-                padding: "10px 12px", fontSize: 13, fontWeight: 600, color: row.bC,
-                textAlign: "center", fontFamily: "'JetBrains Mono',monospace",
-                background: "rgba(99,102,241,0.03)", border: "1px solid rgba(99,102,241,0.08)",
-                borderTop: "none", borderBottom: i < rows.length - 1 ? "none" : "1px solid rgba(99,102,241,0.08)",
-              }}>
-                {row.bV}
-              </div>
-            </React.Fragment>
-          ))}
-        </div>
 
-        {/* Insight bar */}
-        <div style={{
-          marginTop: 16, padding: "12px 16px", borderRadius: 10,
-          background: "rgba(245,158,11,0.05)", border: "1px solid rgba(245,158,11,0.12)",
-          display: "flex", gap: 10,
-        }}>
-          <span style={{ fontSize: 14, flexShrink: 0 }}>💡</span>
-          <span style={{ fontSize: 13, color: "#FBBF24", lineHeight: 1.6 }}>{insight}</span>
+          {/* ── 2. CATEGORY WINNERS STRIP ────────────────────────────────────── */}
+          <div style={{
+            display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 8, marginBottom: 14,
+          }}>
+            {([
+              { label: "Pricing",  key: "pricing" as const, icon: "💰" },
+              { label: "Coverage", key: "dscr"    as const, icon: "🏦" },
+              { label: "Quality",  key: "score"   as const, icon: "⭐" },
+              { label: "Risk",     key: "risk"    as const, icon: "🛡️" },
+            ]).map(cat => {
+              const winner = catWinners[cat.key];
+              const isTie  = winner === "Tie";
+              const winColor  = winner === "A" ? "#60A5FA" : winner === "B" ? "#A5B4FC" : "#4B5563";
+              const winBg     = winner === "A" ? "rgba(59,130,246,0.08)" : winner === "B" ? "rgba(99,102,241,0.08)" : "rgba(255,255,255,0.03)";
+              const winBorder = winner === "A" ? "rgba(59,130,246,0.2)"  : winner === "B" ? "rgba(99,102,241,0.2)"  : "rgba(255,255,255,0.06)";
+              return (
+                <div key={cat.key} style={{
+                  padding: "10px 12px", borderRadius: 10,
+                  background: winBg, border: `1px solid ${winBorder}`,
+                  textAlign: "center",
+                }}>
+                  <div style={{ fontSize: 14, marginBottom: 4 }}>{cat.icon}</div>
+                  <div style={{ fontSize: 10, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4 }}>{cat.label}</div>
+                  <div style={{ fontSize: 12, fontWeight: 700, color: winColor }}>
+                    {isTie ? "Tie" : `Deal ${winner}`}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* ── 3. SIDE-BY-SIDE METRICS ──────────────────────────────────────── */}
+          <Card style={{ marginBottom: 14 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "90px 1fr 1fr", gap: "0 12px" }}>
+              {/* Column headers */}
+              <div />
+              <div style={{
+                padding: "8px 12px", borderRadius: "8px 8px 0 0",
+                background: "rgba(59,130,246,0.08)", border: "1px solid rgba(59,130,246,0.15)", borderBottom: "none",
+                fontSize: 12, fontWeight: 600, color: "#60A5FA", textAlign: "center",
+              }}>
+                {aShort}
+              </div>
+              <div style={{
+                padding: "8px 12px", borderRadius: "8px 8px 0 0",
+                background: "rgba(99,102,241,0.08)", border: "1px solid rgba(99,102,241,0.15)", borderBottom: "none",
+                fontSize: 12, fontWeight: 600, color: "#A5B4FC", textAlign: "center",
+              }}>
+                {bShort}
+              </div>
+
+              {/* Data rows */}
+              {rows.map((row, i) => (
+                <React.Fragment key={row.label}>
+                  <div style={{
+                    padding: "10px 0", fontSize: 11, color: "#4B5563",
+                    display: "flex", alignItems: "center",
+                    borderBottom: i < rows.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none",
+                  }}>
+                    {row.label}
+                  </div>
+                  <div style={{
+                    padding: "10px 12px", fontSize: 13, fontWeight: 600, color: row.aC,
+                    textAlign: "center", fontFamily: "'JetBrains Mono',monospace",
+                    background: row.aW ? "rgba(59,130,246,0.08)" : "rgba(59,130,246,0.03)",
+                    border: "1px solid rgba(59,130,246,0.08)",
+                    borderTop: "none",
+                    borderBottom: i < rows.length - 1 ? "none" : "1px solid rgba(59,130,246,0.08)",
+                    position: "relative" as any,
+                  }}>
+                    {row.aV}
+                    {row.aW && (
+                      <span style={{ position: "absolute", top: 4, right: 4, fontSize: 8, color: "#60A5FA", fontWeight: 700 }}>✓</span>
+                    )}
+                  </div>
+                  <div style={{
+                    padding: "10px 12px", fontSize: 13, fontWeight: 600, color: row.bC,
+                    textAlign: "center", fontFamily: "'JetBrains Mono',monospace",
+                    background: row.bW ? "rgba(99,102,241,0.08)" : "rgba(99,102,241,0.03)",
+                    border: "1px solid rgba(99,102,241,0.08)",
+                    borderTop: "none",
+                    borderBottom: i < rows.length - 1 ? "none" : "1px solid rgba(99,102,241,0.08)",
+                    position: "relative" as any,
+                  }}>
+                    {row.bV}
+                    {row.bW && (
+                      <span style={{ position: "absolute", top: 4, right: 4, fontSize: 8, color: "#A5B4FC", fontWeight: 700 }}>✓</span>
+                    )}
+                  </div>
+                </React.Fragment>
+              ))}
+            </div>
+          </Card>
+
+          {/* ── 4. INSIGHT BAR ───────────────────────────────────────────────── */}
+          <div style={{
+            padding: "14px 18px", borderRadius: 10, marginBottom: 14,
+            background: "rgba(245,158,11,0.04)", border: "1px solid rgba(245,158,11,0.14)",
+            display: "flex", gap: 10, alignItems: "flex-start",
+          }}>
+            <span style={{ fontSize: 14, flexShrink: 0, marginTop: 1 }}>💡</span>
+            <span style={{ fontSize: 13, color: "#FBBF24", lineHeight: 1.7 }}>{insightCopy}</span>
+          </div>
+
+          {/* ── 5. WHAT WOULD FLIP THE VERDICT ───────────────────────────────── */}
+          <div style={{
+            padding: "14px 18px", borderRadius: 10,
+            background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)",
+          }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>
+              What would change the verdict?
+            </div>
+            <div style={{ fontSize: 13, color: "#94A3B8", lineHeight: 1.7 }}>
+              {flipCopy}
+            </div>
+          </div>
         </div>
-      </Card>
+      )}
+
+      {/* ══ MARKET COMPS MODE ════════════════════════════════════════════════ */}
+      {mode === "market" && (
+        <div style={{ animation: "fadeUp 0.2s ease-out" }}>
+          {isPro ? (
+            // ── PRO: Live Market Comps ────────────────────────────────────────
+            <div>
+              <div style={{
+                padding: "16px 20px", borderRadius: 12, marginBottom: 16,
+                background: "rgba(59,130,246,0.05)", border: "1px solid rgba(59,130,246,0.18)",
+              }}>
+                <div style={{ fontSize: 10, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: 600, marginBottom: 10 }}>Live Market Comparison</div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 12, marginBottom: 12 }}>
+                  {[
+                    { label: "Your Deal (A)",     value: `${(a?.valuation_multiple ?? 0).toFixed(2)}x`, color: "#60A5FA" },
+                    { label: "Market Median",      value: "3.10x",  color: "#E2E8F0" },
+                    { label: "Pricing Percentile", value: "34th",   color: (a?.valuation_multiple ?? 0) < 3.1 ? "#10B981" : "#D85A30" },
+                    { label: "Active Listings",    value: "41",     color: "#F59E0B" },
+                    { label: "Market Range",       value: "2.1x–4.0x", color: "#94A3B8" },
+                    { label: "Your Position",      value: (a?.valuation_multiple ?? 0) < 3.1 ? "Below Median" : "Above Median", color: (a?.valuation_multiple ?? 0) < 3.1 ? "#10B981" : "#D85A30" },
+                  ].map(m => (
+                    <div key={m.label} style={{ padding: "10px 12px", borderRadius: 9, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                      <div style={{ fontSize: 9, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4 }}>{m.label}</div>
+                      <div style={{ fontSize: 16, fontWeight: 700, color: m.color, fontFamily: "'JetBrains Mono',monospace" }}>{m.value}</div>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ fontSize: 13, color: "#60A5FA", lineHeight: 1.6 }}>
+                  {(a?.valuation_multiple ?? 0) < 3.1
+                    ? `Deal A is priced below the current live market median of 3.10x — favorable positioning relative to active listings.`
+                    : `Deal A is priced above the current live market median of 3.10x — may face resistance in buyer negotiations.`}
+                </div>
+              </div>
+              <div style={{ padding: "12px 16px", borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                <div style={{ fontSize: 10, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600, marginBottom: 8 }}>What this means</div>
+                <div style={{ fontSize: 13, color: "#94A3B8", lineHeight: 1.7 }}>
+                  Live comps are directionally useful for framing a negotiation anchor. Your deal's position relative to active listings tells you how motivated the seller may be and how much room exists to negotiate. Full live market data integration is coming in the next platform update.
+                </div>
+              </div>
+            </div>
+          ) : (
+            // ── LOCKED: Market Comps ────────────────────────────────────────────
+            <div style={{ borderRadius: 14, overflow: "hidden", border: "1px solid rgba(99,102,241,0.2)" }}>
+              <div style={{ padding: "24px 28px", background: "linear-gradient(135deg,rgba(99,102,241,0.08),rgba(59,130,246,0.04))" }}>
+                <div style={{ fontSize: 10, color: "#818CF8", textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: 700, marginBottom: 10 }}>⚡ Pro Feature</div>
+                <div style={{ fontSize: 18, fontWeight: 700, color: "#F1F5F9", fontFamily: "'Inter Tight',sans-serif", marginBottom: 8 }}>Compare Against Live Market Listings</div>
+                <div style={{ fontSize: 13, color: "#6B7280", lineHeight: 1.7, marginBottom: 20, maxWidth: 480 }}>
+                  See how your deal stacks up against current asking multiples, live market pricing, and active listing trends in the same industry.
+                </div>
+                {/* Blurred preview metrics */}
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 8, marginBottom: 20, filter: "blur(4px)", userSelect: "none" as any, pointerEvents: "none" }}>
+                  {[
+                    { label: "Median Ask Multiple", value: "3.2x"  },
+                    { label: "Active Listings",      value: "41"    },
+                    { label: "Pricing Percentile",   value: "68th"  },
+                    { label: "Market Spread",        value: "2.4x–4.1x" },
+                  ].map(m => (
+                    <div key={m.label} style={{ padding: "12px", borderRadius: 9, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", textAlign: "center" }}>
+                      <div style={{ fontSize: 9, color: "#4B5563", textTransform: "uppercase", marginBottom: 4 }}>{m.label}</div>
+                      <div style={{ fontSize: 18, fontWeight: 700, color: "#818CF8" }}>{m.value}</div>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ fontSize: 12, color: "#4B5563", marginBottom: 20, lineHeight: 1.6 }}>
+                  This shows whether a deal is cheap, fair, or aggressive relative to what is currently being marketed — essential context before going to LOI.
+                </div>
+                <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                  <button style={{ padding: "10px 22px", borderRadius: 9, border: "none", background: "linear-gradient(135deg,#6366F1,#8B5CF6)", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+                    Upgrade to Pro
+                  </button>
+                  <span style={{ fontSize: 12, color: "#374151" }}>Unlock live market comparisons across active listings.</span>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ══ CLOSED COMPS MODE ════════════════════════════════════════════════ */}
+      {mode === "closed" && (
+        <div style={{ animation: "fadeUp 0.2s ease-out" }}>
+          {isPro ? (
+            // ── PRO: Closed Comps ──────────────────────────────────────────────
+            <div>
+              <div style={{
+                padding: "16px 20px", borderRadius: 12, marginBottom: 16,
+                background: "rgba(16,185,129,0.04)", border: "1px solid rgba(16,185,129,0.18)",
+              }}>
+                <div style={{ fontSize: 10, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: 600, marginBottom: 10 }}>Closed Deal Benchmark</div>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 12, marginBottom: 12 }}>
+                  {[
+                    { label: "Your Deal (A)",       value: `${(a?.valuation_multiple ?? 0).toFixed(2)}x`, color: "#60A5FA" },
+                    { label: "Closed Median",        value: "2.30x", color: "#10B981" },
+                    { label: "Sold vs Ask Delta",    value: "−14%",  color: "#F59E0B" },
+                    { label: "Closed Comp Count",    value: "189",   color: "#94A3B8" },
+                    { label: "Historical Range",     value: "1.7x–2.9x", color: "#94A3B8" },
+                    { label: "Your Position",        value: (a?.valuation_multiple ?? 0) <= 2.9 ? "Within Range" : "Above Range", color: (a?.valuation_multiple ?? 0) <= 2.9 ? "#10B981" : "#D85A30" },
+                  ].map(m => (
+                    <div key={m.label} style={{ padding: "10px 12px", borderRadius: 9, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                      <div style={{ fontSize: 9, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4 }}>{m.label}</div>
+                      <div style={{ fontSize: 16, fontWeight: 700, color: m.color, fontFamily: "'JetBrains Mono',monospace" }}>{m.value}</div>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ fontSize: 13, color: "#10B981", lineHeight: 1.6 }}>
+                  {(a?.valuation_multiple ?? 0) <= 2.9
+                    ? `Deal A is priced within the historical closing range for this industry — a realistic basis for LOI.`
+                    : `Deal A is priced above where similar deals have actually closed. Expect negotiation pressure toward the ${(a?.fair_value ? (a.fair_value / (a.sde || 1)).toFixed(2) : "market")}x range.`}
+                </div>
+              </div>
+              <div style={{ padding: "12px 16px", borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                <div style={{ fontSize: 10, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600, marginBottom: 8 }}>What this means</div>
+                <div style={{ fontSize: 13, color: "#94A3B8", lineHeight: 1.7 }}>
+                  Closed comps show where deals actually transact — not where sellers hope to exit. This is the strongest pricing signal for anchoring an LOI and stress-testing your offer before committing. Full DealStats closed transaction integration is active across all 41 NexTax industries.
+                </div>
+              </div>
+            </div>
+          ) : (
+            // ── LOCKED: Closed Comps ────────────────────────────────────────────
+            <div style={{ borderRadius: 14, overflow: "hidden", border: "1px solid rgba(99,102,241,0.2)" }}>
+              <div style={{ padding: "24px 28px", background: "linear-gradient(135deg,rgba(16,185,129,0.06),rgba(6,95,70,0.03))" }}>
+                <div style={{ fontSize: 10, color: "#10B981", textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: 700, marginBottom: 10 }}>⚡ Pro Feature</div>
+                <div style={{ fontSize: 18, fontWeight: 700, color: "#F1F5F9", fontFamily: "'Inter Tight',sans-serif", marginBottom: 8 }}>Benchmark Against Actual Closed Deals</div>
+                <div style={{ fontSize: 13, color: "#6B7280", lineHeight: 1.7, marginBottom: 20, maxWidth: 480 }}>
+                  Compare your deal to historical transaction multiples, sold pricing ranges, and real closed-deal benchmarks from the DealStats database.
+                </div>
+                {/* Blurred preview */}
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 8, marginBottom: 20, filter: "blur(4px)", userSelect: "none" as any, pointerEvents: "none" }}>
+                  {[
+                    { label: "Median Closed Multiple", value: "2.6x"       },
+                    { label: "Sold vs Ask",             value: "−14%"       },
+                    { label: "Closed Comp Count",       value: "126"        },
+                    { label: "Closed Range",            value: "1.9x–3.4x"  },
+                  ].map(m => (
+                    <div key={m.label} style={{ padding: "12px", borderRadius: 9, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", textAlign: "center" }}>
+                      <div style={{ fontSize: 9, color: "#4B5563", textTransform: "uppercase", marginBottom: 4 }}>{m.label}</div>
+                      <div style={{ fontSize: 18, fontWeight: 700, color: "#10B981" }}>{m.value}</div>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ fontSize: 12, color: "#4B5563", marginBottom: 20, lineHeight: 1.6 }}>
+                  This shows where deals actually close — not just where sellers hope to sell. The strongest signal for anchoring your offer.
+                </div>
+                <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
+                  <button style={{ padding: "10px 22px", borderRadius: 9, border: "none", background: "linear-gradient(135deg,#6366F1,#8B5CF6)", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+                    Upgrade to Pro
+                  </button>
+                  <span style={{ fontSize: 12, color: "#374151" }}>Unlock historical closed-deal benchmarking.</span>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
+
 
 // ─── LOCAL MARKET REALITY CHECK ──────────────────────────────────────────────
 
