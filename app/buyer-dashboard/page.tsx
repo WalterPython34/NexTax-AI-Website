@@ -36,7 +36,12 @@ interface DealRun {
   sde?: number;
   gap_pct?: number;
   signal?: "overpriced" | "fair" | "opportunity";
+  verdict?: DealVerdict;
+  oppScore?: number;
 }
+
+/** Deal Verdict — the single opinionated label shown throughout the UI */
+type DealVerdict = "high_conviction" | "pursue" | "investigate" | "pass";
 
 interface DealNote {
   id: string;
@@ -181,9 +186,127 @@ function ago(d: string) {
   return new Date(d).toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
-/** Opportunity score used to rank deals in Top Opportunities */
-function oppScore(d: DealRun) {
-  return (100 - (d.gap_pct ?? 0) * 2) + d.overall_score + (d.dscr * 10);
+// ─── COMPOSITE OPPORTUNITY SCORING ENGINE ────────────────────────────────────
+//
+// Opportunity Score = 40% Pricing Advantage
+//                   + 30% DSCR Strength
+//                   + 20% Deal Quality Score
+//                   + 10% Risk Adjustment
+//
+// Score range: 0–100. Used for ranking in Top Opportunities.
+
+/**
+ * Pricing Advantage component (0–100).
+ * Big negative gap (below market) = near 100. Overpriced = penalized toward 0.
+ */
+function pricingAdvantageScore(gapPct: number): number {
+  // −30% gap → ~100, 0% gap → ~50, +20% gap → ~10
+  if (gapPct <= -30) return 100;
+  if (gapPct <= 0)   return 50 + (Math.abs(gapPct) / 30) * 50;
+  if (gapPct <= 15)  return 50 - (gapPct / 15) * 35;
+  return Math.max(0, 15 - (gapPct - 15) * 1.5);
+}
+
+/**
+ * DSCR Strength component (0–100).
+ * Capped at 3.0x — a 6x DSCR shouldn't automatically beat 2.5x if pricing is bad.
+ */
+function dscrStrengthScore(dscr: number): number {
+  if (dscr < 1.0)  return Math.max(0, dscr * 15);
+  if (dscr < 1.25) return 15 + (dscr - 1.0) / 0.25 * 25;
+  if (dscr < 1.5)  return 40 + (dscr - 1.25) / 0.25 * 20;
+  if (dscr < 2.5)  return 60 + (dscr - 1.5)  / 1.0  * 35;
+  if (dscr < 3.0)  return 95 + (dscr - 2.5)  / 0.5  * 5;
+  return 100; // Capped — diminishing returns above 3.0x
+}
+
+/**
+ * Risk Adjustment component (0–100 → applied as multiplier).
+ * Penalizes low DSCR, volatile industries, extreme assumptions.
+ */
+function riskAdjustmentScore(dscr: number, riskLevel: string, gapPct: number): number {
+  let score = 80; // Base neutral
+  // DSCR penalties
+  if (dscr < 1.0)        score -= 40;
+  else if (dscr < 1.25)  score -= 20;
+  else if (dscr >= 1.75) score += 10;
+  // Risk level from deal scoring
+  const rl = (riskLevel || "").toLowerCase();
+  if (rl === "critical") score -= 30;
+  else if (rl === "high") score -= 15;
+  else if (rl === "low")  score += 10;
+  // Extreme overpricing penalty
+  if (gapPct > 30) score -= 15;
+  return Math.max(0, Math.min(100, score));
+}
+
+/**
+ * Composite Opportunity Score (0–100).
+ * Weighted: 40% pricing, 30% DSCR, 20% deal quality, 10% risk.
+ */
+function oppScore(d: DealRun): number {
+  const gp = d.gap_pct ?? 0;
+  const pricing = pricingAdvantageScore(gp);
+  const dscr    = dscrStrengthScore(d.dscr);
+  const quality = d.overall_score; // Already 0–100
+  const risk    = riskAdjustmentScore(d.dscr, d.risk_level, gp);
+  return Math.round(pricing * 0.40 + dscr * 0.30 + quality * 0.20 + risk * 0.10);
+}
+
+/**
+ * Deal Verdict — the single opinionated label for a deal.
+ *
+ * 🔥 High Conviction: gap ≤ −30% AND DSCR ≥ 2.5 AND score ≥ 85 AND low risk
+ * 🟢 Pursue:         (gap ≤ −20% AND DSCR ≥ 1.75 AND not high risk)
+ *                    OR (score ≥ 80 AND gap ≤ −10%)
+ * 🟡 Investigate:    −20% < gap < +15% AND DSCR ≥ 1.25
+ * 🔴 Pass:           gap ≥ +15% OR DSCR < 1.25 OR risk == high/critical
+ */
+function dealVerdict(d: DealRun): DealVerdict {
+  const gp = d.gap_pct ?? 0;
+  const rl = (d.risk_level || "").toLowerCase();
+  const isHighRisk = rl === "high" || rl === "critical";
+
+  // 🔥 High Conviction
+  if (gp <= -30 && d.dscr >= 2.5 && d.overall_score >= 85 && rl === "low") {
+    return "high_conviction";
+  }
+  // 🔴 Pass — hard disqualifiers
+  if (gp >= 15 || d.dscr < 1.25 || isHighRisk) {
+    return "pass";
+  }
+  // 🟢 Pursue
+  if ((gp <= -20 && d.dscr >= 1.75) || (d.overall_score >= 80 && gp <= -10)) {
+    return "pursue";
+  }
+  // 🟡 Investigate (default for viable deals)
+  return "investigate";
+}
+
+/** Verdict display config — emoji, label, colors */
+function verdictCfg(v: DealVerdict) {
+  switch (v) {
+    case "high_conviction": return {
+      emoji: "🔥", label: "High Conviction",
+      color: "#F97316", bg: "rgba(249,115,22,0.1)", border: "rgba(249,115,22,0.25)",
+      subtext: "Strong mispricing + durable DSCR. Priority deal to advance.",
+    };
+    case "pursue": return {
+      emoji: "🟢", label: "Pursue",
+      color: "#10B981", bg: "rgba(16,185,129,0.1)", border: "rgba(16,185,129,0.25)",
+      subtext: "Clearly underpriced, financeable, and not fragile. Move to diligence.",
+    };
+    case "investigate": return {
+      emoji: "🟡", label: "Investigate",
+      color: "#F59E0B", bg: "rgba(245,158,11,0.1)", border: "rgba(245,158,11,0.25)",
+      subtext: "Viable deal — not obviously mispriced. Needs diligence before advancing.",
+    };
+    case "pass": return {
+      emoji: "🔴", label: "Pass",
+      color: "#EF4444", bg: "rgba(239,68,68,0.1)", border: "rgba(239,68,68,0.25)",
+      subtext: "Overpriced, risky, or structurally weak. Reprice or move on.",
+    };
+  }
 }
 
 // ─── UI ATOMS ─────────────────────────────────────────────────────────────────
@@ -334,7 +457,6 @@ function NotesPanel({
   const [loadingNotes, setLoadingNotes] = useState(false);
   const [loadingIntel, setLoadingIntel] = useState(false);
 
-  const sc     = sigCfg(deal.signal ?? "fair");
   const gp     = deal.gap_pct ?? 0;
   const status = dealStatuses[deal.id] ?? "New";
 
@@ -813,12 +935,12 @@ function TopOpportunities({
     <div style={{ marginBottom: 24 }}>
       <SectionHeader
         title="Top Opportunities"
-        sub="Ranked by pricing gap, score, and DSCR"
+        sub="Ranked by: pricing advantage, debt coverage, and risk-adjusted return"
       />
       <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
         {top.map((deal, i) => {
           const gp  = deal.gap_pct ?? 0;
-          const sig = sigCfg(deal.signal ?? "fair");
+          const vd  = verdictCfg(deal.verdict ?? dealVerdict(deal));
           const isTop = i === 0;
           return (
             <div
@@ -862,16 +984,15 @@ function TopOpportunities({
                 {gp > 0 ? "+" : ""}{gp}%
               </div>
 
-              {/* Signal badge */}
+              {/* Verdict badge */}
               <span style={{
-                display: "inline-flex", alignItems: "center", gap: 3,
-                padding: "3px 9px", borderRadius: 20,
-                fontSize: 10, fontWeight: 600,
-                background: sig.bg, color: sig.color, border: `1px solid ${sig.border}`,
-                flexShrink: 0,
+                display: "inline-flex", alignItems: "center", gap: 4,
+                padding: "4px 10px", borderRadius: 7,
+                fontSize: 11, fontWeight: 700,
+                background: vd.bg, color: vd.color, border: `1px solid ${vd.border}`,
+                flexShrink: 0, whiteSpace: "nowrap" as any,
               }}>
-                <span style={{ width: 4, height: 4, borderRadius: "50%", background: sig.dot }} />
-                {sig.label}
+                {vd.emoji} {vd.label}
               </span>
 
               {/* Actions */}
@@ -940,7 +1061,7 @@ function PriorityDeals({
       <Card>
         {starred.map((deal, i) => {
           const gp  = deal.gap_pct ?? 0;
-          const sig = sigCfg(deal.signal ?? "fair");
+          const vd  = verdictCfg(deal.verdict ?? dealVerdict(deal));
           return (
             <div
               key={deal.id}
@@ -968,13 +1089,13 @@ function PriorityDeals({
                 {gp > 0 ? "+" : ""}{gp}%
               </div>
               <span style={{
-                display: "inline-flex", alignItems: "center", gap: 3,
-                padding: "2px 8px", borderRadius: 20,
-                fontSize: 10, fontWeight: 600,
-                background: sig.bg, color: sig.color, border: `1px solid ${sig.border}`,
+                display: "inline-flex", alignItems: "center", gap: 4,
+                padding: "2px 8px", borderRadius: 6,
+                fontSize: 10, fontWeight: 700,
+                background: vd.bg, color: vd.color, border: `1px solid ${vd.border}`,
+                whiteSpace: "nowrap" as any,
               }}>
-                <span style={{ width: 4, height: 4, borderRadius: "50%", background: sig.dot }} />
-                {sig.label}
+                {vd.emoji} {vd.label}
               </span>
               <div style={{ display: "flex", gap: 4 }}>
                 <button
@@ -1480,39 +1601,45 @@ function AnalyzeDealModal({
                 </div>
               </div>
 
-              {/* Signal + fair value range */}
-              <div style={{ display: "flex", gap: 10, marginBottom: 14 }}>
-                <div style={{
-                  flex: 1, padding: "10px 14px", borderRadius: 10,
-                  background: sigCfgM(score.signal).bg,
-                  border: `1px solid ${sigCfgM(score.signal).color}33`,
-                  display: "flex", alignItems: "center", gap: 8,
-                }}>
-                  <span style={{ fontSize: 18 }}>
-                    {score.signal === "opportunity" ? "🟢" : score.signal === "overpriced" ? "🔴" : "🟡"}
-                  </span>
-                  <div>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: sigCfgM(score.signal).color }}>{sigCfgM(score.signal).label}</div>
-                    <div style={{ fontSize: 10, color: "#4B5563" }}>
-                      FV Range: {fmt(score.fairValueLow)} – {fmt(score.fairValueHigh)}
+              {/* Verdict + fair value range */}
+              {(() => {
+                const dForV = { gap_pct: score.gap_pct, dscr: score.dscr, overall_score: score.overall, risk_level: score.riskLevel } as DealRun;
+                const vdm = verdictCfg(dealVerdict(dForV));
+                return (
+                  <div style={{ display: "flex", gap: 10, marginBottom: 14 }}>
+                    <div style={{
+                      flex: 1, padding: "10px 14px", borderRadius: 10,
+                      background: vdm.bg, border: `1px solid ${vdm.border}`,
+                      display: "flex", alignItems: "center", gap: 8,
+                    }}>
+                      <span style={{ fontSize: 20 }}>{vdm.emoji}</span>
+                      <div>
+                        <div style={{ fontSize: 12, fontWeight: 700, color: vdm.color, textTransform: "uppercase" as any, letterSpacing: "0.06em" }}>
+                          Verdict: {vdm.label}
+                        </div>
+                        <div style={{ fontSize: 10, color: "#6B7280", marginTop: 1, lineHeight: 1.4 }}>{vdm.subtext}</div>
+                        <div style={{ fontSize: 10, color: "#4B5563", marginTop: 3 }}>
+                          FV Range: {fmt(score.fairValueLow)} – {fmt(score.fairValueHigh)}
+                        </div>
+                      </div>
+                    </div>
+                    {/* Sub-score pills */}
+                    <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                      {[
+                        { label: "Val", value: score.valuationScore },
+                        { label: "Debt", value: score.debtScore },
+                        { label: "Mkt", value: score.marketScore },
+                        { label: "Ind", value: score.industryScore },
+                      ].map(s => (
+                        <div key={s.label} style={{ textAlign: "center", padding: "6px 8px", borderRadius: 8, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", minWidth: 42 }}>
+                          <div style={{ fontSize: 8, color: "#4B5563", textTransform: "uppercase", marginBottom: 2 }}>{s.label}</div>
+                          <div style={{ fontSize: 13, fontWeight: 700, color: scoreColor(s.value), fontFamily: "'JetBrains Mono',monospace" }}>{s.value}</div>
+                        </div>
+                      ))}
                     </div>
                   </div>
-                </div>
-                {/* Sub-score pills */}
-                <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                  {[
-                    { label: "Val", value: score.valuationScore },
-                    { label: "Debt", value: score.debtScore },
-                    { label: "Mkt", value: score.marketScore },
-                    { label: "Ind", value: score.industryScore },
-                  ].map(s => (
-                    <div key={s.label} style={{ textAlign: "center", padding: "6px 8px", borderRadius: 8, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", minWidth: 42 }}>
-                      <div style={{ fontSize: 8, color: "#4B5563", textTransform: "uppercase", marginBottom: 2 }}>{s.label}</div>
-                      <div style={{ fontSize: 13, fontWeight: 700, color: scoreColor(s.value), fontFamily: "'JetBrains Mono',monospace" }}>{s.value}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
+                );
+              })()}
 
               {/* Flags */}
               {(score.redFlags.length > 0 || score.greenFlags.length > 0) && (
@@ -1703,6 +1830,7 @@ function UnderwritingPanel({
   const ind = SCORE_INDUSTRIES[deal.industry];
   const gp  = deal.gap_pct ?? 0;
   const fv  = deal.fair_value ?? 0;
+  const vd  = verdictCfg(deal.verdict ?? dealVerdict(deal));
 
   // ── Derived underwriting metrics ──────────────────────────────────────────
   const stressDscr15 = +(deal.dscr * 0.85).toFixed(2);
@@ -1805,6 +1933,21 @@ function UnderwritingPanel({
 
         {/* Tab content */}
         <div style={{ flex: 1, overflowY: "auto", padding: "16px 20px" }}>
+
+          {/* Verdict banner — always visible at top */}
+          <div style={{
+            display: "flex", alignItems: "center", gap: 10,
+            padding: "10px 14px", borderRadius: 10, marginBottom: 16,
+            background: vd.bg, border: `1px solid ${vd.border}`,
+          }}>
+            <span style={{ fontSize: 18, flexShrink: 0 }}>{vd.emoji}</span>
+            <div>
+              <div style={{ fontSize: 11, fontWeight: 700, color: vd.color, textTransform: "uppercase" as any, letterSpacing: "0.07em" }}>
+                Verdict: {vd.label}
+              </div>
+              <div style={{ fontSize: 11, color: "#94A3B8", lineHeight: 1.5, marginTop: 2 }}>{vd.subtext}</div>
+            </div>
+          </div>
 
           {/* ── STRESS TEST ── */}
           {activeTab === "stress" && (
@@ -1921,12 +2064,14 @@ function UnderwritingPanel({
                     ],
                   },
                   {
-                    title: "Recommended Next Step",
-                    content: deal.overall_score >= 65
-                      ? `Score of ${deal.overall_score} and DSCR of ${deal.dscr.toFixed(2)}x support advancing to LOI. Anchor at ${fmt(recOffer)} and request 3 years of financials before submission.`
-                      : deal.overall_score >= 45
-                      ? `Validate key assumptions before LOI. Confirm SDE add-backs and request 2 years of tax returns to verify stated earnings.`
-                      : `Score of ${deal.overall_score} indicates elevated risk. Reprice or request significant seller concessions before proceeding.`,
+                    title: "Final Recommendation",
+                    content: (() => {
+                      const v = deal.verdict ?? dealVerdict(deal);
+                      if (v === "high_conviction") return `🔥 HIGH CONVICTION — ${vd.subtext} Anchor at ${fmt(recOffer)}, move to LOI immediately after confirming add-backs.`;
+                      if (v === "pursue")          return `🟢 PURSUE — ${vd.subtext} Anchor at ${fmt(recOffer)} and request 3 years of financials before LOI submission.`;
+                      if (v === "investigate")     return `🟡 INVESTIGATE — ${vd.subtext} Validate SDE and add-backs before committing. Request 2 years of tax returns.`;
+                      return `🔴 PASS — ${vd.subtext} Do not advance at current pricing. Requires ${gp > 0 ? `${gp}% price reduction` : "structural improvement"} to become viable.`;
+                    })(),
                   },
                 ].map(s => (
                   <div key={s.title} style={{ padding: "12px 14px", borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
@@ -2408,7 +2553,7 @@ function TabDashboard({
             </div>
           ) : recent.map((deal, i) => {
             const gp  = deal.gap_pct ?? 0;
-            const sig = sigCfg(deal.signal ?? "fair");
+            const vd  = verdictCfg(deal.verdict ?? dealVerdict(deal));
             return (
               <div
                 key={deal.id}
@@ -2435,12 +2580,12 @@ function TabDashboard({
                 </div>
                 <span style={{
                   display: "inline-flex", alignItems: "center", gap: 4,
-                  padding: "3px 10px", borderRadius: 20,
-                  fontSize: 11, fontWeight: 600,
-                  background: sig.bg, color: sig.color, border: `1px solid ${sig.border}`,
+                  padding: "3px 9px", borderRadius: 6,
+                  fontSize: 10, fontWeight: 700,
+                  background: vd.bg, color: vd.color, border: `1px solid ${vd.border}`,
+                  whiteSpace: "nowrap" as any,
                 }}>
-                  <span style={{ width: 4, height: 4, borderRadius: "50%", background: sig.dot, flexShrink: 0 }} />
-                  {sig.label}
+                  {vd.emoji} {vd.label}
                 </span>
                 <div style={{ display: "flex", gap: 4 }}>
                   <StarButton dealId={deal.id} favorites={favorites} onToggle={onToggleFav} />
@@ -2652,7 +2797,7 @@ function TabMyDeals({
     .filter(d => {
       const q        = search.toLowerCase();
       const match    = !q || (IL[d.industry] || d.industry).toLowerCase().includes(q) || (d.city || "").toLowerCase().includes(q);
-      const sigMatch = filterSig === "all" || d.signal === filterSig;
+      const sigMatch = filterSig === "all" || (d.verdict ?? dealVerdict(d)) === filterSig;
       return match && sigMatch;
     })
     .sort((a, b) => {
@@ -2706,10 +2851,11 @@ function TabMyDeals({
           />
         </div>
         <select value={filterSig} onChange={(e) => setFilterSig(e.target.value)} style={selStyle}>
-          <option value="all">All signals</option>
-          <option value="opportunity">Opportunity</option>
-          <option value="fair">Fair Market</option>
-          <option value="overpriced">Overpriced</option>
+          <option value="all">All Verdicts</option>
+          <option value="high_conviction">🔥 High Conviction</option>
+          <option value="pursue">🟢 Pursue</option>
+          <option value="investigate">🟡 Investigate</option>
+          <option value="pass">🔴 Pass</option>
         </select>
         <select value={sortKey} onChange={(e) => setSortKey(e.target.value as SortKey)} style={selStyle}>
           <option value="date">Sort: Newest</option>
@@ -2723,12 +2869,12 @@ function TabMyDeals({
         {/* Table header */}
         <div style={{
           display: "grid",
-          gridTemplateColumns: "1.6fr 0.8fr 1fr 1fr 60px 48px 100px 90px auto",
+          gridTemplateColumns: "1.6fr 0.8fr 1fr 1fr 60px 48px 130px 90px auto",
           gap: "0 8px", padding: "10px 18px",
           borderBottom: "1px solid rgba(255,255,255,0.06)",
           background: "rgba(255,255,255,0.015)",
         }}>
-          {["Deal", "Industry", "Asking", "Fair Value", "Gap", "Score", "Signal", "Status", "Actions"].map(h => (
+          {["Deal", "Industry", "Asking", "Fair Value", "Gap", "Score", "Verdict", "Status", "Actions"].map(h => (
             <div key={h} style={{
               fontSize: 10, color: "#374151", textTransform: "uppercase",
               letterSpacing: "0.08em", fontWeight: 600,
@@ -2744,7 +2890,7 @@ function TabMyDeals({
             key={i}
             style={{
               display: "grid",
-              gridTemplateColumns: "1.6fr 0.8fr 1fr 1fr 60px 48px 100px 90px auto",
+              gridTemplateColumns: "1.6fr 0.8fr 1fr 1fr 60px 48px 130px 90px auto",
               gap: "0 8px", padding: "14px 18px",
               borderBottom: "1px solid rgba(255,255,255,0.04)", alignItems: "center",
             }}
@@ -2783,7 +2929,7 @@ function TabMyDeals({
         {/* Deal rows */}
         {!loading && filtered.map((deal, i) => {
           const gp      = deal.gap_pct ?? 0;
-          const sig     = sigCfg(deal.signal ?? "fair");
+          const vd      = verdictCfg(deal.verdict ?? dealVerdict(deal));
           const status  = dealStatuses[deal.id] ?? "New";
           const statusC = STATUS_COLORS[status];
           const loc     = [deal.city, deal.state].filter(Boolean).join(", ");
@@ -2794,7 +2940,7 @@ function TabMyDeals({
               key={deal.id}
               style={{
                 display: "grid",
-                gridTemplateColumns: "1.6fr 0.8fr 1fr 1fr 60px 48px 100px 90px auto",
+                gridTemplateColumns: "1.6fr 0.8fr 1fr 1fr 60px 48px 130px 90px auto",
                 gap: "0 8px", padding: "13px 18px",
                 borderBottom: i < filtered.length - 1 ? "1px solid rgba(255,255,255,0.03)" : "none",
                 alignItems: "center", transition: "background 0.12s",
@@ -2848,16 +2994,20 @@ function TabMyDeals({
               {/* Score ring */}
               <Ring score={deal.overall_score} size={32} />
 
-              {/* Signal badge */}
-              <span style={{
-                display: "inline-flex", alignItems: "center", gap: 3,
-                padding: "3px 8px", borderRadius: 20,
-                fontSize: 10, fontWeight: 600,
-                background: sig.bg, color: sig.color, border: `1px solid ${sig.border}`,
+              {/* Verdict badge */}
+              <div style={{
+                display: "inline-flex", flexDirection: "column", gap: 1,
               }}>
-                <span style={{ width: 4, height: 4, borderRadius: "50%", background: sig.dot }} />
-                {sig.label}
-              </span>
+                <span style={{
+                  display: "inline-flex", alignItems: "center", gap: 4,
+                  padding: "3px 8px", borderRadius: 6,
+                  fontSize: 10, fontWeight: 700,
+                  background: vd.bg, color: vd.color, border: `1px solid ${vd.border}`,
+                  whiteSpace: "nowrap" as any,
+                }}>
+                  {vd.emoji} {vd.label}
+                </span>
+              </div>
 
               {/* Status dropdown */}
               <select
@@ -4038,7 +4188,8 @@ export default function BuyerDashboard() {
       const gap_pct = d.fair_value > 0
         ? Math.round(((d.asking_price - d.fair_value) / d.fair_value) * 100)
         : 0;
-      return { ...d, gap_pct, signal: deriveSignal(gap_pct) };
+      const enriched = { ...d, gap_pct, signal: deriveSignal(gap_pct) };
+      return { ...enriched, verdict: dealVerdict(enriched), oppScore: oppScore(enriched) };
     });
     setDeals(enriched);
     setLoadingDeals(false);
@@ -4159,7 +4310,9 @@ export default function BuyerDashboard() {
 
   // ── New deal saved from modal → prepend to deals state immediately ────────
   const handleDealSaved = (deal: DealRun) => {
-    setDeals(prev => [deal, ...prev]);
+    // Enrich with verdict + oppScore before adding to state
+    const enriched = { ...deal, verdict: dealVerdict(deal), oppScore: oppScore(deal) };
+    setDeals(prev => [enriched, ...prev]);
     setAnalyzeModal(false);
   };
 
