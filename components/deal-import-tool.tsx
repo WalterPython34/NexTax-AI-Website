@@ -10,7 +10,7 @@ const TRACKED_INDUSTRIES = [
   "Accounting", "Electrical", "Healthcare", "Transportation", "Printing",
   "Self-Storage", "Painting", "Security",
   // ── New 14 ───────────────────────────────────────────────────────────────
-  "Sign Manufacturing", "Hair Salon", "Other Construction", "Grocery Store",
+  "Sign Manufacturing", "Hair Salon", "Other Construction", "Gas Station", "Grocery Store",
   "Pest Control", "Marketing Agency", "Engineering Services", "Veterinary Practice",
   "Real Estate Brokerage", "Property Management", "Senior Care / Home Health",
   "Physical Therapy / Chiropractic", "Home Remodeling & Restoration", "Staffing / Recruiting",
