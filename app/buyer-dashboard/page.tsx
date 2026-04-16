@@ -459,6 +459,7 @@ function NotesPanel({
   const [loadingIntel, setLoadingIntel] = useState(false);
 
   const gp     = deal.gap_pct ?? 0;
+  const sc     = sigCfg(deal.signal ?? "fair");
   const status = dealStatuses[deal.id] ?? "New";
 
   const selStyle: React.CSSProperties = {
