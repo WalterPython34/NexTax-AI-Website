@@ -4937,13 +4937,13 @@ export default function BuyerDashboard() {
   // ── Deals ───────────────────────────────────────────────────────────────────
   const fetchDeals = useCallback(async (uid: string) => {
     setLoadingDeals(true);
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from("deal_runs")
-      .select("id,tool_used,industry,asking_price,fair_value,valuation_multiple,dscr,overall_score,risk_level,city,state,created_at,confidence_grade,revenue,sde,gap_pct")
+      .select("id,tool_used,industry,asking_price,fair_value,valuation_multiple,dscr,overall_score,risk_level,city,state,created_at,confidence_grade,revenue,sde")
       .eq("user_id", uid)
-      .eq("is_valid", true)
       .order("created_at", { ascending: false })
       .limit(50);
+    if (error) console.error("fetchDeals error:", error.message);
     const enriched: DealRun[] = (data || []).map(d => {
       const gap_pct = d.fair_value > 0
         ? Math.round(((d.asking_price - d.fair_value) / d.fair_value) * 100)
