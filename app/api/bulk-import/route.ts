@@ -1,10 +1,65 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { scoreDeal, estimateSdeFromRevenue } from "@/lib/scoringEngine";
+import { getNaicsFromIndustry } from "@/lib/industryMappings";
+import { generateScoreExplanation } from "@/lib/scoreExplanation";
+import type { IndustryBenchmarks } from "@/lib/types/benchmarks";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
+
+// ─── BENCHMARK FETCHER ───────────────────────────────────────────────────────
+// Queries rma_benchmarks directly — no HTTP round-trip needed server-side.
+
+async function fetchBenchmarksForIndustry(
+  nextaxKey: string,
+): Promise<IndustryBenchmarks | null> {
+  const naicsCode = getNaicsFromIndustry(nextaxKey);
+  if (!naicsCode) return null;
+
+  const { data: rows, error } = await supabase
+    .from("rma_benchmarks")
+    .select("metric_name, metric_value, industry_name, year")
+    .eq("naics_code", naicsCode)
+    .eq("year", "2025-26");
+
+  if (error || !rows || rows.length === 0) return null;
+
+  const get = (key: string): number | null =>
+    rows.find(r => r.metric_name === key)?.metric_value ?? null;
+
+  const debtToEquity = get("debt_to_equity");
+  const coverage     = get("interest_coverage");
+  const ebitda       = get("ebitda_margin_pct");
+
+  return {
+    naics_code:               naicsCode,
+    industry_name:            rows[0].industry_name ?? nextaxKey,
+    year:                     rows[0].year ?? "2025-26",
+    operating_margin_pct:     get("operating_margin_pct"),
+    pretax_margin_pct:        get("pretax_margin_pct"),
+    ebitda_margin_pct:        ebitda,
+    current_ratio:            get("current_ratio"),
+    debt_to_equity:           debtToEquity,
+    interest_coverage:        coverage,
+    asset_turnover:           get("asset_turnover"),
+    sales_to_working_capital: get("sales_to_working_capital"),
+    return_on_assets:         get("return_on_assets"),
+    total_revenue:            get("total_revenue"),
+    total_assets:             get("total_assets"),
+    implied_sde_margin:       ebitda,
+    leverage_flag:
+      debtToEquity === null ? null :
+      debtToEquity < 1.5    ? "low" :
+      debtToEquity < 3.0    ? "moderate" : "high",
+    coverage_flag:
+      coverage === null ? null :
+      coverage >= 3.0   ? "strong" :
+      coverage >= 1.5   ? "adequate" : "weak",
+  };
+}
 
 // ─── INDUSTRY CLASSIFIER ────────────────────────────────────────────────────
 
@@ -168,9 +223,11 @@ const INDUSTRY_MAP: Record<string, string> = {
   "seo agency": "marketing", "social media agency": "marketing",
 
   // ── NEW: Engineering
-  "engineering firm": "engineering", "engineering services": "engineering",
+  engineering: "engineering", "engineering firm": "engineering", "engineering services": "engineering",
   "civil engineering": "engineering", "mechanical engineering": "engineering",
   "environmental engineering": "engineering", "structural engineering": "engineering",
+  "electrical engineering": "engineering", "industrial engineering": "engineering",
+  "consulting engineer": "engineering", "engineering & consulting": "engineering",
 
   // ── NEW: Veterinary
   veterinary: "veterinary", vet: "veterinary", "veterinary practice": "veterinary",
@@ -220,59 +277,9 @@ const INDUSTRY_MAP: Record<string, string> = {
   "workforce solutions": "staffing", "hr staffing": "staffing",
 };
 
-const INDUSTRY_MARGINS: Record<string, [number, number]> = {
-  laundromat: [25, 40], hvac: [15, 30], landscaping: [10, 25], carwash: [25, 45],
-  dental: [20, 40], gym: [15, 35], restaurant: [5, 15], autorepair: [15, 30],
-  cleaning: [15, 30], ecommerce: [15, 35], saas: [60, 85], insurance: [20, 40],
-  plumbing: [15, 30], roofing: [15, 30], petcare: [20, 40], pharmacy: [18, 30],
-  daycare: [15, 30], medspa: [25, 45],
-  accounting: [30, 55], electrical: [15, 30], healthcare: [15, 35],
-  transportation: [10, 25], printing: [15, 30], storage: [40, 65],
-  painting: [15, 30], security: [15, 30],
-  // ── New 14 industries ──────────────────────────────────────────────────
-  signmaking:      [15, 30],
-  hairsalon:       [15, 30],
-  construction:    [15, 30],
-  grocery:         [10, 15],
-  pestcontrol:     [20, 35],
-  marketing:       [20, 35],
-  engineering:     [20, 40],
-  veterinary:      [15, 30],
-  realestatebrok:  [15, 30],
-  propertymanage:  [20, 40],
-  seniorcare:      [10, 20],
-  physicaltherapy: [20, 35],
-  remodeling:      [15, 25],
-  staffing:        [15, 25],
-  gasstation:      [3,  8],   // Gas stations run thin margins on fuel; profit from c-store
-};
+// INDUSTRY_MARGINS moved to @/lib/scoringEngine
 
-const MULTIPLES: Record<string, [number, number]> = {
-  laundromat: [2.5, 4.0], hvac: [2.5, 4.5], landscaping: [1.5, 3.0], carwash: [3.0, 5.0],
-  dental: [3.0, 5.5], gym: [2.0, 4.0], restaurant: [1.5, 3.0], autorepair: [2.0, 3.5],
-  cleaning: [1.5, 3.0], ecommerce: [2.5, 4.5], saas: [3.0, 6.0], insurance: [2.0, 3.5],
-  plumbing: [2.0, 4.0], roofing: [1.5, 3.5], petcare: [2.0, 4.0], pharmacy: [2.5, 4.0],
-  daycare: [2.0, 4.0], medspa: [3.0, 5.0],
-  accounting: [1.5, 3.5], electrical: [2.0, 4.0], healthcare: [3.0, 6.0],
-  transportation: [2.0, 4.0], printing: [1.5, 3.0], storage: [4.0, 8.0],
-  painting: [1.5, 3.0], security: [2.5, 4.5],
-  // ── New 14 industries ──────────────────────────────────────────────────
-  signmaking:      [1.9, 3.3],
-  hairsalon:       [1.1, 2.3],
-  construction:    [1.8, 3.2],
-  grocery:         [1.6, 3.3],
-  pestcontrol:     [2.0, 4.2],
-  marketing:       [1.8, 3.1],
-  engineering:     [1.8, 3.3],
-  veterinary:      [2.4, 4.1],
-  realestatebrok:  [1.7, 2.6],
-  propertymanage:  [1.9, 3.1],
-  seniorcare:      [2.0, 3.8],
-  physicaltherapy: [1.6, 2.9],
-  remodeling:      [1.4, 2.7],
-  staffing:        [1.5, 3.0],
-  gasstation:      [2.5, 4.5],  // Gas stations trade on real estate + fuel volume + c-store
-};
+// MULTIPLES moved to @/lib/scoringEngine
 
 function classifyIndustry(text: string): string | null {
   const lower = text.toLowerCase();
@@ -336,12 +343,11 @@ function extractFields(row: Record<string, string>, industry: string | null): Fi
   }
 
   if (!sde && revenue && industry) {
-    const margins = INDUSTRY_MARGINS[industry];
-    if (margins) {
-      const midMargin = (margins[0] + margins[1]) / 2 / 100;
-      sde = Math.round(revenue * midMargin);
-      sdeSource = "estimated";
-    }
+    // estimateSdeFromRevenue from scoringEngine — uses RMA when available.
+    // benchmarks not fetched yet at extraction time; null triggers fallback margins.
+    const est = estimateSdeFromRevenue(revenue, industry, null);
+    sde = est.sde;
+    sdeSource = "estimated";
   }
 
   return { revenue, sde, price, sdeSource };
@@ -355,35 +361,7 @@ function getConfidenceScore(sdeSource: FieldExtraction["sdeSource"], hasRevenue:
 
 // ─── SCORING ─────────────────────────────────────────────────────────────────
 
-function scoreDeal(industry: string, revenue: number, sde: number, price: number) {
-  const [lowM, highM] = MULTIPLES[industry] || [2.0, 4.0];
-  const midM = (lowM + highM) / 2;
-  const multiple = +(price / sde).toFixed(2);
-
-  let valScore = multiple <= midM ? Math.min(95, 70 + (midM - multiple) / midM * 50)
-    : multiple <= highM ? 70 - ((multiple - midM) / (highM - midM)) * 30
-    : Math.max(5, 40 - ((multiple - highM) / highM) * 60);
-  valScore = Math.round(Math.max(5, Math.min(98, valScore)));
-
-  const debtPct = 0.80, rate = 0.105, term = 10;
-  const loanAmount = price * debtPct;
-  const monthlyRate = rate / 12;
-  const numPayments = term * 12;
-  const monthlyPayment = (loanAmount * monthlyRate * Math.pow(1 + monthlyRate, numPayments)) / (Math.pow(1 + monthlyRate, numPayments) - 1);
-  const annualPayment = monthlyPayment * 12;
-  const dscr = +(sde / annualPayment).toFixed(2);
-
-  let debtScore = dscr >= 2.0 ? 92 : dscr >= 1.5 ? 75 + (dscr - 1.5) * 34
-    : dscr >= 1.25 ? 55 + (dscr - 1.25) * 80 : dscr >= 1.0 ? 30 + (dscr - 1.0) * 100
-    : Math.max(5, dscr * 30);
-  debtScore = Math.round(Math.max(5, Math.min(98, debtScore)));
-
-  const overallScore = Math.round(valScore * 0.4 + debtScore * 0.4 + 55 * 0.2);
-  const riskLevel = overallScore >= 70 ? "Low" : overallScore >= 50 ? "Moderate" : overallScore >= 30 ? "High" : "Critical";
-  const fairValue = Math.round(sde * midM);
-
-  return { multiple, dscr, monthlyPayment, annualPayment, fairValue, valScore, debtScore, overallScore, riskLevel };
-}
+// scoreDeal() now imported from @/lib/scoringEngine
 
 // ─── MAIN HANDLER ────────────────────────────────────────────────────────────
 
@@ -508,10 +486,21 @@ export async function POST(req: NextRequest) {
           .from("deal_runs").select("id").eq("fingerprint", fingerprint).limit(1).single();
         if (existingByFingerprint) { results.duplicates++; continue; }
 
-        const scores = scoreDeal(industry, rev, sde, price);
+        // Fetch RMA benchmarks for this industry (null = graceful fallback)
+        const benchmarks = await fetchBenchmarksForIndustry(industry);
+
+        const scores = scoreDeal({ industry, revenue: rev, sde, price, benchmarks });
         const confidence = getConfidenceScore(extracted.sdeSource, true, true);
         results.confidence[confidence]++;
         if (extracted.sdeSource === "estimated") results.estimated_sde++;
+
+        // Generate score explanation bullets
+        const explanation = generateScoreExplanation({
+          industry, revenue: rev, sde,
+          multiple: scores.multiple,
+          dscr:     scores.dscr,
+          benchmarks,
+        });
 
         let clusterId: string | null = null;
         const { data: cluster } = await supabase.from("deal_clusters").select("id, runs_count, median_revenue, median_sde, median_price")
@@ -553,7 +542,9 @@ export async function POST(req: NextRequest) {
           fair_value: scores.fairValue,
           overall_score: scores.overallScore, risk_level: scores.riskLevel,
           valuation_score: scores.valScore, debt_score: scores.debtScore,
-          market_score: 55, industry_score: 55,
+          market_score: scores.marginScore, industry_score: 55,
+          benchmark_source: scores.dataSource,
+          score_explanation: explanation.bullets,
           fingerprint, cluster_id: clusterId, is_valid: true,
           red_flags: [], green_flags: [],
           source_platform,
