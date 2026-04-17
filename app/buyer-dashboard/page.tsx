@@ -38,6 +38,19 @@ interface DealRun {
   signal?: "overpriced" | "fair" | "opportunity";
   verdict?: DealVerdict;
   oppScore?: number;
+  // ── Benchmark-aware scoring (populated when RMA data available) ──────────
+  marginScore?:      number;           // 0–100, margin plausibility vs RMA
+  benchmarkSource?:  "rma" | "fallback";
+  scoreExplanation?: string[];         // from generateScoreExplanation()
+  rmaBenchmarks?: {
+    ebitdaMarginPct:    number | null;
+    operatingMarginPct: number | null;
+    currentRatio:       number | null;
+    debtToEquity:       number | null;
+    interestCoverage:   number | null;
+    leverageFlag:       string | null;
+    coverageFlag:       string | null;
+  } | null;
 }
 
 /** Deal Verdict — the single opinionated label shown throughout the UI */
@@ -1708,6 +1721,142 @@ function AnalyzeDealModal({
   );
 }
 
+// ─── SCORE INSIGHTS PANEL ────────────────────────────────────────────────────
+// Reusable bullet list showing why a score is what it is.
+// Requires scoreExplanation[] from generateScoreExplanation().
+
+function ScoreInsightsPanel({
+  explanation,
+  severity,
+  style,
+}: {
+  explanation: string[];
+  severity: "positive" | "neutral" | "caution" | "warning";
+  style?: React.CSSProperties;
+}) {
+  if (!explanation || explanation.length === 0) return null;
+
+  const severityConfig = {
+    positive: { color: "#10B981", bg: "rgba(16,185,129,0.06)",  border: "rgba(16,185,129,0.18)", label: "Positive Signals",  icon: "✓" },
+    neutral:  { color: "#94A3B8", bg: "rgba(255,255,255,0.02)", border: "rgba(255,255,255,0.08)", label: "Score Insights",   icon: "·" },
+    caution:  { color: "#F59E0B", bg: "rgba(245,158,11,0.06)",  border: "rgba(245,158,11,0.18)", label: "Score Insights",   icon: "⚠" },
+    warning:  { color: "#F97316", bg: "rgba(249,115,22,0.06)",  border: "rgba(249,115,22,0.18)", label: "Score Reduced By", icon: "↓" },
+  };
+  const sc = severityConfig[severity];
+
+  return (
+    <div style={{
+      padding: "11px 14px", borderRadius: 10,
+      background: sc.bg, border: `1px solid ${sc.border}`,
+      ...style,
+    }}>
+      <div style={{
+        fontSize: 10, fontWeight: 700, color: sc.color,
+        textTransform: "uppercase" as any, letterSpacing: "0.08em", marginBottom: 8,
+      }}>
+        {sc.label}
+      </div>
+      <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+        {explanation.map((bullet, i) => (
+          <div key={i} style={{ display: "flex", gap: 7, alignItems: "flex-start" }}>
+            <span style={{ fontSize: 10, color: sc.color, flexShrink: 0, marginTop: 2, fontWeight: 700 }}>
+              {sc.icon}
+            </span>
+            <span style={{ fontSize: 12, color: "#94A3B8", lineHeight: 1.5 }}>{bullet}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── INDUSTRY BENCHMARK DISPLAY (inline — no external import needed) ──────────
+// Renders RMA benchmark metrics from deal.rmaBenchmarks.
+// ebitdaMarginPct and operatingMarginPct stored as decimals (0.121 = 12.1%).
+
+function IndustryBenchmarkPanel({
+  rmaBenchmarks,
+  marginScore,
+  sde,
+  revenue,
+  style,
+}: {
+  rmaBenchmarks: DealRun["rmaBenchmarks"];
+  marginScore: number;
+  sde: number;
+  revenue: number;
+  style?: React.CSSProperties;
+}) {
+  if (!rmaBenchmarks?.ebitdaMarginPct) {
+    return (
+      <div style={{
+        padding: "10px 13px", borderRadius: 9,
+        background: "rgba(255,255,255,0.015)", border: "1px solid rgba(255,255,255,0.06)",
+        fontSize: 12, color: "#374151", ...style,
+      }}>
+        Industry benchmarks unavailable for this category.
+      </div>
+    );
+  }
+
+  const dealMarginPct = revenue > 0 ? (sde / revenue) : 0;
+  const ratio         = rmaBenchmarks.ebitdaMarginPct > 0
+    ? dealMarginPct / rmaBenchmarks.ebitdaMarginPct : 0;
+
+  const marginStatus  = ratio > 1.4 ? "above" : ratio >= 0.8 ? "inline" : "below";
+  const marginCfg = {
+    above:  { label: "Above Industry",        sub: "High add-back scrutiny recommended",            color: "#F97316", bg: "rgba(249,115,22,0.08)",   border: "rgba(249,115,22,0.2)"   },
+    inline: { label: "In Line With Industry", sub: "Margins consistent with sector benchmarks",     color: "#10B981", bg: "rgba(16,185,129,0.08)",   border: "rgba(16,185,129,0.2)"   },
+    below:  { label: "Below Industry",        sub: "Margin underperformance or conservative add-backs", color: "#F59E0B", bg: "rgba(245,158,11,0.08)", border: "rgba(245,158,11,0.2)" },
+  }[marginStatus];
+
+  const scoreColor = marginScore >= 70 ? "#10B981" : marginScore >= 50 ? "#F59E0B" : marginScore >= 30 ? "#F97316" : "#EF4444";
+
+  const BRow = ({ label, value, sub }: { label: string; value: string; sub?: string }) => (
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "7px 0", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+      <div>
+        <div style={{ fontSize: 12, color: "#94A3B8" }}>{label}</div>
+        {sub && <div style={{ fontSize: 10, color: "#4B5563", marginTop: 1 }}>{sub}</div>}
+      </div>
+      <div style={{ fontSize: 13, fontWeight: 700, color: "#E2E8F0", fontFamily: "'JetBrains Mono',monospace" }}>{value}</div>
+    </div>
+  );
+
+  return (
+    <div style={{ borderRadius: 10, border: "1px solid rgba(255,255,255,0.07)", background: "rgba(255,255,255,0.015)", overflow: "hidden", ...style }}>
+      <div style={{ padding: "9px 14px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", justifyContent: "space-between", alignItems: "center", background: "rgba(255,255,255,0.01)" }}>
+        <div style={{ fontSize: 10, fontWeight: 700, color: "#94A3B8", textTransform: "uppercase" as any, letterSpacing: "0.08em" }}>
+          Industry Benchmarks
+        </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "2px 7px", borderRadius: 20, background: `${scoreColor}18`, border: `1px solid ${scoreColor}33` }}>
+          <div style={{ width: 5, height: 5, borderRadius: "50%", background: scoreColor }} />
+          <span style={{ fontSize: 10, fontWeight: 700, color: scoreColor, fontFamily: "'JetBrains Mono',monospace" }}>{marginScore}</span>
+          <span style={{ fontSize: 9, color: "#4B5563" }}>/ 100</span>
+        </div>
+      </div>
+      <div style={{ padding: "2px 14px 0" }}>
+        <BRow label="Typical EBITDA Margin"    value={`~${Math.round(rmaBenchmarks.ebitdaMarginPct * 100)}%`} sub="Earnings before interest, taxes, depreciation" />
+        {rmaBenchmarks.operatingMarginPct && <BRow label="Typical Operating Margin" value={`~${Math.round(rmaBenchmarks.operatingMarginPct * 100)}%`} />}
+        {rmaBenchmarks.currentRatio       && <BRow label="Typical Current Ratio"    value={`~${rmaBenchmarks.currentRatio.toFixed(1)}x`} sub="Short-term liquidity" />}
+        {rmaBenchmarks.debtToEquity       && <BRow label="Typical Debt / Equity"    value={`~${rmaBenchmarks.debtToEquity.toFixed(1)}x`} sub="Leverage vs owner equity" />}
+        {rmaBenchmarks.interestCoverage   && <BRow label="Interest Coverage"        value={`~${rmaBenchmarks.interestCoverage.toFixed(1)}x`} />}
+      </div>
+      <div style={{ padding: "8px 14px 10px" }}>
+        <div style={{ display: "flex", alignItems: "flex-start", gap: 8, padding: "8px 11px", borderRadius: 8, background: marginCfg.bg, border: `1px solid ${marginCfg.border}` }}>
+          <div style={{ width: 6, height: 6, borderRadius: "50%", background: marginCfg.color, flexShrink: 0, marginTop: 3 }} />
+          <div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: marginCfg.color, textTransform: "uppercase" as any, letterSpacing: "0.06em", marginBottom: 2 }}>{marginCfg.label}</div>
+            <div style={{ fontSize: 11, color: "#6B7280", lineHeight: 1.5 }}>{marginCfg.sub}</div>
+          </div>
+        </div>
+      </div>
+      <div style={{ padding: "6px 14px", borderTop: "1px solid rgba(255,255,255,0.04)", fontSize: 10, color: "#2D3748", fontStyle: "italic" }}>
+        Based on industry financial data (RMA)
+      </div>
+    </div>
+  );
+}
+
 // ─── DEAL DETAIL PANEL ────────────────────────────────────────────────────────
 
 function DealDetailPanel({
@@ -1795,6 +1944,29 @@ function DealDetailPanel({
             <StarButton dealId={deal.id} favorites={favorites} onToggle={onToggleFav} />
             <span style={{ fontSize: 11, color: isFav ? "#F59E0B" : "#4B5563" }}>{isFav ? "Watchlisted" : "Add to watchlist"}</span>
           </div>
+
+          {/* Score Insights */}
+          {deal.scoreExplanation && deal.scoreExplanation.length > 0 && (
+            <ScoreInsightsPanel
+              explanation={deal.scoreExplanation}
+              severity={(() => {
+                const s = deal.marginScore ?? 55;
+                return s >= 70 ? "positive" : s >= 50 ? "neutral" : s >= 30 ? "caution" : "warning";
+              })()}
+              style={{ marginBottom: 12 }}
+            />
+          )}
+
+          {/* Industry Benchmarks */}
+          {deal.rmaBenchmarks && (
+            <IndustryBenchmarkPanel
+              rmaBenchmarks={deal.rmaBenchmarks}
+              marginScore={deal.marginScore ?? 55}
+              sde={deal.sde ?? 0}
+              revenue={deal.revenue ?? 0}
+              style={{ marginBottom: 12 }}
+            />
+          )}
 
           {/* Actions */}
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
@@ -1951,6 +2123,29 @@ function UnderwritingPanel({
               <div style={{ fontSize: 11, color: "#94A3B8", lineHeight: 1.5, marginTop: 2 }}>{vd.subtext}</div>
             </div>
           </div>
+
+          {/* Score Insights — below verdict banner */}
+          {deal.scoreExplanation && deal.scoreExplanation.length > 0 && (
+            <ScoreInsightsPanel
+              explanation={deal.scoreExplanation}
+              severity={(() => {
+                const s = deal.marginScore ?? 55;
+                return s >= 70 ? "positive" : s >= 50 ? "neutral" : s >= 30 ? "caution" : "warning";
+              })()}
+              style={{ marginBottom: 14 }}
+            />
+          )}
+
+          {/* Industry Benchmarks — below score insights */}
+          {deal.rmaBenchmarks && (
+            <IndustryBenchmarkPanel
+              rmaBenchmarks={deal.rmaBenchmarks}
+              marginScore={deal.marginScore ?? 55}
+              sde={deal.sde ?? 0}
+              revenue={deal.revenue ?? 0}
+              style={{ marginBottom: 14 }}
+            />
+          )}
 
           {/* ── STRESS TEST ── */}
           {activeTab === "stress" && (
