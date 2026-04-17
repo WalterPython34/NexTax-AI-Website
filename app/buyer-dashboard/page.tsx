@@ -1364,7 +1364,7 @@ function AnalyzeDealModal({
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          tool_used:            "dashboard_modal",
+          tool_used:            "reality_check",
           industry:             inputs.industry,
           revenue:              rev,
           sde,
@@ -4939,7 +4939,7 @@ export default function BuyerDashboard() {
     setLoadingDeals(true);
     const { data } = await supabase
       .from("deal_runs")
-      .select("id,tool_used,industry,asking_price,fair_value,valuation_multiple,dscr,overall_score,risk_level,city,state,created_at,confidence_grade")
+      .select("id,tool_used,industry,asking_price,fair_value,valuation_multiple,dscr,overall_score,risk_level,city,state,created_at,confidence_grade,revenue,sde,gap_pct")
       .eq("user_id", uid)
       .eq("is_valid", true)
       .order("created_at", { ascending: false })
