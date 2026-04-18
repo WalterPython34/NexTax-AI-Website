@@ -25,12 +25,13 @@ const FALLBACK_MULTIPLES: Record<string, [number, number]> = {
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 export interface ScoreExplanationInputs {
-  industry:    string;        // nextax key
-  revenue:     number;
-  sde:         number;
-  multiple:    number;        // price / sde — from scoreDeal() output
-  dscr:        number;        // from scoreDeal() output
-  benchmarks:  IndustryBenchmarks | null;
+  industry:        string;        // nextax key
+  revenue:         number;
+  sde:             number;
+  multiple:        number;        // price / sde — from scoreDeal() output
+  dscr:            number;        // from scoreDeal() output
+  benchmarks:      IndustryBenchmarks | null;
+  benchmarkFamily?: string | null;  // used to detect proxy families for nuanced messaging
 }
 
 export interface ScoreExplanation {
@@ -54,22 +55,33 @@ export interface ScoreExplanation {
 export function generateScoreExplanation(
   inputs: ScoreExplanationInputs,
 ): ScoreExplanation {
-  const { industry, revenue, sde, multiple, dscr, benchmarks } = inputs;
+  const { industry, revenue, sde, multiple, dscr, benchmarks, benchmarkFamily = null } = inputs;
 
   const bullets: string[] = [];
   let severityScore = 0; // accumulate: positive = neg, caution = +1, warning = +2
 
   // ── 1. Margin plausibility (requires RMA data) ────────────────────────────
+  // Proxy families (e.g. med_spa using physician RMA) use softer language.
+  const PROXY_FAMILIES = new Set(["med_spa"]);
+  const isProxy = PROXY_FAMILIES.has(benchmarkFamily ?? "");
+
   if (benchmarks?.ebitda_margin_pct && benchmarks.ebitda_margin_pct > 0 && revenue > 0) {
     const dealMarginPct  = Math.round((sde / revenue) * 100);
     const rmaMarginPct   = Math.round(benchmarks.ebitda_margin_pct * 100);
     const ratio          = (sde / revenue) / benchmarks.ebitda_margin_pct;
+    const proxyLabel     = isProxy ? "proxy benchmark" : "industry typical";
 
     if (ratio > 1.4) {
       bullets.push(
-        `Stated margin ${dealMarginPct}% vs industry typical ~${rmaMarginPct}% — verify add-backs`
+        `Stated margin ${dealMarginPct}% vs ${proxyLabel} ~${rmaMarginPct}%`
       );
-      if (ratio > 2.0) {
+      if (isProxy) {
+        // Nuanced — not a fraud flag. Med spa legitimately runs higher than physician proxy.
+        bullets.push(
+          "Margins exceed the closest available RMA proxy — review add-backs and confirm whether elevated margins reflect true business economics"
+        );
+        severityScore += 1; // caution, not warning
+      } else if (ratio > 2.0) {
         bullets.push("Margin is more than 2× the industry median — high add-back scrutiny required");
         severityScore += 2;
       } else {
@@ -78,12 +90,12 @@ export function generateScoreExplanation(
       }
     } else if (ratio < 0.8) {
       bullets.push(
-        `Margin ${dealMarginPct}% is below the industry typical ~${rmaMarginPct}% — potential underperformance`
+        `Margin ${dealMarginPct}% is below the ${proxyLabel} ~${rmaMarginPct}% — potential underperformance or conservative add-backs`
       );
       severityScore += 1;
     } else {
       bullets.push(
-        `Margin ${dealMarginPct}% is consistent with industry benchmarks (~${rmaMarginPct}%)`
+        `Margin ${dealMarginPct}% is consistent with ${proxyLabel} (~${rmaMarginPct}%)`
       );
       severityScore -= 1; // positive signal
     }
