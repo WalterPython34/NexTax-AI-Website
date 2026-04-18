@@ -68,7 +68,11 @@ interface KeywordOverrideRow {
 // Add any future proxy families here — checked by getBenchmarkIsProxy().
 
 const PROXY_BENCHMARK_FAMILIES = new Set([
-  "med_spa",  // RMA proxy = 621111 physician office — med spa margins are legitimately higher
+  "med_spa",           // RMA proxy = 621111 physician office
+  "behavioral_health", // RMA proxy = 621330 when direct data unavailable
+  "manufacturing",     // RMA proxy = 323111 commercial printing
+  "retail",            // RMA proxy = 454110 ecommerce (no direct retail RMA)
+  "wholesale",         // RMA proxy = 445110 grocery (closest distribution proxy)
 ]);
 
 /**
@@ -77,6 +81,30 @@ const PROXY_BENCHMARK_FAMILIES = new Set([
  */
 export function getBenchmarkIsProxy(benchmarkFamily: string | null | undefined): boolean {
   return PROXY_BENCHMARK_FAMILIES.has(benchmarkFamily ?? "");
+}
+
+// ── Mixed business signals ───────────────────────────────────────────────────
+// When a deal shows signals from multiple distinct business categories,
+// confidence is penalized by 15 points and reasoning notes the ambiguity.
+// This prevents overconfident classification of blended revenue models.
+
+const MIXED_BUSINESS_SIGNAL_GROUPS: string[][] = [
+  ["restaurant", "dining", "food service"],          // food
+  ["gym", "fitness", "workout"],                     // fitness
+  ["retail", "merchandise", "merch", "store"],       // retail
+  ["smoothie", "juice bar", "cafe", "coffee"],       // beverage
+  ["salon", "spa", "beauty"],                        // beauty/personal
+  ["software", "saas", "platform", "tech"],          // digital
+];
+
+function detectMixedBusiness(texts: string[]): boolean {
+  const combined = texts.join(" ");
+  let groupsMatched = 0;
+  for (const group of MIXED_BUSINESS_SIGNAL_GROUPS) {
+    if (group.some(signal => combined.includes(signal))) groupsMatched++;
+    if (groupsMatched >= 2) return true;
+  }
+  return false;
 }
 
 // ── Fallback classification ───────────────────────────────────────────────────
@@ -196,18 +224,20 @@ export async function classifyDealIndustry(
 
   // Case A: Exact NAICS + keyword override → confidence 92
   if (baseRow && matchedOverride) {
+    const isMixed_a = detectMixedBusiness(searchTexts);
     return {
       model_type:                matchedOverride.override_model_type   ?? baseRow.model_type,
       sub_model:                 matchedOverride.override_sub_model    ?? baseRow.sub_model,
       rma_naics_code:            matchedOverride.override_rma_naics_code ?? baseRow.rma_naics_code,
       rma_title:                 matchedOverride.override_rma_title    ?? baseRow.rma_title,
       benchmark_family:          matchedOverride.benchmark_family      ?? baseRow.benchmark_family,
-      classification_confidence: 92,
+      classification_confidence: isMixed_a ? 77 : 92,
       classification_reasoning:  (() => {
         const proxyNote = matchedOverride.override_rma_naics_code && matchedOverride.override_rma_naics_code !== detected_naics_code
           ? ` RMA proxy: ${matchedOverride.override_rma_naics_code} (${matchedOverride.override_rma_title ?? "proxy source"}).`
           : "";
-        return `Incoming NAICS: ${detected_naics_code} (${baseRow.naics_title}). Keyword override: "${matchedOverride.keyword}". Final benchmark family: ${matchedOverride.benchmark_family ?? baseRow.benchmark_family}.${proxyNote}`;
+        const mixedNote_a = isMixed_a ? " Mixed business signals detected — confidence reduced." : "";
+        return `Incoming NAICS: ${detected_naics_code} (${baseRow.naics_title}). Keyword override: "${matchedOverride.keyword}". Final benchmark family: ${matchedOverride.benchmark_family ?? baseRow.benchmark_family}.${proxyNote}${mixedNote_a}`;
       })(),
       override_keyword:          matchedOverride.keyword,
     };
@@ -215,14 +245,15 @@ export async function classifyDealIndustry(
 
   // Case B: Exact NAICS only → confidence 95
   if (baseRow) {
+    const isMixed_b = detectMixedBusiness(searchTexts);
     return {
       model_type:                baseRow.model_type,
       sub_model:                 baseRow.sub_model,
       rma_naics_code:            baseRow.rma_naics_code,
       rma_title:                 baseRow.rma_title,
       benchmark_family:          baseRow.benchmark_family,
-      classification_confidence: 95,
-      classification_reasoning:  `Incoming NAICS: ${detected_naics_code} (${baseRow.naics_title}). Direct NAICS match. Benchmark family: ${baseRow.benchmark_family}. RMA source: ${baseRow.rma_naics_code ?? "same"}.`,
+      classification_confidence: isMixed_b ? 80 : 95,
+      classification_reasoning:  `Incoming NAICS: ${detected_naics_code} (${baseRow.naics_title}). Direct NAICS match. Benchmark family: ${baseRow.benchmark_family}. RMA source: ${baseRow.rma_naics_code ?? "same"}.${isMixed_b ? " Mixed business signals detected — confidence reduced." : ""}`,
     };
   }
 
@@ -359,11 +390,16 @@ export function getBenchmarkLabelForUI(
     auto_services:         "Auto Services Benchmark",
     food_beverage:         "Restaurant & Food Benchmark",
     healthcare_clinical:   "Healthcare Benchmark",
-    med_spa:       "Med Spa Benchmark",     // distinct from general healthcare
+    behavioral_health:     "Behavioral Health Benchmark",
+    med_spa:               "Med Spa Benchmark",
     personal_services:     "Personal Services Benchmark",
     professional_services: "Professional Services Benchmark",
     asset_services:        "Asset-Based Business Benchmark",
-    digital:               "Digital / SaaS Benchmark",
+    saas:                  "SaaS / Recurring Software Benchmark",
+    digital:               "Digital Business Benchmark",
+    manufacturing:         "Manufacturing Benchmark",
+    retail:                "Retail Business Benchmark",
+    wholesale:             "Wholesale / Distribution Benchmark",
   };
 
   if (benchmark_family && familyLabels[benchmark_family]) {
