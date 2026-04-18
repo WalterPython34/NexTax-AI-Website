@@ -62,6 +62,23 @@ interface KeywordOverrideRow {
   applies_if_naics_prefix:  string[] | null;
 }
 
+// ── Proxy benchmark families ────────────────────────────────────────────────────
+// When a benchmark_family uses a different industry's RMA data as a proxy,
+// margin comparisons should use nuanced language rather than blunt fraud flags.
+// Add any future proxy families here — checked by getBenchmarkIsProxy().
+
+const PROXY_BENCHMARK_FAMILIES = new Set([
+  "med_spa",  // RMA proxy = 621111 physician office — med spa margins are legitimately higher
+]);
+
+/**
+ * Returns true when the benchmark family uses a proxy RMA source.
+ * UI components use this to show "Proxy Benchmark" wording instead of "Industry Benchmark".
+ */
+export function getBenchmarkIsProxy(benchmarkFamily: string | null | undefined): boolean {
+  return PROXY_BENCHMARK_FAMILIES.has(benchmarkFamily ?? "");
+}
+
 // ── Fallback classification ───────────────────────────────────────────────────
 // Used when nothing in Supabase matches. Never returns null.
 
@@ -143,16 +160,17 @@ export async function classifyDealIndustry(
 
   if (overrides && overrides.length > 0) {
     for (const override of overrides) {
-      // Check NAICS prefix restriction if set
-      if (override.applies_if_naics_prefix && override.applies_if_naics_prefix.length > 0) {
+      // Check NAICS prefix restriction if set.
+      // Empty array = no restriction (fires for any or unknown NAICS).
+      // Non-empty array = only fires when detected_naics_code starts with one of the prefixes.
+      const prefixes = override.applies_if_naics_prefix ?? [];
+      if (prefixes.length > 0) {
         const naicsToCheck = detected_naics_code || "";
-        const prefixMatches = override.applies_if_naics_prefix.some(
-          prefix => naicsToCheck.startsWith(prefix)
-        );
-        // If there's a restriction and neither NAICS matches NOR we have text signals,
-        // skip this override when NAICS is unknown (allows keyword-only matching)
-        if (!prefixMatches && naicsToCheck !== "") continue;
+        const prefixMatches = prefixes.some(prefix => naicsToCheck.startsWith(prefix));
+        // Has a restriction AND the detected NAICS doesn't match → skip
+        if (!prefixMatches) continue;
       }
+      // prefixes.length === 0 → no restriction, fall through to keyword check
       if (textContainsKeyword(searchTexts, override.keyword)) {
         matchedOverride = override;
         break; // already ordered by priority — first match is the strongest
@@ -185,7 +203,12 @@ export async function classifyDealIndustry(
       rma_title:                 matchedOverride.override_rma_title    ?? baseRow.rma_title,
       benchmark_family:          matchedOverride.benchmark_family      ?? baseRow.benchmark_family,
       classification_confidence: 92,
-      classification_reasoning:  `Exact NAICS ${detected_naics_code} (${baseRow.naics_title}) with keyword override "${matchedOverride.keyword}".`,
+      classification_reasoning:  (() => {
+        const proxyNote = matchedOverride.override_rma_naics_code && matchedOverride.override_rma_naics_code !== detected_naics_code
+          ? ` RMA proxy: ${matchedOverride.override_rma_naics_code} (${matchedOverride.override_rma_title ?? "proxy source"}).`
+          : "";
+        return `Incoming NAICS: ${detected_naics_code} (${baseRow.naics_title}). Keyword override: "${matchedOverride.keyword}". Final benchmark family: ${matchedOverride.benchmark_family ?? baseRow.benchmark_family}.${proxyNote}`;
+      })(),
       override_keyword:          matchedOverride.keyword,
     };
   }
@@ -199,7 +222,7 @@ export async function classifyDealIndustry(
       rma_title:                 baseRow.rma_title,
       benchmark_family:          baseRow.benchmark_family,
       classification_confidence: 95,
-      classification_reasoning:  `Exact NAICS match: ${detected_naics_code} — ${baseRow.naics_title}.`,
+      classification_reasoning:  `Incoming NAICS: ${detected_naics_code} (${baseRow.naics_title}). Direct NAICS match. Benchmark family: ${baseRow.benchmark_family}. RMA source: ${baseRow.rma_naics_code ?? "same"}.`,
     };
   }
 
@@ -212,7 +235,12 @@ export async function classifyDealIndustry(
       rma_title:                 matchedOverride.override_rma_title    ?? null,
       benchmark_family:          matchedOverride.benchmark_family      ?? null,
       classification_confidence: 75,
-      classification_reasoning:  `No NAICS match. Classified via keyword "${matchedOverride.keyword}" in deal text.`,
+      classification_reasoning:  (() => {
+        const proxyNote = matchedOverride.override_rma_naics_code
+          ? ` RMA proxy: ${matchedOverride.override_rma_naics_code} (${matchedOverride.override_rma_title ?? "proxy source"}).`
+          : "";
+        return `Incoming NAICS: ${detected_naics_code || "none"}. No base NAICS match. Keyword "${matchedOverride.keyword}" matched deal text. Final benchmark family: ${matchedOverride.benchmark_family ?? "unclassified"}.${proxyNote}`;
+      })(),
       override_keyword:          matchedOverride.keyword,
     };
   }
@@ -331,6 +359,7 @@ export function getBenchmarkLabelForUI(
     auto_services:         "Auto Services Benchmark",
     food_beverage:         "Restaurant & Food Benchmark",
     healthcare_clinical:   "Healthcare Benchmark",
+    med_spa:       "Med Spa Benchmark",     // distinct from general healthcare
     personal_services:     "Personal Services Benchmark",
     professional_services: "Professional Services Benchmark",
     asset_services:        "Asset-Based Business Benchmark",
