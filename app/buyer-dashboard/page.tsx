@@ -41,6 +41,7 @@ interface DealRun {
   // ── Benchmark-aware scoring (populated when RMA data available) ──────────
   marginScore?:      number;           // 0–100, margin plausibility vs RMA
   benchmarkSource?:  "rma" | "fallback";
+  benchmark_family?: string | null;    // from deal_classification or scoring
   scoreExplanation?: string[];         // from generateScoreExplanation()
   rmaBenchmarks?: {
     ebitdaMarginPct:    number | null;
@@ -1779,12 +1780,14 @@ function IndustryBenchmarkPanel({
   marginScore,
   sde,
   revenue,
+  benchmarkFamily,
   style,
 }: {
   rmaBenchmarks: DealRun["rmaBenchmarks"];
   marginScore: number;
   sde: number;
   revenue: number;
+  benchmarkFamily?: string | null;  // used for proxy detection + UI label
   style?: React.CSSProperties;
 }) {
   if (!rmaBenchmarks?.ebitdaMarginPct) {
@@ -1803,12 +1806,28 @@ function IndustryBenchmarkPanel({
   const ratio         = rmaBenchmarks.ebitdaMarginPct > 0
     ? dealMarginPct / rmaBenchmarks.ebitdaMarginPct : 0;
 
-  const marginStatus  = ratio > 1.4 ? "above" : ratio >= 0.8 ? "inline" : "below";
-  const marginCfg = {
-    above:  { label: "Above Industry",        sub: "High add-back scrutiny recommended",            color: "#F97316", bg: "rgba(249,115,22,0.08)",   border: "rgba(249,115,22,0.2)"   },
-    inline: { label: "In Line With Industry", sub: "Margins consistent with sector benchmarks",     color: "#10B981", bg: "rgba(16,185,129,0.08)",   border: "rgba(16,185,129,0.2)"   },
-    below:  { label: "Below Industry",        sub: "Margin underperformance or conservative add-backs", color: "#F59E0B", bg: "rgba(245,158,11,0.08)", border: "rgba(245,158,11,0.2)" },
-  }[marginStatus];
+  // Proxy benchmark families (med_spa etc.) use softer comparison language.
+  // The RMA source is a different industry used as an approximation.
+  const PROXY_FAMILIES = new Set(["med_spa"]);
+  const isProxy = PROXY_FAMILIES.has(benchmarkFamily ?? "");
+
+  const marginStatus = ratio > 1.4 ? "above" : ratio >= 0.8 ? "inline" : "below";
+
+  // Standard labels (non-proxy industries)
+  const standardCfg = {
+    above:  { label: "Above Industry",        sub: "Margin is above the industry median — verify add-backs",              color: "#F97316", bg: "rgba(249,115,22,0.08)",   border: "rgba(249,115,22,0.2)"   },
+    inline: { label: "In Line With Industry", sub: "Margins consistent with sector benchmarks",                           color: "#10B981", bg: "rgba(16,185,129,0.08)",   border: "rgba(16,185,129,0.2)"   },
+    below:  { label: "Below Industry",        sub: "Margin underperformance or conservative add-backs",                   color: "#F59E0B", bg: "rgba(245,158,11,0.08)",   border: "rgba(245,158,11,0.2)"   },
+  };
+
+  // Proxy labels — nuanced, not accusatory
+  const proxyCfg = {
+    above:  { label: "Above Proxy Benchmark",    sub: "Margins exceed the closest available RMA proxy. Review add-backs and confirm whether elevated margins reflect true business economics.", color: "#F59E0B", bg: "rgba(245,158,11,0.07)",  border: "rgba(245,158,11,0.2)"   },
+    inline: { label: "In Line With Proxy Benchmark", sub: "Margins are consistent with the closest available RMA proxy source.",                                                              color: "#10B981", bg: "rgba(16,185,129,0.08)",  border: "rgba(16,185,129,0.2)"   },
+    below:  { label: "Below Proxy Benchmark",    sub: "Margins are below the proxy benchmark. May reflect conservative add-backs or higher-than-typical operating costs.",                    color: "#94A3B8", bg: "rgba(255,255,255,0.03)", border: "rgba(255,255,255,0.1)"  },
+  };
+
+  const marginCfg = (isProxy ? proxyCfg : standardCfg)[marginStatus];
 
   const scoreColor = marginScore >= 70 ? "#10B981" : marginScore >= 50 ? "#F59E0B" : marginScore >= 30 ? "#F97316" : "#EF4444";
 
@@ -1826,7 +1845,7 @@ function IndustryBenchmarkPanel({
     <div style={{ borderRadius: 10, border: "1px solid rgba(255,255,255,0.07)", background: "rgba(255,255,255,0.015)", overflow: "hidden", ...style }}>
       <div style={{ padding: "9px 14px", borderBottom: "1px solid rgba(255,255,255,0.06)", display: "flex", justifyContent: "space-between", alignItems: "center", background: "rgba(255,255,255,0.01)" }}>
         <div style={{ fontSize: 10, fontWeight: 700, color: "#94A3B8", textTransform: "uppercase" as any, letterSpacing: "0.08em" }}>
-          Industry Benchmarks
+          {isProxy ? "Industry Benchmarks (Closest Available Proxy)" : "Industry Benchmarks"}
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "2px 7px", borderRadius: 20, background: `${scoreColor}18`, border: `1px solid ${scoreColor}33` }}>
           <div style={{ width: 5, height: 5, borderRadius: "50%", background: scoreColor }} />
@@ -1851,7 +1870,9 @@ function IndustryBenchmarkPanel({
         </div>
       </div>
       <div style={{ padding: "6px 14px", borderTop: "1px solid rgba(255,255,255,0.04)", fontSize: 10, color: "#2D3748", fontStyle: "italic" }}>
-        Based on industry financial data (RMA)
+        {isProxy
+          ? "Using closest available RMA proxy benchmark — interpret with context"
+          : "Based on industry financial data (RMA)"}
       </div>
     </div>
   );
@@ -1964,6 +1985,7 @@ function DealDetailPanel({
               marginScore={deal.marginScore ?? 55}
               sde={deal.sde ?? 0}
               revenue={deal.revenue ?? 0}
+              benchmarkFamily={deal.benchmark_family ?? null}
               style={{ marginBottom: 12 }}
             />
           )}
@@ -2143,6 +2165,7 @@ function UnderwritingPanel({
               marginScore={deal.marginScore ?? 55}
               sde={deal.sde ?? 0}
               revenue={deal.revenue ?? 0}
+              benchmarkFamily={deal.benchmark_family ?? null}
               style={{ marginBottom: 14 }}
             />
           )}
@@ -4939,7 +4962,7 @@ export default function BuyerDashboard() {
     setLoadingDeals(true);
     const { data, error } = await supabase
       .from("deal_runs")
-      .select("id,tool_used,industry,asking_price,fair_value,valuation_multiple,dscr,overall_score,risk_level,city,state,created_at,confidence_grade,revenue,sde")
+      .select("id,tool_used,industry,asking_price,fair_value,valuation_multiple,dscr,overall_score,risk_level,city,state,created_at,confidence_grade,revenue,sde,benchmark_family,rma_naics_code,classification_confidence")
       .eq("user_id", uid)
       .order("created_at", { ascending: false })
       .limit(50);
