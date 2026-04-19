@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { scoreDeal, estimateSdeFromRevenue } from "@/lib/scoringEngine";
+import { normalizeDealFinancials, buildNormalizationPayload } from "@/lib/normalizationIntegration";
 import { getNaicsFromIndustry } from "@/lib/industryMappings";
 import { generateScoreExplanation } from "@/lib/scoreExplanation";
 import type { IndustryBenchmarks } from "@/lib/types/benchmarks";
@@ -489,14 +490,35 @@ export async function POST(req: NextRequest) {
         // Fetch RMA benchmarks for this industry (null = graceful fallback)
         const benchmarks = await fetchBenchmarksForIndustry(industry);
 
-        const scores = scoreDeal({ industry, revenue: rev, sde, price, benchmarks });
+        // Normalize financials — compute usableSDE before scoring
+        let normalized = null;
+        let normPayload = {};
+        let usableSDE = sde;
+        try {
+          const rawBm = benchmarks
+            ? { ebitdaMarginPct: benchmarks.ebitda_margin_pct }
+            : null;
+          normalized = normalizeDealFinancials({
+            revenue: rev, sde, ebitda: sde * 0.9, // ebitda approximated if not available
+            price, benchmarkFamily: industry,
+            classificationConfidence: null,
+            benchmarkIsProxy: false,
+            dataSource: "marketplace",
+            rmaBenchmarks: rawBm,
+          });
+          usableSDE  = normalized.earnings.usableSDE;
+          normPayload = buildNormalizationPayload(normalized);
+        } catch { /* normalization is additive */ }
+
+        // Score using usableSDE — not raw stated SDE
+        const scores = scoreDeal({ industry, revenue: rev, sde: usableSDE, price, benchmarks });
         const confidence = getConfidenceScore(extracted.sdeSource, true, true);
         results.confidence[confidence]++;
         if (extracted.sdeSource === "estimated") results.estimated_sde++;
 
         // Generate score explanation bullets
         const explanation = generateScoreExplanation({
-          industry, revenue: rev, sde,
+          industry, revenue: rev, sde: usableSDE,
           multiple: scores.multiple,
           dscr:     scores.dscr,
           benchmarks,
@@ -548,6 +570,7 @@ export async function POST(req: NextRequest) {
           fingerprint, cluster_id: clusterId, is_valid: true,
           red_flags: [], green_flags: [],
           source_platform,
+          ...normPayload,
           source_url: sourceUrl,
           source_listing_id: sourceListingId,
           raw_data: row,
