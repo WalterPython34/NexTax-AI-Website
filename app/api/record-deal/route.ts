@@ -1,11 +1,16 @@
 // app/api/record-deal/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { normalizeDealFinancials, getConvictionCap, buildNormalizationPayload } from "@/lib/normalizationIntegration";
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
+
+function safe(n: unknown): number {
+  return typeof n === "number" && isFinite(n) ? n : 0;
+}
 
 function generateFingerprint(
   industry: string,
@@ -65,11 +70,15 @@ export async function POST(req: NextRequest) {
       operational_score,
       red_flags,
       green_flags,
-      // ── Auth fields (new) ──────────────────────────────────────────────────
-      // user_id: set if the user is already authenticated when they run the deal
-      // pending_email: set for anonymous users — used to backfill user_id after auth
+      // ── Auth fields ────────────────────────────────────────────────────────
       user_id = null,
       pending_email = null,
+      // ── Normalization context (optional — sent by modal after V2 scoring) ──
+      benchmark_family   = null,
+      classification_confidence = null,
+      benchmark_is_proxy = false,
+      data_source        = "manual_entry",
+      ebitda             = 0,
     } = body;
 
     const revNum   = typeof revenue      === "string" ? parseFloat(revenue.replace(/,/g, ""))      : revenue;
@@ -146,10 +155,24 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    // ── Normalize financials before scoring ────────────────────────────────────
+    // Runs normalizeDealFinancials() to compute usableSDE, trustScore, flags.
+    // Falls back to stated SDE if normalization is unavailable.
+    let normPayload = {};
+    try {
+      const normalized = normalizeDealFinancials({
+        revenue: revNum, sde: sdeNum, ebitda: safe(ebitda),
+        price: priceNum,
+        benchmarkFamily:          benchmark_family,
+        classificationConfidence: classification_confidence,
+        benchmarkIsProxy:         benchmark_is_proxy,
+        dataSource:               data_source as any,
+        rmaBenchmarks:            null, // benchmarks not fetched in this route
+      });
+      normPayload = buildNormalizationPayload(normalized);
+    } catch { /* normalization is additive — never block a save */ }
+
     // ── Insert deal run ────────────────────────────────────────────────────────
-    // user_id:       populated if user is already authenticated
-    // pending_email: populated for anonymous users, cleared after auth linking
-    // is_anonymous:  true if no user_id at insert time
     const { error } = await supabaseAdmin.from("deal_runs").insert({
       tool_used,
       industry,
@@ -188,8 +211,10 @@ export async function POST(req: NextRequest) {
       is_valid,
       // Auth fields
       user_id,
-      pending_email:  user_id ? null : pending_email, // don't store if already linked
+      pending_email:  user_id ? null : pending_email,
       is_anonymous:   !user_id,
+      // Normalization fields (spread — empty object is a no-op if normalization failed)
+      ...normPayload,
     });
 
     if (error) {
