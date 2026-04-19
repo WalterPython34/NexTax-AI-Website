@@ -25,13 +25,28 @@ const FALLBACK_MULTIPLES: Record<string, [number, number]> = {
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 export interface ScoreExplanationInputs {
-  industry:        string;        // nextax key
-  revenue:         number;
-  sde:             number;
-  multiple:        number;        // price / sde — from scoreDeal() output
-  dscr:            number;        // from scoreDeal() output
-  benchmarks:      IndustryBenchmarks | null;
-  benchmarkFamily?: string | null;  // used to detect proxy families for nuanced messaging
+  industry:         string;
+  revenue:          number;
+  sde:              number;
+  multiple:         number;
+  dscr:             number;
+  benchmarks:       IndustryBenchmarks | null;
+  benchmarkFamily?: string | null;
+  // Normalization context — optional, backward compatible
+  normalizationContext?: {
+    earningsSource:   "reported" | "blended" | "benchmark_implied";
+    trustScore:       number;
+    reportedSDE:      number;
+    usableSDE:        number;
+    benchmarkSDE:     number | null;
+    convictionBlocked: boolean;
+    manualReview:     boolean;
+    isProxy:          boolean;
+  } | null;
+  // Pre-built normalization bullets from normalizationIntegration.getScoreBasisForUI()
+  normalizationBullets?: string[];
+  earningsSource?:       "reported" | "blended" | "benchmark_implied";
+  trustScore?:           number;
 }
 
 export interface ScoreExplanation {
@@ -55,7 +70,14 @@ export interface ScoreExplanation {
 export function generateScoreExplanation(
   inputs: ScoreExplanationInputs,
 ): ScoreExplanation {
-  const { industry, revenue, sde, multiple, dscr, benchmarks, benchmarkFamily = null } = inputs;
+  const {
+    industry, revenue, sde, multiple, dscr, benchmarks,
+    benchmarkFamily = null,
+    normalizationBullets = [],
+    reportedSDE,
+    earningsSource = "reported",
+    trustScore,
+  } = inputs;
 
   const bullets: string[] = [];
   let severityScore = 0; // accumulate: positive = neg, caution = +1, warning = +2
@@ -98,6 +120,33 @@ export function generateScoreExplanation(
         `Margin ${dealMarginPct}% is consistent with ${proxyLabel} (~${rmaMarginPct}%)`
       );
       severityScore -= 1; // positive signal
+    }
+  }
+
+  // ── 1b. Normalization context bullets (inserted before DSCR when present) ──
+  const nc = inputs.normalizationContext;
+  if (nc) {
+    if (nc.manualReview) {
+      bullets.push("Manual review required — stated earnings could not be substantiated against available benchmarks");
+      severityScore += 2;
+    } else if (nc.earningsSource === "benchmark_implied") {
+      bullets.push(
+        `Trust-adjusted earnings used for valuation and DSCR — reported SDE ($${nc.reportedSDE.toLocaleString()}) set aside, benchmark-implied SDE ($${nc.usableSDE.toLocaleString()}) applied`
+      );
+      bullets.push("Reported earnings exceeded benchmark-supported range");
+      severityScore += 2;
+    } else if (nc.earningsSource === "blended") {
+      bullets.push(
+        `Conservative earnings blend applied — benchmark cap reduced effective SDE from $${nc.reportedSDE.toLocaleString()} to $${nc.usableSDE.toLocaleString()}`
+      );
+      severityScore += 1;
+    }
+    if (nc.isProxy && nc.earningsSource !== "reported") {
+      bullets.push("Closest available proxy benchmark applied — interpret comparisons in industry context");
+    }
+    if (nc.convictionBlocked && !nc.manualReview) {
+      bullets.push(`Trust score of ${nc.trustScore}/100 — investigate financials before advancing`);
+      severityScore += 1;
     }
   }
 
@@ -153,14 +202,27 @@ export function generateScoreExplanation(
   }
 
   // ── Severity ──────────────────────────────────────────────────────────────
+  // ── Normalization bullets: prepend before financial analysis bullets ──────
+  // These explain WHY scoring used a different SDE from what was stated.
+  const allBullets = [...normalizationBullets, ...bullets];
+
+  // ── Trust score note ────────────────────────────────────────────────────────
+  if (trustScore !== undefined && trustScore < 60) {
+    allBullets.unshift(
+      trustScore < 45
+        ? `Manual review required before strong recommendation — trust score ${trustScore}/100`
+        : `Investigate financials before advancing — trust score ${trustScore}/100`
+    );
+  }
+
   const severity: ScoreExplanation["severity"] =
     severityScore <= -2 ? "positive" :
     severityScore <= 0  ? "neutral"  :
     severityScore <= 2  ? "caution"  : "warning";
 
   return {
-    bullets,
-    hasInsights: bullets.length > 0,
-    severity,
+    bullets:     allBullets,
+    hasInsights: allBullets.length > 0,
+    severity:    trustScore !== undefined && trustScore < 60 ? "warning" : severity,
   };
 }
