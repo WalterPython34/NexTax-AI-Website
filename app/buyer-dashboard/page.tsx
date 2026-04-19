@@ -1276,6 +1276,7 @@ function computeModalScore(
   let sde = sdeRaw;
   let normalizationTrustScore: number | null = null;
   let normalizationBullets: string[] = [];
+  let rmaBenchmarksForNorm: { ebitdaMarginPct: number } | null = null;
   try {
     // Pass ebitda = sdeRaw (not *0.9) so allIdentical fires when revenue=sde=ebitda.
     const ebitdaInput = sdeRaw;
@@ -1284,7 +1285,6 @@ function computeModalScore(
     // 1. Real RMA data if fetched async before computeModalScore (resolvedBenchmark)
     // 2. SCORE_INDUSTRIES marginRange midpoint as fallback
     const indData = SCORE_INDUSTRIES[inputs.industry];
-    let rmaBenchmarksForNorm: { ebitdaMarginPct: number } | null = null;
 
     if (resolvedBenchmark?.ebitdaMarginPct) {
       // Priority 1 & 2: real RMA or proxy (fetched async before this call)
