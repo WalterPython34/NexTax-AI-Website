@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { CATEGORIES } from "@/lib/marketview/categories";
+import { normalizeDealFinancials } from "@/lib/normalizationEngine";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -1260,17 +1261,18 @@ function computeModalScore(inputs: ModalDealInputs): ModalScore | null {
   let normalizationTrustScore: number | null = null;
   let normalizationBullets: string[] = [];
   try {
-    const { normalizeDealFinancials: ndf, getScoreBasisForUI } =
-      require("@/lib/normalizationIntegration");
-    const normalized = ndf({
+    const normalized = normalizeDealFinancials({
       revenue, sde: sdeRaw, ebitda: sdeRaw * 0.9, price,
       benchmarkFamily: inputs.industry,
-      dataSource: "manual_entry" as const,
+      dataSource: "manual_entry",
       rmaBenchmarks: null,
     });
     sde = normalized.earnings.usableSDE;
     normalizationTrustScore = normalized.trustScore;
-    normalizationBullets = getScoreBasisForUI(normalized).normalizationBullets;
+    // Build simple bullets from flags
+    normalizationBullets = normalized.flags
+      .filter(f => f.deduction > 0)
+      .map(f => f.message);
   } catch { /* normalization is additive — never block scoring */ }
   const debtPct = parseFloat(inputs.debtPercent) / 100;
   const rate    = parseFloat(inputs.interestRate) / 100;
@@ -2097,6 +2099,9 @@ function UnderwritingPanel({
   const vd  = verdictCfg(deal.verdict ?? dealVerdict(deal));
 
   // ── Derived underwriting metrics ──────────────────────────────────────────
+  // usableSDE: trust-gated earnings from normalization. Falls back to stated sde.
+  // This is the number that was actually used to compute fair_value and dscr.
+  const usableSDE = deal.usable_sde ?? deal.sde ?? 0;
   const stressDscr15 = +(deal.dscr * 0.85).toFixed(2);
   const stressDscr25 = +(deal.dscr * 0.75).toFixed(2);
   const recOffer     = fv * 0.92;
@@ -2232,7 +2237,7 @@ function UnderwritingPanel({
             <IndustryBenchmarkPanel
               rmaBenchmarks={deal.rmaBenchmarks}
               marginScore={deal.marginScore ?? 55}
-              sde={deal.sde ?? 0}
+              sde={usableSDE}
               revenue={deal.revenue ?? 0}
               benchmarkFamily={deal.benchmark_family ?? null}
               style={{ marginBottom: 14 }}
@@ -2245,15 +2250,15 @@ function UnderwritingPanel({
               <div style={{ marginBottom: 16, padding: "12px 14px", borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
                 <div style={{ fontSize: 11, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600, marginBottom: 10 }}>Base Case</div>
                 <MetricRow label="DSCR at Current Terms"  value={deal.dscr.toFixed(2) + "x"}     color={col(deal.dscr)} />
-                <MetricRow label="Annual Debt Service"    value={fmt((deal.sde ?? 0) / deal.dscr)} sub="SDE ÷ DSCR" />
-                <MetricRow label="Monthly Payment"        value={fmt(deal.monthly_payment ?? (deal.sde ?? 0) / deal.dscr / 12)} />
+                <MetricRow label="Annual Debt Service"    value={fmt(usableSDE / deal.dscr)} sub="Usable SDE ÷ DSCR" />
+                <MetricRow label="Monthly Payment"        value={fmt(deal.monthly_payment ?? usableSDE / deal.dscr / 12)} />
               </div>
               <div style={{ marginBottom: 16, padding: "12px 14px", borderRadius: 10, background: "rgba(239,68,68,0.04)", border: "1px solid rgba(239,68,68,0.12)" }}>
                 <div style={{ fontSize: 11, color: "#F97316", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600, marginBottom: 10 }}>Downside Scenarios</div>
                 <MetricRow label="−15% Revenue Stress"   value={stressDscr15 + "x DSCR"}  color={col(stressDscr15)} sub={`SDE drops to ~${fmt((deal.sde ?? 0) * 0.85)}`} />
                 <MetricRow label="−25% Revenue Stress"   value={stressDscr25 + "x DSCR"}  color={col(stressDscr25)} sub={`SDE drops to ~${fmt((deal.sde ?? 0) * 0.75)}`} />
-                <MetricRow label="Break-Even SDE"        value={fmt((deal.sde ?? 0) / deal.dscr)}  sub="Minimum SDE to cover debt service" color="#F59E0B" />
-                <MetricRow label="Revenue Break-Even"    value={fmt((deal.sde ?? 0) / deal.dscr / ((deal.sde ?? 0) / Math.max(deal.revenue ?? 1, 1)))}  sub="Estimated revenue needed at break-even" color="#F59E0B" />
+                <MetricRow label="Break-Even SDE"        value={fmt(usableSDE / deal.dscr)}  sub="Minimum usable SDE to cover debt service" color="#F59E0B" />
+                <MetricRow label="Revenue Break-Even"    value={fmt(usableSDE / deal.dscr / (usableSDE / Math.max(deal.revenue ?? 1, 1)))}  sub="Estimated revenue needed at break-even" color="#F59E0B" />
               </div>
               <div style={{ padding: "10px 12px", borderRadius: 8, background: stressDscr15 >= 1.25 ? "rgba(16,185,129,0.06)" : "rgba(245,158,11,0.06)", border: `1px solid ${stressDscr15 >= 1.25 ? "rgba(16,185,129,0.15)" : "rgba(245,158,11,0.15)"}`, fontSize: 12, color: "#94A3B8", lineHeight: 1.6 }}>
                 {stressDscr15 >= 1.25
@@ -2338,7 +2343,7 @@ function UnderwritingPanel({
                   {
                     title: "What Must Be True",
                     bullets: [
-                      `SDE of ${fmt(deal.sde ?? 0)} is verified and add-backs are documented`,
+                      `SDE of ${fmt(usableSDE)} is the earnings basis used for scoring${usableSDE !== (deal.sde ?? 0) ? " (trust-adjusted — see normalization flags)" : ""}`,
                       `DSCR of ${deal.dscr.toFixed(2)}x holds under normalized owner compensation`,
                       `Revenue trend is stable or growing — no single-customer concentration above 20%`,
                       `No undisclosed liabilities, lease assignment issues, or pending litigation`,
@@ -2350,7 +2355,7 @@ function UnderwritingPanel({
                       "Request 3 years of tax returns and P&Ls prior to LOI",
                       "Validate customer list and contract transferability",
                       "Confirm lease terms and assignment clause",
-                      `Stress-test SDE to ${fmt((deal.sde ?? 0) * 0.85)} (−15%) — DSCR at ${stressDscr15}x`,
+                      `Stress-test usable SDE to ${fmt(usableSDE * 0.85)} (−15%) — DSCR at ${stressDscr15}x`,
                     ],
                   },
                   {
