@@ -1263,11 +1263,24 @@ function computeModalScore(inputs: ModalDealInputs): ModalScore | null {
   let normalizationTrustScore: number | null = null;
   let normalizationBullets: string[] = [];
   try {
+    // Pass ebitda = sdeRaw (not *0.9) so allIdentical fires when revenue=sde=ebitda.
+    const ebitdaInput = sdeRaw;
+
+    // Build a synthetic RMA benchmark from SCORE_INDUSTRIES margin range
+    // so normalization has a benchmarkSDE to gate against even without real RMA data.
+    const indData = SCORE_INDUSTRIES[inputs.industry];
+    const syntheticMarginMid = indData
+      ? (indData.marginRange[0] + indData.marginRange[1]) / 2 / 100
+      : null;
+    const syntheticRmaBenchmarks = syntheticMarginMid
+      ? { ebitdaMarginPct: syntheticMarginMid }
+      : null;
+
     const normalized = normalizeDealFinancials({
-      revenue, sde: sdeRaw, ebitda: sdeRaw * 0.9, price,
+      revenue, sde: sdeRaw, ebitda: ebitdaInput, price,
       benchmarkFamily: inputs.industry,
       dataSource: "manual_entry",
-      rmaBenchmarks: null,
+      rmaBenchmarks: syntheticRmaBenchmarks,
     });
     sde = normalized.earnings.usableSDE;
     normalizationTrustScore = normalized.trustScore;
@@ -1615,7 +1628,7 @@ function AnalyzeDealModal({
               {/* Hero row */}
               <div style={{
                 display: "grid", gridTemplateColumns: "auto 1fr", gap: 20,
-                padding: "16px 18px", borderRadius: 12, marginBottom: 16,
+                padding: "16px 18px", borderRadius: 12, marginBottom: 8,
                 background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)",
                 alignItems: "center",
               }}>
@@ -1664,6 +1677,58 @@ function AnalyzeDealModal({
                   ))}
                 </div>
               </div>
+
+              {/* ── Earnings basis debug banner ─────────────────────────────────────── */}
+              {(() => {
+                const usedSDE = Math.round(score.fairValue / ((SCORE_INDUSTRIES[inputs.industry]?.benchmarkMid) ?? 2.75));
+                const rawSDE  = parseFloat(inputs.sde.replace(/,/g, "")) || 0;
+                const isAdj   = Math.abs(usedSDE - rawSDE) > 100;
+                const nts     = score.normalizationTrustScore;
+                const tColor  = nts === null ? "#94A3B8" : nts < 60 ? "#F97316" : nts < 85 ? "#F59E0B" : "#10B981";
+                return (
+                  <div style={{
+                    padding: "7px 14px", marginBottom: 10, borderRadius: 8,
+                    background: isAdj ? "rgba(129,140,248,0.07)" : "rgba(255,255,255,0.02)",
+                    border: `1px solid ${isAdj ? "rgba(129,140,248,0.2)" : "rgba(255,255,255,0.07)"}`,
+                    display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12,
+                  }}>
+                    <div style={{ fontSize: 10, color: "#94A3B8" }}>
+                      <span style={{ marginRight: 6 }}>
+                        Earnings basis:{" "}
+                        <span style={{ color: isAdj ? "#818CF8" : "#E2E8F0", fontFamily: "'JetBrains Mono',monospace", fontWeight: 700 }}>
+                          {isAdj ? "Usable SDE (adjusted)" : "Reported SDE"}
+                        </span>
+                      </span>
+                      <span style={{ color: "#4B5563", marginRight: 6 }}>·</span>
+                      <span>
+                        SDE used:{" "}
+                        <span style={{ color: "#E2E8F0", fontFamily: "'JetBrains Mono',monospace", fontWeight: 700 }}>
+                          ${usedSDE.toLocaleString()}
+                        </span>
+                      </span>
+                      {isAdj && (
+                        <>
+                          <span style={{ color: "#4B5563", margin: "0 6px" }}>·</span>
+                          <span>
+                            Reported:{" "}
+                            <span style={{ color: "#4B5563", fontFamily: "'JetBrains Mono',monospace", textDecoration: "line-through" }}>
+                              ${rawSDE.toLocaleString()}
+                            </span>
+                          </span>
+                        </>
+                      )}
+                    </div>
+                    {nts !== null && (
+                      <div style={{ fontSize: 10, color: "#94A3B8", flexShrink: 0 }}>
+                        Trust:{" "}
+                        <span style={{ color: tColor, fontFamily: "'JetBrains Mono',monospace", fontWeight: 700 }}>
+                          {nts}/100
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                );
+              })()}
 
               {/* Verdict + fair value range */}
               {(() => {
@@ -2259,8 +2324,8 @@ function UnderwritingPanel({
               </div>
               <div style={{ marginBottom: 16, padding: "12px 14px", borderRadius: 10, background: "rgba(239,68,68,0.04)", border: "1px solid rgba(239,68,68,0.12)" }}>
                 <div style={{ fontSize: 11, color: "#F97316", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600, marginBottom: 10 }}>Downside Scenarios</div>
-                <MetricRow label="−15% Revenue Stress"   value={stressDscr15 + "x DSCR"}  color={col(stressDscr15)} sub={`SDE drops to ~${fmt((deal.sde ?? 0) * 0.85)}`} />
-                <MetricRow label="−25% Revenue Stress"   value={stressDscr25 + "x DSCR"}  color={col(stressDscr25)} sub={`SDE drops to ~${fmt((deal.sde ?? 0) * 0.75)}`} />
+                <MetricRow label="−15% Revenue Stress"   value={stressDscr15 + "x DSCR"}  color={col(stressDscr15)} sub={`Usable SDE drops to ~${fmt(usableSDE * 0.85)}`} />
+                <MetricRow label="−25% Revenue Stress"   value={stressDscr25 + "x DSCR"}  color={col(stressDscr25)} sub={`Usable SDE drops to ~${fmt(usableSDE * 0.75)}`} />
                 <MetricRow label="Break-Even SDE"        value={fmt(usableSDE / deal.dscr)}  sub="Minimum usable SDE to cover debt service" color="#F59E0B" />
                 <MetricRow label="Revenue Break-Even"    value={fmt(usableSDE / deal.dscr / (usableSDE / Math.max(deal.revenue ?? 1, 1)))}  sub="Estimated revenue needed at break-even" color="#F59E0B" />
               </div>
