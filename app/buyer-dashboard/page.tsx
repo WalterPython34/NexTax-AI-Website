@@ -1238,6 +1238,8 @@ interface ModalScore {
   multiple: number;
   dscr: number;
   monthlyPayment: number;
+  normalizationTrustScore: number | null;
+  normalizationBullets: string[];
   gap_pct: number;
   signal: "overpriced" | "fair" | "opportunity";
   recommendedOfferLow: number;
@@ -1269,10 +1271,9 @@ function computeModalScore(inputs: ModalDealInputs): ModalScore | null {
     });
     sde = normalized.earnings.usableSDE;
     normalizationTrustScore = normalized.trustScore;
-    // Build simple bullets from flags
     normalizationBullets = normalized.flags
-      .filter(f => f.deduction > 0)
-      .map(f => f.message);
+      .filter((f: any) => f.deduction > 0)
+      .map((f: any) => f.message);
   } catch { /* normalization is additive — never block scoring */ }
   const debtPct = parseFloat(inputs.debtPercent) / 100;
   const rate    = parseFloat(inputs.interestRate) / 100;
@@ -1355,6 +1356,8 @@ function computeModalScore(inputs: ModalDealInputs): ModalScore | null {
     recommendedOfferLow, recommendedOfferHigh,
     redFlags, greenFlags,
     valuationScore, debtScore, marketScore, industryScore,
+    normalizationTrustScore,
+    normalizationBullets,
   };
 }
 
@@ -1412,7 +1415,7 @@ function AnalyzeDealModal({
           sde,                                    // displayed SDE (stated)
           reported_sde:         sde,              // audit: original stated SDE
           usable_sde:           sde,              // modal: normalization applied client-side
-          normalization_trust_score: normalizationTrustScore,
+          normalization_trust_score: score?.normalizationTrustScore ?? null,
           asking_price:         price,
           city:                 inputs.city || null,
           state:                inputs.state || null,
@@ -1665,10 +1668,11 @@ function AnalyzeDealModal({
               {/* Verdict + fair value range */}
               {(() => {
                 // Add normalization trust note if trust score is below full confidence
-                const trustNote = (normalizationTrustScore !== null && normalizationTrustScore < 85)
-                  ? `Trust score: ${normalizationTrustScore}/100 — ${normalizationTrustScore < 60 ? "manual review recommended" : "moderate confidence"}`
+                const nts = score.normalizationTrustScore;
+                const trustNote = (nts !== null && nts !== undefined && nts < 85)
+                  ? `Trust score: ${nts}/100 — ${nts < 60 ? "manual review recommended" : "moderate confidence"}`
                   : null;
-                const dForV = { gap_pct: score.gap_pct, dscr: score.dscr, overall_score: score.overall, risk_level: score.riskLevel, normalization_trust_score: normalizationTrustScore } as DealRun;
+                const dForV = { gap_pct: score.gap_pct, dscr: score.dscr, overall_score: score.overall, risk_level: score.riskLevel, normalization_trust_score: nts } as DealRun;
                 const vdm = verdictCfg(dealVerdict(dForV));
                 return (
                   <div style={{ display: "flex", gap: 10, marginBottom: 14 }}>
