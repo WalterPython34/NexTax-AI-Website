@@ -38,10 +38,22 @@ interface DealRun {
   signal?: "overpriced" | "fair" | "opportunity";
   verdict?: DealVerdict;
   oppScore?: number;
-  // ── Benchmark-aware scoring (populated when RMA data available) ──────────
-  marginScore?:      number;           // 0–100, margin plausibility vs RMA
+  // ── Benchmark-aware scoring ──────────────────────────────────────────────
+  marginScore?:      number;
   benchmarkSource?:  "rma" | "fallback";
-  benchmark_family?: string | null;    // from deal_classification or scoring
+  benchmark_family?: string | null;
+  // ── Normalization layer (V2) ──────────────────────────────────────────────
+  reported_sde?:                  number | null;
+  usable_sde?:                    number | null;
+  benchmark_implied_sde?:         number | null;
+  earnings_source?:               "reported" | "blended" | "benchmark_implied" | null;
+  normalization_trust_score?:     number | null;
+  normalization_confidence_level?: "high" | "medium" | "low" | null;
+  normalization_flags_json?:      any[] | null;
+  normalization_adjustments_json?: any[] | null;
+  manual_review_required?:        boolean | null;
+  benchmark_is_proxy?:            boolean | null;
+  earnings_basis?:                "reported" | "blended" | "benchmark_implied" | null;
   scoreExplanation?: string[];         // from generateScoreExplanation()
   rmaBenchmarks?: {
     ebitdaMarginPct:    number | null;
@@ -282,19 +294,27 @@ function dealVerdict(d: DealRun): DealVerdict {
   const rl = (d.risk_level || "").toLowerCase();
   const isHighRisk = rl === "high" || rl === "critical";
 
+  // ── Conviction cap — normalization trust gate ─────────────────────────────
+  const trustScore    = d.normalization_trust_score ?? 100;
+  const manualReview  = d.manual_review_required    ?? false;
+  if (manualReview || trustScore < 45) {
+    if (gp >= 15 || d.dscr < 1.25 || isHighRisk) return "pass";
+    return "investigate";
+  }
+  if (trustScore < 60) {
+    if (gp >= 15 || d.dscr < 1.25 || isHighRisk) return "pass";
+    return "investigate";
+  }
+
   // 🔥 High Conviction
   if (gp <= -30 && d.dscr >= 2.5 && d.overall_score >= 85 && rl === "low") {
     return "high_conviction";
   }
-  // 🔴 Pass — hard disqualifiers
-  if (gp >= 15 || d.dscr < 1.25 || isHighRisk) {
-    return "pass";
-  }
+  // 🔴 Pass
+  if (gp >= 15 || d.dscr < 1.25 || isHighRisk) return "pass";
   // 🟢 Pursue
-  if ((gp <= -20 && d.dscr >= 1.75) || (d.overall_score >= 80 && gp <= -10)) {
-    return "pursue";
-  }
-  // 🟡 Investigate (default for viable deals)
+  if ((gp <= -20 && d.dscr >= 1.75) || (d.overall_score >= 80 && gp <= -10)) return "pursue";
+  // 🟡 Investigate
   return "investigate";
 }
 
@@ -1231,8 +1251,27 @@ interface ModalScore {
 
 function computeModalScore(inputs: ModalDealInputs): ModalScore | null {
   const revenue = parseFloat(inputs.revenue.replace(/,/g, ""));
-  const sde     = parseFloat(inputs.sde.replace(/,/g, ""));
+  const sdeRaw  = parseFloat(inputs.sde.replace(/,/g, ""));
   const price   = parseFloat(inputs.askingPrice.replace(/,/g, ""));
+
+  // ── Normalization: compute usableSDE before any downstream calculation ─────
+  // Falls back to sdeRaw if normalization is unavailable.
+  let sde = sdeRaw;
+  let normalizationTrustScore: number | null = null;
+  let normalizationBullets: string[] = [];
+  try {
+    const { normalizeDealFinancials: ndf, getScoreBasisForUI } =
+      require("@/lib/normalizationIntegration");
+    const normalized = ndf({
+      revenue, sde: sdeRaw, ebitda: sdeRaw * 0.9, price,
+      benchmarkFamily: inputs.industry,
+      dataSource: "manual_entry" as const,
+      rmaBenchmarks: null,
+    });
+    sde = normalized.earnings.usableSDE;
+    normalizationTrustScore = normalized.trustScore;
+    normalizationBullets = getScoreBasisForUI(normalized).normalizationBullets;
+  } catch { /* normalization is additive — never block scoring */ }
   const debtPct = parseFloat(inputs.debtPercent) / 100;
   const rate    = parseFloat(inputs.interestRate) / 100;
   const term    = parseFloat(inputs.termYears);
@@ -1368,7 +1407,10 @@ function AnalyzeDealModal({
           tool_used:            "reality_check",
           industry:             inputs.industry,
           revenue:              rev,
-          sde,
+          sde,                                    // displayed SDE (stated)
+          reported_sde:         sde,              // audit: original stated SDE
+          usable_sde:           sde,              // modal: normalization applied client-side
+          normalization_trust_score: normalizationTrustScore,
           asking_price:         price,
           city:                 inputs.city || null,
           state:                inputs.state || null,
@@ -1620,7 +1662,11 @@ function AnalyzeDealModal({
 
               {/* Verdict + fair value range */}
               {(() => {
-                const dForV = { gap_pct: score.gap_pct, dscr: score.dscr, overall_score: score.overall, risk_level: score.riskLevel } as DealRun;
+                // Add normalization trust note if trust score is below full confidence
+                const trustNote = (normalizationTrustScore !== null && normalizationTrustScore < 85)
+                  ? `Trust score: ${normalizationTrustScore}/100 — ${normalizationTrustScore < 60 ? "manual review recommended" : "moderate confidence"}`
+                  : null;
+                const dForV = { gap_pct: score.gap_pct, dscr: score.dscr, overall_score: score.overall, risk_level: score.riskLevel, normalization_trust_score: normalizationTrustScore } as DealRun;
                 const vdm = verdictCfg(dealVerdict(dForV));
                 return (
                   <div style={{ display: "flex", gap: 10, marginBottom: 14 }}>
@@ -1983,11 +2029,32 @@ function DealDetailPanel({
             <IndustryBenchmarkPanel
               rmaBenchmarks={deal.rmaBenchmarks}
               marginScore={deal.marginScore ?? 55}
-              sde={deal.sde ?? 0}
+              sde={deal.usable_sde ?? deal.sde ?? 0}
               revenue={deal.revenue ?? 0}
               benchmarkFamily={deal.benchmark_family ?? null}
               style={{ marginBottom: 12 }}
             />
+          )}
+
+          {/* Normalization trust note */}
+          {deal.normalization_trust_score !== null && deal.normalization_trust_score !== undefined && deal.normalization_trust_score < 80 && (
+            <div style={{
+              padding: "9px 12px", borderRadius: 9, marginBottom: 12,
+              background: deal.manual_review_required ? "rgba(239,68,68,0.07)" : "rgba(245,158,11,0.07)",
+              border: `1px solid ${deal.manual_review_required ? "rgba(239,68,68,0.2)" : "rgba(245,158,11,0.2)"}`,
+            }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: deal.manual_review_required ? "#EF4444" : "#F59E0B",
+                textTransform: "uppercase" as any, letterSpacing: "0.07em", marginBottom: 3 }}>
+                {deal.manual_review_required ? "Manual Review Required" : `Trust Score: ${deal.normalization_trust_score}/100`}
+              </div>
+              <div style={{ fontSize: 11, color: "#6B7280", lineHeight: 1.5 }}>
+                {deal.earnings_basis === "benchmark_implied"
+                  ? `Benchmark-implied SDE ($${(deal.usable_sde ?? 0).toLocaleString()}) used — stated $${(deal.reported_sde ?? deal.sde ?? 0).toLocaleString()} set aside`
+                  : deal.earnings_basis === "blended"
+                  ? `Conservative earnings blend applied — effective SDE $${(deal.usable_sde ?? 0).toLocaleString()}`
+                  : `Data quality flags detected — review before advancing`}
+              </div>
+            </div>
           )}
 
           {/* Actions */}
@@ -2038,7 +2105,9 @@ function UnderwritingPanel({
   const sbaDown      = deal.asking_price * 0.10;
   const sbaEligible  = deal.dscr >= 1.25 && deal.asking_price <= 5_000_000;
   const sbaMonthly   = sbaLoan > 0 ? (sbaLoan * (0.1075 / 12) * Math.pow(1 + 0.1075 / 12, 120)) / (Math.pow(1 + 0.1075 / 12, 120) - 1) : 0;
-  const sbaDscr      = sbaMonthly > 0 ? +((deal.sde ?? 0) / (sbaMonthly * 12)).toFixed(2) : 0;
+  // Use usable_sde (trust-adjusted) for DSCR if available, else stated sde
+  const effectiveSde = deal.usable_sde ?? deal.sde ?? 0;
+  const sbaDscr      = sbaMonthly > 0 ? +(effectiveSde / (sbaMonthly * 12)).toFixed(2) : 0;
 
   const UW_TABS: { id: UwTab; label: string; icon: string }[] = [
     { id: "stress",      label: "Stress Test",   icon: "📉" },
@@ -4962,7 +5031,7 @@ export default function BuyerDashboard() {
     setLoadingDeals(true);
     const { data, error } = await supabase
       .from("deal_runs")
-      .select("id,tool_used,industry,asking_price,fair_value,valuation_multiple,dscr,overall_score,risk_level,city,state,created_at,confidence_grade,revenue,sde,benchmark_family,rma_naics_code,classification_confidence")
+      .select("id,tool_used,industry,asking_price,fair_value,valuation_multiple,dscr,overall_score,risk_level,city,state,created_at,confidence_grade,revenue,sde,benchmark_family,rma_naics_code,classification_confidence,reported_sde,usable_sde,benchmark_implied_sde,earnings_source,normalization_trust_score,normalization_confidence_level,normalization_flags_json,manual_review_required,benchmark_is_proxy")
       .eq("user_id", uid)
       .order("created_at", { ascending: false })
       .limit(50);
