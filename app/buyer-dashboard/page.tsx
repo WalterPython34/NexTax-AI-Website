@@ -68,7 +68,7 @@ interface DealRun {
 }
 
 /** Deal Verdict — the single opinionated label shown throughout the UI */
-type DealVerdict = "high_conviction" | "pursue" | "investigate" | "pass";
+type DealVerdict = "high_conviction" | "pursue" | "investigate" | "pass" | "manual_review";
 
 interface DealNote {
   id: string;
@@ -296,14 +296,18 @@ function dealVerdict(d: DealRun): DealVerdict {
   const isHighRisk = rl === "high" || rl === "critical";
 
   // ── Conviction cap — normalization trust gate ─────────────────────────────
+  // Low-trust verdicts are review-oriented, not investment-oriented.
+  // "manual_review" = data quality is the blocker (not deal quality)
+  // "investigate"   = trust partially low but deal still worth validating
   const trustScore    = d.normalization_trust_score ?? 100;
   const manualReview  = d.manual_review_required    ?? false;
   if (manualReview || trustScore < 45) {
-    if (gp >= 15 || d.dscr < 1.25 || isHighRisk) return "pass";
-    return "investigate";
+    // Critical trust failure — always show as manual review needed
+    return "manual_review";
   }
   if (trustScore < 60) {
-    if (gp >= 15 || d.dscr < 1.25 || isHighRisk) return "pass";
+    // Low trust — cap at investigate (never show pursue or high_conviction)
+    if (gp >= 15 || d.dscr < 1.25 || isHighRisk) return "investigate";
     return "investigate";
   }
 
@@ -341,6 +345,11 @@ function verdictCfg(v: DealVerdict) {
       emoji: "🔴", label: "Pass",
       color: "#EF4444", bg: "rgba(239,68,68,0.1)", border: "rgba(239,68,68,0.25)",
       subtext: "Overpriced, risky, or structurally weak. Reprice or move on.",
+    };
+    case "manual_review": return {
+      emoji: "⚠️", label: "Needs Manual Review",
+      color: "#F97316", bg: "rgba(249,115,22,0.08)", border: "rgba(249,115,22,0.28)",
+      subtext: "Data quality flags require manual review before any verdict can be issued. Verify financials before advancing.",
     };
   }
 }
@@ -1239,7 +1248,9 @@ interface ModalScore {
   dscr: number;
   monthlyPayment: number;
   normalizationTrustScore: number | null;
-  normalizationBullets: string[];
+  normalizationBullets:    string[];
+  benchmarkBasis:          "direct" | "proxy" | "fallback";
+  resolvedMarginMid:       number | null;
   gap_pct: number;
   signal: "overpriced" | "fair" | "opportunity";
   recommendedOfferLow: number;
@@ -1252,7 +1263,10 @@ interface ModalScore {
   industryScore: number;
 }
 
-function computeModalScore(inputs: ModalDealInputs): ModalScore | null {
+function computeModalScore(
+  inputs: ModalDealInputs,
+  resolvedBenchmark?: { ebitdaMarginPct: number; isProxy: boolean; basis: "direct" | "proxy" | "fallback" } | null,
+): ModalScore | null {
   const revenue = parseFloat(inputs.revenue.replace(/,/g, ""));
   const sdeRaw  = parseFloat(inputs.sde.replace(/,/g, ""));
   const price   = parseFloat(inputs.askingPrice.replace(/,/g, ""));
@@ -1266,21 +1280,29 @@ function computeModalScore(inputs: ModalDealInputs): ModalScore | null {
     // Pass ebitda = sdeRaw (not *0.9) so allIdentical fires when revenue=sde=ebitda.
     const ebitdaInput = sdeRaw;
 
-    // Build a synthetic RMA benchmark from SCORE_INDUSTRIES margin range
-    // so normalization has a benchmarkSDE to gate against even without real RMA data.
+    // ── Benchmark resolution (priority order) ────────────────────────────────
+    // 1. Real RMA data if fetched async before computeModalScore (resolvedBenchmark)
+    // 2. SCORE_INDUSTRIES marginRange midpoint as fallback
     const indData = SCORE_INDUSTRIES[inputs.industry];
-    const syntheticMarginMid = indData
-      ? (indData.marginRange[0] + indData.marginRange[1]) / 2 / 100
-      : null;
-    const syntheticRmaBenchmarks = syntheticMarginMid
-      ? { ebitdaMarginPct: syntheticMarginMid }
-      : null;
+    let rmaBenchmarksForNorm: { ebitdaMarginPct: number } | null = null;
+
+    if (resolvedBenchmark?.ebitdaMarginPct) {
+      // Priority 1 & 2: real RMA or proxy (fetched async before this call)
+      rmaBenchmarksForNorm = { ebitdaMarginPct: resolvedBenchmark.ebitdaMarginPct };
+    } else {
+      // Priority 3: fallback to SCORE_INDUSTRIES midpoint
+      const midpoint = indData
+        ? (indData.marginRange[0] + indData.marginRange[1]) / 2 / 100
+        : null;
+      rmaBenchmarksForNorm = midpoint ? { ebitdaMarginPct: midpoint } : null;
+    }
 
     const normalized = normalizeDealFinancials({
       revenue, sde: sdeRaw, ebitda: ebitdaInput, price,
       benchmarkFamily: inputs.industry,
+      benchmarkIsProxy: resolvedBenchmark?.isProxy ?? false,
       dataSource: "manual_entry",
-      rmaBenchmarks: syntheticRmaBenchmarks,
+      rmaBenchmarks: rmaBenchmarksForNorm,
     });
     sde = normalized.earnings.usableSDE;
     normalizationTrustScore = normalized.trustScore;
@@ -1371,6 +1393,8 @@ function computeModalScore(inputs: ModalDealInputs): ModalScore | null {
     valuationScore, debtScore, marketScore, industryScore,
     normalizationTrustScore,
     normalizationBullets,
+    benchmarkBasis:    resolvedBenchmark?.basis ?? "fallback",
+    resolvedMarginMid: rmaBenchmarksForNorm?.ebitdaMarginPct ?? null,
   };
 }
 
@@ -1404,9 +1428,30 @@ function AnalyzeDealModal({
 
   const canScore = inputs.industry && inputs.revenue && inputs.sde && inputs.askingPrice;
 
-  function handleScore() {
+  async function handleScore() {
     setLoading(true);
-    const result = computeModalScore(inputs);
+    // ── Step 1: Fetch real RMA benchmark (priority 1/2) ─────────────────────
+    // Try /api/benchmarks?industry={key} — falls back gracefully if unavailable.
+    let resolvedBenchmark: { ebitdaMarginPct: number; isProxy: boolean; basis: "direct" | "proxy" | "fallback" } | null = null;
+    try {
+      const bmRes = await fetch(`/api/benchmarks?industry=${encodeURIComponent(inputs.industry)}`);
+      if (bmRes.ok) {
+        const bmJson = await bmRes.json();
+        if (bmJson.benchmarks?.ebitda_margin_pct) {
+          const isProxy = bmJson.source === "no_data" ? false
+            : ["med_spa","behavioral_health","manufacturing","retail","wholesale"]
+                .includes(inputs.industry);
+          resolvedBenchmark = {
+            ebitdaMarginPct: bmJson.benchmarks.ebitda_margin_pct,
+            isProxy,
+            basis: isProxy ? "proxy" : "direct",
+          };
+        }
+      }
+    } catch { /* network failure — fall back to SCORE_INDUSTRIES midpoint */ }
+
+    // ── Step 2: Compute score using resolved benchmark ───────────────────────
+    const result = computeModalScore(inputs, resolvedBenchmark);
     setTimeout(() => { setScore(result); setStep("results"); setLoading(false); }, 300);
   }
 
@@ -1717,6 +1762,24 @@ function AnalyzeDealModal({
                           </span>
                         </>
                       )}
+                      <span style={{ color: "#4B5563", margin: "0 6px" }}>·</span>
+                      <span>
+                        Benchmark:{" "}
+                        <span style={{ fontFamily: "'JetBrains Mono',monospace", fontWeight: 700,
+                          color: score.benchmarkBasis === "direct" ? "#10B981"
+                               : score.benchmarkBasis === "proxy"  ? "#F59E0B"
+                               :                                      "#94A3B8",
+                        }}>
+                          {score.benchmarkBasis === "direct" ? "Direct RMA"
+                         : score.benchmarkBasis === "proxy"  ? "Proxy RMA"
+                         :                                      "Fallback"}
+                        </span>
+                        {score.resolvedMarginMid !== null && (
+                          <span style={{ color: "#4B5563" }}>
+                            {" "}({Math.round(score.resolvedMarginMid * 100)}%)
+                          </span>
+                        )}
+                      </span>
                     </div>
                     {nts !== null && (
                       <div style={{ fontSize: 10, color: "#94A3B8", flexShrink: 0 }}>
@@ -2434,6 +2497,7 @@ function UnderwritingPanel({
                       if (v === "high_conviction") return `🔥 HIGH CONVICTION — ${vd.subtext} Anchor at ${fmt(recOffer)}, move to LOI immediately after confirming add-backs.`;
                       if (v === "pursue")          return `🟢 PURSUE — ${vd.subtext} Anchor at ${fmt(recOffer)} and request 3 years of financials before LOI submission.`;
                       if (v === "investigate")     return `🟡 INVESTIGATE — ${vd.subtext} Validate SDE and add-backs before committing. Request 2 years of tax returns.`;
+                      if (v === "manual_review")   return `⚠️ MANUAL REVIEW REQUIRED — Normalization flags indicate data quality concerns. Do not advance until financials are independently verified.`;
                       return `🔴 PASS — ${vd.subtext} Do not advance at current pricing. Requires ${gp > 0 ? `${gp}% price reduction` : "structural improvement"} to become viable.`;
                     })(),
                   },
