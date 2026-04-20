@@ -1002,12 +1002,16 @@ function TopOpportunities({
           return (
             <div
               key={deal.id}
+              onClick={() => onOpenUnderwriting(deal)}
               style={{
                 display: "flex", alignItems: "center", gap: 12,
                 padding: "13px 16px", borderRadius: 12,
                 background: isTop ? "rgba(16,185,129,0.04)" : "rgba(255,255,255,0.02)",
                 border: isTop ? "1px solid rgba(16,185,129,0.15)" : "1px solid rgba(255,255,255,0.06)",
+                cursor: "pointer", transition: "background 0.12s",
               }}
+              onMouseEnter={e => (e.currentTarget.style.background = isTop ? "rgba(16,185,129,0.07)" : "rgba(99,102,241,0.04)")}
+              onMouseLeave={e => (e.currentTarget.style.background = isTop ? "rgba(16,185,129,0.04)" : "rgba(255,255,255,0.02)")}
             >
               {/* Rank badge */}
               <div style={{
@@ -1052,43 +1056,20 @@ function TopOpportunities({
                 {vd.emoji} {vd.label}
               </span>
 
-              {/* Actions */}
-              <div style={{ display: "flex", gap: 4, flexShrink: 0, alignItems: "center" }}>
-                <button
-                  onClick={() => onOpenDetail(deal)}
-                  style={{
-                    padding: "5px 10px", borderRadius: 7,
-                    border: "1px solid rgba(255,255,255,0.08)",
-                    background: "rgba(255,255,255,0.03)",
-                    color: "#6B7280", fontSize: 11, cursor: "pointer",
-                  }}
-                >
-                  View
-                </button>
+              {/* Actions — all stop propagation; row itself triggers underwriting */}
+              <div style={{ display: "flex", gap: 4, flexShrink: 0, alignItems: "center" }} onClick={e => e.stopPropagation()}>
                 <StarButton dealId={deal.id} favorites={favorites} onToggle={onToggleFav} />
-                <button
-                  onClick={() => onOpenNotes(deal)}
-                  title="Notes"
-                  style={{
-                    background: "none", border: "1px solid rgba(255,255,255,0.08)",
-                    borderRadius: 7, cursor: "pointer", padding: "5px 8px",
-                    fontSize: 12, color: "#4B5563",
-                  }}
-                >
+                <button onClick={(e) => { e.stopPropagation(); onOpenNotes(deal); }} title="Notes & Intel"
+                  style={{ background: "none", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 7, cursor: "pointer", padding: "5px 8px", fontSize: 12, color: "#4B5563" }}>
                   📝
                 </button>
-                <button
-                  onClick={() => onOpenUnderwriting(deal)}
-                  title={isPro ? "Run Full Analysis" : "Pro feature"}
-                  style={{
-                    padding: "5px 10px", borderRadius: 7,
-                    border: isPro ? "1px solid rgba(99,102,241,0.25)" : "1px solid rgba(255,255,255,0.05)",
-                    background: isPro ? "rgba(99,102,241,0.08)" : "rgba(255,255,255,0.02)",
-                    color: isPro ? "#818CF8" : "#2D3748",
-                    fontSize: 11, cursor: isPro ? "pointer" : "not-allowed",
-                  }}
-                >
-                  {isPro ? "⚡ Full" : "🔒"}
+                <button onClick={(e) => { e.stopPropagation(); onOpenDetail(deal); }} title="Quick View"
+                  style={{ padding: "5px 9px", borderRadius: 7, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.03)", color: "#6B7280", fontSize: 11, cursor: "pointer" }}>
+                  Quick View
+                </button>
+                <button onClick={(e) => { e.stopPropagation(); onOpenUnderwriting(deal); }} title="Open Underwriting"
+                  style={{ padding: "5px 12px", borderRadius: 7, border: "1px solid rgba(99,102,241,0.35)", background: "rgba(99,102,241,0.12)", color: "#A5B4FC", fontSize: 11, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" as any }}>
+                  Open Underwriting →
                 </button>
               </div>
             </div>
@@ -2158,6 +2139,30 @@ function DealDetailPanel({
         {/* Body */}
         <div style={{ padding: "16px 20px", flex: 1, overflowY: "auto" }}>
 
+          {/* Teaser — visible to all users above the paywall */}
+          {teaserInsight && !canAccessFull && (
+            <div style={{
+              padding: "9px 13px", borderRadius: 9, marginBottom: 12,
+              background: "rgba(245,158,11,0.07)",
+              border: "1px solid rgba(245,158,11,0.2)",
+              fontSize: 11, color: "#F59E0B", lineHeight: 1.5,
+            }}>
+              {teaserInsight}
+            </div>
+          )}
+
+          {/* Teaser — visible to all users above paywall */}
+          {teaserInsight && !canAccessFull && (
+            <div style={{
+              padding: "9px 13px", borderRadius: 9, marginBottom: 12,
+              background: "rgba(245,158,11,0.07)",
+              border: "1px solid rgba(245,158,11,0.2)",
+              fontSize: 11, color: "#F59E0B", lineHeight: 1.5,
+            }}>
+              {teaserInsight}
+            </div>
+          )}
+
           {/* Score + metrics */}
           <div style={{ display: "grid", gridTemplateColumns: "auto 1fr", gap: 16, alignItems: "center", marginBottom: 16, padding: "14px 16px", borderRadius: 12, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
             <Ring score={deal.overall_score} size={64} />
@@ -2465,27 +2470,82 @@ function UnderwritingPanel({
 
   const col = (s: number) => s >= 1.5 ? "#10B981" : s >= 1.25 ? "#F59E0B" : "#EF4444";
 
-  const BlurredContent = ({ children }: { children: React.ReactNode }) => (
-    <div style={{ position: "relative" }}>
-      <div style={{ filter: isPro ? "none" : "blur(5px)", pointerEvents: isPro ? "auto" : "none", opacity: isPro ? 1 : 0.4 }}>
-        {children}
-      </div>
-      {!isPro && (
+  // ── Freemium gating ──────────────────────────────────────────────────────
+  const [freeUnlocked, setFreeUnlocked] = React.useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return parseInt(localStorage.getItem("nxtax_free_unlocks") ?? "0", 10) < 1;
+  });
+
+  const handleFreeUnlock = () => {
+    const n = parseInt(localStorage.getItem("nxtax_free_unlocks") ?? "0", 10);
+    localStorage.setItem("nxtax_free_unlocks", String(n + 1));
+    setFreeUnlocked(true);
+  };
+
+  const canAccessFull = isPro || freeUnlocked;
+
+  const teaserInsight: string | null = (() => {
+    if (canAccessFull) return null;
+    const flags = (deal.normalization_flags_json ?? []) as any[];
+    const critical = flags.find((f: any) => f.severity === "critical");
+    if (critical) return `⚠ ${critical.title} — full analysis blocked pending review`;
+    const trust = deal.normalization_trust_score ?? 100;
+    if (trust < 80) return `⚠ Reported earnings may be overstated — adjusted SDE is lower`;
+    const gp = deal.gap_pct ?? 0;
+    if (gp > 15) return `⚠ Asking price is ${gp}% above estimated fair value`;
+    return null;
+  })();
+
+  const BlurredContent = ({ children }: { children: React.ReactNode }) => {
+    if (canAccessFull) return <>{children}</>;
+    return (
+      <div style={{ position: "relative", borderRadius: 10, overflow: "hidden" }}>
+        <div style={{ filter: "blur(6px)", opacity: 0.3, pointerEvents: "none", userSelect: "none" }}>
+          {children}
+        </div>
         <div style={{
-          position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", flexDirection: "column", gap: 10,
-        }}>
-          <div style={{ padding: "16px 24px", borderRadius: 12, background: "rgba(8,12,19,0.9)", border: "1px solid rgba(99,102,241,0.2)", textAlign: "center" }}>
-            <div style={{ fontSize: 20, marginBottom: 6 }}>🔒</div>
-            <div style={{ fontSize: 13, fontWeight: 700, color: "#F1F5F9", marginBottom: 4 }}>Pro Feature</div>
-            <div style={{ fontSize: 11, color: "#6B7280", marginBottom: 12, maxWidth: 220 }}>Upgrade to unlock full underwriting analysis</div>
-            <button style={{ padding: "7px 16px", borderRadius: 8, border: "none", background: "linear-gradient(135deg,#6366F1,#8B5CF6)", color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer" }}>
-              Upgrade to Pro
+          position: "absolute", top: 0, left: 0, right: 0, height: "45%",
+          background: "linear-gradient(to bottom, transparent, rgba(13,17,23,0.9))",
+          pointerEvents: "none",
+        }} />
+        <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div style={{
+            padding: "20px 24px", borderRadius: 14,
+            background: "rgba(8,12,19,0.95)",
+            border: "1px solid rgba(99,102,241,0.25)",
+            textAlign: "center" as const, maxWidth: 290,
+            boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
+          }}>
+            <div style={{ fontSize: 20, marginBottom: 8 }}>🔒</div>
+            <div style={{ fontSize: 14, fontWeight: 700, color: "#F1F5F9", marginBottom: 8, fontFamily: "'Inter Tight',sans-serif" }}>
+              Unlock Full Deal Underwriting
+            </div>
+            <div style={{ display: "flex", flexDirection: "column" as const, gap: 5, marginBottom: 14, textAlign: "left" as const }}>
+              {["Adjusted SDE (true earnings)", "Risk flags & trust score", "Market comps & percentile", "Negotiation strategy"].map(b => (
+                <div key={b} style={{ display: "flex", gap: 7, fontSize: 11, color: "#94A3B8" }}>
+                  <span style={{ color: "#818CF8", flexShrink: 0 }}>✓</span>{b}
+                </div>
+              ))}
+            </div>
+            <button
+              onClick={handleFreeUnlock}
+              style={{
+                width: "100%", padding: "9px 0", borderRadius: 8, border: "none",
+                background: "linear-gradient(135deg,#6366F1,#818CF8)",
+                color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer", marginBottom: 6,
+              }}
+            >
+              Unlock Full Analysis →
             </button>
+            <div style={{ fontSize: 10, color: "#374151" }}>
+              1 free unlock available · Upgrade to Pro for unlimited access
+            </div>
           </div>
         </div>
-      )}
-    </div>
-  );
+      </div>
+    );
+  };
+
 
   const MetricRow = ({ label, value, sub, color = "#E2E8F0" }: { label: string; value: string; sub?: string; color?: string }) => (
     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "9px 0", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
@@ -3218,10 +3278,14 @@ function TabDashboard({
             return (
               <div
                 key={deal.id}
+                onClick={() => onOpenUnderwriting(deal)}
                 style={{
-                  display: "flex", alignItems: "center", gap: 14, padding: "12px 0",
+                  display: "flex", alignItems: "center", gap: 14, padding: "12px 8px",
                   borderBottom: i < recent.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none",
+                  cursor: "pointer", borderRadius: 8, marginLeft: -8, transition: "background 0.12s",
                 }}
+                onMouseEnter={e => (e.currentTarget.style.background = "rgba(99,102,241,0.04)")}
+                onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
               >
                 <Ring score={deal.overall_score} size={34} />
                 <div style={{ flex: 1, minWidth: 0 }}>
@@ -3248,27 +3312,19 @@ function TabDashboard({
                 }}>
                   {vd.emoji} {vd.label}
                 </span>
-                <div style={{ display: "flex", gap: 4 }}>
+                <div style={{ display: "flex", gap: 4 }} onClick={e => e.stopPropagation()}>
                   <StarButton dealId={deal.id} favorites={favorites} onToggle={onToggleFav} />
-                  <button
-                    onClick={() => onOpenNotes(deal)}
-                    style={{
-                      background: "none", border: "1px solid rgba(255,255,255,0.08)",
-                      borderRadius: 6, cursor: "pointer", padding: "4px 7px", fontSize: 11, color: "#4B5563",
-                    }}
-                  >
+                  <button onClick={(e) => { e.stopPropagation(); onOpenNotes(deal); }} title="Notes & Intel"
+                    style={{ background: "none", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 6, cursor: "pointer", padding: "4px 7px", fontSize: 11, color: "#4B5563" }}>
                     📝
                   </button>
-                  <button
-                    onClick={() => onOpenDetail(deal)}
-                    style={{
-                      padding: "5px 10px", borderRadius: 7,
-                      border: "1px solid rgba(255,255,255,0.08)",
-                      background: "rgba(255,255,255,0.03)",
-                      color: "#6B7280", fontSize: 11, cursor: "pointer",
-                    }}
-                  >
-                    View
+                  <button onClick={(e) => { e.stopPropagation(); onOpenDetail(deal); }} title="Quick View"
+                    style={{ padding: "4px 8px", borderRadius: 6, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.03)", color: "#6B7280", fontSize: 11, cursor: "pointer" }}>
+                    Quick View
+                  </button>
+                  <button onClick={(e) => { e.stopPropagation(); onOpenUnderwriting(deal); }} title="Open Underwriting"
+                    style={{ padding: "5px 10px", borderRadius: 6, border: "1px solid rgba(99,102,241,0.35)", background: "rgba(99,102,241,0.12)", color: "#A5B4FC", fontSize: 11, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" as any }}>
+                    Open Underwriting →
                   </button>
                 </div>
               </div>
@@ -3599,13 +3655,17 @@ function TabMyDeals({
           return (
             <div
               key={deal.id}
+              onClick={() => onOpenUnderwriting(deal)}
               style={{
                 display: "grid",
                 gridTemplateColumns: "1.6fr 0.8fr 1fr 1fr 60px 48px 130px 90px auto",
                 gap: "0 8px", padding: "13px 18px",
                 borderBottom: i < filtered.length - 1 ? "1px solid rgba(255,255,255,0.03)" : "none",
                 alignItems: "center", transition: "background 0.12s",
+                cursor: "pointer",
               }}
+              onMouseEnter={e => (e.currentTarget.style.background = "rgba(99,102,241,0.04)")}
+              onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
             >
               {/* Deal name + meta */}
               <div>
@@ -3685,42 +3745,20 @@ function TabMyDeals({
                 {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
               </select>
 
-              {/* Actions */}
-              <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+              {/* Actions — stopPropagation; row itself triggers underwriting */}
+              <div style={{ display: "flex", gap: 4, alignItems: "center" }} onClick={e => e.stopPropagation()}>
                 <StarButton dealId={deal.id} favorites={favorites} onToggle={onToggleFav} />
-                <button
-                  onClick={() => onOpenNotes(deal)}
-                  title="Notes"
-                  style={{
-                    background: "none", border: "1px solid rgba(255,255,255,0.08)",
-                    borderRadius: 6, cursor: "pointer", padding: "3px 6px", fontSize: 11, color: "#4B5563",
-                  }}
-                >
+                <button onClick={(e) => { e.stopPropagation(); onOpenNotes(deal); }} title="Notes & Intel"
+                  style={{ background: "none", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 6, cursor: "pointer", padding: "3px 6px", fontSize: 11, color: "#4B5563" }}>
                   📝
                 </button>
-                <button
-                  onClick={() => onOpenDetail(deal)}
-                  style={{
-                    padding: "4px 8px", borderRadius: 6,
-                    border: "1px solid rgba(255,255,255,0.08)",
-                    background: "rgba(255,255,255,0.03)",
-                    color: "#6B7280", fontSize: 10, cursor: "pointer",
-                  }}
-                >
-                  View
+                <button onClick={(e) => { e.stopPropagation(); onOpenDetail(deal); }} title="Quick View"
+                  style={{ padding: "4px 8px", borderRadius: 6, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.03)", color: "#6B7280", fontSize: 10, cursor: "pointer" }}>
+                  Quick View
                 </button>
-                <button
-                  onClick={() => onOpenUnderwriting(deal)}
-                  title={isPro ? "Full Underwriting" : "Pro feature"}
-                  style={{
-                    padding: "4px 8px", borderRadius: 6,
-                    border: isPro ? "1px solid rgba(99,102,241,0.25)" : "1px solid rgba(255,255,255,0.05)",
-                    background: isPro ? "rgba(99,102,241,0.08)" : "rgba(255,255,255,0.02)",
-                    color: isPro ? "#818CF8" : "#374151",
-                    fontSize: 10, cursor: isPro ? "pointer" : "not-allowed",
-                  }}
-                >
-                  {isPro ? "⚡" : "🔒"}
+                <button onClick={(e) => { e.stopPropagation(); onOpenUnderwriting(deal); }} title="Open Underwriting"
+                  style={{ padding: "5px 10px", borderRadius: 6, border: "1px solid rgba(99,102,241,0.35)", background: "rgba(99,102,241,0.12)", color: "#A5B4FC", fontSize: 10, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" as any }}>
+                  Open Underwriting →
                 </button>
               </div>
             </div>
