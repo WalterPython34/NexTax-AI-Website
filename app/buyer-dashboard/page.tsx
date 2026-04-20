@@ -1827,13 +1827,13 @@ function AnalyzeDealModal({
                         </span>
                       </div>
                     )}
-                  </div>
                   {/* Proxy note — only shown when proxy benchmark used */}
                   {score.benchmarkBasis === "proxy" && (
                     <div style={{ marginTop: 4, fontSize: 10, color: "#F59E0B", lineHeight: 1.5 }}>
                       ⚠ Using conservative proxy benchmark — actual {SCORE_INDUSTRIES[inputs.industry]?.label ?? inputs.industry} performance may differ from RMA proxy source
                     </div>
                   )}
+                  </div>
                 );
               })()}
 
