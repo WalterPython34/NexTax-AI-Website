@@ -239,29 +239,59 @@ function buildScoreBasis(
  */
 export function buildNormalizationPayload(
   normalized: NormalizedDealFinancials,
+  benchmarkSource?: "direct" | "proxy" | "fallback",
 ) {
   const { earnings, trustScore, confidenceLevel, flags, adjustments } = normalized;
+  const { revenue, price } = normalized.raw;
+
+  // ── Derived analytics columns ──────────────────────────────────────────────
+  const rawSDE       = earnings.reportedSDE;
+  const usableSDE    = earnings.usableSDE;
+  const rev          = typeof revenue === "number" && revenue > 0 ? revenue : null;
+
+  const rawMultiple        = rawSDE > 0 && price > 0
+    ? +((price / rawSDE).toFixed(3)) : null;
+
+  const normalizedMultiple = usableSDE > 0 && price > 0
+    ? +((price / usableSDE).toFixed(3)) : null;
+
+  const normalizedMargin   = usableSDE > 0 && rev !== null
+    ? +((usableSDE / rev).toFixed(4)) : null;
+
+  // Derive benchmark_source from flags when not explicitly passed
+  const derivedSource: "direct" | "proxy" | "fallback" =
+    benchmarkSource ??
+    (flags.some(f => f.code === "PROXY_BENCHMARK_USED") ? "proxy" :
+     flags.some(f => f.code === "BENCHMARK_UNAVAILABLE") ? "fallback" :
+     "direct");
 
   return {
-    // Earnings audit trail
-    reported_sde:              earnings.reportedSDE,
+    // ── Earnings audit trail ─────────────────────────────────────────────────
+    reported_sde:              rawSDE,
     reported_ebitda:           normalized.raw.ebitda,
     benchmark_implied_sde:     earnings.benchmarkSDE ?? null,
-    usable_sde:                earnings.usableSDE,
+    usable_sde:                usableSDE,
     earnings_source:           earnings.earningsSource,
 
-    // Trust
+    // ── Trust ────────────────────────────────────────────────────────────────
     normalization_trust_score:      trustScore,
     normalization_confidence_level: confidenceLevel,
     manual_review_required:         trustScore < 60 || flags.some(f => f.severity === "critical"),
 
-    // Structured output for Underwriting Panel
+    // ── Structured output for Underwriting Panel ─────────────────────────────
     normalization_flags_json:       flags,
     normalization_adjustments_json: adjustments,
 
-    // Benchmark context
+    // ── Benchmark context ────────────────────────────────────────────────────
     benchmark_is_proxy:    normalized.raw.benchmarkIsProxy ?? false,
     data_source_quality:   normalized.raw.dataSource ?? "manual_entry",
+    benchmark_source:      derivedSource,
+
+    // ── Analytics columns (new) ──────────────────────────────────────────────
+    raw_multiple:          rawMultiple,          // price / stated SDE (pre-normalization)
+    normalized_margin:     normalizedMargin,     // usable_sde / revenue (decimal)
+    normalized_multiple:   normalizedMultiple,   // price / usable_sde (what scoring used)
+    // percentile_multiple and percentile_margin populated by refresh_deal_percentiles()
   };
 }
 
