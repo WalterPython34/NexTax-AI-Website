@@ -1478,8 +1478,18 @@ function AnalyzeDealModal({
           revenue:              rev,
           sde,                                    // displayed SDE (stated)
           reported_sde:         sde,              // audit: original stated SDE
-          usable_sde:           sde,              // modal: normalization applied client-side
+          usable_sde:           score ? Math.round(score.fairValue / ((SCORE_INDUSTRIES[inputs.industry]?.benchmarkMid) ?? 2.75)) : sde,
           normalization_trust_score: score?.normalizationTrustScore ?? null,
+          benchmark_family:     inputs.industry,
+          benchmark_source:     score?.benchmarkBasis ?? "fallback",
+          benchmark_is_proxy:   score?.benchmarkBasis === "proxy",
+          raw_multiple:         sde > 0 ? +(price / sde).toFixed(3) : null,
+          normalized_multiple:  score && score.fairValue > 0
+            ? +(price / Math.round(score.fairValue / ((SCORE_INDUSTRIES[inputs.industry]?.benchmarkMid) ?? 2.75))).toFixed(3)
+            : null,
+          normalized_margin:    rev > 0 && score
+            ? +(Math.round(score.fairValue / ((SCORE_INDUSTRIES[inputs.industry]?.benchmarkMid) ?? 2.75)) / rev).toFixed(4)
+            : null,
           asking_price:         price,
           city:                 inputs.city || null,
           state:                inputs.state || null,
