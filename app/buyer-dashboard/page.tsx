@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { CATEGORIES } from "@/lib/marketview/categories";
 import { normalizeDealFinancials } from "@/lib/normalizationEngine";
+import { BlurGateSection, ProLockedBanner } from "@/components/BlurGateSection";
 import {
   CompsTab,
   type CompsTabProps,
@@ -2474,55 +2475,7 @@ function UnderwritingPanel({
     return null;
   })();
 
-  const BlurredContent = ({ children }: { children: React.ReactNode }) => {
-    if (canAccessFull) return <>{children}</>;
-    return (
-      <div style={{ position: "relative", borderRadius: 10, overflow: "hidden" }}>
-        <div style={{ filter: "blur(6px)", opacity: 0.3, pointerEvents: "none", userSelect: "none" }}>
-          {children}
-        </div>
-        <div style={{
-          position: "absolute", top: 0, left: 0, right: 0, height: "45%",
-          background: "linear-gradient(to bottom, transparent, rgba(13,17,23,0.9))",
-          pointerEvents: "none",
-        }} />
-        <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-          <div style={{
-            padding: "20px 24px", borderRadius: 14,
-            background: "rgba(8,12,19,0.95)",
-            border: "1px solid rgba(99,102,241,0.25)",
-            textAlign: "center" as const, maxWidth: 290,
-            boxShadow: "0 8px 32px rgba(0,0,0,0.5)",
-          }}>
-            <div style={{ fontSize: 20, marginBottom: 8 }}>🔒</div>
-            <div style={{ fontSize: 14, fontWeight: 700, color: "#F1F5F9", marginBottom: 8, fontFamily: "'Inter Tight',sans-serif" }}>
-              Unlock Full Deal Underwriting
-            </div>
-            <div style={{ display: "flex", flexDirection: "column" as const, gap: 5, marginBottom: 14, textAlign: "left" as const }}>
-              {["Adjusted SDE (true earnings)", "Risk flags & trust score", "Market comps & percentile", "Negotiation strategy"].map(b => (
-                <div key={b} style={{ display: "flex", gap: 7, fontSize: 11, color: "#94A3B8" }}>
-                  <span style={{ color: "#818CF8", flexShrink: 0 }}>✓</span>{b}
-                </div>
-              ))}
-            </div>
-            <button
-              onClick={handleFreeUnlock}
-              style={{
-                width: "100%", padding: "9px 0", borderRadius: 8, border: "none",
-                background: "linear-gradient(135deg,#6366F1,#818CF8)",
-                color: "#fff", fontSize: 13, fontWeight: 700, cursor: "pointer", marginBottom: 6,
-              }}
-            >
-              Unlock Full Analysis →
-            </button>
-            <div style={{ fontSize: 10, color: "#374151" }}>
-              1 free unlock available · Upgrade to Pro for unlimited access
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
+  // BlurredContent removed — using <BlurGateSection> from components/BlurGateSection.tsx
 
 
   const MetricRow = ({ label, value, sub, color = "#E2E8F0" }: { label: string; value: string; sub?: string; color?: string }) => (
@@ -2626,7 +2579,13 @@ function UnderwritingPanel({
 
           {/* ── STRESS TEST ── */}
           {activeTab === "stress" && (
-            <BlurredContent>
+            <BlurGateSection
+              isPro={canAccessFull}
+              onUnlock={handleFreeUnlock}
+              previewHeight={220}
+              ctaLabel="Unlock Stress Test Analysis →"
+              bullets={["DSCR at current and stressed terms","−15% and −25% revenue scenarios","Break-even SDE and revenue","Monthly debt service projection"]}
+            >
               <div style={{ marginBottom: 16, padding: "12px 14px", borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
                 <div style={{ fontSize: 11, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600, marginBottom: 10 }}>Base Case</div>
                 <MetricRow label="DSCR at Current Terms"  value={deal.dscr.toFixed(2) + "x"}     color={col(deal.dscr)} />
@@ -2645,12 +2604,18 @@ function UnderwritingPanel({
                   ? `This deal maintains lender-minimum DSCR even at −15% revenue. Stress resilience is solid.`
                   : `A −15% revenue decline pushes DSCR below 1.25x — deal loses financing viability under moderate stress. Validate revenue stability before proceeding.`}
               </div>
-            </BlurredContent>
+            </BlurGateSection>
           )}
 
           {/* ── SBA FINANCE ── */}
           {activeTab === "sba" && (
-            <BlurredContent>
+            <BlurGateSection
+              isPro={canAccessFull}
+              onUnlock={handleFreeUnlock}
+              previewHeight={220}
+              ctaLabel="Unlock SBA Financing Details →"
+              bullets={["SBA 7(a) eligibility assessment","Loan sizing at 90% LTV","Monthly payment at SBA prime rate","DSCR at SBA terms"]}
+            >
               <div style={{ marginBottom: 14, padding: "10px 14px", borderRadius: 10, background: sbaEligible ? "rgba(16,185,129,0.06)" : "rgba(245,158,11,0.06)", border: `1px solid ${sbaEligible ? "rgba(16,185,129,0.2)" : "rgba(245,158,11,0.2)"}`, display: "flex", alignItems: "center", gap: 10 }}>
                 <span style={{ fontSize: 20 }}>{sbaEligible ? "✅" : "⚠️"}</span>
                 <div>
@@ -2673,12 +2638,18 @@ function UnderwritingPanel({
               <div style={{ padding: "10px 12px", borderRadius: 8, background: "rgba(99,102,241,0.05)", border: "1px solid rgba(99,102,241,0.12)", fontSize: 11, color: "#94A3B8", lineHeight: 1.6 }}>
                 SBA 7(a) rates typically prime + 2.25–2.75%. Current estimates use 10.75%. Equity injection, goodwill caps, and lender overlays may affect final terms. Consult an SBA-preferred lender for formal qualification.
               </div>
-            </BlurredContent>
+            </BlurGateSection>
           )}
 
           {/* ── NEGOTIATION ── */}
           {activeTab === "negotiation" && (
-            <BlurredContent>
+            <BlurGateSection
+              isPro={canAccessFull}
+              onUnlock={handleFreeUnlock}
+              previewHeight={220}
+              ctaLabel="Unlock Negotiation Strategy →"
+              bullets={["Anchor offer and walk-away price","Seller note and earnout structures","Working capital and training terms","Pricing position narrative"]}
+            >
               <div style={{ padding: "12px 14px", borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", marginBottom: 14 }}>
                 <div style={{ fontSize: 11, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600, marginBottom: 10 }}>Pricing Position</div>
                 <MetricRow label="Asking Price"         value={fmt(deal.asking_price)}  />
@@ -2708,12 +2679,18 @@ function UnderwritingPanel({
                   ? `Deal is priced ${Math.abs(gp)}% below market fair value. Strong position — investigate seller motivation before moving to LOI.`
                   : `Pricing is near market median. Focus negotiation on terms (seller note, earnout) rather than price.`}
               </div>
-            </BlurredContent>
+            </BlurGateSection>
           )}
 
           {/* ── DEAL MEMO ── */}
           {activeTab === "memo" && (
-            <BlurredContent>
+            <BlurGateSection
+              isPro={canAccessFull}
+              onUnlock={handleFreeUnlock}
+              previewHeight={240}
+              ctaLabel="Unlock Deal Memo →"
+              bullets={["Full deal summary and thesis","What must be true checklist","Key diligence priorities","Final recommendation"]}
+            >
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                 {[
                   {
@@ -2765,11 +2742,17 @@ function UnderwritingPanel({
                   </div>
                 ))}
               </div>
-            </BlurredContent>
+            </BlurGateSection>
           )}
 
           {activeTab === "comps" && (
-            <BlurredContent>
+            <BlurGateSection
+              isPro={canAccessFull}
+              onUnlock={handleFreeUnlock}
+              previewHeight={230}
+              ctaLabel="Unlock Market Comps →"
+              bullets={["Market position vs benchmark range","SDE margin and DSCR comparison","Normalization adjustment detail","Decision summary and action plan"]}
+            >
               <CompsTab
                 benchmarkContext={buildBenchmarkContext(deal)}
                 marketPosition={buildMarketPosition(deal)}
@@ -2788,7 +2771,7 @@ function UnderwritingPanel({
                 ]}
                 decision={buildDecisionContext(deal)}
               />
-            </BlurredContent>
+            </BlurGateSection>
           )}
         </div>
       </div>
