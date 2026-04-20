@@ -78,6 +78,7 @@ export async function POST(req: NextRequest) {
       classification_confidence = null,
       benchmark_is_proxy = false,
       data_source        = "manual_entry",
+      benchmark_source   = null,   // "direct" | "proxy" | "fallback" — sent by modal
       ebitda             = 0,
     } = body;
 
@@ -169,7 +170,10 @@ export async function POST(req: NextRequest) {
         dataSource:               data_source as any,
         rmaBenchmarks:            null, // benchmarks not fetched in this route
       });
-      normPayload = buildNormalizationPayload(normalized);
+      normPayload = buildNormalizationPayload(
+        normalized,
+        benchmark_source as "direct" | "proxy" | "fallback" | undefined ?? undefined,
+      );
     } catch { /* normalization is additive — never block a save */ }
 
     // ── Insert deal run ────────────────────────────────────────────────────────
