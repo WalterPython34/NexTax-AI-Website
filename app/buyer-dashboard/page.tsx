@@ -1064,10 +1064,12 @@ function TopOpportunities({
                   📝
                 </button>
                 <button onClick={(e) => { e.stopPropagation(); onOpenDetail(deal); }} title="Quick View"
+                  className="btn-qv"
                   style={{ padding: "5px 9px", borderRadius: 7, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.03)", color: "#6B7280", fontSize: 11, cursor: "pointer" }}>
                   Quick View
                 </button>
                 <button onClick={(e) => { e.stopPropagation(); onOpenUnderwriting(deal); }} title="Open Underwriting"
+                  className="btn-uw"
                   style={{ padding: "5px 12px", borderRadius: 7, border: "1px solid rgba(99,102,241,0.35)", background: "rgba(99,102,241,0.12)", color: "#A5B4FC", fontSize: 11, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" as any }}>
                   Open Underwriting →
                 </button>
@@ -2138,30 +2140,6 @@ function DealDetailPanel({
 
         {/* Body */}
         <div style={{ padding: "16px 20px", flex: 1, overflowY: "auto" }}>
-
-          {/* Teaser — visible to all users above the paywall */}
-          {teaserInsight && !canAccessFull && (
-            <div style={{
-              padding: "9px 13px", borderRadius: 9, marginBottom: 12,
-              background: "rgba(245,158,11,0.07)",
-              border: "1px solid rgba(245,158,11,0.2)",
-              fontSize: 11, color: "#F59E0B", lineHeight: 1.5,
-            }}>
-              {teaserInsight}
-            </div>
-          )}
-
-          {/* Teaser — visible to all users above paywall */}
-          {teaserInsight && !canAccessFull && (
-            <div style={{
-              padding: "9px 13px", borderRadius: 9, marginBottom: 12,
-              background: "rgba(245,158,11,0.07)",
-              border: "1px solid rgba(245,158,11,0.2)",
-              fontSize: 11, color: "#F59E0B", lineHeight: 1.5,
-            }}>
-              {teaserInsight}
-            </div>
-          )}
 
           {/* Score + metrics */}
           <div style={{ display: "grid", gridTemplateColumns: "auto 1fr", gap: 16, alignItems: "center", marginBottom: 16, padding: "14px 16px", borderRadius: 12, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
@@ -3319,10 +3297,12 @@ function TabDashboard({
                     📝
                   </button>
                   <button onClick={(e) => { e.stopPropagation(); onOpenDetail(deal); }} title="Quick View"
+                    className="btn-qv"
                     style={{ padding: "4px 8px", borderRadius: 6, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.03)", color: "#6B7280", fontSize: 11, cursor: "pointer" }}>
                     Quick View
                   </button>
                   <button onClick={(e) => { e.stopPropagation(); onOpenUnderwriting(deal); }} title="Open Underwriting"
+                    className="btn-uw"
                     style={{ padding: "5px 10px", borderRadius: 6, border: "1px solid rgba(99,102,241,0.35)", background: "rgba(99,102,241,0.12)", color: "#A5B4FC", fontSize: 11, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" as any }}>
                     Open Underwriting →
                   </button>
@@ -3753,10 +3733,12 @@ function TabMyDeals({
                   📝
                 </button>
                 <button onClick={(e) => { e.stopPropagation(); onOpenDetail(deal); }} title="Quick View"
+                  className="btn-qv"
                   style={{ padding: "4px 8px", borderRadius: 6, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.03)", color: "#6B7280", fontSize: 10, cursor: "pointer" }}>
                   Quick View
                 </button>
                 <button onClick={(e) => { e.stopPropagation(); onOpenUnderwriting(deal); }} title="Open Underwriting"
+                  className="btn-uw"
                   style={{ padding: "5px 10px", borderRadius: 6, border: "1px solid rgba(99,102,241,0.35)", background: "rgba(99,102,241,0.12)", color: "#A5B4FC", fontSize: 10, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" as any }}>
                   Open Underwriting →
                 </button>
@@ -5605,6 +5587,10 @@ export default function BuyerDashboard() {
         .tab-content { animation: fadeUp 0.25s ease-out }
         .btn-action  { transition: opacity 0.12s }
         .btn-action:hover { opacity: 0.85 }
+        .btn-qv { transition: background 0.12s, color 0.12s, border-color 0.12s }
+        .btn-qv:hover { background: rgba(255,255,255,0.06) !important; color: #E2E8F0 !important; border-color: rgba(255,255,255,0.15) !important }
+        .btn-uw { transition: background 0.12s, box-shadow 0.12s }
+        .btn-uw:hover { background: rgba(99,102,241,0.2) !important; box-shadow: 0 0 0 1px rgba(99,102,241,0.4) }
       `}</style>
 
       {/* ── NAV ── */}
