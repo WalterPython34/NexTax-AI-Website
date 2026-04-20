@@ -2580,10 +2580,10 @@ function UnderwritingPanel({
           {/* ── STRESS TEST ── */}
           {activeTab === "stress" && (
             <BlurGateSection
-              isPro={canAccessFull}
+              isUnlocked={canAccessFull}
               onUnlock={handleFreeUnlock}
               previewHeight={220}
-              ctaLabel="Unlock Stress Test Analysis →"
+              ctaLabel="Unlock Stress Test"
               bullets={["DSCR at current and stressed terms","−15% and −25% revenue scenarios","Break-even SDE and revenue","Monthly debt service projection"]}
             >
               <div style={{ marginBottom: 16, padding: "12px 14px", borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
@@ -2610,10 +2610,10 @@ function UnderwritingPanel({
           {/* ── SBA FINANCE ── */}
           {activeTab === "sba" && (
             <BlurGateSection
-              isPro={canAccessFull}
+              isUnlocked={canAccessFull}
               onUnlock={handleFreeUnlock}
               previewHeight={220}
-              ctaLabel="Unlock SBA Financing Details →"
+              ctaLabel="Unlock SBA Financing"
               bullets={["SBA 7(a) eligibility assessment","Loan sizing at 90% LTV","Monthly payment at SBA prime rate","DSCR at SBA terms"]}
             >
               <div style={{ marginBottom: 14, padding: "10px 14px", borderRadius: 10, background: sbaEligible ? "rgba(16,185,129,0.06)" : "rgba(245,158,11,0.06)", border: `1px solid ${sbaEligible ? "rgba(16,185,129,0.2)" : "rgba(245,158,11,0.2)"}`, display: "flex", alignItems: "center", gap: 10 }}>
@@ -2644,10 +2644,10 @@ function UnderwritingPanel({
           {/* ── NEGOTIATION ── */}
           {activeTab === "negotiation" && (
             <BlurGateSection
-              isPro={canAccessFull}
+              isUnlocked={canAccessFull}
               onUnlock={handleFreeUnlock}
               previewHeight={220}
-              ctaLabel="Unlock Negotiation Strategy →"
+              ctaLabel="Unlock Negotiation Strategy"
               bullets={["Anchor offer and walk-away price","Seller note and earnout structures","Working capital and training terms","Pricing position narrative"]}
             >
               <div style={{ padding: "12px 14px", borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", marginBottom: 14 }}>
@@ -2685,10 +2685,10 @@ function UnderwritingPanel({
           {/* ── DEAL MEMO ── */}
           {activeTab === "memo" && (
             <BlurGateSection
-              isPro={canAccessFull}
+              isUnlocked={canAccessFull}
               onUnlock={handleFreeUnlock}
               previewHeight={240}
-              ctaLabel="Unlock Deal Memo →"
+              ctaLabel="Unlock Deal Memo"
               bullets={["Full deal summary and thesis","What must be true checklist","Key diligence priorities","Final recommendation"]}
             >
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -2747,10 +2747,10 @@ function UnderwritingPanel({
 
           {activeTab === "comps" && (
             <BlurGateSection
-              isPro={canAccessFull}
+              isUnlocked={canAccessFull}
               onUnlock={handleFreeUnlock}
               previewHeight={230}
-              ctaLabel="Unlock Market Comps →"
+              ctaLabel="Unlock Market Comps"
               bullets={["Market position vs benchmark range","SDE margin and DSCR comparison","Normalization adjustment detail","Decision summary and action plan"]}
             >
               <CompsTab
