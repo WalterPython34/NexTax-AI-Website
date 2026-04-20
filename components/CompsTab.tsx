@@ -420,7 +420,7 @@ export function MarketPositionHero({
         <Mono color={T.textSub} size={11}>{formatMultiple(lowMultiple)}</Mono>
         {"–"}
         <Mono color={T.textSub} size={11}>{formatMultiple(highMultiple)}</Mono>
-        {" observed market range (median "}
+        {" — typical market range (median "}
         <Mono color={T.textSub} size={11}>{formatMultiple(medianMultiple)}</Mono>
         {")"}
       </div>
@@ -765,7 +765,7 @@ export function ComparableDealsSection({
       <SectionCard style={{ marginBottom: 10 }}>
         <SectionLabel>Representative Comps</SectionLabel>
         <div style={{ fontSize: 11, color: T.textMuted, textAlign: "center" as const, padding: "16px 0" }}>
-          No comparable transactions available for this benchmark family.
+          Representative comps will appear as market data becomes available.
         </div>
       </SectionCard>
     );
@@ -910,8 +910,8 @@ export function ComparableDealsSection({
         lineHeight:  1.5,
       }}>
         {currentDealOutsideRange
-          ? "⚠ Your deal sits outside the observed comp range. Validate pricing with the broker before advancing."
-          : "✓ Your deal is broadly within the observed comp range."}
+          ? "⚠ Your deal sits outside the typical benchmark range. Validate pricing with the broker before advancing."
+          : "✓ Your deal is broadly within the typical benchmark range."}
         {benchmarkIsProxy && (
           <span style={{ color: T.textMuted }}>
             {" "}Comps sourced from proxy benchmark family — actual market transactions may vary.
