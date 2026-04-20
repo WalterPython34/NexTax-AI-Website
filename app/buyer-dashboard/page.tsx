@@ -1354,7 +1354,7 @@ function computeModalScore(
   const sdeMargin = (sde / revenue) * 100;
   if (multiple > benchmarkHigh) redFlags.push(`Asking multiple of ${multiple.toFixed(2)}x is above the ${benchmarkHigh.toFixed(2)}x high end of observed ${ind.label} transactions`);
   else if (multiple < benchmarkLow) greenFlags.push(`Asking multiple of ${multiple.toFixed(2)}x is below the ${benchmarkLow.toFixed(2)}x market low end — favorable pricing`);
-  else greenFlags.push(`${multiple.toFixed(2)}x is within the ${benchmarkLow.toFixed(2)}–${benchmarkHigh.toFixed(2)}x observed range`);
+  else greenFlags.push(`${multiple.toFixed(2)}x is within the ${benchmarkLow.toFixed(2)}–${benchmarkHigh.toFixed(2)}x typical benchmark range`);
   if (sdeMargin < ind.marginRange[0]) redFlags.push(`SDE margin of ${sdeMargin.toFixed(0)}% is below the ${ind.marginRange[0]}–${ind.marginRange[1]}% typical range`);
 
   // DSCR
@@ -2375,7 +2375,7 @@ function buildCompsData(deal: DealRun): CompsData {
 
 function buildDecisionContext(deal: DealRun): DecisionContext {
   const v       = (deal.verdict ?? dealVerdict(deal)) as VerdictLabel;
-  const vd      = verdictCfg(v as any);
+  // gp and fv used for string interpolation in summaries only — not for verdict branching
   const gp      = deal.gap_pct ?? 0;
   const fv      = deal.fair_value ?? 0;
   const usable  = deal.usable_sde ?? deal.sde ?? 0;
