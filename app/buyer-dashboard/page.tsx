@@ -1364,7 +1364,13 @@ function computeModalScore(
   else                   debtScore = Math.max(5, dscr * 30);
   debtScore = Math.round(Math.max(5, Math.min(98, debtScore)));
 
-  if (dscr < 1.25) redFlags.push(`DSCR of ${dscr.toFixed(2)}x is below the 1.25x lender minimum`);
+  if (dscr < 1.25) redFlags.push(
+    dscr < 0.75
+      ? `DSCR of ${dscr.toFixed(2)}x — cannot support debt (well below the 1.25x lender minimum)`
+      : dscr < 1.0
+      ? `DSCR of ${dscr.toFixed(2)}x — insufficient to cover debt service (below 1.25x lender minimum)`
+      : `DSCR of ${dscr.toFixed(2)}x is below the 1.25x lender minimum — deal may not qualify for financing`
+  );
   else if (dscr >= 1.5) greenFlags.push(`DSCR of ${dscr.toFixed(2)}x is well above lender minimums`);
 
   const growthScores: Record<string, number> = { Growing: 80, Stable: 65, Variable: 45, Volatile: 30 };
@@ -1701,7 +1707,7 @@ function AnalyzeDealModal({
                     marginTop: 6, fontSize: 10, fontWeight: 700, color: scoreColor(score.overall),
                     textTransform: "uppercase", letterSpacing: "0.06em",
                   }}>
-                    {score.riskLevel} Risk
+                    Deal Score
                   </div>
                 </div>
 
@@ -1779,17 +1785,34 @@ function AnalyzeDealModal({
                             {" "}({Math.round(score.resolvedMarginMid * 100)}%)
                           </span>
                         )}
+                        {score.benchmarkBasis === "proxy" && (() => {
+                          const ind = SCORE_INDUSTRIES[inputs.industry];
+                          return ind ? (
+                            <span style={{ color: "#4B5563" }}>
+                              {" · "}
+                              <span style={{ color: "#6B7280" }}>
+                                Industry typical: {ind.marginRange[0]}–{ind.marginRange[1]}%
+                              </span>
+                            </span>
+                          ) : null;
+                        })()}
                       </span>
                     </div>
                     {nts !== null && (
                       <div style={{ fontSize: 10, color: "#94A3B8", flexShrink: 0 }}>
-                        Trust:{" "}
+                        Data Confidence:{" "}
                         <span style={{ color: tColor, fontFamily: "'JetBrains Mono',monospace", fontWeight: 700 }}>
                           {nts}/100
                         </span>
                       </div>
                     )}
                   </div>
+                  {/* Proxy note — only shown when proxy benchmark used */}
+                  {score.benchmarkBasis === "proxy" && (
+                    <div style={{ marginTop: 4, fontSize: 10, color: "#F59E0B", lineHeight: 1.5 }}>
+                      ⚠ Using conservative proxy benchmark — actual {SCORE_INDUSTRIES[inputs.industry]?.label ?? inputs.industry} performance may differ from RMA proxy source
+                    </div>
+                  )}
                 );
               })()}
 
@@ -1798,7 +1821,7 @@ function AnalyzeDealModal({
                 // Add normalization trust note if trust score is below full confidence
                 const nts = score.normalizationTrustScore;
                 const trustNote = (nts !== null && nts !== undefined && nts < 85)
-                  ? `Trust score: ${nts}/100 — ${nts < 60 ? "manual review recommended" : "moderate confidence"}`
+                  ? `Data confidence: ${nts}/100 — ${nts < 60 ? "manual review required" : "moderate — verify inputs"}`
                   : null;
                 const dForV = { gap_pct: score.gap_pct, dscr: score.dscr, overall_score: score.overall, risk_level: score.riskLevel, normalization_trust_score: nts } as DealRun;
                 const vdm = verdictCfg(dealVerdict(dForV));
@@ -2179,7 +2202,7 @@ function DealDetailPanel({
             }}>
               <div style={{ fontSize: 10, fontWeight: 700, color: deal.manual_review_required ? "#EF4444" : "#F59E0B",
                 textTransform: "uppercase" as any, letterSpacing: "0.07em", marginBottom: 3 }}>
-                {deal.manual_review_required ? "Manual Review Required" : `Trust Score: ${deal.normalization_trust_score}/100`}
+                {deal.manual_review_required ? "Manual Review Required" : `Data Confidence: ${deal.normalization_trust_score}/100`}
               </div>
               <div style={{ fontSize: 11, color: "#6B7280", lineHeight: 1.5 }}>
                 {deal.earnings_basis === "benchmark_implied"
@@ -2395,7 +2418,7 @@ function UnderwritingPanel({
               <div style={{ padding: "10px 12px", borderRadius: 8, background: stressDscr15 >= 1.25 ? "rgba(16,185,129,0.06)" : "rgba(245,158,11,0.06)", border: `1px solid ${stressDscr15 >= 1.25 ? "rgba(16,185,129,0.15)" : "rgba(245,158,11,0.15)"}`, fontSize: 12, color: "#94A3B8", lineHeight: 1.6 }}>
                 {stressDscr15 >= 1.25
                   ? `This deal maintains lender-minimum DSCR even at −15% revenue. Stress resilience is solid.`
-                  : `A −15% revenue decline pushes DSCR below 1.25x. Validate revenue stability before proceeding.`}
+                  : `A −15% revenue decline pushes DSCR below 1.25x — deal loses financing viability under moderate stress. Validate revenue stability before proceeding.`}
               </div>
             </BlurredContent>
           )}
@@ -2410,7 +2433,7 @@ function UnderwritingPanel({
                     SBA 7(a) {sbaEligible ? "Appears Eligible" : "May Require Review"}
                   </div>
                   <div style={{ fontSize: 11, color: "#4B5563" }}>
-                    {sbaEligible ? `DSCR ${deal.dscr.toFixed(2)}x exceeds 1.25x minimum, ask under $5M` : deal.dscr < 1.25 ? `DSCR ${deal.dscr.toFixed(2)}x is below the 1.25x lender minimum` : `Deal size exceeds typical SBA 7(a) range`}
+                    {sbaEligible ? `DSCR ${deal.dscr.toFixed(2)}x exceeds 1.25x minimum, ask under $5M` : deal.dscr < 1.25 ? `DSCR ${deal.dscr.toFixed(2)}x — cannot support debt at these terms (below 1.25x minimum)` : `Deal size exceeds typical SBA 7(a) range`}
                   </div>
                 </div>
               </div>
