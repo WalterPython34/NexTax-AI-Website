@@ -4,6 +4,17 @@ import React, { useState, useEffect, useCallback } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { CATEGORIES } from "@/lib/marketview/categories";
 import { normalizeDealFinancials } from "@/lib/normalizationEngine";
+import {
+  CompsTab,
+  type CompsTabProps,
+  type BenchmarkContext,
+  type MarketPosition,
+  type NormalizationContext,
+  type CompsData,
+  type DecisionContext,
+  type PricingLabel,
+  type VerdictLabel,
+} from "@/components/CompsTab";
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -2245,9 +2256,174 @@ function DealDetailPanel({
   );
 }
 
+// ─── COMPS TAB PROP ASSEMBLERS ───────────────────────────────────────────────
+// These functions translate a DealRun row into the typed props CompsTab expects.
+// No business logic — pure data reshaping from deal fields + SCORE_INDUSTRIES.
+
+function buildBenchmarkContext(deal: DealRun): BenchmarkContext {
+  const ind = SCORE_INDUSTRIES[deal.industry];
+  const isProxy = deal.benchmark_is_proxy ?? false;
+
+  // Benchmark label — use industry label rather than raw key
+  const BENCHMARK_LABELS: Record<string, string> = {
+    field_services:        "Local Service Benchmark",
+    specialty_trade:       "Trades Benchmark",
+    auto_services:         "Automotive Services Benchmark",
+    food_beverage:         "Restaurant & Food Benchmark",
+    healthcare_clinical:   "Healthcare Benchmark",
+    behavioral_health:     "Behavioral Health Benchmark",
+    med_spa:               "Med Spa Benchmark",
+    medspa:                "Med Spa Benchmark",
+    personal_services:     "Personal Services Benchmark",
+    professional_services: "Professional Services Benchmark",
+    asset_services:        "Asset-Based Business Benchmark",
+    saas:                  "SaaS / Recurring Software Benchmark",
+    digital:               "Digital Business Benchmark",
+    manufacturing:         "Manufacturing Benchmark",
+    retail:                "Retail Business Benchmark",
+    wholesale:             "Wholesale / Distribution Benchmark",
+  };
+
+  const benchmarkLabel =
+    BENCHMARK_LABELS[deal.benchmark_family ?? ""] ||
+    (ind?.label ? `${ind.label} Benchmark` : "Industry Benchmark");
+
+  const benchmarkSource =
+    (deal.benchmark_source as "direct" | "proxy" | "fallback" | null | undefined) ?? "fallback";
+
+  return {
+    benchmarkLabel,
+    benchmarkIsProxy: isProxy,
+    benchmarkSource,
+    // Valuation multiples from SCORE_INDUSTRIES
+    lowMultiple:    ind?.benchmarkLow    ?? 2.0,
+    medianMultiple: ind?.benchmarkMid    ?? 2.75,
+    highMultiple:   ind?.benchmarkHigh   ?? 3.5,
+    // Margin range — stored as [low%, high%] integers, convert to decimals
+    marginLow:    ind ? ind.marginRange[0] / 100 : 0.10,
+    marginMedian: ind ? ((ind.marginRange[0] + ind.marginRange[1]) / 2) / 100 : 0.20,
+    marginHigh:   ind ? ind.marginRange[1] / 100 : 0.35,
+    // DSCR typical range — conservative industry norms
+    dscrLow:    1.0,
+    dscrMedian: 1.5,
+    dscrHigh:   2.5,
+  };
+}
+
+function buildMarketPosition(deal: DealRun): MarketPosition {
+  const multiple = deal.valuation_multiple ?? 0;
+  const ind      = SCORE_INDUSTRIES[deal.industry];
+  const low      = ind?.benchmarkLow    ?? 2.0;
+  const high     = ind?.benchmarkHigh   ?? 3.5;
+  const median   = ind?.benchmarkMid    ?? 2.75;
+
+  let pricingLabel: PricingLabel;
+  if      (multiple <= low * 0.75)   pricingLabel = "Well Below Market";
+  else if (multiple <= low)          pricingLabel = "Below Market";
+  else if (multiple <= median * 1.1) pricingLabel = "At Market";
+  else if (multiple <= high)         pricingLabel = "Above Market";
+  else if (multiple <= high * 1.35)  pricingLabel = "Significantly Above Market";
+  else                               pricingLabel = "Extreme Outlier";
+
+  return {
+    pricingLabel,
+    percentile:     deal.percentile_multiple ?? null,
+    currentMultiple: multiple,
+  };
+}
+
+function buildNormalizationContext(deal: DealRun): NormalizationContext {
+  const reportedSDE  = deal.reported_sde ?? deal.sde ?? 0;
+  const usableSDE    = deal.usable_sde   ?? deal.sde ?? 0;
+  const isAdjusted   = Math.abs(reportedSDE - usableSDE) > 100;
+  const revenue      = deal.revenue ?? 0;
+  const ind          = SCORE_INDUSTRIES[deal.industry];
+
+  // Reconstruct reported fair value from reported SDE using benchmark mid
+  const benchmarkMid      = ind?.benchmarkMid ?? 2.75;
+  const reportedFairValue = Math.round(reportedSDE * benchmarkMid);
+  const adjustedFairValue = deal.fair_value ?? Math.round(usableSDE * benchmarkMid);
+
+  return {
+    reportedSDE,
+    usableSDE,
+    benchmarkImpliedSDE: deal.benchmark_implied_sde ?? null,
+    reportedFairValue,
+    adjustedFairValue,
+    trustScore:    deal.normalization_trust_score ?? 100,
+    earningsSource: (deal.earnings_source as NormalizationContext["earningsSource"]) ?? "reported",
+    isAdjusted,
+    currentMargin: revenue > 0 ? usableSDE / revenue : null,
+    currentDscr:   deal.dscr ?? 0,
+  };
+}
+
+function buildCompsData(deal: DealRun): CompsData {
+  const ind      = SCORE_INDUSTRIES[deal.industry];
+  const multiple = deal.valuation_multiple ?? 0;
+  const low      = ind?.benchmarkLow  ?? 2.0;
+  const high     = ind?.benchmarkHigh ?? 3.5;
+
+  // Placeholder comps — will be replaced with real DealStats data in a future session
+  const comps: CompsData["comps"] = [];
+
+  return {
+    comps,
+    currentDealOutsideRange: multiple < low * 0.80 || multiple > high * 1.20,
+  };
+}
+
+function buildDecisionContext(deal: DealRun): DecisionContext {
+  const v       = (deal.verdict ?? dealVerdict(deal)) as VerdictLabel;
+  const vd      = verdictCfg(v as any);
+  const gp      = deal.gap_pct ?? 0;
+  const fv      = deal.fair_value ?? 0;
+  const usable  = deal.usable_sde ?? deal.sde ?? 0;
+
+  const summary =
+    v === "high_conviction"
+      ? `Deal is materially underpriced at ${Math.abs(gp)}% below market fair value with strong debt coverage. Priority candidate — advance to LOI after confirming add-backs.`
+      : v === "pursue"
+      ? `Deal shows favorable pricing and financeable structure. Proceed to due diligence with standard seller information requests.`
+      : v === "investigate"
+      ? `Deal is in the investable zone but requires validation. Key unknowns should be resolved before committing. ${deal.manual_review_required ? "Data quality flags present — verify financials independently." : ""}`
+      : v === "manual_review"
+      ? `Normalization flags indicate data quality concerns that prevent a reliable verdict. Independently verify all financial inputs before drawing conclusions.`
+      : `Deal does not meet investment criteria at current terms. Significant repricing or structural changes would be required to advance.`;
+
+  const actions: string[] =
+    v === "high_conviction" ? [
+      "Submit LOI at or below fair value — anchor at 8% below ask",
+      "Request 3 years tax returns and add-back schedule before close",
+      "Confirm lease assignment and customer contract transferability",
+    ]
+    : v === "pursue" ? [
+      "Request seller financial package: 3 years P&Ls, tax returns",
+      "Validate top-5 customers and revenue concentration",
+      "Run SBA 7(a) pre-qualification to confirm financing path",
+    ]
+    : v === "investigate" ? [
+      "Obtain verified financials before advancing to LOI",
+      "Clarify all add-backs with seller's accountant",
+      "Run downside scenario: revenue −20%, what does DSCR look like?",
+    ]
+    : v === "manual_review" ? [
+      "Do not advance until financials are independently verified",
+      "Engage CPA to certify SDE and all add-back items",
+      "Request full 3-year P&L and tax return package from broker",
+    ]
+    : [
+      "Do not advance at current asking price",
+      "Re-engage if seller reduces price to fair value range",
+      `Fair value estimate: ${fv > 0 ? "$" + Math.round(fv).toLocaleString() : "unavailable at current data quality"}`,
+    ];
+
+  return { verdict: v, summary, actions };
+}
+
 // ─── UNDERWRITING PANEL ───────────────────────────────────────────────────────
 
-type UwTab = "stress" | "sba" | "negotiation" | "memo";
+type UwTab = "stress" | "sba" | "negotiation" | "memo" | "comps";
 
 function UnderwritingPanel({
   deal, isPro, onClose,
@@ -2284,6 +2460,7 @@ function UnderwritingPanel({
     { id: "sba",         label: "SBA Finance",   icon: "🏦" },
     { id: "negotiation", label: "Negotiation",   icon: "🤝" },
     { id: "memo",        label: "Deal Memo",      icon: "📄" },
+    { id: "comps",       label: "Market Comps",   icon: "📊" },
   ];
 
   const col = (s: number) => s >= 1.5 ? "#10B981" : s >= 1.25 ? "#F59E0B" : "#EF4444";
@@ -2550,6 +2727,29 @@ function UnderwritingPanel({
                   </div>
                 ))}
               </div>
+            </BlurredContent>
+          )}
+
+          {activeTab === "comps" && (
+            <BlurredContent>
+              <CompsTab
+                benchmarkContext={buildBenchmarkContext(deal)}
+                marketPosition={buildMarketPosition(deal)}
+                normalization={buildNormalizationContext(deal)}
+                compsData={buildCompsData(deal)}
+                insights={[
+                  `${IL[deal.industry] || deal.industry} deals typically trade between ${(SCORE_INDUSTRIES[deal.industry]?.benchmarkLow ?? 2.0).toFixed(2)}x and ${(SCORE_INDUSTRIES[deal.industry]?.benchmarkHigh ?? 3.5).toFixed(2)}x SDE.`,
+                  `This deal's asking multiple is ${(deal.valuation_multiple ?? 0).toFixed(2)}x — ${(deal.gap_pct ?? 0) > 0 ? `${deal.gap_pct}% above` : `${Math.abs(deal.gap_pct ?? 0)}% below`} the NexTax market fair value.`,
+                  `DSCR of ${deal.dscr.toFixed(2)}x ${deal.dscr >= 1.5 ? "provides strong debt coverage headroom" : deal.dscr >= 1.25 ? "meets minimum lender thresholds" : "does not meet standard lender minimums — financing at risk"}.`,
+                  ...(deal.normalization_trust_score != null && deal.normalization_trust_score < 80
+                    ? [`Data confidence score of ${deal.normalization_trust_score}/100 — market positioning reflects trust-adjusted earnings, not stated SDE.`]
+                    : []),
+                  ...(deal.benchmark_is_proxy
+                    ? ["Benchmark data is sourced from the closest available RMA proxy — interpret margin comparisons with appropriate context for this industry."]
+                    : []),
+                ]}
+                decision={buildDecisionContext(deal)}
+              />
             </BlurredContent>
           )}
         </div>
