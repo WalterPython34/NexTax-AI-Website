@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { scoreDeal, estimateSdeFromRevenue } from "@/lib/scoringEngine";
+import { applyDealClassification } from "@/lib/dealClassifier";
 import { normalizeDealFinancials, buildNormalizationPayload } from "@/lib/normalizationIntegration";
 import { getNaicsFromIndustry } from "@/lib/industryMappings";
 import { generateScoreExplanation } from "@/lib/scoreExplanation";
@@ -579,7 +580,18 @@ export async function POST(req: NextRequest) {
           import_batch_id: batchId,
         });
 
-        results.imported++;
+        // Classification — fire-and-forget per deal
+        try {
+          const { data: ins } = await supabase
+            .from("deal_runs").select("id")
+            .eq("fingerprint", fingerprint)
+            .order("created_at", { ascending: false })
+            .limit(1).single();
+          if (ins?.id) {
+            applyDealClassification(ins.id).catch(() => {}); // non-fatal
+          }
+        } catch {}
+  results.imported++;
       } catch (err) {
         results.errors++;
       }
@@ -588,6 +600,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true, results, batch_id: batchId });
   } catch (error) {
     console.error("Bulk import error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    // ── Refresh percentiles after batch completes ───────────────────────────
+    try {
+      await supabase.rpc("refresh_deal_percentiles");
+    } catch (e) {
+      console.error("[bulk-import] percentile refresh failed:", e);
+    }
+
+        return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
