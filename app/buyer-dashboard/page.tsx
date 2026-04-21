@@ -2908,7 +2908,7 @@ function UnderwritingPanel({
               headline="This deal may not get approved"
               subtext="See exact loan structure, DSCR thresholds, and lender viability."
               ctaLabel="Unlock SBA Financing →"
-              bullets={["SBA 7(a) eligibility assessment","Loan sizing at 90% LTV","Monthly payment at SBA prime rate","DSCR at SBA terms"]}
+              bullets={["SBA 7(a) eligibility assessment","Loan sizing at 90% LTV","Equity recovery timeline","Cash-on-cash return (Year 1)","DSCR at SBA terms"]}
             >
               <div style={{ marginBottom: 14, padding: "10px 14px", borderRadius: 10, background: sbaEligible ? "rgba(16,185,129,0.06)" : "rgba(245,158,11,0.06)", border: `1px solid ${sbaEligible ? "rgba(16,185,129,0.2)" : "rgba(245,158,11,0.2)"}`, display: "flex", alignItems: "center", gap: 10 }}>
                 <span style={{ fontSize: 20 }}>{sbaEligible ? "✅" : "⚠️"}</span>
@@ -2929,6 +2929,127 @@ function UnderwritingPanel({
                 <MetricRow label="DSCR at SBA Terms"     value={sbaDscr.toFixed(2) + "x"} color={col(sbaDscr)} />
                 <MetricRow label="Annual Debt Service"   value={fmt(sbaMonthly * 12)} />
               </div>
+
+              {/* ── EQUITY RECOVERY ── */}
+              {(() => {
+                const annualDebtService = sbaMonthly * 12;
+                const annualCashFlow    = usableSDE - annualDebtService;
+                const yearsToRecover    = annualCashFlow > 0 ? sbaDown / annualCashFlow : null;
+                const cocReturn         = sbaDown > 0 && annualCashFlow > 0 ? (annualCashFlow / sbaDown) * 100 : null;
+                const loanTermYears     = 10;  // matches SBA estimator default
+
+                // Color logic — green highlights strong outcomes
+                const recoveryColor =
+                  yearsToRecover == null     ? "#EF4444"
+                  : yearsToRecover <= 2       ? "#10B981"
+                  : yearsToRecover <= 4       ? "#F59E0B"
+                  :                             "#F97316";
+
+                const cocColor =
+                  cocReturn == null           ? "#EF4444"
+                  : cocReturn >= 40            ? "#10B981"
+                  : cocReturn >= 20            ? "#F59E0B"
+                  :                             "#F97316";
+
+                return (
+                  <div style={{
+                    padding: "14px 16px", borderRadius: 10, marginBottom: 16,
+                    background: "rgba(16,185,129,0.03)",
+                    border: "1px solid rgba(16,185,129,0.18)",
+                  }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 4 }}>
+                      <div style={{ fontSize: 11, color: "#10B981", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 700 }}>
+                        💰 Equity Recovery
+                      </div>
+                    </div>
+                    <div style={{ fontSize: 10, color: "#4B5563", lineHeight: 1.5, marginBottom: 12 }}>
+                      Measures how quickly you recover your invested capital based on current earnings and debt structure.
+                    </div>
+
+                    {/* 3-column grid on wide, stacks on narrow */}
+                    <div style={{
+                      display: "grid",
+                      gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))",
+                      gap: 10,
+                    }}>
+                      {/* Time to Recover Down Payment */}
+                      <div style={{
+                        padding: "10px 12px", borderRadius: 8,
+                        background: "rgba(255,255,255,0.025)",
+                        border: "1px solid rgba(255,255,255,0.05)",
+                      }}>
+                        <div style={{ fontSize: 9, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 5 }}>
+                          Recover Down Payment
+                        </div>
+                        <div style={{ fontSize: 17, fontWeight: 800, color: recoveryColor, fontFamily: "'JetBrains Mono',monospace", marginBottom: 3 }}>
+                          {yearsToRecover != null ? `${yearsToRecover.toFixed(1)} yrs` : "N/A"}
+                        </div>
+                        <div style={{ fontSize: 10, color: "#4B5563", lineHeight: 1.4 }}>
+                          {yearsToRecover == null
+                            ? "Negative cash flow — recovery not possible at current terms"
+                            : yearsToRecover <= 2
+                            ? "Fast recovery — strong cash return profile"
+                            : yearsToRecover <= 4
+                            ? "Typical SBA recovery window"
+                            : "Slow recovery — evaluate pricing or structure"}
+                        </div>
+                      </div>
+
+                      {/* Time to Full Ownership */}
+                      <div style={{
+                        padding: "10px 12px", borderRadius: 8,
+                        background: "rgba(255,255,255,0.025)",
+                        border: "1px solid rgba(255,255,255,0.05)",
+                      }}>
+                        <div style={{ fontSize: 9, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 5 }}>
+                          Full Ownership
+                        </div>
+                        <div style={{ fontSize: 17, fontWeight: 800, color: "#60A5FA", fontFamily: "'JetBrains Mono',monospace", marginBottom: 3 }}>
+                          {loanTermYears} yrs
+                        </div>
+                        <div style={{ fontSize: 10, color: "#4B5563", lineHeight: 1.4 }}>
+                          Loan fully amortized — business is debt-free
+                        </div>
+                      </div>
+
+                      {/* Cash-on-Cash Return Year 1 */}
+                      <div style={{
+                        padding: "10px 12px", borderRadius: 8,
+                        background: "rgba(255,255,255,0.025)",
+                        border: "1px solid rgba(255,255,255,0.05)",
+                      }}>
+                        <div style={{ fontSize: 9, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 5 }}>
+                          Cash-on-Cash (Y1)
+                        </div>
+                        <div style={{ fontSize: 17, fontWeight: 800, color: cocColor, fontFamily: "'JetBrains Mono',monospace", marginBottom: 3 }}>
+                          {cocReturn != null ? `${cocReturn.toFixed(0)}%` : "N/A"}
+                        </div>
+                        <div style={{ fontSize: 10, color: "#4B5563", lineHeight: 1.4 }}>
+                          {cocReturn == null
+                            ? "No return — debt service exceeds earnings"
+                            : cocReturn >= 40
+                            ? "Strong first-year return on equity"
+                            : cocReturn >= 20
+                            ? "Solid return above market benchmarks"
+                            : "Modest return — stretched structure"}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Summary line */}
+                    <div style={{
+                      marginTop: 12, paddingTop: 10,
+                      borderTop: "1px solid rgba(255,255,255,0.04)",
+                      fontSize: 11, color: "#94A3B8", lineHeight: 1.6,
+                    }}>
+                      {annualCashFlow <= 0
+                        ? `Annual cash flow after debt service is ${fmt(annualCashFlow)} — deal does not generate positive equity return at current pricing.`
+                        : `After servicing debt, this deal generates ${fmt(annualCashFlow)}/year in free cash flow. At current earnings, you recover your ${fmt(sbaDown)} down payment in roughly ${yearsToRecover!.toFixed(1)} years.`}
+                    </div>
+                  </div>
+                );
+              })()}
+
               <div style={{ padding: "10px 12px", borderRadius: 8, background: "rgba(99,102,241,0.05)", border: "1px solid rgba(99,102,241,0.12)", fontSize: 11, color: "#94A3B8", lineHeight: 1.6 }}>
                 SBA 7(a) rates typically prime + 2.25–2.75%. Current estimates use 10.75%. Equity injection, goodwill caps, and lender overlays may affect final terms. Consult an SBA-preferred lender for formal qualification.
               </div>
