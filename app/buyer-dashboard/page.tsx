@@ -2918,10 +2918,10 @@ function SignInRequired() {
           fontSize: 22, fontWeight: 700, color: "#F1F5F9", margin: "0 0 8px",
           fontFamily: "'Inter Tight',sans-serif", letterSpacing: "-0.02em",
         }}>
-          Access Your Full Deal Underwriting
+          Continue your deal analysis
         </h2>
         <p style={{ fontSize: 14, color: "#6B7280", margin: "0 0 28px", lineHeight: 1.6 }}>
-          Run downside scenarios, validate pricing, and see how your deal compares to the market.
+          Enter your email to pick up where you left off.
         </p>
 
         {!sent ? (
@@ -2953,7 +2953,7 @@ function SignInRequired() {
                 cursor: email && !loading ? "pointer" : "not-allowed",
               }}
             >
-              {loading ? "Sending..." : "Send Magic Link →"}
+              {loading ? "Sending..." : "Send me a secure link →"}
             </button>
             <p style={{ fontSize: 11, color: "#374151", marginTop: 10 }}>
               Already analyzed a deal?{" "}
@@ -2968,17 +2968,27 @@ function SignInRequired() {
             borderRadius: 14, padding: 24,
           }}>
             <div style={{ fontSize: 32, marginBottom: 10 }}>📬</div>
-            <div style={{ fontSize: 14, fontWeight: 600, color: "#E2E8F0", marginBottom: 6 }}>
-              Magic link sent to {email}
+            <div style={{ fontSize: 14, fontWeight: 600, color: "#E2E8F0", marginBottom: 8 }}>
+              Check your inbox ✉️
             </div>
-            <div style={{ fontSize: 12, color: "#818CF8" }}>Click it to open your full deal underwriting.</div>
+            <div style={{ fontSize: 13, color: "#94A3B8", marginBottom: 8, lineHeight: 1.6 }}>
+              Secure link sent to <strong style={{ color: "#E2E8F0" }}>{email}</strong>
+            </div>
+            <div style={{ fontSize: 12, color: "#818CF8", lineHeight: 1.6 }}>
+              Click it to continue your analysis — your deals are saved and waiting.
+            </div>
           </div>
         )}
 
-        <div style={{ marginTop: 20, fontSize: 13, color: "#4B5563" }}>
+        <div style={{ marginTop: 20, fontSize: 12, color: "#374151", lineHeight: 1.8 }}>
           No account?{" "}
           <a href="/deal-reality-check" style={{ color: "#6366F1", textDecoration: "none" }}>
             Run a free deal analysis →
+          </a>
+          <br />
+          <span style={{ color: "#374151" }}>Prefer a password?{" "}</span>
+          <a href="/account/security" style={{ color: "#4B5563", textDecoration: "none" }}>
+            Set one up in account settings →
           </a>
         </div>
       </div>
@@ -5495,6 +5505,13 @@ export default function BuyerDashboard() {
   const [detailDeal, setDetailDeal]             = useState<DealRun | null>(null);
   const [underwritingDeal, setUnderwritingDeal] = useState<DealRun | null>(null);
   const [showUpgradeModal, setShowUpgradeModal]   = useState(false);
+  const [showFirstLoginBanner, setShowFirstLoginBanner] = useState(() => {
+    if (typeof window === "undefined") return false;
+    // Show banner once per session after first login
+    const shown = sessionStorage.getItem("nxtax_login_banner_shown");
+    if (!shown) { sessionStorage.setItem("nxtax_login_banner_shown", "1"); return true; }
+    return false;
+  });
 
   const isPro       = profile?.plan === "pro" || profile?.plan === "premium";
   const userInitial = user?.email?.charAt(0)?.toUpperCase() ?? "?";
@@ -5653,7 +5670,10 @@ export default function BuyerDashboard() {
     if (underwritingDeal) return;               // already open
     if (deals.length === 0) return;             // no deals yet — empty state handles it
     autoOpenedRef.current = true;
-    setUnderwritingDeal(deals[0]);              // open most recent deal
+    // Prefer last-viewed deal (returning user), fall back to most recent
+    const lastId = (() => { try { return localStorage.getItem("nxtax_last_deal_id"); } catch { return null; } })();
+    const target = (lastId && deals.find(d => d.id === lastId)) ?? deals[0];
+    setUnderwritingDeal(target);
   }, [user, loadingDeals, deals, underwritingDeal]);
 
   useEffect(() => { fetchMarket(); }, [fetchMarket]);
@@ -5672,7 +5692,11 @@ export default function BuyerDashboard() {
   };
 
   // ── Open underwriting panel ───────────────────────────────────────────────
-  const openUnderwriting = (deal: DealRun) => setUnderwritingDeal(deal);
+  const openUnderwriting = (deal: DealRun) => {
+    setUnderwritingDeal(deal);
+    // Persist last-viewed deal so returning users re-open it automatically
+    try { localStorage.setItem("nxtax_last_deal_id", deal.id); } catch {}
+  };
 
   // ── Open deal detail panel ────────────────────────────────────────────────
   const openDetail = (deal: DealRun) => setDetailDeal(deal);
@@ -5804,6 +5828,36 @@ export default function BuyerDashboard() {
       </nav>
 
       {/* ── AUTH GATE ── */}
+      {/* First-login confirmation banner */}
+      {user && showFirstLoginBanner && (
+        <div style={{
+          position: "fixed", top: 16, left: "50%", transform: "translateX(-50%)",
+          zIndex: 500, maxWidth: 480, width: "calc(100% - 32px)",
+          padding: "12px 16px 12px 14px",
+          borderRadius: 12,
+          background: "rgba(16,185,129,0.09)",
+          border: "1px solid rgba(16,185,129,0.25)",
+          backdropFilter: "blur(8px)",
+          display: "flex", alignItems: "flex-start", gap: 10,
+        }}>
+          <span style={{ fontSize: 18, flexShrink: 0, marginTop: 1 }}>✅</span>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontSize: 13, fontWeight: 600, color: "#6EE7B7", marginBottom: 2 }}>
+              Your deals are saved to your account.
+            </div>
+            <div style={{ fontSize: 11, color: "#94A3B8", lineHeight: 1.5 }}>
+              We'll send you a secure link anytime you want to pick up where you left off.
+            </div>
+          </div>
+          <button
+            onClick={() => setShowFirstLoginBanner(false)}
+            style={{ background: "none", border: "none", color: "#4B5563", fontSize: 16, cursor: "pointer", padding: "0 2px", lineHeight: 1, flexShrink: 0 }}
+          >
+            ×
+          </button>
+        </div>
+      )}
+
       {!loadingUser && !user && <SignInRequired />}
       {loadingUser && (
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "60vh" }}>
