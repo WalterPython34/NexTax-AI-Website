@@ -63,6 +63,21 @@ function VerdictHero({ data }: { data: LenderReadinessOutput }) {
       <div style={{ fontSize: 12, color: T.textSub, lineHeight: 1.6, paddingTop: 10, borderTop: `1px solid ${v.bd}` }}>
         {data.verdictMessage}
       </div>
+
+      {/* Prequal process outlook — dynamic by verdict + industry fit */}
+      <div style={{
+        marginTop: 10, padding: "8px 12px", borderRadius: 8,
+        background: "rgba(255,255,255,0.025)",
+        border: "1px solid rgba(255,255,255,0.05)",
+        display: "flex", alignItems: "flex-start", gap: 8,
+      }}>
+        <span style={{ fontSize: 10, color: T.textMuted, textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 700, flexShrink: 0, marginTop: 1, fontFamily: T.sans }}>
+          Outlook
+        </span>
+        <span style={{ fontSize: 11, color: T.textSub, lineHeight: 1.6 }}>
+          {data.prequalOutlook}
+        </span>
+      </div>
     </div>
   );
 }
@@ -163,7 +178,8 @@ function WhyBlock({ bullets }: { bullets: WhyBullet[] }) {
 
 const FIT_COLOR: Record<string, string> = {
   preferred:        T.green,
-  non_preferred:    T.amber,
+  standard:         T.teal,     // financeable — positive but not top tier
+  higher_scrutiny:  T.amber,
   sba_ineligible:   T.red,
   requires_review:  T.slate,
 };
@@ -192,9 +208,9 @@ function IndustryFitSection({ fit }: { fit: LenderReadinessOutput["industryFit"]
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const DOC_STATE_STYLE: Record<DocItem["state"], { color: string; bg: string; icon: string; label: string }> = {
-  complete:        { color: T.green, bg: T.greenBg, icon: "✓", label: "Complete" },
-  missing:         { color: T.red,   bg: T.redBg,   icon: "✗", label: "Missing"  },
-  unknown:         { color: T.slate, bg: T.slateBg, icon: "?", label: "Needed"   },
+  complete:        { color: T.green, bg: T.greenBg, icon: "✓", label: "Confirmed" },
+  missing:         { color: T.red,   bg: T.redBg,   icon: "✗", label: "Missing"   },
+  unknown:         { color: T.slate, bg: T.slateBg, icon: "·", label: "Pending"   },
   not_applicable:  { color: T.slate, bg: T.bgInset, icon: "—", label: "N/A"       },
 };
 
@@ -249,11 +265,43 @@ function ChecklistGroup({ group }: { group: DocGroup }) {
 }
 
 function DocumentChecklist({ groups }: { groups: DocGroup[] }) {
+  // Compute confirmation status across all groups
+  const allItems  = groups.flatMap(g => g.items);
+  const trackable = allItems.filter(i => i.state !== "not_applicable");
+  const confirmed = trackable.filter(i => i.state === "complete").length;
+  const total     = trackable.length;
+  const pct       = total > 0 ? Math.round((confirmed / total) * 100) : 0;
+
   return (
     <div style={{ padding: "15px 18px", borderRadius: 12, background: T.bgCard, border: `1px solid ${T.border}`, marginBottom: 12 }}>
-      <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: T.textMuted, fontFamily: T.sans, marginBottom: 13 }}>
-        Document Readiness
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 11 }}>
+        <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: T.textMuted, fontFamily: T.sans }}>
+          Document Readiness
+        </div>
+        <div style={{ fontSize: 10, color: T.textSub, fontFamily: T.mono, fontWeight: 600 }}>
+          {confirmed} / {total} confirmed
+        </div>
       </div>
+
+      {/* Package status summary bar */}
+      <div style={{ padding: "9px 12px", borderRadius: 8, background: T.bgInset, border: `1px solid ${T.borderLight}`, marginBottom: 14, display: "flex", alignItems: "center", gap: 10 }}>
+        <span style={{ fontSize: 11, color: T.textSub, flex: 1 }}>
+          Prequal Package Status
+        </span>
+        <div style={{ flex: 2, height: 4, borderRadius: 2, background: "rgba(255,255,255,0.05)", overflow: "hidden" }}>
+          <div style={{
+            height: "100%",
+            width: `${pct}%`,
+            background: pct >= 75 ? T.green : pct >= 40 ? T.amber : T.slate,
+            borderRadius: 2,
+            transition: "width 0.4s ease",
+          }} />
+        </div>
+        <span style={{ fontSize: 10, color: T.textMuted, fontFamily: T.mono, minWidth: 72, textAlign: "right" }}>
+          {confirmed} of {total} items
+        </span>
+      </div>
+
       {groups.map((g) => <ChecklistGroup key={g.id} group={g} />)}
     </div>
   );
