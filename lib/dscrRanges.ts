@@ -1,220 +1,110 @@
-// lib/ddChecklist.ts
-// Due diligence checklist generator — deal-aware, priority-ranked.
+// lib/dscrRanges.ts
+// Per-industry DSCR thresholds for NexTax underwriting panel.
+// Replaces hardcoded 1.0 / 1.5 / 2.5 values.
 
-export interface ChecklistItem {
-  id:       string;
-  section:  "financial" | "legal" | "operational";
-  priority: "critical" | "high" | "standard";
-  item:     string;
-  why?:     string;  // one-line rationale shown in UI
+export interface DscrRange {
+  /** Below this: deal cannot service standard debt */
+  weak:       number;
+  /** Below this: below typical lender minimum (1.25x for SBA) */
+  acceptable: number;
+  /** At or above this: strong coverage headroom */
+  strong:     number;
 }
 
-export interface DdChecklistInput {
-  industry:               string;
-  revenue:                number;
-  sde:                    number;
-  asking_price:           number;
-  dscr:                   number;
-  normalization_trust_score?: number | null;
-  normalization_flags_json?:  any[] | null;
-  manual_review_required?:    boolean | null;
-  owner_operated?:            boolean | null;
-  customer_concentration?:    string | null;
-  has_real_estate?:           boolean | null;
-  years_in_business?:         number | null;
-  valuation_multiple?:        number | null;
+// Industry-specific DSCR ranges.
+// Logic: service businesses with high owner involvement accept tighter coverage;
+// asset-heavy or recurring-revenue models are underwritten more conservatively.
+export const DSCR_RANGES: Record<string, DscrRange> = {
+  // Tight-margin service (restaurants, quick-service)
+  food_beverage:        { weak: 1.0,  acceptable: 1.20, strong: 1.5 },
+  // Field services — variable seasonality
+  field_services:       { weak: 1.0,  acceptable: 1.25, strong: 1.6 },
+  specialty_trade:      { weak: 1.0,  acceptable: 1.25, strong: 1.6 },
+  auto_services:        { weak: 1.0,  acceptable: 1.25, strong: 1.5 },
+  // Healthcare / med spa — higher capex, cash-pay model
+  healthcare_clinical:  { weak: 1.1,  acceptable: 1.30, strong: 1.7 },
+  med_spa:              { weak: 1.1,  acceptable: 1.30, strong: 1.7 },
+  behavioral_health:    { weak: 1.05, acceptable: 1.25, strong: 1.6 },
+  physical_therapy:     { weak: 1.05, acceptable: 1.25, strong: 1.6 },
+  // Personal services (salon, laundry) — owner-heavy, low barrier
+  personal_services:    { weak: 1.0,  acceptable: 1.20, strong: 1.5 },
+  hairsalon:            { weak: 1.0,  acceptable: 1.20, strong: 1.5 },
+  // Professional services — less capital, reliable revenue
+  professional_services:{ weak: 1.0,  acceptable: 1.25, strong: 1.6 },
+  marketing:            { weak: 1.0,  acceptable: 1.25, strong: 1.6 },
+  engineering:          { weak: 1.0,  acceptable: 1.25, strong: 1.6 },
+  staffing:             { weak: 1.0,  acceptable: 1.30, strong: 1.7 },
+  // Asset-heavy / recurring
+  asset_services:       { weak: 1.1,  acceptable: 1.35, strong: 1.8 },
+  propertymanage:       { weak: 1.1,  acceptable: 1.30, strong: 1.7 },
+  realestatebrok:       { weak: 1.0,  acceptable: 1.25, strong: 1.6 },
+  // Inventory-heavy retail / grocery
+  retail:               { weak: 1.0,  acceptable: 1.25, strong: 1.6 },
+  grocery:              { weak: 1.0,  acceptable: 1.20, strong: 1.5 },
+  clothing:             { weak: 1.0,  acceptable: 1.25, strong: 1.6 },
+  // SaaS / digital — high margins, predictable
+  saas:                 { weak: 1.1,  acceptable: 1.30, strong: 2.0 },
+  digital:              { weak: 1.0,  acceptable: 1.25, strong: 1.8 },
+  // Manufacturing / wholesale — capital-intensive
+  manufacturing:        { weak: 1.1,  acceptable: 1.35, strong: 1.8 },
+  wholesale:            { weak: 1.0,  acceptable: 1.30, strong: 1.7 },
+  construction:         { weak: 1.0,  acceptable: 1.30, strong: 1.7 },
+  // Senior / home care — regulatory risk
+  seniorcare:           { weak: 1.1,  acceptable: 1.30, strong: 1.7 },
+  veterinary:           { weak: 1.1,  acceptable: 1.30, strong: 1.7 },
+  // Misc
+  pestcontrol:          { weak: 1.0,  acceptable: 1.25, strong: 1.6 },
+  signmaking:           { weak: 1.0,  acceptable: 1.25, strong: 1.5 },
+  remodeling:           { weak: 1.0,  acceptable: 1.25, strong: 1.6 },
+};
+
+const DEFAULT_DSCR: DscrRange = { weak: 1.0, acceptable: 1.25, strong: 1.5 };
+
+/** Get the DSCR range for a given NexTax industry key. */
+export function getDscrRange(industryKey: string | null | undefined): DscrRange {
+  if (!industryKey) return DEFAULT_DSCR;
+  return DSCR_RANGES[industryKey.toLowerCase()] ?? DEFAULT_DSCR;
 }
 
-export function generateDdChecklist(deal: DdChecklistInput): ChecklistItem[] {
-  const items: ChecklistItem[] = [];
-  const trust   = deal.normalization_trust_score ?? 100;
-  const flags   = (deal.normalization_flags_json ?? []) as any[];
-  const hasCrit = flags.some((f: any) => f.severity === "critical");
-  const gp      = deal.asking_price > 0 && deal.sde > 0
-    ? ((deal.asking_price - deal.sde * 2.75) / (deal.sde * 2.75)) * 100
-    : 0;
-
-  // ── FINANCIAL ──────────────────────────────────────────────────────────────
-  items.push({
-    id: "fin-01", section: "financial", priority: "critical",
-    item: "Request 3 years of federal tax returns (business + personal if pass-through)",
-    why: "Tax returns are the only externally verified earnings record. Prioritize over P&Ls.",
-  });
-
-  items.push({
-    id: "fin-02", section: "financial", priority: "critical",
-    item: "Obtain itemized add-back schedule with documentation for each adjustment",
-    why: "Add-backs are the primary lever for overstating SDE. Every line needs a receipt or explanation.",
-  });
-
-  items.push({
-    id: "fin-03", section: "financial", priority: "high",
-    item: "Request 3 years of P&L statements in QuickBooks/accounting software format",
-    why: "Compare to tax returns — material discrepancies are a red flag.",
-  });
-
-  if (trust < 80 || hasCrit) {
-    items.push({
-      id: "fin-04", section: "financial", priority: "critical",
-      item: "Engage CPA for independent financial review before LOI",
-      why: `Data confidence score of ${trust}/100 — reported financials require independent verification.`,
-    });
-  }
-
-  items.push({
-    id: "fin-05", section: "financial", priority: "high",
-    item: "Verify owner compensation and benefits included in add-backs",
-    why: "Owner salary, health insurance, personal vehicles, and family payroll are common inflators.",
-  });
-
-  if (deal.dscr < 1.25) {
-    items.push({
-      id: "fin-06", section: "financial", priority: "critical",
-      item: `Stress-test DSCR at −15% revenue — current ${deal.dscr.toFixed(2)}x is below lender minimum`,
-      why: "Deal does not meet standard 1.25x SBA DSCR threshold at current terms.",
-    });
-  }
-
-  if (gp > 15) {
-    items.push({
-      id: "fin-07", section: "financial", priority: "high",
-      item: "Request seller justification for pricing above market fair value estimate",
-      why: `Asking price is approximately ${Math.round(gp)}% above NexTax market estimate. Validate the premium.`,
-    });
-  }
-
-  items.push({
-    id: "fin-08", section: "financial", priority: "standard",
-    item: "Confirm accounts receivable aging schedule and collectability",
-  });
-
-  items.push({
-    id: "fin-09", section: "financial", priority: "standard",
-    item: "Review trailing 12-month bank statements for revenue verification",
-    why: "Bank deposits are the ground-truth check against reported revenue.",
-  });
-
-  // ── LEGAL ──────────────────────────────────────────────────────────────────
-  items.push({
-    id: "leg-01", section: "legal", priority: "critical",
-    item: "Confirm lease assignment clause — landlord consent required",
-    why: "A non-assignable lease can kill a deal post-LOI. Confirm before advancing.",
-  });
-
-  items.push({
-    id: "leg-02", section: "legal", priority: "critical",
-    item: "Request all customer contracts and confirm transferability",
-    why: "Revenue concentration in non-transferable contracts overstates business value.",
-  });
-
-  items.push({
-    id: "leg-03", section: "legal", priority: "high",
-    item: "Run UCC lien search and confirm all liens can be cleared at close",
-  });
-
-  items.push({
-    id: "leg-04", section: "legal", priority: "high",
-    item: "Confirm no pending litigation, claims, or regulatory actions",
-  });
-
-  items.push({
-    id: "leg-05", section: "legal", priority: "high",
-    item: "Review seller non-compete scope — geographic area, duration, covered activities",
-    why: "A weak non-compete lets the seller immediately rebuild a competing business.",
-  });
-
-  if (deal.has_real_estate) {
-    items.push({
-      id: "leg-06", section: "legal", priority: "high",
-      item: "Order Phase I environmental assessment for real property",
-    });
-  }
-
-  items.push({
-    id: "leg-07", section: "legal", priority: "standard",
-    item: "Verify all required business licenses and permits are current and transferable",
-  });
-
-  // ── OPERATIONAL ────────────────────────────────────────────────────────────
-  if (deal.customer_concentration === "high" || deal.customer_concentration === "moderate") {
-    items.push({
-      id: "ops-01", section: "operational", priority: "critical",
-      item: "Identify top-5 customers by revenue — confirm relationships transfer with business",
-      why: "High customer concentration is the leading cause of post-acquisition revenue loss.",
-    });
-  } else {
-    items.push({
-      id: "ops-01", section: "operational", priority: "high",
-      item: "Review customer list — verify revenue distribution and retention history",
-    });
-  }
-
-  if (deal.owner_operated) {
-    items.push({
-      id: "ops-02", section: "operational", priority: "critical",
-      item: "Assess key-person risk — document which revenue relationships depend on the seller",
-      why: "Owner-operated businesses often have revenue concentrated in the seller's personal relationships.",
-    });
-  }
-
-  items.push({
-    id: "ops-03", section: "operational", priority: "high",
-    item: "Interview 2–3 key employees — assess retention risk and role coverage",
-  });
-
-  items.push({
-    id: "ops-04", section: "operational", priority: "high",
-    item: `Request ${Math.min(90, 30 + (deal.years_in_business ?? 0) > 5 ? 60 : 30)}-day seller training commitment in LOI`,
-    why: "Standard is 30–90 days. Longer training reduces transition risk.",
-  });
-
-  items.push({
-    id: "ops-05", section: "operational", priority: "standard",
-    item: "Review all vendor contracts — pricing, exclusivity, and assignment terms",
-  });
-
-  items.push({
-    id: "ops-06", section: "operational", priority: "standard",
-    item: "Assess equipment condition and maintenance records — identify near-term capex needs",
-  });
-
-  items.push({
-    id: "ops-07", section: "operational", priority: "standard",
-    item: "Review current working capital — establish normalized working capital peg for LOI",
-  });
-
-  // Sort: critical → high → standard, within each section
-  const order: Record<string, number> = { critical: 0, high: 1, standard: 2 };
-  const secOrder: Record<string, number> = { financial: 0, legal: 1, operational: 2 };
-  return items.sort((a, b) =>
-    secOrder[a.section] - secOrder[b.section] ||
-    order[a.priority] - order[b.priority]
-  );
+/** Human-readable coverage assessment. */
+export function dscrAssessment(dscr: number, range: DscrRange): {
+  label: "critical" | "weak" | "acceptable" | "strong";
+  message: string;
+} {
+  if (dscr < range.weak) return {
+    label: "critical",
+    message: `DSCR of ${dscr.toFixed(2)}x — cannot service standard debt at current terms. Financing is not viable.`,
+  };
+  if (dscr < range.acceptable) return {
+    label: "weak",
+    message: `DSCR of ${dscr.toFixed(2)}x — below the typical ${range.acceptable}x lender minimum. Financing at risk without equity injection.`,
+  };
+  if (dscr < range.strong) return {
+    label: "acceptable",
+    message: `DSCR of ${dscr.toFixed(2)}x — meets minimum lender thresholds but leaves limited headroom.`,
+  };
+  return {
+    label: "strong",
+    message: `DSCR of ${dscr.toFixed(2)}x — solid debt coverage with meaningful headroom above lender minimums.`,
+  };
 }
 
-/** Export checklist as plain text — suitable for download or PDF prep. */
-export function checklistToText(items: ChecklistItem[], dealLabel?: string): string {
-  const sections = ["financial", "legal", "operational"] as const;
-  const sectionNames = { financial: "FINANCIAL", legal: "LEGAL", operational: "OPERATIONAL" };
+/*
+// WIRING in buyer-dashboard.tsx — update buildBenchmarkContext():
+// REPLACE the hardcoded dscrLow/Median/High values with:
 
-  const lines: string[] = [
-    `NexTax AI — Due Diligence Checklist`,
-    dealLabel ? `Deal: ${dealLabel}` : "",
-    `Generated: ${new Date().toLocaleDateString()}`,
-    "",
-  ];
+import { getDscrRange } from "@/lib/dscrRanges";
 
-  for (const sec of sections) {
-    const secItems = items.filter(i => i.section === sec);
-    if (secItems.length === 0) continue;
-    lines.push(`── ${sectionNames[sec]} ──────────────────────────────────`);
-    for (const item of secItems) {
-      const flag = item.priority === "critical" ? "⚠ " : item.priority === "high" ? "→ " : "  ";
-      lines.push(`${flag}${item.item}`);
-      if (item.why) lines.push(`   ${item.why}`);
-    }
-    lines.push("");
-  }
+// Inside buildBenchmarkContext(deal):
+  const dscrRange = getDscrRange(deal.industry);
+  return {
+    ...
+    dscrLow:    dscrRange.weak,
+    dscrMedian: dscrRange.acceptable,
+    dscrHigh:   dscrRange.strong,
+  };
 
-  return lines.join("\n");
-}
+// And in CompsTab RangeBar note for DSCR, update the thresholds dynamically:
+// The note already reads from normalization.currentDscr — it will auto-update
+// once dscrRange values flow through.
+*/
