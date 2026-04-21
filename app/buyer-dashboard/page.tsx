@@ -2421,6 +2421,19 @@ function UnderwritingPanel({
   const [activeTab, setActiveTab]    = useState<UwTab>("stress");
   const [compsData, setCompsData]    = useState<CompsData>({ comps: [], currentDealOutsideRange: false });
 
+  // Panel width mode — persisted across sessions
+  const [panelExpanded, setPanelExpanded] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("nxtax_panel_expanded") === "1";
+  });
+  const toggleExpanded = () => {
+    setPanelExpanded(prev => {
+      const next = !prev;
+      try { localStorage.setItem("nxtax_panel_expanded", next ? "1" : "0"); } catch {}
+      return next;
+    });
+  };
+
   // Fetch real comps from dealstats_transactions when panel opens
   useEffect(() => {
     const ind      = SCORE_INDUSTRIES[deal.industry];
@@ -2571,14 +2584,37 @@ function UnderwritingPanel({
 
   return (
     <>
-      <div onClick={onClose} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.5)", zIndex: 200, backdropFilter: "blur(2px)" }} />
-      <div style={{
-        position: "fixed", top: 0, right: 0,
-        width: 460, height: "100vh",
-        background: "#0D1117", borderLeft: "1px solid rgba(255,255,255,0.08)",
-        zIndex: 201, display: "flex", flexDirection: "column",
-        animation: "slideIn 0.22s ease-out",
-      }}>
+      {/* Backdrop — dimmer in expanded mode, lighter in normal */}
+      <div
+        onClick={onClose}
+        style={{
+          position: "fixed", inset: 0,
+          background: panelExpanded ? "rgba(0,0,0,0.78)" : "rgba(0,0,0,0.45)",
+          zIndex: 200,
+          backdropFilter: panelExpanded ? "blur(6px)" : "blur(2px)",
+          transition: "background 260ms ease, backdrop-filter 260ms ease",
+        }}
+      />
+      {/* Panel — responsive width w/ CSS transition (no remount on toggle) */}
+      <div
+        className="nxtax-uw-panel"
+        style={{
+          position: "fixed", top: 0, right: 0,
+          width: panelExpanded
+            ? "min(100vw, 1600px)"
+            : "min(65vw, 1280px)",
+          minWidth: "min(100vw, 460px)",
+          height: "100vh",
+          background: "#0D1117",
+          borderLeft: "1px solid rgba(255,255,255,0.08)",
+          boxShadow: panelExpanded
+            ? "-24px 0 64px rgba(0,0,0,0.5)"
+            : "-16px 0 40px rgba(0,0,0,0.4)",
+          zIndex: 201, display: "flex", flexDirection: "column",
+          animation: "slideIn 0.22s ease-out",
+          transition: "width 260ms cubic-bezier(0.32, 0.72, 0, 1), box-shadow 260ms ease",
+        }}
+      >
         {/* Header */}
         <div style={{ padding: "16px 20px 12px", borderBottom: "1px solid rgba(255,255,255,0.06)", flexShrink: 0 }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
@@ -2593,7 +2629,39 @@ function UnderwritingPanel({
                 {fmt(deal.asking_price)} · {deal.valuation_multiple.toFixed(2)}x · Score {deal.overall_score} · DSCR {deal.dscr.toFixed(2)}
               </div>
             </div>
-            <button onClick={onClose} style={{ background: "none", border: "none", color: "#4B5563", fontSize: 20, cursor: "pointer", lineHeight: 1, padding: "2px 6px" }}>×</button>
+            <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+              <button
+                onClick={toggleExpanded}
+                title={panelExpanded ? "Collapse panel" : "Expand to full view"}
+                aria-label={panelExpanded ? "Collapse panel" : "Expand panel"}
+                style={{
+                  background: "rgba(255,255,255,0.03)",
+                  border: "1px solid rgba(255,255,255,0.07)",
+                  borderRadius: 6,
+                  color: "#94A3B8",
+                  fontSize: 11,
+                  cursor: "pointer",
+                  padding: "4px 10px",
+                  display: "flex", alignItems: "center", gap: 5,
+                  lineHeight: 1,
+                  transition: "background 150ms ease, color 150ms ease",
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.06)"; e.currentTarget.style.color = "#E2E8F0"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.03)"; e.currentTarget.style.color = "#94A3B8"; }}
+              >
+                <span style={{ fontSize: 12 }}>{panelExpanded ? "⇤" : "⇥"}</span>
+                <span style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase" as const, letterSpacing: "0.06em" }}>
+                  {panelExpanded ? "Collapse" : "Expand"}
+                </span>
+              </button>
+              <button
+                onClick={onClose}
+                aria-label="Close panel"
+                style={{ background: "none", border: "none", color: "#4B5563", fontSize: 20, cursor: "pointer", lineHeight: 1, padding: "2px 6px" }}
+              >
+                ×
+              </button>
+            </div>
           </div>
 
           {/* Tab bar */}
@@ -2623,8 +2691,12 @@ function UnderwritingPanel({
           </div>
         </div>
 
-        {/* Tab content */}
-        <div style={{ flex: 1, overflowY: "auto", padding: "16px 20px" }}>
+        {/* Tab content — adaptive padding by panel mode */}
+        <div style={{
+          flex: 1, overflowY: "auto",
+          padding: panelExpanded ? "18px 32px" : "16px 20px",
+          transition: "padding 260ms ease",
+        }}>
 
           {/* Verdict banner — always visible at top */}
           <div style={{
@@ -6105,6 +6177,14 @@ export default function BuyerDashboard() {
         .btn-qv:hover { background: rgba(255,255,255,0.06) !important; color: #E2E8F0 !important; border-color: rgba(255,255,255,0.15) !important }
         .btn-uw { transition: background 0.12s, box-shadow 0.12s }
         .btn-uw:hover { background: rgba(99,102,241,0.2) !important; box-shadow: 0 0 0 1px rgba(99,102,241,0.4) }
+
+        /* Underwriting panel responsive width — overrides inline styles */
+        @media (max-width: 1024px) {
+          .nxtax-uw-panel { width: 85vw !important; }
+        }
+        @media (max-width: 640px) {
+          .nxtax-uw-panel { width: 100vw !important; min-width: 100vw !important; }
+        }
       `}</style>
 
       {/* ── NAV ── */}
