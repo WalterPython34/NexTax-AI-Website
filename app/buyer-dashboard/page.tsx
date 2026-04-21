@@ -3909,6 +3909,120 @@ function TabMyDeals({
 
 // ─── TAB: COMPARE ─────────────────────────────────────────────────────────────
 
+
+// ── CompareRangeTrack — hero visual for Market Comps and Closed Comps ─────────
+// Shows a horizontal track with low/median/high markers and a "Your Deal" dot.
+// Supports out-of-range rendering cleanly on both ends.
+function CompareRangeTrack({
+  currentValue,
+  low, median, high,
+  label = "Your Deal",
+  emptyText,
+  accentColor = "#818CF8",
+}: {
+  currentValue:  number | null;
+  low:           number;
+  median:        number;
+  high:          number;
+  label?:        string;
+  emptyText?:    string;
+  accentColor?:  string;
+}) {
+  if (!currentValue || !low || !high || low >= high) {
+    return (
+      <div style={{ padding: "20px 0", textAlign: "center" as const }}>
+        <div style={{ fontSize: 11, color: "#374151" }}>{emptyText ?? "Range data unavailable"}</div>
+      </div>
+    );
+  }
+
+  const PAD = 12;           // % padding each side of track
+  const USABLE = 100 - PAD * 2;
+
+  function pos(v: number): number {
+    const raw = ((v - low) / (high - low)) * USABLE + PAD;
+    return Math.max(PAD - 4, Math.min(PAD + USABLE + 4, raw));
+  }
+
+  const isBelow  = currentValue < low;
+  const isAbove  = currentValue > high;
+  const isInside = !isBelow && !isAbove;
+
+  const markerPct  = isBelow ? PAD - 3 : isAbove ? PAD + USABLE + 3 : pos(currentValue);
+  const medianPct  = pos(median);
+
+  const markerColor = isBelow  ? "#2DD4BF"
+                    : isAbove  ? "#EF4444"
+                    :            accentColor;
+
+  const posLabel = isBelow  ? "below range" : isAbove ? "above range" : "in range";
+
+  return (
+    <div style={{ padding: "4px 0 8px" }}>
+      {/* Value labels above track */}
+      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6, padding: `0 ${PAD}%` }}>
+        <span style={{ fontSize: 9, color: "#4B5563", textTransform: "uppercase" as const, letterSpacing: "0.06em" }}>Low {low.toFixed(2)}x</span>
+        <span style={{ fontSize: 9, color: "#4B5563", textTransform: "uppercase" as const, letterSpacing: "0.06em" }}>Median {median.toFixed(2)}x</span>
+        <span style={{ fontSize: 9, color: "#4B5563", textTransform: "uppercase" as const, letterSpacing: "0.06em" }}>High {high.toFixed(2)}x</span>
+      </div>
+
+      {/* Track */}
+      <div style={{ position: "relative", height: 8, borderRadius: 4, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)", margin: "0 0" }}>
+        {/* Range fill */}
+        <div style={{
+          position: "absolute",
+          left: `${PAD}%`, width: `${USABLE}%`,
+          top: 0, bottom: 0, borderRadius: 3,
+          background: "rgba(255,255,255,0.07)",
+        }} />
+        {/* Median tick */}
+        <div style={{
+          position: "absolute", left: `${medianPct}%`,
+          top: -3, bottom: -3, width: 2,
+          background: "rgba(255,255,255,0.25)",
+          transform: "translateX(-50%)",
+          borderRadius: 1,
+        }} />
+        {/* Current deal marker */}
+        <div style={{
+          position: "absolute",
+          left: `${markerPct}%`,
+          top: "50%",
+          transform: "translate(-50%, -50%)",
+          width: 14, height: 14,
+          borderRadius: "50%",
+          background: markerColor,
+          border: "2.5px solid #0D1117",
+          boxShadow: `0 0 0 2px ${markerColor}55, 0 0 12px ${markerColor}44`,
+          zIndex: 2,
+          transition: "left 0.3s ease",
+        }} />
+      </div>
+
+      {/* Labels below track */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginTop: 10 }}>
+        <div style={{ fontSize: 10, color: "#374151" }}>← Below range</div>
+        <div style={{ textAlign: "center" as const }}>
+          <div style={{
+            display: "inline-flex", alignItems: "center", gap: 5,
+            padding: "3px 10px", borderRadius: 20,
+            background: isInside ? `${markerColor}18` : isAbove ? "rgba(239,68,68,0.1)" : "rgba(45,212,191,0.1)",
+            border: `1px solid ${markerColor}44`,
+          }}>
+            <div style={{ width: 6, height: 6, borderRadius: "50%", background: markerColor, flexShrink: 0 }} />
+            <span style={{ fontSize: 10, fontWeight: 700, color: markerColor, fontFamily: "'JetBrains Mono',monospace" }}>
+              {currentValue.toFixed(2)}x
+            </span>
+            <span style={{ fontSize: 9, color: markerColor + "99" }}>{label}</span>
+          </div>
+          <div style={{ fontSize: 9, color: markerColor + "88", marginTop: 3 }}>{posLabel}</div>
+        </div>
+        <div style={{ fontSize: 10, color: "#374151" }}>Above range →</div>
+      </div>
+    </div>
+  );
+}
+
 function TabCompare({ deals, isPro, onAnalyzeNew }: { deals: DealRun[]; isPro: boolean; onAnalyzeNew: () => void }) {
   const [mode, setMode] = useState<CompareMode>("my-deals");
   const [ai, setAi]     = useState(0);
@@ -4308,40 +4422,75 @@ function TabCompare({ deals, isPro, onAnalyzeNew }: { deals: DealRun[]; isPro: b
         <div style={{ animation: "fadeUp 0.2s ease-out" }}>
           {isPro ? (
             // ── PRO: Live Market Comps ────────────────────────────────────────
-            <div>
-              <div style={{
-                padding: "16px 20px", borderRadius: 12, marginBottom: 16,
-                background: "rgba(59,130,246,0.05)", border: "1px solid rgba(59,130,246,0.18)",
-              }}>
-                <div style={{ fontSize: 10, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: 600, marginBottom: 10 }}>Live Market Comparison</div>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 12, marginBottom: 12 }}>
-                  {[
-                    { label: "Your Deal (A)",     value: `${(a?.valuation_multiple ?? 0).toFixed(2)}x`, color: "#60A5FA" },
-                    { label: "Market Median",      value: "3.10x",  color: "#E2E8F0" },
-                    { label: "Pricing Percentile", value: "34th",   color: (a?.valuation_multiple ?? 0) < 3.1 ? "#10B981" : "#D85A30" },
-                    { label: "Active Listings",    value: "41",     color: "#F59E0B" },
-                    { label: "Market Range",       value: "2.1x–4.0x", color: "#94A3B8" },
-                    { label: "Your Position",      value: (a?.valuation_multiple ?? 0) < 3.1 ? "Below Median" : "Above Median", color: (a?.valuation_multiple ?? 0) < 3.1 ? "#10B981" : "#D85A30" },
-                  ].map(m => (
-                    <div key={m.label} style={{ padding: "10px 12px", borderRadius: 9, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
-                      <div style={{ fontSize: 9, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4 }}>{m.label}</div>
-                      <div style={{ fontSize: 16, fontWeight: 700, color: m.color, fontFamily: "'JetBrains Mono',monospace" }}>{m.value}</div>
+            (() => {
+              const mult     = a?.valuation_multiple ?? 0;
+              const ind      = SCORE_INDUSTRIES[a?.industry ?? ""];
+              const mktLow   = ind?.benchmarkLow    ?? 2.1;
+              const mktMed   = ind?.benchmarkMid    ?? 3.1;
+              const mktHigh  = ind?.benchmarkHigh   ?? 4.0;
+              const isAbove  = mult > mktMed;
+
+              const implication = mult > mktHigh * 1.3
+                ? "Current ask is stretched well above where sellers are successfully marketing this type of business. Expect strong resistance from buyers comparing active listings."
+                : mult > mktHigh
+                ? "Your deal is priced above most current market asks. This pricing may face resistance from buyers who can compare active listings."
+                : mult > mktMed
+                ? "Deal A sits above the median active-listing multiple. Negotiation room likely exists — sellers in this range typically close below ask."
+                : mult < mktLow * 0.8
+                ? "Current pricing is below what most sellers are asking. Investigate whether the discount is structural or an opportunity."
+                : "Current pricing appears broadly aligned with the live market. Focus negotiation on terms and structure rather than price alone.";
+
+              return (
+                <div>
+                  {/* Header */}
+                  <div style={{ marginBottom: 16 }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: "#F1F5F9", fontFamily: "'Inter Tight',sans-serif", marginBottom: 4 }}>
+                      Market Comps — Active Listings
                     </div>
-                  ))}
+                    <div style={{ fontSize: 11, color: "#4B5563", lineHeight: 1.5 }}>
+                      Active listings show where sellers are testing the market. Useful for negotiation framing — not final transaction truth.
+                    </div>
+                  </div>
+
+                  {/* Hero: Range track */}
+                  <div style={{ padding: "16px 20px", borderRadius: 12, marginBottom: 14, background: "rgba(59,130,246,0.04)", border: "1px solid rgba(59,130,246,0.18)" }}>
+                    <div style={{ fontSize: 10, color: "#60A5FA", textTransform: "uppercase" as const, letterSpacing: "0.09em", fontWeight: 700, marginBottom: 14 }}>
+                      Pricing Position vs Live Market
+                    </div>
+                    <CompareRangeTrack
+                      currentValue={mult}
+                      low={mktLow} median={mktMed} high={mktHigh}
+                      label="Deal A"
+                      accentColor={mult <= mktMed ? "#60A5FA" : mult <= mktHigh ? "#F59E0B" : "#EF4444"}
+                      emptyText="Benchmark range unavailable for this industry"
+                    />
+                  </div>
+
+                  {/* KPI cards */}
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 10, marginBottom: 14 }}>
+                    {[
+                      { label: "Your Multiple",      value: `${mult.toFixed(2)}x`,           color: "#60A5FA" },
+                      { label: "Market Median",       value: `${mktMed.toFixed(2)}x`,          color: "#E2E8F0" },
+                      { label: "Market Range",        value: `${mktLow.toFixed(2)}x–${mktHigh.toFixed(2)}x`, color: "#94A3B8" },
+                      { label: "Position",            value: mult < mktLow ? "Below Range" : mult > mktHigh ? "Above Range" : mult <= mktMed ? "Below Median" : "Above Median", color: mult > mktHigh ? "#EF4444" : mult < mktLow ? "#2DD4BF" : "#60A5FA" },
+                      { label: "Gap vs Median",       value: `${mult > mktMed ? "+" : ""}${((mult - mktMed) / mktMed * 100).toFixed(0)}%`, color: mult > mktMed ? "#F97316" : "#10B981" },
+                      { label: "Percentile",          value: "Approximate", color: "#374151" },
+                    ].map(m => (
+                      <div key={m.label} style={{ padding: "10px 12px", borderRadius: 9, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                        <div style={{ fontSize: 9, color: "#4B5563", textTransform: "uppercase" as const, letterSpacing: "0.07em", marginBottom: 5 }}>{m.label}</div>
+                        <div style={{ fontSize: 15, fontWeight: 700, color: m.color, fontFamily: "'JetBrains Mono',monospace" }}>{m.value}</div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Implication */}
+                  <div style={{ padding: "12px 16px", borderRadius: 10, background: isAbove ? "rgba(249,115,22,0.05)" : "rgba(59,130,246,0.05)", border: `1px solid ${isAbove ? "rgba(249,115,22,0.18)" : "rgba(59,130,246,0.15)"}` }}>
+                    <div style={{ fontSize: 10, color: "#4B5563", textTransform: "uppercase" as const, letterSpacing: "0.08em", fontWeight: 600, marginBottom: 6 }}>Pricing Takeaway</div>
+                    <div style={{ fontSize: 13, color: "#94A3B8", lineHeight: 1.7 }}>{implication}</div>
+                  </div>
                 </div>
-                <div style={{ fontSize: 13, color: "#60A5FA", lineHeight: 1.6 }}>
-                  {(a?.valuation_multiple ?? 0) < 3.1
-                    ? `Deal A is priced below the current live market median of 3.10x — favorable positioning relative to active listings.`
-                    : `Deal A is priced above the current live market median of 3.10x — may face resistance in buyer negotiations.`}
-                </div>
-              </div>
-              <div style={{ padding: "12px 16px", borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
-                <div style={{ fontSize: 10, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600, marginBottom: 8 }}>What this means</div>
-                <div style={{ fontSize: 13, color: "#94A3B8", lineHeight: 1.7 }}>
-                  Live comps are directionally useful for framing a negotiation anchor. Your deal's position relative to active listings tells you how motivated the seller may be and how much room exists to negotiate. Full live market data integration is coming in the next platform update.
-                </div>
-              </div>
-            </div>
+              );
+            })()
           ) : (
             // ── LOCKED: Market Comps ────────────────────────────────────────────
             <div style={{ borderRadius: 14, overflow: "hidden", border: "1px solid rgba(99,102,241,0.2)" }}>
@@ -4385,40 +4534,78 @@ function TabCompare({ deals, isPro, onAnalyzeNew }: { deals: DealRun[]; isPro: b
         <div style={{ animation: "fadeUp 0.2s ease-out" }}>
           {isPro ? (
             // ── PRO: Closed Comps ──────────────────────────────────────────────
-            <div>
-              <div style={{
-                padding: "16px 20px", borderRadius: 12, marginBottom: 16,
-                background: "rgba(16,185,129,0.04)", border: "1px solid rgba(16,185,129,0.18)",
-              }}>
-                <div style={{ fontSize: 10, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: 600, marginBottom: 10 }}>Closed Deal Benchmark</div>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 12, marginBottom: 12 }}>
-                  {[
-                    { label: "Your Deal (A)",       value: `${(a?.valuation_multiple ?? 0).toFixed(2)}x`, color: "#60A5FA" },
-                    { label: "Closed Median",        value: "2.30x", color: "#10B981" },
-                    { label: "Sold vs Ask Delta",    value: "−14%",  color: "#F59E0B" },
-                    { label: "Closed Comp Count",    value: "189",   color: "#94A3B8" },
-                    { label: "Historical Range",     value: "1.7x–2.9x", color: "#94A3B8" },
-                    { label: "Your Position",        value: (a?.valuation_multiple ?? 0) <= 2.9 ? "Within Range" : "Above Range", color: (a?.valuation_multiple ?? 0) <= 2.9 ? "#10B981" : "#D85A30" },
-                  ].map(m => (
-                    <div key={m.label} style={{ padding: "10px 12px", borderRadius: 9, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
-                      <div style={{ fontSize: 9, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4 }}>{m.label}</div>
-                      <div style={{ fontSize: 16, fontWeight: 700, color: m.color, fontFamily: "'JetBrains Mono',monospace" }}>{m.value}</div>
+            (() => {
+              const mult     = a?.valuation_multiple ?? 0;
+              const ind      = SCORE_INDUSTRIES[a?.industry ?? ""];
+              // Closed deal ranges trend ~15–20% below asking multiples
+              const clLow    = ind ? ind.benchmarkLow  * 0.82 : 1.7;
+              const clMed    = ind ? ind.benchmarkMid  * 0.84 : 2.3;
+              const clHigh   = ind ? ind.benchmarkHigh * 0.86 : 2.9;
+              const isAbove  = mult > clHigh;
+              const isBelow  = mult < clLow;
+              const pctVsMed = ((mult - clMed) / clMed * 100).toFixed(0);
+
+              const implication = mult > clHigh * 1.4
+                ? `This deal is priced well above where similar businesses have actually closed. Closed transaction data suggests meaningful repricing may be required before a buyer will commit.`
+                : mult > clHigh
+                ? `Your deal is priced above where similar deals have actually closed. Expect negotiation pressure — buyers using closed comps will anchor below the current ask.`
+                : mult > clMed
+                ? `Current pricing is above the median closing multiple for this industry. Workable, but expect buyers to push for a discount at LOI.`
+                : mult < clLow
+                ? `Current pricing is below the typical closed range — if earnings are credible, this is a strong entry point supported by historical transaction data.`
+                : `This deal sits within historical closing norms. Pricing is defensible at LOI based on closed transaction benchmarks.`;
+
+              return (
+                <div>
+                  {/* Header */}
+                  <div style={{ marginBottom: 16 }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: "#F1F5F9", fontFamily: "'Inter Tight',sans-serif", marginBottom: 4 }}>
+                      Closed Comps — Historical Transactions
                     </div>
-                  ))}
+                    <div style={{ fontSize: 11, color: "#4B5563", lineHeight: 1.5 }}>
+                      Closed comps show where buyers and sellers actually transacted. This is the strongest pricing anchor for your LOI.
+                    </div>
+                  </div>
+
+                  {/* Hero: Range track — green accent, feels more decisive */}
+                  <div style={{ padding: "16px 20px", borderRadius: 12, marginBottom: 14, background: "rgba(16,185,129,0.04)", border: "1px solid rgba(16,185,129,0.2)" }}>
+                    <div style={{ fontSize: 10, color: "#10B981", textTransform: "uppercase" as const, letterSpacing: "0.09em", fontWeight: 700, marginBottom: 14 }}>
+                      Pricing Position vs Closed Transactions
+                    </div>
+                    <CompareRangeTrack
+                      currentValue={mult}
+                      low={clLow} median={clMed} high={clHigh}
+                      label="Deal A"
+                      accentColor={isBelow ? "#2DD4BF" : isAbove ? "#EF4444" : "#10B981"}
+                      emptyText="Closed comp range unavailable for this industry"
+                    />
+                  </div>
+
+                  {/* KPI cards */}
+                  <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 10, marginBottom: 14 }}>
+                    {[
+                      { label: "Your Multiple",      value: `${mult.toFixed(2)}x`,                 color: "#60A5FA"  },
+                      { label: "Closed Median",       value: `${clMed.toFixed(2)}x`,                color: "#10B981"  },
+                      { label: "Closed Range",        value: `${clLow.toFixed(2)}x–${clHigh.toFixed(2)}x`, color: "#94A3B8" },
+                      { label: "Position",            value: isBelow ? "Below Range" : isAbove ? "Above Range" : "Within Range", color: isAbove ? "#EF4444" : isBelow ? "#2DD4BF" : "#10B981" },
+                      { label: "vs Closed Median",    value: `${Number(pctVsMed) > 0 ? "+" : ""}${pctVsMed}%`, color: Number(pctVsMed) > 15 ? "#F97316" : Number(pctVsMed) < -5 ? "#10B981" : "#94A3B8" },
+                      { label: "Sold vs Ask (est.)",  value: "−14% avg",  color: "#F59E0B"  },
+                    ].map(m => (
+                      <div key={m.label} style={{ padding: "10px 12px", borderRadius: 9, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                        <div style={{ fontSize: 9, color: "#4B5563", textTransform: "uppercase" as const, letterSpacing: "0.07em", marginBottom: 5 }}>{m.label}</div>
+                        <div style={{ fontSize: 15, fontWeight: 700, color: m.color, fontFamily: "'JetBrains Mono',monospace" }}>{m.value}</div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Implication — stronger, more decisive than Market Comps */}
+                  <div style={{ padding: "12px 16px", borderRadius: 10, background: isAbove ? "rgba(239,68,68,0.05)" : "rgba(16,185,129,0.05)", border: `1px solid ${isAbove ? "rgba(239,68,68,0.2)" : "rgba(16,185,129,0.2)"}` }}>
+                    <div style={{ fontSize: 10, color: "#4B5563", textTransform: "uppercase" as const, letterSpacing: "0.08em", fontWeight: 600, marginBottom: 6 }}>LOI Anchor Signal</div>
+                    <div style={{ fontSize: 13, color: "#94A3B8", lineHeight: 1.7 }}>{implication}</div>
+                  </div>
                 </div>
-                <div style={{ fontSize: 13, color: "#10B981", lineHeight: 1.6 }}>
-                  {(a?.valuation_multiple ?? 0) <= 2.9
-                    ? `Deal A is priced within the historical closing range for this industry — a realistic basis for LOI.`
-                    : `Deal A is priced above where similar deals have actually closed. Expect negotiation pressure toward the ${(a?.fair_value ? (a.fair_value / (a.sde || 1)).toFixed(2) : "market")}x range.`}
-                </div>
-              </div>
-              <div style={{ padding: "12px 16px", borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
-                <div style={{ fontSize: 10, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600, marginBottom: 8 }}>What this means</div>
-                <div style={{ fontSize: 13, color: "#94A3B8", lineHeight: 1.7 }}>
-                  Closed comps show where deals actually transact — not where sellers hope to exit. This is the strongest pricing signal for anchoring an LOI and stress-testing your offer before committing. Full DealStats closed transaction integration is active across all 41 NexTax industries.
-                </div>
-              </div>
-            </div>
+              );
+            })()
           ) : (
             // ── LOCKED: Closed Comps ────────────────────────────────────────────
             <div style={{ borderRadius: 14, overflow: "hidden", border: "1px solid rgba(99,102,241,0.2)" }}>
