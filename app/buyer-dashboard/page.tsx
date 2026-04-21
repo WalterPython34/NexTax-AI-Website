@@ -2860,27 +2860,69 @@ function UnderwritingPanel({
               isUnlocked={tabUnlocked("comps")}
               onUnlock={() => { unlockTab("comps"); }}
               previewHeight={230}
-              headline="This deal is an extreme outlier"
-              subtext="Compare against real market comps and percentile ranking."
-              ctaLabel="Unlock Market Comps →"
-              bullets={["Market position vs benchmark range","SDE margin and DSCR comparison","Normalization adjustment detail","Decision summary and action plan"]}
+              headline="This deal is outside typical market range"
+              subtext="Unlock full comps, percentile positioning, and pricing reality."
+              ctaLabel="Unlock Market Comps"
+              footerNote="1 free unlock available · Upgrade to Pro for full market positioning"
+              bullets={["Market position vs benchmark range","Adjusted SDE vs reported SDE","DSCR and financing viability","Decision summary and action plan"]}
             >
               <CompsTab
                 benchmarkContext={buildBenchmarkContext(deal)}
                 marketPosition={buildMarketPosition(deal)}
                 normalization={buildNormalizationContext(deal)}
                 compsData={buildCompsData(deal)}
-                insights={[
-                  `${IL[deal.industry] || deal.industry} deals typically trade between ${(SCORE_INDUSTRIES[deal.industry]?.benchmarkLow ?? 2.0).toFixed(2)}x and ${(SCORE_INDUSTRIES[deal.industry]?.benchmarkHigh ?? 3.5).toFixed(2)}x SDE.`,
-                  `This deal's asking multiple is ${(deal.valuation_multiple ?? 0).toFixed(2)}x — ${(deal.gap_pct ?? 0) > 0 ? `${deal.gap_pct}% above` : `${Math.abs(deal.gap_pct ?? 0)}% below`} the NexTax market fair value.`,
-                  `DSCR of ${deal.dscr.toFixed(2)}x ${deal.dscr >= 1.5 ? "provides strong debt coverage headroom" : deal.dscr >= 1.25 ? "meets minimum lender thresholds" : "does not meet standard lender minimums — financing at risk"}.`,
-                  ...(deal.normalization_trust_score != null && deal.normalization_trust_score < 80
-                    ? [`Data confidence score of ${deal.normalization_trust_score}/100 — market positioning reflects trust-adjusted earnings, not stated SDE.`]
-                    : []),
-                  ...(deal.benchmark_is_proxy
-                    ? ["Benchmark data is sourced from the closest available RMA proxy — interpret margin comparisons with appropriate context for this industry."]
-                    : []),
-                ]}
+                insights={(() => {
+                  const ind     = SCORE_INDUSTRIES[deal.industry];
+                  const low     = ind?.benchmarkLow  ?? 2.0;
+                  const high    = ind?.benchmarkHigh ?? 3.5;
+                  const mult    = deal.valuation_multiple ?? 0;
+                  const gp      = deal.gap_pct ?? 0;
+                  const dscr    = deal.dscr ?? 0;
+                  const trust   = deal.normalization_trust_score ?? 100;
+                  const isProxy = deal.benchmark_is_proxy;
+                  const bullets: string[] = [];
+
+                  // Pricing position — decisive
+                  if (mult > high * 1.5) {
+                    bullets.push(`Current pricing sits well above the range most buyers would consider financeable. At ${mult.toFixed(2)}x, this deal requires exceptional earnings quality or strategic rationale to justify.`);
+                  } else if (mult > high) {
+                    bullets.push(`Asking multiple of ${mult.toFixed(2)}x exceeds the typical ${low.toFixed(2)}x–${high.toFixed(2)}x benchmark range. This deal would likely need significant repricing to fall back into a normal market band.`);
+                  } else if (mult < low * 0.75) {
+                    bullets.push(`Asking multiple of ${mult.toFixed(2)}x is well below the ${low.toFixed(2)}x–${high.toFixed(2)}x benchmark range. If earnings are credible, this may represent an attractive entry point — investigate seller motivation.`);
+                  } else {
+                    bullets.push(`Asking multiple of ${mult.toFixed(2)}x falls within the typical ${low.toFixed(2)}x–${high.toFixed(2)}x current benchmark range for this industry.`);
+                  }
+
+                  // Fair value gap — actionable
+                  if (gp > 20) {
+                    bullets.push(`NexTax fair value estimate implies this deal is ${gp}% above market pricing. Normalized earnings imply materially lower value than the listing suggests.`);
+                  } else if (gp < -15) {
+                    bullets.push(`NexTax fair value estimate implies this deal is priced ${Math.abs(gp)}% below market. Validate earnings quality before treating this as confirmed upside.`);
+                  }
+
+                  // DSCR — financing reality
+                  if (dscr < 1.0) {
+                    bullets.push(`DSCR of ${dscr.toFixed(2)}x means this deal cannot service standard SBA or bank debt at current terms. Financing at the ask is not viable.`);
+                  } else if (dscr < 1.25) {
+                    bullets.push(`DSCR of ${dscr.toFixed(2)}x falls below the 1.25x minimum most lenders require. Expect financing challenges or required equity injection.`);
+                  } else if (dscr >= 1.5) {
+                    bullets.push(`DSCR of ${dscr.toFixed(2)}x provides solid debt coverage headroom. Financing is viable at current terms.`);
+                  }
+
+                  // Normalization signal
+                  if (trust < 60) {
+                    bullets.push(`Data confidence score of ${trust}/100 indicates reported financials appear unreliable. Use adjusted SDE — not broker-stated SDE — in your offer logic.`);
+                  } else if (trust < 80) {
+                    bullets.push(`Data confidence score of ${trust}/100 — request verified financials before relying on current earnings figures.`);
+                  }
+
+                  // Proxy note
+                  if (isProxy) {
+                    bullets.push(`Benchmark data is sourced from the closest available RMA proxy — not a direct industry match. Interpret comparisons with appropriate context.`);
+                  }
+
+                  return bullets;
+                })()}
                 decision={buildDecisionContext(deal)}
               />
             </BlurGateSection>
