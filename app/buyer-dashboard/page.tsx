@@ -3792,10 +3792,21 @@ function TabMyDeals({
           borderBottom: "1px solid rgba(255,255,255,0.06)",
           background: "rgba(255,255,255,0.015)",
         }}>
-          {["Deal", "Industry", "Asking", "Fair Value", "Gap", "Score", "Verdict", "Status", "Actions"].map(h => (
+          {([
+            { h: "Deal",       align: "left"   },
+            { h: "Industry",   align: "left"   },
+            { h: "Asking",     align: "left"   },
+            { h: "Fair Value", align: "left"   },
+            { h: "Gap",        align: "left"   },
+            { h: "Score",      align: "center" },
+            { h: "Verdict",    align: "left"   },
+            { h: "Status",     align: "left"   },
+            { h: "Actions",    align: "center" },
+          ] as { h: string; align: string }[]).map(({ h, align }) => (
             <div key={h} style={{
               fontSize: 10, color: "#374151", textTransform: "uppercase",
               letterSpacing: "0.08em", fontWeight: 600,
+              textAlign: align as any,
             }}>
               {h}
             </div>
@@ -3871,18 +3882,19 @@ function TabMyDeals({
               {/* Deal name + meta */}
               <div>
                 <div style={{
-                  fontSize: 13, fontWeight: 600,
+                  fontSize: 12, fontWeight: 700,
                   color: isFav ? "#F1F5F9" : "#E2E8F0",
                   display: "flex", alignItems: "center", gap: 4,
+                  fontFamily: "'JetBrains Mono',monospace",
                 }}>
                   {isFav && <span style={{ color: "#F59E0B", fontSize: 11 }}>★</span>}
-                  {IL[deal.industry] || deal.industry}
+                  {fmt(deal.asking_price)}
                 </div>
-                <div style={{ fontSize: 10, color: "#374151", marginTop: 2 }}>
-                  {deal.valuation_multiple.toFixed(2)}x · DSCR {deal.dscr.toFixed(2)}{loc ? ` · ${loc}` : ""}
+                <div style={{ fontSize: 10, color: "#4B5563", marginTop: 2 }}>
+                  {deal.valuation_multiple.toFixed(2)}x · DSCR {deal.dscr.toFixed(2)}
                 </div>
-                <div style={{ fontSize: 10, color: "#2D3748" }}>
-                  {ago(deal.created_at)} · {deal.tool_used === "risk_analyzer" ? "Full" : "Quick"}
+                <div style={{ fontSize: 10, color: "#374151" }}>
+                  {ago(deal.created_at)}{loc ? ` · ${loc}` : ""}
                 </div>
               </div>
 
@@ -3914,7 +3926,9 @@ function TabMyDeals({
               </div>
 
               {/* Score ring */}
-              <Ring score={deal.overall_score} size={32} />
+              <div style={{ display: "flex", justifyContent: "center" }}>
+                <Ring score={deal.overall_score} size={32} />
+              </div>
 
               {/* Verdict badge */}
               <div style={{
@@ -3947,7 +3961,7 @@ function TabMyDeals({
               </select>
 
               {/* Actions — stopPropagation; row itself triggers underwriting */}
-              <div style={{ display: "flex", gap: 4, alignItems: "center" }} onClick={e => e.stopPropagation()}>
+              <div style={{ display: "flex", gap: 4, alignItems: "center", justifyContent: "center" }} onClick={e => e.stopPropagation()}>
                 <StarButton dealId={deal.id} favorites={favorites} onToggle={onToggleFav} />
                 <button onClick={(e) => { e.stopPropagation(); onOpenNotes(deal); }} title="Notes & Intel"
                   style={{ background: "none", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 6, cursor: "pointer", padding: "3px 6px", fontSize: 11, color: "#4B5563" }}>
