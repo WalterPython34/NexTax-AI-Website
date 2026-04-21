@@ -3787,8 +3787,9 @@ function TabMyDeals({
         {/* Table header */}
         <div style={{
           display: "grid",
-          gridTemplateColumns: "1.6fr 0.8fr 1fr 1fr 60px 48px 130px 90px auto",
+          gridTemplateColumns: "180px 110px 100px 100px 60px 48px 140px 80px auto",
           gap: "0 8px", padding: "10px 18px",
+          alignItems: "center",
           borderBottom: "1px solid rgba(255,255,255,0.06)",
           background: "rgba(255,255,255,0.015)",
         }}>
@@ -3819,12 +3820,12 @@ function TabMyDeals({
             key={i}
             style={{
               display: "grid",
-              gridTemplateColumns: "1.6fr 0.8fr 1fr 1fr 60px 48px 130px 90px auto",
+              gridTemplateColumns: "180px 110px 100px 100px 60px 48px 140px 80px auto",
               gap: "0 8px", padding: "14px 18px",
               borderBottom: "1px solid rgba(255,255,255,0.04)", alignItems: "center",
             }}
           >
-            {[70, 60, 70, 70, 40, 34, 90, 80, 100].map((w, j) => (
+            {[120, 80, 80, 80, 40, 34, 100, 60, 100].map((w, j) => (
               <Skel key={j} h={j === 5 ? 34 : 12} w={w} />
             ))}
           </div>
@@ -3870,7 +3871,7 @@ function TabMyDeals({
               onClick={() => onOpenUnderwriting(deal)}
               style={{
                 display: "grid",
-                gridTemplateColumns: "1.6fr 0.8fr 1fr 1fr 60px 48px 130px 90px auto",
+                gridTemplateColumns: "180px 110px 100px 100px 60px 48px 140px 80px auto",
                 gap: "0 8px", padding: "13px 18px",
                 borderBottom: i < filtered.length - 1 ? "1px solid rgba(255,255,255,0.03)" : "none",
                 alignItems: "center", transition: "background 0.12s",
