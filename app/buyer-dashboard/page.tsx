@@ -3955,7 +3955,12 @@ function CompareRangeTrack({
                     : isAbove  ? "#EF4444"
                     :            accentColor;
 
-  const posLabel = isBelow  ? "below range" : isAbove ? "above range" : "in range";
+  // Extreme outlier threshold: >50% above high bound
+  const isExtreme = currentValue > high * 1.5;
+  const posLabel  = isBelow   ? "below range"
+                  : isExtreme ? "extreme outlier"
+                  : isAbove   ? "above range"
+                  :             "in range";
 
   return (
     <div style={{ padding: "4px 0 8px" }}>
@@ -3999,25 +4004,41 @@ function CompareRangeTrack({
         }} />
       </div>
 
-      {/* Labels below track */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginTop: 10 }}>
-        <div style={{ fontSize: 10, color: "#374151" }}>← Below range</div>
-        <div style={{ textAlign: "center" as const }}>
+      {/* Badge anchored to the dot — position:relative wrapper so badge left matches markerPct */}
+      <div style={{ position: "relative", marginTop: 10, height: 44 }}>
+        {/* Far-left / far-right axis hint labels — only when in range so they don't crowd edge badge */}
+        {isInside && (
+          <>
+            <span style={{ position: "absolute", left: 0, top: 14, fontSize: 9, color: "#2D3748" }}>← Low</span>
+            <span style={{ position: "absolute", right: 0, top: 14, fontSize: 9, color: "#2D3748" }}>High →</span>
+          </>
+        )}
+        {/* Badge — absolutely positioned at markerPct, clamped 5%–95% so it never bleeds off edge */}
+        <div style={{
+          position: "absolute",
+          left: `${Math.max(5, Math.min(95, markerPct))}%`,
+          top: 0,
+          transform: "translateX(-50%)",
+          display: "flex",
+          flexDirection: "column" as const,
+          alignItems: "center",
+          gap: 2,
+          whiteSpace: "nowrap" as const,
+        }}>
           <div style={{
-            display: "inline-flex", alignItems: "center", gap: 5,
-            padding: "3px 10px", borderRadius: 20,
-            background: isInside ? `${markerColor}18` : isAbove ? "rgba(239,68,68,0.1)" : "rgba(45,212,191,0.1)",
-            border: `1px solid ${markerColor}44`,
+            display: "inline-flex", alignItems: "center", gap: 4,
+            padding: "3px 9px", borderRadius: 20,
+            background: isInside ? `${markerColor}18` : isAbove ? "rgba(239,68,68,0.12)" : "rgba(45,212,191,0.12)",
+            border: `1px solid ${markerColor}55`,
           }}>
-            <div style={{ width: 6, height: 6, borderRadius: "50%", background: markerColor, flexShrink: 0 }} />
+            <div style={{ width: 5, height: 5, borderRadius: "50%", background: markerColor, flexShrink: 0 }} />
             <span style={{ fontSize: 10, fontWeight: 700, color: markerColor, fontFamily: "'JetBrains Mono',monospace" }}>
               {currentValue.toFixed(2)}x
             </span>
-            <span style={{ fontSize: 9, color: markerColor + "99" }}>{label}</span>
+            <span style={{ fontSize: 9, color: markerColor + "bb" }}>{label}</span>
           </div>
-          <div style={{ fontSize: 9, color: markerColor + "88", marginTop: 3 }}>{posLabel}</div>
+          <div style={{ fontSize: 9, color: markerColor + "99" }}>{posLabel}</div>
         </div>
-        <div style={{ fontSize: 10, color: "#374151" }}>Above range →</div>
       </div>
     </div>
   );
@@ -4474,7 +4495,7 @@ function TabCompare({ deals, isPro, onAnalyzeNew }: { deals: DealRun[]; isPro: b
                       { label: "Market Range",        value: `${mktLow.toFixed(2)}x–${mktHigh.toFixed(2)}x`, color: "#94A3B8" },
                       { label: "Position",            value: mult < mktLow ? "Below Range" : mult > mktHigh ? "Above Range" : mult <= mktMed ? "Below Median" : "Above Median", color: mult > mktHigh ? "#EF4444" : mult < mktLow ? "#2DD4BF" : "#60A5FA" },
                       { label: "Gap vs Median",       value: `${mult > mktMed ? "+" : ""}${((mult - mktMed) / mktMed * 100).toFixed(0)}%`, color: mult > mktMed ? "#F97316" : "#10B981" },
-                      { label: "Percentile",          value: "Approximate", color: "#374151" },
+                      { label: "Market Positioning",   value: mult > mktHigh ? "Above Range" : mult < mktLow ? "Below Range" : mult > mktMed ? "Above Median" : "Below Median", color: mult > mktHigh ? "#EF4444" : mult < mktLow ? "#2DD4BF" : mult > mktMed ? "#F59E0B" : "#10B981" },
                     ].map(m => (
                       <div key={m.label} style={{ padding: "10px 12px", borderRadius: 9, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
                         <div style={{ fontSize: 9, color: "#4B5563", textTransform: "uppercase" as const, letterSpacing: "0.07em", marginBottom: 5 }}>{m.label}</div>
@@ -4505,7 +4526,7 @@ function TabCompare({ deals, isPro, onAnalyzeNew }: { deals: DealRun[]; isPro: b
                   {[
                     { label: "Median Ask Multiple", value: "3.2x"  },
                     { label: "Active Listings",      value: "41"    },
-                    { label: "Pricing Percentile",   value: "68th"  },
+                    { label: "Market Positioning",    value: "68th"  },
                     { label: "Market Spread",        value: "2.4x–4.1x" },
                   ].map(m => (
                     <div key={m.label} style={{ padding: "12px", borderRadius: 9, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", textAlign: "center" }}>
