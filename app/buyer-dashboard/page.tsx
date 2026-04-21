@@ -2287,10 +2287,12 @@ function buildBenchmarkContext(deal: DealRun): BenchmarkContext {
     marginLow:    ind ? ind.marginRange[0] / 100 : 0.10,
     marginMedian: ind ? ((ind.marginRange[0] + ind.marginRange[1]) / 2) / 100 : 0.20,
     marginHigh:   ind ? ind.marginRange[1] / 100 : 0.35,
-    // DSCR typical range — conservative industry norms
-    dscrLow:    1.0,
-    dscrMedian: 1.5,
-    dscrHigh:   2.5,
+    // DSCR range — per-industry (lib/dscrRanges.ts)
+    // getDscrRange not imported here (server lib) — inline thresholds from SCORE_INDUSTRIES
+    // For now use mid-range defaults; full wiring done when dscrRanges.ts is deployed
+    dscrLow:    ind ? (ind.benchmarkLow  >= 3 ? 1.1 : 1.0) : 1.0,
+    dscrMedian: ind ? (ind.benchmarkHigh >= 4 ? 1.35 : 1.25) : 1.25,
+    dscrHigh:   ind ? (ind.benchmarkHigh >= 4 ? 1.8  : 1.6 ) : 1.6,
   };
 }
 
@@ -2417,7 +2419,77 @@ function UnderwritingPanel({
   onClose: () => void;
   onShowUpgrade?: () => void;
 }) {
-  const [activeTab, setActiveTab] = useState<UwTab>("stress");
+  const [activeTab, setActiveTab]    = useState<UwTab>("stress");
+  const [compsData, setCompsData]    = useState<CompsData>({ comps: [], currentDealOutsideRange: false });
+
+  // Fetch real comps from dealstats_transactions when panel opens
+  useEffect(() => {
+    const ind      = SCORE_INDUSTRIES[deal.industry];
+    const multiple = deal.valuation_multiple ?? 0;
+    const low      = ind?.benchmarkLow  ?? 2.0;
+    const high     = ind?.benchmarkHigh ?? 3.5;
+    const outside  = multiple < low * 0.80 || multiple > high * 1.20;
+
+    // Build NAICS from industry key for Supabase query
+    const INDUSTRY_NAICS: Record<string, string> = {
+      food_beverage: "722511", field_services: "561730", specialty_trade: "238900",
+      auto_services: "811111", healthcare_clinical: "621111", med_spa: "621399",
+      personal_services: "812112", professional_services: "541611", saas: "511210",
+      digital: "454110", manufacturing: "339900", retail: "441300", wholesale: "424900",
+      construction: "236220", staffing: "561320", marketing: "541810",
+      engineering: "541330", veterinary: "541940", realestatebrok: "531210",
+      propertymanage: "531311", seniorcare: "623312", physicaltherapy: "621340",
+      remodeling: "236118", pestcontrol: "561710", signmaking: "339950",
+      hairsalon: "812112", clothing: "448140", grocery: "445110",
+      behavioral_health: "621420",
+    };
+
+    const naics = INDUSTRY_NAICS[deal.industry];
+    if (!naics) { setCompsData({ comps: [], currentDealOutsideRange: outside }); return; }
+
+    supabase
+      .from("dealstats_transactions")
+      .select("mvic_price, revenue, sde, sale_year, naics_description, naics_code")
+      .eq("naics_code", naics)
+      .not("mvic_price", "is", null)
+      .not("sde", "is", null)
+      .gt("sde", 0)
+      .gt("mvic_price", 0)
+      .order("sale_year", { ascending: false })
+      .limit(12)
+      .then(({ data }) => {
+        let rows = data ?? [];
+        // Fallback: 4-digit prefix if sparse
+        if (rows.length < 3) {
+          return supabase
+            .from("dealstats_transactions")
+            .select("mvic_price, revenue, sde, sale_year, naics_description, naics_code")
+            .like("naics_code", `${naics.slice(0, 4)}%`)
+            .not("mvic_price", "is", null)
+            .not("sde", "is", null)
+            .gt("sde", 0).gt("mvic_price", 0)
+            .order("sale_year", { ascending: false })
+            .limit(10)
+            .then(({ data: broad }) => broad ?? []);
+        }
+        return rows;
+      })
+      .then((rows: any[]) => {
+        const comps = (rows as any[])
+          .filter(r => r.mvic_price > 0 && r.sde > 0)
+          .map((r: any, i: number) => ({
+            id:       `ds-${i}`,
+            name:     `${(r.naics_description ?? deal.industry).split(",")[0].trim()}${r.sale_year ? ` (${r.sale_year})` : ""}`,
+            revenue:  r.revenue ?? 0,
+            sde:      r.sde,
+            multiple: +(r.mvic_price / r.sde).toFixed(2),
+            note:     r.sale_year ? `Closed ${r.sale_year}` : null,
+          }))
+          .slice(0, 7);
+        setCompsData({ comps, currentDealOutsideRange: outside });
+      })
+      .catch(() => setCompsData({ comps: [], currentDealOutsideRange: outside }));
+  }, [deal.id, deal.industry]);
 
   const ind = SCORE_INDUSTRIES[deal.industry];
   const gp  = deal.gap_pct ?? 0;
@@ -2870,7 +2942,7 @@ function UnderwritingPanel({
                 benchmarkContext={buildBenchmarkContext(deal)}
                 marketPosition={buildMarketPosition(deal)}
                 normalization={buildNormalizationContext(deal)}
-                compsData={buildCompsData(deal)}
+                compsData={compsData}
                 insights={(() => {
                   const ind     = SCORE_INDUSTRIES[deal.industry];
                   const low     = ind?.benchmarkLow  ?? 2.0;
