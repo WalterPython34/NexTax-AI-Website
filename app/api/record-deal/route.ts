@@ -2,6 +2,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { normalizeDealFinancials, getConvictionCap, buildNormalizationPayload } from "@/lib/normalizationIntegration";
+import { applyDealClassification } from "@/lib/dealClassifier";
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -224,6 +225,21 @@ export async function POST(req: NextRequest) {
     if (error) {
       console.error("Deal record error:", error);
       return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    }
+
+    // ── Classification — fire-and-forget after successful insert ───────────────
+    // Runs async so it never blocks the response.
+    // Writes to: model_type, sub_model, benchmark_family, classification_confidence
+    // on the deal_runs row via applyDealClassification(dealId).
+    {
+      const { data: justInserted } = await supabaseAdmin
+        .from("deal_runs").select("id").eq("fingerprint", fingerprint)
+        .order("created_at", { ascending: false }).limit(1).single();
+      if (justInserted?.id) {
+        applyDealClassification(justInserted.id).catch(err =>
+          console.error("[record-deal] classification error:", err)
+        );
+      }
     }
 
     // Fetch the inserted row so callers get the full scored deal object back.
