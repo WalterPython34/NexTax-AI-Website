@@ -95,11 +95,11 @@ function statusColor(s: LenderMetric["status"]): string {
 
 function MetricsGrid({ metrics }: { metrics: LenderMetric[] }) {
   return (
-    <div style={{ padding: "15px 18px", borderRadius: 12, background: T.bgCard, border: `1px solid ${T.border}`, marginBottom: 12 }}>
+    <div style={{ padding: "16px 20px", borderRadius: 12, background: T.bgCard, border: `1px solid ${T.border}`, marginBottom: 12 }}>
       <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: T.textMuted, fontFamily: T.sans, marginBottom: 12 }}>
         Core Metrics
       </div>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 10 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 10 }}>
         {metrics.map((m) => (
           <div key={m.label} style={{
             padding: "10px 12px", borderRadius: 9,
@@ -143,7 +143,7 @@ function severityIcon(s: WhyBullet["severity"]): string {
 
 function WhyBlock({ bullets }: { bullets: WhyBullet[] }) {
   return (
-    <div style={{ padding: "15px 18px", borderRadius: 12, background: T.bgCard, border: `1px solid ${T.border}`, marginBottom: 12 }}>
+    <div style={{ padding: "16px 20px", borderRadius: 12, background: T.bgCard, border: `1px solid ${T.border}`, marginBottom: 12 }}>
       <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: T.textMuted, fontFamily: T.sans, marginBottom: 11 }}>
         Why This Deal Is / Is Not Lender-Ready
       </div>
@@ -187,7 +187,7 @@ const FIT_COLOR: Record<string, string> = {
 function IndustryFitSection({ fit }: { fit: LenderReadinessOutput["industryFit"] }) {
   const c = FIT_COLOR[fit.state];
   return (
-    <div style={{ padding: "15px 18px", borderRadius: 12, background: T.bgCard, border: `1px solid ${T.border}`, marginBottom: 12 }}>
+    <div style={{ padding: "16px 20px", borderRadius: 12, background: T.bgCard, border: `1px solid ${T.border}`, marginBottom: 12 }}>
       <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: T.textMuted, fontFamily: T.sans, marginBottom: 11 }}>
         Industry Fit
       </div>
@@ -273,7 +273,7 @@ function DocumentChecklist({ groups }: { groups: DocGroup[] }) {
   const pct       = total > 0 ? Math.round((confirmed / total) * 100) : 0;
 
   return (
-    <div style={{ padding: "15px 18px", borderRadius: 12, background: T.bgCard, border: `1px solid ${T.border}`, marginBottom: 12 }}>
+    <div style={{ padding: "16px 20px", borderRadius: 12, background: T.bgCard, border: `1px solid ${T.border}`, marginBottom: 12 }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 11 }}>
         <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: T.textMuted, fontFamily: T.sans }}>
           Document Readiness
@@ -302,7 +302,13 @@ function DocumentChecklist({ groups }: { groups: DocGroup[] }) {
         </span>
       </div>
 
-      {groups.map((g) => <ChecklistGroup key={g.id} group={g} />)}
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))",
+        gap: "0 20px",
+      }}>
+        {groups.map((g) => <ChecklistGroup key={g.id} group={g} />)}
+      </div>
     </div>
   );
 }
@@ -321,7 +327,7 @@ function ImprovementActions({ actions }: { actions: ImprovementAction[] }) {
   if (actions.length === 0) return null;
 
   return (
-    <div style={{ padding: "15px 18px", borderRadius: 12, background: T.bgCard, border: `1px solid ${T.border}`, marginBottom: 12 }}>
+    <div style={{ padding: "16px 20px", borderRadius: 12, background: T.bgCard, border: `1px solid ${T.border}`, marginBottom: 12 }}>
       <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: T.textMuted, fontFamily: T.sans, marginBottom: 11 }}>
         What Would Improve Lender Readiness
       </div>
@@ -362,12 +368,22 @@ function ImprovementActions({ actions }: { actions: ImprovementAction[] }) {
 export function LenderReadinessTab({ data }: { data: LenderReadinessOutput }) {
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 0 }}>
-      <VerdictHero         data={data} />
-      <MetricsGrid         metrics={data.metrics} />
-      <WhyBlock            bullets={data.whyBullets} />
-      <IndustryFitSection  fit={data.industryFit} />
-      <DocumentChecklist   groups={data.docGroups} />
-      <ImprovementActions  actions={data.improvements} />
+      <VerdictHero data={data} />
+      <MetricsGrid metrics={data.metrics} />
+
+      {/* Why / Industry Fit — side-by-side on wide, stacked on narrow */}
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))",
+        gap: 12,
+        marginBottom: 0,
+      }}>
+        <WhyBlock bullets={data.whyBullets} />
+        <IndustryFitSection fit={data.industryFit} />
+      </div>
+
+      <DocumentChecklist  groups={data.docGroups} />
+      <ImprovementActions actions={data.improvements} />
 
       {/* Footer disclaimer */}
       <div style={{
