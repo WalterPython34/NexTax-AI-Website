@@ -11,6 +11,8 @@ import { buildLenderReadiness } from "@/lib/lenderReadiness";
 import { DealMemoTab } from "@/components/DealMemoTab";
 import { buildRiskFlags, buildDiligenceQuestions, buildDecisionTriggers } from "@/lib/dealMemo";
 import { INDUSTRY_FIT } from "@/lib/lenderReadiness";
+import { LoiBuilderTab } from "@/components/LoiBuilderTab";
+import { buildLoiRecommendation } from "@/lib/loiBuilder";
 import {
   CompsTab,
   type CompsTabProps,
@@ -2411,7 +2413,7 @@ function buildDecisionContext(deal: DealRun): DecisionContext {
 
 // ─── UNDERWRITING PANEL ───────────────────────────────────────────────────────
 
-type UwTab = "stress" | "lender" | "sba" | "negotiation" | "memo" | "comps";
+type UwTab = "stress" | "lender" | "sba" | "negotiation" | "loi" | "memo" | "comps";
 
 function UnderwritingPanel({
   deal, isPro, onClose, onShowUpgrade,
@@ -2534,6 +2536,7 @@ function UnderwritingPanel({
     { id: "lender",      label: "Lender Readiness", icon: "🏛️" },
     { id: "sba",         label: "SBA Finance",       icon: "🏦" },
     { id: "negotiation", label: "Negotiation",   icon: "🤝" },
+    { id: "loi",         label: "LOI Builder",    icon: "📝" },
     { id: "memo",        label: "Deal Memo",      icon: "📄" },
     { id: "comps",       label: "Market Comps",   icon: "📊" },
   ];
@@ -3149,6 +3152,44 @@ function UnderwritingPanel({
           )}
 
           {/* ── DEAL MEMO ── */}
+          {/* ── LOI BUILDER ── */}
+          {activeTab === "loi" && (
+            <BlurGateSection
+              isUnlocked={tabUnlocked("loi")}
+              onUnlock={() => { unlockTab("loi"); }}
+              previewHeight={260}
+              headline="See how a disciplined buyer would structure the LOI"
+              subtext="Unlock price framing, seller note strategy, contingencies, and pre-LOI protections."
+              ctaLabel="Unlock LOI Builder"
+              footerNote="1 free unlock available · Upgrade to Pro for full deal structuring"
+              bullets={[
+                "Anchor offer, target range, and walk-away price",
+                "Cash / seller note / earnout recommendation",
+                "Diligence period, training, and contingencies",
+                "Buyer protections and LOI checklist",
+              ]}
+            >
+              <LoiBuilderTab
+                data={buildLoiRecommendation({
+                  asking_price:    deal.asking_price,
+                  fair_value:      deal.fair_value ?? 0,
+                  usableSDE:       usableSDE,
+                  gap_pct:         deal.gap_pct ?? null,
+                  dscr:            deal.dscr,
+                  stressDscr15:    stressDscr15,
+                  stressDscr25:    stressDscr25,
+                  trustScore:      deal.normalization_trust_score ?? 100,
+                  earningsSource:  (deal.earnings_source as any) ?? "reported",
+                  industryFit:     (INDUSTRY_FIT[deal.industry] ?? "requires_review") as any,
+                  sbaEligible:     sbaEligible,
+                  owner_operated:         deal.owner_operated ?? null,
+                  customer_concentration: deal.customer_concentration ?? null,
+                  years_in_business:      deal.years_in_business ?? null,
+                })}
+              />
+            </BlurGateSection>
+          )}
+
           {activeTab === "memo" && (
             <BlurGateSection
               isUnlocked={tabUnlocked("memo")}
