@@ -2833,14 +2833,33 @@ function UnderwritingPanel({
 
           {/* ── STRESS TEST ── */}
           {activeTab === "stress" && (
+            <>
+              {/* ── FREE: Teaser — base DSCR + one-line downside takeaway ── */}
+              <div style={{ marginBottom: 12, padding: "12px 14px", borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                <div style={{ fontSize: 10, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 700, marginBottom: 8 }}>At a Glance</div>
+                <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginBottom: 8 }}>
+                  <div>
+                    <div style={{ fontSize: 9, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 2 }}>Base DSCR</div>
+                    <div style={{ fontSize: 22, fontWeight: 800, color: col(deal.dscr), fontFamily: "'JetBrains Mono',monospace" }}>{deal.dscr.toFixed(2)}x</div>
+                  </div>
+                  <div style={{ flex: 1, fontSize: 12, color: "#94A3B8", lineHeight: 1.55 }}>
+                    {stressDscr15 >= 1.25
+                      ? "Coverage holds under a −15% revenue stress — downside profile looks resilient."
+                      : stressDscr15 >= 1.0
+                      ? "Coverage thins under a −15% revenue stress — headroom is limited."
+                      : "Coverage breaks under a −15% revenue stress — deal is fragile to modest downside."}
+                  </div>
+                </div>
+              </div>
+
             <BlurGateSection
               isUnlocked={tabUnlocked("stress")}
               onUnlock={() => { unlockTab("stress"); }}
               previewHeight={220}
-              headline="This deal breaks under pressure"
-              subtext="A −15% revenue drop kills financing viability. See full downside scenarios and break-even analysis."
+              headline="How bad could it get?"
+              subtext="Unlock full downside scenarios, break-even analysis, and debt service breakdown."
               ctaLabel="Unlock Stress Test →"
-              bullets={["DSCR at current and stressed terms","−15% and −25% revenue scenarios","Break-even SDE and revenue","Monthly debt service projection"]}
+              bullets={["−15% and −25% revenue scenarios","Break-even SDE and revenue","Annual and monthly debt service","Resilience takeaway"]}
             >
               <div style={{ marginBottom: 16, padding: "12px 14px", borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
                 <div style={{ fontSize: 11, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600, marginBottom: 10 }}>Base Case</div>
@@ -2861,59 +2880,83 @@ function UnderwritingPanel({
                   : `A −15% revenue decline pushes DSCR below 1.25x — deal loses financing viability under moderate stress. Validate revenue stability before proceeding.`}
               </div>
             </BlurGateSection>
+            </>
           )}
 
           {/* ── LENDER READINESS ── */}
-          {activeTab === "lender" && (
-            <BlurGateSection
-              isUnlocked={tabUnlocked("lender")}
-              onUnlock={() => { unlockTab("lender"); }}
-              previewHeight={240}
-              headline="Will this deal actually get funded?"
-              subtext="Unlock lender readiness, required documents, and prequal risk flags."
-              ctaLabel="Unlock Lender Readiness"
-              footerNote="1 free unlock available · Upgrade to Pro for full lender prequal view"
-              bullets={[
-                "Lender verdict and DSCR stress results",
-                "SBA 7(a) eligibility and loan-size fit",
-                "Full document checklist (seller, buyer, acquisition)",
-                "Industry fit and concrete improvement actions",
-              ]}
-            >
-              <LenderReadinessTab
-                data={buildLenderReadiness({
-                  asking_price:    deal.asking_price,
-                  usableSDE:       usableSDE,
-                  dscr:            deal.dscr,
-                  stressDscr15:    stressDscr15,
-                  stressDscr25:    stressDscr25,
-                  industry:        deal.industry,
-                  trustScore:      deal.normalization_trust_score ?? 100,
-                  earningsSource:  (deal.earnings_source as any) ?? "reported",
-                  fair_value:      deal.fair_value ?? 0,
-                  gap_pct:         deal.gap_pct ?? null,
-                  valuation_multiple: deal.valuation_multiple ?? 0,
-                  owner_operated:         deal.owner_operated ?? null,
-                  customer_concentration: deal.customer_concentration ?? null,
-                  has_real_estate:        deal.has_real_estate ?? null,
-                  buyer_owns_other_biz:   null,
-                })}
-              />
-            </BlurGateSection>
-          )}
+          {activeTab === "lender" && (() => {
+            const lrData = buildLenderReadiness({
+              asking_price:    deal.asking_price,
+              usableSDE:       usableSDE,
+              dscr:            deal.dscr,
+              stressDscr15:    stressDscr15,
+              stressDscr25:    stressDscr25,
+              industry:        deal.industry,
+              trustScore:      deal.normalization_trust_score ?? 100,
+              earningsSource:  (deal.earnings_source as any) ?? "reported",
+              fair_value:      deal.fair_value ?? 0,
+              gap_pct:         deal.gap_pct ?? null,
+              valuation_multiple: deal.valuation_multiple ?? 0,
+              owner_operated:         deal.owner_operated ?? null,
+              customer_concentration: deal.customer_concentration ?? null,
+              has_real_estate:        deal.has_real_estate ?? null,
+              buyer_owns_other_biz:   null,
+            });
+            const verdictColor = lrData.verdict === "likely_financeable" ? "#10B981"
+                               : lrData.verdict === "borderline"          ? "#F59E0B"
+                               : lrData.verdict === "manual_review"       ? "#818CF8"
+                               :                                             "#EF4444";
+            const fitColor = lrData.industryFit.state === "preferred"       ? "#10B981"
+                           : lrData.industryFit.state === "standard"        ? "#2DD4BF"
+                           : lrData.industryFit.state === "higher_scrutiny" ? "#F59E0B"
+                           : lrData.industryFit.state === "sba_ineligible"  ? "#EF4444"
+                           :                                                  "#64748B";
+            return (
+            <>
+              {/* ── FREE: Teaser — verdict + industry fit + outlook ── */}
+              <div style={{ marginBottom: 12, padding: "12px 14px", borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                <div style={{ fontSize: 10, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 700, marginBottom: 8 }}>At a Glance</div>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 10 }}>
+                  <div style={{ padding: "5px 11px", borderRadius: 8, background: `${verdictColor}14`, border: `1px solid ${verdictColor}44` }}>
+                    <div style={{ fontSize: 9, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 2 }}>Lender Verdict</div>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: verdictColor, fontFamily: "'Inter Tight',sans-serif" }}>{lrData.verdictLabel}</div>
+                  </div>
+                  <div style={{ padding: "5px 11px", borderRadius: 8, background: `${fitColor}14`, border: `1px solid ${fitColor}44` }}>
+                    <div style={{ fontSize: 9, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 2 }}>Industry Fit</div>
+                    <div style={{ fontSize: 12, fontWeight: 700, color: fitColor, fontFamily: "'Inter Tight',sans-serif" }}>{lrData.industryFit.label}</div>
+                  </div>
+                </div>
+                <div style={{ fontSize: 12, color: "#94A3B8", lineHeight: 1.55 }}>
+                  {lrData.prequalOutlook}
+                </div>
+              </div>
+
+              <BlurGateSection
+                isUnlocked={tabUnlocked("lender")}
+                onUnlock={() => { unlockTab("lender"); }}
+                previewHeight={240}
+                headline="What will it take to close?"
+                subtext="Unlock the full lender prequal view — document checklist, required actions, and risk flags."
+                ctaLabel="Unlock Lender Readiness"
+                footerNote="1 free unlock available · Upgrade to Pro for full lender prequal view"
+                bullets={[
+                  "Core metrics and DSCR stress results",
+                  "Complete seller / buyer / acquisition checklist",
+                  "Why this deal is / is not lender-ready",
+                  "Concrete improvement actions",
+                ]}
+              >
+                <LenderReadinessTab data={lrData} />
+              </BlurGateSection>
+            </>
+            );
+          })()}
 
           {/* ── SBA FINANCE ── */}
           {activeTab === "sba" && (
-            <BlurGateSection
-              isUnlocked={tabUnlocked("sba")}
-              onUnlock={() => { unlockTab("sba"); }}
-              previewHeight={220}
-              headline="This deal may not get approved"
-              subtext="See exact loan structure, DSCR thresholds, and lender viability."
-              ctaLabel="Unlock SBA Financing →"
-              bullets={["SBA 7(a) eligibility assessment","Loan sizing at 90% LTV","Equity recovery timeline","Cash-on-cash return (Year 1)","DSCR at SBA terms"]}
-            >
-              <div style={{ marginBottom: 14, padding: "10px 14px", borderRadius: 10, background: sbaEligible ? "rgba(16,185,129,0.06)" : "rgba(245,158,11,0.06)", border: `1px solid ${sbaEligible ? "rgba(16,185,129,0.2)" : "rgba(245,158,11,0.2)"}`, display: "flex", alignItems: "center", gap: 10 }}>
+            <>
+              {/* ── FREE: Teaser — eligibility + loan sizing fundamentals ── */}
+              <div style={{ marginBottom: 12, padding: "10px 14px", borderRadius: 10, background: sbaEligible ? "rgba(16,185,129,0.06)" : "rgba(245,158,11,0.06)", border: `1px solid ${sbaEligible ? "rgba(16,185,129,0.2)" : "rgba(245,158,11,0.2)"}`, display: "flex", alignItems: "center", gap: 10 }}>
                 <span style={{ fontSize: 20 }}>{sbaEligible ? "✅" : "⚠️"}</span>
                 <div>
                   <div style={{ fontSize: 13, fontWeight: 700, color: sbaEligible ? "#10B981" : "#F59E0B" }}>
@@ -2924,12 +2967,26 @@ function UnderwritingPanel({
                   </div>
                 </div>
               </div>
-              <div style={{ padding: "12px 14px", borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", marginBottom: 16 }}>
-                <div style={{ fontSize: 11, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600, marginBottom: 10 }}>Loan Sizing (90% LTV)</div>
-                <MetricRow label="Loan Amount"           value={fmt(sbaLoan)}    color="#60A5FA" />
+
+              <div style={{ padding: "12px 14px", borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", marginBottom: 12 }}>
+                <div style={{ fontSize: 10, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 700, marginBottom: 10 }}>Loan Basics</div>
+                <MetricRow label="Loan Amount (90% LTV)" value={fmt(sbaLoan)}    color="#60A5FA" />
                 <MetricRow label="Down Payment (10%)"    value={fmt(sbaDown)}    color="#F59E0B" />
-                <MetricRow label="Est. Monthly Payment"  value={fmt(sbaMonthly)} sub="10yr @ 10.75% (SBA prime+2.75)" />
                 <MetricRow label="DSCR at SBA Terms"     value={sbaDscr.toFixed(2) + "x"} color={col(sbaDscr)} />
+              </div>
+
+            <BlurGateSection
+              isUnlocked={tabUnlocked("sba")}
+              onUnlock={() => { unlockTab("sba"); }}
+              previewHeight={220}
+              headline="Can it be financed — and is it attractive?"
+              subtext="Unlock full debt service, equity recovery timeline, and Year-1 cash-on-cash returns."
+              ctaLabel="Unlock SBA Financing →"
+              bullets={["Monthly and annual debt service","Equity recovery timeline","Year-1 cash-on-cash return","Stressed recovery sensitivity"]}
+            >
+              <div style={{ padding: "12px 14px", borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", marginBottom: 16 }}>
+                <div style={{ fontSize: 11, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600, marginBottom: 10 }}>Debt Service Detail</div>
+                <MetricRow label="Est. Monthly Payment"  value={fmt(sbaMonthly)} sub="10yr @ 10.75% (SBA prime+2.75)" />
                 <MetricRow label="Annual Debt Service"   value={fmt(sbaMonthly * 12)} />
               </div>
 
@@ -3106,18 +3163,29 @@ function UnderwritingPanel({
                 SBA 7(a) rates typically prime + 2.25–2.75%. Current estimates use 10.75%. Equity injection, goodwill caps, and lender overlays may affect final terms. Consult an SBA-preferred lender for formal qualification.
               </div>
             </BlurGateSection>
+            </>
           )}
 
           {/* ── NEGOTIATION ── */}
           {activeTab === "negotiation" && (
+            <>
+              {/* ── FREE: Thin teaser — one-line framing above the gate ── */}
+              <div style={{ marginBottom: 12, padding: "10px 14px", borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", fontSize: 12, color: "#94A3B8", lineHeight: 1.55 }}>
+                {gp > 10
+                  ? "Pricing is meaningfully above fair value — structure matters more than price alone."
+                  : gp < -5
+                  ? "Pricing is below fair value — move carefully to understand why before moving up."
+                  : "Pricing sits near fair value — negotiation should focus on terms and timing."}
+              </div>
+
             <BlurGateSection
               isUnlocked={tabUnlocked("negotiation")}
               onUnlock={() => { unlockTab("negotiation"); }}
-              previewHeight={220}
-              headline="You're likely overpaying"
-              subtext="See fair value, anchor offer, and walk-away price."
+              previewHeight={180}
+              headline="How should you frame this negotiation?"
+              subtext="Unlock anchor offer, walk-away, and full deal-structure playbook."
               ctaLabel="Unlock Negotiation Strategy →"
-              bullets={["Anchor offer and walk-away price","Seller note and earnout structures","Working capital and training terms","Pricing position narrative"]}
+              bullets={["Anchor offer and walk-away pricing","Seller note and earnout structures","Working capital and training terms","Pricing position narrative"]}
             >
               <div style={{ padding: "12px 14px", borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", marginBottom: 14 }}>
                 <div style={{ fontSize: 11, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600, marginBottom: 10 }}>Pricing Position</div>
@@ -3149,58 +3217,127 @@ function UnderwritingPanel({
                   : `Pricing is near market median. Focus negotiation on terms (seller note, earnout) rather than price.`}
               </div>
             </BlurGateSection>
+            </>
           )}
 
-          {/* ── DEAL MEMO ── */}
           {/* ── LOI BUILDER ── */}
-          {activeTab === "loi" && (
-            <BlurGateSection
-              isUnlocked={tabUnlocked("loi")}
-              onUnlock={() => { unlockTab("loi"); }}
-              previewHeight={260}
-              headline="See how a disciplined buyer would structure the LOI"
-              subtext="Unlock price framing, seller note strategy, contingencies, and pre-LOI protections."
-              ctaLabel="Unlock LOI Builder"
-              footerNote="1 free unlock available · Upgrade to Pro for full deal structuring"
-              bullets={[
-                "Anchor offer, target range, and walk-away price",
-                "Cash / seller note / earnout recommendation",
-                "Diligence period, training, and contingencies",
-                "Buyer protections and LOI checklist",
-              ]}
-            >
-              <LoiBuilderTab
-                data={buildLoiRecommendation({
-                  asking_price:    deal.asking_price,
-                  fair_value:      deal.fair_value ?? 0,
-                  usableSDE:       usableSDE,
-                  gap_pct:         deal.gap_pct ?? null,
-                  dscr:            deal.dscr,
-                  stressDscr15:    stressDscr15,
-                  stressDscr25:    stressDscr25,
-                  trustScore:      deal.normalization_trust_score ?? 100,
-                  earningsSource:  (deal.earnings_source as any) ?? "reported",
-                  industryFit:     (INDUSTRY_FIT[deal.industry] ?? "requires_review") as any,
-                  sbaEligible:     sbaEligible,
+          {activeTab === "loi" && (() => {
+            const loiData = buildLoiRecommendation({
+              asking_price:    deal.asking_price,
+              fair_value:      deal.fair_value ?? 0,
+              usableSDE:       usableSDE,
+              gap_pct:         deal.gap_pct ?? null,
+              dscr:            deal.dscr,
+              stressDscr15:    stressDscr15,
+              stressDscr25:    stressDscr25,
+              trustScore:      deal.normalization_trust_score ?? 100,
+              earningsSource:  (deal.earnings_source as any) ?? "reported",
+              industryFit:     (INDUSTRY_FIT[deal.industry] ?? "requires_review") as any,
+              sbaEligible:     sbaEligible,
+              owner_operated:         deal.owner_operated ?? null,
+              customer_concentration: deal.customer_concentration ?? null,
+              years_in_business:      deal.years_in_business ?? null,
+            });
+            const stanceColor = loiData.stance === "aggressive"   ? "#10B981"
+                              : loiData.stance === "balanced"     ? "#60A5FA"
+                              : loiData.stance === "conservative" ? "#F59E0B"
+                              :                                     "#EF4444";
+            return (
+            <>
+              {/* ── FREE: Teaser — stance only, plus one-line framing ── */}
+              <div style={{ marginBottom: 12, padding: "12px 14px", borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                <div style={{ fontSize: 10, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 700, marginBottom: 8 }}>Recommended Posture</div>
+                <div style={{ display: "inline-block", padding: "5px 12px", borderRadius: 8, background: `${stanceColor}14`, border: `1px solid ${stanceColor}44`, marginBottom: 8 }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: stanceColor, fontFamily: "'Inter Tight',sans-serif" }}>{loiData.stanceLabel}</div>
+                </div>
+                <div style={{ fontSize: 12, color: "#94A3B8", lineHeight: 1.55 }}>
+                  {loiData.stanceMessage.split(".")[0]}.
+                </div>
+              </div>
+
+              <BlurGateSection
+                isUnlocked={tabUnlocked("loi")}
+                onUnlock={() => { unlockTab("loi"); }}
+                previewHeight={220}
+                headline="How should this offer actually be structured?"
+                subtext="Unlock price framing, seller note strategy, contingencies, and the pre-LOI checklist."
+                ctaLabel="Unlock LOI Builder"
+                footerNote="1 free unlock available · Upgrade to Pro for full deal structuring"
+                bullets={[
+                  "Anchor offer, target range, and max justified price",
+                  "Cash / seller note / earnout recommendation",
+                  "Diligence period, training, and contingencies",
+                  "Buyer protections and LOI checklist",
+                ]}
+              >
+                <LoiBuilderTab data={loiData} />
+              </BlurGateSection>
+            </>
+            );
+          })()}
+
+          {activeTab === "memo" && (() => {
+                // Pre-compute once for both teaser and gated content
+                const loc    = [deal.city, deal.state].filter(Boolean).join(", ") || "undisclosed market";
+                const indLbl = IL[deal.industry] || deal.industry;
+                const gapStr = gp > 0 ? `${gp}% above` : `${Math.abs(gp)}% below`;
+                const summaryText = `${indLbl} located in ${loc}. Asking ${fmt(deal.asking_price)} at ${deal.valuation_multiple.toFixed(2)}x SDE — ${gapStr} the NexTax fair value of ${fmt(fv)}. Overall score ${deal.overall_score}/100 — ${deal.risk_level} Risk.`;
+
+                const memoInputTeaser = {
+                  asking_price:     deal.asking_price,
+                  usableSDE:        usableSDE,
+                  reportedSDE:      deal.sde ?? 0,
+                  dscr:             deal.dscr,
+                  stressDscr15:     stressDscr15,
+                  stressDscr25:     stressDscr25,
+                  industry:         deal.industry,
+                  industryFit:      (INDUSTRY_FIT[deal.industry] ?? "requires_review") as any,
+                  trustScore:       deal.normalization_trust_score ?? 100,
+                  earningsSource:   (deal.earnings_source as any) ?? "reported",
+                  gap_pct:          deal.gap_pct ?? null,
+                  valuation_multiple: deal.valuation_multiple,
                   owner_operated:         deal.owner_operated ?? null,
                   customer_concentration: deal.customer_concentration ?? null,
+                  has_real_estate:        deal.has_real_estate ?? null,
                   years_in_business:      deal.years_in_business ?? null,
-                })}
-              />
-            </BlurGateSection>
-          )}
+                  manual_review_required: deal.manual_review_required ?? false,
+                };
+                const riskFlagsTeaser = buildRiskFlags(memoInputTeaser);
+                const highCount   = riskFlagsTeaser.filter(f => f.level === "high").length;
+                const medCount    = riskFlagsTeaser.filter(f => f.level === "medium").length;
+                const lowCount    = riskFlagsTeaser.filter(f => f.level === "low").length;
 
-          {activeTab === "memo" && (
-            <BlurGateSection
-              isUnlocked={tabUnlocked("memo")}
-              onUnlock={() => { unlockTab("memo"); }}
-              previewHeight={240}
-              headline="Here's the real risk"
-              subtext="See what must be true and key diligence traps before LOI."
-              ctaLabel="Unlock Deal Memo →"
-              bullets={["Deal summary and thesis","Red flags grouped by risk level","Diligence questions to ask seller","Final recommendation"]}
-            >
-              {(() => {
+                return (
+                <>
+                  {/* ── FREE: Teaser — summary paragraph + red-flag counts ── */}
+                  <div style={{ marginBottom: 12, padding: "12px 14px", borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                    <div style={{ fontSize: 10, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 700, marginBottom: 8 }}>Deal Summary</div>
+                    <div style={{ fontSize: 12, color: "#94A3B8", lineHeight: 1.6, marginBottom: 10 }}>
+                      {summaryText}
+                    </div>
+                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+                      <span style={{ padding: "3px 9px", borderRadius: 20, fontSize: 10, fontWeight: 700, background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.25)", color: "#EF4444" }}>
+                        {highCount} High Risk
+                      </span>
+                      <span style={{ padding: "3px 9px", borderRadius: 20, fontSize: 10, fontWeight: 700, background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.25)", color: "#F59E0B" }}>
+                        {medCount} Medium Risk
+                      </span>
+                      <span style={{ padding: "3px 9px", borderRadius: 20, fontSize: 10, fontWeight: 700, background: "rgba(100,116,139,0.08)", border: "1px solid rgba(100,116,139,0.25)", color: "#94A3B8" }}>
+                        {lowCount} Low Risk
+                      </span>
+                    </div>
+                  </div>
+
+                  <BlurGateSection
+                    isUnlocked={tabUnlocked("memo")}
+                    onUnlock={() => { unlockTab("memo"); }}
+                    previewHeight={220}
+                    headline="What could go wrong — and what to ask"
+                    subtext="Unlock the full memo — red flag detail, diligence questions, decision triggers, and final recommendation."
+                    ctaLabel="Unlock Deal Memo →"
+                    bullets={["Red flag detail by level","What must be true checklist","Diligence questions by category","Decision triggers + final recommendation"]}
+                  >
+                    {(() => {
                 // Build structured memo props from live deal signals
                 const loc    = [deal.city, deal.state].filter(Boolean).join(", ") || "undisclosed market";
                 const indLbl = IL[deal.industry] || deal.industry;
@@ -3267,24 +3404,55 @@ function UnderwritingPanel({
                     finalRecommendation={finalRec}
                   />
                 );
+                    })()}
+                  </BlurGateSection>
+                </>
+                );
               })()}
-            </BlurGateSection>
-          )}
 
-          {activeTab === "comps" && (
+          {activeTab === "comps" && (() => {
+            const compsMarketPosition = buildMarketPosition(deal);
+            const indTeaser = SCORE_INDUSTRIES[deal.industry];
+            const lowTeaser   = indTeaser?.benchmarkLow  ?? 2.0;
+            const highTeaser  = indTeaser?.benchmarkHigh ?? 3.5;
+            const multTeaser  = deal.valuation_multiple ?? 0;
+            const pricingColor = compsMarketPosition.pricingLabel === "Well Below Market"          ? "#2DD4BF"
+                               : compsMarketPosition.pricingLabel === "Below Market"               ? "#10B981"
+                               : compsMarketPosition.pricingLabel === "At Market"                  ? "#F59E0B"
+                               : compsMarketPosition.pricingLabel === "Above Market"               ? "#F97316"
+                               :                                                                     "#EF4444";
+            const teaserImplication =
+              multTeaser > highTeaser * 1.5 ? `At ${multTeaser.toFixed(2)}x, this deal is priced far outside the ${lowTeaser.toFixed(2)}x–${highTeaser.toFixed(2)}x benchmark range for this industry.`
+              : multTeaser > highTeaser    ? `At ${multTeaser.toFixed(2)}x, this deal is priced above the ${lowTeaser.toFixed(2)}x–${highTeaser.toFixed(2)}x benchmark range.`
+              : multTeaser < lowTeaser * 0.75 ? `At ${multTeaser.toFixed(2)}x, this deal is priced well below the ${lowTeaser.toFixed(2)}x–${highTeaser.toFixed(2)}x benchmark range.`
+              : multTeaser < lowTeaser     ? `At ${multTeaser.toFixed(2)}x, this deal is priced below the ${lowTeaser.toFixed(2)}x–${highTeaser.toFixed(2)}x benchmark range.`
+              :                              `At ${multTeaser.toFixed(2)}x, this deal sits within the ${lowTeaser.toFixed(2)}x–${highTeaser.toFixed(2)}x benchmark range.`;
+            return (
+            <>
+              {/* ── FREE: Teaser — pricing label + one implication sentence ── */}
+              <div style={{ marginBottom: 12, padding: "12px 14px", borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                <div style={{ fontSize: 10, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 700, marginBottom: 8 }}>Market Position</div>
+                <div style={{ display: "inline-block", padding: "5px 12px", borderRadius: 8, background: `${pricingColor}14`, border: `1px solid ${pricingColor}44`, marginBottom: 8 }}>
+                  <div style={{ fontSize: 13, fontWeight: 800, color: pricingColor, fontFamily: "'Inter Tight',sans-serif" }}>{compsMarketPosition.pricingLabel}</div>
+                </div>
+                <div style={{ fontSize: 12, color: "#94A3B8", lineHeight: 1.55 }}>
+                  {teaserImplication}
+                </div>
+              </div>
+
             <BlurGateSection
               isUnlocked={tabUnlocked("comps")}
               onUnlock={() => { unlockTab("comps"); }}
-              previewHeight={230}
-              headline="This deal is outside typical market range"
-              subtext="Unlock full comps, percentile positioning, and pricing reality."
+              previewHeight={220}
+              headline="How does this deal really compare?"
+              subtext="Unlock full comps, percentile positioning, and the normalization adjustment detail."
               ctaLabel="Unlock Market Comps"
               footerNote="1 free unlock available · Upgrade to Pro for full market positioning"
-              bullets={["Market position vs benchmark range","Adjusted SDE vs reported SDE","DSCR and financing viability","Decision summary and action plan"]}
+              bullets={["Full benchmark range comparison","Reported vs adjusted earnings","Representative closed comps","Decision summary and action plan"]}
             >
               <CompsTab
                 benchmarkContext={buildBenchmarkContext(deal)}
-                marketPosition={buildMarketPosition(deal)}
+                marketPosition={compsMarketPosition}
                 normalization={buildNormalizationContext(deal)}
                 compsData={compsData}
                 insights={(() => {
@@ -3342,7 +3510,9 @@ function UnderwritingPanel({
                 decision={buildDecisionContext(deal)}
               />
             </BlurGateSection>
-          )}
+            </>
+            );
+          })()}
         </div>
       </div>
     </>
