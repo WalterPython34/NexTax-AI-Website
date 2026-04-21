@@ -9,7 +9,7 @@ import { getDscrRange } from "@/lib/dscrRanges";
 import { LenderReadinessTab } from "@/components/LenderReadinessTab";
 import { buildLenderReadiness } from "@/lib/lenderReadiness";
 import { DealMemoTab } from "@/components/DealMemoTab";
-import { buildRiskFlags, buildDiligenceQuestions } from "@/lib/dealMemo";
+import { buildRiskFlags, buildDiligenceQuestions, buildDecisionTriggers } from "@/lib/dealMemo";
 import { INDUSTRY_FIT } from "@/lib/lenderReadiness";
 import {
   CompsTab,
@@ -3046,6 +3046,55 @@ function UnderwritingPanel({
                         ? `Annual cash flow after debt service is ${fmt(annualCashFlow)} — deal does not generate positive equity return at current pricing.`
                         : `After servicing debt, this deal generates ${fmt(annualCashFlow)}/year in free cash flow. At current earnings, you recover your ${fmt(sbaDown)} down payment in roughly ${yearsToRecover!.toFixed(1)} years.`}
                     </div>
+
+                    {/* Reality anchor — prevents overconfidence on fast-recovery deals */}
+                    {annualCashFlow > 0 && (
+                      <div style={{
+                        marginTop: 10, padding: "9px 12px", borderRadius: 8,
+                        background: "rgba(100,116,139,0.06)",
+                        border: "1px solid rgba(100,116,139,0.15)",
+                      }}>
+                        <div style={{
+                          fontSize: 10, fontWeight: 700, color: "#64748B",
+                          textTransform: "uppercase" as const, letterSpacing: "0.06em",
+                          marginBottom: 6, fontFamily: "'Inter Tight',sans-serif",
+                        }}>
+                          Reality Check
+                        </div>
+                        <div style={{ fontSize: 11, color: "#94A3B8", lineHeight: 1.6, marginBottom: 8 }}>
+                          Assumes current earnings are sustainable. Figures exclude taxes, reinvestment needs, and growth or contraction in the business.
+                        </div>
+                        {/* Sensitivity at −15% earnings */}
+                        {(() => {
+                          const stressedSde       = usableSDE * 0.85;
+                          const stressedCash      = stressedSde - annualDebtService;
+                          const stressedRecovery  = stressedCash > 0 ? sbaDown / stressedCash : null;
+                          return (
+                            <div style={{
+                              display: "flex", alignItems: "center", gap: 8,
+                              fontSize: 11, color: "#94A3B8",
+                              paddingTop: 7, borderTop: "1px solid rgba(255,255,255,0.04)",
+                            }}>
+                              <span style={{
+                                fontSize: 9, fontWeight: 700, color: "#F59E0B",
+                                padding: "2px 7px", borderRadius: 20,
+                                background: "rgba(245,158,11,0.08)",
+                                border: "1px solid rgba(245,158,11,0.25)",
+                                textTransform: "uppercase" as const, letterSpacing: "0.06em",
+                                whiteSpace: "nowrap" as const,
+                              }}>
+                                Stress −15%
+                              </span>
+                              <span>
+                                {stressedRecovery == null
+                                  ? `Earnings drop of 15% wipes out free cash flow — recovery stalls.`
+                                  : `At 15% lower earnings, recovery extends to ${stressedRecovery.toFixed(1)} years (cash-on-cash ${((stressedCash / sbaDown) * 100).toFixed(0)}%).`}
+                              </span>
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    )}
                   </div>
                 );
               })()}
@@ -3162,8 +3211,9 @@ function UnderwritingPanel({
                   manual_review_required: deal.manual_review_required ?? false,
                 };
 
-                const riskFlags      = buildRiskFlags(memoInput);
-                const questionGroups = buildDiligenceQuestions(memoInput);
+                const riskFlags        = buildRiskFlags(memoInput);
+                const questionGroups   = buildDiligenceQuestions(memoInput);
+                const decisionTriggers = buildDecisionTriggers(memoInput);
 
                 return (
                   <DealMemoTab
@@ -3172,6 +3222,7 @@ function UnderwritingPanel({
                     riskFlags={riskFlags}
                     diligencePriorities={diligencePriorities}
                     questionGroups={questionGroups}
+                    decisionTriggers={decisionTriggers}
                     finalRecommendation={finalRec}
                   />
                 );
