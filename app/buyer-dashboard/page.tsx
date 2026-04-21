@@ -3728,7 +3728,7 @@ function TabMyDeals({
             )}
           </div>
         )}
-      </div>
+      </Card>
     </div>
   );
 }
