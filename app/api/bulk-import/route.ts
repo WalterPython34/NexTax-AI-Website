@@ -597,16 +597,17 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    return NextResponse.json({ success: true, results, batch_id: batchId });
-  } catch (error) {
-    console.error("Bulk import error:", error);
-    // ── Refresh percentiles after batch completes ───────────────────────────
+    // ── Refresh percentiles once after entire batch succeeds ──────────────────
     try {
       await supabase.rpc("refresh_deal_percentiles");
     } catch (e) {
       console.error("[bulk-import] percentile refresh failed:", e);
+      // Non-fatal — percentiles will be stale until next successful import
     }
 
-        return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json({ success: true, results, batch_id: batchId });
+  } catch (error) {
+    console.error("Bulk import error:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
