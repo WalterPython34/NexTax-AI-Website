@@ -2449,32 +2449,38 @@ function UnderwritingPanel({
 
   const col = (s: number) => s >= 1.5 ? "#10B981" : s >= 1.25 ? "#F59E0B" : "#EF4444";
 
-  // ── Freemium gating ──────────────────────────────────────────────────────
-  const [freeUnlocked, setFreeUnlocked] = React.useState<boolean>(() => {
-    if (typeof window === "undefined") return false;
-    return parseInt(localStorage.getItem("nxtax_free_unlocks") ?? "0", 10) < 1;
+  // ── Per-tab freemium gating ──────────────────────────────────────────────
+  // Pro users always get full access.
+  // Free users start fully gated. Each tab unlocks independently after
+  // clicking that tab's CTA. Unlocked tabs persist in localStorage.
+  // No tab is ever auto-unlocked — first view is always blurred.
+
+  const LS_KEY = "nxtax_unlocked_tabs";
+
+  const [unlockedTabs, setUnlockedTabs] = React.useState<Set<UwTab>>(() => {
+    if (typeof window === "undefined") return new Set();
+    try {
+      const stored = JSON.parse(localStorage.getItem(LS_KEY) ?? "[]") as UwTab[];
+      return new Set(stored);
+    } catch { return new Set(); }
   });
 
-  const handleFreeUnlock = () => {
+  const unlockTab = (tab: UwTab) => {
+    if (isPro) return; // Pro never touches localStorage
+    const next = new Set(unlockedTabs);
+    next.add(tab);
+    setUnlockedTabs(next);
+    localStorage.setItem(LS_KEY, JSON.stringify([...next]));
+    // Also track total unlock count for analytics
     const n = parseInt(localStorage.getItem("nxtax_free_unlocks") ?? "0", 10);
     localStorage.setItem("nxtax_free_unlocks", String(n + 1));
-    setFreeUnlocked(true);
   };
 
-  const canAccessFull = isPro || freeUnlocked;
+  // Returns true if this tab's content should be fully visible
+  const tabUnlocked = (tab: UwTab): boolean => isPro || unlockedTabs.has(tab);
 
-  const teaserInsight: string | null = (() => {
-    if (canAccessFull) return null;
-    const flags = (deal.normalization_flags_json ?? []) as any[];
-    const critical = flags.find((f: any) => f.severity === "critical");
-    if (critical) return `⚠ ${critical.title} — full analysis blocked pending review`;
-    const trust = deal.normalization_trust_score ?? 100;
-    if (trust < 80) return `⚠ Reported earnings may be overstated — adjusted SDE is lower`;
-    const gp = deal.gap_pct ?? 0;
-    if (gp > 15) return `⚠ Asking price is ${gp}% above estimated fair value`;
-    return null;
-  })();
-
+  // BlurGateSection prop helper — called inline per tab
+  // onUnlock is always tab-specific so only that tab opens
   // BlurredContent removed — using <BlurGateSection> from components/BlurGateSection.tsx
 
 
@@ -2577,11 +2583,99 @@ function UnderwritingPanel({
             />
           )}
 
+          {/* ── FREE USER INSIGHT SUMMARY — always visible, never gated ── */}
+          {!isPro && (
+            <div style={{
+              marginBottom: 14,
+              padding: "14px 16px",
+              borderRadius: 12,
+              background: "rgba(255,255,255,0.02)",
+              border: "1px solid rgba(255,255,255,0.07)",
+            }}>
+              <div style={{
+                fontSize: 9, fontWeight: 700, color: "#4B5563",
+                textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 10,
+              }}>
+                Deal Intelligence Preview
+              </div>
+
+              {/* 1. Verdict */}
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 8,
+                padding: "8px 10px", borderRadius: 8,
+                background: vd.bg, border: `1px solid ${vd.border}` }}>
+                <span style={{ fontSize: 16 }}>{vd.emoji}</span>
+                <div>
+                  <div style={{ fontSize: 11, fontWeight: 700, color: vd.color,
+                    textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                    {vd.label}
+                  </div>
+                  <div style={{ fontSize: 10, color: "#6B7280", marginTop: 1 }}>{vd.subtext}</div>
+                </div>
+                <div style={{ marginLeft: "auto", fontFamily: "'JetBrains Mono',monospace",
+                  fontSize: 18, fontWeight: 800, color: vd.color }}>
+                  {deal.overall_score}
+                </div>
+              </div>
+
+              {/* 2. Key financial insight — DSCR */}
+              <div style={{ display: "flex", justifyContent: "space-between",
+                padding: "7px 0", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+                <span style={{ fontSize: 11, color: "#94A3B8" }}>DSCR (Debt Coverage)</span>
+                <span style={{
+                  fontSize: 12, fontWeight: 700,
+                  fontFamily: "'JetBrains Mono',monospace",
+                  color: deal.dscr >= 1.5 ? "#10B981" : deal.dscr >= 1.25 ? "#F59E0B" : "#EF4444",
+                }}>
+                  {deal.dscr.toFixed(2)}x
+                  {" "}
+                  <span style={{ fontSize: 10, fontWeight: 400, color: "#4B5563" }}>
+                    {deal.dscr >= 1.5 ? "Strong" : deal.dscr >= 1.25 ? "Borderline" : "Insufficient"}
+                  </span>
+                </span>
+              </div>
+
+              {/* 3. Market positioning insight */}
+              <div style={{ display: "flex", justifyContent: "space-between",
+                padding: "7px 0", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+                <span style={{ fontSize: 11, color: "#94A3B8" }}>Asking Multiple</span>
+                <span style={{
+                  fontSize: 12, fontWeight: 700,
+                  fontFamily: "'JetBrains Mono',monospace",
+                  color: gp > 20 ? "#EF4444" : gp > 0 ? "#F59E0B" : "#10B981",
+                }}>
+                  {deal.valuation_multiple.toFixed(2)}x
+                  {" "}
+                  <span style={{ fontSize: 10, fontWeight: 400, color: "#4B5563" }}>
+                    {gp > 20 ? "Extreme Outlier" : gp > 5 ? "Above Market" : gp < -5 ? "Below Market" : "At Market"}
+                  </span>
+                </span>
+              </div>
+
+              {/* 4. One implication */}
+              <div style={{ marginTop: 9, fontSize: 11, color: "#6B7280", lineHeight: 1.5,
+                padding: "8px 10px", borderRadius: 7,
+                background: "rgba(255,255,255,0.02)" }}>
+                {deal.dscr < 1.25
+                  ? `⚠ DSCR of ${deal.dscr.toFixed(2)}x is below the 1.25x lender minimum — financing this deal at current terms is unlikely.`
+                  : gp > 20
+                  ? `⚠ Asking price is ${gp}% above estimated fair value — significant repricing required before this deal makes sense.`
+                  : gp > 5
+                  ? `Priced ${gp}% above market. Negotiation room exists — unlock the Negotiation tab for anchor and walk-away strategy.`
+                  : `Deal is within market range. Unlock individual tabs below to see stress scenarios, SBA sizing, and comps.`}
+              </div>
+
+              {/* 5. Unlock prompt */}
+              <div style={{ marginTop: 10, fontSize: 10, color: "#374151", textAlign: "center" as const }}>
+                🔒 Detailed analysis locked per tab — click Unlock in each section to reveal
+              </div>
+            </div>
+          )}
+
           {/* ── STRESS TEST ── */}
           {activeTab === "stress" && (
             <BlurGateSection
-              isUnlocked={canAccessFull}
-              onUnlock={handleFreeUnlock}
+              isUnlocked={tabUnlocked("stress")}
+              onUnlock={() => unlockTab("stress")}
               previewHeight={220}
               ctaLabel="Unlock Stress Test"
               bullets={["DSCR at current and stressed terms","−15% and −25% revenue scenarios","Break-even SDE and revenue","Monthly debt service projection"]}
@@ -2610,8 +2704,8 @@ function UnderwritingPanel({
           {/* ── SBA FINANCE ── */}
           {activeTab === "sba" && (
             <BlurGateSection
-              isUnlocked={canAccessFull}
-              onUnlock={handleFreeUnlock}
+              isUnlocked={tabUnlocked("sba")}
+              onUnlock={() => unlockTab("sba")}
               previewHeight={220}
               ctaLabel="Unlock SBA Financing"
               bullets={["SBA 7(a) eligibility assessment","Loan sizing at 90% LTV","Monthly payment at SBA prime rate","DSCR at SBA terms"]}
@@ -2644,8 +2738,8 @@ function UnderwritingPanel({
           {/* ── NEGOTIATION ── */}
           {activeTab === "negotiation" && (
             <BlurGateSection
-              isUnlocked={canAccessFull}
-              onUnlock={handleFreeUnlock}
+              isUnlocked={tabUnlocked("negotiation")}
+              onUnlock={() => unlockTab("negotiation")}
               previewHeight={220}
               ctaLabel="Unlock Negotiation Strategy"
               bullets={["Anchor offer and walk-away price","Seller note and earnout structures","Working capital and training terms","Pricing position narrative"]}
@@ -2685,8 +2779,8 @@ function UnderwritingPanel({
           {/* ── DEAL MEMO ── */}
           {activeTab === "memo" && (
             <BlurGateSection
-              isUnlocked={canAccessFull}
-              onUnlock={handleFreeUnlock}
+              isUnlocked={tabUnlocked("memo")}
+              onUnlock={() => unlockTab("memo")}
               previewHeight={240}
               ctaLabel="Unlock Deal Memo"
               bullets={["Full deal summary and thesis","What must be true checklist","Key diligence priorities","Final recommendation"]}
@@ -2747,8 +2841,8 @@ function UnderwritingPanel({
 
           {activeTab === "comps" && (
             <BlurGateSection
-              isUnlocked={canAccessFull}
-              onUnlock={handleFreeUnlock}
+              isUnlocked={tabUnlocked("comps")}
+              onUnlock={() => unlockTab("comps")}
               previewHeight={230}
               ctaLabel="Unlock Market Comps"
               bullets={["Market position vs benchmark range","SDE margin and DSCR comparison","Normalization adjustment detail","Decision summary and action plan"]}
