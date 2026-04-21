@@ -140,11 +140,35 @@ function RiskFlagsSection({ flags }: { flags: RiskFlag[] }) {
     </div>
   );
 
+  // Standing "watch items" — ALWAYS surface for buyer vigilance, even on strong deals
+  const WATCH_ITEMS: string[] = [
+    "Validate earnings quality and add-backs with source documentation",
+    "Confirm customer concentration and contract transferability",
+    "Ensure working capital level is sufficient at close",
+  ];
+
   if (flags.length === 0) {
     return (
       <MemoCard title="Red Flags & Risks">
-        <div style={{ fontSize: 12, color: T.green, lineHeight: 1.6 }}>
-          No material risk signals detected. Complete standard diligence before advancing.
+        <div style={{
+          fontSize: 11, fontWeight: 700, color: T.green,
+          marginBottom: 10, fontFamily: T.sans,
+          display: "flex", alignItems: "center", gap: 6,
+        }}>
+          <span style={{ fontSize: 10 }}>●</span>
+          No critical risks detected, but monitor:
+        </div>
+        <div style={{ display: "flex", flexDirection: "column", gap: 5 }}>
+          {WATCH_ITEMS.map((item, i) => (
+            <div key={i} style={{
+              padding: "8px 11px", borderRadius: 7,
+              background: "rgba(100,116,139,0.06)",
+              border: "1px solid rgba(100,116,139,0.15)",
+              fontSize: 12, color: T.textSub, lineHeight: 1.5,
+            }}>
+              {item}
+            </div>
+          ))}
         </div>
       </MemoCard>
     );
@@ -268,8 +292,97 @@ function DiligenceQuestionsSection({ groups }: { groups: QuestionGroup[] }) {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
+// DECISION TRIGGERS — proceed / reevaluate / walk-away criteria
+// ═══════════════════════════════════════════════════════════════════════════════
+
+const TRIGGER_STYLE = {
+  proceed:    { color: "#10B981", bg: "rgba(16,185,129,0.06)",  bd: "rgba(16,185,129,0.22)",  label: "Proceed if",     icon: "✓" },
+  reevaluate: { color: "#F59E0B", bg: "rgba(245,158,11,0.06)",  bd: "rgba(245,158,11,0.22)",  label: "Re-evaluate if", icon: "⚠" },
+  walkAway:   { color: "#EF4444", bg: "rgba(239,68,68,0.06)",   bd: "rgba(239,68,68,0.22)",   label: "Walk away if",   icon: "✗" },
+} as const;
+
+function TriggerColumn({ kind, items }: {
+  kind: "proceed" | "reevaluate" | "walkAway";
+  items: string[];
+}) {
+  const style = TRIGGER_STYLE[kind];
+  return (
+    <div style={{
+      padding: "12px 14px", borderRadius: 8,
+      background: style.bg,
+      border: `1px solid ${style.bd}`,
+      display: "flex", flexDirection: "column" as const, gap: 8,
+    }}>
+      <div style={{
+        display: "flex", alignItems: "center", gap: 7,
+        paddingBottom: 9, borderBottom: `1px solid ${style.bd}`,
+      }}>
+        <span style={{
+          width: 20, height: 20, borderRadius: "50%",
+          background: style.color + "18",
+          border: `1px solid ${style.color}55`,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          fontSize: 11, fontWeight: 800, color: style.color,
+          fontFamily: T.mono, flexShrink: 0,
+        }}>
+          {style.icon}
+        </span>
+        <div style={{
+          fontSize: 11, fontWeight: 700, color: style.color,
+          fontFamily: T.sans, textTransform: "uppercase" as const,
+          letterSpacing: "0.06em",
+        }}>
+          {style.label}
+        </div>
+      </div>
+      <div style={{ display: "flex", flexDirection: "column" as const, gap: 6 }}>
+        {items.map((item, i) => (
+          <div key={i} style={{
+            display: "flex", gap: 8, alignItems: "flex-start",
+            fontSize: 11, color: T.textSub, lineHeight: 1.55,
+          }}>
+            <span style={{
+              color: style.color, flexShrink: 0, marginTop: 1, fontWeight: 700,
+              fontFamily: T.mono, fontSize: 10,
+            }}>
+              ·
+            </span>
+            <span>{item}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function DecisionTriggersSection({ triggers }: { triggers: DecisionTriggers }) {
+  return (
+    <MemoCard title="Decision Triggers">
+      <div style={{ fontSize: 10, color: T.textMuted, lineHeight: 1.5, marginBottom: 12 }}>
+        Concrete criteria for the next stage of diligence. Use these to decide whether to advance, pause, or exit.
+      </div>
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+        gap: 10,
+      }}>
+        <TriggerColumn kind="proceed"    items={triggers.proceedIf}    />
+        <TriggerColumn kind="reevaluate" items={triggers.reevaluateIf} />
+        <TriggerColumn kind="walkAway"   items={triggers.walkAwayIf}   />
+      </div>
+    </MemoCard>
+  );
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
 // ROOT COMPONENT
 // ═══════════════════════════════════════════════════════════════════════════════
+
+export interface DecisionTriggers {
+  proceedIf:     string[];
+  reevaluateIf:  string[];
+  walkAwayIf:    string[];
+}
 
 export interface DealMemoTabProps {
   /** Deal summary paragraph (pre-composed by parent — industry, location, pricing) */
@@ -282,6 +395,8 @@ export interface DealMemoTabProps {
   diligencePriorities: string[];
   /** Diligence question groups — 5 categories */
   questionGroups: QuestionGroup[];
+  /** Decision triggers — proceed/reevaluate/walk-away criteria */
+  decisionTriggers: DecisionTriggers;
   /** Final recommendation — formatted string with emoji prefix */
   finalRecommendation: string;
 }
@@ -292,6 +407,7 @@ export function DealMemoTab({
   riskFlags,
   diligencePriorities,
   questionGroups,
+  decisionTriggers,
   finalRecommendation,
 }: DealMemoTabProps) {
   return (
@@ -322,7 +438,10 @@ export function DealMemoTab({
       {/* 4. Diligence Questions — 5-category grid */}
       <DiligenceQuestionsSection groups={questionGroups} />
 
-      {/* 5. Final Recommendation */}
+      {/* 5. Decision Triggers */}
+      <DecisionTriggersSection triggers={decisionTriggers} />
+
+      {/* 6. Final Recommendation */}
       <MemoCard title="Final Recommendation">
         <ProseBlock content={finalRecommendation} />
       </MemoCard>
