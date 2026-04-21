@@ -16,7 +16,8 @@ export type LenderVerdict =
 
 export type IndustryFit =
   | "preferred"
-  | "non_preferred"
+  | "standard"
+  | "higher_scrutiny"
   | "sba_ineligible"
   | "requires_review";
 
@@ -78,6 +79,7 @@ export interface LenderReadinessOutput {
   verdict:        LenderVerdict;
   verdictLabel:   string;
   verdictMessage: string;
+  prequalOutlook: string;
   metrics:        LenderMetric[];
   whyBullets:     WhyBullet[];
   docGroups:      DocGroup[];
@@ -90,40 +92,42 @@ export interface LenderReadinessOutput {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export const INDUSTRY_FIT: Record<string, IndustryFit> = {
-  // Preferred — lender-favored, predictable cash flow
+  // ── Preferred — lender-favored, predictable cash flow ──
   healthcare_clinical:   "preferred",
   med_spa:               "preferred",
   physical_therapy:      "preferred",
   veterinary:            "preferred",
   professional_services: "preferred",
   engineering:           "preferred",
-  specialty_trade:       "preferred",
+  specialty_trade:       "preferred",     // HVAC / plumbing / electrical
   manufacturing:         "preferred",
   seniorcare:            "preferred",
   behavioral_health:     "preferred",
+  propertymanage:        "preferred",     // recurring-revenue model
+  saas:                  "preferred",     // high-margin recurring
+  marketing:             "preferred",     // agency recurring revenue
+  digital:               "preferred",
 
-  // Standard / acceptable
-  food_beverage:         "non_preferred",
-  retail:                "non_preferred",
-  grocery:               "non_preferred",
-  clothing:              "non_preferred",
-  auto_services:         "non_preferred",
-  personal_services:     "non_preferred",
-  hairsalon:             "non_preferred",
-  field_services:        "non_preferred",
-  construction:          "non_preferred",
-  wholesale:             "non_preferred",
-  staffing:              "non_preferred",
-  marketing:             "non_preferred",
-  pestcontrol:           "non_preferred",
-  signmaking:            "non_preferred",
-  remodeling:            "non_preferred",
-  realestatebrok:        "non_preferred",
-  propertymanage:        "non_preferred",
-  saas:                  "non_preferred",
-  digital:               "non_preferred",
+  // ── Standard / Financeable — normal underwriting, no red flags ──
+  construction:          "standard",      // financeable for established contractors
+  wholesale:             "standard",
+  auto_services:         "standard",
+  remodeling:            "standard",
+  pestcontrol:           "standard",
+  signmaking:            "standard",
+  personal_services:     "standard",
+  hairsalon:             "standard",
+  retail:                "standard",
+  clothing:              "standard",
+  realestatebrok:        "standard",
 
-  // SBA-ineligible or heavily restricted
+  // ── Higher Scrutiny — financeable but closer lender review ──
+  food_beverage:         "higher_scrutiny",   // thin margins, concept risk
+  grocery:               "higher_scrutiny",   // very thin margins
+  staffing:              "higher_scrutiny",   // customer concentration common
+  field_services:        "higher_scrutiny",   // owner dependency common
+
+  // ── SBA-ineligible or heavily restricted ──
   cannabis:              "sba_ineligible",
   gambling:              "sba_ineligible",
   adult_entertainment:   "sba_ineligible",
@@ -136,16 +140,19 @@ export const INDUSTRY_FIT: Record<string, IndustryFit> = {
 
 export const INDUSTRY_FIT_LABEL: Record<IndustryFit, string> = {
   preferred:        "Preferred Industry",
-  non_preferred:    "Standard / Non-Preferred",
-  sba_ineligible:   "SBA-Ineligible",
+  standard:         "Standard / Financeable",
+  higher_scrutiny:  "Higher Scrutiny",
+  sba_ineligible:   "Ineligible",
   requires_review:  "Requires Lender Review",
 };
 
 export const INDUSTRY_FIT_NOTE: Record<IndustryFit, string> = {
   preferred:
     "Lenders generally favor this industry for SBA 7(a) financing based on predictable cash flow and established underwriting precedent.",
-  non_preferred:
-    "This industry is financeable but may face closer lender scrutiny on earnings quality, customer concentration, or seasonality.",
+  standard:
+    "This industry is routinely financed under standard SBA 7(a) terms. Normal underwriting applies — no industry-specific red flags.",
+  higher_scrutiny:
+    "This industry is financeable but typically receives closer lender review on margins, customer concentration, or key-person risk.",
   sba_ineligible:
     "This industry is generally ineligible for SBA 7(a) financing. Alternative financing structures will be required.",
   requires_review:
@@ -195,7 +202,8 @@ function computeVerdict(d: LenderReadinessInput, fit: IndustryFit): LenderVerdic
   if (d.dscr < 1.25)                    return "borderline";
   if (d.stressDscr15 < 1.15)            return "borderline";
   if (d.trustScore < 70)                return "borderline";
-  if (fit === "non_preferred" && d.dscr < 1.40) return "borderline";
+  // Higher-scrutiny industries at thin DSCR → borderline (closer review expected)
+  if (fit === "higher_scrutiny" && d.dscr < 1.40) return "borderline";
 
   return "likely_financeable";
 }
@@ -293,10 +301,12 @@ function buildWhyBullets(d: LenderReadinessInput, fit: IndustryFit, verdict: Len
     bullets.push({ text: `Asking price is ${d.gap_pct}% above market fair value — pricing materially compresses lender coverage.`, severity: "warning" });
   }
 
-  if (fit === "non_preferred" && verdict !== "not_financeable") {
-    bullets.push({ text: "Industry is not in lender-preferred list — expect closer scrutiny on customer mix and earnings stability.", severity: "neutral" });
-  } else if (fit === "preferred") {
+  if (fit === "preferred") {
     bullets.push({ text: "Industry is typically preferred by SBA-active lenders.", severity: "positive" });
+  } else if (fit === "standard") {
+    bullets.push({ text: "Industry is routinely financed under standard SBA terms.", severity: "neutral" });
+  } else if (fit === "higher_scrutiny" && verdict !== "not_financeable") {
+    bullets.push({ text: "Industry typically receives closer lender review — expect questions on customer mix, margins, and key-person risk.", severity: "neutral" });
   }
 
   if (d.owner_operated) {
@@ -447,6 +457,25 @@ function buildImprovements(d: LenderReadinessInput, fit: IndustryFit, verdict: L
 // PUBLIC API
 // ═══════════════════════════════════════════════════════════════════════════════
 
+function computePrequalOutlook(verdict: LenderVerdict, fit: IndustryFit): string {
+  if (fit === "sba_ineligible") {
+    return "SBA path is closed — alternative financing will be required before prequal can advance.";
+  }
+  if (verdict === "likely_financeable") {
+    return fit === "preferred"
+      ? "Strong candidate once seller and buyer document package is assembled."
+      : "Financeability appears strong — next gating factor is documentation completeness.";
+  }
+  if (verdict === "borderline") {
+    return "Coverage is thin — prequal will depend on earnings quality documentation and lender appetite.";
+  }
+  if (verdict === "manual_review") {
+    return "Lender engagement should wait until earnings quality is verified via tax returns or CPA review.";
+  }
+  // not_financeable
+  return "Current structure will not clear standard prequal — price, earnings, or deal size need to change before lender outreach.";
+}
+
 export function buildLenderReadiness(d: LenderReadinessInput): LenderReadinessOutput {
   const fit     = INDUSTRY_FIT[d.industry] ?? "requires_review";
   const verdict = computeVerdict(d, fit);
@@ -456,6 +485,7 @@ export function buildLenderReadiness(d: LenderReadinessInput): LenderReadinessOu
     verdict,
     verdictLabel:   cfg.label,
     verdictMessage: cfg.message(d),
+    prequalOutlook: computePrequalOutlook(verdict, fit),
     metrics:        buildMetrics(d),
     whyBullets:     buildWhyBullets(d, fit, verdict),
     docGroups:      buildDocGroups(d),
