@@ -6,6 +6,8 @@ import { CATEGORIES } from "@/lib/marketview/categories";
 import { normalizeDealFinancials } from "@/lib/normalizationEngine";
 import { BlurGateSection, ProLockedBanner } from "@/components/BlurGateSection";
 import { getDscrRange } from "@/lib/dscrRanges";
+import { LenderReadinessTab } from "@/components/LenderReadinessTab";
+import { buildLenderReadiness } from "@/lib/lenderReadiness";
 import {
   CompsTab,
   type CompsTabProps,
@@ -2406,7 +2408,7 @@ function buildDecisionContext(deal: DealRun): DecisionContext {
 
 // ─── UNDERWRITING PANEL ───────────────────────────────────────────────────────
 
-type UwTab = "stress" | "sba" | "negotiation" | "memo" | "comps";
+type UwTab = "stress" | "lender" | "sba" | "negotiation" | "memo" | "comps";
 
 function UnderwritingPanel({
   deal, isPro, onClose, onShowUpgrade,
@@ -2512,8 +2514,9 @@ function UnderwritingPanel({
   const sbaDscr      = sbaMonthly > 0 ? +(effectiveSde / (sbaMonthly * 12)).toFixed(2) : 0;
 
   const UW_TABS: { id: UwTab; label: string; icon: string }[] = [
-    { id: "stress",      label: "Stress Test",   icon: "📉" },
-    { id: "sba",         label: "SBA Finance",   icon: "🏦" },
+    { id: "stress",      label: "Stress Test",       icon: "📉" },
+    { id: "lender",      label: "Lender Readiness", icon: "🏛️" },
+    { id: "sba",         label: "SBA Finance",       icon: "🏦" },
     { id: "negotiation", label: "Negotiation",   icon: "🤝" },
     { id: "memo",        label: "Deal Memo",      icon: "📄" },
     { id: "comps",       label: "Market Comps",   icon: "📊" },
@@ -2779,6 +2782,45 @@ function UnderwritingPanel({
                   ? `This deal maintains lender-minimum DSCR even at −15% revenue. Stress resilience is solid.`
                   : `A −15% revenue decline pushes DSCR below 1.25x — deal loses financing viability under moderate stress. Validate revenue stability before proceeding.`}
               </div>
+            </BlurGateSection>
+          )}
+
+          {/* ── LENDER READINESS ── */}
+          {activeTab === "lender" && (
+            <BlurGateSection
+              isUnlocked={tabUnlocked("lender")}
+              onUnlock={() => { unlockTab("lender"); }}
+              previewHeight={240}
+              headline="Will this deal actually get funded?"
+              subtext="Unlock lender readiness, required documents, and prequal risk flags."
+              ctaLabel="Unlock Lender Readiness"
+              footerNote="1 free unlock available · Upgrade to Pro for full lender prequal view"
+              bullets={[
+                "Lender verdict and DSCR stress results",
+                "SBA 7(a) eligibility and loan-size fit",
+                "Full document checklist (seller, buyer, acquisition)",
+                "Industry fit and concrete improvement actions",
+              ]}
+            >
+              <LenderReadinessTab
+                data={buildLenderReadiness({
+                  asking_price:    deal.asking_price,
+                  usableSDE:       usableSDE,
+                  dscr:            deal.dscr,
+                  stressDscr15:    stressDscr15,
+                  stressDscr25:    stressDscr25,
+                  industry:        deal.industry,
+                  trustScore:      deal.normalization_trust_score ?? 100,
+                  earningsSource:  (deal.earnings_source as any) ?? "reported",
+                  fair_value:      deal.fair_value ?? 0,
+                  gap_pct:         deal.gap_pct ?? null,
+                  valuation_multiple: deal.valuation_multiple ?? 0,
+                  owner_operated:         deal.owner_operated ?? null,
+                  customer_concentration: deal.customer_concentration ?? null,
+                  has_real_estate:        deal.has_real_estate ?? null,
+                  buyer_owns_other_biz:   null,
+                })}
+              />
             </BlurGateSection>
           )}
 
