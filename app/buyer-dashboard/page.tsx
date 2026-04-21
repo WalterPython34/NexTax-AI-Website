@@ -5,6 +5,7 @@ import { createClient } from "@supabase/supabase-js";
 import { CATEGORIES } from "@/lib/marketview/categories";
 import { normalizeDealFinancials } from "@/lib/normalizationEngine";
 import { BlurGateSection, ProLockedBanner } from "@/components/BlurGateSection";
+import { getDscrRange } from "@/lib/dscrRanges";
 import {
   CompsTab,
   type CompsTabProps,
@@ -2287,12 +2288,8 @@ function buildBenchmarkContext(deal: DealRun): BenchmarkContext {
     marginLow:    ind ? ind.marginRange[0] / 100 : 0.10,
     marginMedian: ind ? ((ind.marginRange[0] + ind.marginRange[1]) / 2) / 100 : 0.20,
     marginHigh:   ind ? ind.marginRange[1] / 100 : 0.35,
-    // DSCR range — per-industry (lib/dscrRanges.ts)
-    // getDscrRange not imported here (server lib) — inline thresholds from SCORE_INDUSTRIES
-    // For now use mid-range defaults; full wiring done when dscrRanges.ts is deployed
-    dscrLow:    ind ? (ind.benchmarkLow  >= 3 ? 1.1 : 1.0) : 1.0,
-    dscrMedian: ind ? (ind.benchmarkHigh >= 4 ? 1.35 : 1.25) : 1.25,
-    dscrHigh:   ind ? (ind.benchmarkHigh >= 4 ? 1.8  : 1.6 ) : 1.6,
+    // DSCR range — sourced from lib/dscrRanges.ts (single source of truth)
+    ...((() => { const r = getDscrRange(deal.industry); return { dscrLow: r.weak, dscrMedian: r.acceptable, dscrHigh: r.strong }; })()),
   };
 }
 
@@ -2481,6 +2478,8 @@ function UnderwritingPanel({
             id:       `ds-${i}`,
             name:     `${(r.naics_description ?? deal.industry).split(",")[0].trim()}${r.sale_year ? ` (${r.sale_year})` : ""}`,
             revenue:  r.revenue ?? 0,
+            // r.sde = DealStats seller discretionary earnings (the comp's reported earnings basis)
+            // Multiple = MVIC / SDE — this is the correct closed-deal multiple for comps
             sde:      r.sde,
             multiple: +(r.mvic_price / r.sde).toFixed(2),
             note:     r.sale_year ? `Closed ${r.sale_year}` : null,
