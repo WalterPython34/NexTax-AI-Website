@@ -217,3 +217,67 @@ export function summarizeRiskFlags(flags: RiskFlag[]): { high: number; medium: n
     low:    flags.filter(f => f.level === "low").length,
   };
 }
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// DECISION TRIGGERS — proceed / reevaluate / walk-away criteria
+// Tunes to the specific deal so triggers feel earned, not generic.
+// ═══════════════════════════════════════════════════════════════════════════════
+
+export interface DecisionTriggers {
+  proceedIf:    string[];
+  reevaluateIf: string[];
+  walkAwayIf:   string[];
+}
+
+export function buildDecisionTriggers(d: DealMemoInput): DecisionTriggers {
+  const lowTrust    = d.trustScore < 70 || d.earningsSource !== "reported";
+  const thinDscr    = d.dscr < 1.25 || d.stressDscr15 < 1.15;
+  const pricingGap  = (d.gap_pct ?? 0) > 15;
+  const ownerRisk   = d.owner_operated === true;
+  const custRisk    = d.customer_concentration === "high" || d.customer_concentration === "moderate";
+  const industryRisk = d.industryFit === "higher_scrutiny" || d.industryFit === "sba_ineligible";
+
+  // ── PROCEED IF — the conditions that would confirm the decision ────────────
+  const proceedIf: string[] = [
+    "3 years of tax returns validate reported SDE within 5%",
+    "No single customer represents more than 25% of revenue",
+    "Lease is assignable with no adverse change in terms",
+  ];
+  if (lowTrust) {
+    proceedIf.push("Add-backs are supported by itemized documentation or CPA review");
+  }
+  if (ownerRisk) {
+    proceedIf.push("Seller commits to a 60–90 day transition and customer introductions");
+  }
+
+  // ── RE-EVALUATE IF — yellow signals that warrant a pause ───────────────────
+  const reevaluateIf: string[] = [
+    "Add-backs are not supported by source documentation",
+    "Revenue declines more than 10% in the trailing 12 months",
+    "A key employee signals departure risk during diligence",
+  ];
+  if (pricingGap) {
+    reevaluateIf.push("Seller is unwilling to negotiate closer to NexTax fair value");
+  }
+  if (thinDscr) {
+    reevaluateIf.push("Lender prequal requires larger equity injection or additional collateral");
+  }
+  if (industryRisk) {
+    reevaluateIf.push("SBA lender declines the industry or applies restrictive overlays");
+  }
+
+  // ── WALK AWAY IF — red-line conditions ─────────────────────────────────────
+  const walkAwayIf: string[] = [
+    "Earnings quality materially deteriorates — tax returns contradict stated SDE",
+    "Legal, regulatory, or liability issues are uncovered in diligence",
+    "Seller is unwilling to support transition or any deal structure flexibility",
+  ];
+  if (custRisk) {
+    walkAwayIf.push("Top customers indicate they will not continue post-sale");
+  }
+  if (d.dscr < 1.0) {
+    walkAwayIf.push("Seller refuses pricing adjustment needed to restore debt coverage");
+  }
+
+  return { proceedIf, reevaluateIf, walkAwayIf };
+}
