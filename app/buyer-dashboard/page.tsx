@@ -8,6 +8,9 @@ import { BlurGateSection, ProLockedBanner } from "@/components/BlurGateSection";
 import { getDscrRange } from "@/lib/dscrRanges";
 import { LenderReadinessTab } from "@/components/LenderReadinessTab";
 import { buildLenderReadiness } from "@/lib/lenderReadiness";
+import { DealMemoTab } from "@/components/DealMemoTab";
+import { buildRiskFlags, buildDiligenceQuestions } from "@/lib/dealMemo";
+import { INDUSTRY_FIT } from "@/lib/lenderReadiness";
 import {
   CompsTab,
   type CompsTabProps,
@@ -2984,59 +2987,74 @@ function UnderwritingPanel({
               headline="Here's the real risk"
               subtext="See what must be true and key diligence traps before LOI."
               ctaLabel="Unlock Deal Memo →"
-              bullets={["Full deal summary and thesis","What must be true checklist","Key diligence priorities","Final recommendation"]}
+              bullets={["Deal summary and thesis","Red flags grouped by risk level","Diligence questions to ask seller","Final recommendation"]}
             >
-              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                {[
-                  {
-                    title: "Deal Summary",
-                    content: `${IL[deal.industry] || deal.industry} located in ${[deal.city, deal.state].filter(Boolean).join(", ") || "undisclosed market"}. Asking ${fmt(deal.asking_price)} at ${deal.valuation_multiple.toFixed(2)}x SDE, ${gp > 0 ? `${gp}% above` : `${Math.abs(gp)}% below`} the NexTax market fair value of ${fmt(fv)}. Overall score ${deal.overall_score}/100 — ${deal.risk_level} Risk.`,
-                  },
-                  {
-                    title: "What Must Be True",
-                    bullets: [
-                      `SDE of ${fmt(usableSDE)} is the earnings basis used for scoring${usableSDE !== (deal.sde ?? 0) ? " (trust-adjusted — see normalization flags)" : ""}`,
-                      `DSCR of ${deal.dscr.toFixed(2)}x holds under normalized owner compensation`,
-                      `Revenue trend is stable or growing — no single-customer concentration above 20%`,
-                      `No undisclosed liabilities, lease assignment issues, or pending litigation`,
-                    ],
-                  },
-                  {
-                    title: "Key Diligence Priorities",
-                    bullets: [
-                      "Request 3 years of tax returns and P&Ls prior to LOI",
-                      "Validate customer list and contract transferability",
-                      "Confirm lease terms and assignment clause",
-                      `Stress-test usable SDE to ${fmt(usableSDE * 0.85)} (−15%) — DSCR at ${stressDscr15}x`,
-                    ],
-                  },
-                  {
-                    title: "Final Recommendation",
-                    content: (() => {
-                      const v = deal.verdict ?? dealVerdict(deal);
-                      if (v === "high_conviction") return `🔥 HIGH CONVICTION — ${vd.subtext} Anchor at ${fmt(recOffer)}, move to LOI immediately after confirming add-backs.`;
-                      if (v === "pursue")          return `🟢 PURSUE — ${vd.subtext} Anchor at ${fmt(recOffer)} and request 3 years of financials before LOI submission.`;
-                      if (v === "investigate")     return `🟡 INVESTIGATE — ${vd.subtext} Validate SDE and add-backs before committing. Request 2 years of tax returns.`;
-                      if (v === "manual_review")   return `⚠️ MANUAL REVIEW REQUIRED — Normalization flags indicate data quality concerns. Do not advance until financials are independently verified.`;
-                      return `🔴 PASS — ${vd.subtext} Do not advance at current pricing. Requires ${gp > 0 ? `${gp}% price reduction` : "structural improvement"} to become viable.`;
-                    })(),
-                  },
-                ].map(s => (
-                  <div key={s.title} style={{ padding: "12px 14px", borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
-                    <div style={{ fontSize: 10, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600, marginBottom: 7 }}>{s.title}</div>
-                    {"content" in s && <div style={{ fontSize: 12, color: "#94A3B8", lineHeight: 1.7 }}>{s.content}</div>}
-                    {"bullets" in s && (
-                      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
-                        {s.bullets!.map((b, i) => (
-                          <div key={i} style={{ display: "flex", gap: 8, fontSize: 12, color: "#94A3B8", lineHeight: 1.5 }}>
-                            <span style={{ color: "#6366F1", flexShrink: 0 }}>→</span>{b}
-                          </div>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
+              {(() => {
+                // Build structured memo props from live deal signals
+                const loc    = [deal.city, deal.state].filter(Boolean).join(", ") || "undisclosed market";
+                const indLbl = IL[deal.industry] || deal.industry;
+                const gapStr = gp > 0 ? `${gp}% above` : `${Math.abs(gp)}% below`;
+
+                const summary = `${indLbl} located in ${loc}. Asking ${fmt(deal.asking_price)} at ${deal.valuation_multiple.toFixed(2)}x SDE — ${gapStr} the NexTax fair value of ${fmt(fv)}. Overall score ${deal.overall_score}/100 — ${deal.risk_level} Risk.`;
+
+                const mustBeTrue = [
+                  `SDE of ${fmt(usableSDE)} is the earnings basis used for scoring${usableSDE !== (deal.sde ?? 0) ? " (trust-adjusted — see normalization flags)" : ""}`,
+                  `DSCR of ${deal.dscr.toFixed(2)}x holds under normalized owner compensation`,
+                  `Revenue trend is stable or growing — no single-customer concentration above 20%`,
+                  `No undisclosed liabilities, lease assignment issues, or pending litigation`,
+                ];
+
+                const diligencePriorities = [
+                  "Request 3 years of tax returns and P&Ls prior to LOI",
+                  "Validate customer list and contract transferability",
+                  "Confirm lease terms and assignment clause",
+                  `Stress-test usable SDE to ${fmt(usableSDE * 0.85)} (−15%) — DSCR at ${stressDscr15}x`,
+                ];
+
+                const finalRec = (() => {
+                  const v = deal.verdict ?? dealVerdict(deal);
+                  if (v === "high_conviction") return `🔥 HIGH CONVICTION — ${vd.subtext} Anchor at ${fmt(recOffer)}, move to LOI immediately after confirming add-backs.`;
+                  if (v === "pursue")          return `🟢 PURSUE — ${vd.subtext} Anchor at ${fmt(recOffer)} and request 3 years of financials before LOI submission.`;
+                  if (v === "investigate")     return `🟡 INVESTIGATE — ${vd.subtext} Validate SDE and add-backs before committing. Request 2 years of tax returns.`;
+                  if (v === "manual_review")   return `⚠️ MANUAL REVIEW REQUIRED — Normalization flags indicate data quality concerns. Do not advance until financials are independently verified.`;
+                  return `🔴 PASS — ${vd.subtext} Do not advance at current pricing. Requires ${gp > 0 ? `${gp}% price reduction` : "structural improvement"} to become viable.`;
+                })();
+
+                // Build dealMemo input from existing panel state
+                const memoInput = {
+                  asking_price:     deal.asking_price,
+                  usableSDE:        usableSDE,
+                  reportedSDE:      deal.sde ?? 0,
+                  dscr:             deal.dscr,
+                  stressDscr15:     stressDscr15,
+                  stressDscr25:     stressDscr25,
+                  industry:         deal.industry,
+                  industryFit:      (INDUSTRY_FIT[deal.industry] ?? "requires_review") as any,
+                  trustScore:       deal.normalization_trust_score ?? 100,
+                  earningsSource:   (deal.earnings_source as any) ?? "reported",
+                  gap_pct:          deal.gap_pct ?? null,
+                  valuation_multiple: deal.valuation_multiple,
+                  owner_operated:         deal.owner_operated ?? null,
+                  customer_concentration: deal.customer_concentration ?? null,
+                  has_real_estate:        deal.has_real_estate ?? null,
+                  years_in_business:      deal.years_in_business ?? null,
+                  manual_review_required: deal.manual_review_required ?? false,
+                };
+
+                const riskFlags      = buildRiskFlags(memoInput);
+                const questionGroups = buildDiligenceQuestions(memoInput);
+
+                return (
+                  <DealMemoTab
+                    summary={summary}
+                    mustBeTrue={mustBeTrue}
+                    riskFlags={riskFlags}
+                    diligencePriorities={diligencePriorities}
+                    questionGroups={questionGroups}
+                    finalRecommendation={finalRec}
+                  />
+                );
+              })()}
             </BlurGateSection>
           )}
 
