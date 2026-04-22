@@ -6507,13 +6507,17 @@ function TabMarketIntel({
           </Card>
         </div>
       </div>
+      )}
 
-      {/* ══ SECTION 3: LOCAL MARKET SATURATION ANALYSIS (PRIMARY FEATURE) ══════ */}
+      {/* ══ SECTION 3: LOCAL MARKET SATURATION (Pro-gated) ═════════════════════ */}
+      {isPro && (
       <div style={{ marginBottom: 24 }}>
         <LocalMarketRealityCheck deals={deals} isPro={isPro} />
       </div>
+      )}
 
-      {/* ══ SECTION 4: PERSONALIZED DEAL FEED ═════════════════════════════════ */}
+      {/* ══ SECTION 4: PERSONALIZED DEAL FEED (Pro-gated) ══════════════════════ */}
+      {isPro && (
       <div style={{ marginBottom: 8 }}>
         {isPro ? (
           // ── Pro: real feed ─────────────────────────────────────────────────
