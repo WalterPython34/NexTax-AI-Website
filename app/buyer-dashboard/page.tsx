@@ -3089,14 +3089,34 @@ function UnderwritingPanel({
                 {topReasons.length > 0 && (
                   <>
                     <div style={{ fontSize: 10, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.07em", fontWeight: 700, marginBottom: 7 }}>Why</div>
-                    <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 12 }}>
-                      {topReasons.map((r, i) => (
-                        <div key={i} style={{ display: "flex", gap: 9, alignItems: "flex-start", fontSize: 11, color: "#94A3B8", lineHeight: 1.55 }}>
-                          <span style={{ color: "#F59E0B", flexShrink: 0, marginTop: 1, fontWeight: 700 }}>·</span>
-                          <span>{r}</span>
+                    {isPro ? (
+                      <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 12 }}>
+                        {topReasons.map((r, i) => (
+                          <div key={i} style={{ display: "flex", gap: 9, alignItems: "flex-start", fontSize: 11, color: "#94A3B8", lineHeight: 1.55 }}>
+                            <span style={{ color: "#F59E0B", flexShrink: 0, marginTop: 1, fontWeight: 700 }}>·</span>
+                            <span>{r}</span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div
+                        onClick={() => { window.location.href = "/pricing"; }}
+                        style={{
+                          padding: "9px 12px", borderRadius: 7, marginBottom: 12,
+                          background: "rgba(245,158,11,0.04)", border: "1px dashed rgba(245,158,11,0.25)",
+                          display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10,
+                          cursor: "pointer",
+                        }}
+                      >
+                        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                          <span style={{ fontSize: 13, color: "#F59E0B" }}>🔒</span>
+                          <span style={{ fontSize: 11, color: "#C4C8D1", fontWeight: 500 }}>
+                            {topReasons.length} {topReasons.length === 1 ? "factor" : "factors"} flagged — unlock to see which
+                          </span>
                         </div>
-                      ))}
-                    </div>
+                        <span style={{ fontSize: 11, color: "#F59E0B", fontWeight: 600 }}>Pro →</span>
+                      </div>
+                    )}
                   </>
                 )}
                 <div style={{ padding: "9px 12px", borderRadius: 7, background: "rgba(16,185,129,0.05)", border: "1px solid rgba(16,185,129,0.15)" }}>
@@ -3667,21 +3687,43 @@ function UnderwritingPanel({
                       ))}
                     </div>
 
-                    {/* High-level recommendation */}
-                    <div style={{
-                      padding: "10px 14px", borderRadius: 8,
-                      background: `${highLevelRec.color}12`,
-                      border: `1px solid ${highLevelRec.color}44`,
-                      display: "flex", alignItems: "center", gap: 10,
-                    }}>
-                      <span style={{ fontSize: 14, color: highLevelRec.color, fontWeight: 800 }}>{highLevelRec.icon}</span>
-                      <div>
-                        <div style={{ fontSize: 9, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.07em", fontWeight: 700, marginBottom: 2 }}>Recommendation</div>
-                        <div style={{ fontSize: 13, fontWeight: 800, color: highLevelRec.color, fontFamily: "'Inter Tight',sans-serif" }}>
-                          {highLevelRec.label}
+                    {/* High-level recommendation — visible to Pro, gated for free */}
+                    {isPro ? (
+                      <div style={{
+                        padding: "10px 14px", borderRadius: 8,
+                        background: `${highLevelRec.color}12`,
+                        border: `1px solid ${highLevelRec.color}44`,
+                        display: "flex", alignItems: "center", gap: 10,
+                      }}>
+                        <span style={{ fontSize: 14, color: highLevelRec.color, fontWeight: 800 }}>{highLevelRec.icon}</span>
+                        <div>
+                          <div style={{ fontSize: 9, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.07em", fontWeight: 700, marginBottom: 2 }}>Recommendation</div>
+                          <div style={{ fontSize: 13, fontWeight: 800, color: highLevelRec.color, fontFamily: "'Inter Tight',sans-serif" }}>
+                            {highLevelRec.label}
+                          </div>
                         </div>
                       </div>
-                    </div>
+                    ) : (
+                      <div
+                        onClick={() => { window.location.href = "/pricing"; }}
+                        style={{
+                          padding: "10px 14px", borderRadius: 8,
+                          background: "rgba(99,102,241,0.05)",
+                          border: "1px dashed rgba(99,102,241,0.25)",
+                          display: "flex", alignItems: "center", gap: 10,
+                          cursor: "pointer",
+                        }}
+                      >
+                        <span style={{ fontSize: 14, color: "#9CA3AF" }}>🔒</span>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontSize: 9, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.07em", fontWeight: 700, marginBottom: 2 }}>Recommendation</div>
+                          <div style={{ fontSize: 12, fontWeight: 600, color: "#A5B4FC", fontFamily: "'Inter Tight',sans-serif" }}>
+                            Proceed / Caution / Pass — unlock with Pro
+                          </div>
+                        </div>
+                        <span style={{ fontSize: 11, color: "#818CF8" }}>→</span>
+                      </div>
+                    )}
                   </div>
 
                   <BlurGateSection
@@ -7108,6 +7150,44 @@ export default function BuyerDashboard() {
   const isPro       = profile?.plan === "pro" || profile?.plan === "premium";
   const userInitial = user?.email?.charAt(0)?.toUpperCase() ?? "?";
 
+  // ── Free-plan monthly deal-analysis cap ───────────────────────────────────
+  // 10 deal analyses per calendar month. Resets on the 1st.
+  // Pro users bypass. Tracked in localStorage keyed by month.
+  const FREE_MONTHLY_DEAL_LIMIT = 10;
+  const currentMonthKey = React.useMemo(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  }, []);
+  const [dealAnalysesThisMonth, setDealAnalysesThisMonth] = useState<number>(() => {
+    if (typeof window === "undefined") return 0;
+    try {
+      const raw = localStorage.getItem("nxtax_deal_analyses_by_month");
+      if (!raw) return 0;
+      const obj = JSON.parse(raw);
+      return obj[currentMonthKey] ?? 0;
+    } catch { return 0; }
+  });
+  const dealAnalysesRemaining = Math.max(0, FREE_MONTHLY_DEAL_LIMIT - dealAnalysesThisMonth);
+  const hitDealCap            = !isPro && dealAnalysesRemaining === 0;
+  const nearDealCap           = !isPro && dealAnalysesRemaining <= 2 && dealAnalysesRemaining > 0;
+  // Days until reset (shown in counter UI)
+  const daysUntilReset = (() => {
+    const now = new Date();
+    const firstOfNext = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    return Math.ceil((firstOfNext.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+  })();
+  const incrementDealAnalyses = React.useCallback(() => {
+    if (isPro) return;
+    const next = dealAnalysesThisMonth + 1;
+    setDealAnalysesThisMonth(next);
+    try {
+      const raw = localStorage.getItem("nxtax_deal_analyses_by_month");
+      const obj = raw ? JSON.parse(raw) : {};
+      obj[currentMonthKey] = next;
+      localStorage.setItem("nxtax_deal_analyses_by_month", JSON.stringify(obj));
+    } catch {}
+  }, [isPro, dealAnalysesThisMonth, currentMonthKey]);
+
   // ── Auth ────────────────────────────────────────────────────────────────────
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -7293,6 +7373,17 @@ export default function BuyerDashboard() {
     const enriched = { ...deal, verdict: dealVerdict(deal), oppScore: oppScore(deal) };
     setDeals(prev => [enriched, ...prev]);
     setAnalyzeModal(false);
+    // Increment the free-plan monthly counter (no-op for Pro)
+    incrementDealAnalyses();
+  };
+
+  // ── Gate the "Analyze New Deal" entry point based on the monthly cap ──────
+  const handleAnalyzeNewClick = () => {
+    if (hitDealCap) {
+      setShowUpgradeModal(true);
+      return;
+    }
+    setAnalyzeModal(true);
   };
 
   // ── Open underwriting panel ───────────────────────────────────────────────
@@ -7511,7 +7602,7 @@ export default function BuyerDashboard() {
               </h1>
             </div>
             <button
-              onClick={() => setAnalyzeModal(true)}
+              onClick={handleAnalyzeNewClick}
               className="btn-action"
               style={{
                 display: "inline-flex", alignItems: "center", gap: 6,
@@ -7523,6 +7614,53 @@ export default function BuyerDashboard() {
               <span style={{ fontSize: 14 }}>+</span> Analyze New Deal
             </button>
           </div>
+
+          {/* Free-plan monthly deal-analysis counter — visible when near or at cap */}
+          {!isPro && (nearDealCap || hitDealCap) && (
+            <div style={{
+              marginBottom: 14,
+              padding: "11px 14px", borderRadius: 10,
+              background: hitDealCap ? "rgba(245,158,11,0.08)" : "rgba(99,102,241,0.05)",
+              border: hitDealCap ? "1px solid rgba(245,158,11,0.3)" : "1px solid rgba(99,102,241,0.22)",
+              display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" as const,
+            }}>
+              <span style={{ fontSize: 16, flexShrink: 0 }}>
+                {hitDealCap ? "⚠️" : "📊"}
+              </span>
+              <div style={{ flex: 1, minWidth: 180 }}>
+                <div style={{ fontSize: 12, fontWeight: 600, color: hitDealCap ? "#F59E0B" : "#A5B4FC", marginBottom: 2 }}>
+                  {hitDealCap
+                    ? `You've reached this month's free deal analyses`
+                    : `${dealAnalysesRemaining} free deal ${dealAnalysesRemaining === 1 ? "analysis" : "analyses"} remaining this month`}
+                </div>
+                <div style={{ fontSize: 10, color: "#7C8593" }}>
+                  {hitDealCap
+                    ? `Resets in ${daysUntilReset} ${daysUntilReset === 1 ? "day" : "days"} · Saved deals remain fully accessible`
+                    : `${FREE_MONTHLY_DEAL_LIMIT} analyses per month on free · Resets in ${daysUntilReset} ${daysUntilReset === 1 ? "day" : "days"}`}
+                </div>
+              </div>
+              {/* Progress bar */}
+              <div style={{ flex: 1, minWidth: 120, height: 4, borderRadius: 2, background: "rgba(255,255,255,0.05)", overflow: "hidden" }}>
+                <div style={{
+                  height: "100%",
+                  width: `${Math.min(100, (dealAnalysesThisMonth / FREE_MONTHLY_DEAL_LIMIT) * 100)}%`,
+                  background: hitDealCap ? "#F59E0B" : "#818CF8",
+                  transition: "width 0.3s ease",
+                }} />
+              </div>
+              <button
+                onClick={() => window.location.href = "/pricing"}
+                style={{
+                  padding: "6px 14px", borderRadius: 7, border: "none",
+                  background: "linear-gradient(135deg,#6366F1,#8B5CF6)",
+                  color: "#fff", fontSize: 11, fontWeight: 600, cursor: "pointer",
+                  whiteSpace: "nowrap" as const,
+                }}
+              >
+                Go unlimited
+              </button>
+            </div>
+          )}
 
           {/* Stat cards — dashboard + my-deals only */}
           {(activeTab === "dashboard" || activeTab === "my-deals") && (
@@ -7547,7 +7685,7 @@ export default function BuyerDashboard() {
                 onOpenDetail={openDetail}
                 onOpenUnderwriting={openUnderwriting}
                 onOpenOutcome={setOutcomeDeal}
-                onAnalyzeNew={() => setAnalyzeModal(true)}
+                onAnalyzeNew={handleAnalyzeNewClick}
               />
             )}
             {activeTab === "my-deals" && (
@@ -7564,11 +7702,11 @@ export default function BuyerDashboard() {
                 onOpenDetail={openDetail}
                 onOpenUnderwriting={openUnderwriting}
                 onOpenOutcome={setOutcomeDeal}
-                onAnalyzeNew={() => setAnalyzeModal(true)}
+                onAnalyzeNew={handleAnalyzeNewClick}
               />
             )}
             {activeTab === "compare" && (
-              <TabCompare deals={deals} isPro={isPro} onAnalyzeNew={() => setAnalyzeModal(true)} />
+              <TabCompare deals={deals} isPro={isPro} onAnalyzeNew={handleAnalyzeNewClick} />
             )}
             {activeTab === "market-intel" && (
               <TabMarketIntel dri={dri} trending={trending} loading={loadingMkt} isPro={isPro} deals={deals} />
@@ -7663,12 +7801,14 @@ export default function BuyerDashboard() {
             boxShadow: "0 24px 64px rgba(0,0,0,0.7)",
             textAlign: "center" as const,
           }}>
-            <div style={{ fontSize: 32, marginBottom: 12 }}>⚡</div>
+            <div style={{ fontSize: 32, marginBottom: 12 }}>{hitDealCap ? "📊" : "⚡"}</div>
             <h2 style={{ fontSize: 20, fontWeight: 800, color: "#F1F5F9", margin: "0 0 10px", fontFamily: "'Inter Tight',sans-serif", letterSpacing: "-0.02em" }}>
-              Finish your underwriting
+              {hitDealCap ? "You're in the pipeline" : "Finish your underwriting"}
             </h2>
             <p style={{ fontSize: 13, color: "#64748B", lineHeight: 1.6, margin: "0 0 20px" }}>
-              You've seen how this deal performs. Now unlock full analysis, comps, and negotiation strategy.
+              {hitDealCap
+                ? `You've analyzed ${FREE_MONTHLY_DEAL_LIMIT} deals this month — clearly screening seriously. Go unlimited and get the full playbook on every one.`
+                : "You've seen how this deal performs. Now unlock full analysis, comps, and negotiation strategy."}
             </p>
             <div style={{ display: "flex", flexDirection: "column" as const, gap: 5, marginBottom: 20, textAlign: "left" as const }}>
               {["Full stress test & downside scenarios","SBA loan structure & DSCR","Negotiation anchor & walk-away price","Market comps & percentile ranking","Complete deal memo"].map(b => (
