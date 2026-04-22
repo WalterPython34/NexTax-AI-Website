@@ -4665,6 +4665,9 @@ function TabDashboard({
   });
   const topDeal = dealsNeedingAttention[0] ?? deals[0] ?? null;
 
+  // Top 3 most-recent deals for the "Your deals" list in State B
+  const recent = deals.slice(0, 3);
+
   // Sample-modal state for "View sample" button (future: replace with real sample deal)
   const [showSampleModal, setShowSampleModal] = useState(false);
 
