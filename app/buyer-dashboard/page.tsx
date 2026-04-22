@@ -4270,8 +4270,8 @@ function ProUpsellCard({ deals, onOpenUnderwriting }: { deals: DealRun[]; onOpen
 // ─── TAB: DASHBOARD ───────────────────────────────────────────────────────────
 
 function TabDashboard({
-  deals, dri, trending, loading, loadingMkt, isPro, favorites,
-  onTabChange, onToggleFav, onOpenNotes, onOpenDetail, onOpenUnderwriting, onAnalyzeNew,
+  deals, dri, trending, loading, loadingMkt, isPro, favorites, outcomesMap,
+  onTabChange, onToggleFav, onOpenNotes, onOpenDetail, onOpenUnderwriting, onOpenOutcome, onAnalyzeNew,
 }: {
   deals: DealRun[];
   dri: DriSnapshot[];
@@ -4280,11 +4280,13 @@ function TabDashboard({
   loadingMkt: boolean;
   isPro: boolean;
   favorites: Set<string>;
+  outcomesMap: Map<string, DealOutcome>;
   onTabChange: (tab: TabId) => void;
   onToggleFav: (id: string) => void;
   onOpenNotes: (deal: DealRun) => void;
   onOpenDetail: (deal: DealRun) => void;
   onOpenUnderwriting: (deal: DealRun) => void;
+  onOpenOutcome: (deal: DealRun) => void;
   onAnalyzeNew: () => void;
 }) {
   const recent  = deals.slice(0, 3);
@@ -7266,11 +7268,13 @@ export default function BuyerDashboard() {
                 loadingMkt={loadingMkt}
                 isPro={isPro}
                 favorites={favorites}
+                outcomesMap={outcomesMap}
                 onTabChange={setActiveTab}
                 onToggleFav={toggleFavorite}
                 onOpenNotes={openNotes}
                 onOpenDetail={openDetail}
                 onOpenUnderwriting={openUnderwriting}
+                onOpenOutcome={setOutcomeDeal}
                 onAnalyzeNew={() => setAnalyzeModal(true)}
               />
             )}
