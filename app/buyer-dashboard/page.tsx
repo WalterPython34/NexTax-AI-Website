@@ -2676,11 +2676,7 @@ function UnderwritingPanel({
               <button
                 key={t.id}
                 onClick={() => {
-                  // Free user with 1 unlock used clicking a still-locked tab → upgrade
-                  if (!isPro && unlockedTabs.size >= 1 && !unlockedTabs.has(t.id as UwTab)) {
-                    onShowUpgrade?.();
-                    return;
-                  }
+                  // Always allow navigation — free preview shows on every tab
                   setActiveTab(t.id);
                 }}
                 style={{
@@ -5594,6 +5590,15 @@ function LocalMarketRealityCheck({
   const [aiInsight, setAiInsight]           = useState<string>("");
   const [error, setError]                   = useState<string>("");
 
+  // Free plan: soft limit of 3 market checks. Counter persists across sessions.
+  const FREE_MARKET_CHECK_LIMIT = 3;
+  const [freeChecksUsed, setFreeChecksUsed] = useState<number>(() => {
+    if (typeof window === "undefined") return 0;
+    return parseInt(localStorage.getItem("nxtax_free_market_checks") ?? "0", 10);
+  });
+  const freeChecksRemaining = Math.max(0, FREE_MARKET_CHECK_LIMIT - freeChecksUsed);
+  const freeLimitReached    = !isPro && freeChecksRemaining === 0;
+
   const RADIUS_OPTIONS = [5, 10, 15, 25];
 
   const selectedDeal = deals.find(d => d.id === selectedDealId) ?? null;
@@ -5681,6 +5686,11 @@ function LocalMarketRealityCheck({
 
   async function runCheck() {
     if (!selectedDeal || !dealLocation) return;
+    // Free soft limit: block run if already used allotted checks
+    if (!isPro && freeChecksRemaining === 0) {
+      setError(`You've used all ${FREE_MARKET_CHECK_LIMIT} free market analyses. Upgrade to Pro for unlimited checks.`);
+      return;
+    }
     setLoading(true);
     setResult(null);
     setAiInsight("");
@@ -5815,21 +5825,41 @@ function LocalMarketRealityCheck({
         </div>
       </div>
 
-      {/* Free gate */}
-      {!isPro ? (
-        <Card style={{ position: "relative" }}>
-          <LockOverlay label="Upgrade to Pro to run local market saturation checks" />
-          <div style={{ opacity: 0.15 }}>
-            {/* Ghost UI */}
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr auto", gap: 10, marginBottom: 14 }}>
-              <div style={{ height: 38, borderRadius: 8, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }} />
-              <div style={{ height: 38, borderRadius: 8, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }} />
-              <div style={{ height: 38, width: 140, borderRadius: 8, background: "rgba(59,130,246,0.15)" }} />
-            </div>
-            <div style={{ height: 140, borderRadius: 10, background: "rgba(255,255,255,0.02)" }} />
+      {/* Free-user soft-limit counter — shown above the working card */}
+      {!isPro && (
+        <div style={{
+          marginBottom: 12, padding: "10px 14px", borderRadius: 10,
+          background: freeChecksRemaining > 0 ? "rgba(99,102,241,0.05)" : "rgba(245,158,11,0.08)",
+          border: freeChecksRemaining > 0 ? "1px solid rgba(99,102,241,0.18)" : "1px solid rgba(245,158,11,0.3)",
+          display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" as const,
+        }}>
+          <span style={{ fontSize: 11, fontWeight: 600, color: freeChecksRemaining > 0 ? "#A5B4FC" : "#F59E0B" }}>
+            {freeChecksRemaining > 0
+              ? `You've used ${freeChecksUsed} of ${FREE_MARKET_CHECK_LIMIT} free market analyses`
+              : `You've used all ${FREE_MARKET_CHECK_LIMIT} free market analyses`}
+          </span>
+          <div style={{ flex: 1, minWidth: 100, height: 4, borderRadius: 2, background: "rgba(255,255,255,0.05)", overflow: "hidden" }}>
+            <div style={{
+              height: "100%",
+              width: `${(freeChecksUsed / FREE_MARKET_CHECK_LIMIT) * 100}%`,
+              background: freeChecksRemaining > 0 ? "#818CF8" : "#F59E0B",
+              transition: "width 0.3s ease",
+            }} />
           </div>
-        </Card>
-      ) : (
+          <button
+            onClick={() => window.location.href = "/pricing"}
+            style={{
+              padding: "5px 12px", borderRadius: 6, border: "none",
+              background: "linear-gradient(135deg,#6366F1,#8B5CF6)",
+              color: "#fff", fontSize: 11, fontWeight: 600, cursor: "pointer", whiteSpace: "nowrap" as const,
+            }}
+          >
+            Upgrade for Unlimited
+          </button>
+        </div>
+      )}
+
+      {/* Working card — free users see the same UI, bounded by the soft limit */}
         <Card style={{
           border: "1px solid rgba(16,185,129,0.3)",
           boxShadow: "0 0 24px rgba(16,185,129,0.08), 0 0 48px rgba(16,185,129,0.04), 0 4px 24px rgba(16,185,129,0.06)",
@@ -6220,7 +6250,6 @@ function LocalMarketRealityCheck({
             </div>
           )}
         </Card>
-      )}
     </div>
   );
 }
@@ -6237,11 +6266,13 @@ function TabMarketIntel({
   deals: DealRun[];
 }) {
   // ── Derived metrics ──────────────────────────────────────────────────────
-  const overpricedList  = [...dri].sort((a, b) => (b.gap_pct ?? 0) - (a.gap_pct ?? 0)).slice(0, 6);
-  const opportunityList = [...dri]
+  const overpricedListFull = [...dri].sort((a, b) => (b.gap_pct ?? 0) - (a.gap_pct ?? 0)).slice(0, 6);
+  const overpricedList     = isPro ? overpricedListFull : overpricedListFull.slice(0, 2);
+  const opportunityListFull = [...dri]
     .filter(s => condSig(s.condition) === "opportunity")
     .sort((a, b) => (a.gap_pct ?? 0) - (b.gap_pct ?? 0))
     .slice(0, 6);
+  const opportunityList     = isPro ? opportunityListFull : opportunityListFull.slice(0, 2);
 
   const avgDri = dri.length
     ? (dri.reduce((a, s) => a + (s.dri ?? 0), 0) / dri.length)
@@ -6359,36 +6390,8 @@ function TabMarketIntel({
         )}
       </div>
 
-      {/* ══ FREE-USER GATE — everything below Market Conditions requires Pro ═══ */}
-      {!isPro && (
-        <div style={{
-          marginBottom: 24,
-          padding: "20px 24px", borderRadius: 12,
-          background: "rgba(99,102,241,0.05)", border: "1px solid rgba(99,102,241,0.2)",
-          textAlign: "center" as const,
-        }}>
-          <div style={{ fontSize: 28, marginBottom: 10 }}>🔒</div>
-          <div style={{ fontSize: 15, fontWeight: 700, color: "#F1F5F9", marginBottom: 6, fontFamily: "'Inter Tight',sans-serif" }}>
-            Run full local market analysis
-          </div>
-          <div style={{ fontSize: 12, color: "#9CA3AF", marginBottom: 14, lineHeight: 1.6, maxWidth: 420, marginLeft: "auto", marginRight: "auto" }}>
-            Unlock industry-level saturation, overpriced and opportunity tables, trending multiples, and your personal deal fit against local market conditions.
-          </div>
-          <button
-            onClick={() => window.location.href = "/pricing"}
-            style={{
-              padding: "9px 22px", borderRadius: 8, border: "none",
-              background: "linear-gradient(135deg,#6366F1,#8B5CF6)",
-              color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer",
-            }}
-          >
-            Upgrade to Pro →
-          </button>
-        </div>
-      )}
-
-      {/* ══ SECTION 2: WHERE THE MARKET IS MISPRICED (Pro only) ════════════════ */}
-      {isPro && (
+      {/* ══ SECTION 2: WHERE THE MARKET IS MISPRICED ══════════════════════════ */}
+      {/* Free users see top 2 overpriced + top 2 opportunity; rest gated inline */}
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 24 }}>
 
         {/* Most Overpriced */}
@@ -6439,6 +6442,27 @@ function TabMarketIntel({
                 </span>
               </div>
             ))}
+            {!isPro && overpricedListFull.length > overpricedList.length && (
+              <div style={{
+                padding: "10px 16px", borderTop: "1px solid rgba(255,255,255,0.05)",
+                display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10,
+                background: "rgba(99,102,241,0.03)",
+              }}>
+                <span style={{ fontSize: 11, color: "#9CA3AF" }}>
+                  +{overpricedListFull.length - overpricedList.length} more industries hidden
+                </span>
+                <button
+                  onClick={() => window.location.href = "/pricing"}
+                  style={{
+                    padding: "4px 10px", borderRadius: 6, border: "none",
+                    background: "rgba(99,102,241,0.12)", color: "#A5B4FC",
+                    fontSize: 11, fontWeight: 600, cursor: "pointer",
+                  }}
+                >
+                  See all →
+                </button>
+              </div>
+            )}
           </Card>
         </div>
 
@@ -6494,6 +6518,27 @@ function TabMarketIntel({
                 </span>
               </div>
             ))}
+            {!isPro && opportunityListFull.length > opportunityList.length && (
+              <div style={{
+                padding: "10px 16px", borderTop: "1px solid rgba(255,255,255,0.05)",
+                display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10,
+                background: "rgba(99,102,241,0.03)",
+              }}>
+                <span style={{ fontSize: 11, color: "#9CA3AF" }}>
+                  +{opportunityListFull.length - opportunityList.length} more industries hidden
+                </span>
+                <button
+                  onClick={() => window.location.href = "/pricing"}
+                  style={{
+                    padding: "4px 10px", borderRadius: 6, border: "none",
+                    background: "rgba(99,102,241,0.12)", color: "#A5B4FC",
+                    fontSize: 11, fontWeight: 600, cursor: "pointer",
+                  }}
+                >
+                  See all →
+                </button>
+              </div>
+            )}
             {opportunityList.length > 0 && (
               <div style={{
                 padding: "10px 16px", borderTop: "1px solid rgba(255,255,255,0.04)",
@@ -6507,17 +6552,13 @@ function TabMarketIntel({
           </Card>
         </div>
       </div>
-      )}
 
-      {/* ══ SECTION 3: LOCAL MARKET SATURATION (Pro-gated) ═════════════════════ */}
-      {isPro && (
+      {/* ══ SECTION 3: LOCAL MARKET SATURATION (always available w/ soft limit) ═ */}
       <div style={{ marginBottom: 24 }}>
         <LocalMarketRealityCheck deals={deals} isPro={isPro} />
       </div>
-      )}
 
-      {/* ══ SECTION 4: PERSONALIZED DEAL FEED (Pro-gated) ══════════════════════ */}
-      {isPro && (
+      {/* ══ SECTION 4: PERSONALIZED DEAL FEED (has internal Pro/Free branches) ═ */}
       <div style={{ marginBottom: 8 }}>
         {isPro ? (
           // ── Pro: real feed ─────────────────────────────────────────────────
@@ -6653,7 +6694,6 @@ function TabMarketIntel({
           </div>
         )}
       </div>
-      )}
 
     </div>
   );
