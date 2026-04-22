@@ -18,6 +18,7 @@ import { TrajectoryChip, TrajectoryBreakdown } from "@/components/TrajectoryIndi
 import { buildTrajectory } from "@/lib/dealTrajectory";
 import { OutcomeModal } from "@/components/OutcomeModal";
 import { fetchOutcomesForUser, OUTCOME_LABELS, OUTCOME_COLORS, type DealOutcome } from "@/lib/dealOutcomes";
+import { InfoTooltip } from "@/components/InfoTooltip";
 import {
   CompsTab,
   type CompsTabProps,
@@ -2160,7 +2161,13 @@ function DealDetailPanel({
 
           {/* Score + metrics */}
           <div style={{ display: "grid", gridTemplateColumns: "auto 1fr", gap: 16, alignItems: "center", marginBottom: 16, padding: "14px 16px", borderRadius: 12, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
-            <Ring score={deal.overall_score} size={64} />
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
+              <Ring score={deal.overall_score} size={64} />
+              <div style={{ fontSize: 9, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.07em", fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 4 }}>
+                <span>Overall Score</span>
+                <InfoTooltip term="overallScore" size="sm" />
+              </div>
+            </div>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "6px 12px" }}>
               {[
                 { label: "Fair Value",    value: fmt(deal.fair_value),     color: "#10B981" },
@@ -2222,8 +2229,10 @@ function DealDetailPanel({
               border: `1px solid ${deal.manual_review_required ? "rgba(239,68,68,0.2)" : "rgba(245,158,11,0.2)"}`,
             }}>
               <div style={{ fontSize: 10, fontWeight: 700, color: deal.manual_review_required ? "#EF4444" : "#F59E0B",
-                textTransform: "uppercase" as any, letterSpacing: "0.07em", marginBottom: 3 }}>
-                {deal.manual_review_required ? "Manual Review Required" : `Data Confidence: ${deal.normalization_trust_score}/100`}
+                textTransform: "uppercase" as any, letterSpacing: "0.07em", marginBottom: 3,
+                display: "inline-flex", alignItems: "center", gap: 5 }}>
+                <span>{deal.manual_review_required ? "Manual Review Required" : `Data Confidence: ${deal.normalization_trust_score}/100`}</span>
+                <InfoTooltip term="trustScore" size="sm" />
               </div>
               <div style={{ fontSize: 11, color: "#6B7280", lineHeight: 1.5 }}>
                 {deal.earnings_basis === "benchmark_implied"
@@ -2775,8 +2784,9 @@ function UnderwritingPanel({
             <span style={{ fontSize: 18, flexShrink: 0, marginTop: 1 }}>{vd.emoji}</span>
             <div style={{ flex: 1, minWidth: 0 }}>
               <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 2 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: vd.color, textTransform: "uppercase" as any, letterSpacing: "0.07em" }}>
-                  Verdict: {vd.label}
+                <div style={{ fontSize: 11, fontWeight: 700, color: vd.color, textTransform: "uppercase" as any, letterSpacing: "0.07em", display: "inline-flex", alignItems: "center", gap: 6 }}>
+                  <span>Verdict: {vd.label}</span>
+                  <InfoTooltip term="verdict" size="sm" />
                 </div>
                 <TrustBadge
                   trustScore={deal.normalization_trust_score ?? 100}
@@ -2870,9 +2880,12 @@ function UnderwritingPanel({
                   </div>
                   <div style={{ fontSize: 10, color: "#6B7280", marginTop: 1 }}>{vd.subtext}</div>
                 </div>
-                <div style={{ marginLeft: "auto", fontFamily: "'JetBrains Mono',monospace",
-                  fontSize: 18, fontWeight: 800, color: vd.color }}>
-                  {deal.overall_score}
+                <div style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 5 }}>
+                  <div style={{ fontFamily: "'JetBrains Mono',monospace",
+                    fontSize: 18, fontWeight: 800, color: vd.color }}>
+                    {deal.overall_score}
+                  </div>
+                  <InfoTooltip term="overallScore" size="sm" />
                 </div>
               </div>
 
@@ -2967,13 +2980,19 @@ function UnderwritingPanel({
                 {/* Two headline metrics side-by-side */}
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 10, marginBottom: 12 }}>
                   <div style={{ padding: "9px 12px", borderRadius: 8, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)" }}>
-                    <div style={{ fontSize: 9, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4 }}>DSCR</div>
+                    <div style={{ fontSize: 9, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4, display: "inline-flex", alignItems: "center", gap: 4 }}>
+                      <span>DSCR</span>
+                      <InfoTooltip term="dscr" size="sm" />
+                    </div>
                     <div style={{ fontSize: 20, fontWeight: 800, color: col(deal.dscr), fontFamily: "'JetBrains Mono',monospace" }}>
                       {deal.dscr.toFixed(2)}x
                     </div>
                   </div>
                   <div style={{ padding: "9px 12px", borderRadius: 8, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)" }}>
-                    <div style={{ fontSize: 9, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4 }}>Asking Multiple</div>
+                    <div style={{ fontSize: 9, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4, display: "inline-flex", alignItems: "center", gap: 4 }}>
+                      <span>Asking Multiple</span>
+                      <InfoTooltip term="askingMultiple" size="sm" />
+                    </div>
                     <div style={{ fontSize: 20, fontWeight: 800, color: "#E2E8F0", fontFamily: "'JetBrains Mono',monospace" }}>
                       {(deal.valuation_multiple ?? 0).toFixed(2)}x
                     </div>
@@ -3088,7 +3107,10 @@ function UnderwritingPanel({
                 </div>
                 {topReasons.length > 0 && (
                   <>
-                    <div style={{ fontSize: 10, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.07em", fontWeight: 700, marginBottom: 7 }}>Why</div>
+                    <div style={{ fontSize: 10, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.07em", fontWeight: 700, marginBottom: 7, display: "inline-flex", alignItems: "center", gap: 5 }}>
+                      <span>Why</span>
+                      <InfoTooltip term="lenderVerdict" size="sm" />
+                    </div>
                     {isPro ? (
                       <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 12 }}>
                         {topReasons.map((r, i) => (
@@ -3167,7 +3189,10 @@ function UnderwritingPanel({
 
                 {/* Payment range pill */}
                 <div style={{ marginBottom: 12 }}>
-                  <div style={{ fontSize: 9, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4 }}>Estimated Monthly Payment</div>
+                  <div style={{ fontSize: 9, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4, display: "inline-flex", alignItems: "center", gap: 4 }}>
+                    <span>Estimated Monthly Payment</span>
+                    <InfoTooltip term="debtService" size="sm" />
+                  </div>
                   <div style={{ fontSize: 20, fontWeight: 800, color: "#60A5FA", fontFamily: "'JetBrains Mono',monospace", letterSpacing: "-0.01em" }}>
                     {fmt(paymentLow)} – {fmt(paymentHigh)}
                   </div>
@@ -3657,7 +3682,10 @@ function UnderwritingPanel({
                     {/* Top 3 risks */}
                     {top3Risks.length > 0 && (
                       <>
-                        <div style={{ fontSize: 10, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.07em", fontWeight: 700, marginBottom: 7 }}>Top 3 Risks</div>
+                        <div style={{ fontSize: 10, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.07em", fontWeight: 700, marginBottom: 7, display: "inline-flex", alignItems: "center", gap: 5 }}>
+                          <span>Top 3 Risks</span>
+                          <InfoTooltip term="riskLevel" size="sm" />
+                        </div>
                         <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 14 }}>
                           {top3Risks.map((r, i) => {
                             const rc = r.level === "high" ? "#EF4444" : r.level === "medium" ? "#F59E0B" : "#94A3B8";
@@ -3833,7 +3861,10 @@ function UnderwritingPanel({
 
                 {/* Range — large display */}
                 <div style={{ marginBottom: 10 }}>
-                  <div style={{ fontSize: 9, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4 }}>Typical Market Range</div>
+                  <div style={{ fontSize: 9, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4, display: "inline-flex", alignItems: "center", gap: 4 }}>
+                    <span>Typical Market Range</span>
+                    <InfoTooltip term="marketMultiple" size="sm" />
+                  </div>
                   <div style={{ fontSize: 20, fontWeight: 800, color: "#E2E8F0", fontFamily: "'JetBrains Mono',monospace", letterSpacing: "-0.01em" }}>
                     {lowTeaser.toFixed(2)}x – {highTeaser.toFixed(2)}x
                   </div>
@@ -3914,8 +3945,9 @@ function UnderwritingPanel({
                     }}>
                       <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap" as const, marginBottom: 12 }}>
                         <div>
-                          <div style={{ fontSize: 10, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 700, marginBottom: 3 }}>
-                            Percentile Positioning
+                          <div style={{ fontSize: 10, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 700, marginBottom: 3, display: "inline-flex", alignItems: "center", gap: 5 }}>
+                            <span>Percentile Positioning</span>
+                            <InfoTooltip term="percentile" size="sm" />
                           </div>
                           <div style={{ fontSize: 11, color: "#7C8593" }}>
                             Based on {n} closed {n === 1 ? "transaction" : "transactions"} in this industry
