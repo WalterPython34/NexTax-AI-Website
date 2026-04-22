@@ -122,9 +122,12 @@ interface DriSnapshot {
 }
 
 interface TrendingMultiple {
-  industry_key: string;
-  median_multiple: number;
-  sample_size: number;
+  industry_key:     string;
+  median_multiple:  number;   // SDE multiple (mvic_to_sde) — primary
+  revenue_multiple: number | null;   // MVIC-to-revenue cross-reference
+  p25_sde_multiple: number | null;   // 25th percentile SDE multiple
+  p75_sde_multiple: number | null;   // 75th percentile SDE multiple
+  sample_size:      number;
 }
 
 interface Profile {
@@ -2452,6 +2455,14 @@ function UnderwritingPanel({
 }) {
   const [activeTab, setActiveTab]    = useState<UwTab>("stress");
   const [compsData, setCompsData]    = useState<CompsData>({ comps: [], currentDealOutsideRange: false });
+  // Benchmark IQR for this deal's industry — populated when panel opens
+  const [benchmarkIqr, setBenchmarkIqr] = useState<{
+    p25:         number | null;
+    median:      number | null;
+    p75:         number | null;
+    sample_size: number;
+    percentile:  number | null;   // where this deal sits in the IQR distribution
+  } | null>(null);
 
   // Panel width mode — persisted across sessions
   const [panelExpanded, setPanelExpanded] = useState<boolean>(() => {
@@ -2536,6 +2547,34 @@ function UnderwritingPanel({
       })
       .catch(() => setCompsData({ comps: [], currentDealOutsideRange: outside }));
   }, [deal.id, deal.industry]);
+
+  // Fetch IQR benchmark (p25/median/p75 SDE multiple) for percentile positioning
+  useEffect(() => {
+    supabase
+      .from("dealstats_benchmarks")
+      .select("p25_mvic_to_sde,median_mvic_to_sde,p75_mvic_to_sde,sample_size")
+      .eq("industry_key", deal.industry)
+      .eq("size_band", "mid")
+      .maybeSingle()
+      .then(({ data }) => {
+        if (!data) { setBenchmarkIqr(null); return; }
+        const p25    = data.p25_mvic_to_sde    ?? null;
+        const median = data.median_mvic_to_sde ?? null;
+        const p75    = data.p75_mvic_to_sde    ?? null;
+        const mult   = deal.valuation_multiple ?? 0;
+        // Approx percentile — linear interpolation between known quartile points
+        // (a good-enough approximation for UI; exact percentile would need full distribution)
+        let percentile: number | null = null;
+        if (p25 != null && median != null && p75 != null && mult > 0) {
+          if      (mult <= p25)    percentile = Math.max(1, Math.round(25 * (mult / p25)));
+          else if (mult <= median) percentile = Math.round(25 + 25 * ((mult - p25) / (median - p25)));
+          else if (mult <= p75)    percentile = Math.round(50 + 25 * ((mult - median) / (p75 - median)));
+          else                     percentile = Math.min(99, Math.round(75 + 24 * Math.min(1, (mult - p75) / (p75 * 0.5))));
+        }
+        setBenchmarkIqr({ p25, median, p75, sample_size: data.sample_size ?? 0, percentile });
+      })
+      .catch(() => setBenchmarkIqr(null));
+  }, [deal.id, deal.industry, deal.valuation_multiple]);
 
   const ind = SCORE_INDUSTRIES[deal.industry];
   const gp  = deal.gap_pct ?? 0;
@@ -3800,6 +3839,118 @@ function UnderwritingPanel({
               footerNote="1 free unlock available · Upgrade to Pro for full market positioning"
               bullets={["Percentile ranking within the market","Representative comparable transactions","Adjusted vs reported earnings detail","Full range comparison and data sources"]}
             >
+              {/* ── Percentile Positioning — where this deal sits in the IQR distribution ── */}
+              {benchmarkIqr && benchmarkIqr.p25 != null && benchmarkIqr.median != null && benchmarkIqr.p75 != null && benchmarkIqr.percentile != null && (
+                (() => {
+                  const mult = deal.valuation_multiple ?? 0;
+                  const p25  = benchmarkIqr.p25!;
+                  const med  = benchmarkIqr.median!;
+                  const p75  = benchmarkIqr.p75!;
+                  const pct  = benchmarkIqr.percentile!;
+                  const n    = benchmarkIqr.sample_size;
+                  // Position deal marker along IQR bar — clamp to [0%, 100%] of visual span
+                  // Display range extends 20% beyond p75 on the right
+                  const displayMax = p75 * 1.2;
+                  const displayMin = Math.max(0, p25 * 0.5);
+                  const markerPct  = Math.max(2, Math.min(98, ((mult - displayMin) / (displayMax - displayMin)) * 100));
+                  const p25pct     = ((p25 - displayMin) / (displayMax - displayMin)) * 100;
+                  const medPct     = ((med - displayMin) / (displayMax - displayMin)) * 100;
+                  const p75pct     = ((p75 - displayMin) / (displayMax - displayMin)) * 100;
+
+                  // Interpretation color
+                  const pctColor = pct >= 85 ? "#EF4444" : pct >= 65 ? "#F59E0B" : pct <= 25 ? "#10B981" : "#A5B4FC";
+                  const pctLabel = pct >= 90 ? "Extreme outlier — priced far above comparable closed deals"
+                                 : pct >= 75 ? "Above the 75th percentile — priced richer than 3-in-4 comparable deals"
+                                 : pct >= 50 ? "Above median — priced higher than half of comparable deals"
+                                 : pct >= 25 ? "Below median — priced lower than half of comparable deals"
+                                 :             "Below the 25th percentile — priced cheaper than 3-in-4 comparable deals";
+
+                  return (
+                    <div style={{
+                      padding: "14px 16px", borderRadius: 10, marginBottom: 14,
+                      background: "rgba(99,102,241,0.04)", border: "1px solid rgba(99,102,241,0.18)",
+                    }}>
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10, flexWrap: "wrap" as const, marginBottom: 12 }}>
+                        <div>
+                          <div style={{ fontSize: 10, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 700, marginBottom: 3 }}>
+                            Percentile Positioning
+                          </div>
+                          <div style={{ fontSize: 11, color: "#7C8593" }}>
+                            Based on {n} closed {n === 1 ? "transaction" : "transactions"} in this industry
+                          </div>
+                        </div>
+                        <div style={{
+                          padding: "5px 12px", borderRadius: 8,
+                          background: `${pctColor}14`, border: `1px solid ${pctColor}44`,
+                        }}>
+                          <div style={{ fontSize: 9, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.07em", fontWeight: 600, marginBottom: 1 }}>This Deal</div>
+                          <div style={{ fontSize: 16, fontWeight: 800, color: pctColor, fontFamily: "'JetBrains Mono',monospace" }}>
+                            {pct}<span style={{ fontSize: 11, fontWeight: 500, color: `${pctColor}BB` }}>th pct</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* IQR bar — visual distribution */}
+                      <div style={{ position: "relative" as const, height: 52, marginBottom: 4 }}>
+                        {/* Background track */}
+                        <div style={{
+                          position: "absolute" as const, top: 24, left: 0, right: 0, height: 4,
+                          borderRadius: 2, background: "rgba(255,255,255,0.05)",
+                        }} />
+                        {/* IQR band (25th-75th) */}
+                        <div style={{
+                          position: "absolute" as const, top: 24,
+                          left: `${p25pct}%`, width: `${p75pct - p25pct}%`,
+                          height: 4, borderRadius: 2,
+                          background: "rgba(99,102,241,0.35)",
+                        }} />
+                        {/* P25 tick */}
+                        <div style={{ position: "absolute" as const, left: `${p25pct}%`, top: 20, transform: "translateX(-50%)", width: 2, height: 12, background: "#64748B" }} />
+                        <div style={{ position: "absolute" as const, left: `${p25pct}%`, top: 36, transform: "translateX(-50%)", fontSize: 9, color: "#6B7280", fontFamily: "'JetBrains Mono',monospace", whiteSpace: "nowrap" as const }}>
+                          P25 · {p25.toFixed(1)}x
+                        </div>
+                        {/* Median tick */}
+                        <div style={{ position: "absolute" as const, left: `${medPct}%`, top: 18, transform: "translateX(-50%)", width: 2, height: 16, background: "#A5B4FC" }} />
+                        <div style={{ position: "absolute" as const, left: `${medPct}%`, top: 36, transform: "translateX(-50%)", fontSize: 9, color: "#A5B4FC", fontFamily: "'JetBrains Mono',monospace", whiteSpace: "nowrap" as const, fontWeight: 600 }}>
+                          Median · {med.toFixed(1)}x
+                        </div>
+                        {/* P75 tick */}
+                        <div style={{ position: "absolute" as const, left: `${p75pct}%`, top: 20, transform: "translateX(-50%)", width: 2, height: 12, background: "#64748B" }} />
+                        <div style={{ position: "absolute" as const, left: `${p75pct}%`, top: 36, transform: "translateX(-50%)", fontSize: 9, color: "#6B7280", fontFamily: "'JetBrains Mono',monospace", whiteSpace: "nowrap" as const }}>
+                          P75 · {p75.toFixed(1)}x
+                        </div>
+                        {/* Deal marker — the pin */}
+                        <div style={{
+                          position: "absolute" as const, left: `${markerPct}%`, top: 8,
+                          transform: "translateX(-50%)",
+                          display: "flex", flexDirection: "column" as const, alignItems: "center",
+                          pointerEvents: "none" as const,
+                        }}>
+                          <div style={{
+                            fontSize: 10, fontWeight: 700, color: pctColor,
+                            fontFamily: "'JetBrains Mono',monospace", whiteSpace: "nowrap" as const,
+                            padding: "1px 6px", borderRadius: 4,
+                            background: "#0D1117", border: `1px solid ${pctColor}`,
+                          }}>
+                            {mult.toFixed(2)}x
+                          </div>
+                          <div style={{ width: 2, height: 6, background: pctColor, marginTop: 1 }} />
+                          <div style={{ width: 10, height: 10, borderRadius: "50%", background: pctColor, border: "2px solid #0D1117", boxShadow: `0 0 0 2px ${pctColor}55` }} />
+                        </div>
+                      </div>
+
+                      <div style={{
+                        marginTop: 14, padding: "9px 11px", borderRadius: 7,
+                        background: `${pctColor}10`, border: `1px solid ${pctColor}22`,
+                        fontSize: 12, color: "#C4C8D1", lineHeight: 1.55,
+                      }}>
+                        {pctLabel}
+                      </div>
+                    </div>
+                  );
+                })()
+              )}
+
               <CompsTab
                 benchmarkContext={buildBenchmarkContext(deal)}
                 marketPosition={compsMarketPosition}
@@ -6659,6 +6810,119 @@ function TabMarketIntel({
         </div>
       </div>
 
+      {/* ══ SECTION 2.5: TRENDING VALUATION MULTIPLES ═══════════════════════════
+           Side-by-side SDE + Revenue multiples with transaction sample sizes.
+           Free users see top 3; Pro sees full list. IQR bar visible on hover.      */}
+      <div style={{ marginBottom: 24 }}>
+        <SectionHeader
+          title="Trending Valuation Multiples"
+          sub="Live closed-deal multiples from the DealStats transaction database"
+        />
+        <Card style={{ padding: 0, overflow: "hidden" }}>
+          {/* Header row */}
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr) auto",
+            gap: 12,
+            padding: "9px 16px",
+            borderBottom: "1px solid rgba(255,255,255,0.05)",
+            background: "rgba(255,255,255,0.01)",
+            alignItems: "center",
+          }}>
+            <div style={{ fontSize: 10, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600 }}>Industry</div>
+            <div style={{ fontSize: 10, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600, textAlign: "right" as const }}>SDE Multiple</div>
+            <div style={{ fontSize: 10, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600, textAlign: "right" as const }}>Revenue Multiple</div>
+            <div style={{ fontSize: 10, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600, textAlign: "right" as const, minWidth: 52 }}>Deals</div>
+          </div>
+
+          {/* Rows */}
+          {loadingMkt ? (
+            <div style={{ padding: 16, display: "flex", flexDirection: "column", gap: 8 }}>
+              {[0,1,2].map(i => <Skel key={i} h={36} />)}
+            </div>
+          ) : trending.length === 0 ? (
+            <div style={{ padding: "20px 16px", fontSize: 12, color: "#6B7280", textAlign: "center" as const }}>
+              Loading transaction data…
+            </div>
+          ) : (
+            <>
+              {(isPro ? trending : trending.slice(0, 3)).map((t, i, arr) => (
+                <div
+                  key={t.industry_key}
+                  style={{
+                    display: "grid",
+                    gridTemplateColumns: "minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr) auto",
+                    gap: 12,
+                    padding: "10px 16px",
+                    borderBottom: i < arr.length - 1 ? "1px solid rgba(255,255,255,0.03)" : "none",
+                    alignItems: "center",
+                  }}
+                >
+                  <div style={{ fontSize: 12, color: "#E2E8F0", fontWeight: 500, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const }}>
+                    {IL[t.industry_key] || t.industry_key}
+                  </div>
+                  {/* SDE multiple with IQR range as sub */}
+                  <div style={{ textAlign: "right" as const }}>
+                    <div style={{ fontSize: 13, fontWeight: 700, color: "#A5B4FC", fontFamily: "'JetBrains Mono',monospace" }}>
+                      {Number(t.median_multiple ?? 0).toFixed(2)}x
+                    </div>
+                    {t.p25_sde_multiple != null && t.p75_sde_multiple != null && (
+                      <div style={{ fontSize: 10, color: "#6B7280", fontFamily: "'JetBrains Mono',monospace", marginTop: 1 }}>
+                        {Number(t.p25_sde_multiple).toFixed(1)}–{Number(t.p75_sde_multiple).toFixed(1)}x
+                      </div>
+                    )}
+                  </div>
+                  {/* Revenue multiple */}
+                  <div style={{ textAlign: "right" as const }}>
+                    {t.revenue_multiple != null ? (
+                      <div style={{ fontSize: 13, fontWeight: 500, color: "#7DD3FC", fontFamily: "'JetBrains Mono',monospace" }}>
+                        {Number(t.revenue_multiple).toFixed(2)}x
+                      </div>
+                    ) : (
+                      <div style={{ fontSize: 11, color: "#6B7280" }}>—</div>
+                    )}
+                  </div>
+                  <div style={{ fontSize: 11, color: "#94A3B8", textAlign: "right" as const, fontFamily: "'JetBrains Mono',monospace", minWidth: 52 }}>
+                    n={t.sample_size}
+                  </div>
+                </div>
+              ))}
+              {/* Show-more link for free users */}
+              {!isPro && trending.length > 3 && (
+                <div style={{
+                  padding: "10px 16px", borderTop: "1px solid rgba(255,255,255,0.05)",
+                  display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10,
+                  background: "rgba(99,102,241,0.03)",
+                }}>
+                  <span style={{ fontSize: 11, color: "#9CA3AF" }}>
+                    +{trending.length - 3} more industries hidden
+                  </span>
+                  <button
+                    onClick={() => window.location.href = "/pricing"}
+                    style={{
+                      padding: "4px 10px", borderRadius: 6, border: "none",
+                      background: "rgba(99,102,241,0.12)", color: "#A5B4FC",
+                      fontSize: 11, fontWeight: 600, cursor: "pointer",
+                    }}
+                  >
+                    See all →
+                  </button>
+                </div>
+              )}
+              {/* Legend footer */}
+              <div style={{
+                padding: "9px 16px", borderTop: "1px solid rgba(255,255,255,0.04)",
+                fontSize: 10, color: "#7C8593", lineHeight: 1.5,
+              }}>
+                <span style={{ color: "#A5B4FC", fontWeight: 600 }}>SDE Multiple</span> — primary valuation metric ·{" "}
+                <span style={{ color: "#7DD3FC", fontWeight: 600 }}>Revenue Multiple</span> — cross-reference ·{" "}
+                Range shows 25th–75th percentile band · Mid-size deals only
+              </div>
+            </>
+          )}
+        </Card>
+      </div>
+
       {/* ══ SECTION 3: LOCAL MARKET SATURATION (always available w/ soft limit) ═ */}
       <div style={{ marginBottom: 24 }}>
         <LocalMarketRealityCheck deals={deals} isPro={isPro} />
@@ -6978,11 +7242,19 @@ export default function BuyerDashboard() {
 
     const { data: bm } = await supabase
       .from("dealstats_benchmarks")
-      .select("industry_key,median_multiple,sample_size")
+      .select("industry_key,median_mvic_to_sde,median_mvic_to_revenue,p25_mvic_to_sde,p75_mvic_to_sde,sample_size")
       .eq("size_band", "mid")
       .order("sample_size", { ascending: false })
       .limit(12);
-    setTrending(bm || []);
+    // Map to the TrendingMultiple shape — both multiples + IQR for percentile math
+    setTrending((bm || []).map((r: any) => ({
+      industry_key:     r.industry_key,
+      median_multiple:  r.median_mvic_to_sde,
+      revenue_multiple: r.median_mvic_to_revenue ?? null,
+      p25_sde_multiple: r.p25_mvic_to_sde ?? null,
+      p75_sde_multiple: r.p75_mvic_to_sde ?? null,
+      sample_size:      r.sample_size,
+    })));
     setLoadingMkt(false);
   }, []);
 
