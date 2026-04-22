@@ -4514,310 +4514,586 @@ function TabDashboard({
   onOpenOutcome: (deal: DealRun) => void;
   onAnalyzeNew: () => void;
 }) {
-  const recent  = deals.slice(0, 3);
-  const opps    = deals.filter(d => (d.gap_pct ?? 0) < -5).slice(0, 3);
-  const overDri = [...dri].sort((a, b) => (b.gap_pct ?? 0) - (a.gap_pct ?? 0)).slice(0, 4);
+  // ─── STATE GATE ──────────────────────────────────────────────────────────
+  // Rule: deals.length === 0 → State A (empty hero).  deals.length > 0 → State B (momentum hero).
+  const isEmpty = deals.length === 0 && !loading;
 
+  // ─── DECISION FEED — deterministic signals from existing data ────────────
+  // Builds a list of short, action-oriented insights. Only signals where
+  // we can reliably detect the trigger from deal fields we already store.
+  // Max 4 items, newest first, hidden section if empty.
+  type FeedItem = {
+    kind:      "declining" | "improving" | "stale" | "low_trust" | "needs_review" | "outcome" | "dscr_drop" | "gap_widened" | "fresh";
+    deal:      DealRun;
+    severity:  "red" | "amber" | "green" | "blue" | "gray";
+    text:      React.ReactNode;
+    timestamp: number;   // used for "newest first" sort
+  };
+
+  const feedItems: FeedItem[] = (() => {
+    if (deals.length === 0) return [];
+    const items: FeedItem[] = [];
+    const nowMs = Date.now();
+    const DAY_MS = 86_400_000;
+
+    for (const d of deals) {
+      const createdMs = d.created_at ? new Date(d.created_at).getTime() : nowMs;
+      const daysSince = Math.floor((nowMs - createdMs) / DAY_MS);
+      const label     = IL[d.industry] || d.industry;
+
+      // Compute trajectory signal using same logic as TrajectoryChip
+      // (lightweight inline version — full module is in lib/dealTrajectory.ts)
+      const margin    = (d as any).margin_yoy_pct ?? null;
+      const revYoy    = (d as any).revenue_yoy_pct ?? null;
+      const dscrDrop  = d.dscr != null && d.dscr < 1.25;
+      const gap       = d.gap_pct ?? 0;
+      const gapWide   = Math.abs(gap) >= 25;
+      const trust     = d.normalization_trust_score ?? 100;
+      const outcome   = outcomesMap.get(d.id);
+
+      // 1. Trajectory declining — weighted negative signals
+      if ((margin != null && margin <= -3) || (revYoy != null && revYoy <= -10)) {
+        items.push({
+          kind: "declining", deal: d, severity: "red",
+          text: <><strong style={{ color: "#F87171", fontWeight: 600 }}>{label}</strong> trajectory turned declining — margin or revenue compression detected</>,
+          timestamp: createdMs + daysSince * 1000,
+        });
+      }
+      // 2. Trajectory improving — weighted positive signals
+      else if ((margin != null && margin >= 2) || (revYoy != null && revYoy >= 10)) {
+        items.push({
+          kind: "improving", deal: d, severity: "green",
+          text: <><strong style={{ color: "#10B981", fontWeight: 600 }}>{label}</strong> trajectory improving — margin or revenue expansion</>,
+          timestamp: createdMs + daysSince * 1000,
+        });
+      }
+
+      // 3. Stale listing — 90+ days on market (approximate from created_at for now)
+      if (daysSince >= 90) {
+        items.push({
+          kind: "stale", deal: d, severity: "amber",
+          text: <><strong style={{ color: "#F59E0B", fontWeight: 600 }}>{label}</strong> listed {daysSince} days — seller likely motivated</>,
+          timestamp: createdMs + 1,
+        });
+      }
+
+      // 4. Low trust score
+      if (trust < 60) {
+        items.push({
+          kind: "low_trust", deal: d, severity: "red",
+          text: <><strong style={{ color: "#F87171", fontWeight: 600 }}>{label}</strong> data confidence {trust}/100 — independently verify financials before proceeding</>,
+          timestamp: createdMs + 2,
+        });
+      }
+
+      // 5. DSCR dropped below threshold
+      if (dscrDrop && d.dscr != null) {
+        items.push({
+          kind: "dscr_drop", deal: d, severity: "red",
+          text: <><strong style={{ color: "#F87171", fontWeight: 600 }}>{label}</strong> DSCR {d.dscr.toFixed(2)}x — below SBA financing threshold</>,
+          timestamp: createdMs + 3,
+        });
+      }
+
+      // 6. Valuation gap widened materially
+      if (gapWide) {
+        const color = gap > 0 ? "#F59E0B" : "#10B981";
+        items.push({
+          kind: "gap_widened", deal: d, severity: gap > 0 ? "amber" : "green",
+          text: <><strong style={{ color, fontWeight: 600 }}>{label}</strong> priced {gap > 0 ? "+" : ""}{gap}% vs fair value — {gap > 0 ? "significant overpricing" : "potential opportunity"}</>,
+          timestamp: createdMs + 4,
+        });
+      }
+
+      // 7. Review needed — saved 7+ days ago, no outcome recorded
+      if (daysSince >= 7 && !outcome) {
+        items.push({
+          kind: "needs_review", deal: d, severity: "gray",
+          text: <><strong style={{ color: "#C4C8D1", fontWeight: 600 }}>Review needed:</strong> <span style={{ color: "#94A3B8" }}>{label}</span> saved {daysSince} days ago with no decision recorded</>,
+          timestamp: createdMs + 5,
+        });
+      }
+
+      // 8. New outcome recorded (timestamped after save)
+      if (outcome && outcome.updated_at) {
+        const outMs = new Date(outcome.updated_at).getTime();
+        const daysAgoOutcome = Math.floor((nowMs - outMs) / DAY_MS);
+        if (daysAgoOutcome <= 30) {  // only surface recent outcomes
+          items.push({
+            kind: "outcome", deal: d, severity: "green",
+            text: <><strong style={{ color: "#10B981", fontWeight: 600 }}>{label}</strong> outcome recorded — {OUTCOME_LABELS[outcome.outcome].toLowerCase()}{outcome.final_price ? ` at ${fmt(outcome.final_price)}` : ""}</>,
+            timestamp: outMs,
+          });
+        }
+      }
+
+      // 9. Fresh deal (analyzed within last 3 days) — only if no other signal already fired
+      if (daysSince <= 3) {
+        items.push({
+          kind: "fresh", deal: d, severity: "blue",
+          text: <><strong style={{ color: "#60A5FA", fontWeight: 600 }}>{label}</strong> newly analyzed — review the verdict</>,
+          timestamp: createdMs + 6,
+        });
+      }
+    }
+
+    // Dedupe by (kind, deal.id) — keep newest. Then sort by timestamp desc, cap at 4.
+    const seen = new Set<string>();
+    const deduped: FeedItem[] = [];
+    for (const item of items.sort((a, b) => b.timestamp - a.timestamp)) {
+      const key = `${item.kind}:${item.deal.id}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      deduped.push(item);
+      if (deduped.length >= 4) break;
+    }
+    return deduped;
+  })();
+
+  // ─── STATE B: MOMENTUM METRICS ───────────────────────────────────────────
+  const dealsNeedingAttention = deals.filter(d => {
+    const trust  = d.normalization_trust_score ?? 100;
+    const dscr   = d.dscr ?? 2;
+    const gapAbs = Math.abs(d.gap_pct ?? 0);
+    return trust < 60 || dscr < 1.25 || gapAbs >= 25;
+  });
+  const dealsAwaitingOutcome = deals.filter(d => {
+    if (outcomesMap.has(d.id)) return false;
+    const createdMs = d.created_at ? new Date(d.created_at).getTime() : Date.now();
+    const daysSince = Math.floor((Date.now() - createdMs) / 86_400_000);
+    return daysSince >= 7;
+  });
+  const topDeal = dealsNeedingAttention[0] ?? deals[0] ?? null;
+
+  // Sample-modal state for "View sample" button (future: replace with real sample deal)
+  const [showSampleModal, setShowSampleModal] = useState(false);
+
+  // ─── RENDER ──────────────────────────────────────────────────────────────
   return (
     <div>
-      {/* Priority Deals (starred watchlist) — only shows if user has favorites */}
-      <PriorityDeals
-        deals={deals}
-        favorites={favorites}
-        onOpenNotes={onOpenNotes}
-        onOpenDetail={onOpenDetail}
-      />
 
-      {/* Recent Deals */}
-      <div style={{ marginBottom: 28 }}>
-        <SectionHeader
-          title="Recent Deals"
-          sub="Your latest analyzed deals"
-          action={
-            <button
-              onClick={() => onTabChange("my-deals")}
-              style={{ background: "none", border: "none", color: "#6366F1", fontSize: 12, cursor: "pointer", fontWeight: 500 }}
-            >
-              View all →
-            </button>
-          }
-        />
-        <Card>
-          {loading ? (
-            <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
-              {[0, 1, 2].map(i => <Skel key={i} h={44} />)}
-            </div>
-          ) : recent.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "28px 0" }}>
-              <div style={{ fontSize: 24, marginBottom: 8 }}>📋</div>
-              <div style={{ fontSize: 14, fontWeight: 600, color: "#E2E8F0", marginBottom: 4 }}>No deals yet</div>
-              <div style={{ fontSize: 12, color: "#7C8593", marginBottom: 14 }}>Analyze your first deal to get started.</div>
-              <button
-                onClick={() => onAnalyzeNew()}
-                style={{
-                  display: "inline-block", padding: "8px 16px", borderRadius: 8, border: "none",
-                  background: "linear-gradient(135deg,#3B82F6,#6366F1)",
-                  color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer",
-                }}
-              >
-                Analyze a Deal →
-              </button>
-            </div>
-          ) : recent.map((deal, i) => {
-            const gp  = deal.gap_pct ?? 0;
-            const vd  = verdictCfg(deal.verdict ?? dealVerdict(deal));
-            return (
-              <div
-                key={deal.id}
-                onClick={() => onOpenUnderwriting(deal)}
-                style={{
-                  display: "flex", alignItems: "center", gap: 14, padding: "12px 8px",
-                  borderBottom: i < recent.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none",
-                  cursor: "pointer", borderRadius: 8, marginLeft: -8, transition: "background 0.12s",
-                }}
-                onMouseEnter={e => (e.currentTarget.style.background = "rgba(99,102,241,0.04)")}
-                onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
-              >
-                <Ring score={deal.overall_score} size={34} />
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontSize: 13, fontWeight: 600, color: "#E2E8F0" }}>
-                    {IL[deal.industry] || deal.industry}
-                  </div>
-                  <div style={{ fontSize: 11, color: "#7C8593" }}>
-                    {fmt(deal.asking_price)} · {deal.valuation_multiple.toFixed(2)}x · {ago(deal.created_at)}
-                  </div>
-                </div>
-                <div style={{
-                  fontSize: 13, fontWeight: 700,
-                  color: gp > 0 ? "#D85A30" : "#10B981",
-                  fontFamily: "'JetBrains Mono',monospace",
-                }}>
-                  {gp > 0 ? "+" : ""}{gp}%
-                </div>
-                <span style={{
-                  display: "inline-flex", alignItems: "center", gap: 4,
-                  padding: "3px 9px", borderRadius: 6,
-                  fontSize: 10, fontWeight: 700,
-                  background: vd.bg, color: vd.color, border: `1px solid ${vd.border}`,
-                  whiteSpace: "nowrap" as any,
-                }}>
-                  {vd.emoji} {vd.label}
-                </span>
-                <div style={{ display: "flex", gap: 4 }} onClick={e => e.stopPropagation()}>
-                  <StarButton dealId={deal.id} favorites={favorites} onToggle={onToggleFav} />
-                  <button onClick={(e) => { e.stopPropagation(); onOpenNotes(deal); }} title="Notes & Intel"
-                    style={{ background: "none", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 6, cursor: "pointer", padding: "4px 7px", fontSize: 11, color: "#7C8593" }}>
-                    📝
-                  </button>
-                  <button onClick={(e) => { e.stopPropagation(); onOpenDetail(deal); }} title="Quick View"
-                    className="btn-qv"
-                    style={{ padding: "4px 8px", borderRadius: 6, border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.03)", color: "#6B7280", fontSize: 11, cursor: "pointer" }}>
-                    Quick View
-                  </button>
-                  <button onClick={(e) => { e.stopPropagation(); onOpenUnderwriting(deal); }} title="Open Underwriting"
-                    className="btn-uw"
-                    style={{ padding: "5px 10px", borderRadius: 6, border: "1px solid rgba(99,102,241,0.35)", background: "rgba(99,102,241,0.12)", color: "#A5B4FC", fontSize: 11, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" as any }}>
-                    Open Underwriting →
-                  </button>
-                  {/* Outcome button or recorded-outcome chip */}
-                  {(() => {
-                    const existing = outcomesMap.get(deal.id);
-                    if (existing) {
-                      const oc = OUTCOME_COLORS[existing.outcome];
-                      return (
-                        <button
-                          onClick={(e) => { e.stopPropagation(); onOpenOutcome(deal); }}
-                          title="Edit outcome"
-                          style={{
-                            display: "inline-flex", alignItems: "center", gap: 4,
-                            padding: "4px 9px", borderRadius: 20,
-                            background: oc.bg, border: `1px solid ${oc.border}`,
-                            color: oc.text, fontSize: 10, fontWeight: 600,
-                            cursor: "pointer", whiteSpace: "nowrap" as any,
-                          }}
-                        >
-                          <span style={{ width: 5, height: 5, borderRadius: "50%", background: oc.text, display: "inline-block" }} />
-                          {OUTCOME_LABELS[existing.outcome]}
-                        </button>
-                      );
-                    }
-                    return (
-                      <button
-                        onClick={(e) => { e.stopPropagation(); onOpenOutcome(deal); }}
-                        title="Record outcome"
-                        style={{
-                          padding: "4px 9px", borderRadius: 6,
-                          border: "1px solid rgba(16,185,129,0.3)",
-                          background: "rgba(16,185,129,0.06)",
-                          color: "#10B981", fontSize: 10, fontWeight: 600,
-                          cursor: "pointer", whiteSpace: "nowrap" as any,
-                        }}
-                      >
-                        Log outcome
-                      </button>
-                    );
-                  })()}
-                </div>
+      {/* ══ STATE A ═══════════════════════════════════════════════════════════
+           First-time user (no deals yet). Aspirational hero + simple flow + quick actions. */}
+      {isEmpty && (
+        <>
+          <div style={{
+            background: "linear-gradient(135deg, rgba(99,102,241,0.06), rgba(16,185,129,0.03))",
+            borderRadius: 14,
+            padding: "32px 28px",
+            marginBottom: 16,
+            border: "1px solid rgba(99,102,241,0.15)",
+            display: "grid",
+            gridTemplateColumns: "minmax(0, 1.3fr) minmax(0, 1fr)",
+            gap: 28,
+            alignItems: "center",
+          }}>
+            <div>
+              <div style={{ fontSize: 10, color: "#A5B4FC", textTransform: "uppercase", letterSpacing: "0.12em", fontWeight: 500, marginBottom: 10 }}>
+                NexTax Intelligence
               </div>
-            );
-          })}
-        </Card>
-      </div>
-
-      {/* Market Signals + Best Opportunities */}
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 28 }}>
-        {/* Market Signals */}
-        <div>
-          <SectionHeader
-            title="Market Signals"
-            sub="Live from DRI snapshots"
-            action={
-              <button
-                onClick={() => onTabChange("market-intel")}
-                style={{ background: "none", border: "none", color: "#6366F1", fontSize: 12, cursor: "pointer", fontWeight: 500 }}
-              >
-                Full intel →
-              </button>
-            }
-          />
-          <Card>
-            {loadingMkt ? (
-              <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-                {[0, 1, 2, 3].map(i => <Skel key={i} h={28} />)}
-              </div>
-            ) : overDri.map(s => {
-              const ss   = sigCfg(condSig(s.condition));
-              const barW = Math.min(100, Math.abs(s.gap_pct ?? 0) * 3.5 + 6);
-              return (
-                <div
-                  key={s.industry_key}
+              <h1 style={{ fontSize: 28, fontWeight: 800, color: "#F1F5F9", margin: "0 0 10px", lineHeight: 1.15, letterSpacing: "-0.02em", fontFamily: "'Inter Tight',sans-serif" }}>
+                Evaluate a business before you buy
+              </h1>
+              <p style={{ fontSize: 13, color: "#94A3B8", lineHeight: 1.6, margin: "0 0 20px", maxWidth: 420 }}>
+                Financial clarity for SMB acquisitions — in minutes, not days. Get a defensible buy/pass decision on any deal.
+              </p>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" as const }}>
+                <button
+                  onClick={onAnalyzeNew}
                   style={{
-                    display: "flex", alignItems: "center", gap: 8, padding: "7px 0",
-                    borderBottom: "1px solid rgba(255,255,255,0.03)",
+                    padding: "11px 22px", borderRadius: 9, border: "none",
+                    background: "linear-gradient(135deg,#6366F1,#8B5CF6)",
+                    color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit",
                   }}
                 >
-                  <div style={{ width: 100, fontSize: 12, color: "#94A3B8", fontWeight: 500, flexShrink: 0 }}>
-                    {IL[s.industry_key] || s.industry_key}
+                  Analyze a new deal →
+                </button>
+                <button
+                  onClick={() => setShowSampleModal(true)}
+                  style={{
+                    padding: "11px 18px", borderRadius: 9,
+                    border: "1px solid rgba(255,255,255,0.1)",
+                    background: "rgba(255,255,255,0.03)",
+                    color: "#E2E8F0", fontSize: 13, fontWeight: 500, cursor: "pointer", fontFamily: "inherit",
+                  }}
+                >
+                  View sample
+                </button>
+              </div>
+            </div>
+            {/* 1-2-3 flow */}
+            <div style={{ display: "flex", flexDirection: "column" as const, gap: 10 }}>
+              {[
+                { n: "1", title: "Paste listing details", sub: "Asking price, SDE, industry — that's it", good: false },
+                { n: "2", title: "We analyze it",          sub: "Against 1,500+ closed deals + industry benchmarks", good: false },
+                { n: "3", title: "Get your verdict",       sub: "Proceed · Investigate · Pass", good: true },
+              ].map(step => (
+                <div key={step.n} style={{
+                  padding: "11px 14px", borderRadius: 9,
+                  background: step.good ? "rgba(16,185,129,0.04)" : "rgba(255,255,255,0.02)",
+                  border:     step.good ? "1px solid rgba(16,185,129,0.2)" : "1px solid rgba(255,255,255,0.05)",
+                  display: "flex", alignItems: "center", gap: 11,
+                }}>
+                  <div style={{
+                    width: 24, height: 24, borderRadius: "50%",
+                    background: step.good ? "rgba(16,185,129,0.15)" : "rgba(99,102,241,0.15)",
+                    color:      step.good ? "#10B981" : "#A5B4FC",
+                    fontSize: 11, fontWeight: 700,
+                    display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
+                  }}>
+                    {step.n}
                   </div>
-                  <div style={{ flex: 1, height: 3, background: "rgba(255,255,255,0.04)", borderRadius: 2 }}>
-                    <div style={{ height: "100%", width: `${barW}%`, background: ss.dot, borderRadius: 2 }} />
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: 12, color: "#F1F5F9", fontWeight: 600 }}>{step.title}</div>
+                    <div style={{ fontSize: 10, color: step.good ? "#10B981" : "#7C8593", fontWeight: step.good ? 500 : 400 }}>{step.sub}</div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Quick Actions — empty state has 4 actions */}
+          <div style={{
+            padding: "16px 18px", borderRadius: 10,
+            background: "rgba(255,255,255,0.02)",
+            border: "1px solid rgba(255,255,255,0.06)",
+          }}>
+            <div style={{ fontSize: 10, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600, marginBottom: 12 }}>
+              Quick actions
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 10 }}>
+              {[
+                { icon: "+", label: "Analyze deal",   primary: true,  onClick: onAnalyzeNew },
+                { icon: "↑", label: "Import listing", primary: false, onClick: onAnalyzeNew },  // same flow for now
+                { icon: "◎", label: "View sample",    primary: false, onClick: () => setShowSampleModal(true) },
+                { icon: "?", label: "How it works",   primary: false, onClick: () => onTabChange("market-intel") },
+              ].map((a, i) => (
+                <div
+                  key={i}
+                  onClick={a.onClick}
+                  style={{
+                    padding: "14px 10px", borderRadius: 9,
+                    background: a.primary ? "rgba(99,102,241,0.07)" : "rgba(255,255,255,0.02)",
+                    border:     a.primary ? "1px solid rgba(99,102,241,0.25)" : "1px solid rgba(255,255,255,0.06)",
+                    cursor: "pointer", textAlign: "center" as const,
+                    transition: "background 140ms ease",
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = a.primary ? "rgba(99,102,241,0.12)" : "rgba(255,255,255,0.04)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = a.primary ? "rgba(99,102,241,0.07)" : "rgba(255,255,255,0.02)"; }}
+                >
+                  <div style={{ fontSize: 18, marginBottom: 6, color: a.primary ? "#A5B4FC" : "#7C8593" }}>{a.icon}</div>
+                  <div style={{ fontSize: 11, fontWeight: a.primary ? 600 : 500, color: a.primary ? "#A5B4FC" : "#C4C8D1" }}>{a.label}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* ══ STATE B ═══════════════════════════════════════════════════════════
+           Returning user — momentum hero surfacing attention-needed deals, then list, then feed. */}
+      {!isEmpty && (
+        <>
+          {/* Momentum hero — clickable if dealsNeedingAttention.length > 0 */}
+          <div style={{
+            padding: "22px 24px", borderRadius: 14,
+            background: "rgba(255,255,255,0.02)",
+            border: "1px solid rgba(255,255,255,0.08)",
+            marginBottom: 14,
+          }}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 20, flexWrap: "wrap" as const }}>
+              <div style={{ minWidth: 0, flex: "1 1 auto" }}>
+                <div style={{ fontSize: 10, color: "#A5B4FC", textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: 500, marginBottom: 6 }}>
+                  Your pipeline
+                </div>
+                <h2 style={{ fontSize: 22, fontWeight: 700, color: "#F1F5F9", margin: "0 0 4px", letterSpacing: "-0.015em", fontFamily: "'Inter Tight',sans-serif" }}>
+                  {deals.length} {deals.length === 1 ? "deal" : "deals"} in progress
+                </h2>
+                <div style={{ fontSize: 12, color: "#94A3B8", lineHeight: 1.5 }}>
+                  {dealsNeedingAttention.length > 0 ? (
+                    <span
+                      onClick={() => { if (topDeal) onOpenDetail(topDeal); }}
+                      style={{ color: "#F59E0B", fontWeight: 500, cursor: "pointer", borderBottom: "1px dashed rgba(245,158,11,0.4)" }}
+                    >
+                      {dealsNeedingAttention.length} {dealsNeedingAttention.length === 1 ? "deal needs" : "deals need"} your attention
+                    </span>
+                  ) : (
+                    <span style={{ color: "#10B981", fontWeight: 500 }}>Pipeline looks clean — no urgent action</span>
+                  )}
+                  {dealsAwaitingOutcome.length > 0 && (
+                    <> · {dealsAwaitingOutcome.length} awaiting outcome recording</>
+                  )}
+                </div>
+              </div>
+              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" as const }}>
+                {topDeal && (
+                  <button
+                    onClick={() => onOpenUnderwriting(topDeal)}
+                    style={{
+                      padding: "10px 18px", borderRadius: 8,
+                      border: "1px solid rgba(255,255,255,0.1)",
+                      background: "rgba(255,255,255,0.03)",
+                      color: "#E2E8F0", fontSize: 12, fontWeight: 500,
+                      cursor: "pointer", fontFamily: "inherit",
+                    }}
+                  >
+                    Continue analysis
+                  </button>
+                )}
+                <button
+                  onClick={onAnalyzeNew}
+                  style={{
+                    padding: "10px 20px", borderRadius: 8, border: "none",
+                    background: "linear-gradient(135deg,#6366F1,#8B5CF6)",
+                    color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit",
+                  }}
+                >
+                  + Analyze new deal
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Your deals — compact list with trajectory chips */}
+          <div style={{
+            padding: 0, borderRadius: 12,
+            background: "rgba(255,255,255,0.02)",
+            border: "1px solid rgba(255,255,255,0.06)",
+            overflow: "hidden",
+            marginBottom: 14,
+          }}>
+            <div style={{
+              padding: "12px 16px", borderBottom: "1px solid rgba(255,255,255,0.05)",
+              background: "rgba(255,255,255,0.01)",
+              display: "flex", justifyContent: "space-between", alignItems: "center",
+            }}>
+              <div>
+                <div style={{ fontSize: 13, fontWeight: 600, color: "#E2E8F0" }}>Your deals</div>
+                <div style={{ fontSize: 10, color: "#7C8593", marginTop: 1 }}>Pulled back in — here's where you left off</div>
+              </div>
+              {deals.length > 3 && (
+                <div
+                  onClick={() => onTabChange("my-deals")}
+                  style={{ fontSize: 11, color: "#A5B4FC", cursor: "pointer" }}
+                >
+                  View all {deals.length} →
+                </div>
+              )}
+            </div>
+
+            {recent.map((deal, i) => {
+              const label = IL[deal.industry] || deal.industry;
+              const loc   = [deal.city, deal.state].filter(Boolean).join(", ");
+              // Compute trajectory label from fields we have
+              const margin   = (deal as any).margin_yoy_pct ?? null;
+              const revYoy   = (deal as any).revenue_yoy_pct ?? null;
+              const trajLabel = (margin != null && margin <= -3) || (revYoy != null && revYoy <= -10) ? "Declining"
+                              : (margin != null && margin >= 2)  || (revYoy != null && revYoy >= 10)  ? "Improving"
+                              :                                                                          "Flat";
+              const trajColor = trajLabel === "Improving" ? "#10B981"
+                              : trajLabel === "Declining" ? "#F87171"
+                              :                             "#94A3B8";
+              const trajGlyph = trajLabel === "Improving" ? "▲"
+                              : trajLabel === "Declining" ? "▼"
+                              :                             "—";
+              // Status — outcome > review needed > in-progress
+              const outcome = outcomesMap.get(deal.id);
+              const createdMs = deal.created_at ? new Date(deal.created_at).getTime() : Date.now();
+              const daysSince = Math.floor((Date.now() - createdMs) / 86_400_000);
+              const needsReview = daysSince >= 7 && !outcome;
+              const statusText = outcome
+                ? OUTCOME_LABELS[outcome.outcome]
+                : needsReview
+                ? "Needs review"
+                : daysSince === 0 ? "Just added"
+                : `Saved ${daysSince} ${daysSince === 1 ? "day" : "days"} ago`;
+              const statusColor = outcome ? OUTCOME_COLORS[outcome.outcome].text
+                                : needsReview ? "#F59E0B"
+                                : "#94A3B8";
+
+              return (
+                <div
+                  key={deal.id}
+                  style={{
+                    padding: "11px 16px",
+                    display: "grid",
+                    gridTemplateColumns: "minmax(0, 1.4fr) minmax(0, 0.9fr) minmax(0, 0.9fr) auto",
+                    gap: 14,
+                    alignItems: "center",
+                    borderBottom: i < recent.length - 1 ? "1px solid rgba(255,255,255,0.03)" : "none",
+                  }}
+                >
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: 12, fontWeight: 500, color: "#F1F5F9", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const }}>
+                      {label}{loc ? ` · ${loc}` : ""}
+                    </div>
+                    <div style={{ fontSize: 10, color: "#7C8593", fontFamily: "'JetBrains Mono',monospace", marginTop: 1 }}>
+                      {fmt(deal.asking_price)} · {deal.valuation_multiple.toFixed(2)}x
+                    </div>
                   </div>
                   <div style={{
-                    fontSize: 12, fontWeight: 700, color: ss.color,
-                    fontFamily: "'JetBrains Mono',monospace", minWidth: 40, textAlign: "right",
+                    display: "inline-flex", alignItems: "center", gap: 6,
+                    padding: "3px 9px", borderRadius: 20,
+                    background: `${trajColor}14`, border: `1px solid ${trajColor}44`,
+                    width: "fit-content",
                   }}>
-                    {(s.gap_pct ?? 0) > 0 ? "+" : ""}{(s.gap_pct ?? 0).toFixed(0)}%
+                    <span style={{ color: trajColor, fontSize: 9, fontWeight: 700 }}>{trajGlyph}</span>
+                    <span style={{ fontSize: 10, fontWeight: 600, color: trajColor }}>{trajLabel}</span>
                   </div>
+                  <div style={{ fontSize: 11, color: statusColor, fontWeight: needsReview || outcome ? 500 : 400 }}>
+                    {statusText}
+                  </div>
+                  <button
+                    onClick={() => onOpenUnderwriting(deal)}
+                    style={{
+                      padding: "5px 11px", borderRadius: 6,
+                      border: "1px solid rgba(99,102,241,0.35)",
+                      background: "rgba(99,102,241,0.1)",
+                      color: "#A5B4FC", fontSize: 11, fontWeight: 600,
+                      cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" as const,
+                    }}
+                  >
+                    View →
+                  </button>
                 </div>
               );
             })}
-          </Card>
-        </div>
-
-        {/* Best Opportunities */}
-        <div>
-          <SectionHeader
-            title="Best Opportunities"
-            sub="Your deals priced below market"
-            action={
-              <button
-                onClick={() => onTabChange("my-deals")}
-                style={{ background: "none", border: "none", color: "#6366F1", fontSize: 12, cursor: "pointer", fontWeight: 500 }}
-              >
-                All deals →
-              </button>
-            }
-          />
-          <Card>
-            {loading ? (
-              <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                {[0, 1, 2].map(i => <Skel key={i} h={44} />)}
-              </div>
-            ) : opps.length === 0 ? (
-              <div style={{ textAlign: "center", padding: "20px 0" }}>
-                <div style={{ fontSize: 22, marginBottom: 8 }}>🔍</div>
-                <div style={{ fontSize: 13, color: "#7C8593" }}>
-                  No below-market deals yet. Analyze more deals to find opportunities.
-                </div>
-              </div>
-            ) : opps.map((deal, i) => (
-              <div
-                key={deal.id}
-                style={{
-                  display: "flex", alignItems: "center", gap: 12, padding: "10px 0",
-                  borderBottom: i < opps.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none",
-                }}
-              >
-                <div style={{
-                  width: 22, height: 22, borderRadius: "50%",
-                  background: "rgba(16,185,129,0.1)",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: 10, fontWeight: 700, color: "#10B981", flexShrink: 0,
-                }}>
-                  {i + 1}
-                </div>
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontSize: 12, fontWeight: 600, color: "#E2E8F0" }}>
-                    {IL[deal.industry] || deal.industry}
-                  </div>
-                  <div style={{ fontSize: 10, color: "#7C8593" }}>{fmt(deal.asking_price)}</div>
-                </div>
-                <div style={{
-                  fontSize: 13, fontWeight: 700, color: "#10B981",
-                  fontFamily: "'JetBrains Mono',monospace",
-                }}>
-                  {deal.gap_pct}%
-                </div>
-                <Ring score={deal.overall_score} size={30} />
-              </div>
-            ))}
-          </Card>
-        </div>
-      </div>
-
-      {/* Compare Teaser */}
-      <div style={{ marginBottom: 28 }}>
-        <SectionHeader title="Compare Deals" sub="Side-by-side deal intelligence" />
-        <Card style={{ position: "relative" }}>
-          {!isPro && <LockOverlay label="Compare is a Pro feature — upgrade to unlock" />}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, opacity: isPro ? 1 : 0.3 }}>
-            {["Deal A", "Deal B"].map(label => (
-              <div key={label} style={{
-                padding: "12px 14px", borderRadius: 10,
-                background: "rgba(255,255,255,0.02)",
-                border: "1px solid rgba(255,255,255,0.06)",
-              }}>
-                <div style={{
-                  fontSize: 10, color: "#7C8593", textTransform: "uppercase",
-                  letterSpacing: "0.08em", marginBottom: 6,
-                }}>
-                  {label}
-                </div>
-                <div style={{ fontSize: 13, color: "#6B7280" }}>Select a deal to compare</div>
-              </div>
-            ))}
           </div>
-          {isPro && (
+
+          {/* Decision Feed — hidden if no signals */}
+          {feedItems.length > 0 && (
+            <div style={{
+              padding: "14px 18px", borderRadius: 10,
+              background: "rgba(255,255,255,0.02)",
+              border: "1px solid rgba(255,255,255,0.06)",
+              marginBottom: 14,
+            }}>
+              <div style={{ fontSize: 10, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600, marginBottom: 10 }}>
+                Decision feed
+              </div>
+              <div style={{ display: "flex", flexDirection: "column" as const, gap: 8 }}>
+                {feedItems.map((item, i) => {
+                  const dotColor = item.severity === "red"   ? "#F87171"
+                                 : item.severity === "amber" ? "#F59E0B"
+                                 : item.severity === "green" ? "#10B981"
+                                 : item.severity === "blue"  ? "#60A5FA"
+                                 :                             "#94A3B8";
+                  const bgColor  = item.severity === "red"   ? "rgba(239,68,68,0.04)"
+                                 : item.severity === "amber" ? "rgba(245,158,11,0.04)"
+                                 : item.severity === "green" ? "rgba(16,185,129,0.04)"
+                                 : item.severity === "blue"  ? "rgba(96,165,250,0.04)"
+                                 :                             "rgba(148,163,184,0.04)";
+                  return (
+                    <div
+                      key={i}
+                      onClick={() => onOpenUnderwriting(item.deal)}
+                      style={{
+                        display: "flex", gap: 10, alignItems: "flex-start",
+                        padding: "8px 10px", borderRadius: 7,
+                        background: bgColor,
+                        cursor: "pointer",
+                        transition: "background 140ms ease",
+                      }}
+                      onMouseEnter={(e) => { e.currentTarget.style.background = bgColor.replace("0.04", "0.08"); }}
+                      onMouseLeave={(e) => { e.currentTarget.style.background = bgColor; }}
+                    >
+                      <div style={{ width: 6, height: 6, borderRadius: "50%", background: dotColor, marginTop: 6, flexShrink: 0 }} />
+                      <div style={{ fontSize: 12, color: "#C4C8D1", lineHeight: 1.5, flex: 1 }}>
+                        {item.text}
+                      </div>
+                      <span style={{ fontSize: 11, color: "#64748B", flexShrink: 0, alignSelf: "center" }}>→</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* Quick Actions — returning user has fewer, emphasizes ongoing work */}
+          <div style={{
+            padding: "14px 18px", borderRadius: 10,
+            background: "rgba(255,255,255,0.02)",
+            border: "1px solid rgba(255,255,255,0.06)",
+          }}>
+            <div style={{ fontSize: 10, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600, marginBottom: 10 }}>
+              Quick actions
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 10 }}>
+              {[
+                { icon: "+", label: "Analyze deal",   primary: true,  onClick: onAnalyzeNew },
+                { icon: "≡", label: "All deals",      primary: false, onClick: () => onTabChange("my-deals") },
+                { icon: "⇄", label: "Compare",        primary: false, onClick: () => onTabChange("compare") },
+                { icon: "◎", label: "Market intel",   primary: false, onClick: () => onTabChange("market-intel") },
+              ].map((a, i) => (
+                <div
+                  key={i}
+                  onClick={a.onClick}
+                  style={{
+                    padding: "12px 10px", borderRadius: 9,
+                    background: a.primary ? "rgba(99,102,241,0.07)" : "rgba(255,255,255,0.02)",
+                    border:     a.primary ? "1px solid rgba(99,102,241,0.25)" : "1px solid rgba(255,255,255,0.06)",
+                    cursor: "pointer", textAlign: "center" as const,
+                    transition: "background 140ms ease",
+                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.background = a.primary ? "rgba(99,102,241,0.12)" : "rgba(255,255,255,0.04)"; }}
+                  onMouseLeave={(e) => { e.currentTarget.style.background = a.primary ? "rgba(99,102,241,0.07)" : "rgba(255,255,255,0.02)"; }}
+                >
+                  <div style={{ fontSize: 16, marginBottom: 5, color: a.primary ? "#A5B4FC" : "#7C8593" }}>{a.icon}</div>
+                  <div style={{ fontSize: 11, fontWeight: a.primary ? 600 : 500, color: a.primary ? "#A5B4FC" : "#C4C8D1" }}>{a.label}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* ── SAMPLE MODAL — lightweight placeholder until a real sample deal exists ── */}
+      {showSampleModal && (
+        <>
+          <div
+            onClick={() => setShowSampleModal(false)}
+            style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.65)", zIndex: 400, backdropFilter: "blur(4px)" }}
+          />
+          <div style={{
+            position: "fixed", top: "50%", left: "50%", transform: "translate(-50%,-50%)",
+            zIndex: 401, width: "100%", maxWidth: 380, padding: 28,
+            borderRadius: 14, background: "#0D1117",
+            border: "1px solid rgba(99,102,241,0.25)",
+            boxShadow: "0 24px 64px rgba(0,0,0,0.7)",
+            textAlign: "center" as const,
+            fontFamily: "'Inter Tight',sans-serif",
+          }}>
+            <div style={{ fontSize: 28, marginBottom: 12 }}>◎</div>
+            <h2 style={{ fontSize: 18, fontWeight: 700, color: "#F1F5F9", margin: "0 0 8px", letterSpacing: "-0.01em" }}>
+              Sample analysis coming soon
+            </h2>
+            <p style={{ fontSize: 12, color: "#94A3B8", lineHeight: 1.6, margin: "0 0 18px" }}>
+              You'll soon be able to preview a fully analyzed deal here. In the meantime, paste a real listing — it only takes a minute.
+            </p>
             <button
-              onClick={() => onTabChange("compare")}
+              onClick={() => { setShowSampleModal(false); onAnalyzeNew(); }}
               style={{
-                marginTop: 12, width: "100%", padding: "10px", borderRadius: 9,
-                border: "1px solid rgba(99,102,241,0.25)",
-                background: "rgba(99,102,241,0.06)",
-                color: "#818CF8", fontSize: 13, fontWeight: 500, cursor: "pointer",
+                display: "block", width: "100%", padding: "11px 0", borderRadius: 9, border: "none",
+                background: "linear-gradient(135deg,#6366F1,#818CF8)",
+                color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit",
+                marginBottom: 8,
               }}
             >
-              Open Compare Engine →
+              Analyze a real deal →
             </button>
-          )}
-        </Card>
-      </div>
-
-      {/* Pro block */}
-      {isPro ? <ProCommandModule deals={deals} onOpenUnderwriting={onOpenUnderwriting} /> : <ProUpsellCard deals={deals} onOpenUnderwriting={onOpenUnderwriting} />}
+            <button
+              onClick={() => setShowSampleModal(false)}
+              style={{ background: "none", border: "none", color: "#6B7280", fontSize: 11, cursor: "pointer", fontFamily: "inherit" }}
+            >
+              Maybe later
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
 }
+
 
 // ─── TAB: MY DEALS ────────────────────────────────────────────────────────────
 
@@ -7694,8 +7970,8 @@ export default function BuyerDashboard() {
             </div>
           )}
 
-          {/* Stat cards — dashboard + my-deals only */}
-          {(activeTab === "dashboard" || activeTab === "my-deals") && (
+          {/* Stat cards — my-deals only (dashboard has its own hero now) */}
+          {activeTab === "my-deals" && (
             <StatCards deals={deals} loading={loadingDeals} />
           )}
 
