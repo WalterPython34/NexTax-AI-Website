@@ -426,7 +426,7 @@ function SectionHeader({ title, sub, action }: { title: string; sub?: string; ac
         }}>
           {title}
         </h2>
-        {sub && <p style={{ fontSize: 11, color: "#4B5563", margin: 0 }}>{sub}</p>}
+        {sub && <p style={{ fontSize: 11, color: "#7C8593", margin: 0 }}>{sub}</p>}
       </div>
       {action}
     </div>
@@ -646,7 +646,7 @@ function NotesPanel({
                   {sc.label}
                 </span>
               </div>
-              <div style={{ fontSize: 11, color: "#4B5563" }}>
+              <div style={{ fontSize: 11, color: "#7C8593" }}>
                 {fmt(deal.asking_price)} · {deal.valuation_multiple.toFixed(2)}x · DSCR {deal.dscr.toFixed(2)} · Score {deal.overall_score}
                 {gp !== 0 && (
                   <span style={{ color: gp > 0 ? "#D85A30" : "#10B981", marginLeft: 6, fontWeight: 600 }}>
@@ -658,7 +658,7 @@ function NotesPanel({
             <button
               onClick={onClose}
               style={{
-                background: "none", border: "none", color: "#4B5563",
+                background: "none", border: "none", color: "#7C8593",
                 fontSize: 20, cursor: "pointer", padding: "2px 6px", lineHeight: 1,
               }}
             >
@@ -668,7 +668,7 @@ function NotesPanel({
 
           {/* Status dropdown */}
           <div style={{ marginTop: 10, display: "flex", alignItems: "center", gap: 8 }}>
-            <span style={{ fontSize: 10, color: "#4B5563" }}>Status:</span>
+            <span style={{ fontSize: 10, color: "#7C8593" }}>Status:</span>
             <select
               value={status}
               onChange={(e) => onStatusChange(deal.id, e.target.value as DealStatus)}
@@ -692,7 +692,7 @@ function NotesPanel({
           flexShrink: 0,
         }}>
           <div style={{
-            fontSize: 10, fontWeight: 600, color: "#4B5563",
+            fontSize: 10, fontWeight: 600, color: "#7C8593",
             textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8,
           }}>
             Add Note
@@ -726,7 +726,7 @@ function NotesPanel({
               style={{
                 padding: "7px 16px", borderRadius: 7, border: "none",
                 background: noteText.trim() ? "linear-gradient(135deg,#3B82F6,#6366F1)" : "rgba(255,255,255,0.05)",
-                color: noteText.trim() ? "#fff" : "#374151",
+                color: noteText.trim() ? "#fff" : "#6B7280",
                 fontSize: 12, fontWeight: 600,
                 cursor: noteText.trim() && !saving ? "pointer" : "not-allowed",
               }}
@@ -740,7 +740,7 @@ function NotesPanel({
         <div style={{ padding: "12px 20px", flex: 1, overflowY: "auto" }}>
           {notes.length > 0 && (
             <div style={{
-              fontSize: 10, fontWeight: 600, color: "#374151",
+              fontSize: 10, fontWeight: 600, color: "#6B7280",
               textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 10,
             }}>
               {notes.length} Note{notes.length !== 1 ? "s" : ""}
@@ -753,7 +753,7 @@ function NotesPanel({
               <Skel h={56} />
             </div>
           ) : notes.length === 0 ? (
-            <div style={{ textAlign: "center", padding: "20px 0", color: "#374151", fontSize: 12 }}>
+            <div style={{ textAlign: "center", padding: "20px 0", color: "#6B7280", fontSize: 12 }}>
               No notes yet. Add one above.
             </div>
           ) : (
@@ -787,7 +787,7 @@ function NotesPanel({
                       <button
                         onClick={() => handleDeleteNote(note.id)}
                         style={{
-                          background: "none", border: "none", color: "#374151",
+                          background: "none", border: "none", color: "#6B7280",
                           cursor: "pointer", fontSize: 11, padding: "0 2px",
                         }}
                       >
@@ -824,7 +824,7 @@ function NotesPanel({
             {/* Empty state */}
             {!intel && !loadingIntel && (
               <div style={{ textAlign: "center", padding: "10px 0" }}>
-                <div style={{ fontSize: 12, color: "#4B5563", marginBottom: 14, lineHeight: 1.6 }}>
+                <div style={{ fontSize: 12, color: "#7C8593", marginBottom: 14, lineHeight: 1.6 }}>
                   AI-generated analysis — risks, deal assumptions, and negotiation strategy.
                 </div>
                 <button
@@ -847,7 +847,7 @@ function NotesPanel({
                 <Skel h={12} w="65%" />
                 <Skel h={12} w="90%" />
                 <Skel h={12} w="72%" />
-                <div style={{ fontSize: 10, color: "#374151", textAlign: "center", marginTop: 4 }}>
+                <div style={{ fontSize: 10, color: "#6B7280", textAlign: "center", marginTop: 4 }}>
                   Analyzing deal with AI...
                 </div>
               </div>
@@ -959,7 +959,7 @@ function NotesPanel({
               <div style={{ fontSize: 12, fontWeight: 600, color: "#818CF8", marginBottom: 4 }}>
                 Deal Intelligence is a Pro feature
               </div>
-              <div style={{ fontSize: 11, color: "#4B5563", marginBottom: 12 }}>
+              <div style={{ fontSize: 11, color: "#7C8593", marginBottom: 12 }}>
                 Get AI-generated risks, assumptions, and negotiation strategy for every deal.
               </div>
               <button style={{
@@ -1028,7 +1028,7 @@ function TopOpportunities({
                 background: isTop ? "rgba(16,185,129,0.15)" : "rgba(255,255,255,0.05)",
                 display: "flex", alignItems: "center", justifyContent: "center",
                 fontSize: 11, fontWeight: 700,
-                color: isTop ? "#10B981" : "#4B5563",
+                color: isTop ? "#10B981" : "#7C8593",
                 flexShrink: 0, fontFamily: "'JetBrains Mono',monospace",
               }}>
                 {i + 1}
@@ -1040,7 +1040,7 @@ function TopOpportunities({
                 <div style={{ fontSize: 13, fontWeight: 600, color: "#F1F5F9" }}>
                   {IL[deal.industry] || deal.industry}
                 </div>
-                <div style={{ fontSize: 11, color: "#4B5563", marginTop: 1 }}>
+                <div style={{ fontSize: 11, color: "#7C8593", marginTop: 1 }}>
                   {fmt(deal.asking_price)} · {deal.valuation_multiple.toFixed(2)}x · DSCR {deal.dscr.toFixed(2)}
                 </div>
               </div>
@@ -1069,7 +1069,7 @@ function TopOpportunities({
               <div style={{ display: "flex", gap: 4, flexShrink: 0, alignItems: "center" }} onClick={e => e.stopPropagation()}>
                 <StarButton dealId={deal.id} favorites={favorites} onToggle={onToggleFav} />
                 <button onClick={(e) => { e.stopPropagation(); onOpenNotes(deal); }} title="Notes & Intel"
-                  style={{ background: "none", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 7, cursor: "pointer", padding: "5px 8px", fontSize: 12, color: "#4B5563" }}>
+                  style={{ background: "none", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 7, cursor: "pointer", padding: "5px 8px", fontSize: 12, color: "#7C8593" }}>
                   📝
                 </button>
                 <button onClick={(e) => { e.stopPropagation(); onOpenDetail(deal); }} title="Quick View"
@@ -1126,7 +1126,7 @@ function PriorityDeals({
                 <div style={{ fontSize: 13, fontWeight: 600, color: "#E2E8F0" }}>
                   {IL[deal.industry] || deal.industry}
                 </div>
-                <div style={{ fontSize: 11, color: "#374151" }}>
+                <div style={{ fontSize: 11, color: "#6B7280" }}>
                   {fmt(deal.asking_price)} · {deal.valuation_multiple.toFixed(2)}x
                 </div>
               </div>
@@ -1164,7 +1164,7 @@ function PriorityDeals({
                     padding: "4px 8px", borderRadius: 6,
                     border: "1px solid rgba(255,255,255,0.08)",
                     background: "rgba(255,255,255,0.03)",
-                    color: "#4B5563", fontSize: 11, cursor: "pointer",
+                    color: "#7C8593", fontSize: 11, cursor: "pointer",
                   }}
                 >
                   📝
@@ -1543,7 +1543,7 @@ function AnalyzeDealModal({
     color: "#E2E8F0", fontSize: 13, outline: "none",
   };
   const labelStyle: React.CSSProperties = {
-    display: "block", fontSize: 10, color: "#4B5563",
+    display: "block", fontSize: 10, color: "#7C8593",
     textTransform: "uppercase", letterSpacing: "0.08em",
     fontWeight: 600, marginBottom: 5,
   };
@@ -1579,13 +1579,13 @@ function AnalyzeDealModal({
             <div style={{ fontSize: 15, fontWeight: 700, color: "#F1F5F9", fontFamily: "'Inter Tight',sans-serif" }}>
               {step === "input" ? "Analyze a Deal" : "Deal Analysis Results"}
             </div>
-            <div style={{ fontSize: 11, color: "#4B5563", marginTop: 2 }}>
+            <div style={{ fontSize: 11, color: "#7C8593", marginTop: 2 }}>
               {step === "input" ? "Enter deal details to score and save" : "Review score, then save to your dashboard"}
             </div>
           </div>
           <button
             onClick={onClose}
-            style={{ background: "none", border: "none", color: "#4B5563", fontSize: 22, cursor: "pointer", lineHeight: 1, padding: "2px 6px" }}
+            style={{ background: "none", border: "none", color: "#7C8593", fontSize: 22, cursor: "pointer", lineHeight: 1, padding: "2px 6px" }}
           >
             ×
           </button>
@@ -1648,7 +1648,7 @@ function AnalyzeDealModal({
                 padding: "12px 14px", borderRadius: 10, marginBottom: 18,
                 background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
               }}>
-                <div style={{ fontSize: 10, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600, marginBottom: 10 }}>
+                <div style={{ fontSize: 10, color: "#7C8593", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600, marginBottom: 10 }}>
                   Debt Terms (for DSCR)
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
@@ -1676,7 +1676,7 @@ function AnalyzeDealModal({
                 style={{
                   width: "100%", padding: "12px", borderRadius: 10, border: "none",
                   background: canScore ? "linear-gradient(135deg,#3B82F6,#6366F1)" : "rgba(255,255,255,0.05)",
-                  color: canScore ? "#fff" : "#374151",
+                  color: canScore ? "#fff" : "#6B7280",
                   fontSize: 14, fontWeight: 600, cursor: canScore ? "pointer" : "not-allowed",
                 }}
               >
@@ -1713,7 +1713,7 @@ function AnalyzeDealModal({
                       alignItems: "center", justifyContent: "center",
                     }}>
                       <span style={{ fontSize: 22, fontWeight: 800, color: scoreColor(score.overall), fontFamily: "'JetBrains Mono',monospace", lineHeight: 1 }}>{score.overall}</span>
-                      <span style={{ fontSize: 9, color: "#4B5563", marginTop: 1 }}>/ 100</span>
+                      <span style={{ fontSize: 9, color: "#7C8593", marginTop: 1 }}>/ 100</span>
                     </div>
                   </div>
                   <div style={{
@@ -1735,7 +1735,7 @@ function AnalyzeDealModal({
                     { label: "Offer High",    value: fmt(score.recommendedOfferHigh),color: "#818CF8" },
                   ].map(m => (
                     <div key={m.label} style={{ textAlign: "center", padding: "8px 6px", borderRadius: 8, background: "rgba(255,255,255,0.02)" }}>
-                      <div style={{ fontSize: 9, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 3 }}>{m.label}</div>
+                      <div style={{ fontSize: 9, color: "#7C8593", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 3 }}>{m.label}</div>
                       <div style={{ fontSize: 14, fontWeight: 700, color: m.color, fontFamily: "'JetBrains Mono',monospace" }}>{m.value}</div>
                     </div>
                   ))}
@@ -1763,7 +1763,7 @@ function AnalyzeDealModal({
                           {isAdj ? "Usable SDE (adjusted)" : "Reported SDE"}
                         </span>
                       </span>
-                      <span style={{ color: "#4B5563", marginRight: 6 }}>·</span>
+                      <span style={{ color: "#7C8593", marginRight: 6 }}>·</span>
                       <span>
                         SDE used:{" "}
                         <span style={{ color: "#E2E8F0", fontFamily: "'JetBrains Mono',monospace", fontWeight: 700 }}>
@@ -1772,16 +1772,16 @@ function AnalyzeDealModal({
                       </span>
                       {isAdj && (
                         <>
-                          <span style={{ color: "#4B5563", margin: "0 6px" }}>·</span>
+                          <span style={{ color: "#7C8593", margin: "0 6px" }}>·</span>
                           <span>
                             Reported:{" "}
-                            <span style={{ color: "#4B5563", fontFamily: "'JetBrains Mono',monospace", textDecoration: "line-through" }}>
+                            <span style={{ color: "#7C8593", fontFamily: "'JetBrains Mono',monospace", textDecoration: "line-through" }}>
                               ${rawSDE.toLocaleString()}
                             </span>
                           </span>
                         </>
                       )}
-                      <span style={{ color: "#4B5563", margin: "0 6px" }}>·</span>
+                      <span style={{ color: "#7C8593", margin: "0 6px" }}>·</span>
                       <span>
                         Benchmark:{" "}
                         <span style={{ fontFamily: "'JetBrains Mono',monospace", fontWeight: 700,
@@ -1794,14 +1794,14 @@ function AnalyzeDealModal({
                          :                                      "Fallback"}
                         </span>
                         {score.resolvedMarginMid !== null && (
-                          <span style={{ color: "#4B5563" }}>
+                          <span style={{ color: "#7C8593" }}>
                             {" "}({Math.round(score.resolvedMarginMid * 100)}%)
                           </span>
                         )}
                         {score.benchmarkBasis === "proxy" && (() => {
                           const ind = SCORE_INDUSTRIES[inputs.industry];
                           return ind ? (
-                            <span style={{ color: "#4B5563" }}>
+                            <span style={{ color: "#7C8593" }}>
                               {" · "}
                               <span style={{ color: "#6B7280" }}>
                                 Industry typical: {ind.marginRange[0]}–{ind.marginRange[1]}%
@@ -1851,7 +1851,7 @@ function AnalyzeDealModal({
                           Verdict: {vdm.label}
                         </div>
                         <div style={{ fontSize: 10, color: "#6B7280", marginTop: 1, lineHeight: 1.4 }}>{vdm.subtext}</div>
-                        <div style={{ fontSize: 10, color: "#4B5563", marginTop: 3 }}>
+                        <div style={{ fontSize: 10, color: "#7C8593", marginTop: 3 }}>
                           FV Range: {fmt(score.fairValueLow)} – {fmt(score.fairValueHigh)}
                         </div>
                       </div>
@@ -1865,7 +1865,7 @@ function AnalyzeDealModal({
                         { label: "Ind", value: score.industryScore },
                       ].map(s => (
                         <div key={s.label} style={{ textAlign: "center", padding: "6px 8px", borderRadius: 8, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", minWidth: 42 }}>
-                          <div style={{ fontSize: 8, color: "#4B5563", textTransform: "uppercase", marginBottom: 2 }}>{s.label}</div>
+                          <div style={{ fontSize: 8, color: "#7C8593", textTransform: "uppercase", marginBottom: 2 }}>{s.label}</div>
                           <div style={{ fontSize: 13, fontWeight: 700, color: scoreColor(s.value), fontFamily: "'JetBrains Mono',monospace" }}>{s.value}</div>
                         </div>
                       ))}
@@ -2011,7 +2011,7 @@ function IndustryBenchmarkPanel({
       <div style={{
         padding: "10px 13px", borderRadius: 9,
         background: "rgba(255,255,255,0.015)", border: "1px solid rgba(255,255,255,0.06)",
-        fontSize: 12, color: "#374151", ...style,
+        fontSize: 12, color: "#6B7280", ...style,
       }}>
         Industry benchmarks unavailable for this category.
       </div>
@@ -2051,7 +2051,7 @@ function IndustryBenchmarkPanel({
     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "7px 0", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
       <div>
         <div style={{ fontSize: 12, color: "#94A3B8" }}>{label}</div>
-        {sub && <div style={{ fontSize: 10, color: "#4B5563", marginTop: 1 }}>{sub}</div>}
+        {sub && <div style={{ fontSize: 10, color: "#7C8593", marginTop: 1 }}>{sub}</div>}
       </div>
       <div style={{ fontSize: 13, fontWeight: 700, color: "#E2E8F0", fontFamily: "'JetBrains Mono',monospace" }}>{value}</div>
     </div>
@@ -2066,7 +2066,7 @@ function IndustryBenchmarkPanel({
         <div style={{ display: "flex", alignItems: "center", gap: 4, padding: "2px 7px", borderRadius: 20, background: `${scoreColor}18`, border: `1px solid ${scoreColor}33` }}>
           <div style={{ width: 5, height: 5, borderRadius: "50%", background: scoreColor }} />
           <span style={{ fontSize: 10, fontWeight: 700, color: scoreColor, fontFamily: "'JetBrains Mono',monospace" }}>{marginScore}</span>
-          <span style={{ fontSize: 9, color: "#4B5563" }}>/ 100</span>
+          <span style={{ fontSize: 9, color: "#7C8593" }}>/ 100</span>
         </div>
       </div>
       <div style={{ padding: "2px 14px 0" }}>
@@ -2138,12 +2138,12 @@ function DealDetailPanel({
                   <span style={{ width: 4, height: 4, borderRadius: "50%", background: sc.dot }} />{sc.label}
                 </span>
               </div>
-              <div style={{ fontSize: 11, color: "#4B5563" }}>
+              <div style={{ fontSize: 11, color: "#7C8593" }}>
                 {fmt(deal.asking_price)} asking · {deal.valuation_multiple.toFixed(2)}x · {ago(deal.created_at)}
                 {(deal.city || deal.state) && ` · ${[deal.city, deal.state].filter(Boolean).join(", ")}`}
               </div>
             </div>
-            <button onClick={onClose} style={{ background: "none", border: "none", color: "#4B5563", fontSize: 20, cursor: "pointer", padding: "2px 6px", lineHeight: 1 }}>×</button>
+            <button onClick={onClose} style={{ background: "none", border: "none", color: "#7C8593", fontSize: 20, cursor: "pointer", padding: "2px 6px", lineHeight: 1 }}>×</button>
           </div>
         </div>
 
@@ -2161,7 +2161,7 @@ function DealDetailPanel({
                 { label: "Risk",         value: deal.risk_level,                 color: col(deal.overall_score) },
               ].map(m => (
                 <div key={m.label}>
-                  <div style={{ fontSize: 9, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 2 }}>{m.label}</div>
+                  <div style={{ fontSize: 9, color: "#7C8593", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 2 }}>{m.label}</div>
                   <div style={{ fontSize: 13, fontWeight: 700, color: m.color, fontFamily: "'JetBrains Mono',monospace" }}>{m.value}</div>
                 </div>
               ))}
@@ -2170,7 +2170,7 @@ function DealDetailPanel({
 
           {/* Status + favorite */}
           <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 16 }}>
-            <span style={{ fontSize: 10, color: "#4B5563" }}>Status:</span>
+            <span style={{ fontSize: 10, color: "#7C8593" }}>Status:</span>
             <select
               value={status}
               onChange={e => onStatusChange(deal.id, e.target.value as DealStatus)}
@@ -2179,7 +2179,7 @@ function DealDetailPanel({
               {STATUS_OPTIONS.map(s => <option key={s} value={s}>{s}</option>)}
             </select>
             <StarButton dealId={deal.id} favorites={favorites} onToggle={onToggleFav} />
-            <span style={{ fontSize: 11, color: isFav ? "#F59E0B" : "#4B5563" }}>{isFav ? "Watchlisted" : "Add to watchlist"}</span>
+            <span style={{ fontSize: 11, color: isFav ? "#F59E0B" : "#7C8593" }}>{isFav ? "Watchlisted" : "Add to watchlist"}</span>
           </div>
 
           {/* Score Insights */}
@@ -2582,7 +2582,7 @@ function UnderwritingPanel({
     <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "9px 0", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
       <div>
         <div style={{ fontSize: 12, color: "#94A3B8" }}>{label}</div>
-        {sub && <div style={{ fontSize: 10, color: "#4B5563", marginTop: 1 }}>{sub}</div>}
+        {sub && <div style={{ fontSize: 10, color: "#7C8593", marginTop: 1 }}>{sub}</div>}
       </div>
       <div style={{ fontSize: 14, fontWeight: 700, color, fontFamily: "'JetBrains Mono',monospace" }}>{value}</div>
     </div>
@@ -2631,7 +2631,7 @@ function UnderwritingPanel({
                 </span>
                 {isPro && <ProBadge />}
               </div>
-              <div style={{ fontSize: 11, color: "#4B5563" }}>
+              <div style={{ fontSize: 11, color: "#7C8593" }}>
                 {fmt(deal.asking_price)} · {deal.valuation_multiple.toFixed(2)}x · Score {deal.overall_score} · DSCR {deal.dscr.toFixed(2)}
               </div>
             </div>
@@ -2663,7 +2663,7 @@ function UnderwritingPanel({
               <button
                 onClick={onClose}
                 aria-label="Close panel"
-                style={{ background: "none", border: "none", color: "#4B5563", fontSize: 20, cursor: "pointer", lineHeight: 1, padding: "2px 6px" }}
+                style={{ background: "none", border: "none", color: "#7C8593", fontSize: 20, cursor: "pointer", lineHeight: 1, padding: "2px 6px" }}
               >
                 ×
               </button>
@@ -2686,7 +2686,7 @@ function UnderwritingPanel({
                 style={{
                   flex: 1, padding: "6px 4px", borderRadius: 7, border: "none",
                   background: activeTab === t.id ? "rgba(99,102,241,0.15)" : "transparent",
-                  color: activeTab === t.id ? "#C4B5FD" : "#4B5563",
+                  color: activeTab === t.id ? "#C4B5FD" : "#7C8593",
                   fontSize: 11, fontWeight: activeTab === t.id ? 600 : 400,
                   cursor: "pointer",
                 }}
@@ -2753,7 +2753,7 @@ function UnderwritingPanel({
               border: "1px solid rgba(255,255,255,0.07)",
             }}>
               <div style={{
-                fontSize: 9, fontWeight: 700, color: "#4B5563",
+                fontSize: 9, fontWeight: 700, color: "#7C8593",
                 textTransform: "uppercase", letterSpacing: "0.1em", marginBottom: 10,
               }}>
                 Deal Intelligence Preview
@@ -2788,7 +2788,7 @@ function UnderwritingPanel({
                 }}>
                   {deal.dscr.toFixed(2)}x
                   {" "}
-                  <span style={{ fontSize: 10, fontWeight: 400, color: "#4B5563" }}>
+                  <span style={{ fontSize: 10, fontWeight: 400, color: "#7C8593" }}>
                     {deal.dscr >= 1.5 ? "Strong" : deal.dscr >= 1.25 ? "Borderline" : "Insufficient"}
                   </span>
                 </span>
@@ -2805,7 +2805,7 @@ function UnderwritingPanel({
                 }}>
                   {deal.valuation_multiple.toFixed(2)}x
                   {" "}
-                  <span style={{ fontSize: 10, fontWeight: 400, color: "#4B5563" }}>
+                  <span style={{ fontSize: 10, fontWeight: 400, color: "#7C8593" }}>
                     {gp > 20 ? "Extreme Outlier" : gp > 5 ? "Above Market" : gp < -5 ? "Below Market" : "At Market"}
                   </span>
                 </span>
@@ -2825,30 +2825,73 @@ function UnderwritingPanel({
               </div>
 
               {/* 5. Unlock prompt */}
-              <div style={{ marginTop: 10, fontSize: 10, color: "#374151", textAlign: "center" as const }}>
+              <div style={{ marginTop: 10, fontSize: 10, color: "#6B7280", textAlign: "center" as const }}>
                 🔒 Detailed analysis locked per tab — click Unlock in each section to reveal
               </div>
             </div>
           )}
 
           {/* ── STRESS TEST ── */}
-          {activeTab === "stress" && (
+          {activeTab === "stress" && (() => {
+            const passFail = deal.dscr >= 1.25 && stressDscr15 >= 1.15 ? "PASS" : "FAIL";
+            const passColor = passFail === "PASS" ? "#10B981" : "#EF4444";
+            const stressStatus = stressDscr15 >= 1.25 ? "Holds under modest downside"
+                               : stressDscr15 >= 1.0  ? "Thins under modest downside"
+                               :                        "Fails under modest downside";
+            const stressColor = stressDscr15 >= 1.25 ? "#10B981"
+                              : stressDscr15 >= 1.0  ? "#F59E0B"
+                              :                        "#EF4444";
+            const plainExplain = deal.dscr < 1.0
+              ? "This deal appears overpriced and unlikely to meet standard lending thresholds."
+              : deal.dscr < 1.25
+              ? "Debt coverage sits below SBA minimums — financing will be constrained at current pricing."
+              : deal.dscr >= 1.5
+              ? "Debt coverage is strong — this deal clears standard lender thresholds comfortably."
+              : "Debt coverage meets SBA minimums but leaves limited headroom for downside scenarios.";
+            return (
             <>
-              {/* ── FREE: Teaser — base DSCR + one-line downside takeaway ── */}
-              <div style={{ marginBottom: 12, padding: "12px 14px", borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
-                <div style={{ fontSize: 10, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 700, marginBottom: 8 }}>At a Glance</div>
-                <div style={{ display: "flex", alignItems: "baseline", gap: 12, marginBottom: 8 }}>
-                  <div>
-                    <div style={{ fontSize: 9, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 2 }}>Base DSCR</div>
-                    <div style={{ fontSize: 22, fontWeight: 800, color: col(deal.dscr), fontFamily: "'JetBrains Mono',monospace" }}>{deal.dscr.toFixed(2)}x</div>
+              {/* ── FREE (always visible): verdict + headline metrics + plain explanation ── */}
+              <div style={{ marginBottom: 12, padding: "14px 16px", borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 12 }}>
+                  <div style={{
+                    padding: "4px 12px", borderRadius: 7,
+                    background: `${passColor}18`, border: `1px solid ${passColor}55`,
+                    fontSize: 12, fontWeight: 800, color: passColor,
+                    fontFamily: "'Inter Tight',sans-serif", letterSpacing: "0.04em",
+                  }}>
+                    {passFail}
                   </div>
-                  <div style={{ flex: 1, fontSize: 12, color: "#94A3B8", lineHeight: 1.55 }}>
-                    {stressDscr15 >= 1.25
-                      ? "Coverage holds under a −15% revenue stress — downside profile looks resilient."
-                      : stressDscr15 >= 1.0
-                      ? "Coverage thins under a −15% revenue stress — headroom is limited."
-                      : "Coverage breaks under a −15% revenue stress — deal is fragile to modest downside."}
+                  <div style={{ fontSize: 11, color: "#94A3B8", lineHeight: 1.5 }}>
+                    Standard SBA 7(a) screening · 1.25x minimum DSCR
                   </div>
+                </div>
+                {/* Two headline metrics side-by-side */}
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 10, marginBottom: 12 }}>
+                  <div style={{ padding: "9px 12px", borderRadius: 8, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)" }}>
+                    <div style={{ fontSize: 9, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4 }}>DSCR</div>
+                    <div style={{ fontSize: 20, fontWeight: 800, color: col(deal.dscr), fontFamily: "'JetBrains Mono',monospace" }}>
+                      {deal.dscr.toFixed(2)}x
+                    </div>
+                  </div>
+                  <div style={{ padding: "9px 12px", borderRadius: 8, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)" }}>
+                    <div style={{ fontSize: 9, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4 }}>Asking Multiple</div>
+                    <div style={{ fontSize: 20, fontWeight: 800, color: "#E2E8F0", fontFamily: "'JetBrains Mono',monospace" }}>
+                      {(deal.valuation_multiple ?? 0).toFixed(2)}x
+                    </div>
+                  </div>
+                </div>
+                {/* Stress indicator chip */}
+                <div style={{
+                  display: "inline-flex", alignItems: "center", gap: 7,
+                  padding: "4px 11px", borderRadius: 20,
+                  background: `${stressColor}14`, border: `1px solid ${stressColor}44`,
+                  marginBottom: 10,
+                }}>
+                  <span style={{ fontSize: 10, fontWeight: 700, color: stressColor }}>●</span>
+                  <span style={{ fontSize: 11, fontWeight: 600, color: stressColor }}>{stressStatus}</span>
+                </div>
+                <div style={{ fontSize: 12, color: "#B8C1CC", lineHeight: 1.6 }}>
+                  {plainExplain}
                 </div>
               </div>
 
@@ -2856,13 +2899,13 @@ function UnderwritingPanel({
               isUnlocked={tabUnlocked("stress")}
               onUnlock={() => { unlockTab("stress"); }}
               previewHeight={220}
-              headline="How bad could it get?"
-              subtext="Unlock full downside scenarios, break-even analysis, and debt service breakdown."
+              headline="See how this performs under real loan terms"
+              subtext="Unlock the full DSCR model, sensitivity tables, and monthly debt service breakdown."
               ctaLabel="Unlock Stress Test →"
-              bullets={["−15% and −25% revenue scenarios","Break-even SDE and revenue","Annual and monthly debt service","Resilience takeaway"]}
+              bullets={["Full DSCR calculations","−15% and −25% sensitivity tables","Monthly payment breakdown","Break-even SDE and revenue"]}
             >
               <div style={{ marginBottom: 16, padding: "12px 14px", borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
-                <div style={{ fontSize: 11, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600, marginBottom: 10 }}>Base Case</div>
+                <div style={{ fontSize: 11, color: "#7C8593", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600, marginBottom: 10 }}>Base Case</div>
                 <MetricRow label="DSCR at Current Terms"  value={deal.dscr.toFixed(2) + "x"}     color={col(deal.dscr)} />
                 <MetricRow label="Annual Debt Service"    value={fmt(usableSDE / deal.dscr)} sub="Usable SDE ÷ DSCR" />
                 <MetricRow label="Monthly Payment"        value={fmt(deal.monthly_payment ?? usableSDE / deal.dscr / 12)} />
@@ -2881,7 +2924,8 @@ function UnderwritingPanel({
               </div>
             </BlurGateSection>
             </>
-          )}
+            );
+          })()}
 
           {/* ── LENDER READINESS ── */}
           {activeTab === "lender" && (() => {
@@ -2911,23 +2955,54 @@ function UnderwritingPanel({
                            : lrData.industryFit.state === "higher_scrutiny" ? "#F59E0B"
                            : lrData.industryFit.state === "sba_ineligible"  ? "#EF4444"
                            :                                                  "#64748B";
+            // Pick 2-3 top reasons (critical/warning severity bullets from whyBullets)
+            const topReasons = lrData.whyBullets
+              .filter(b => b.severity === "critical" || b.severity === "warning")
+              .slice(0, 3)
+              .map(b => b.text);
+            // Simple improvement hint — first critical/high improvement action
+            const topImprovement = lrData.improvements.find(i => i.priority === "critical")?.text
+                                ?? lrData.improvements.find(i => i.priority === "high")?.text
+                                ?? "Obtain verified tax returns and lender-ready documentation.";
+            // Simple status sentence
+            const simpleStatus = lrData.verdict === "not_financeable"
+              ? "Not financeable under typical SBA guidelines at current pricing."
+              : lrData.verdict === "borderline"
+              ? "Borderline — financeable only with structural improvements or stronger documentation."
+              : lrData.verdict === "manual_review"
+              ? "Needs manual review — earnings quality must be verified before any lender will engage."
+              : "Likely financeable under standard SBA guidelines once documentation is assembled.";
             return (
             <>
-              {/* ── FREE: Teaser — verdict + industry fit + outlook ── */}
-              <div style={{ marginBottom: 12, padding: "12px 14px", borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
-                <div style={{ fontSize: 10, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 700, marginBottom: 8 }}>At a Glance</div>
-                <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 10 }}>
-                  <div style={{ padding: "5px 11px", borderRadius: 8, background: `${verdictColor}14`, border: `1px solid ${verdictColor}44` }}>
-                    <div style={{ fontSize: 9, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 2 }}>Lender Verdict</div>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: verdictColor, fontFamily: "'Inter Tight',sans-serif" }}>{lrData.verdictLabel}</div>
+              {/* ── FREE (always visible): status + 2-3 reasons + improvement hint ── */}
+              <div style={{ marginBottom: 12, padding: "14px 16px", borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                <div style={{ display: "flex", flexWrap: "wrap", gap: 8, marginBottom: 12 }}>
+                  <div style={{ padding: "5px 12px", borderRadius: 7, background: `${verdictColor}18`, border: `1px solid ${verdictColor}55` }}>
+                    <div style={{ fontSize: 12, fontWeight: 800, color: verdictColor, fontFamily: "'Inter Tight',sans-serif" }}>{lrData.verdictLabel}</div>
                   </div>
-                  <div style={{ padding: "5px 11px", borderRadius: 8, background: `${fitColor}14`, border: `1px solid ${fitColor}44` }}>
-                    <div style={{ fontSize: 9, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 2 }}>Industry Fit</div>
+                  <div style={{ padding: "5px 12px", borderRadius: 7, background: `${fitColor}14`, border: `1px solid ${fitColor}44` }}>
                     <div style={{ fontSize: 12, fontWeight: 700, color: fitColor, fontFamily: "'Inter Tight',sans-serif" }}>{lrData.industryFit.label}</div>
                   </div>
                 </div>
-                <div style={{ fontSize: 12, color: "#94A3B8", lineHeight: 1.55 }}>
-                  {lrData.prequalOutlook}
+                <div style={{ fontSize: 12, color: "#B8C1CC", lineHeight: 1.6, marginBottom: 12 }}>
+                  {simpleStatus}
+                </div>
+                {topReasons.length > 0 && (
+                  <>
+                    <div style={{ fontSize: 10, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.07em", fontWeight: 700, marginBottom: 7 }}>Why</div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 12 }}>
+                      {topReasons.map((r, i) => (
+                        <div key={i} style={{ display: "flex", gap: 9, alignItems: "flex-start", fontSize: 11, color: "#94A3B8", lineHeight: 1.55 }}>
+                          <span style={{ color: "#F59E0B", flexShrink: 0, marginTop: 1, fontWeight: 700 }}>·</span>
+                          <span>{r}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </>
+                )}
+                <div style={{ padding: "9px 12px", borderRadius: 7, background: "rgba(16,185,129,0.05)", border: "1px solid rgba(16,185,129,0.15)" }}>
+                  <div style={{ fontSize: 9, color: "#10B981", textTransform: "uppercase", letterSpacing: "0.07em", fontWeight: 700, marginBottom: 4 }}>Improvement Hint</div>
+                  <div style={{ fontSize: 11, color: "#B8C1CC", lineHeight: 1.55 }}>{topImprovement}</div>
                 </div>
               </div>
 
@@ -2935,15 +3010,15 @@ function UnderwritingPanel({
                 isUnlocked={tabUnlocked("lender")}
                 onUnlock={() => { unlockTab("lender"); }}
                 previewHeight={240}
-                headline="What will it take to close?"
-                subtext="Unlock the full lender prequal view — document checklist, required actions, and risk flags."
+                headline="See exact loan structure and approval odds"
+                subtext="Unlock full SBA structure, required equity injection, lender perspective, and approval likelihood."
                 ctaLabel="Unlock Lender Readiness"
                 footerNote="1 free unlock available · Upgrade to Pro for full lender prequal view"
                 bullets={[
-                  "Core metrics and DSCR stress results",
+                  "Core metrics and DSCR under multiple scenarios",
+                  "Required equity injection and interest assumptions",
                   "Complete seller / buyer / acquisition checklist",
-                  "Why this deal is / is not lender-ready",
-                  "Concrete improvement actions",
+                  "All improvement actions and risk flags",
                 ]}
               >
                 <LenderReadinessTab data={lrData} />
@@ -2953,39 +3028,84 @@ function UnderwritingPanel({
           })()}
 
           {/* ── SBA FINANCE ── */}
-          {activeTab === "sba" && (
+          {activeTab === "sba" && (() => {
+            // Compute a RANGE for the monthly payment (±8% to reflect rate variability)
+            const paymentLow  = Math.round(sbaMonthly * 0.92);
+            const paymentHigh = Math.round(sbaMonthly * 1.08);
+            const sbaStatement = deal.dscr < 1.0
+              ? "This deal likely cannot support SBA debt at current price."
+              : deal.dscr < 1.25
+              ? "This deal is unlikely to qualify for SBA financing without material repricing."
+              : deal.asking_price > 5_000_000
+              ? "This deal exceeds the $5M SBA 7(a) cap — alternative financing required."
+              : "This deal appears to support SBA debt at current price and terms.";
+            const statementColor = deal.dscr < 1.25 || deal.asking_price > 5_000_000 ? "#F59E0B" : "#10B981";
+            return (
             <>
-              {/* ── FREE: Teaser — eligibility + loan sizing fundamentals ── */}
+              {/* ── FREE (always visible): payment range + simple qualification statement ── */}
+              <div style={{ marginBottom: 12, padding: "14px 16px", borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                <div style={{ fontSize: 10, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 700, marginBottom: 10 }}>Financing Outlook</div>
+
+                {/* Payment range pill */}
+                <div style={{ marginBottom: 12 }}>
+                  <div style={{ fontSize: 9, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4 }}>Estimated Monthly Payment</div>
+                  <div style={{ fontSize: 20, fontWeight: 800, color: "#60A5FA", fontFamily: "'JetBrains Mono',monospace", letterSpacing: "-0.01em" }}>
+                    {fmt(paymentLow)} – {fmt(paymentHigh)}
+                  </div>
+                  <div style={{ fontSize: 10, color: "#7C8593", marginTop: 3 }}>
+                    Range reflects typical SBA 7(a) rate variability
+                  </div>
+                </div>
+
+                <div style={{
+                  padding: "10px 12px", borderRadius: 8,
+                  background: `${statementColor}10`,
+                  border: `1px solid ${statementColor}33`,
+                }}>
+                  <div style={{ fontSize: 12, fontWeight: 600, color: statementColor, lineHeight: 1.6 }}>
+                    {sbaStatement}
+                  </div>
+                </div>
+              </div>
+
+            <BlurGateSection
+              isUnlocked={tabUnlocked("sba")}
+              onUnlock={() => { unlockTab("sba"); }}
+              previewHeight={180}
+              headline="Unlock full SBA financing model"
+              subtext="Get the complete loan structure — amortization, rate assumptions, DSCR scenarios, and equity recovery analysis."
+              ctaLabel="Unlock SBA Financing →"
+              bullets={["Full loan sizing and down payment breakdown","Monthly and annual debt service","Amortization and interest assumptions","Equity recovery + Year-1 cash-on-cash return"]}
+            >
+              {/* Gated content — full SBA breakdown (loan basics moved inside) */}
               <div style={{ marginBottom: 12, padding: "10px 14px", borderRadius: 10, background: sbaEligible ? "rgba(16,185,129,0.06)" : "rgba(245,158,11,0.06)", border: `1px solid ${sbaEligible ? "rgba(16,185,129,0.2)" : "rgba(245,158,11,0.2)"}`, display: "flex", alignItems: "center", gap: 10 }}>
                 <span style={{ fontSize: 20 }}>{sbaEligible ? "✅" : "⚠️"}</span>
                 <div>
                   <div style={{ fontSize: 13, fontWeight: 700, color: sbaEligible ? "#10B981" : "#F59E0B" }}>
                     SBA 7(a) {sbaEligible ? "Appears Eligible" : "May Require Review"}
                   </div>
-                  <div style={{ fontSize: 11, color: "#4B5563" }}>
+                  <div style={{ fontSize: 11, color: "#9CA3AF" }}>
                     {sbaEligible ? `DSCR ${deal.dscr.toFixed(2)}x exceeds 1.25x minimum, ask under $5M` : deal.dscr < 1.25 ? `DSCR ${deal.dscr.toFixed(2)}x — cannot support debt at these terms (below 1.25x minimum)` : `Deal size exceeds typical SBA 7(a) range`}
                   </div>
                 </div>
               </div>
 
               <div style={{ padding: "12px 14px", borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", marginBottom: 12 }}>
-                <div style={{ fontSize: 10, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 700, marginBottom: 10 }}>Loan Basics</div>
+                <div style={{ fontSize: 10, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 700, marginBottom: 10 }}>Loan Sizing</div>
                 <MetricRow label="Loan Amount (90% LTV)" value={fmt(sbaLoan)}    color="#60A5FA" />
                 <MetricRow label="Down Payment (10%)"    value={fmt(sbaDown)}    color="#F59E0B" />
                 <MetricRow label="DSCR at SBA Terms"     value={sbaDscr.toFixed(2) + "x"} color={col(sbaDscr)} />
               </div>
 
-            <BlurGateSection
-              isUnlocked={tabUnlocked("sba")}
-              onUnlock={() => { unlockTab("sba"); }}
-              previewHeight={220}
-              headline="Can it be financed — and is it attractive?"
-              subtext="Unlock full debt service, equity recovery timeline, and Year-1 cash-on-cash returns."
-              ctaLabel="Unlock SBA Financing →"
-              bullets={["Monthly and annual debt service","Equity recovery timeline","Year-1 cash-on-cash return","Stressed recovery sensitivity"]}
-            >
               <div style={{ padding: "12px 14px", borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", marginBottom: 16 }}>
-                <div style={{ fontSize: 11, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600, marginBottom: 10 }}>Debt Service Detail</div>
+                <div style={{ fontSize: 11, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600, marginBottom: 10 }}>Debt Service Detail</div>
+                <MetricRow label="Est. Monthly Payment"  value={fmt(sbaMonthly)} sub="10yr @ 10.75% (SBA prime+2.75)" />
+                <MetricRow label="Annual Debt Service"   value={fmt(sbaMonthly * 12)} />
+              </div>
+
+
+              <div style={{ padding: "12px 14px", borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", marginBottom: 16 }}>
+                <div style={{ fontSize: 11, color: "#7C8593", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600, marginBottom: 10 }}>Debt Service Detail</div>
                 <MetricRow label="Est. Monthly Payment"  value={fmt(sbaMonthly)} sub="10yr @ 10.75% (SBA prime+2.75)" />
                 <MetricRow label="Annual Debt Service"   value={fmt(sbaMonthly * 12)} />
               </div>
@@ -3022,7 +3142,7 @@ function UnderwritingPanel({
                         💰 Equity Recovery
                       </div>
                     </div>
-                    <div style={{ fontSize: 10, color: "#4B5563", lineHeight: 1.5, marginBottom: 12 }}>
+                    <div style={{ fontSize: 10, color: "#7C8593", lineHeight: 1.5, marginBottom: 12 }}>
                       Measures how quickly you recover your invested capital based on current earnings and debt structure.
                     </div>
 
@@ -3038,13 +3158,13 @@ function UnderwritingPanel({
                         background: "rgba(255,255,255,0.025)",
                         border: "1px solid rgba(255,255,255,0.05)",
                       }}>
-                        <div style={{ fontSize: 9, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 5 }}>
+                        <div style={{ fontSize: 9, color: "#7C8593", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 5 }}>
                           Recover Down Payment
                         </div>
                         <div style={{ fontSize: 17, fontWeight: 800, color: recoveryColor, fontFamily: "'JetBrains Mono',monospace", marginBottom: 3 }}>
                           {yearsToRecover != null ? `${yearsToRecover.toFixed(1)} yrs` : "N/A"}
                         </div>
-                        <div style={{ fontSize: 10, color: "#4B5563", lineHeight: 1.4 }}>
+                        <div style={{ fontSize: 10, color: "#7C8593", lineHeight: 1.4 }}>
                           {yearsToRecover == null
                             ? "Negative cash flow — recovery not possible at current terms"
                             : yearsToRecover <= 2
@@ -3061,13 +3181,13 @@ function UnderwritingPanel({
                         background: "rgba(255,255,255,0.025)",
                         border: "1px solid rgba(255,255,255,0.05)",
                       }}>
-                        <div style={{ fontSize: 9, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 5 }}>
+                        <div style={{ fontSize: 9, color: "#7C8593", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 5 }}>
                           Full Ownership
                         </div>
                         <div style={{ fontSize: 17, fontWeight: 800, color: "#60A5FA", fontFamily: "'JetBrains Mono',monospace", marginBottom: 3 }}>
                           {loanTermYears} yrs
                         </div>
-                        <div style={{ fontSize: 10, color: "#4B5563", lineHeight: 1.4 }}>
+                        <div style={{ fontSize: 10, color: "#7C8593", lineHeight: 1.4 }}>
                           Loan fully amortized — business is debt-free
                         </div>
                       </div>
@@ -3078,13 +3198,13 @@ function UnderwritingPanel({
                         background: "rgba(255,255,255,0.025)",
                         border: "1px solid rgba(255,255,255,0.05)",
                       }}>
-                        <div style={{ fontSize: 9, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 5 }}>
+                        <div style={{ fontSize: 9, color: "#7C8593", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 5 }}>
                           Cash-on-Cash (Y1)
                         </div>
                         <div style={{ fontSize: 17, fontWeight: 800, color: cocColor, fontFamily: "'JetBrains Mono',monospace", marginBottom: 3 }}>
                           {cocReturn != null ? `${cocReturn.toFixed(0)}%` : "N/A"}
                         </div>
-                        <div style={{ fontSize: 10, color: "#4B5563", lineHeight: 1.4 }}>
+                        <div style={{ fontSize: 10, color: "#7C8593", lineHeight: 1.4 }}>
                           {cocReturn == null
                             ? "No return — debt service exceeds earnings"
                             : cocReturn >= 40
@@ -3164,31 +3284,58 @@ function UnderwritingPanel({
               </div>
             </BlurGateSection>
             </>
-          )}
+            );
+          })()}
 
           {/* ── NEGOTIATION ── */}
-          {activeTab === "negotiation" && (
+          {activeTab === "negotiation" && (() => {
+            // High-level insight and suggested direction — no specific numbers
+            const insight = gp > 20
+              ? "This deal is significantly overpriced relative to market benchmarks."
+              : gp > 10
+              ? "This deal is priced above fair value and will require negotiation."
+              : gp < -10
+              ? "This deal is priced below fair value — investigate why before moving up."
+              : "This deal is priced near fair value — focus on terms and structure.";
+            const direction = gp > 20
+              ? "Substantial price reduction required to reach market-consistent levels."
+              : gp > 10
+              ? "Moderate price reduction likely needed — structure can bridge part of the gap."
+              : gp < -10
+              ? "Minimal price movement needed — focus diligence on earnings quality."
+              : "Price negotiation is secondary — focus on seller note, earnout, and working capital.";
+            const insightColor = gp > 20 ? "#EF4444" : gp > 10 ? "#F59E0B" : gp < -10 ? "#10B981" : "#60A5FA";
+            return (
             <>
-              {/* ── FREE: Thin teaser — one-line framing above the gate ── */}
-              <div style={{ marginBottom: 12, padding: "10px 14px", borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", fontSize: 12, color: "#94A3B8", lineHeight: 1.55 }}>
-                {gp > 10
-                  ? "Pricing is meaningfully above fair value — structure matters more than price alone."
-                  : gp < -5
-                  ? "Pricing is below fair value — move carefully to understand why before moving up."
-                  : "Pricing sits near fair value — negotiation should focus on terms and timing."}
+              {/* ── FREE (always visible): high-level insight + suggested direction ── */}
+              <div style={{ marginBottom: 12, padding: "14px 16px", borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                <div style={{ fontSize: 10, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 700, marginBottom: 10 }}>Pricing Position</div>
+                <div style={{
+                  padding: "10px 12px", borderRadius: 8,
+                  background: `${insightColor}10`, border: `1px solid ${insightColor}33`,
+                  marginBottom: 10,
+                }}>
+                  <div style={{ fontSize: 13, fontWeight: 700, color: insightColor, lineHeight: 1.5, marginBottom: 5 }}>
+                    {insight}
+                  </div>
+                </div>
+                <div style={{ padding: "9px 12px", borderRadius: 7, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.04)" }}>
+                  <div style={{ fontSize: 9, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.07em", fontWeight: 700, marginBottom: 4 }}>Suggested Direction</div>
+                  <div style={{ fontSize: 12, color: "#B8C1CC", lineHeight: 1.6 }}>{direction}</div>
+                </div>
               </div>
 
             <BlurGateSection
               isUnlocked={tabUnlocked("negotiation")}
               onUnlock={() => { unlockTab("negotiation"); }}
-              previewHeight={180}
-              headline="How should you frame this negotiation?"
-              subtext="Unlock anchor offer, walk-away, and full deal-structure playbook."
+              previewHeight={160}
+              headline="Get your exact offer and negotiation strategy"
+              subtext="Unlock anchor offer, walk-away price, and deal structure tactics."
               ctaLabel="Unlock Negotiation Strategy →"
-              bullets={["Anchor offer and walk-away pricing","Seller note and earnout structures","Working capital and training terms","Pricing position narrative"]}
+              bullets={["Exact anchor offer and walk-away price","Seller note and earnout structures","Working capital and training terms","Concession strategy playbook"]}
             >
               <div style={{ padding: "12px 14px", borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", marginBottom: 14 }}>
-                <div style={{ fontSize: 11, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600, marginBottom: 10 }}>Pricing Position</div>
+                <div style={{ fontSize: 11, color: "#7C8593", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600, marginBottom: 10 }}>Pricing Position</div>
                 <MetricRow label="Asking Price"         value={fmt(deal.asking_price)}  />
                 <MetricRow label="NexTax Fair Value"    value={fmt(fv)}         color="#10B981" />
                 <MetricRow label="Gap vs Market"        value={(gp > 0 ? "+" : "") + gp + "%"} color={gp > 0 ? "#D85A30" : "#10B981"} />
@@ -3196,7 +3343,7 @@ function UnderwritingPanel({
                 <MetricRow label="Walk-Away Price"      value={fmt(walkAway)}   color="#F97316" sub="~8% above fair value — max justified" />
               </div>
               <div style={{ padding: "12px 14px", borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", marginBottom: 14 }}>
-                <div style={{ fontSize: 11, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600, marginBottom: 10 }}>Structure Ideas</div>
+                <div style={{ fontSize: 11, color: "#7C8593", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600, marginBottom: 10 }}>Structure Ideas</div>
                 {[
                   { title: "Seller Note",      desc: `Ask seller to carry 10–15% (${fmt(deal.asking_price * 0.12)}) over 3–5 years — reduces day-1 debt service` },
                   { title: "Earnout Clause",   desc: "Tie 10–20% of price to Year 1 revenue hitting stated levels" },
@@ -3218,7 +3365,8 @@ function UnderwritingPanel({
               </div>
             </BlurGateSection>
             </>
-          )}
+            );
+          })()}
 
           {/* ── LOI BUILDER ── */}
           {activeTab === "loi" && (() => {
@@ -3242,16 +3390,62 @@ function UnderwritingPanel({
                               : loiData.stance === "balanced"     ? "#60A5FA"
                               : loiData.stance === "conservative" ? "#F59E0B"
                               :                                     "#EF4444";
+            // Indicative range (not exact) — widen ±5% around target to feel directional
+            const rangeLow  = Math.round(loiData.targetRangeLow  * 0.97);
+            const rangeHigh = Math.round(loiData.targetRangeHigh * 1.03);
+            // Round indicative numbers heavily so free users see "around $X" not precise targets
+            const toNice = (n: number) => {
+              if (n >= 1_000_000) return `$${(n / 1_000_000).toFixed(1)}M`;
+              if (n >= 100_000)   return `$${Math.round(n / 10_000) * 10}K`;
+              return `$${Math.round(n / 1_000)}K`;
+            };
             return (
             <>
-              {/* ── FREE: Teaser — stance only, plus one-line framing ── */}
-              <div style={{ marginBottom: 12, padding: "12px 14px", borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
-                <div style={{ fontSize: 10, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 700, marginBottom: 8 }}>Recommended Posture</div>
-                <div style={{ display: "inline-block", padding: "5px 12px", borderRadius: 8, background: `${stanceColor}14`, border: `1px solid ${stanceColor}44`, marginBottom: 8 }}>
-                  <div style={{ fontSize: 13, fontWeight: 700, color: stanceColor, fontFamily: "'Inter Tight',sans-serif" }}>{loiData.stanceLabel}</div>
+              {/* ── FREE (always visible): LOI preview skeleton ── */}
+              <div style={{ marginBottom: 12, padding: "14px 16px", borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+                  <div style={{ fontSize: 10, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 700 }}>LOI Preview</div>
+                  <div style={{ fontSize: 9, color: "#F59E0B", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.06em", padding: "2px 8px", borderRadius: 20, background: "rgba(245,158,11,0.1)", border: "1px solid rgba(245,158,11,0.3)" }}>
+                    Preview Only
+                  </div>
                 </div>
-                <div style={{ fontSize: 12, color: "#94A3B8", lineHeight: 1.55 }}>
-                  {loiData.stanceMessage.split(".")[0]}.
+
+                {/* Placeholder skeleton — structured LOI shell */}
+                <div style={{ fontSize: 11, color: "#B8C1CC", lineHeight: 1.8 }}>
+                  <div style={{ display: "grid", gridTemplateColumns: "auto 1fr", gap: "6px 14px" }}>
+                    <div style={{ color: "#9CA3AF", fontWeight: 600 }}>Buyer:</div>
+                    <div style={{ color: "#7C8593", fontStyle: "italic" }}>[Your entity name]</div>
+
+                    <div style={{ color: "#9CA3AF", fontWeight: 600 }}>Seller:</div>
+                    <div style={{ color: "#7C8593", fontStyle: "italic" }}>[Seller entity name]</div>
+
+                    <div style={{ color: "#9CA3AF", fontWeight: 600 }}>Deal Type:</div>
+                    <div style={{ color: "#E2E8F0" }}>Asset purchase preferred</div>
+
+                    <div style={{ color: "#9CA3AF", fontWeight: 600 }}>Indicative Price:</div>
+                    <div style={{ color: "#818CF8", fontWeight: 700, fontFamily: "'JetBrains Mono',monospace" }}>
+                      {toNice(rangeLow)}–{toNice(rangeHigh)}
+                    </div>
+
+                    <div style={{ color: "#9CA3AF", fontWeight: 600 }}>Posture:</div>
+                    <div>
+                      <span style={{ display: "inline-block", padding: "2px 9px", borderRadius: 20, background: `${stanceColor}18`, border: `1px solid ${stanceColor}55`, fontSize: 10, fontWeight: 700, color: stanceColor, textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                        {loiData.stance === "aggressive"   ? "Lean In"
+                         : loiData.stance === "balanced"    ? "Disciplined"
+                         : loiData.stance === "conservative"? "Protective"
+                         :                                    "Heavy Structure"}
+                      </span>
+                    </div>
+
+                    <div style={{ color: "#9CA3AF", fontWeight: 600 }}>Basic Terms:</div>
+                    <div style={{ color: "#7C8593" }}>Cash at close, seller note, earnout, diligence period</div>
+                  </div>
+                </div>
+
+                <div style={{ marginTop: 14, padding: "9px 12px", borderRadius: 7, background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.18)" }}>
+                  <div style={{ fontSize: 11, color: "#F59E0B", fontWeight: 600, lineHeight: 1.5 }}>
+                    This is a preview — critical deal protections and final terms are not included.
+                  </div>
                 </div>
               </div>
 
@@ -3259,15 +3453,15 @@ function UnderwritingPanel({
                 isUnlocked={tabUnlocked("loi")}
                 onUnlock={() => { unlockTab("loi"); }}
                 previewHeight={220}
-                headline="How should this offer actually be structured?"
-                subtext="Unlock price framing, seller note strategy, contingencies, and the pre-LOI checklist."
+                headline="Turn this into a lender-ready LOI with negotiation protection"
+                subtext="Unlock exact offer price, financing structure, working capital clauses, and all buyer protections."
                 ctaLabel="Unlock LOI Builder"
                 footerNote="1 free unlock available · Upgrade to Pro for full deal structuring"
                 bullets={[
-                  "Anchor offer, target range, and max justified price",
-                  "Cash / seller note / earnout recommendation",
-                  "Diligence period, training, and contingencies",
-                  "Buyer protections and LOI checklist",
+                  "Exact anchor, target range, and max justified price",
+                  "Full structure — cash, seller note, earnout, working capital",
+                  "Buyer protections and financing contingency",
+                  "Pre-LOI checklist and term confirmation",
                 ]}
               >
                 <LoiBuilderTab data={loiData} />
@@ -3307,24 +3501,87 @@ function UnderwritingPanel({
                 const medCount    = riskFlagsTeaser.filter(f => f.level === "medium").length;
                 const lowCount    = riskFlagsTeaser.filter(f => f.level === "low").length;
 
+                // Top 3 risks — pull highest severity first, then pad if needed
+                const allRisks = [
+                  ...riskFlagsTeaser.filter(f => f.level === "high"),
+                  ...riskFlagsTeaser.filter(f => f.level === "medium"),
+                  ...riskFlagsTeaser.filter(f => f.level === "low"),
+                ];
+                const top3Risks = allRisks.slice(0, 3);
+
+                // "What must be true" — top 3 conditions for the deal to work
+                const mustBeTrueTop = [
+                  `SDE of ${fmt(usableSDE)} is the earnings basis used for scoring${usableSDE !== (deal.sde ?? 0) ? " (trust-adjusted)" : ""}.`,
+                  `DSCR of ${deal.dscr.toFixed(2)}x holds under normalized owner compensation.`,
+                  `Revenue trend is stable or growing — no single-customer concentration above 20%.`,
+                ];
+
+                // High-level recommendation — Proceed / Caution / Pass
+                const verdictKey = deal.verdict ?? dealVerdict(deal);
+                const highLevelRec: { label: string; color: string; icon: string } =
+                  verdictKey === "high_conviction" ? { label: "Proceed",   color: "#10B981", icon: "→" }
+                  : verdictKey === "pursue"        ? { label: "Proceed",   color: "#10B981", icon: "→" }
+                  : verdictKey === "investigate"   ? { label: "Caution",   color: "#F59E0B", icon: "⚠" }
+                  : verdictKey === "manual_review" ? { label: "Caution",   color: "#F59E0B", icon: "⚠" }
+                  :                                  { label: "Pass",      color: "#EF4444", icon: "✗" };
+
                 return (
                 <>
-                  {/* ── FREE: Teaser — summary paragraph + red-flag counts ── */}
-                  <div style={{ marginBottom: 12, padding: "12px 14px", borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
-                    <div style={{ fontSize: 10, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 700, marginBottom: 8 }}>Deal Summary</div>
-                    <div style={{ fontSize: 12, color: "#94A3B8", lineHeight: 1.6, marginBottom: 10 }}>
+                  {/* ── FREE (always visible): summary + top 3 risks + must-be-true + high-level rec ── */}
+                  <div style={{ marginBottom: 12, padding: "14px 16px", borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                    {/* Summary */}
+                    <div style={{ fontSize: 10, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 700, marginBottom: 8 }}>Deal Summary</div>
+                    <div style={{ fontSize: 12, color: "#B8C1CC", lineHeight: 1.6, marginBottom: 14 }}>
                       {summaryText}
                     </div>
-                    <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
-                      <span style={{ padding: "3px 9px", borderRadius: 20, fontSize: 10, fontWeight: 700, background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.25)", color: "#EF4444" }}>
-                        {highCount} High Risk
-                      </span>
-                      <span style={{ padding: "3px 9px", borderRadius: 20, fontSize: 10, fontWeight: 700, background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.25)", color: "#F59E0B" }}>
-                        {medCount} Medium Risk
-                      </span>
-                      <span style={{ padding: "3px 9px", borderRadius: 20, fontSize: 10, fontWeight: 700, background: "rgba(100,116,139,0.08)", border: "1px solid rgba(100,116,139,0.25)", color: "#94A3B8" }}>
-                        {lowCount} Low Risk
-                      </span>
+
+                    {/* Top 3 risks */}
+                    {top3Risks.length > 0 && (
+                      <>
+                        <div style={{ fontSize: 10, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.07em", fontWeight: 700, marginBottom: 7 }}>Top 3 Risks</div>
+                        <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 14 }}>
+                          {top3Risks.map((r, i) => {
+                            const rc = r.level === "high" ? "#EF4444" : r.level === "medium" ? "#F59E0B" : "#94A3B8";
+                            return (
+                              <div key={i} style={{
+                                padding: "8px 11px", borderRadius: 7,
+                                background: `${rc}10`, border: `1px solid ${rc}33`,
+                                display: "flex", gap: 9, alignItems: "flex-start",
+                              }}>
+                                <span style={{ color: rc, flexShrink: 0, marginTop: 1, fontSize: 10, fontWeight: 800 }}>●</span>
+                                <span style={{ fontSize: 11, color: "#B8C1CC", lineHeight: 1.5 }}>{r.text}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </>
+                    )}
+
+                    {/* What must be true */}
+                    <div style={{ fontSize: 10, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.07em", fontWeight: 700, marginBottom: 7 }}>What Must Be True</div>
+                    <div style={{ display: "flex", flexDirection: "column", gap: 5, marginBottom: 14 }}>
+                      {mustBeTrueTop.map((m, i) => (
+                        <div key={i} style={{ display: "flex", gap: 9, alignItems: "flex-start", fontSize: 11, color: "#94A3B8", lineHeight: 1.55 }}>
+                          <span style={{ color: "#818CF8", flexShrink: 0, marginTop: 1, fontWeight: 700 }}>→</span>
+                          <span>{m}</span>
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* High-level recommendation */}
+                    <div style={{
+                      padding: "10px 14px", borderRadius: 8,
+                      background: `${highLevelRec.color}12`,
+                      border: `1px solid ${highLevelRec.color}44`,
+                      display: "flex", alignItems: "center", gap: 10,
+                    }}>
+                      <span style={{ fontSize: 14, color: highLevelRec.color, fontWeight: 800 }}>{highLevelRec.icon}</span>
+                      <div>
+                        <div style={{ fontSize: 9, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.07em", fontWeight: 700, marginBottom: 2 }}>Recommendation</div>
+                        <div style={{ fontSize: 13, fontWeight: 800, color: highLevelRec.color, fontFamily: "'Inter Tight',sans-serif" }}>
+                          {highLevelRec.label}
+                        </div>
+                      </div>
                     </div>
                   </div>
 
@@ -3332,8 +3589,8 @@ function UnderwritingPanel({
                     isUnlocked={tabUnlocked("memo")}
                     onUnlock={() => { unlockTab("memo"); }}
                     previewHeight={220}
-                    headline="What could go wrong — and what to ask"
-                    subtext="Unlock the full memo — red flag detail, diligence questions, decision triggers, and final recommendation."
+                    headline="Unlock full diligence checklist and decision framework"
+                    subtext="See the full memo — all risks by category, diligence questions, decision triggers, and detailed recommendation logic."
                     ctaLabel="Unlock Deal Memo →"
                     bullets={["Red flag detail by level","What must be true checklist","Diligence questions by category","Decision triggers + final recommendation"]}
                   >
@@ -3429,26 +3686,59 @@ function UnderwritingPanel({
               :                              `At ${multTeaser.toFixed(2)}x, this deal sits within the ${lowTeaser.toFixed(2)}x–${highTeaser.toFixed(2)}x benchmark range.`;
             return (
             <>
-              {/* ── FREE: Teaser — pricing label + one implication sentence ── */}
-              <div style={{ marginBottom: 12, padding: "12px 14px", borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
-                <div style={{ fontSize: 10, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 700, marginBottom: 8 }}>Market Position</div>
-                <div style={{ display: "inline-block", padding: "5px 12px", borderRadius: 8, background: `${pricingColor}14`, border: `1px solid ${pricingColor}44`, marginBottom: 8 }}>
-                  <div style={{ fontSize: 13, fontWeight: 800, color: pricingColor, fontFamily: "'Inter Tight',sans-serif" }}>{compsMarketPosition.pricingLabel}</div>
+              {/* ── FREE (always visible): range + outlier label + simple comparison ── */}
+              <div style={{ marginBottom: 12, padding: "14px 16px", borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
+                <div style={{ fontSize: 10, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 700, marginBottom: 10 }}>Market Position</div>
+
+                {/* Range — large display */}
+                <div style={{ marginBottom: 10 }}>
+                  <div style={{ fontSize: 9, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4 }}>Typical Market Range</div>
+                  <div style={{ fontSize: 20, fontWeight: 800, color: "#E2E8F0", fontFamily: "'JetBrains Mono',monospace", letterSpacing: "-0.01em" }}>
+                    {lowTeaser.toFixed(2)}x – {highTeaser.toFixed(2)}x
+                  </div>
                 </div>
-                <div style={{ fontSize: 12, color: "#94A3B8", lineHeight: 1.55 }}>
-                  {teaserImplication}
+
+                {/* This deal position */}
+                <div style={{ marginBottom: 12 }}>
+                  <div style={{ fontSize: 9, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4 }}>This Deal</div>
+                  <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
+                    <span style={{ fontSize: 20, fontWeight: 800, color: pricingColor, fontFamily: "'JetBrains Mono',monospace", letterSpacing: "-0.01em" }}>
+                      {multTeaser.toFixed(2)}x
+                    </span>
+                    <span style={{
+                      padding: "3px 10px", borderRadius: 20,
+                      background: `${pricingColor}18`, border: `1px solid ${pricingColor}55`,
+                      fontSize: 11, fontWeight: 700, color: pricingColor,
+                      fontFamily: "'Inter Tight',sans-serif",
+                    }}>
+                      {multTeaser > highTeaser * 1.5 ? "Extreme Outlier" : compsMarketPosition.pricingLabel}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Simple comparison sentence */}
+                <div style={{
+                  padding: "9px 12px", borderRadius: 7,
+                  background: `${pricingColor}10`, border: `1px solid ${pricingColor}33`,
+                  fontSize: 12, color: "#B8C1CC", lineHeight: 1.55,
+                }}>
+                  {multTeaser > highTeaser * 1.5 ? "Priced far above typical market range for this industry."
+                   : multTeaser > highTeaser     ? "Priced above typical market range for this industry."
+                   : multTeaser < lowTeaser * 0.75 ? "Priced far below typical market range — investigate why."
+                   : multTeaser < lowTeaser     ? "Priced below typical market range — investigate seller motivation."
+                   :                              "Priced within typical market range for this industry."}
                 </div>
               </div>
 
             <BlurGateSection
               isUnlocked={tabUnlocked("comps")}
               onUnlock={() => { unlockTab("comps"); }}
-              previewHeight={220}
-              headline="How does this deal really compare?"
-              subtext="Unlock full comps, percentile positioning, and the normalization adjustment detail."
+              previewHeight={200}
+              headline="See real comps and where this deal ranks"
+              subtext="Unlock percentile positioning, comparable transactions, and adjusted vs reported earnings analysis."
               ctaLabel="Unlock Market Comps"
               footerNote="1 free unlock available · Upgrade to Pro for full market positioning"
-              bullets={["Full benchmark range comparison","Reported vs adjusted earnings","Representative closed comps","Decision summary and action plan"]}
+              bullets={["Percentile ranking within the market","Representative comparable transactions","Adjusted vs reported earnings detail","Full range comparison and data sources"]}
             >
               <CompsTab
                 benchmarkContext={buildBenchmarkContext(deal)}
@@ -3576,14 +3866,14 @@ function SignInRequired() {
               style={{
                 width: "100%", padding: "12px", borderRadius: 9, border: "none",
                 background: email ? "linear-gradient(135deg,#3B82F6,#6366F1)" : "rgba(255,255,255,0.06)",
-                color: email ? "#fff" : "#4B5563",
+                color: email ? "#fff" : "#7C8593",
                 fontSize: 14, fontWeight: 600,
                 cursor: email && !loading ? "pointer" : "not-allowed",
               }}
             >
               {loading ? "Sending..." : "Send me a secure link →"}
             </button>
-            <p style={{ fontSize: 11, color: "#374151", marginTop: 10 }}>
+            <p style={{ fontSize: 11, color: "#6B7280", marginTop: 10 }}>
               Already analyzed a deal?{" "}
               <a href="#" onClick={(e) => { e.preventDefault(); }} style={{ color: "#818CF8", textDecoration: "none" }}>
                 Pick up where you left off →
@@ -3608,14 +3898,14 @@ function SignInRequired() {
           </div>
         )}
 
-        <div style={{ marginTop: 20, fontSize: 12, color: "#374151", lineHeight: 1.8 }}>
+        <div style={{ marginTop: 20, fontSize: 12, color: "#6B7280", lineHeight: 1.8 }}>
           No account?{" "}
           <a href="/deal-reality-check" style={{ color: "#6366F1", textDecoration: "none" }}>
             Run a free deal analysis →
           </a>
           <br />
-          <span style={{ color: "#374151" }}>Prefer a password?{" "}</span>
-          <a href="/account/security" style={{ color: "#4B5563", textDecoration: "none" }}>
+          <span style={{ color: "#6B7280" }}>Prefer a password?{" "}</span>
+          <a href="/account/security" style={{ color: "#7C8593", textDecoration: "none" }}>
             Set one up in account settings →
           </a>
         </div>
@@ -3671,7 +3961,7 @@ function StatCards({ deals, loading }: { deals: DealRun[]; loading: boolean }) {
           border: "1px solid rgba(255,255,255,0.06)",
         }}>
           <div style={{
-            fontSize: 10, color: "#4B5563", textTransform: "uppercase",
+            fontSize: 10, color: "#7C8593", textTransform: "uppercase",
             letterSpacing: "0.1em", fontWeight: 600, marginBottom: 8,
           }}>
             {c.label}
@@ -3687,7 +3977,7 @@ function StatCards({ deals, loading }: { deals: DealRun[]; loading: boolean }) {
               {c.value}
             </div>
           )}
-          <div style={{ fontSize: 11, color: "#374151" }}>{c.sub}</div>
+          <div style={{ fontSize: 11, color: "#6B7280" }}>{c.sub}</div>
         </div>
       ))}
     </div>
@@ -3735,7 +4025,7 @@ function ProCommandModule({ deals, onOpenUnderwriting }: { deals: DealRun[]; onO
         ].map(m => (
           <div key={m.label} style={{ textAlign: "center" }}>
             <div style={{
-              fontSize: 10, color: "#4B5563", textTransform: "uppercase",
+              fontSize: 10, color: "#7C8593", textTransform: "uppercase",
               letterSpacing: "0.08em", marginBottom: 4,
             }}>
               {m.label}
@@ -3762,7 +4052,7 @@ function ProCommandModule({ deals, onOpenUnderwriting }: { deals: DealRun[]; onO
             <div style={{ fontSize: 13, fontWeight: 600, color: "#E2E8F0" }}>
               Last Full Analysis — {IL[lastAnalysis.industry] || lastAnalysis.industry}
             </div>
-            <div style={{ fontSize: 11, color: "#4B5563" }}>
+            <div style={{ fontSize: 11, color: "#7C8593" }}>
               {ago(lastAnalysis.created_at)} · {lastAnalysis.valuation_multiple.toFixed(2)}x · DSCR {lastAnalysis.dscr.toFixed(2)}
             </div>
           </div>
@@ -3802,7 +4092,7 @@ function ProCommandModule({ deals, onOpenUnderwriting }: { deals: DealRun[]; onO
             <span style={{ fontSize: 18, flexShrink: 0 }}>{a.icon}</span>
             <div>
               <div style={{ fontSize: 12, fontWeight: 600, color: "#E2E8F0" }}>{a.label}</div>
-              <div style={{ fontSize: 10, color: "#4B5563" }}>{a.sub}</div>
+              <div style={{ fontSize: 10, color: "#7C8593" }}>{a.sub}</div>
             </div>
           </button>
         ))}
@@ -3882,7 +4172,7 @@ function ProUpsellCard({ deals, onOpenUnderwriting }: { deals: DealRun[]; onOpen
           background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)",
         }}>
           <div style={{
-            fontSize: 10, color: "#374151", textTransform: "uppercase",
+            fontSize: 10, color: "#6B7280", textTransform: "uppercase",
             letterSpacing: "0.08em", marginBottom: 10, fontWeight: 600,
           }}>
             Preview
@@ -3897,7 +4187,7 @@ function ProUpsellCard({ deals, onOpenUnderwriting }: { deals: DealRun[]; onOpen
               display: "flex", justifyContent: "space-between",
               padding: "6px 0", borderBottom: "1px solid rgba(255,255,255,0.04)",
             }}>
-              <span style={{ fontSize: 10, color: "#4B5563" }}>{r.label}</span>
+              <span style={{ fontSize: 10, color: "#7C8593" }}>{r.label}</span>
               <span style={{
                 fontSize: 10, fontWeight: 600,
                 color: r.warn ? "#F59E0B" : "#10B981",
@@ -3908,7 +4198,7 @@ function ProUpsellCard({ deals, onOpenUnderwriting }: { deals: DealRun[]; onOpen
               </span>
             </div>
           ))}
-          <div style={{ marginTop: 8, fontSize: 10, color: "#374151", textAlign: "center" }}>
+          <div style={{ marginTop: 8, fontSize: 10, color: "#6B7280", textAlign: "center" }}>
             🔒 Upgrade to unlock
           </div>
         </div>
@@ -3974,7 +4264,7 @@ function TabDashboard({
             <div style={{ textAlign: "center", padding: "28px 0" }}>
               <div style={{ fontSize: 24, marginBottom: 8 }}>📋</div>
               <div style={{ fontSize: 14, fontWeight: 600, color: "#E2E8F0", marginBottom: 4 }}>No deals yet</div>
-              <div style={{ fontSize: 12, color: "#4B5563", marginBottom: 14 }}>Analyze your first deal to get started.</div>
+              <div style={{ fontSize: 12, color: "#7C8593", marginBottom: 14 }}>Analyze your first deal to get started.</div>
               <button
                 onClick={() => onAnalyzeNew()}
                 style={{
@@ -4006,7 +4296,7 @@ function TabDashboard({
                   <div style={{ fontSize: 13, fontWeight: 600, color: "#E2E8F0" }}>
                     {IL[deal.industry] || deal.industry}
                   </div>
-                  <div style={{ fontSize: 11, color: "#4B5563" }}>
+                  <div style={{ fontSize: 11, color: "#7C8593" }}>
                     {fmt(deal.asking_price)} · {deal.valuation_multiple.toFixed(2)}x · {ago(deal.created_at)}
                   </div>
                 </div>
@@ -4029,7 +4319,7 @@ function TabDashboard({
                 <div style={{ display: "flex", gap: 4 }} onClick={e => e.stopPropagation()}>
                   <StarButton dealId={deal.id} favorites={favorites} onToggle={onToggleFav} />
                   <button onClick={(e) => { e.stopPropagation(); onOpenNotes(deal); }} title="Notes & Intel"
-                    style={{ background: "none", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 6, cursor: "pointer", padding: "4px 7px", fontSize: 11, color: "#4B5563" }}>
+                    style={{ background: "none", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 6, cursor: "pointer", padding: "4px 7px", fontSize: 11, color: "#7C8593" }}>
                     📝
                   </button>
                   <button onClick={(e) => { e.stopPropagation(); onOpenDetail(deal); }} title="Quick View"
@@ -4121,7 +4411,7 @@ function TabDashboard({
             ) : opps.length === 0 ? (
               <div style={{ textAlign: "center", padding: "20px 0" }}>
                 <div style={{ fontSize: 22, marginBottom: 8 }}>🔍</div>
-                <div style={{ fontSize: 13, color: "#4B5563" }}>
+                <div style={{ fontSize: 13, color: "#7C8593" }}>
                   No below-market deals yet. Analyze more deals to find opportunities.
                 </div>
               </div>
@@ -4145,7 +4435,7 @@ function TabDashboard({
                   <div style={{ fontSize: 12, fontWeight: 600, color: "#E2E8F0" }}>
                     {IL[deal.industry] || deal.industry}
                   </div>
-                  <div style={{ fontSize: 10, color: "#4B5563" }}>{fmt(deal.asking_price)}</div>
+                  <div style={{ fontSize: 10, color: "#7C8593" }}>{fmt(deal.asking_price)}</div>
                 </div>
                 <div style={{
                   fontSize: 13, fontWeight: 700, color: "#10B981",
@@ -4173,7 +4463,7 @@ function TabDashboard({
                 border: "1px solid rgba(255,255,255,0.06)",
               }}>
                 <div style={{
-                  fontSize: 10, color: "#4B5563", textTransform: "uppercase",
+                  fontSize: 10, color: "#7C8593", textTransform: "uppercase",
                   letterSpacing: "0.08em", marginBottom: 6,
                 }}>
                   {label}
@@ -4266,7 +4556,7 @@ function TabMyDeals({
         <div style={{ flex: 1, minWidth: 200, position: "relative" }}>
           <span style={{
             position: "absolute", left: 10, top: "50%",
-            transform: "translateY(-50%)", fontSize: 13, color: "#4B5563",
+            transform: "translateY(-50%)", fontSize: 13, color: "#7C8593",
           }}>
             🔍
           </span>
@@ -4320,7 +4610,7 @@ function TabMyDeals({
             { h: "Actions",    align: "center" },
           ] as { h: string; align: string }[]).map(({ h, align }) => (
             <div key={h} style={{
-              fontSize: 10, color: "#374151", textTransform: "uppercase",
+              fontSize: 10, color: "#6B7280", textTransform: "uppercase",
               letterSpacing: "0.08em", fontWeight: 600,
               textAlign: align as any,
             }}>
@@ -4353,7 +4643,7 @@ function TabMyDeals({
             <div style={{ fontSize: 14, fontWeight: 600, color: "#E2E8F0", marginBottom: 4 }}>
               {search ? "No deals match your search" : "No deals yet"}
             </div>
-            <div style={{ fontSize: 12, color: "#4B5563", marginBottom: 14 }}>
+            <div style={{ fontSize: 12, color: "#7C8593", marginBottom: 14 }}>
               {search ? "Try a different search term." : "Analyze your first deal to get started."}
             </div>
             {!search && (
@@ -4406,16 +4696,16 @@ function TabMyDeals({
                   {isFav && <span style={{ color: "#F59E0B", fontSize: 11 }}>★</span>}
                   {fmt(deal.asking_price)}
                 </div>
-                <div style={{ fontSize: 10, color: "#4B5563", marginTop: 2 }}>
+                <div style={{ fontSize: 10, color: "#7C8593", marginTop: 2 }}>
                   {deal.valuation_multiple.toFixed(2)}x · DSCR {deal.dscr.toFixed(2)}
                 </div>
-                <div style={{ fontSize: 10, color: "#374151" }}>
+                <div style={{ fontSize: 10, color: "#6B7280" }}>
                   {ago(deal.created_at)}{loc ? ` · ${loc}` : ""}
                 </div>
               </div>
 
               {/* Industry */}
-              <div style={{ fontSize: 11, color: "#4B5563" }}>
+              <div style={{ fontSize: 11, color: "#7C8593" }}>
                 {IL[deal.industry] || deal.industry}
               </div>
 
@@ -4480,7 +4770,7 @@ function TabMyDeals({
               <div style={{ display: "flex", gap: 4, alignItems: "center", justifyContent: "center" }} onClick={e => e.stopPropagation()}>
                 <StarButton dealId={deal.id} favorites={favorites} onToggle={onToggleFav} />
                 <button onClick={(e) => { e.stopPropagation(); onOpenNotes(deal); }} title="Notes & Intel"
-                  style={{ background: "none", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 6, cursor: "pointer", padding: "3px 6px", fontSize: 11, color: "#4B5563" }}>
+                  style={{ background: "none", border: "1px solid rgba(255,255,255,0.08)", borderRadius: 6, cursor: "pointer", padding: "3px 6px", fontSize: 11, color: "#7C8593" }}>
                   📝
                 </button>
                 <button onClick={(e) => { e.stopPropagation(); onOpenDetail(deal); }} title="Quick View"
@@ -4500,7 +4790,7 @@ function TabMyDeals({
       </Card>
 
       {!loading && filtered.length > 0 && (
-        <div style={{ marginTop: 10, fontSize: 11, color: "#374151", textAlign: "right" }}>
+        <div style={{ marginTop: 10, fontSize: 11, color: "#6B7280", textAlign: "right" }}>
           {filtered.length} deal{filtered.length !== 1 ? "s" : ""}
         </div>
       )}
@@ -4532,7 +4822,7 @@ function CompareRangeTrack({
   if (!currentValue || !low || !high || low >= high) {
     return (
       <div style={{ padding: "20px 0", textAlign: "center" as const }}>
-        <div style={{ fontSize: 11, color: "#374151" }}>{emptyText ?? "Range data unavailable"}</div>
+        <div style={{ fontSize: 11, color: "#6B7280" }}>{emptyText ?? "Range data unavailable"}</div>
       </div>
     );
   }
@@ -4567,9 +4857,9 @@ function CompareRangeTrack({
     <div style={{ padding: "4px 0 8px" }}>
       {/* Value labels above track */}
       <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6, padding: `0 ${PAD}%` }}>
-        <span style={{ fontSize: 9, color: "#4B5563", textTransform: "uppercase" as const, letterSpacing: "0.06em" }}>Low {low.toFixed(2)}x</span>
-        <span style={{ fontSize: 9, color: "#4B5563", textTransform: "uppercase" as const, letterSpacing: "0.06em" }}>Median {median.toFixed(2)}x</span>
-        <span style={{ fontSize: 9, color: "#4B5563", textTransform: "uppercase" as const, letterSpacing: "0.06em" }}>High {high.toFixed(2)}x</span>
+        <span style={{ fontSize: 9, color: "#7C8593", textTransform: "uppercase" as const, letterSpacing: "0.06em" }}>Low {low.toFixed(2)}x</span>
+        <span style={{ fontSize: 9, color: "#7C8593", textTransform: "uppercase" as const, letterSpacing: "0.06em" }}>Median {median.toFixed(2)}x</span>
+        <span style={{ fontSize: 9, color: "#7C8593", textTransform: "uppercase" as const, letterSpacing: "0.06em" }}>High {high.toFixed(2)}x</span>
       </div>
 
       {/* Track */}
@@ -4665,71 +4955,11 @@ function TabCompare({ deals, isPro, onAnalyzeNew }: { deals: DealRun[]; isPro: b
     width: "100%", appearance: "none" as any,
   };
 
-  // ── Free user gate ───────────────────────────────────────────────────────────
-  if (!isPro) {
-    return (
-      <div>
-        {/* Tab bar still visible so user sees what's locked */}
-        <div style={{
-          display: "flex", gap: 4, marginBottom: 18,
-          background: "rgba(255,255,255,0.03)", borderRadius: 10, padding: 4,
-          border: "1px solid rgba(255,255,255,0.06)", width: "fit-content",
-        }}>
-          {([ ["my-deals","My Deals"], ["market","Market Comps"], ["closed","Closed Comps"] ] as [CompareMode, string][]).map(([m, label]) => (
-            <button key={m} onClick={() => setMode(m)} style={{
-              padding: "7px 14px", borderRadius: 7, border: "none",
-              background: mode === m ? "rgba(99,102,241,0.18)" : "transparent",
-              color: mode === m ? "#C4B5FD" : "#4B5563",
-              fontSize: 12, fontWeight: mode === m ? 600 : 400,
-              cursor: "pointer", transition: "all 0.15s",
-            }}>
-              {label}{m !== "my-deals" && <span style={{ fontSize: 9, color: "#374151", marginLeft: 3 }}>🔒</span>}
-            </button>
-          ))}
-        </div>
-
-        <div style={{ position: "relative" }}>
-          {/* Blurred ghost preview */}
-          <Card style={{ filter: "blur(3px)", pointerEvents: "none", opacity: 0.3 }}>
-            <div style={{ display: "grid", gridTemplateColumns: "90px 1fr 1fr", gap: "0 12px" }}>
-              {["", "Deal A", "Deal B"].map((h, i) => (
-                <div key={i} style={{ padding: "8px 12px", background: i > 0 ? "rgba(99,102,241,0.08)" : "transparent", borderRadius: i > 0 ? "8px 8px 0 0" : 0, fontSize: 12, fontWeight: 600, color: "#60A5FA", textAlign: "center" }}>{h}</div>
-              ))}
-              {["Score", "Asking", "Fair Value", "Gap vs Mkt", "Multiple", "DSCR", "Verdict"].map(r => (
-                <React.Fragment key={r}>
-                  <div style={{ padding: "10px 0", fontSize: 11, color: "#4B5563" }}>{r}</div>
-                  <div style={{ padding: "10px 12px", fontSize: 13, fontWeight: 600, color: "#818CF8", textAlign: "center", background: "rgba(59,130,246,0.04)", border: "1px solid rgba(59,130,246,0.1)", borderTop: "none" }}>—</div>
-                  <div style={{ padding: "10px 12px", fontSize: 13, fontWeight: 600, color: "#A5B4FC", textAlign: "center", background: "rgba(99,102,241,0.04)", border: "1px solid rgba(99,102,241,0.1)", borderTop: "none" }}>—</div>
-                </React.Fragment>
-              ))}
-            </div>
-          </Card>
-          {/* Lock overlay */}
-          <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <div style={{
-              padding: "28px 36px", borderRadius: 14,
-              background: "rgba(8,12,19,0.92)", border: "1px solid rgba(99,102,241,0.2)",
-              textAlign: "center", maxWidth: 340,
-            }}>
-              <div style={{ fontSize: 32, marginBottom: 12 }}>🔒</div>
-              <div style={{ fontSize: 16, fontWeight: 700, color: "#F1F5F9", marginBottom: 6, fontFamily: "'Inter Tight',sans-serif" }}>
-                Compare Deal Options
-              </div>
-              <div style={{ fontSize: 13, color: "#6B7280", marginBottom: 16, lineHeight: 1.6 }}>
-                Side-by-side comparison with verdict, category winners, market comps, and closed deal benchmarks.
-              </div>
-              <button style={{
-                padding: "10px 24px", borderRadius: 9, border: "none",
-                background: "linear-gradient(135deg,#6366F1,#8B5CF6)",
-                color: "#fff", fontSize: 14, fontWeight: 600, cursor: "pointer",
-              }}>
-                Upgrade to Pro
-              </button>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
+  // ── Free user: LIMITED 2-deal compare, my-deals only, minimal columns ───────
+  // Market Comps + Closed Comps sub-tabs are locked for free users
+  if (!isPro && (mode === "market" || mode === "closed")) {
+    // Force back to my-deals if user tries to view locked sub-tabs
+    // (Handled below — we render tab bar and show a lock on the sub-tab content)
   }
 
   // ── Need 2+ deals ────────────────────────────────────────────────────────────
@@ -4738,7 +4968,7 @@ function TabCompare({ deals, isPro, onAnalyzeNew }: { deals: DealRun[]; isPro: b
       <Card style={{ textAlign: "center", padding: "48px 24px" }}>
         <div style={{ fontSize: 32, marginBottom: 12 }}>⇄</div>
         <div style={{ fontSize: 15, fontWeight: 600, color: "#E2E8F0", marginBottom: 6 }}>Analyze 2+ deals to compare</div>
-        <div style={{ fontSize: 13, color: "#4B5563", marginBottom: 16 }}>You need at least two saved deals to use the comparison engine.</div>
+        <div style={{ fontSize: 13, color: "#7C8593", marginBottom: 16 }}>You need at least two saved deals to use the comparison engine.</div>
         <button onClick={() => onAnalyzeNew()} style={{ display: "inline-block", padding: "9px 18px", borderRadius: 9, border: "none", background: "linear-gradient(135deg,#3B82F6,#6366F1)", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
           Analyze a Deal →
         </button>
@@ -4837,6 +5067,11 @@ function TabCompare({ deals, isPro, onAnalyzeNew }: { deals: DealRun[]; isPro: b
     { label: "Verdict",    aV: (() => { const v = verdictCfg(a?.verdict ?? dealVerdict(a!)); return `${v.emoji} ${v.label}`; })(), aW: false, bV: (() => { const v = verdictCfg(b?.verdict ?? dealVerdict(b!)); return `${v.emoji} ${v.label}`; })(), bW: false, aC: "#E2E8F0", bC: "#E2E8F0" },
   ];
 
+  // Free users see a limited row set — Verdict / DSCR / Multiple only
+  const visibleRows = isPro
+    ? rows
+    : rows.filter(r => r.label === "Verdict" || r.label === "DSCR" || r.label === "Multiple");
+
   return (
     <div>
       {/* Tab bar */}
@@ -4849,12 +5084,12 @@ function TabCompare({ deals, isPro, onAnalyzeNew }: { deals: DealRun[]; isPro: b
           <button key={m} onClick={() => setMode(m)} style={{
             padding: "7px 14px", borderRadius: 7, border: "none",
             background: mode === m ? "rgba(99,102,241,0.18)" : "transparent",
-            color: mode === m ? "#C4B5FD" : "#4B5563",
+            color: mode === m ? "#C4B5FD" : "#7C8593",
             fontSize: 12, fontWeight: mode === m ? 600 : 400,
             cursor: "pointer", transition: "all 0.15s",
           }}>
             {label}
-            {m !== "my-deals" && !isPro && <span style={{ fontSize: 9, color: "#374151", marginLeft: 3 }}>🔒</span>}
+            {m !== "my-deals" && !isPro && <span style={{ fontSize: 9, color: "#6B7280", marginLeft: 3 }}>🔒</span>}
           </button>
         ))}
       </div>
@@ -4865,7 +5100,7 @@ function TabCompare({ deals, isPro, onAnalyzeNew }: { deals: DealRun[]; isPro: b
           {/* Deal selectors */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", gap: 10, alignItems: "flex-end", marginBottom: 20 }}>
             <div>
-              <label style={{ display: "block", fontSize: 10, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 5 }}>Deal A</label>
+              <label style={{ display: "block", fontSize: 10, color: "#7C8593", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 5 }}>Deal A</label>
               <select value={ai} onChange={(e) => setAi(Number(e.target.value))} style={selStyle}>
                 {deals.map((d, i) => (<option key={d.id} value={i}>{IL[d.industry] || d.industry} — {fmt(d.asking_price)}</option>))}
               </select>
@@ -4877,14 +5112,14 @@ function TabCompare({ deals, isPro, onAnalyzeNew }: { deals: DealRun[]; isPro: b
                 padding: "9px 12px", borderRadius: 8,
                 border: "1px solid rgba(255,255,255,0.1)",
                 background: "rgba(255,255,255,0.03)",
-                color: "#4B5563", fontSize: 16, cursor: "pointer",
+                color: "#7C8593", fontSize: 16, cursor: "pointer",
                 marginTop: 18,
               }}
             >
               ⇄
             </button>
             <div>
-              <label style={{ display: "block", fontSize: 10, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 5 }}>Deal B</label>
+              <label style={{ display: "block", fontSize: 10, color: "#7C8593", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 5 }}>Deal B</label>
               <select value={bi} onChange={(e) => setBi(Number(e.target.value))} style={selStyle}>
                 {deals.map((d, i) => (<option key={d.id} value={i}>{IL[d.industry] || d.industry} — {fmt(d.asking_price)}</option>))}
               </select>
@@ -4901,7 +5136,7 @@ function TabCompare({ deals, isPro, onAnalyzeNew }: { deals: DealRun[]; isPro: b
               ? "1px solid rgba(99,102,241,0.18)"
               : "1px solid rgba(16,185,129,0.2)",
           }}>
-            <div style={{ fontSize: 10, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: 600, marginBottom: 8 }}>
+            <div style={{ fontSize: 10, color: "#7C8593", textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: 600, marginBottom: 8 }}>
               Comparison Verdict
             </div>
             <div style={{ fontSize: 18, fontWeight: 700, color: "#F1F5F9", fontFamily: "'Inter Tight',sans-serif", letterSpacing: "-0.01em", marginBottom: 6 }}>
@@ -4910,17 +5145,41 @@ function TabCompare({ deals, isPro, onAnalyzeNew }: { deals: DealRun[]; isPro: b
             <div style={{ fontSize: 13, color: "#94A3B8", lineHeight: 1.6 }}>
               {verdictReason}
             </div>
-            {!tied && (
+            {!tied && isPro && (
               <div style={{ display: "flex", gap: 6, marginTop: 10, flexWrap: "wrap" as any }}>
-                <span style={{ fontSize: 10, color: "#4B5563" }}>Category wins:</span>
+                <span style={{ fontSize: 10, color: "#9CA3AF" }}>Category wins:</span>
                 <span style={{ fontSize: 10, color: "#60A5FA" }}>Deal A: {aWins}</span>
-                <span style={{ fontSize: 10, color: "#4B5563" }}>·</span>
+                <span style={{ fontSize: 10, color: "#9CA3AF" }}>·</span>
                 <span style={{ fontSize: 10, color: "#A5B4FC" }}>Deal B: {bWins}</span>
               </div>
             )}
           </div>
 
-          {/* ── 2. CATEGORY WINNERS STRIP ────────────────────────────────────── */}
+          {/* ── FREE-USER GATE: Compare advanced features are Pro ── */}
+          {!isPro && (
+            <div style={{ marginBottom: 14, padding: "16px 18px", borderRadius: 12, background: "rgba(99,102,241,0.05)", border: "1px solid rgba(99,102,241,0.2)", textAlign: "center" as const }}>
+              <div style={{ fontSize: 24, marginBottom: 8 }}>🔒</div>
+              <div style={{ fontSize: 14, fontWeight: 700, color: "#F1F5F9", marginBottom: 6, fontFamily: "'Inter Tight',sans-serif" }}>
+                Compare deals across risk, pricing, and financing
+              </div>
+              <div style={{ fontSize: 12, color: "#9CA3AF", marginBottom: 14, lineHeight: 1.6 }}>
+                Unlock category winners, benchmark overlays, detailed differences, and ranking across all your deals.
+              </div>
+              <button
+                onClick={() => window.location.href = "/pricing"}
+                style={{
+                  padding: "9px 22px", borderRadius: 8, border: "none",
+                  background: "linear-gradient(135deg,#6366F1,#8B5CF6)",
+                  color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer",
+                }}
+              >
+                Upgrade to Pro →
+              </button>
+            </div>
+          )}
+
+          {/* ── 2. CATEGORY WINNERS STRIP (Pro only) ─────────────────────────── */}
+          {isPro && (
           <div style={{
             display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 8, marginBottom: 14,
           }}>
@@ -4932,7 +5191,7 @@ function TabCompare({ deals, isPro, onAnalyzeNew }: { deals: DealRun[]; isPro: b
             ]).map(cat => {
               const winner = catWinners[cat.key];
               const isTie  = winner === "Tie";
-              const winColor  = winner === "A" ? "#60A5FA" : winner === "B" ? "#A5B4FC" : "#4B5563";
+              const winColor  = winner === "A" ? "#60A5FA" : winner === "B" ? "#A5B4FC" : "#7C8593";
               const winBg     = winner === "A" ? "rgba(59,130,246,0.08)" : winner === "B" ? "rgba(99,102,241,0.08)" : "rgba(255,255,255,0.03)";
               const winBorder = winner === "A" ? "rgba(59,130,246,0.2)"  : winner === "B" ? "rgba(99,102,241,0.2)"  : "rgba(255,255,255,0.06)";
               return (
@@ -4942,7 +5201,7 @@ function TabCompare({ deals, isPro, onAnalyzeNew }: { deals: DealRun[]; isPro: b
                   textAlign: "center",
                 }}>
                   <div style={{ fontSize: 14, marginBottom: 4 }}>{cat.icon}</div>
-                  <div style={{ fontSize: 10, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4 }}>{cat.label}</div>
+                  <div style={{ fontSize: 10, color: "#7C8593", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4 }}>{cat.label}</div>
                   <div style={{ fontSize: 12, fontWeight: 700, color: winColor }}>
                     {isTie ? "Tie" : `Deal ${winner}`}
                   </div>
@@ -4950,6 +5209,7 @@ function TabCompare({ deals, isPro, onAnalyzeNew }: { deals: DealRun[]; isPro: b
               );
             })}
           </div>
+          )}
 
           {/* ── 3. SIDE-BY-SIDE METRICS ──────────────────────────────────────── */}
           <Card style={{ marginBottom: 14 }}>
@@ -4972,10 +5232,10 @@ function TabCompare({ deals, isPro, onAnalyzeNew }: { deals: DealRun[]; isPro: b
               </div>
 
               {/* Data rows */}
-              {rows.map((row, i) => (
+              {visibleRows.map((row, i) => (
                 <React.Fragment key={row.label}>
                   <div style={{
-                    padding: "10px 0", fontSize: 11, color: "#4B5563",
+                    padding: "10px 0", fontSize: 11, color: "#7C8593",
                     display: "flex", alignItems: "center",
                     borderBottom: i < rows.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none",
                   }}>
@@ -5014,7 +5274,8 @@ function TabCompare({ deals, isPro, onAnalyzeNew }: { deals: DealRun[]; isPro: b
             </div>
           </Card>
 
-          {/* ── 4. INSIGHT BAR ───────────────────────────────────────────────── */}
+          {/* ── 4. INSIGHT BAR (Pro only) ────────────────────────────────────── */}
+          {isPro && (
           <div style={{
             padding: "14px 18px", borderRadius: 10, marginBottom: 14,
             background: "rgba(245,158,11,0.04)", border: "1px solid rgba(245,158,11,0.14)",
@@ -5023,24 +5284,42 @@ function TabCompare({ deals, isPro, onAnalyzeNew }: { deals: DealRun[]; isPro: b
             <span style={{ fontSize: 14, flexShrink: 0, marginTop: 1 }}>💡</span>
             <span style={{ fontSize: 13, color: "#FBBF24", lineHeight: 1.7 }}>{insightCopy}</span>
           </div>
+          )}
 
-          {/* ── 5. WHAT WOULD FLIP THE VERDICT ───────────────────────────────── */}
+          {/* ── 5. WHAT WOULD FLIP THE VERDICT (Pro only) ────────────────────── */}
+          {isPro && (
           <div style={{
             padding: "14px 18px", borderRadius: 10,
             background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)",
           }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>
+            <div style={{ fontSize: 11, fontWeight: 700, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>
               What would change the verdict?
             </div>
             <div style={{ fontSize: 13, color: "#94A3B8", lineHeight: 1.7 }}>
               {flipCopy}
             </div>
           </div>
+          )}
         </div>
       )}
 
       {/* ══ MARKET COMPS MODE ════════════════════════════════════════════════ */}
-      {mode === "market" && (
+      {mode === "market" && !isPro && (
+        <div style={{ padding: "32px 24px", borderRadius: 12, background: "rgba(99,102,241,0.04)", border: "1px solid rgba(99,102,241,0.2)", textAlign: "center" as const }}>
+          <div style={{ fontSize: 28, marginBottom: 10 }}>🔒</div>
+          <div style={{ fontSize: 15, fontWeight: 700, color: "#F1F5F9", marginBottom: 6, fontFamily: "'Inter Tight',sans-serif" }}>
+            Market Comps is a Pro feature
+          </div>
+          <div style={{ fontSize: 12, color: "#9CA3AF", marginBottom: 14, lineHeight: 1.6 }}>
+            See active market positioning, benchmark overlays, and pricing percentiles for every deal you're evaluating.
+          </div>
+          <button onClick={() => window.location.href = "/pricing"} style={{ padding: "9px 20px", borderRadius: 8, border: "none", background: "linear-gradient(135deg,#6366F1,#8B5CF6)", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+            Upgrade to Pro →
+          </button>
+        </div>
+      )}
+
+      {mode === "market" && isPro && (
         <div style={{ animation: "fadeUp 0.2s ease-out" }}>
           {isPro ? (
             // ── PRO: Live Market Comps ────────────────────────────────────────
@@ -5069,7 +5348,7 @@ function TabCompare({ deals, isPro, onAnalyzeNew }: { deals: DealRun[]; isPro: b
                     <div style={{ fontSize: 13, fontWeight: 700, color: "#F1F5F9", fontFamily: "'Inter Tight',sans-serif", marginBottom: 4 }}>
                       Market Comps — Active Listings
                     </div>
-                    <div style={{ fontSize: 11, color: "#4B5563", lineHeight: 1.5 }}>
+                    <div style={{ fontSize: 11, color: "#7C8593", lineHeight: 1.5 }}>
                       Active listings show where sellers are testing the market. Useful for negotiation framing — not final transaction truth.
                     </div>
                   </div>
@@ -5099,7 +5378,7 @@ function TabCompare({ deals, isPro, onAnalyzeNew }: { deals: DealRun[]; isPro: b
                       { label: "Market Positioning",   value: mult > mktHigh ? "Above Range" : mult < mktLow ? "Below Range" : mult > mktMed ? "Above Median" : "Below Median", color: mult > mktHigh ? "#EF4444" : mult < mktLow ? "#2DD4BF" : mult > mktMed ? "#F59E0B" : "#10B981" },
                     ].map(m => (
                       <div key={m.label} style={{ padding: "10px 12px", borderRadius: 9, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
-                        <div style={{ fontSize: 9, color: "#4B5563", textTransform: "uppercase" as const, letterSpacing: "0.07em", marginBottom: 5 }}>{m.label}</div>
+                        <div style={{ fontSize: 9, color: "#7C8593", textTransform: "uppercase" as const, letterSpacing: "0.07em", marginBottom: 5 }}>{m.label}</div>
                         <div style={{ fontSize: 15, fontWeight: 700, color: m.color, fontFamily: "'JetBrains Mono',monospace" }}>{m.value}</div>
                       </div>
                     ))}
@@ -5107,7 +5386,7 @@ function TabCompare({ deals, isPro, onAnalyzeNew }: { deals: DealRun[]; isPro: b
 
                   {/* Implication */}
                   <div style={{ padding: "12px 16px", borderRadius: 10, background: isAbove ? "rgba(249,115,22,0.05)" : "rgba(59,130,246,0.05)", border: `1px solid ${isAbove ? "rgba(249,115,22,0.18)" : "rgba(59,130,246,0.15)"}` }}>
-                    <div style={{ fontSize: 10, color: "#4B5563", textTransform: "uppercase" as const, letterSpacing: "0.08em", fontWeight: 600, marginBottom: 6 }}>Pricing Takeaway</div>
+                    <div style={{ fontSize: 10, color: "#7C8593", textTransform: "uppercase" as const, letterSpacing: "0.08em", fontWeight: 600, marginBottom: 6 }}>Pricing Takeaway</div>
                     <div style={{ fontSize: 13, color: "#94A3B8", lineHeight: 1.7 }}>{implication}</div>
                   </div>
                 </div>
@@ -5131,19 +5410,19 @@ function TabCompare({ deals, isPro, onAnalyzeNew }: { deals: DealRun[]; isPro: b
                     { label: "Market Spread",        value: "2.4x–4.1x" },
                   ].map(m => (
                     <div key={m.label} style={{ padding: "12px", borderRadius: 9, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", textAlign: "center" }}>
-                      <div style={{ fontSize: 9, color: "#4B5563", textTransform: "uppercase", marginBottom: 4 }}>{m.label}</div>
+                      <div style={{ fontSize: 9, color: "#7C8593", textTransform: "uppercase", marginBottom: 4 }}>{m.label}</div>
                       <div style={{ fontSize: 18, fontWeight: 700, color: "#818CF8" }}>{m.value}</div>
                     </div>
                   ))}
                 </div>
-                <div style={{ fontSize: 12, color: "#4B5563", marginBottom: 20, lineHeight: 1.6 }}>
+                <div style={{ fontSize: 12, color: "#7C8593", marginBottom: 20, lineHeight: 1.6 }}>
                   This shows whether a deal is cheap, fair, or aggressive relative to what is currently being marketed — essential context before going to LOI.
                 </div>
                 <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
                   <button style={{ padding: "10px 22px", borderRadius: 9, border: "none", background: "linear-gradient(135deg,#6366F1,#8B5CF6)", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
                     Upgrade to Pro
                   </button>
-                  <span style={{ fontSize: 12, color: "#374151" }}>Unlock live market comparisons across active listings.</span>
+                  <span style={{ fontSize: 12, color: "#6B7280" }}>Unlock live market comparisons across active listings.</span>
                 </div>
               </div>
             </div>
@@ -5152,7 +5431,22 @@ function TabCompare({ deals, isPro, onAnalyzeNew }: { deals: DealRun[]; isPro: b
       )}
 
       {/* ══ CLOSED COMPS MODE ════════════════════════════════════════════════ */}
-      {mode === "closed" && (
+      {mode === "closed" && !isPro && (
+        <div style={{ padding: "32px 24px", borderRadius: 12, background: "rgba(99,102,241,0.04)", border: "1px solid rgba(99,102,241,0.2)", textAlign: "center" as const }}>
+          <div style={{ fontSize: 28, marginBottom: 10 }}>🔒</div>
+          <div style={{ fontSize: 15, fontWeight: 700, color: "#F1F5F9", marginBottom: 6, fontFamily: "'Inter Tight',sans-serif" }}>
+            Closed Comps is a Pro feature
+          </div>
+          <div style={{ fontSize: 12, color: "#9CA3AF", marginBottom: 14, lineHeight: 1.6 }}>
+            See where similar deals have actually closed. The strongest anchor for your LOI.
+          </div>
+          <button onClick={() => window.location.href = "/pricing"} style={{ padding: "9px 20px", borderRadius: 8, border: "none", background: "linear-gradient(135deg,#6366F1,#8B5CF6)", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
+            Upgrade to Pro →
+          </button>
+        </div>
+      )}
+
+      {mode === "closed" && isPro && (
         <div style={{ animation: "fadeUp 0.2s ease-out" }}>
           {isPro ? (
             // ── PRO: Closed Comps ──────────────────────────────────────────────
@@ -5184,7 +5478,7 @@ function TabCompare({ deals, isPro, onAnalyzeNew }: { deals: DealRun[]; isPro: b
                     <div style={{ fontSize: 13, fontWeight: 700, color: "#F1F5F9", fontFamily: "'Inter Tight',sans-serif", marginBottom: 4 }}>
                       Closed Comps — Historical Transactions
                     </div>
-                    <div style={{ fontSize: 11, color: "#4B5563", lineHeight: 1.5 }}>
+                    <div style={{ fontSize: 11, color: "#7C8593", lineHeight: 1.5 }}>
                       Closed comps show where buyers and sellers actually transacted. This is the strongest pricing anchor for your LOI.
                     </div>
                   </div>
@@ -5214,7 +5508,7 @@ function TabCompare({ deals, isPro, onAnalyzeNew }: { deals: DealRun[]; isPro: b
                       { label: "Sold vs Ask (est.)",  value: "−14% avg",  color: "#F59E0B"  },
                     ].map(m => (
                       <div key={m.label} style={{ padding: "10px 12px", borderRadius: 9, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
-                        <div style={{ fontSize: 9, color: "#4B5563", textTransform: "uppercase" as const, letterSpacing: "0.07em", marginBottom: 5 }}>{m.label}</div>
+                        <div style={{ fontSize: 9, color: "#7C8593", textTransform: "uppercase" as const, letterSpacing: "0.07em", marginBottom: 5 }}>{m.label}</div>
                         <div style={{ fontSize: 15, fontWeight: 700, color: m.color, fontFamily: "'JetBrains Mono',monospace" }}>{m.value}</div>
                       </div>
                     ))}
@@ -5222,7 +5516,7 @@ function TabCompare({ deals, isPro, onAnalyzeNew }: { deals: DealRun[]; isPro: b
 
                   {/* Implication — stronger, more decisive than Market Comps */}
                   <div style={{ padding: "12px 16px", borderRadius: 10, background: isAbove ? "rgba(239,68,68,0.05)" : "rgba(16,185,129,0.05)", border: `1px solid ${isAbove ? "rgba(239,68,68,0.2)" : "rgba(16,185,129,0.2)"}` }}>
-                    <div style={{ fontSize: 10, color: "#4B5563", textTransform: "uppercase" as const, letterSpacing: "0.08em", fontWeight: 600, marginBottom: 6 }}>LOI Anchor Signal</div>
+                    <div style={{ fontSize: 10, color: "#7C8593", textTransform: "uppercase" as const, letterSpacing: "0.08em", fontWeight: 600, marginBottom: 6 }}>LOI Anchor Signal</div>
                     <div style={{ fontSize: 13, color: "#94A3B8", lineHeight: 1.7 }}>{implication}</div>
                   </div>
                 </div>
@@ -5246,19 +5540,19 @@ function TabCompare({ deals, isPro, onAnalyzeNew }: { deals: DealRun[]; isPro: b
                     { label: "Closed Range",            value: "1.9x–3.4x"  },
                   ].map(m => (
                     <div key={m.label} style={{ padding: "12px", borderRadius: 9, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)", textAlign: "center" }}>
-                      <div style={{ fontSize: 9, color: "#4B5563", textTransform: "uppercase", marginBottom: 4 }}>{m.label}</div>
+                      <div style={{ fontSize: 9, color: "#7C8593", textTransform: "uppercase", marginBottom: 4 }}>{m.label}</div>
                       <div style={{ fontSize: 18, fontWeight: 700, color: "#10B981" }}>{m.value}</div>
                     </div>
                   ))}
                 </div>
-                <div style={{ fontSize: 12, color: "#4B5563", marginBottom: 20, lineHeight: 1.6 }}>
+                <div style={{ fontSize: 12, color: "#7C8593", marginBottom: 20, lineHeight: 1.6 }}>
                   This shows where deals actually close — not just where sellers hope to sell. The strongest signal for anchoring your offer.
                 </div>
                 <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
                   <button style={{ padding: "10px 22px", borderRadius: 9, border: "none", background: "linear-gradient(135deg,#6366F1,#8B5CF6)", color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer" }}>
                     Upgrade to Pro
                   </button>
-                  <span style={{ fontSize: 12, color: "#374151" }}>Unlock historical closed-deal benchmarking.</span>
+                  <span style={{ fontSize: 12, color: "#6B7280" }}>Unlock historical closed-deal benchmarking.</span>
                 </div>
               </div>
             </div>
@@ -5513,7 +5807,7 @@ function LocalMarketRealityCheck({
                 padding: "2px 8px", borderRadius: 20, letterSpacing: "0.06em", textTransform: "uppercase" as any,
               }}>Core Feature</span>
             </h2>
-            <p style={{ fontSize: 11, color: "#4B5563", margin: 0 }}>
+            <p style={{ fontSize: 11, color: "#7C8593", margin: 0 }}>
               Local competitive density for your selected deal — answer "is this market worth entering?"
             </p>
           </div>
@@ -5544,7 +5838,7 @@ function LocalMarketRealityCheck({
           <div style={{ display: "grid", gridTemplateColumns: "1fr auto auto", gap: 10, alignItems: "flex-end", marginBottom: 16 }}>
             {/* Deal selector */}
             <div>
-              <div style={{ fontSize: 10, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600, marginBottom: 6 }}>
+              <div style={{ fontSize: 10, color: "#7C8593", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600, marginBottom: 6 }}>
                 Select Deal
               </div>
               <select
@@ -5565,7 +5859,7 @@ function LocalMarketRealityCheck({
                 }
               </select>
               {deals.filter(d => !d.city && !d.state).length > 0 && (
-                <div style={{ fontSize: 10, color: "#374151", marginTop: 4 }}>
+                <div style={{ fontSize: 10, color: "#6B7280", marginTop: 4 }}>
                   {deals.filter(d => !d.city && !d.state).length} deal(s) hidden — no location data
                 </div>
               )}
@@ -5573,7 +5867,7 @@ function LocalMarketRealityCheck({
 
             {/* Radius selector */}
             <div>
-              <div style={{ fontSize: 10, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600, marginBottom: 6 }}>
+              <div style={{ fontSize: 10, color: "#7C8593", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600, marginBottom: 6 }}>
                 Radius
               </div>
               <div style={{ display: "flex", gap: 4 }}>
@@ -5584,7 +5878,7 @@ function LocalMarketRealityCheck({
                     style={{
                       padding: "8px 10px", borderRadius: 7, border: "none",
                       background: radius === r ? "rgba(99,102,241,0.18)" : "rgba(255,255,255,0.04)",
-                      color: radius === r ? "#C4B5FD" : "#4B5563",
+                      color: radius === r ? "#C4B5FD" : "#7C8593",
                       fontSize: 12, fontWeight: radius === r ? 600 : 400,
                       cursor: "pointer", fontFamily: "'JetBrains Mono',monospace",
                     }}
@@ -5604,7 +5898,7 @@ function LocalMarketRealityCheck({
                 background: selectedDealId && !loading
                   ? "linear-gradient(135deg,#3B82F6,#6366F1)"
                   : "rgba(255,255,255,0.05)",
-                color: selectedDealId && !loading ? "#fff" : "#374151",
+                color: selectedDealId && !loading ? "#fff" : "#6B7280",
                 fontSize: 13, fontWeight: 600,
                 cursor: selectedDealId && !loading ? "pointer" : "not-allowed",
                 whiteSpace: "nowrap" as any,
@@ -5618,9 +5912,9 @@ function LocalMarketRealityCheck({
           {/* Controls row 2 — category override */}
           {selectedDeal && (
             <div style={{ marginBottom: 14 }}>
-              <div style={{ fontSize: 10, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600, marginBottom: 6 }}>
+              <div style={{ fontSize: 10, color: "#7C8593", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600, marginBottom: 6 }}>
                 MarketView Category
-                <span style={{ marginLeft: 6, fontSize: 9, color: "#374151", fontWeight: 400, textTransform: "none" as any }}>
+                <span style={{ marginLeft: 6, fontSize: 9, color: "#6B7280", fontWeight: 400, textTransform: "none" as any }}>
                   Auto-mapped from industry — change if results look wrong
                 </span>
               </div>
@@ -5685,7 +5979,7 @@ function LocalMarketRealityCheck({
           {/* Loading state */}
           {loading && (
             <div style={{ display: "flex", flexDirection: "column", gap: 8, padding: "8px 0" }}>
-              <div style={{ fontSize: 11, color: "#374151", marginBottom: 4 }}>
+              <div style={{ fontSize: 11, color: "#6B7280", marginBottom: 4 }}>
                 Geocoding → Pulling competitors → AI classification → Computing metrics...
               </div>
               <Skel h={10} w="70%" />
@@ -5731,7 +6025,7 @@ function LocalMarketRealityCheck({
                   }}>
                     {result.saturationScore}
                   </div>
-                  <div style={{ fontSize: 10, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>
+                  <div style={{ fontSize: 10, color: "#7C8593", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 8 }}>
                     / 100
                   </div>
                   <span style={{
@@ -5755,7 +6049,7 @@ function LocalMarketRealityCheck({
                       { label: "Est. Population",   value: `~${(result.populationEstimate / 1000).toFixed(0)}K` },
                     ].map(m => (
                       <div key={m.label}>
-                        <div style={{ fontSize: 9, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 2 }}>{m.label}</div>
+                        <div style={{ fontSize: 9, color: "#7C8593", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 2 }}>{m.label}</div>
                         <div style={{ fontSize: 15, fontWeight: 700, color: "#E2E8F0", fontFamily: "'JetBrains Mono',monospace" }}>{m.value}</div>
                       </div>
                     ))}
@@ -5770,7 +6064,7 @@ function LocalMarketRealityCheck({
 
               {/* Competitor breakdown */}
               <div style={{ marginBottom: 16 }}>
-                <div style={{ fontSize: 10, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600, marginBottom: 10 }}>
+                <div style={{ fontSize: 10, color: "#7C8593", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600, marginBottom: 10 }}>
                   Competitive Mix
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 8 }}>
@@ -5792,7 +6086,7 @@ function LocalMarketRealityCheck({
                       <div style={{ fontSize: 24, fontWeight: 700, color: b.color, fontFamily: "'JetBrains Mono',monospace", lineHeight: 1, marginBottom: 4 }}>
                         {b.value}
                       </div>
-                      <div style={{ fontSize: 10, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+                      <div style={{ fontSize: 10, color: "#7C8593", textTransform: "uppercase", letterSpacing: "0.06em" }}>
                         {b.label}
                       </div>
                     </div>
@@ -5806,7 +6100,7 @@ function LocalMarketRealityCheck({
                 background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
               }}>
                 <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 }}>
-                  <span style={{ fontSize: 10, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600 }}>
+                  <span style={{ fontSize: 10, color: "#7C8593", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600 }}>
                     Market Density Pressure
                   </span>
                   <span style={{ fontSize: 11, color: "#6B7280", fontFamily: "'JetBrains Mono',monospace" }}>
@@ -5843,7 +6137,7 @@ function LocalMarketRealityCheck({
                   ].map(l => (
                     <div key={l.label} style={{ display: "flex", alignItems: "center", gap: 4 }}>
                       <div style={{ width: 8, height: 8, borderRadius: "50%", background: l.color }} />
-                      <span style={{ fontSize: 10, color: "#4B5563" }}>{l.label}</span>
+                      <span style={{ fontSize: 10, color: "#7C8593" }}>{l.label}</span>
                     </div>
                   ))}
                 </div>
@@ -5869,7 +6163,7 @@ function LocalMarketRealityCheck({
 
                 return (
                   <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
-                    <div style={{ fontSize: 10, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600, marginBottom: 2 }}>
+                    <div style={{ fontSize: 10, color: "#7C8593", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600, marginBottom: 2 }}>
                       Market Intelligence
                     </div>
                     {blockDefs.map((def, i) => {
@@ -5921,7 +6215,7 @@ function LocalMarketRealityCheck({
 
           {/* Empty state — no deal selected yet */}
           {!result && !loading && !error && (
-            <div style={{ textAlign: "center", padding: "24px 0", color: "#374151", fontSize: 13 }}>
+            <div style={{ textAlign: "center", padding: "24px 0", color: "#6B7280", fontSize: 13 }}>
               Select a deal above and choose a radius to run a local market saturation check.
             </div>
           )}
@@ -5973,7 +6267,7 @@ function TabMarketIntel({
     : avgDri < 1.20 ? "Slightly Seller-Favored"
     : "Seller-Favored";
 
-  const marketConditionColor = avgDri === null ? "#4B5563"
+  const marketConditionColor = avgDri === null ? "#7C8593"
     : avgDri < 0.95 ? "#10B981"
     : avgDri < 1.05 ? "#F59E0B"
     : "#D85A30";
@@ -6003,7 +6297,7 @@ function TabMarketIntel({
             background: "rgba(255,255,255,0.025)",
             border: "1px solid rgba(255,255,255,0.06)",
           }}>
-            <div style={{ fontSize: 10, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: 600, marginBottom: 8 }}>
+            <div style={{ fontSize: 10, color: "#7C8593", textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: 600, marginBottom: 8 }}>
               Market Heat (DRI)
             </div>
             {loading ? <Skel h={22} w={60} /> : (
@@ -6020,7 +6314,7 @@ function TabMarketIntel({
             background: "rgba(255,255,255,0.025)",
             border: "1px solid rgba(255,255,255,0.06)",
           }}>
-            <div style={{ fontSize: 10, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: 600, marginBottom: 8 }}>
+            <div style={{ fontSize: 10, color: "#7C8593", textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: 600, marginBottom: 8 }}>
               Overpriced Industries
             </div>
             {loading ? <Skel h={22} w={60} /> : (
@@ -6028,7 +6322,7 @@ function TabMarketIntel({
                 {overpricedPct !== null ? `${overpricedPct}%` : "—"}
               </div>
             )}
-            <div style={{ fontSize: 11, color: "#374151" }}>of tracked industries</div>
+            <div style={{ fontSize: 11, color: "#6B7280" }}>of tracked industries</div>
           </div>
 
           {/* Median pricing gap */}
@@ -6037,7 +6331,7 @@ function TabMarketIntel({
             background: "rgba(255,255,255,0.025)",
             border: "1px solid rgba(255,255,255,0.06)",
           }}>
-            <div style={{ fontSize: 10, color: "#4B5563", textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: 600, marginBottom: 8 }}>
+            <div style={{ fontSize: 10, color: "#7C8593", textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: 600, marginBottom: 8 }}>
               Median Pricing Gap
             </div>
             {loading ? <Skel h={22} w={60} /> : (
@@ -6049,7 +6343,7 @@ function TabMarketIntel({
                 {medianGap !== null ? `${medianGap > 0 ? "+" : ""}${medianGap}%` : "—"}
               </div>
             )}
-            <div style={{ fontSize: 11, color: "#374151" }}>vs market median</div>
+            <div style={{ fontSize: 11, color: "#6B7280" }}>vs market median</div>
           </div>
         </div>
 
@@ -6065,7 +6359,36 @@ function TabMarketIntel({
         )}
       </div>
 
-      {/* ══ SECTION 2: WHERE THE MARKET IS MISPRICED ═══════════════════════════ */}
+      {/* ══ FREE-USER GATE — everything below Market Conditions requires Pro ═══ */}
+      {!isPro && (
+        <div style={{
+          marginBottom: 24,
+          padding: "20px 24px", borderRadius: 12,
+          background: "rgba(99,102,241,0.05)", border: "1px solid rgba(99,102,241,0.2)",
+          textAlign: "center" as const,
+        }}>
+          <div style={{ fontSize: 28, marginBottom: 10 }}>🔒</div>
+          <div style={{ fontSize: 15, fontWeight: 700, color: "#F1F5F9", marginBottom: 6, fontFamily: "'Inter Tight',sans-serif" }}>
+            Run full local market analysis
+          </div>
+          <div style={{ fontSize: 12, color: "#9CA3AF", marginBottom: 14, lineHeight: 1.6, maxWidth: 420, marginLeft: "auto", marginRight: "auto" }}>
+            Unlock industry-level saturation, overpriced and opportunity tables, trending multiples, and your personal deal fit against local market conditions.
+          </div>
+          <button
+            onClick={() => window.location.href = "/pricing"}
+            style={{
+              padding: "9px 22px", borderRadius: 8, border: "none",
+              background: "linear-gradient(135deg,#6366F1,#8B5CF6)",
+              color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer",
+            }}
+          >
+            Upgrade to Pro →
+          </button>
+        </div>
+      )}
+
+      {/* ══ SECTION 2: WHERE THE MARKET IS MISPRICED (Pro only) ════════════════ */}
+      {isPro && (
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 24 }}>
 
         {/* Most Overpriced */}
@@ -6081,7 +6404,7 @@ function TabMarketIntel({
               background: "rgba(255,255,255,0.01)",
             }}>
               {["Industry", "Gap vs Market"].map(h => (
-                <div key={h} style={{ fontSize: 10, color: "#374151", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600 }}>{h}</div>
+                <div key={h} style={{ fontSize: 10, color: "#6B7280", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600 }}>{h}</div>
               ))}
             </div>
             {loading ? (
@@ -6132,7 +6455,7 @@ function TabMarketIntel({
               background: "rgba(255,255,255,0.01)",
             }}>
               {["Industry", "Gap vs Market"].map(h => (
-                <div key={h} style={{ fontSize: 10, color: "#374151", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600 }}>{h}</div>
+                <div key={h} style={{ fontSize: 10, color: "#6B7280", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600 }}>{h}</div>
               ))}
             </div>
             {loading ? (
@@ -6140,7 +6463,7 @@ function TabMarketIntel({
                 {[0,1,2,3].map(i => <Skel key={i} h={32} />)}
               </div>
             ) : opportunityList.length === 0 ? (
-              <div style={{ padding: "20px 16px", fontSize: 12, color: "#374151", textAlign: "center" }}>
+              <div style={{ padding: "20px 16px", fontSize: 12, color: "#6B7280", textAlign: "center" }}>
                 No industries currently priced below market median.
               </div>
             ) : opportunityList.map((s, i) => (
@@ -6202,7 +6525,7 @@ function TabMarketIntel({
             />
             {deals.length === 0 ? (
               <Card>
-                <div style={{ fontSize: 13, color: "#4B5563", textAlign: "center", padding: "16px 0" }}>
+                <div style={{ fontSize: 13, color: "#7C8593", textAlign: "center", padding: "16px 0" }}>
                   Save your first deal to start receiving personalized recommendations.
                 </div>
               </Card>
@@ -6232,12 +6555,12 @@ function TabMarketIntel({
                           <div style={{ fontSize: 13, fontWeight: 600, color: "#E2E8F0", marginBottom: 2 }}>
                             {IL[deal.industry] || deal.industry}
                             {(deal.city || deal.state) && (
-                              <span style={{ fontSize: 11, color: "#4B5563", fontWeight: 400, marginLeft: 6 }}>
+                              <span style={{ fontSize: 11, color: "#7C8593", fontWeight: 400, marginLeft: 6 }}>
                                 · {[deal.city, deal.state].filter(Boolean).join(", ")}
                               </span>
                             )}
                           </div>
-                          <div style={{ fontSize: 10, color: "#4B5563" }}>
+                          <div style={{ fontSize: 10, color: "#7C8593" }}>
                             {fmt(deal.asking_price)} · {deal.valuation_multiple.toFixed(2)}x · DSCR {deal.dscr.toFixed(2)}
                           </div>
                         </div>
@@ -6258,7 +6581,7 @@ function TabMarketIntel({
                             {vd.emoji} {vd.label}
                           </span>
                           <div style={{
-                            fontSize: 9, color: "#374151", marginTop: 3,
+                            fontSize: 9, color: "#6B7280", marginTop: 3,
                             display: "flex", alignItems: "center", gap: 3, justifyContent: "flex-end",
                           }}>
                             <span style={{ color: "#6366F1", fontWeight: 600 }}>Why this surfaced:</span>
@@ -6319,13 +6642,14 @@ function TabMarketIntel({
                   }}>
                     Unlock Pro
                   </button>
-                  <span style={{ fontSize: 12, color: "#374151" }}>Personalized feed across all your saved deals.</span>
+                  <span style={{ fontSize: 12, color: "#6B7280" }}>Personalized feed across all your saved deals.</span>
                 </div>
               </div>
             </div>
           </div>
         )}
       </div>
+      )}
 
     </div>
   );
@@ -6613,7 +6937,7 @@ export default function BuyerDashboard() {
                 style={{
                   position: "relative", padding: "6px 14px", borderRadius: 8, border: "none",
                   background: activeTab === tab.id ? "rgba(99,102,241,0.12)" : "transparent",
-                  color: activeTab === tab.id ? "#C4B5FD" : "#4B5563",
+                  color: activeTab === tab.id ? "#C4B5FD" : "#7C8593",
                   fontSize: 13, fontWeight: activeTab === tab.id ? 600 : 400,
                   cursor: "pointer", transition: "all 0.15s",
                 }}
@@ -6627,7 +6951,7 @@ export default function BuyerDashboard() {
                   }} />
                 )}
                 {tab.id === "compare" && !isPro && (
-                  <span style={{ marginLeft: 4, fontSize: 9, color: "#374151" }}>🔒</span>
+                  <span style={{ marginLeft: 4, fontSize: 9, color: "#6B7280" }}>🔒</span>
                 )}
               </button>
             ))}
@@ -6650,7 +6974,7 @@ export default function BuyerDashboard() {
               <div style={{
                 padding: "3px 10px", borderRadius: 20,
                 background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)",
-                fontSize: 11, color: "#4B5563", fontWeight: 600,
+                fontSize: 11, color: "#7C8593", fontWeight: 600,
               }}>
                 Free
               </div>
@@ -6710,7 +7034,7 @@ export default function BuyerDashboard() {
           </div>
           <button
             onClick={() => setShowFirstLoginBanner(false)}
-            style={{ background: "none", border: "none", color: "#4B5563", fontSize: 16, cursor: "pointer", padding: "0 2px", lineHeight: 1, flexShrink: 0 }}
+            style={{ background: "none", border: "none", color: "#7C8593", fontSize: 16, cursor: "pointer", padding: "0 2px", lineHeight: 1, flexShrink: 0 }}
           >
             ×
           </button>
@@ -6720,7 +7044,7 @@ export default function BuyerDashboard() {
       {!loadingUser && !user && <SignInRequired />}
       {loadingUser && (
         <div style={{ display: "flex", alignItems: "center", justifyContent: "center", minHeight: "60vh" }}>
-          <div style={{ fontSize: 13, color: "#374151" }}>Loading...</div>
+          <div style={{ fontSize: 13, color: "#6B7280" }}>Loading...</div>
         </div>
       )}
 
@@ -6735,7 +7059,7 @@ export default function BuyerDashboard() {
           }}>
             <div>
               <div style={{
-                fontSize: 10, color: "#374151", textTransform: "uppercase",
+                fontSize: 10, color: "#6B7280", textTransform: "uppercase",
                 letterSpacing: "0.1em", fontWeight: 600, marginBottom: 6,
               }}>
                 {TABS.find(t => t.id === activeTab)?.label}
@@ -6907,7 +7231,7 @@ export default function BuyerDashboard() {
             </a>
             <button
               onClick={() => setShowUpgradeModal(false)}
-              style={{ background: "none", border: "none", color: "#374151", fontSize: 12, cursor: "pointer" }}
+              style={{ background: "none", border: "none", color: "#6B7280", fontSize: 12, cursor: "pointer" }}
             >
               Maybe later
             </button>
