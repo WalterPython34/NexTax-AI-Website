@@ -38,7 +38,7 @@ const supabase = createClient(
 
 // ─── TYPES ───────────────────────────────────────────────────────────────────
 
-type TabId       = "dashboard" | "my-deals" | "compare" | "market-intel";
+type TabId       = "home" | "dashboard" | "my-deals" | "compare" | "market-intel";
 type CompareMode = "my-deals" | "market" | "closed";
 type DealStatus  = "New" | "Reviewing" | "Under LOI" | "Paused" | "Passed";
 type SortKey     = "date" | "score" | "gap" | "asking";
@@ -4492,9 +4492,9 @@ function ProUpsellCard({ deals, onOpenUnderwriting }: { deals: DealRun[]; onOpen
   );
 }
 
-// ─── TAB: DASHBOARD ───────────────────────────────────────────────────────────
+// ─── TAB: HOME ────────────────────────────────────────────────────────────────
 
-function TabDashboard({
+function TabHome({
   deals, dri, trending, loading, loadingMkt, isPro, favorites, outcomesMap,
   onTabChange, onToggleFav, onOpenNotes, onOpenDetail, onOpenUnderwriting, onOpenOutcome, onAnalyzeNew,
 }: {
@@ -5096,6 +5096,252 @@ function TabDashboard({
     </div>
   );
 }
+
+// ─── TAB: DASHBOARD ───────────────────────────────────────────────────────────
+// ─── TAB: DASHBOARD ───────────────────────────────────────────────────────────
+
+function TabDashboard({
+  deals, dri, trending, loading, loadingMkt, isPro, favorites, outcomesMap,
+  onTabChange, onToggleFav, onOpenNotes, onOpenDetail, onOpenUnderwriting, onOpenOutcome, onAnalyzeNew,
+}: {
+  deals: DealRun[];
+  dri: DriSnapshot[];
+  trending: TrendingMultiple[];
+  loading: boolean;
+  loadingMkt: boolean;
+  isPro: boolean;
+  favorites: Set<string>;
+  outcomesMap: Map<string, DealOutcome>;
+  onTabChange: (tab: TabId) => void;
+  onToggleFav: (id: string) => void;
+  onOpenNotes: (deal: DealRun) => void;
+  onOpenDetail: (deal: DealRun) => void;
+  onOpenUnderwriting: (deal: DealRun) => void;
+  onOpenOutcome: (deal: DealRun) => void;
+  onAnalyzeNew: () => void;
+}) {
+  const recent  = deals.slice(0, 3);
+  const opps    = deals.filter(d => (d.gap_pct ?? 0) < -5).slice(0, 3);
+  const overDri = [...dri].sort((a, b) => (b.gap_pct ?? 0) - (a.gap_pct ?? 0)).slice(0, 4);
+
+  return (
+    <div>
+      {/* Priority Deals (starred watchlist) — only shows if user has favorites */}
+      <PriorityDeals
+        deals={deals}
+        favorites={favorites}
+        onOpenNotes={onOpenNotes}
+        onOpenDetail={onOpenDetail}
+      />
+
+      {/* Recent Activity + Top Opportunities side-by-side */}
+      <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr", gap: 16, marginBottom: 28 }}>
+        {/* Recent deals */}
+        <div>
+          <SectionHeader
+            title="Recent Deals"
+            sub={loading ? "Loading…" : deals.length === 0 ? "No deals yet" : `${deals.length} saved`}
+            action={
+              <button
+                onClick={onAnalyzeNew}
+                style={{
+                  padding: "7px 12px", borderRadius: 8, border: "1px solid rgba(99,102,241,0.3)",
+                  background: "rgba(99,102,241,0.08)", color: "#A5B4FC",
+                  fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: "inherit",
+                }}
+              >
+                + Analyze
+              </button>
+            }
+          />
+          {loading ? (
+            <Card>
+              <div style={{ display: "flex", flexDirection: "column" as const, gap: 10 }}>
+                {[0,1,2].map(i => <Skel key={i} h={56} />)}
+              </div>
+            </Card>
+          ) : recent.length === 0 ? (
+            <Card>
+              <div style={{ fontSize: 13, color: "#7C8593", textAlign: "center" as const, padding: "20px 0" }}>
+                Analyze your first deal to see it here.
+              </div>
+            </Card>
+          ) : (
+            <Card style={{ padding: 0, overflow: "hidden" }}>
+              {recent.map((deal, i) => {
+                const gp = deal.gap_pct ?? 0;
+                const vd = verdictCfg(deal.verdict ?? dealVerdict(deal));
+                return (
+                  <div
+                    key={deal.id}
+                    onClick={() => onOpenDetail(deal)}
+                    style={{
+                      padding: "12px 16px",
+                      display: "grid",
+                      gridTemplateColumns: "auto 1fr auto auto",
+                      gap: 12,
+                      alignItems: "center",
+                      cursor: "pointer",
+                      borderBottom: i < recent.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none",
+                      transition: "background 140ms ease",
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.02)"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
+                  >
+                    <Ring score={deal.overall_score} size={32} />
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: 12, fontWeight: 500, color: "#F1F5F9", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const }}>
+                        {IL[deal.industry] || deal.industry}
+                      </div>
+                      <div style={{ fontSize: 10, color: "#7C8593", fontFamily: "'JetBrains Mono',monospace", marginTop: 1 }}>
+                        {fmt(deal.asking_price)} · {deal.valuation_multiple.toFixed(2)}x
+                      </div>
+                    </div>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: gp > 0 ? "#D85A30" : "#10B981", fontFamily: "'JetBrains Mono',monospace" }}>
+                      {gp > 0 ? "+" : ""}{gp}%
+                    </div>
+                    <span style={{
+                      display: "inline-flex", alignItems: "center", gap: 4,
+                      padding: "3px 8px", borderRadius: 6,
+                      fontSize: 10, fontWeight: 700,
+                      background: vd.bg, color: vd.color, border: `1px solid ${vd.border}`,
+                      whiteSpace: "nowrap" as const,
+                    }}>
+                      {vd.emoji} {vd.label}
+                    </span>
+                  </div>
+                );
+              })}
+            </Card>
+          )}
+        </div>
+
+        {/* Top Opportunities */}
+        <div>
+          <SectionHeader title="Best Opportunities" sub="Deals priced below fair value" />
+          {loading ? (
+            <Card>
+              <div style={{ display: "flex", flexDirection: "column" as const, gap: 10 }}>
+                {[0,1].map(i => <Skel key={i} h={44} />)}
+              </div>
+            </Card>
+          ) : opps.length === 0 ? (
+            <Card>
+              <div style={{ fontSize: 12, color: "#7C8593", textAlign: "center" as const, padding: "14px 0" }}>
+                No opportunities in your current deals yet.
+              </div>
+            </Card>
+          ) : (
+            <Card style={{ padding: 0, overflow: "hidden" }}>
+              {opps.map((deal, i) => {
+                const gp = deal.gap_pct ?? 0;
+                return (
+                  <div
+                    key={deal.id}
+                    onClick={() => onOpenDetail(deal)}
+                    style={{
+                      padding: "10px 14px",
+                      display: "grid",
+                      gridTemplateColumns: "1fr auto",
+                      gap: 10,
+                      alignItems: "center",
+                      cursor: "pointer",
+                      borderBottom: i < opps.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none",
+                    }}
+                  >
+                    <div style={{ minWidth: 0 }}>
+                      <div style={{ fontSize: 12, fontWeight: 500, color: "#F1F5F9", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const }}>
+                        {IL[deal.industry] || deal.industry}
+                      </div>
+                      <div style={{ fontSize: 10, color: "#7C8593", fontFamily: "'JetBrains Mono',monospace", marginTop: 1 }}>
+                        {fmt(deal.asking_price)}
+                      </div>
+                    </div>
+                    <div style={{ fontSize: 11, fontWeight: 700, color: "#10B981", fontFamily: "'JetBrains Mono',monospace" }}>
+                      {gp}%
+                    </div>
+                  </div>
+                );
+              })}
+            </Card>
+          )}
+        </div>
+      </div>
+
+      {/* Market Signals — overpriced industries from DRI */}
+      {overDri.length > 0 && (
+        <div style={{ marginBottom: 28 }}>
+          <SectionHeader title="Market Signals" sub="Where buyers are currently overpaying" />
+          <Card style={{ padding: 0, overflow: "hidden" }}>
+            {loadingMkt ? (
+              <div style={{ padding: 16, display: "flex", flexDirection: "column" as const, gap: 8 }}>
+                {[0,1,2].map(i => <Skel key={i} h={36} />)}
+              </div>
+            ) : (
+              overDri.map((s, i) => (
+                <div
+                  key={s.industry_key}
+                  style={{
+                    padding: "10px 16px",
+                    display: "grid",
+                    gridTemplateColumns: "1fr auto auto",
+                    gap: 12,
+                    alignItems: "center",
+                    borderBottom: i < overDri.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none",
+                  }}
+                >
+                  <div style={{ fontSize: 12, color: "#E2E8F0", fontWeight: 500 }}>
+                    {IL[s.industry_key] || s.industry_key}
+                  </div>
+                  <div style={{ fontSize: 11, color: "#D85A30", fontFamily: "'JetBrains Mono',monospace", fontWeight: 700 }}>
+                    +{(s.gap_pct ?? 0).toFixed(0)}%
+                  </div>
+                  <div style={{ fontSize: 10, color: "#7C8593" }}>
+                    above market
+                  </div>
+                </div>
+              ))
+            )}
+          </Card>
+        </div>
+      )}
+
+      {/* Compare Deals teaser */}
+      {deals.length >= 2 && (
+        <div style={{ marginBottom: 28 }}>
+          <SectionHeader title="Compare Deals" sub="Side-by-side deal intelligence" />
+          <Card style={{ position: "relative" as const }}>
+            <div
+              onClick={() => onTabChange("compare")}
+              style={{
+                display: "flex", alignItems: "center", justifyContent: "space-between",
+                gap: 14, cursor: "pointer",
+              }}
+            >
+              <div style={{ fontSize: 13, color: "#94A3B8", lineHeight: 1.5 }}>
+                Compare {deals.length} deals across pricing, coverage, risk, and quality.
+              </div>
+              <button
+                style={{
+                  padding: "7px 14px", borderRadius: 7, border: "none",
+                  background: "rgba(99,102,241,0.12)", color: "#A5B4FC",
+                  fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: "inherit",
+                  whiteSpace: "nowrap" as const,
+                }}
+              >
+                Open Compare →
+              </button>
+            </div>
+          </Card>
+        </div>
+      )}
+
+      {/* Pro Command Module — for Pro users only */}
+      {isPro ? <ProCommandModule deals={deals} onOpenUnderwriting={onOpenUnderwriting} /> : <ProUpsellCard deals={deals} onOpenUnderwriting={onOpenUnderwriting} />}
+    </div>
+  );
+}
+
 
 
 // ─── TAB: MY DEALS ────────────────────────────────────────────────────────────
@@ -7429,7 +7675,7 @@ export default function BuyerDashboard() {
   const [user, setUser]               = useState<any>(null);
   const [profile, setProfile]         = useState<Profile | null>(null);
   const [loadingUser, setLoadingUser] = useState(true);
-  const [activeTab, setActiveTab]     = useState<TabId>("dashboard");
+  const [activeTab, setActiveTab]     = useState<TabId>("home");
 
   const [deals, setDeals]             = useState<DealRun[]>([]);
   const [dri, setDri]                 = useState<DriSnapshot[]>([]);
@@ -7708,6 +7954,7 @@ export default function BuyerDashboard() {
   const openDetail = (deal: DealRun) => setDetailDeal(deal);
 
   const TABS: { id: TabId; label: string }[] = [
+    { id: "home",         label: "Home"        },
     { id: "dashboard",    label: "Dashboard"   },
     { id: "my-deals",     label: "My Deals"    },
     { id: "compare",      label: "Compare"     },
@@ -7906,6 +8153,7 @@ export default function BuyerDashboard() {
                 fontSize: "clamp(20px,2.5vw,28px)", fontWeight: 700, margin: 0,
                 fontFamily: "'Inter Tight',sans-serif", letterSpacing: "-0.02em", color: "#F1F5F9",
               }}>
+                {activeTab === "home"         && "Welcome"}
                 {activeTab === "dashboard"    && "Deal Command Center"}
                 {activeTab === "my-deals"     && "My Deals"}
                 {activeTab === "compare"      && "Compare Deals"}
@@ -7973,13 +8221,32 @@ export default function BuyerDashboard() {
             </div>
           )}
 
-          {/* Stat cards — my-deals only (dashboard has its own hero now) */}
-          {activeTab === "my-deals" && (
+          {/* Stat cards — dashboard + my-deals (home has its own hero) */}
+          {(activeTab === "dashboard" || activeTab === "my-deals") && (
             <StatCards deals={deals} loading={loadingDeals} />
           )}
 
           {/* Tab content */}
           <div className="tab-content">
+            {activeTab === "home" && (
+              <TabHome
+                deals={deals}
+                dri={dri}
+                trending={trending}
+                loading={loadingDeals}
+                loadingMkt={loadingMkt}
+                isPro={isPro}
+                favorites={favorites}
+                outcomesMap={outcomesMap}
+                onTabChange={setActiveTab}
+                onToggleFav={toggleFavorite}
+                onOpenNotes={openNotes}
+                onOpenDetail={openDetail}
+                onOpenUnderwriting={openUnderwriting}
+                onOpenOutcome={setOutcomeDeal}
+                onAnalyzeNew={handleAnalyzeNewClick}
+              />
+            )}
             {activeTab === "dashboard" && (
               <TabDashboard
                 deals={deals}
