@@ -13,6 +13,11 @@ import { buildRiskFlags, buildDiligenceQuestions, buildDecisionTriggers } from "
 import { INDUSTRY_FIT } from "@/lib/lenderReadiness";
 import { LoiBuilderTab } from "@/components/LoiBuilderTab";
 import { buildLoiRecommendation } from "@/lib/loiBuilder";
+import { TrustBadge } from "@/components/TrustBadge";
+import { TrajectoryChip, TrajectoryBreakdown } from "@/components/TrajectoryIndicator";
+import { buildTrajectory } from "@/lib/dealTrajectory";
+import { OutcomeModal } from "@/components/OutcomeModal";
+import { fetchOutcomesForUser, OUTCOME_LABELS, OUTCOME_COLORS, type DealOutcome } from "@/lib/dealOutcomes";
 import {
   CompsTab,
   type CompsTabProps,
@@ -2227,6 +2232,28 @@ function DealDetailPanel({
             </div>
           )}
 
+          {/* Deal Trajectory — expanded breakdown (explanation layer) */}
+          <div style={{ marginBottom: 14 }}>
+            <TrajectoryBreakdown
+              data={buildTrajectory({
+                deal_created_at:  deal.created_at ?? null,
+                first_seen_at:    (deal as any).first_seen_at ?? deal.created_at ?? null,
+                asking_price:     deal.asking_price,
+                usableSDE:        deal.usable_sde ?? deal.sde ?? 0,
+                reportedSDE:      deal.sde ?? 0,
+                dscr:             deal.dscr,
+                stressDscr15:    +((deal.dscr ?? 0) * 0.85).toFixed(2),
+                gap_pct:          deal.gap_pct ?? null,
+                trustScore:       deal.normalization_trust_score ?? 100,
+                earningsSource:   (deal.earnings_source as any) ?? "reported",
+                revenue_yoy_pct:  (deal as any).revenue_yoy_pct ?? null,
+                margin_yoy_pct:   (deal as any).margin_yoy_pct ?? null,
+                dscr_prior:       (deal as any).dscr_prior ?? null,
+                snapshots:        (deal as any).snapshots ?? null,
+              })}
+            />
+          </div>
+
           {/* Actions */}
           <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
             <button
@@ -2702,18 +2729,55 @@ function UnderwritingPanel({
 
           {/* Verdict banner — always visible at top */}
           <div style={{
-            display: "flex", alignItems: "center", gap: 10,
-            padding: "10px 14px", borderRadius: 10, marginBottom: 16,
+            display: "flex", alignItems: "flex-start", gap: 10,
+            padding: "10px 14px", borderRadius: 10, marginBottom: 10,
             background: vd.bg, border: `1px solid ${vd.border}`,
           }}>
-            <span style={{ fontSize: 18, flexShrink: 0 }}>{vd.emoji}</span>
-            <div>
-              <div style={{ fontSize: 11, fontWeight: 700, color: vd.color, textTransform: "uppercase" as any, letterSpacing: "0.07em" }}>
-                Verdict: {vd.label}
+            <span style={{ fontSize: 18, flexShrink: 0, marginTop: 1 }}>{vd.emoji}</span>
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 2 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: vd.color, textTransform: "uppercase" as any, letterSpacing: "0.07em" }}>
+                  Verdict: {vd.label}
+                </div>
+                <TrustBadge
+                  trustScore={deal.normalization_trust_score ?? 100}
+                  reportedSDE={deal.sde ?? 0}
+                  usableSDE={usableSDE}
+                  manualReviewRequired={deal.manual_review_required ?? false}
+                  flags={(deal.normalization_flags_json ?? []).map((f: any) => ({
+                    text: typeof f === "string" ? f : (f.text ?? f.message ?? String(f)),
+                    severity: (f && typeof f === "object" && f.severity) || "medium",
+                  }))}
+                />
               </div>
-              <div style={{ fontSize: 11, color: "#94A3B8", lineHeight: 1.5, marginTop: 2 }}>{vd.subtext}</div>
+              <div style={{ fontSize: 11, color: "#94A3B8", lineHeight: 1.5 }}>{vd.subtext}</div>
             </div>
           </div>
+
+          {/* Trajectory chip — compact hook below verdict banner */}
+          {(() => {
+            const traj = buildTrajectory({
+              deal_created_at:  deal.created_at ?? null,
+              first_seen_at:    (deal as any).first_seen_at ?? deal.created_at ?? null,
+              asking_price:     deal.asking_price,
+              usableSDE:        usableSDE,
+              reportedSDE:      deal.sde ?? 0,
+              dscr:             deal.dscr,
+              stressDscr15:     stressDscr15,
+              gap_pct:          deal.gap_pct ?? null,
+              trustScore:       deal.normalization_trust_score ?? 100,
+              earningsSource:   (deal.earnings_source as any) ?? "reported",
+              revenue_yoy_pct:  (deal as any).revenue_yoy_pct ?? null,
+              margin_yoy_pct:   (deal as any).margin_yoy_pct ?? null,
+              dscr_prior:       (deal as any).dscr_prior ?? null,
+              snapshots:        (deal as any).snapshots ?? null,
+            });
+            return (
+              <div style={{ marginBottom: 16 }}>
+                <TrajectoryChip data={traj} />
+              </div>
+            );
+          })()}
 
           {/* Score Insights — below verdict banner */}
           {deal.scoreExplanation && deal.scoreExplanation.length > 0 && (
@@ -4328,6 +4392,44 @@ function TabDashboard({
                     style={{ padding: "5px 10px", borderRadius: 6, border: "1px solid rgba(99,102,241,0.35)", background: "rgba(99,102,241,0.12)", color: "#A5B4FC", fontSize: 11, fontWeight: 700, cursor: "pointer", whiteSpace: "nowrap" as any }}>
                     Open Underwriting →
                   </button>
+                  {/* Outcome button or recorded-outcome chip */}
+                  {(() => {
+                    const existing = outcomesMap.get(deal.id);
+                    if (existing) {
+                      const oc = OUTCOME_COLORS[existing.outcome];
+                      return (
+                        <button
+                          onClick={(e) => { e.stopPropagation(); onOpenOutcome(deal); }}
+                          title="Edit outcome"
+                          style={{
+                            display: "inline-flex", alignItems: "center", gap: 4,
+                            padding: "4px 9px", borderRadius: 20,
+                            background: oc.bg, border: `1px solid ${oc.border}`,
+                            color: oc.text, fontSize: 10, fontWeight: 600,
+                            cursor: "pointer", whiteSpace: "nowrap" as any,
+                          }}
+                        >
+                          <span style={{ width: 5, height: 5, borderRadius: "50%", background: oc.text, display: "inline-block" }} />
+                          {OUTCOME_LABELS[existing.outcome]}
+                        </button>
+                      );
+                    }
+                    return (
+                      <button
+                        onClick={(e) => { e.stopPropagation(); onOpenOutcome(deal); }}
+                        title="Record outcome"
+                        style={{
+                          padding: "4px 9px", borderRadius: 6,
+                          border: "1px solid rgba(16,185,129,0.3)",
+                          background: "rgba(16,185,129,0.06)",
+                          color: "#10B981", fontSize: 10, fontWeight: 600,
+                          cursor: "pointer", whiteSpace: "nowrap" as any,
+                        }}
+                      >
+                        Log outcome
+                      </button>
+                    );
+                  })()}
                 </div>
               </div>
             );
@@ -4493,19 +4595,21 @@ function TabDashboard({
 // ─── TAB: MY DEALS ────────────────────────────────────────────────────────────
 
 function TabMyDeals({
-  deals, loading, isPro, dealStatuses, favorites,
-  onStatusChange, onToggleFav, onOpenNotes, onOpenDetail, onOpenUnderwriting, onAnalyzeNew,
+  deals, loading, isPro, dealStatuses, favorites, outcomesMap,
+  onStatusChange, onToggleFav, onOpenNotes, onOpenDetail, onOpenUnderwriting, onOpenOutcome, onAnalyzeNew,
 }: {
   deals: DealRun[];
   loading: boolean;
   isPro: boolean;
   dealStatuses: Record<string, DealStatus>;
   favorites: Set<string>;
+  outcomesMap: Map<string, DealOutcome>;
   onStatusChange: (id: string, status: DealStatus) => void;
   onToggleFav: (id: string) => void;
   onOpenNotes: (deal: DealRun) => void;
   onOpenDetail: (deal: DealRun) => void;
   onOpenUnderwriting: (deal: DealRun) => void;
+  onOpenOutcome: (deal: DealRun) => void;
   onAnalyzeNew: () => void;
 }) {
   const [search, setSearch]       = useState("");
@@ -6724,6 +6828,9 @@ export default function BuyerDashboard() {
   const [detailDeal, setDetailDeal]             = useState<DealRun | null>(null);
   const [underwritingDeal, setUnderwritingDeal] = useState<DealRun | null>(null);
   const [showUpgradeModal, setShowUpgradeModal]   = useState(false);
+  // Deal outcome tracking — proprietary training data
+  const [outcomesMap, setOutcomesMap]           = useState<Map<string, DealOutcome>>(new Map());
+  const [outcomeDeal, setOutcomeDeal]           = useState<DealRun | null>(null);
   const [showFirstLoginBanner, setShowFirstLoginBanner] = useState(() => {
     if (typeof window === "undefined") return false;
     // Show banner once per session after first login
@@ -6770,6 +6877,10 @@ export default function BuyerDashboard() {
       return { ...enriched, verdict: dealVerdict(enriched), oppScore: oppScore(enriched) };
     });
     setDeals(enriched);
+    // Load recorded outcomes for this user (proprietary training data)
+    if (user?.id) {
+      fetchOutcomesForUser(user.id).then(setOutcomesMap).catch(() => {});
+    }
     setLoadingDeals(false);
   }, []);
 
@@ -6946,6 +7057,13 @@ export default function BuyerDashboard() {
         .btn-qv:hover { background: rgba(255,255,255,0.06) !important; color: #E2E8F0 !important; border-color: rgba(255,255,255,0.15) !important }
         .btn-uw { transition: background 0.12s, box-shadow 0.12s }
         .btn-uw:hover { background: rgba(99,102,241,0.2) !important; box-shadow: 0 0 0 1px rgba(99,102,241,0.4) }
+
+        /* Trust badge tooltip */
+        .nxtax-trust-badge:hover .nxtax-trust-tooltip {
+          opacity: 1 !important;
+          transform: translateY(0) !important;
+          pointer-events: auto !important;
+        }
 
         /* Underwriting panel responsive width — overrides inline styles */
         @media (max-width: 1024px) {
@@ -7163,11 +7281,13 @@ export default function BuyerDashboard() {
                 isPro={isPro}
                 dealStatuses={dealStatuses}
                 favorites={favorites}
+                outcomesMap={outcomesMap}
                 onStatusChange={handleStatusChange}
                 onToggleFav={toggleFavorite}
                 onOpenNotes={openNotes}
                 onOpenDetail={openDetail}
                 onOpenUnderwriting={openUnderwriting}
+                onOpenOutcome={setOutcomeDeal}
                 onAnalyzeNew={() => setAnalyzeModal(true)}
               />
             )}
@@ -7230,6 +7350,25 @@ export default function BuyerDashboard() {
           isPro={isPro}
           onClose={() => setUnderwritingDeal(null)}
           onShowUpgrade={() => setShowUpgradeModal(true)}
+        />
+      )}
+
+      {/* ── OUTCOME MODAL — proprietary training data capture ── */}
+      {outcomeDeal && user && (
+        <OutcomeModal
+          dealRunId={outcomeDeal.id}
+          userId={user.id}
+          dealSummary={`${IL[outcomeDeal.industry] || outcomeDeal.industry}${outcomeDeal.city ? " · " + outcomeDeal.city : ""}${outcomeDeal.state ? ", " + outcomeDeal.state : ""} · ${fmt(outcomeDeal.asking_price)}`}
+          askingPrice={outcomeDeal.asking_price}
+          onClose={() => setOutcomeDeal(null)}
+          onSaved={(saved) => {
+            // Update local map so the row chip reflects the outcome immediately
+            setOutcomesMap(prev => {
+              const next = new Map(prev);
+              next.set(saved.deal_run_id, saved);
+              return next;
+            });
+          }}
         />
       )}
 
