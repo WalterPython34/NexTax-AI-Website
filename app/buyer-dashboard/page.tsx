@@ -4677,55 +4677,57 @@ function TabHome({
 
       {/* ══ STATE A ═══════════════════════════════════════════════════════════
            First-time user (no deals yet). Aspirational hero + simple flow + quick actions. */}
-      {isEmpty && (
-        <>
-          <div style={{
-            background: "linear-gradient(135deg, rgba(99,102,241,0.06), rgba(16,185,129,0.03))",
-            borderRadius: 14,
-            padding: "32px 28px",
-            marginBottom: 16,
-            border: "1px solid rgba(99,102,241,0.15)",
-            display: "grid",
-            gridTemplateColumns: "minmax(0, 1.3fr) minmax(0, 1fr)",
-            gap: 28,
-            alignItems: "center",
-          }}>
-            <div>
-              <div style={{ fontSize: 10, color: "#A5B4FC", textTransform: "uppercase", letterSpacing: "0.12em", fontWeight: 500, marginBottom: 10 }}>
-                NexTax Intelligence
-              </div>
-              <h1 style={{ fontSize: 28, fontWeight: 800, color: "#F1F5F9", margin: "0 0 10px", lineHeight: 1.15, letterSpacing: "-0.02em", fontFamily: "'Inter Tight',sans-serif" }}>
-                Evaluate a business before you buy
-              </h1>
-              <p style={{ fontSize: 13, color: "#94A3B8", lineHeight: 1.6, margin: "0 0 20px", maxWidth: 420 }}>
-                Financial clarity for SMB acquisitions — in minutes, not days. Get a defensible buy/pass decision on any deal.
-              </p>
-              <div style={{ display: "flex", gap: 8, flexWrap: "wrap" as const }}>
-                <button
-                  onClick={onAnalyzeNew}
-                  style={{
-                    padding: "11px 22px", borderRadius: 9, border: "none",
-                    background: "linear-gradient(135deg,#6366F1,#8B5CF6)",
-                    color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit",
-                  }}
-                >
-                  Analyze a new deal →
-                </button>
-                <button
-                  onClick={() => setShowSampleModal(true)}
-                  style={{
-                    padding: "11px 18px", borderRadius: 9,
-                    border: "1px solid rgba(255,255,255,0.1)",
-                    background: "rgba(255,255,255,0.03)",
-                    color: "#E2E8F0", fontSize: 13, fontWeight: 500, cursor: "pointer", fontFamily: "inherit",
-                  }}
-                >
-                  View sample
-                </button>
-              </div>
-            </div>
-            {/* 1-2-3 flow */}
-            <div style={{ display: "flex", flexDirection: "column" as const, gap: 10 }}>
+      {/* ══ ASPIRATIONAL HERO — always visible at top of Home tab ════════════
+           Product identity + primary CTA. Renders for empty AND returning users.
+           The 1-2-3 onboarding flow below is gated to empty state only. */}
+      <div style={{
+        background: "linear-gradient(135deg, rgba(99,102,241,0.06), rgba(16,185,129,0.03))",
+        borderRadius: 14,
+        padding: "32px 28px",
+        marginBottom: 16,
+        border: "1px solid rgba(99,102,241,0.15)",
+        display: "grid",
+        gridTemplateColumns: isEmpty ? "minmax(0, 1.3fr) minmax(0, 1fr)" : "1fr",
+        gap: 28,
+        alignItems: "center",
+      }}>
+        <div>
+          <div style={{ fontSize: 10, color: "#A5B4FC", textTransform: "uppercase", letterSpacing: "0.12em", fontWeight: 500, marginBottom: 10 }}>
+            NexTax Intelligence
+          </div>
+          <h1 style={{ fontSize: 28, fontWeight: 800, color: "#F1F5F9", margin: "0 0 10px", lineHeight: 1.15, letterSpacing: "-0.02em", fontFamily: "'Inter Tight',sans-serif", maxWidth: 620 }}>
+            Before you sign an LOI, know what the deal is actually worth.
+          </h1>
+          <p style={{ fontSize: 13, color: "#94A3B8", lineHeight: 1.6, margin: "0 0 20px", maxWidth: 560 }}>
+            Financial clarity for SMB acquisitions — in minutes, not days. Get a defensible buy/pass decision on any deal before you commit.
+          </p>
+          <div style={{ display: "flex", gap: 8, flexWrap: "wrap" as const }}>
+            <button
+              onClick={onAnalyzeNew}
+              style={{
+                padding: "11px 22px", borderRadius: 9, border: "none",
+                background: "linear-gradient(135deg,#6366F1,#8B5CF6)",
+                color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit",
+              }}
+            >
+              Analyze a new deal →
+            </button>
+            <button
+              onClick={() => setShowSampleModal(true)}
+              style={{
+                padding: "11px 18px", borderRadius: 9,
+                border: "1px solid rgba(255,255,255,0.1)",
+                background: "rgba(255,255,255,0.03)",
+                color: "#E2E8F0", fontSize: 13, fontWeight: 500, cursor: "pointer", fontFamily: "inherit",
+              }}
+            >
+              View sample
+            </button>
+          </div>
+        </div>
+        {/* 1-2-3 onboarding flow — only for empty-state users */}
+        {isEmpty && (
+        <div style={{ display: "flex", flexDirection: "column" as const, gap: 10 }}>
               {[
                 { n: "1", title: "Paste listing details", sub: "Asking price, SDE, industry — that's it", good: false },
                 { n: "2", title: "We analyze it",          sub: "Against 1,500+ closed deals + industry benchmarks", good: false },
@@ -4753,10 +4755,12 @@ function TabHome({
                 </div>
               ))}
             </div>
-          </div>
+        )}
+      </div>
 
-          {/* Quick Actions — empty state has 4 actions */}
-          <div style={{
+      {/* Quick Actions — empty state only (onboarding aid) */}
+      {isEmpty && (
+      <div style={{
             padding: "16px 18px", borderRadius: 10,
             background: "rgba(255,255,255,0.02)",
             border: "1px solid rgba(255,255,255,0.06)",
@@ -4790,7 +4794,6 @@ function TabHome({
               ))}
             </div>
           </div>
-        </>
       )}
 
       {/* ══ STATE B ═══════════════════════════════════════════════════════════
