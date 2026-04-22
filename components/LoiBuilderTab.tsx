@@ -26,7 +26,7 @@ const T = {
   borderLight: "rgba(255,255,255,0.04)",
   text:        "#F1F5F9",
   textSub:     "#94A3B8",
-  textMuted:   "#4B5563",
+  textMuted:   "#7C8593",
   mono:        "'JetBrains Mono', monospace",
   sans:        "'Inter Tight', sans-serif",
   green:       "#10B981",
@@ -131,28 +131,28 @@ function RecommendedLoiHero({ data }: { data: LoiBuilderOutput }) {
           value={data.anchorOffer}
           pct={data.anchorPctOfFv}
           color={T.indigo}
-          sub="Where disciplined first paper should start"
+          sub="Where first paper should start — leaves room to negotiate up"
         />
         <PricePillar
           label="Target Low"
           value={data.targetRangeLow}
           pct={data.targetLowPctOfFv}
           color={T.teal}
-          sub="Low end of reasonable zone to win the deal"
+          sub="Low end of zone where most deals in this range actually close"
         />
         <PricePillar
           label="Target High"
           value={data.targetRangeHigh}
           pct={data.targetHighPctOfFv}
           color={T.green}
-          sub="Upper end of acceptable negotiation zone"
+          sub="Upper end of the negotiation zone you should be willing to live with"
         />
         <PricePillar
-          label="Walk-Away"
+          label="Max Justified"
           value={data.walkAwayPrice}
           pct={data.walkAwayPctOfFv}
           color={T.amber}
-          sub="Highest justified price before returns compress"
+          sub="Highest price that still preserves risk-adjusted return — treat as a ceiling, not a goal"
         />
       </div>
     </div>
