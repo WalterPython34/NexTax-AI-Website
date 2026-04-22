@@ -21,7 +21,7 @@ const T = {
   borderLight: "rgba(255,255,255,0.04)",
   text:        "#F1F5F9",
   textSub:     "#94A3B8",
-  textMuted:   "#4B5563",
+  textMuted:   "#7C8593",
   mono:        "'JetBrains Mono', monospace",
   sans:        "'Inter Tight', sans-serif",
   green:       "#10B981",
