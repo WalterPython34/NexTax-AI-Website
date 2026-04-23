@@ -7790,7 +7790,7 @@ function TabMarketIntel({
           </div>
 
           {/* Rows */}
-          {loadingMkt ? (
+          {loading ? (
             <div style={{ padding: 16, display: "flex", flexDirection: "column", gap: 8 }}>
               {[0,1,2].map(i => <Skel key={i} h={36} />)}
             </div>
@@ -8036,7 +8036,7 @@ export default function BuyerDashboard() {
   const [dri, setDri]                 = useState<DriSnapshot[]>([]);
   const [trending, setTrending]       = useState<TrendingMultiple[]>([]);
   const [loadingDeals, setLoadingDeals] = useState(true);
-  const [loadingMkt, setLoadingMkt]     = useState(true);
+  const [loading, setLoadingMkt]     = useState(true);
 
   const [dealStatuses, setDealStatuses] = useState<Record<string, DealStatus>>({});
   const [favorites, setFavorites]       = useState<Set<string>>(new Set());
@@ -8120,13 +8120,28 @@ export default function BuyerDashboard() {
   // ── Deals ───────────────────────────────────────────────────────────────────
   const fetchDeals = useCallback(async (uid: string) => {
     setLoadingDeals(true);
-    const { data, error } = await supabase
+    // Try the full SELECT first — includes evidence_profile for post-migration deals
+    let { data, error } = await supabase
       .from("deal_runs")
       .select("id,tool_used,industry,asking_price,fair_value,valuation_multiple,dscr,overall_score,risk_level,city,state,created_at,confidence_grade,revenue,sde,benchmark_family,rma_naics_code,classification_confidence,reported_sde,usable_sde,benchmark_implied_sde,earnings_source,normalization_trust_score,normalization_confidence_level,normalization_flags_json,manual_review_required,benchmark_is_proxy,evidence_profile,red_flags,green_flags")
       .eq("user_id", uid)
       .order("created_at", { ascending: false })
       .limit(50);
-    if (error) console.error("fetchDeals error:", error.message);
+    // If the full select fails (usually because a new column isn't yet
+    // visible to PostgREST's schema cache), fall back to the minimal set
+    // that predates this migration. User still sees their deals.
+    if (error) {
+      console.warn("fetchDeals full-select failed, retrying minimal:", error.message);
+      const fallback = await supabase
+        .from("deal_runs")
+        .select("id,tool_used,industry,asking_price,fair_value,valuation_multiple,dscr,overall_score,risk_level,city,state,created_at,confidence_grade,revenue,sde,benchmark_family,rma_naics_code,classification_confidence,reported_sde,usable_sde,benchmark_implied_sde,earnings_source,normalization_trust_score,normalization_confidence_level,normalization_flags_json,manual_review_required,benchmark_is_proxy")
+        .eq("user_id", uid)
+        .order("created_at", { ascending: false })
+        .limit(50);
+      data = fallback.data;
+      error = fallback.error;
+      if (error) console.error("fetchDeals fallback also failed:", error.message);
+    }
     const enriched: DealRun[] = (data || []).map(d => {
       const gap_pct = d.fair_value > 0
         ? Math.round(((d.asking_price - d.fair_value) / d.fair_value) * 100)
@@ -8589,7 +8604,7 @@ export default function BuyerDashboard() {
                 dri={dri}
                 trending={trending}
                 loading={loadingDeals}
-                loadingMkt={loadingMkt}
+                loading={loading}
                 isPro={isPro}
                 favorites={favorites}
                 outcomesMap={outcomesMap}
@@ -8608,7 +8623,7 @@ export default function BuyerDashboard() {
                 dri={dri}
                 trending={trending}
                 loading={loadingDeals}
-                loadingMkt={loadingMkt}
+                loading={loading}
                 isPro={isPro}
                 favorites={favorites}
                 outcomesMap={outcomesMap}
@@ -8642,7 +8657,7 @@ export default function BuyerDashboard() {
               <TabCompare deals={deals} isPro={isPro} onAnalyzeNew={handleAnalyzeNewClick} />
             )}
             {activeTab === "market-intel" && (
-              <TabMarketIntel dri={dri} trending={trending} loading={loadingMkt} isPro={isPro} deals={deals} />
+              <TabMarketIntel dri={dri} trending={trending} loading={loading} isPro={isPro} deals={deals} />
             )}
           </div>
         </div>
