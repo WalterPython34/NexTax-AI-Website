@@ -1439,13 +1439,116 @@ function AnalyzeDealModal({
   const [saveError, setSaveError] = useState("");
   const [loading, setLoading] = useState(false);
 
+  // ── Input validation — prevents nonsense verdicts from garbage input ──────
+  // Parse a locale-formatted currency string ("1,500,000") back to a number
+  const parseNum = (s: string): number => {
+    if (!s) return 0;
+    const n = parseFloat(String(s).replace(/[^0-9.-]/g, ""));
+    return isFinite(n) ? n : 0;
+  };
+
+  // Produce a prioritized list of validation issues. Errors block submission;
+  // warnings allow submission but surface a caution banner.
+  type ValidationIssue = { severity: "error" | "warning"; field?: keyof ModalDealInputs; message: string };
+  const validateInputs = (): ValidationIssue[] => {
+    const issues: ValidationIssue[] = [];
+    const revenue = parseNum(inputs.revenue);
+    const sde     = parseNum(inputs.sde);
+    const ask     = parseNum(inputs.askingPrice);
+
+    // ── Hard errors (block) ────────────────────────────────────────────────
+    if (inputs.revenue && revenue < 10_000) {
+      issues.push({ severity: "error", field: "revenue", message: "Revenue appears too low — confirm you entered the full annual amount (not monthly)." });
+    }
+    if (inputs.revenue && revenue > 1_000_000_000) {
+      issues.push({ severity: "error", field: "revenue", message: "Revenue exceeds $1B — this tool is designed for SMB acquisitions under $100M in revenue." });
+    }
+    if (inputs.sde && sde <= 0) {
+      issues.push({ severity: "error", field: "sde", message: "SDE must be positive. Unprofitable businesses cannot be meaningfully scored by this model." });
+    }
+    if (inputs.askingPrice && ask < 10_000) {
+      issues.push({ severity: "error", field: "askingPrice", message: "Asking price appears too low — confirm the full amount." });
+    }
+
+    // SDE > Revenue is structurally impossible (SDE is a subset of revenue)
+    if (revenue > 0 && sde > 0 && sde > revenue) {
+      issues.push({ severity: "error", field: "sde", message: "SDE cannot exceed revenue — check your inputs. SDE is cash flow before owner draws; it is always less than revenue." });
+    }
+
+    // Multiple sanity — the critical check
+    if (sde > 0 && ask > 0) {
+      const multiple = ask / sde;
+      if (multiple > 20) {
+        issues.push({
+          severity: "error",
+          field:    "sde",
+          message:  `Asking price is ${multiple.toFixed(1)}x SDE — far above typical SMB valuations (usually 2–6x). Double-check your SDE and asking price.`,
+        });
+      } else if (multiple > 10) {
+        issues.push({
+          severity: "warning",
+          field:    "sde",
+          message:  `Multiple of ${multiple.toFixed(1)}x SDE is well above typical SMB range. Proceed if confirmed, but verify inputs.`,
+        });
+      } else if (multiple < 0.5) {
+        issues.push({
+          severity: "error",
+          field:    "sde",
+          message:  `Asking price is ${multiple.toFixed(2)}x SDE — implausibly low. Check for transposed values.`,
+        });
+      }
+    }
+
+    // Revenue / SDE sanity — flags typos in one of the two fields
+    if (revenue > 0 && sde > 0) {
+      const margin = (sde / revenue) * 100;
+      if (margin > 75) {
+        issues.push({
+          severity: "warning",
+          field:    "sde",
+          message:  `SDE margin of ${margin.toFixed(0)}% is unusually high. Most SMBs run 10–30% SDE margins — verify this is realistic for the business.`,
+        });
+      } else if (margin < 2 && revenue > 100_000) {
+        issues.push({
+          severity: "warning",
+          field:    "sde",
+          message:  `SDE margin of ${margin.toFixed(1)}% is very thin. Most SMBs run 10–30% — confirm SDE is correct.`,
+        });
+      }
+    }
+
+    // Debt term sanity
+    const dp   = parseNum(inputs.debtPercent);
+    const rate = parseNum(inputs.interestRate);
+    const term = parseNum(inputs.termYears);
+    if (inputs.debtPercent && (dp < 0 || dp > 100)) {
+      issues.push({ severity: "error", field: "debtPercent", message: "Debt % must be between 0 and 100." });
+    }
+    if (inputs.interestRate && (rate < 0 || rate > 30)) {
+      issues.push({ severity: "error", field: "interestRate", message: "Interest rate appears outside realistic range (0–30%)." });
+    }
+    if (inputs.termYears && (term < 1 || term > 30)) {
+      issues.push({ severity: "error", field: "termYears", message: "Loan term should be between 1 and 30 years." });
+    }
+
+    return issues;
+  };
+
+  const validationIssues = validateInputs();
+  const hasErrors        = validationIssues.some(i => i.severity === "error");
+  const hasWarnings      = validationIssues.some(i => i.severity === "warning");
+  const [acknowledgedWarnings, setAcknowledgedWarnings] = useState(false);
+  // Reset acknowledgement if the user changes inputs
+  React.useEffect(() => { setAcknowledgedWarnings(false); }, [inputs.revenue, inputs.sde, inputs.askingPrice]);
+
   const set = (k: keyof ModalDealInputs, v: string) => setInputs(p => ({ ...p, [k]: v }));
   const setCurr = (k: keyof ModalDealInputs, v: string) => {
     const n = v.replace(/[^0-9]/g, "");
     set(k, n ? parseInt(n).toLocaleString() : "");
   };
 
-  const canScore = inputs.industry && inputs.revenue && inputs.sde && inputs.askingPrice;
+  const hasAllFields = !!inputs.industry && !!inputs.revenue && !!inputs.sde && !!inputs.askingPrice;
+  const canScore     = hasAllFields && !hasErrors && (!hasWarnings || acknowledgedWarnings);
 
   async function handleScore() {
     setLoading(true);
@@ -1680,6 +1783,65 @@ function AnalyzeDealModal({
                 </div>
               </div>
 
+              {/* ── Validation banner — shown when inputs trigger issues ── */}
+              {hasAllFields && validationIssues.length > 0 && (
+                <div style={{
+                  marginBottom: 12,
+                  padding: "11px 13px",
+                  borderRadius: 9,
+                  background:  hasErrors ? "rgba(239,68,68,0.06)"  : "rgba(245,158,11,0.05)",
+                  border:      hasErrors ? "1px solid rgba(239,68,68,0.25)" : "1px solid rgba(245,158,11,0.25)",
+                }}>
+                  <div style={{
+                    display: "flex", alignItems: "center", gap: 8, marginBottom: validationIssues.length > 0 ? 8 : 0,
+                  }}>
+                    <span style={{ fontSize: 14 }}>{hasErrors ? "⚠" : "!"}</span>
+                    <div style={{
+                      fontSize: 11, fontWeight: 700, textTransform: "uppercase" as const, letterSpacing: "0.06em",
+                      color: hasErrors ? "#F87171" : "#F59E0B",
+                    }}>
+                      {hasErrors ? "Check your inputs before scoring" : "Unusual values detected"}
+                    </div>
+                  </div>
+                  <div style={{ display: "flex", flexDirection: "column" as const, gap: 5 }}>
+                    {validationIssues.map((issue, i) => (
+                      <div
+                        key={i}
+                        style={{
+                          display: "flex", gap: 8, alignItems: "flex-start",
+                          fontSize: 11.5, color: "#C4C8D1", lineHeight: 1.5,
+                        }}
+                      >
+                        <span style={{
+                          color: issue.severity === "error" ? "#F87171" : "#F59E0B",
+                          flexShrink: 0, fontWeight: 700, marginTop: 1,
+                        }}>
+                          {issue.severity === "error" ? "×" : "!"}
+                        </span>
+                        <span>{issue.message}</span>
+                      </div>
+                    ))}
+                  </div>
+                  {/* Warning acknowledgement — only shown if warnings exist AND no errors */}
+                  {hasWarnings && !hasErrors && (
+                    <label style={{
+                      display: "flex", alignItems: "center", gap: 8,
+                      marginTop: 10, paddingTop: 9,
+                      borderTop: "1px solid rgba(245,158,11,0.18)",
+                      fontSize: 11, color: "#C4C8D1", cursor: "pointer",
+                    }}>
+                      <input
+                        type="checkbox"
+                        checked={acknowledgedWarnings}
+                        onChange={e => setAcknowledgedWarnings(e.target.checked)}
+                        style={{ cursor: "pointer", accentColor: "#F59E0B" }}
+                      />
+                      <span>I've verified these inputs are correct — proceed anyway</span>
+                    </label>
+                  )}
+                </div>
+              )}
+
               <button
                 onClick={handleScore}
                 disabled={!canScore || loading}
@@ -1690,7 +1852,7 @@ function AnalyzeDealModal({
                   fontSize: 14, fontWeight: 600, cursor: canScore ? "pointer" : "not-allowed",
                 }}
               >
-                {loading ? "Scoring..." : "Score This Deal →"}
+                {loading ? "Scoring..." : !hasAllFields ? "Fill all fields to score" : hasErrors ? "Fix errors to score" : "Score This Deal →"}
               </button>
             </div>
           )}
