@@ -19,6 +19,7 @@ import { buildTrajectory } from "@/lib/dealTrajectory";
 import { OutcomeModal } from "@/components/OutcomeModal";
 import { fetchOutcomesForUser, OUTCOME_LABELS, OUTCOME_COLORS, type DealOutcome } from "@/lib/dealOutcomes";
 import { InfoTooltip } from "@/components/InfoTooltip";
+import { SampleMemoPreviewModal } from "@/components/SampleMemoPreviewModal";
 import {
   CompsTab,
   type CompsTabProps,
@@ -4695,11 +4696,11 @@ function TabHome({
           <div style={{ fontSize: 10, color: "#A5B4FC", textTransform: "uppercase", letterSpacing: "0.12em", fontWeight: 500, marginBottom: 10 }}>
             NexTax Intelligence
           </div>
-          <h1 style={{ fontSize: 28, fontWeight: 800, color: "#F1F5F9", margin: "0 0 10px", lineHeight: 1.15, letterSpacing: "-0.02em", fontFamily: "'Inter Tight',sans-serif", maxWidth: 620 }}>
-            Before you sign an LOI, know what the deal is actually worth.
+          <h1 style={{ fontSize: 28, fontWeight: 800, color: "#F1F5F9", margin: "0 0 10px", lineHeight: 1.15, letterSpacing: "-0.02em", fontFamily: "'Inter Tight',sans-serif", maxWidth: 640 }}>
+            Stack deals. Benchmark them. Choose the winner.
           </h1>
-          <p style={{ fontSize: 13, color: "#94A3B8", lineHeight: 1.6, margin: "0 0 20px", maxWidth: 560 }}>
-            Financial clarity for SMB acquisitions — in minutes, not days. Get a defensible buy/pass decision on any deal before you commit.
+          <p style={{ fontSize: 13, color: "#94A3B8", lineHeight: 1.6, margin: "0 0 20px", maxWidth: 620 }}>
+            Analyze, compare, and pressure-test opportunities with lender-ready underwriting, real comps, and LOI guidance — all in one workflow.
           </p>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" as const }}>
             <button
@@ -4710,7 +4711,7 @@ function TabHome({
                 color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit",
               }}
             >
-              Analyze a new deal →
+              Analyze a deal →
             </button>
             <button
               onClick={() => setShowSampleModal(true)}
@@ -4721,7 +4722,7 @@ function TabHome({
                 color: "#E2E8F0", fontSize: 13, fontWeight: 500, cursor: "pointer", fontFamily: "inherit",
               }}
             >
-              View sample
+              See a sample deal
             </button>
           </div>
         </div>
@@ -4772,7 +4773,7 @@ function TabHome({
               {[
                 { icon: "+", label: "Analyze deal",   primary: true,  onClick: onAnalyzeNew },
                 { icon: "↑", label: "Import listing", primary: false, onClick: onAnalyzeNew },  // same flow for now
-                { icon: "◎", label: "View sample",    primary: false, onClick: () => setShowSampleModal(true) },
+                { icon: "◎", label: "Sample deal",    primary: false, onClick: () => setShowSampleModal(true) },
                 { icon: "?", label: "How it works",   primary: false, onClick: () => onTabChange("market-intel") },
               ].map((a, i) => (
                 <div
@@ -5053,48 +5054,13 @@ function TabHome({
         </>
       )}
 
-      {/* ── SAMPLE MODAL — lightweight placeholder until a real sample deal exists ── */}
+      {/* ── SAMPLE MEMO PREVIEW MODAL — Pro-quality IC memo demo for free users ── */}
       {showSampleModal && (
-        <>
-          <div
-            onClick={() => setShowSampleModal(false)}
-            style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.65)", zIndex: 400, backdropFilter: "blur(4px)" }}
-          />
-          <div style={{
-            position: "fixed", top: "50%", left: "50%", transform: "translate(-50%,-50%)",
-            zIndex: 401, width: "100%", maxWidth: 380, padding: 28,
-            borderRadius: 14, background: "#0D1117",
-            border: "1px solid rgba(99,102,241,0.25)",
-            boxShadow: "0 24px 64px rgba(0,0,0,0.7)",
-            textAlign: "center" as const,
-            fontFamily: "'Inter Tight',sans-serif",
-          }}>
-            <div style={{ fontSize: 28, marginBottom: 12 }}>◎</div>
-            <h2 style={{ fontSize: 18, fontWeight: 700, color: "#F1F5F9", margin: "0 0 8px", letterSpacing: "-0.01em" }}>
-              Sample analysis coming soon
-            </h2>
-            <p style={{ fontSize: 12, color: "#94A3B8", lineHeight: 1.6, margin: "0 0 18px" }}>
-              You'll soon be able to preview a fully analyzed deal here. In the meantime, paste a real listing — it only takes a minute.
-            </p>
-            <button
-              onClick={() => { setShowSampleModal(false); onAnalyzeNew(); }}
-              style={{
-                display: "block", width: "100%", padding: "11px 0", borderRadius: 9, border: "none",
-                background: "linear-gradient(135deg,#6366F1,#818CF8)",
-                color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer", fontFamily: "inherit",
-                marginBottom: 8,
-              }}
-            >
-              Analyze a real deal →
-            </button>
-            <button
-              onClick={() => setShowSampleModal(false)}
-              style={{ background: "none", border: "none", color: "#6B7280", fontSize: 11, cursor: "pointer", fontFamily: "inherit" }}
-            >
-              Maybe later
-            </button>
-          </div>
-        </>
+        <SampleMemoPreviewModal
+          onClose={() => setShowSampleModal(false)}
+          onAnalyzeDeal={() => { setShowSampleModal(false); onAnalyzeNew(); }}
+          onUpgrade={() => { setShowSampleModal(false); window.location.href = "/pricing"; }}
+        />
       )}
     </div>
   );
