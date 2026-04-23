@@ -86,12 +86,12 @@ export function SampleMemoPreviewModal({ onClose, onAnalyzeDeal, onUpgrade }: Sa
     // Each flag includes WHY it matters to a buyer
     redFlags: [
       {
-        flag:   "Revenue concentration",
-        detail: "Top customer represents 32% of TTM revenue. Loss of this account would immediately breach SBA DSCR covenants and impair debt service capacity.",
+        flag:   "Revenue concentration (hard flag)",
+        detail: "Top customer represents 32% of TTM revenue — material concentration risk. Loss of this account would immediately breach SBA DSCR covenants and impair debt service capacity.",
       },
       {
-        flag:   "Add-back substantiation gap",
-        detail: "$210K of the $260K add-back schedule lacks independent documentation. If any portion is disallowed, adjusted SDE drops below $580K and multiple expands to 4.2x+.",
+        flag:   "Add-backs elevated (~18% of reported SDE)",
+        detail: "Add-backs of $140K represent 18% of reported SDE — within the moderate band but at the upper end of typical underwriting tolerance. Lenders will require substantiation with tax returns and bank statements before accepting the adjusted basis.",
       },
       {
         flag:   "Owner-operator dependency",
@@ -108,9 +108,9 @@ export function SampleMemoPreviewModal({ onClose, onAnalyzeDeal, onUpgrade }: Sa
         "Real-estate-adjacent cash flow supports collateral structure",
       ],
       concerns: [
-        "Customer concentration above 25% typically triggers additional documentation and may require personal guarantee enhancement",
-        "Add-back quality will be scrutinized — underwriter may independently re-adjust SDE downward",
-        "Thin coverage cushion leaves no room for performance miss in year one",
+        "Top customer at 32% of revenue exceeds typical 20% comfort threshold — expect additional documentation and possible personal guarantee enhancement",
+        "Add-backs at ~18% of reported SDE sit at the upper end of underwriting tolerance — underwriter may re-adjust SDE downward after independent review",
+        "Thin coverage cushion (DSCR 1.28x vs 1.25x minimum) leaves no room for performance miss in year one",
       ],
       summary: "Financeable under SBA 7(a), but not without conditions. Expect the underwriter to re-examine adjusted earnings independently and require mitigation on customer concentration before committee approval.",
     },
@@ -337,7 +337,7 @@ export function SampleMemoPreviewModal({ onClose, onAnalyzeDeal, onUpgrade }: Sa
                 background: "rgba(245,158,11,0.04)", border: "1px solid rgba(245,158,11,0.18)",
                 fontSize: 11.5, color: "#C4C8D1", lineHeight: 1.55,
               }}>
-                Normalization adjustments of {fmt(Math.abs(deal.totalAdjustments))} reduce reported SDE to a defensible underwriting basis. Trust score of {deal.trustScore} indicates that adjusted figures require independent validation before committee.
+                Adjusted earnings used — trust score {deal.trustScore}. Driven by elevated add-backs (~{Math.abs(deal.adjustmentPct).toFixed(0)}% of reported SDE) and hard concentration risk (top customer at 32%). Adjusted figures require independent validation before committee.
               </div>
             </div>
           </div>
