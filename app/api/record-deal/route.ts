@@ -81,6 +81,8 @@ export async function POST(req: NextRequest) {
       data_source        = "manual_entry",
       benchmark_source   = null,   // "direct" | "proxy" | "fallback" — sent by modal
       ebitda             = 0,
+      // ── Evidence profile (optional — sent by modal for add-back + concentration basis)
+      evidence_profile   = null,
     } = body;
 
     const revNum   = typeof revenue      === "string" ? parseFloat(revenue.replace(/,/g, ""))      : revenue;
@@ -209,8 +211,9 @@ export async function POST(req: NextRequest) {
       market_score,
       industry_score,
       operational_score: operational_score || null,
-      red_flags:   red_flags   || [],
-      green_flags: green_flags || [],
+      red_flags:        red_flags   || [],
+      green_flags:      green_flags || [],
+      evidence_profile: evidence_profile || null,
       fingerprint,
       cluster_id,
       is_valid,
@@ -251,7 +254,8 @@ export async function POST(req: NextRequest) {
         "dscr, overall_score, risk_level, city, state, created_at, confidence_grade, " +
         "revenue, sde, red_flags, green_flags, recommended_offer_low, recommended_offer_high, " +
         "valuation_score, debt_score, market_score, industry_score, monthly_payment, " +
-        "interest_rate, term_years, debt_percent"
+        "interest_rate, term_years, debt_percent, " +
+        "evidence_profile, normalization_trust_score"
       )
       .eq("fingerprint", fingerprint)
       .eq("industry", industry)
