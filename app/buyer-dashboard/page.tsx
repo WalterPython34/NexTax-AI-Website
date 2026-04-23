@@ -1249,6 +1249,7 @@ interface ModalDealInputs {
   debtPercent: string;
   interestRate: string;
   termYears: string;
+  topCustomerPct: string;   // Optional — enables HARD concentration flag vs SOFT (inferred)
 }
 
 interface ModalScore {
@@ -1274,6 +1275,116 @@ interface ModalScore {
   debtScore: number;
   marketScore: number;
   industryScore: number;
+  /** Evidence profile — separates HARD (data-backed) from SOFT (inferred) flags. */
+  evidenceProfile?: DealEvidenceProfile;
+}
+
+/**
+ * Evidence profile — explicit, auditable basis for concentration + add-back language.
+ *
+ * Key design principle: every flag is tagged with its evidentiary basis.
+ *   - "hard" = driven by a user-provided data point (defensible, specific)
+ *   - "soft" = inferred from model heuristics (requires validation)
+ *
+ * This lets the memo say "Top customer = 32%" (hard) OR "Concentration risk inferred"
+ * (soft) — never faking precision where none exists.
+ */
+interface DealEvidenceProfile {
+  // ── Add-back analysis ────────────────────────────────────────────────────
+  addBackAmount:  number;           // reported SDE - adjusted SDE
+  addBackPct:     number;           // addBackAmount / reportedSDE (0–1 range)
+  addBackBand:    "clean" | "moderate" | "elevated" | "aggressive";
+  addBackMessage: string;           // one-line underwriter-voice summary
+  // ── Customer concentration ──────────────────────────────────────────────
+  concentrationBasis: "hard" | "soft" | "none";
+  topCustomerPct:     number | null;   // only set if user provided it
+  concentrationBand:  "low" | "moderate" | "high" | "unknown";
+  concentrationMessage: string;
+}
+
+/**
+ * Build the evidence profile for a deal — add-back analysis + concentration band.
+ *
+ * This powers the memo's HARD vs SOFT flag language. Every field here is either:
+ *   - computed from real inputs (hard evidence), OR
+ *   - explicitly tagged as inferred (soft evidence requiring validation)
+ *
+ * Never fake precision. Language must always reflect the evidentiary basis.
+ */
+function buildEvidenceProfile(params: {
+  reportedSDE:    number;
+  adjustedSDE:    number;
+  revenue:        number;
+  industryMarginMidpoint: number | null;   // benchmark SDE margin for this industry (0–1)
+  topCustomerPct: number | null;            // user-provided, or null
+}): DealEvidenceProfile {
+  const { reportedSDE, adjustedSDE, revenue, industryMarginMidpoint, topCustomerPct } = params;
+
+  // ─── Add-back analysis ────────────────────────────────────────────────────
+  const addBackAmount = Math.max(0, reportedSDE - adjustedSDE);
+  const addBackPct    = reportedSDE > 0 ? addBackAmount / reportedSDE : 0;
+
+  let addBackBand:    DealEvidenceProfile["addBackBand"];
+  let addBackMessage: string;
+  const pctStr = `${(addBackPct * 100).toFixed(0)}%`;
+
+  if (addBackPct < 0.10) {
+    addBackBand    = "clean";
+    addBackMessage = addBackAmount === 0
+      ? "No material normalization adjustments applied — reported SDE used as underwriting basis."
+      : `Add-backs (~${pctStr} of reported SDE) are within clean underwriting tolerance.`;
+  } else if (addBackPct < 0.20) {
+    addBackBand    = "moderate";
+    addBackMessage = `Add-backs (~${pctStr} of reported SDE) sit within typical range but require validation with tax returns and bank statements.`;
+  } else if (addBackPct < 0.35) {
+    addBackBand    = "elevated";
+    addBackMessage = `Add-backs (~${pctStr} of reported SDE) exceed typical underwriting tolerance — lenders will require substantiation before approval.`;
+  } else {
+    addBackBand    = "aggressive";
+    addBackMessage = `Add-backs (~${pctStr} of reported SDE) materially inflate earnings — high likelihood of lender re-adjustment downward.`;
+  }
+
+  // ─── Customer concentration ──────────────────────────────────────────────
+  let concentrationBasis:   DealEvidenceProfile["concentrationBasis"];
+  let concentrationBand:    DealEvidenceProfile["concentrationBand"];
+  let concentrationMessage: string;
+
+  if (topCustomerPct != null && topCustomerPct > 0) {
+    // HARD evidence — user provided the number
+    concentrationBasis = "hard";
+    if (topCustomerPct >= 30) {
+      concentrationBand    = "high";
+      concentrationMessage = `Top customer represents ${topCustomerPct.toFixed(0)}% of revenue — material concentration risk. Loss of this account would likely impair debt service capacity.`;
+    } else if (topCustomerPct >= 20) {
+      concentrationBand    = "moderate";
+      concentrationMessage = `Top customer represents ${topCustomerPct.toFixed(0)}% of revenue — concentration is elevated and will attract lender scrutiny.`;
+    } else {
+      concentrationBand    = "low";
+      concentrationMessage = `Top customer represents ${topCustomerPct.toFixed(0)}% of revenue — within acceptable diversification range.`;
+    }
+  } else {
+    // SOFT evidence — infer from margin signal if possible
+    // High margin for the industry can hint at a hidden concentration premium,
+    // but we MUST frame this as inferred, not factual.
+    const actualMargin = revenue > 0 ? adjustedSDE / revenue : 0;
+    const benchMargin  = industryMarginMidpoint ?? 0;
+    const marginAbove  = benchMargin > 0 && actualMargin > benchMargin * 1.5;
+
+    if (marginAbove) {
+      concentrationBasis   = "soft";
+      concentrationBand    = "unknown";
+      concentrationMessage = "SDE margin materially exceeds industry benchmark — may indicate a concentrated customer base or pricing advantage. Requires validation via customer breakdown.";
+    } else {
+      concentrationBasis   = "none";
+      concentrationBand    = "unknown";
+      concentrationMessage = "Customer concentration not disclosed — request top-10 customer breakdown during diligence.";
+    }
+  }
+
+  return {
+    addBackAmount, addBackPct, addBackBand, addBackMessage,
+    concentrationBasis, topCustomerPct, concentrationBand, concentrationMessage,
+  };
 }
 
 function computeModalScore(
@@ -1404,6 +1515,16 @@ function computeModalScore(
   const signal: "overpriced" | "fair" | "opportunity" =
     gap_pct > 10 ? "overpriced" : gap_pct < -5 ? "opportunity" : "fair";
 
+  // Build the evidence profile — auditable basis for concentration + add-back language
+  const topCustomerPctNum = parseFloat((inputs.topCustomerPct || "").replace(/[^0-9.]/g, ""));
+  const evidenceProfile = buildEvidenceProfile({
+    reportedSDE:            sdeRaw,
+    adjustedSDE:            sde,
+    revenue,
+    industryMarginMidpoint: rmaBenchmarksForNorm?.ebitdaMarginPct ?? null,
+    topCustomerPct:         isFinite(topCustomerPctNum) && topCustomerPctNum > 0 ? topCustomerPctNum : null,
+  });
+
   return {
     overall, riskLevel, fairValue, fairValueLow, fairValueHigh, multiple,
     dscr, monthlyPayment, gap_pct, signal,
@@ -1414,6 +1535,7 @@ function computeModalScore(
     normalizationBullets,
     benchmarkBasis:    resolvedBenchmark?.basis ?? "fallback",
     resolvedMarginMid: rmaBenchmarksForNorm?.ebitdaMarginPct ?? null,
+    evidenceProfile,
   };
 }
 
@@ -1432,6 +1554,7 @@ function AnalyzeDealModal({
     industry: "", revenue: "", sde: "", askingPrice: "",
     city: "", state: "",
     debtPercent: "80", interestRate: "10.5", termYears: "10",
+    topCustomerPct: "",
   });
   const [score, setScore]     = useState<ModalScore | null>(null);
   const [saving, setSaving]   = useState(false);
@@ -1514,6 +1637,16 @@ function AnalyzeDealModal({
           field:    "sde",
           message:  `SDE margin of ${margin.toFixed(1)}% is very thin. Most SMBs run 10–30% — confirm SDE is correct.`,
         });
+      }
+    }
+
+    // Top customer % sanity — optional, but must be valid if provided
+    if (inputs.topCustomerPct) {
+      const tc = parseNum(inputs.topCustomerPct);
+      if (tc < 0 || tc > 100) {
+        issues.push({ severity: "error", field: "topCustomerPct", message: "Top customer % must be between 0 and 100." });
+      } else if (tc === 0 && inputs.topCustomerPct !== "") {
+        issues.push({ severity: "warning", field: "topCustomerPct", message: "Top customer 0% is unusual — most SMBs have at least some concentration." });
       }
     }
 
@@ -1753,6 +1886,39 @@ function AnalyzeDealModal({
                 <div>
                   <label style={labelStyle}>State (optional)</label>
                   <input type="text" placeholder="e.g. FL" maxLength={2} value={inputs.state} onChange={e => set("state", e.target.value.toUpperCase())} style={inputStyle} />
+                </div>
+              </div>
+
+              {/* Deal quality signals — optional inputs that strengthen memo precision */}
+              <div style={{
+                padding: "12px 14px", borderRadius: 10, marginBottom: 14,
+                background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
+              }}>
+                <div style={{
+                  fontSize: 10, color: "#7C8593", textTransform: "uppercase" as const, letterSpacing: "0.08em",
+                  fontWeight: 600, marginBottom: 4,
+                }}>
+                  Deal quality signals (optional)
+                </div>
+                <div style={{ fontSize: 10.5, color: "#7C8593", marginBottom: 10, lineHeight: 1.5 }}>
+                  Providing these replaces inferred flags with data-backed findings in the memo.
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: 10, alignItems: "center" }}>
+                  <div>
+                    <label style={labelStyle}>Top customer % of revenue</label>
+                    <input
+                      type="number"
+                      inputMode="decimal"
+                      placeholder="e.g. 25"
+                      min={0} max={100} step={1}
+                      value={inputs.topCustomerPct}
+                      onChange={e => set("topCustomerPct", e.target.value)}
+                      style={{ ...inputStyle, fontFamily: "'JetBrains Mono',monospace" }}
+                    />
+                  </div>
+                  <div style={{ fontSize: 10.5, color: "#7C8593", lineHeight: 1.55, paddingTop: 14 }}>
+                    If the largest customer accounts for 30%+ of revenue, expect lender scrutiny. Leave blank to flag as inferred.
+                  </div>
                 </div>
               </div>
 
