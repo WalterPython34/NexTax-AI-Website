@@ -92,6 +92,19 @@ interface DealRun {
     leverageFlag:       string | null;
     coverageFlag:       string | null;
   } | null;
+  /** Evidence profile — populated for deals saved after the evidence-profile rollout.
+   *  Older deals have this as null/undefined and the UI falls back to legacy flag logic.
+   *  Shape matches DealEvidenceProfile (see interface below). */
+  evidence_profile?: {
+    addBackAmount:        number;
+    addBackPct:           number;
+    addBackBand:          "clean" | "moderate" | "elevated" | "aggressive";
+    addBackMessage:       string;
+    concentrationBasis:   "hard" | "soft" | "none";
+    topCustomerPct:       number | null;
+    concentrationBand:    "low" | "moderate" | "high" | "unknown";
+    concentrationMessage: string;
+  } | null;
 }
 
 /** Deal Verdict — the single opinionated label shown throughout the UI */
@@ -1759,6 +1772,7 @@ function AnalyzeDealModal({
           industry_score:       score.industryScore,
           red_flags:            score.redFlags,
           green_flags:          score.greenFlags,
+          evidence_profile:     score.evidenceProfile ?? null,
           user_id:              userId,
         }),
       });
@@ -3970,15 +3984,59 @@ function UnderwritingPanel({
                   manual_review_required: deal.manual_review_required ?? false,
                 };
                 const riskFlagsTeaser = buildRiskFlags(memoInputTeaser);
-                const highCount   = riskFlagsTeaser.filter(f => f.level === "high").length;
-                const medCount    = riskFlagsTeaser.filter(f => f.level === "medium").length;
-                const lowCount    = riskFlagsTeaser.filter(f => f.level === "low").length;
 
-                // Top 3 risks — pull highest severity first, then pad if needed
+                // ── Evidence-driven flags — derived from the deal's evidence_profile ──
+                // These take precedence over legacy risk flags when available because they
+                // carry explicit HARD (data-backed) vs SOFT (inferred) evidentiary basis.
+                // Deals saved before the evidence-profile rollout have ep = null; we fall
+                // back gracefully to legacy flags in that case.
+                const ep = deal.evidence_profile;
+                const evidenceRisks: { level: "high" | "medium" | "low"; message: string }[] = [];
+                if (ep) {
+                  // Add-back band → severity mapping
+                  if (ep.addBackBand === "aggressive") {
+                    evidenceRisks.push({ level: "high",   message: ep.addBackMessage });
+                  } else if (ep.addBackBand === "elevated") {
+                    evidenceRisks.push({ level: "medium", message: ep.addBackMessage });
+                  } else if (ep.addBackBand === "moderate") {
+                    evidenceRisks.push({ level: "low",    message: ep.addBackMessage });
+                  }
+                  // Concentration basis + band → severity mapping
+                  if (ep.concentrationBasis === "hard") {
+                    if      (ep.concentrationBand === "high")     evidenceRisks.push({ level: "high",   message: ep.concentrationMessage });
+                    else if (ep.concentrationBand === "moderate") evidenceRisks.push({ level: "medium", message: ep.concentrationMessage });
+                  } else if (ep.concentrationBasis === "soft") {
+                    // Inferred concentration — soft flag, medium severity with explicit "requires validation" framing
+                    evidenceRisks.push({ level: "medium", message: ep.concentrationMessage });
+                  }
+                  // Note: concentrationBasis === "none" produces no flag — we don't fabricate risk
+                }
+
+                // Dedupe legacy risk flags that would overlap with evidence-driven ones.
+                // If the evidence profile covers add-backs or concentration, drop the
+                // legacy heuristic versions so the memo reads cleanly.
+                const hasEvidenceAddBack       = evidenceRisks.some(r => r.message.toLowerCase().includes("add-back"));
+                const hasEvidenceConcentration = evidenceRisks.some(r => r.message.toLowerCase().includes("customer") || r.message.toLowerCase().includes("concentration"));
+                const legacyFiltered = riskFlagsTeaser.filter((f: any) => {
+                  const m = String(f.message || "").toLowerCase();
+                  if (hasEvidenceAddBack       && m.includes("add-back"))       return false;
+                  if (hasEvidenceConcentration && (m.includes("customer") || m.includes("concentration"))) return false;
+                  return true;
+                });
+
+                const highCount   = [...evidenceRisks, ...legacyFiltered].filter(f => f.level === "high").length;
+                const medCount    = [...evidenceRisks, ...legacyFiltered].filter(f => f.level === "medium").length;
+                const lowCount    = [...evidenceRisks, ...legacyFiltered].filter(f => f.level === "low").length;
+
+                // Top 3 risks — evidence-driven flags first within each severity tier,
+                // then legacy-derived flags. Stratified high → medium → low.
                 const allRisks = [
-                  ...riskFlagsTeaser.filter(f => f.level === "high"),
-                  ...riskFlagsTeaser.filter(f => f.level === "medium"),
-                  ...riskFlagsTeaser.filter(f => f.level === "low"),
+                  ...evidenceRisks.filter(f => f.level === "high"),
+                  ...legacyFiltered.filter(f => f.level === "high"),
+                  ...evidenceRisks.filter(f => f.level === "medium"),
+                  ...legacyFiltered.filter(f => f.level === "medium"),
+                  ...evidenceRisks.filter(f => f.level === "low"),
+                  ...legacyFiltered.filter(f => f.level === "low"),
                 ];
                 const top3Risks = allRisks.slice(0, 3);
 
@@ -8064,7 +8122,7 @@ export default function BuyerDashboard() {
     setLoadingDeals(true);
     const { data, error } = await supabase
       .from("deal_runs")
-      .select("id,tool_used,industry,asking_price,fair_value,valuation_multiple,dscr,overall_score,risk_level,city,state,created_at,confidence_grade,revenue,sde,benchmark_family,rma_naics_code,classification_confidence,reported_sde,usable_sde,benchmark_implied_sde,earnings_source,normalization_trust_score,normalization_confidence_level,normalization_flags_json,manual_review_required,benchmark_is_proxy")
+      .select("id,tool_used,industry,asking_price,fair_value,valuation_multiple,dscr,overall_score,risk_level,city,state,created_at,confidence_grade,revenue,sde,benchmark_family,rma_naics_code,classification_confidence,reported_sde,usable_sde,benchmark_implied_sde,earnings_source,normalization_trust_score,normalization_confidence_level,normalization_flags_json,manual_review_required,benchmark_is_proxy,evidence_profile,red_flags,green_flags")
       .eq("user_id", uid)
       .order("created_at", { ascending: false })
       .limit(50);
