@@ -902,23 +902,20 @@ function PricingPageInner() {
     searchParams?.get("view") === "formation" ? "formation" : "acquisitions"
 
   return (
-    <>
-      <div className="pt-8">
-        <PricingToggle view={view} />
-      </div>
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-900 pt-4">
+      <PricingToggle view={view} />
       {view === "acquisitions" ? (
         <AcquisitionsPricing />
       ) : (
         <FormationPricingContent />
       )}
-    </>
+    </div>
   )
 }
 
-// ─── Default export with Suspense wrapper ────────────────────────────────
 export default function PricingPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-slate-950" />}>
+    <Suspense fallback={<div className="min-h-screen bg-slate-900" />}>
       <PricingPageInner />
     </Suspense>
   )
