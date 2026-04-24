@@ -3,10 +3,8 @@
 // components/pricing/PricingToggle.tsx
 //
 // Segmented pill control for switching between Acquisitions and Formation
-// pricing views. State is persisted to the URL (?view=formation) so users can
-// deep-link and the back button works correctly.
-//
-// Default view = "acquisitions" (Formation is now secondary).
+// pricing views. URL-persisted (?view=formation) for deep-linking + back button.
+// Brand-matched emerald for active state.
 
 import { useRouter, useSearchParams, usePathname } from "next/navigation"
 import { Building2, Briefcase } from "lucide-react"
@@ -25,7 +23,7 @@ export function PricingToggle({
   const setView = (next: PricingView) => {
     const params = new URLSearchParams(searchParams?.toString() ?? "")
     if (next === "acquisitions") {
-      params.delete("view")   // default view — keep URL clean
+      params.delete("view")
     } else {
       params.set("view", next)
     }
@@ -34,20 +32,20 @@ export function PricingToggle({
   }
 
   return (
-    <div className="flex justify-center mb-8">
+    <div className="flex justify-center pt-8 pb-4">
       <div
         role="tablist"
         aria-label="Pricing view"
-        className="inline-flex items-center rounded-full border border-white/10 bg-white/[0.03] p-1 backdrop-blur-sm"
+        className="inline-flex items-center rounded-full border border-slate-700 bg-slate-800/50 p-1"
       >
         <button
           role="tab"
           aria-selected={view === "acquisitions"}
           onClick={() => setView("acquisitions")}
           className={`
-            flex items-center gap-2 px-5 py-2 rounded-full text-sm font-semibold transition-all
+            flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-semibold transition-all
             ${view === "acquisitions"
-              ? "bg-gradient-to-r from-indigo-500 to-violet-500 text-white shadow-lg shadow-indigo-500/20"
+              ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20"
               : "text-slate-400 hover:text-slate-200"
             }
           `}
@@ -60,9 +58,9 @@ export function PricingToggle({
           aria-selected={view === "formation"}
           onClick={() => setView("formation")}
           className={`
-            flex items-center gap-2 px-5 py-2 rounded-full text-sm font-semibold transition-all
+            flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-semibold transition-all
             ${view === "formation"
-              ? "bg-gradient-to-r from-emerald-500 to-teal-500 text-white shadow-lg shadow-emerald-500/20"
+              ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20"
               : "text-slate-400 hover:text-slate-200"
             }
           `}
