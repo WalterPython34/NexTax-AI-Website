@@ -1,129 +1,49 @@
 "use client"
 
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
 import {
-  ArrowRight,
-  Shield,
-  CheckCircle,
-  TrendingUp,
-  TrendingDown,
   DollarSign,
-  AlertTriangle,
+  TrendingUp,
   BarChart3,
+  AlertTriangle,
   FileText,
   Target,
-  Calculator,
+  CheckCircle,
+  ArrowRight,
+  Layers,
   Scale,
-  Lock,
-  Play,
-  ChevronDown,
+  LineChart,
+  Shield,
+  Briefcase,
+  PieChart,
+  Map,
+  Percent,
+  Bell,
+  GitCompare,
 } from "lucide-react"
 import Link from "next/link"
 
-// FAQ Data
-const preLofiFaqs = [
-  {
-    question: "How do I know seller add-backs will hold up under lender scrutiny?",
-    answer: "We pressure-test earnings integrity to ensure normalized cash flow is defensible.",
-  },
-  {
-    question: "Will this deal survive SBA underwriting under conservative assumptions?",
-    answer: "We evaluate debt coverage durability before LOI to reduce late-stage resets.",
-  },
-  {
-    question: "Am I underestimating working capital requirements post-close?",
-    answer: "We model normalized working capital and liquidity buffers to prevent surprises.",
-  },
-  {
-    question: "Should this be structured as an asset or stock purchase?",
-    answer: "We analyze structure alignment for long-term tax efficiency and lender comfort.",
-  },
-  {
-    question: "What happens if revenue or margins compress after closing?",
-    answer: "We run downside scenarios to define a durable offer range and walk-away threshold.",
-  },
-]
-
-function PreLoiFaq() {
-  const [openIndex, setOpenIndex] = useState<number | null>(null)
-
+export default function FeaturesPage() {
   return (
-    <section className="py-20 border-t border-slate-800">
-      <div className="container mx-auto px-4">
-        <div className="max-w-3xl mx-auto">
-          <div className="mb-10 text-center">
-            <Badge className="bg-slate-700/50 text-slate-300 border-slate-600 mb-4">Due Diligence</Badge>
-            <h2 className="text-3xl font-bold text-white mb-3">Pre-LOI Questions We Help Buyers Answer</h2>
-            <div className="w-16 h-px bg-cyan-500/50 mx-auto" />
-          </div>
-
-          <div className="space-y-2">
-            {preLofiFaqs.map((faq, i) => (
-              <div
-                key={i}
-                className="border border-slate-800 rounded-lg overflow-hidden transition-colors hover:border-slate-700"
-              >
-                <button
-                  onClick={() => setOpenIndex(openIndex === i ? null : i)}
-                  className="w-full flex items-center justify-between px-6 py-4 text-left"
-                >
-                  <span className="text-sm font-medium text-slate-200 pr-4">{faq.question}</span>
-                  <ChevronDown
-                    className={`w-4 h-4 text-slate-500 flex-shrink-0 transition-transform ${openIndex === i ? "rotate-180" : ""}`}
-                  />
-                </button>
-                {openIndex === i && (
-                  <div className="px-6 pb-4 pt-0">
-                    <p className="text-sm text-slate-400 leading-relaxed">{faq.answer}</p>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </section>
-  )
-}
-
-export default function HomePage() {
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black">
-      {/* Hero Section */}
-      <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 to-blue-500/5" />
-        <div className="relative container mx-auto px-4 py-20 lg:py-28">
+    <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black pt-16">
+      {/* SECTION 1 — HERO */}
+      <section className="py-20">
+        <div className="container mx-auto px-4">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <div className="space-y-8">
-              <Badge className="bg-cyan-500/10 text-cyan-400 border-cyan-500/30 text-sm px-3 py-1.5">
-                <BarChart3 className="w-4 h-4 mr-2" />
-                Deal Analysis Platform
+            {/* Left - Copy */}
+            <div className="space-y-6">
+              <Badge className="bg-cyan-500/20 text-cyan-300 border-cyan-500/30">
+                ACQUIFLOW FEATURES
               </Badge>
-
-              <div className="space-y-6">
-                <h1 className="text-4xl lg:text-5xl font-bold text-white leading-tight">
-                  Know if a deal is worth buying
-                  <span className="block text-cyan-400 mt-2">before you commit capital.</span>
-                </h1>
-
-                <p className="text-xl text-slate-300 leading-relaxed max-w-lg">
-                  Normalize earnings, stress test financing, and benchmark against real transactions — all in one
-                  workflow.
-                </p>
-
-                <p className="text-base text-slate-400 mt-4">
-                  Built for SMB buyers, acquisition entrepreneurs, and investors evaluating real deals.
-                </p>
-                <p className="text-sm text-slate-500 mt-2">
-                  Built using real-world underwriting frameworks used by lenders and institutional investors.
-                </p>
-              </div>
-
-              {/* CTAs */}
-              <div className="flex flex-col sm:flex-row gap-4">
+              <h1 className="text-4xl lg:text-5xl font-bold text-white leading-tight">
+                Everything You Need to Underwrite, Compare, and Choose Better Deals
+              </h1>
+              <p className="text-xl text-slate-300 leading-relaxed">
+                AcquiFlow turns raw listings, CIMs, and seller-provided numbers into decision-grade acquisition analysis — with normalized earnings, real transaction benchmarks, financing stress tests, risk flags, LOI guidance, and lender-ready outputs.
+              </p>
+              <div className="flex flex-col sm:flex-row gap-4 pt-4">
                 <Link href="/deal-reality-check">
                   <Button
                     size="lg"
@@ -139,64 +59,51 @@ export default function HomePage() {
                     variant="outline"
                     className="border-slate-600 text-slate-300 hover:bg-slate-800 hover:text-white px-8 py-6 text-lg w-full sm:w-auto bg-transparent"
                   >
-                    See a Sample Analysis
+                    See Sample Analysis
                   </Button>
                 </Link>
-                <Button
-                  size="lg"
-                  variant="ghost"
-                  className="text-slate-400 hover:text-white px-6 py-6 text-lg"
-                  onClick={() => document.getElementById("how-it-works")?.scrollIntoView({ behavior: "smooth" })}
-                >
-                  <Play className="mr-2 w-4 h-4" />
-                  See How It Works
-                </Button>
               </div>
             </div>
 
-            {/* Hero Visual - Deal Analysis Animation Placeholder */}
-            <div className="relative">
-              <div className="relative bg-slate-800/50 backdrop-blur-sm rounded-2xl p-8 border border-slate-700">
-                <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-blue-500/5 rounded-2xl" />
-                <div className="relative space-y-6">
-                  {/* Simulated Deal Analysis Output */}
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-white">Deal Analysis</h3>
-                    <Badge className="bg-yellow-500/20 text-yellow-300 border-yellow-500/30">Processing</Badge>
+            {/* Right - Dashboard mockup */}
+            <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between mb-6">
+                  <span className="text-sm text-slate-400">Deal Analysis Dashboard</span>
+                  <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30">Live</Badge>
+                </div>
+                
+                {/* Metrics Grid */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="bg-slate-900/50 rounded-lg p-4 border border-slate-700">
+                    <div className="text-xs text-slate-500 mb-1">Adjusted SDE</div>
+                    <div className="text-2xl font-bold text-white">$285,000</div>
+                    <div className="text-xs text-red-400 mt-1">↓ $55K from seller claim</div>
                   </div>
-
-                  <div className="space-y-4">
-                    <div className="bg-slate-900/50 rounded-lg p-4">
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-slate-400 text-sm">Adjusted SDE</span>
-                        <span className="text-red-400 font-mono">$285,000 ↓</span>
-                      </div>
-                      <div className="text-xs text-slate-500">Seller claimed: $340,000</div>
-                    </div>
-
-                    <div className="bg-slate-900/50 rounded-lg p-4">
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-slate-400 text-sm">DSCR</span>
-                        <span className="text-red-400 font-mono">1.18x</span>
-                      </div>
-                      <div className="text-xs text-slate-500">Below 1.25x threshold</div>
-                    </div>
-
-                    <div className="bg-slate-900/50 rounded-lg p-4">
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-slate-400 text-sm">Valuation Gap</span>
-                        <span className="text-yellow-400 font-mono">-22%</span>
-                      </div>
-                      <div className="text-xs text-slate-500">Overpriced vs comps</div>
-                    </div>
+                  <div className="bg-slate-900/50 rounded-lg p-4 border border-slate-700">
+                    <div className="text-xs text-slate-500 mb-1">DSCR</div>
+                    <div className="text-2xl font-bold text-amber-400">1.18x</div>
+                    <div className="text-xs text-amber-400 mt-1">Below 1.25x threshold</div>
                   </div>
-
-                  <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 mt-4">
-                    <div className="flex items-center gap-2">
-                      <AlertTriangle className="w-5 h-5 text-red-400" />
-                      <span className="text-red-300 font-semibold">Deal Fails Under Stress</span>
-                    </div>
+                  <div className="bg-slate-900/50 rounded-lg p-4 border border-slate-700">
+                    <div className="text-xs text-slate-500 mb-1">Valuation Gap</div>
+                    <div className="text-2xl font-bold text-red-400">-22%</div>
+                    <div className="text-xs text-slate-500 mt-1">vs. benchmark range</div>
                   </div>
+                  <div className="bg-slate-900/50 rounded-lg p-4 border border-slate-700">
+                    <div className="text-xs text-slate-500 mb-1">Risk Flags</div>
+                    <div className="text-2xl font-bold text-amber-400">3</div>
+                    <div className="text-xs text-slate-500 mt-1">Requires attention</div>
+                  </div>
+                </div>
+
+                {/* Verdict */}
+                <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 mt-4">
+                  <div className="flex items-center gap-2">
+                    <AlertTriangle className="w-5 h-5 text-red-400" />
+                    <span className="font-semibold text-red-400">Deal Fails Under Stress</span>
+                  </div>
+                  <p className="text-sm text-slate-400 mt-2">DSCR drops below 1.0x under conservative assumptions. Renegotiate or walk.</p>
                 </div>
               </div>
             </div>
@@ -204,203 +111,83 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Proof Strip */}
-      <section className="py-12 bg-slate-900/50 border-y border-slate-800">
+      {/* SECTION 2 — BUILT FOR SERIOUS BUYERS */}
+      <section className="py-16 bg-slate-900/50 border-y border-slate-800">
         <div className="container mx-auto px-4">
-          <p className="text-center text-slate-500 text-sm mb-8 uppercase tracking-wide">Built for serious buyers</p>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center mb-8">
-            <div>
-              <div className="text-3xl font-bold text-cyan-400">100+</div>
-              <div className="text-sm text-slate-400 mt-1">Financial signals analyzed per deal</div>
-            </div>
-            <div>
-              <div className="text-3xl font-bold text-cyan-400">40+</div>
-              <div className="text-sm text-slate-400 mt-1">Industries benchmarked</div>
-            </div>
-            <div>
-              <div className="text-3xl font-bold text-emerald-400">Real</div>
-              <div className="text-sm text-slate-400 mt-1">Transaction comps — not listings</div>
-            </div>
-            <div>
-              <div className="text-3xl font-bold text-emerald-400">Minutes</div>
-              <div className="text-sm text-slate-400 mt-1">Lender-ready outputs</div>
-            </div>
+          <div className="text-center mb-12">
+            <h2 className="text-3xl font-bold text-white">Built for Serious Buyers Before the LOI</h2>
           </div>
-          <div className="flex flex-wrap justify-center gap-6 text-sm text-slate-500">
-            <span>Analyzing deals across 40+ industries</span>
-            <span className="hidden sm:inline">•</span>
-            <span>100+ financial signals evaluated per deal</span>
-            <span className="hidden sm:inline">•</span>
-            <span>Designed for lender-ready underwriting</span>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+            <div>
+              <div className="text-4xl font-bold text-cyan-400">100+</div>
+              <div className="text-sm text-slate-400 mt-2">Financial signals evaluated per deal</div>
+            </div>
+            <div>
+              <div className="text-4xl font-bold text-cyan-400">40+</div>
+              <div className="text-sm text-slate-400 mt-2">Industries benchmarked with real transaction data</div>
+            </div>
+            <div>
+              <div className="text-4xl font-bold text-emerald-400">Real</div>
+              <div className="text-sm text-slate-400 mt-2">Transaction comps — not listing guesses</div>
+            </div>
+            <div>
+              <div className="text-4xl font-bold text-emerald-400">Minutes</div>
+              <div className="text-sm text-slate-400 mt-2">To lender-ready outputs</div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Why Deals Fall Apart */}
+      {/* SECTION 3 — CORE FEATURE GRID */}
       <section className="py-20">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">
-              Most deals don&apos;t fail from lack of effort —<br />
-              <span className="text-red-400">they fail from bad assumptions.</span>
-            </h2>
-            <p className="text-xl text-slate-400 max-w-2xl mx-auto">
-              Deals look attractive on the surface but break under scrutiny.
+            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">What AcquiFlow Analyzes</h2>
+            <p className="text-xl text-slate-400 max-w-3xl mx-auto">
+              Every deal is reviewed across the same decision framework serious buyers, lenders, and advisors care about.
             </p>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[
-              {
-                icon: TrendingUp,
-                title: "Inflated Earnings",
-                description: "Seller add-backs often overstate true cash flow.",
-                color: "red",
-              },
-              {
-                icon: TrendingDown,
-                title: "Weak Debt Coverage",
-                description: 'Deals that "work on paper" collapse under financing pressure.',
-                color: "red",
-              },
-              {
-                icon: BarChart3,
-                title: "No Real Benchmarking",
-                description: "Buyers rely on listings — not actual transaction comps.",
-                color: "yellow",
-              },
-              {
-                icon: DollarSign,
-                title: "Overpriced Deals",
-                description: "Without data, buyers consistently overpay.",
-                color: "yellow",
-              },
-            ].map((item, i) => (
-              <Card key={i} className="bg-slate-800/50 border-slate-700 hover:border-red-500/30 transition-colors">
-                <CardContent className="p-6">
-                  <div
-                    className={`w-12 h-12 mb-4 rounded-lg ${item.color === "red" ? "bg-red-500/20" : "bg-yellow-500/20"} flex items-center justify-center`}
-                  >
-                    <item.icon className={`w-6 h-6 ${item.color === "red" ? "text-red-400" : "text-yellow-400"}`} />
-                  </div>
-                  <h3 className="text-lg font-semibold text-white mb-2">{item.title}</h3>
-                  <p className="text-slate-400 text-sm">{item.description}</p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* How AcquiFlow Works */}
-      <section id="how-it-works" className="py-20 bg-slate-900/50">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <Badge className="bg-cyan-500/10 text-cyan-400 border-cyan-500/30 mb-4">Platform Workflow</Badge>
-            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">How Serious Buyers Evaluate Deals with AcquiFlow</h2>
-          </div>
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {[
-              {
-                step: "01",
-                title: "Input the Deal",
-                description: "Enter purchase price, SDE, revenue, and financing assumptions.",
-                icon: Calculator,
-              },
-              {
-                step: "02",
-                title: "Underwrite It",
-                description: "Normalize earnings, adjust add-backs, and stress test debt coverage.",
-                icon: Scale,
-              },
-              {
-                step: "03",
-                title: "Benchmark It",
-                description: "Compare against real transaction data across your industry.",
-                icon: BarChart3,
-              },
-              {
-                step: "04",
-                title: "Decide with Confidence",
-                description: "Instantly see if the deal holds up — or where it breaks.",
-                icon: Target,
-              },
-            ].map((item, i) => (
-              <div key={i} className="relative">
-                <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 h-full hover:border-cyan-500/30 transition-colors">
-                  <div className="text-cyan-500 font-mono text-sm mb-4">{item.step}</div>
-                  <div className="w-12 h-12 mb-4 rounded-lg bg-cyan-500/10 flex items-center justify-center">
-                    <item.icon className="w-6 h-6 text-cyan-400" />
-                  </div>
-                  <h3 className="text-lg font-semibold text-white mb-2">{item.title}</h3>
-                  <p className="text-slate-400 text-sm">{item.description}</p>
-                </div>
-                {i < 3 && (
-                  <div className="hidden lg:block absolute top-1/2 -right-4 w-8 h-px bg-slate-700">
-                    <ArrowRight className="w-4 h-4 text-slate-600 absolute -right-1 -top-2" />
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-
-          {/* Placeholder for animations */}
-          <div className="mt-12 text-center">
-            <p className="text-slate-500 text-sm">[Animation/video placeholder — deal flow visualization]</p>
-          </div>
-        </div>
-      </section>
-
-      {/* What You Get */}
-      <section className="py-20">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">
-              What You&apos;ll Know <span className="text-cyan-400">Before You Make an Offer</span>
-            </h2>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[
               {
                 icon: DollarSign,
-                title: "True Cash Flow (After Add-Back Scrutiny)",
-                description: "Know the real earnings after pressure-testing seller adjustments",
+                title: "Normalized Earnings",
+                description: "Adjust reported SDE for aggressive add-backs, owner compensation gaps, one-time items, and questionable adjustments.",
               },
               {
                 icon: TrendingUp,
-                title: "Will This Deal Survive SBA Financing?",
-                description: "See how the deal performs under realistic lending scenarios",
-              },
-              {
-                icon: Target,
-                title: "What This Business Is Actually Worth",
-                description: "Get a defensible valuation range based on real transaction data",
-              },
-              {
-                icon: AlertTriangle,
-                title: "Where This Deal Breaks Under Pressure",
-                description: "Instantly identify weaknesses before you commit capital",
+                title: "DSCR & Financing Stress Test",
+                description: "See whether the deal can support debt under realistic SBA-style financing assumptions and downside scenarios.",
               },
               {
                 icon: BarChart3,
-                title: "How This Deal Compares to Real Transactions",
-                description: "Benchmark against actual closed deals — not listing prices",
+                title: "Market Benchmarking",
+                description: "Compare asking multiples against real transaction data by industry instead of relying only on broker narratives.",
+              },
+              {
+                icon: AlertTriangle,
+                title: "Risk Flag Engine",
+                description: "Surface issues such as weak coverage, inflated earnings, valuation gaps, concentration risk, and fragile downside protection.",
+              },
+              {
+                icon: Scale,
+                title: "LOI & Negotiation Guidance",
+                description: "Translate the analysis into offer ranges, walk-away pricing, seller note logic, earnout considerations, and buyer protections.",
               },
               {
                 icon: FileText,
-                title: "What a Lender Will See Immediately",
-                description: "Export a clean, structured view for financing conversations",
+                title: "Deal Memo Output",
+                description: "Generate an IC-style memo with investment snapshot, red flags, diligence priorities, lender summary, and recommendation logic.",
               },
-            ].map((item, i) => (
-              <Card key={i} className="bg-slate-800/30 border-slate-700 hover:border-cyan-500/30 transition-colors">
+            ].map((feature, i) => (
+              <Card key={i} className="bg-slate-800/50 border-slate-700 hover:border-cyan-500/50 transition-colors">
                 <CardContent className="p-6">
-                  <div className="w-10 h-10 mb-4 rounded-lg bg-cyan-500/10 flex items-center justify-center">
-                    <item.icon className="w-5 h-5 text-cyan-400" />
+                  <div className="w-12 h-12 rounded-lg bg-cyan-500/20 flex items-center justify-center mb-4">
+                    <feature.icon className="w-6 h-6 text-cyan-400" />
                   </div>
-                  <h3 className="text-lg font-semibold text-white mb-2">{item.title}</h3>
-                  <p className="text-slate-400 text-sm">{item.description}</p>
+                  <h3 className="text-xl font-semibold text-white mb-3">{feature.title}</h3>
+                  <p className="text-slate-400">{feature.description}</p>
                 </CardContent>
               </Card>
             ))}
@@ -408,87 +195,295 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Sample Analysis Section */}
+      {/* SECTION 4 — REAL DEAL WALKTHROUGH */}
       <section className="py-20 bg-slate-900/50">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">
-              See What a Real Deal Analysis Looks Like
-            </h2>
+          <div className="text-center mb-16">
+            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">From Seller Claim to Buyer Decision</h2>
           </div>
 
-          <div className="grid lg:grid-cols-2 gap-12 items-center max-w-5xl mx-auto">
-            {/* Left - Screenshot placeholder */}
-            <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-8 aspect-video flex items-center justify-center">
-              <div className="text-center">
-                <BarChart3 className="w-16 h-16 text-slate-600 mx-auto mb-4" />
-                <p className="text-slate-500 text-sm">[Deal Analysis Dashboard Screenshot]</p>
+          {/* Workflow Steps */}
+          <div className="grid md:grid-cols-4 gap-6 mb-16">
+            {[
+              {
+                step: "01",
+                title: "Input the Deal",
+                description: "Enter asking price, revenue, SDE, industry, location, and financing assumptions — or paste listing details.",
+                icon: Layers,
+              },
+              {
+                step: "02",
+                title: "Normalize the Earnings",
+                description: "AcquiFlow adjusts the seller's numbers into a cleaner cash-flow view buyers and lenders can actually evaluate.",
+                icon: DollarSign,
+              },
+              {
+                step: "03",
+                title: "Benchmark & Stress Test",
+                description: "The platform compares the deal to real transaction benchmarks and tests whether debt coverage holds under pressure.",
+                icon: BarChart3,
+              },
+              {
+                step: "04",
+                title: "Decide the Posture",
+                description: "Proceed, renegotiate, pause, or walk — with pricing discipline, LOI guidance, and diligence priorities.",
+                icon: Target,
+              },
+            ].map((item, i) => (
+              <div key={i} className="relative">
+                <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 h-full">
+                  <div className="text-cyan-400 text-sm font-mono mb-3">Step {item.step}</div>
+                  <div className="w-10 h-10 rounded-lg bg-cyan-500/20 flex items-center justify-center mb-4">
+                    <item.icon className="w-5 h-5 text-cyan-400" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-white mb-2">{item.title}</h3>
+                  <p className="text-sm text-slate-400">{item.description}</p>
+                </div>
+                {i < 3 && (
+                  <div className="hidden md:block absolute top-1/2 -right-3 transform -translate-y-1/2 z-10">
+                    <ArrowRight className="w-6 h-6 text-slate-600" />
+                  </div>
+                )}
               </div>
-            </div>
+            ))}
+          </div>
 
-            {/* Right - Text block */}
-            <div className="space-y-6">
-              <h3 className="text-2xl font-bold text-white">Real insights. Not guesses.</h3>
-              <ul className="space-y-4">
-                {[
-                  "Adjusted SDE reduced from $340K → $285K",
-                  "DSCR falls below lender threshold (1.18x)",
-                  "Business is overpriced by ~22% vs real comps",
-                  "Deal fails under conservative stress scenarios",
-                ].map((item, i) => (
-                  <li key={i} className="flex items-start gap-3">
-                    <CheckCircle className="w-5 h-5 text-cyan-400 flex-shrink-0 mt-0.5" />
-                    <span className="text-slate-300">{item}</span>
-                  </li>
-                ))}
-              </ul>
-              <Link href="/sample-deal">
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="border-cyan-500/50 text-cyan-400 hover:bg-cyan-500/10 px-8 py-6 text-lg bg-transparent"
-                >
-                  See a Sample Analysis
-                  <ArrowRight className="ml-2 w-5 h-5" />
-                </Button>
-              </Link>
+          {/* Sample Result */}
+          <div className="max-w-2xl mx-auto">
+            <div className="bg-slate-800/80 border border-slate-700 rounded-xl p-6">
+              <div className="text-sm text-slate-500 mb-4 uppercase tracking-wide">Sample Analysis Result</div>
+              <div className="grid grid-cols-2 gap-4 mb-4">
+                <div>
+                  <div className="text-xs text-slate-500">Seller-reported SDE</div>
+                  <div className="text-lg font-semibold text-slate-300">$340,000</div>
+                </div>
+                <div>
+                  <div className="text-xs text-slate-500">Adjusted SDE</div>
+                  <div className="text-lg font-semibold text-white">$285,000</div>
+                </div>
+                <div>
+                  <div className="text-xs text-slate-500">DSCR</div>
+                  <div className="text-lg font-semibold text-amber-400">1.18x</div>
+                </div>
+                <div>
+                  <div className="text-xs text-slate-500">Valuation Gap</div>
+                  <div className="text-lg font-semibold text-red-400">-22%</div>
+                </div>
+              </div>
+              <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3">
+                <span className="text-sm text-red-400 font-medium">Result: Deal fails under stress — renegotiate or walk</span>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Pricing Split */}
+      {/* SECTION 5 — LENDER-READY OUTPUTS */}
       <section className="py-20">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-6">
-            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">
-              Use the platform — or get full underwriting support
-            </h2>
+          <div className="text-center mb-16">
+            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">Outputs Built for Financing Conversations</h2>
+            <p className="text-xl text-slate-400 max-w-3xl mx-auto">
+              AcquiFlow does not just give you a score. It produces structured outputs that help buyers communicate clearly with lenders, partners, attorneys, and advisors.
+            </p>
           </div>
-          <p className="text-center text-slate-400 mb-16 max-w-2xl mx-auto">
-            Use the platform yourself — or get expert-level underwriting support when the deal matters most.
-          </p>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[
+              {
+                icon: Shield,
+                title: "Lender Readiness Summary",
+                description: "Shows whether the deal appears financeable, where coverage breaks, and what must improve before lender outreach.",
+              },
+              {
+                icon: Briefcase,
+                title: "SBA Financing View",
+                description: "Estimate loan amount, down payment, debt service, DSCR, and equity recovery under SBA-style assumptions.",
+              },
+              {
+                icon: FileText,
+                title: "Deal Memo",
+                description: "Export a clean, professional memo summarizing valuation, risks, benchmarks, diligence priorities, and recommendation.",
+              },
+              {
+                icon: Scale,
+                title: "LOI Structure Guidance",
+                description: "Use analysis-driven pricing ranges, seller support suggestions, and buyer protection language before drafting an offer.",
+              },
+            ].map((item, i) => (
+              <Card key={i} className="bg-slate-800/50 border-slate-700">
+                <CardContent className="p-6">
+                  <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center mb-4">
+                    <item.icon className="w-5 h-5 text-emerald-400" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-white mb-2">{item.title}</h3>
+                  <p className="text-sm text-slate-400">{item.description}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* SECTION 6 — DASHBOARD SCREENSHOTS */}
+      <section className="py-20 bg-slate-900/50">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">See the Full Deal Workflow in One Dashboard</h2>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[
+              {
+                title: "Underwriting Summary",
+                description: "Instantly see verdict, score, DSCR, asking multiple, adjusted earnings, and key risk signals.",
+                icon: LineChart,
+              },
+              {
+                title: "Stress Test",
+                description: "Model downside scenarios and see where debt coverage breaks under conservative assumptions.",
+                icon: TrendingUp,
+              },
+              {
+                title: "Market Comps",
+                description: "Compare asking price to transaction-backed benchmark ranges for the selected industry.",
+                icon: BarChart3,
+              },
+              {
+                title: "Lender Readiness",
+                description: "See financing feasibility, coverage gaps, and what lenders will flag before you apply.",
+                icon: Shield,
+              },
+              {
+                title: "LOI Builder",
+                description: "Translate analysis into anchor offer, target range, max justified price, and buyer protections.",
+                icon: Scale,
+              },
+              {
+                title: "Deal Memo",
+                description: "Generate an IC-style memo with investment thesis, risks, benchmarks, and recommendation.",
+                icon: FileText,
+              },
+            ].map((item, i) => (
+              <div key={i} className="bg-slate-800/50 border border-slate-700 rounded-xl overflow-hidden">
+                {/* Screenshot placeholder */}
+                <div className="aspect-video bg-slate-900/50 flex items-center justify-center border-b border-slate-700">
+                  <item.icon className="w-12 h-12 text-slate-600" />
+                </div>
+                <div className="p-4">
+                  <h3 className="font-semibold text-white mb-1">{item.title}</h3>
+                  <p className="text-sm text-slate-400">{item.description}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* SECTION 7 — COMPARE DEALS */}
+      <section className="py-20">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">Stack Deals Side by Side</h2>
+            <p className="text-xl text-slate-400 max-w-3xl mx-auto">
+              Most buyers evaluate one deal at a time. AcquiFlow helps you compare multiple opportunities so the best use of your time and capital becomes obvious.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
+            {[
+              { icon: TrendingUp, text: "Compare DSCR and downside durability" },
+              { icon: BarChart3, text: "Compare asking multiple vs benchmark range" },
+              { icon: DollarSign, text: "Compare adjusted SDE and valuation gap" },
+              { icon: GitCompare, text: "Compare deal risk, lender readiness, and negotiation posture" },
+            ].map((item, i) => (
+              <div key={i} className="flex items-start gap-3 bg-slate-800/30 rounded-lg p-4 border border-slate-700">
+                <item.icon className="w-5 h-5 text-cyan-400 flex-shrink-0 mt-0.5" />
+                <span className="text-slate-300 text-sm">{item.text}</span>
+              </div>
+            ))}
+          </div>
+
+          <div className="text-center">
+            <Link href="/compare">
+              <Button
+                size="lg"
+                variant="outline"
+                className="border-cyan-500/50 text-cyan-400 hover:bg-cyan-500/10 px-8 py-6 text-lg bg-transparent"
+              >
+                Compare Your Deals
+                <ArrowRight className="ml-2 w-5 h-5" />
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* SECTION 8 — MARKET INTEL */}
+      <section className="py-20 bg-slate-900/50">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">Market Intelligence Beyond the Listing</h2>
+            <p className="text-xl text-slate-400 max-w-3xl mx-auto">
+              Use deal data, industry benchmarks, and local market signals to understand whether an opportunity deserves deeper diligence.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-4 mb-12">
+            {[
+              { icon: BarChart3, text: "Industry benchmark ranges" },
+              { icon: Map, text: "Local market saturation checks" },
+              { icon: PieChart, text: "Representative transaction comps" },
+              { icon: Percent, text: "Pricing percentile indicators" },
+              { icon: Bell, text: "Personalized deal feed signals" },
+            ].map((item, i) => (
+              <div key={i} className="flex flex-col items-center gap-3 bg-slate-800/30 rounded-lg p-6 border border-slate-700 text-center">
+                <item.icon className="w-8 h-8 text-emerald-400" />
+                <span className="text-slate-300 text-sm">{item.text}</span>
+              </div>
+            ))}
+          </div>
+
+          <div className="text-center">
+            <Link href="/market-intel">
+              <Button
+                size="lg"
+                variant="outline"
+                className="border-emerald-500/50 text-emerald-400 hover:bg-emerald-500/10 px-8 py-6 text-lg bg-transparent"
+              >
+                Explore Market Intel
+                <ArrowRight className="ml-2 w-5 h-5" />
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* SECTION 9 — PLATFORM VS ADVISORY */}
+      <section className="py-20">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">Use the Platform — or Get Full Underwriting Support</h2>
+          </div>
 
           <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
             {/* SaaS Card */}
-            <Card className="bg-slate-800/50 border-slate-700 hover:border-cyan-500/30 transition-colors">
+            <Card className="bg-slate-800/50 border-slate-700">
               <CardContent className="p-8">
-                <Badge className="bg-cyan-500/10 text-cyan-400 border-cyan-500/30 mb-4">Platform</Badge>
-                <h3 className="text-2xl font-bold text-white mb-2">AcquiFlow Platform</h3>
-                <div className="mb-6">
-                  <span className="text-4xl font-bold text-white">$29–$79</span>
-                  <span className="text-slate-400 ml-2">/ month</span>
+                <div className="text-center mb-6">
+                  <h3 className="text-2xl font-bold text-white mb-2">AcquiFlow Platform</h3>
+                  <div className="text-3xl font-bold text-cyan-400">$29–$79<span className="text-lg text-slate-400">/month</span></div>
                 </div>
                 <ul className="space-y-3 mb-8">
                   {[
                     "Analyze unlimited deals",
                     "Benchmark against real comps",
                     "Stress test financing",
-                    "Save & compare opportunities",
+                    "Save and compare opportunities",
                   ].map((item, i) => (
-                    <li key={i} className="flex items-center gap-3 text-slate-300">
+                    <li key={i} className="flex items-center gap-3">
                       <CheckCircle className="w-5 h-5 text-cyan-400 flex-shrink-0" />
-                      {item}
+                      <span className="text-slate-300">{item}</span>
                     </li>
                   ))}
                 </ul>
@@ -501,14 +496,12 @@ export default function HomePage() {
               </CardContent>
             </Card>
 
-            {/* Service Card */}
-            <Card className="bg-slate-800/50 border-emerald-500/30 hover:border-emerald-500/50 transition-colors">
+            {/* Advisory Card */}
+            <Card className="bg-slate-800/50 border-emerald-500/50">
               <CardContent className="p-8">
-                <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/30 mb-4">Advisory</Badge>
-                <h3 className="text-2xl font-bold text-white mb-2">Pro Deal Analysis</h3>
-                <div className="mb-6">
-                  <span className="text-4xl font-bold text-white">$1,500</span>
-                  <span className="text-slate-400 ml-2">starting</span>
+                <div className="text-center mb-6">
+                  <h3 className="text-2xl font-bold text-white mb-2">Pro Deal Analysis</h3>
+                  <div className="text-3xl font-bold text-emerald-400">$1,500<span className="text-lg text-slate-400"> starting</span></div>
                 </div>
                 <ul className="space-y-3 mb-8">
                   {[
@@ -517,14 +510,17 @@ export default function HomePage() {
                     "Tax-aware deal structuring",
                     "Lender-ready report",
                   ].map((item, i) => (
-                    <li key={i} className="flex items-center gap-3 text-slate-300">
+                    <li key={i} className="flex items-center gap-3">
                       <CheckCircle className="w-5 h-5 text-emerald-400 flex-shrink-0" />
-                      {item}
+                      <span className="text-slate-300">{item}</span>
                     </li>
                   ))}
                 </ul>
                 <Link href="/acquisitions">
-                  <Button className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-semibold">
+                  <Button
+                    variant="outline"
+                    className="w-full border-emerald-500/50 text-emerald-400 hover:bg-emerald-500/10 bg-transparent"
+                  >
                     Get a Pro Analysis
                     <ArrowRight className="ml-2 w-4 h-4" />
                   </Button>
@@ -535,36 +531,14 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Security Section - Reduced emphasis */}
-      <section className="py-12 border-t border-slate-800">
-        <div className="container mx-auto px-4">
-          <div className="max-w-4xl mx-auto">
-            <div className="flex flex-col md:flex-row items-center justify-between gap-6">
-              <div className="flex items-center gap-3">
-                <Lock className="w-5 h-5 text-slate-500" />
-                <span className="text-slate-400 text-sm">Your data is protected with bank-level encryption</span>
-              </div>
-              <div className="flex flex-wrap gap-4 text-sm text-slate-500">
-                {["256-bit encryption", "SOC 2 compliant", "100% data ownership"].map((item, i) => (
-                  <span key={i} className="flex items-center gap-2">
-                    <Shield className="w-4 h-4" />
-                    {item}
-                  </span>
-                ))}
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Final CTA */}
+      {/* SECTION 10 — FINAL CTA */}
       <section className="py-20 bg-gradient-to-r from-cyan-500/10 to-blue-500/10">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">
-            Stop guessing. Start making data-driven acquisition decisions.
+            Know If a Deal Is Worth Buying Before You Commit Capital
           </h2>
           <p className="text-xl text-slate-300 mb-8 max-w-2xl mx-auto">
-            Know if a deal is worth buying — before you commit capital.
+            Stop relying on seller claims, broker narratives, and spreadsheet guesswork. Run the deal through a decision-grade acquisition workflow before you make an offer.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/deal-reality-check">
@@ -582,24 +556,10 @@ export default function HomePage() {
                 variant="outline"
                 className="border-slate-600 text-slate-300 hover:bg-slate-800 hover:text-white px-10 py-6 text-lg bg-transparent"
               >
-                See a Sample Analysis
+                See Sample Analysis
               </Button>
             </Link>
           </div>
-        </div>
-      </section>
-
-      {/* Pre-LOI FAQ */}
-      <PreLoiFaq />
-
-      {/* Compliance Footer */}
-      <section className="py-8 border-t border-slate-800">
-        <div className="container mx-auto px-4">
-          <p className="text-center text-slate-500 text-xs max-w-3xl mx-auto">
-            NexTax.AI provides financial analysis tools and educational content. This is not legal, tax, or investment
-            advice. Consult qualified professionals before making business decisions. All transaction data used for
-            benchmarking is anonymized and aggregated.
-          </p>
         </div>
       </section>
     </div>
