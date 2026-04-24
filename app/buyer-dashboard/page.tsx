@@ -20,6 +20,7 @@ import { OutcomeModal } from "@/components/OutcomeModal";
 import { fetchOutcomesForUser, OUTCOME_LABELS, OUTCOME_COLORS, type DealOutcome } from "@/lib/dealOutcomes";
 import { InfoTooltip } from "@/components/InfoTooltip";
 import { SampleMemoPreviewModal } from "@/components/SampleMemoPreviewModal";
+import { HowItWorksButton } from "@/components/HowItWorksModal";
 import {
   CompsTab,
   type CompsTabProps,
@@ -5110,18 +5111,8 @@ function TabHome({
             >
               See a sample deal
             </button>
-            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
-     {/* Analyze a deal button — existing */}
-     <button onClick={onOpenAnalyze} style={{...}}>Analyze a deal →</button>
-
-     {/* See a sample deal button — existing */}
-     <button onClick={onOpenSample} style={{...}}>See a sample deal</button>
-
-     {/* NEW — How it works */}
-     <HowItWorksButton />
-        </div>
+            <HowItWorksButton onAnalyzeDeal={onAnalyzeNew} />
           </div>
-          
         </div>
         {/* 1-2-3 onboarding flow — only for empty-state users */}
         {isEmpty && (
@@ -5244,16 +5235,20 @@ function TabHome({
                     Continue analysis
                   </button>
                 )}
-                <button
-                  onClick={onAnalyzeNew}
+                <a
+                  href="https://nextax.ai/acquisitions"
+                  target="_blank"
+                  rel="noopener noreferrer"
                   style={{
                     padding: "10px 20px", borderRadius: 8, border: "none",
-                    background: "linear-gradient(135deg,#6366F1,#8B5CF6)",
-                    color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit",
+                    background: "linear-gradient(135deg,#10B981,#059669)",
+                    color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer",
+                    fontFamily: "inherit", textDecoration: "none",
+                    display: "inline-flex", alignItems: "center", gap: 6,
                   }}
                 >
-                  + Analyze new deal
-                </button>
+                  Get Pro Analysis →
+                </a>
               </div>
             </div>
           </div>
@@ -5450,6 +5445,79 @@ function TabHome({
           </div>
         </>
       )}
+
+      {/* ── Subtle divider before trust-frame section ────────────────────────── */}
+      <div className="max-w-5xl mx-auto mt-12 mb-2 border-t border-slate-800" />
+
+      {/* ── How Buyers Use AcquiFlow — 3-step workflow (shows for all users) ── */}
+      <section className="mt-8 mb-12 max-w-5xl mx-auto">
+        <div className="text-center mb-8">
+          <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight">
+            How Buyers Use <span className="text-emerald-400">AcquiFlow</span>
+          </h3>
+          <p className="text-xs sm:text-sm text-slate-400 mt-1.5">
+            From raw deal → decision-ready in minutes.
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {/* Card 1 — Input */}
+          <div className="p-5 rounded-xl bg-slate-800/40 border border-slate-700/60 hover:border-emerald-500/40 transition-colors">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-9 h-9 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 flex items-center justify-center font-bold text-sm">1</div>
+              <svg className="w-4 h-4 text-emerald-400/70" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" aria-hidden="true">
+                <rect x="8" y="3" width="8" height="4" rx="1" />
+                <path d="M16 4h2a2 2 0 012 2v13a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2" />
+              </svg>
+            </div>
+            <h4 className="text-sm font-bold text-white mb-1.5">Input the Deal</h4>
+            <p className="text-xs text-slate-400 leading-relaxed">
+              Paste price, revenue, and cash flow to instantly structure the deal.
+            </p>
+          </div>
+
+          {/* Card 2 — Underwrite */}
+          <div className="p-5 rounded-xl bg-slate-800/40 border border-slate-700/60 hover:border-emerald-500/40 transition-colors">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-9 h-9 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 flex items-center justify-center font-bold text-sm">2</div>
+              <svg className="w-4 h-4 text-emerald-400/70" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" aria-hidden="true">
+                <rect x="4" y="2" width="16" height="20" rx="2" />
+                <line x1="8" y1="6" x2="16" y2="6" />
+                <line x1="8" y1="11" x2="8" y2="11" />
+                <line x1="12" y1="11" x2="12" y2="11" />
+                <line x1="16" y1="11" x2="16" y2="11" />
+                <line x1="8" y1="15" x2="8" y2="15" />
+                <line x1="12" y1="15" x2="12" y2="15" />
+                <line x1="16" y1="15" x2="16" y2="15" />
+                <line x1="8" y1="19" x2="16" y2="19" />
+              </svg>
+            </div>
+            <h4 className="text-sm font-bold text-white mb-1.5">Underwrite It</h4>
+            <p className="text-xs text-slate-400 leading-relaxed">
+              Normalize earnings, stress test financing, and benchmark against real transactions.
+            </p>
+          </div>
+
+          {/* Card 3 — Decide */}
+          <div className="p-5 rounded-xl bg-slate-800/40 border border-slate-700/60 hover:border-emerald-500/40 transition-colors">
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-9 h-9 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 flex items-center justify-center font-bold text-sm">3</div>
+              <svg className="w-4 h-4 text-emerald-400/70" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" aria-hidden="true">
+                <circle cx="12" cy="12" r="10" />
+                <path d="M9 12l2 2 4-4" />
+              </svg>
+            </div>
+            <h4 className="text-sm font-bold text-white mb-1.5">Make the Decision</h4>
+            <p className="text-xs text-slate-400 leading-relaxed">
+              Identify risks, validate pricing, and decide whether to proceed, renegotiate, or walk.
+            </p>
+          </div>
+        </div>
+
+        <p className="text-center text-xs sm:text-sm text-slate-400 italic mt-6 max-w-2xl mx-auto">
+          Most deals don&rsquo;t fail because they&rsquo;re bad — they fail because they weren&rsquo;t properly underwritten.
+        </p>
+      </section>
 
       {/* ── SAMPLE MEMO PREVIEW MODAL — Pro-quality IC memo demo for free users ── */}
       {showSampleModal && (
