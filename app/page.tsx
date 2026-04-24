@@ -113,6 +113,13 @@ export default function HomePage() {
                   Normalize earnings, stress test financing, and benchmark against real transactions — all in one
                   workflow.
                 </p>
+
+                <p className="text-base text-slate-400 mt-4">
+                  Built for SMB buyers, acquisition entrepreneurs, and investors evaluating real deals.
+                </p>
+                <p className="text-sm text-slate-500 mt-2">
+                  Built using real-world underwriting frameworks used by lenders and institutional investors.
+                </p>
               </div>
 
               {/* CTAs */}
@@ -120,7 +127,7 @@ export default function HomePage() {
                 <Link href="/deal-reality-check">
                   <Button
                     size="lg"
-                    className="bg-cyan-500 hover:bg-cyan-600 text-slate-900 font-semibold px-8 py-6 text-lg w-full sm:w-auto"
+                    className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white font-semibold px-8 py-6 text-lg w-full sm:w-auto"
                   >
                     Analyze a Deal
                     <ArrowRight className="ml-2 w-5 h-5" />
@@ -132,7 +139,7 @@ export default function HomePage() {
                     variant="outline"
                     className="border-slate-600 text-slate-300 hover:bg-slate-800 hover:text-white px-8 py-6 text-lg w-full sm:w-auto bg-transparent"
                   >
-                    See a Sample Deal
+                    See a Sample Analysis
                   </Button>
                 </Link>
                 <Button
@@ -142,7 +149,7 @@ export default function HomePage() {
                   onClick={() => document.getElementById("how-it-works")?.scrollIntoView({ behavior: "smooth" })}
                 >
                   <Play className="mr-2 w-4 h-4" />
-                  How It Works
+                  See How It Works
                 </Button>
               </div>
             </div>
@@ -201,7 +208,7 @@ export default function HomePage() {
       <section className="py-12 bg-slate-900/50 border-y border-slate-800">
         <div className="container mx-auto px-4">
           <p className="text-center text-slate-500 text-sm mb-8 uppercase tracking-wide">Built for serious buyers</p>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center mb-8">
             <div>
               <div className="text-3xl font-bold text-cyan-400">100+</div>
               <div className="text-sm text-slate-400 mt-1">Financial signals analyzed per deal</div>
@@ -218,6 +225,13 @@ export default function HomePage() {
               <div className="text-3xl font-bold text-emerald-400">Minutes</div>
               <div className="text-sm text-slate-400 mt-1">Lender-ready outputs</div>
             </div>
+          </div>
+          <div className="flex flex-wrap justify-center gap-6 text-sm text-slate-500">
+            <span>Analyzing deals across 40+ industries</span>
+            <span className="hidden sm:inline">•</span>
+            <span>100+ financial signals evaluated per deal</span>
+            <span className="hidden sm:inline">•</span>
+            <span>Designed for lender-ready underwriting</span>
           </div>
         </div>
       </section>
@@ -283,7 +297,7 @@ export default function HomePage() {
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <Badge className="bg-cyan-500/10 text-cyan-400 border-cyan-500/30 mb-4">Platform Workflow</Badge>
-            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">How Buyers Use AcquiFlow</h2>
+            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">How Serious Buyers Evaluate Deals with AcquiFlow</h2>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -308,7 +322,7 @@ export default function HomePage() {
               },
               {
                 step: "04",
-                title: "Make the Decision",
+                title: "Decide with Confidence",
                 description: "Instantly see if the deal holds up — or where it breaks.",
                 icon: Target,
               },
@@ -343,7 +357,7 @@ export default function HomePage() {
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">
-              Decision-grade outputs —<span className="text-cyan-400"> not just analysis</span>
+              What You&apos;ll Know <span className="text-cyan-400">Before You Make an Offer</span>
             </h2>
           </div>
 
@@ -351,32 +365,32 @@ export default function HomePage() {
             {[
               {
                 icon: DollarSign,
-                title: "Normalized Earnings",
-                description: "True cash flow after removing aggressive add-backs",
+                title: "True Cash Flow (After Add-Back Scrutiny)",
+                description: "Know the real earnings after pressure-testing seller adjustments",
               },
               {
                 icon: TrendingUp,
-                title: "DSCR & Financing Stress Test",
+                title: "Will This Deal Survive SBA Financing?",
                 description: "See how the deal performs under realistic lending scenarios",
               },
               {
                 icon: Target,
-                title: "Valuation Range",
-                description: "Understand what the business is actually worth",
+                title: "What This Business Is Actually Worth",
+                description: "Get a defensible valuation range based on real transaction data",
               },
               {
                 icon: AlertTriangle,
-                title: "Risk Flags",
-                description: "Instantly identify weaknesses before you commit",
+                title: "Where This Deal Breaks Under Pressure",
+                description: "Instantly identify weaknesses before you commit capital",
               },
               {
                 icon: BarChart3,
-                title: "Benchmark Comparison",
-                description: "Compare against real deals — not guesses",
+                title: "How This Deal Compares to Real Transactions",
+                description: "Benchmark against actual closed deals — not listing prices",
               },
               {
                 icon: FileText,
-                title: "Lender-Ready Summary",
+                title: "What a Lender Will See Immediately",
                 description: "Export a clean, structured view for financing conversations",
               },
             ].map((item, i) => (
@@ -394,14 +408,66 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Pricing Split */}
+      {/* Sample Analysis Section */}
       <section className="py-20 bg-slate-900/50">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">
+              See What a Real Deal Analysis Looks Like
+            </h2>
+          </div>
+
+          <div className="grid lg:grid-cols-2 gap-12 items-center max-w-5xl mx-auto">
+            {/* Left - Screenshot placeholder */}
+            <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-8 aspect-video flex items-center justify-center">
+              <div className="text-center">
+                <BarChart3 className="w-16 h-16 text-slate-600 mx-auto mb-4" />
+                <p className="text-slate-500 text-sm">[Deal Analysis Dashboard Screenshot]</p>
+              </div>
+            </div>
+
+            {/* Right - Text block */}
+            <div className="space-y-6">
+              <h3 className="text-2xl font-bold text-white">Real insights. Not guesses.</h3>
+              <ul className="space-y-4">
+                {[
+                  "Adjusted SDE reduced from $340K → $285K",
+                  "DSCR falls below lender threshold (1.18x)",
+                  "Business is overpriced by ~22% vs real comps",
+                  "Deal fails under conservative stress scenarios",
+                ].map((item, i) => (
+                  <li key={i} className="flex items-start gap-3">
+                    <CheckCircle className="w-5 h-5 text-cyan-400 flex-shrink-0 mt-0.5" />
+                    <span className="text-slate-300">{item}</span>
+                  </li>
+                ))}
+              </ul>
+              <Link href="/sample-deal">
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="border-cyan-500/50 text-cyan-400 hover:bg-cyan-500/10 px-8 py-6 text-lg bg-transparent"
+                >
+                  See a Sample Analysis
+                  <ArrowRight className="ml-2 w-5 h-5" />
+                </Button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Pricing Split */}
+      <section className="py-20">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-6">
             <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">
               Use the platform — or get full underwriting support
             </h2>
           </div>
+          <p className="text-center text-slate-400 mb-16 max-w-2xl mx-auto">
+            Use the platform yourself — or get expert-level underwriting support when the deal matters most.
+          </p>
 
           <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
             {/* SaaS Card */}
@@ -427,7 +493,7 @@ export default function HomePage() {
                   ))}
                 </ul>
                 <Link href="/deal-reality-check">
-                  <Button className="w-full bg-cyan-500 hover:bg-cyan-600 text-slate-900 font-semibold">
+                  <Button className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white font-semibold">
                     Start Analyzing
                     <ArrowRight className="ml-2 w-4 h-4" />
                   </Button>
@@ -469,38 +535,23 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Security Section */}
-      <section className="py-20">
+      {/* Security Section - Reduced emphasis */}
+      <section className="py-12 border-t border-slate-800">
         <div className="container mx-auto px-4">
           <div className="max-w-4xl mx-auto">
-            <div className="text-center mb-12">
-              <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-slate-800 flex items-center justify-center">
-                <Lock className="w-8 h-8 text-cyan-400" />
+            <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+              <div className="flex items-center gap-3">
+                <Lock className="w-5 h-5 text-slate-500" />
+                <span className="text-slate-400 text-sm">Your data is protected with bank-level encryption</span>
               </div>
-              <h2 className="text-3xl font-bold text-white mb-4">Your data, protected like a Fortune 500 company</h2>
-            </div>
-
-            <div className="grid md:grid-cols-2 gap-6">
-              {[
-                { icon: Shield, text: "Encrypted, bank-level security" },
-                { icon: FileText, text: "Auto-organized financial data" },
-                { icon: Lock, text: "Secure document storage" },
-                { icon: CheckCircle, text: "100% data ownership" },
-              ].map((item, i) => (
-                <div key={i} className="flex items-center gap-4 bg-slate-800/30 rounded-lg p-4 border border-slate-700">
-                  <item.icon className="w-6 h-6 text-cyan-400 flex-shrink-0" />
-                  <span className="text-slate-300">{item.text}</span>
-                </div>
-              ))}
-            </div>
-
-            <div className="text-center mt-8">
-              <Link href="/security">
-                <Button variant="ghost" className="text-slate-400 hover:text-white">
-                  Learn About Security
-                  <ArrowRight className="ml-2 w-4 h-4" />
-                </Button>
-              </Link>
+              <div className="flex flex-wrap gap-4 text-sm text-slate-500">
+                {["256-bit encryption", "SOC 2 compliant", "100% data ownership"].map((item, i) => (
+                  <span key={i} className="flex items-center gap-2">
+                    <Shield className="w-4 h-4" />
+                    {item}
+                  </span>
+                ))}
+              </div>
             </div>
           </div>
         </div>
@@ -510,16 +561,16 @@ export default function HomePage() {
       <section className="py-20 bg-gradient-to-r from-cyan-500/10 to-blue-500/10">
         <div className="container mx-auto px-4 text-center">
           <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">
-            The fastest way to know if a deal is worth buying
+            Stop guessing. Start making data-driven acquisition decisions.
           </h2>
           <p className="text-xl text-slate-300 mb-8 max-w-2xl mx-auto">
-            Stop guessing. Start making data-driven acquisition decisions.
+            Know if a deal is worth buying — before you commit capital.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link href="/deal-reality-check">
               <Button
                 size="lg"
-                className="bg-cyan-500 hover:bg-cyan-600 text-slate-900 font-semibold px-10 py-6 text-lg"
+                className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white font-semibold px-10 py-6 text-lg"
               >
                 Analyze Your First Deal
                 <ArrowRight className="ml-2 w-5 h-5" />
