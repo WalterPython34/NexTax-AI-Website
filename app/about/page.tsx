@@ -114,22 +114,32 @@ export default function AboutPage() {
           <div className="text-center mb-10">
            <h2 className="text-3xl lg:text-4xl font-bold text-emerald-400 mb-6">
             Why We Built This</h2>
-            <p className="text-xl text-slate-300 max-w-2xl mx-auto">
+            <div className="text-xl text-slate-300 max-w-2xl mx-auto">
+             <p> 
               Most SMB buyers aren’t losing deals because of effort — they’re losing because of incomplete information.
+            </p>
 
+            <p>
               Deals look attractive on the surface but fall apart under scrutiny:
               inflated earnings, aggressive add-backs, weak coverage, or unrealistic pricing.
-
-              At the same time, institutional-quality underwriting is locked behind expensive advisors and slow processes.
-
-              We built NexTax.AI to bridge that gap.
-
-              A platform where any buyer can:
-                • Normalize earnings
-                • Benchmark against real deals
-                • Stress test financing
-                • Generate a lender-ready view
             </p>
+
+            <p>
+              At the same time, institutional-quality underwriting is locked behind expensive advisors and slow processes.
+            </p>
+
+            <p className="font-medium text-white">
+             We built NexTax.AI to bridge that gap.
+            </p>
+            <div>
+            <p className="mb-2 text-white">A platform where any buyer can:</p>
+            <ul className="list-disc list-inside space-y-1 text-slate-300">
+            <li>Normalize earnings</li>
+            <li>Benchmark against real deals</li>
+            <li>Stress test financing</li>
+           <li>Generate a lender-ready view</li>
+           </ul>
+
           </div>
         </div>
       </section>
