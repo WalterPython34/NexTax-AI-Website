@@ -15,10 +15,10 @@ export default function AboutPage() {
 
             Deals were evaluated with inconsistent assumptions, limited benchmarking, and heavy reliance on seller-provided narratives.
 
-            NexTax.AI was built to bring institutional discipline to SMB acquisitions — combining financial rigor, tax insight, and automation into a single decision workflow.
+            NexTax.AI was built to bring institutional discipline to SMB acquisitions, combining financial rigor, tax insight, and automation into a single decision workflow.
 
             The goal is simple:
-            Help buyers make better decisions, faster — and avoid costly mistakes.`,
+            Help buyers make better decisions, faster, and avoid costly mistakes.`,
       image: "/images/steve-morello-headshot.jpg",
       credentials: [        
         "Former Morgan Stanley Private Equity",
@@ -291,28 +291,42 @@ export default function AboutPage() {
             <h2 className="text-3xl lg:text-4xl font-bold text-white mb-8">Our Story</h2>
             <div className="space-y-6 text-lg text-slate-300">
               <p>
-                NexTax.AI was born from real-world frustration with the complexity and cost of business formation and
-                tax compliance. Our founder, Steve Morello, spent over two decades navigating the intricate world of tax
-                across Big 4 firms, Wall Street, and high-growth technology companies.
+                NexTax.AI was born from a different kind of frustration, not just with tax and compliance, but with how 
+                small business acquisitions are evaluated.
               </p>
               <p>
-                From structuring complex private equity transactions at Morgan Stanley to leading tax departments at
-                cutting-edge fintech and cybersecurity firms, Steve witnessed firsthand how manual processes, outdated
-                systems, and high costs created barriers for entrepreneurs and growing businesses.
+                Our founder, Steve Morello, spent over two decades in tax, M&A structuring, and financial operations across 
+                Big 4 firms, Wall Street, and high-growth technology companies. In that world, every deal is rigorously underwritten,
+                assumptions are tested, risks are surfaced, and decisions are grounded in data.
+              </p>
+               <p>
+                But in the SMB market, Steve saw the opposite. 
+               </p>  
+              <p>
+                Buyers were making six and seven-figure decisions using inconsistent assumptions, limited benchmarking, 
+                and seller-provided numbers that often didn’t hold up under scrutiny. Critical risks, from aggressive 
+                add-backs to customer concentration, were frequently missed until it was too late.
               </p>
               <p>
-                The vision for NexTax.AI crystallized when Steve partnered with leading AI researchers who saw an
-                opportunity to apply machine learning to tax and compliance. Together, they envisioned a world where AI
-                could handle routine tax work with superhuman accuracy, freeing professionals to focus on strategy and
-                client relationships.
+                The gap was clear:
+                Institutional-grade underwriting existed, but it wasn’t accessible to everyday buyers.
               </p>
               <p>
-                After extensive development and training our AI on comprehensive tax scenarios, we launched NexTax.AI to
-                bridge the gap between complex tax requirements and accessible, affordable business formation services.
+                NexTax.AI was built to close that gap.
+              </p>               
+              <p>
+                We combine financial modeling, tax expertise, and real-world deal pattern recognition into 
+                a structured, repeatable system that helps buyers evaluate opportunities with clarity and 
+                confidence, before they commit capital.
               </p>
+              <p>
+                Today, NexTax powers a new way to evaluate deals:
+                Not just “What is this business worth?”
+                But “Is this the right deal to pursue?”
+              </p>              
               <p className="text-emerald-400 font-semibold">
-                We're building the future where expert-level tax and business services are accessible to every
-                entrepreneur, everywhere.
+                We’re building the future where every buyer, not just private equity, can make 
+                disciplined, data-driven acquisition decisions.
               </p>
             </div>
           </div>
