@@ -109,40 +109,47 @@ export default function AboutPage() {
       </section>
 
       {/* Solution Section */}
-      <section className="py-10">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-10">
-           <h2 className="text-3xl lg:text-4xl font-bold text-emerald-400 mb-6">
-            Why We Built This</h2>
-            <div className="text-xl text-slate-300 max-w-2xl mx-auto">
-             <p> 
-              Most SMB buyers aren’t losing deals because of effort — they’re losing because of incomplete information.
-            </p>
+<section className="py-10">
+  <div className="container mx-auto px-4">
+    <div className="text-center mb-10">
+      <h2 className="text-3xl lg:text-4xl font-bold text-emerald-400 mb-6">
+        Why We Built This
+      </h2>
 
-            <p>
-              Deals look attractive on the surface but fall apart under scrutiny:
-              inflated earnings, aggressive add-backs, weak coverage, or unrealistic pricing.
-            </p>
+      <div className="text-xl text-slate-300 max-w-2xl mx-auto space-y-6">
+        <p>
+          Most SMB buyers aren&apos;t losing deals because of effort — they&apos;re losing because of incomplete information.
+        </p>
 
-            <p>
-              At the same time, institutional-quality underwriting is locked behind expensive advisors and slow processes.
-            </p>
+        <p>
+          Deals look attractive on the surface but fall apart under scrutiny:
+          inflated earnings, aggressive add-backs, weak coverage, or unrealistic pricing.
+        </p>
 
-            <p className="font-medium text-white">
-             We built NexTax.AI to bridge that gap.
-            </p>
-            <div>
-            <p className="mb-2 text-white">A platform where any buyer can:</p>
-            <ul className="list-disc list-inside space-y-1 text-slate-300">
+        <p>
+          At the same time, institutional-quality underwriting is locked behind expensive advisors and slow processes.
+        </p>
+
+        <p className="font-medium text-white">
+          We built NexTax.AI to bridge that gap.
+        </p>
+
+        <div className="text-left max-w-xl mx-auto">
+          <p className="mb-2 text-white">
+            A platform where any buyer can:
+          </p>
+
+          <ul className="list-disc list-inside space-y-1 text-slate-300">
             <li>Normalize earnings</li>
             <li>Benchmark against real deals</li>
             <li>Stress test financing</li>
-           <li>Generate a lender-ready view</li>
-           </ul>
-
-          </div>
+            <li>Generate a lender-ready view</li>
+          </ul>
         </div>
-      </section>
+      </div>
+    </div>
+  </div>
+</section>
           
       {/* Leadership Team Section */}
        <section className="py-10">
