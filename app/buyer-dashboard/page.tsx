@@ -5110,7 +5110,18 @@ function TabHome({
             >
               See a sample deal
             </button>
+            <div style={{ display: "flex", gap: 10, flexWrap: "wrap" }}>
+     {/* Analyze a deal button — existing */}
+     <button onClick={onOpenAnalyze} style={{...}}>Analyze a deal →</button>
+
+     {/* See a sample deal button — existing */}
+     <button onClick={onOpenSample} style={{...}}>See a sample deal</button>
+
+     {/* NEW — How it works */}
+     <HowItWorksButton />
+        </div>
           </div>
+          
         </div>
         {/* 1-2-3 onboarding flow — only for empty-state users */}
         {isEmpty && (
