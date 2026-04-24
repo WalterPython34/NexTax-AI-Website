@@ -8448,7 +8448,7 @@ export default function BuyerDashboard() {
 
       {/* ── NAV ── */}
       <nav style={{
-        position: "sticky", top: 0, zIndex: 50,
+        position: "sticky", top: 64, zIndex: 40,
         background: "rgba(8,12,19,0.95)", backdropFilter: "blur(16px)",
         borderBottom: "1px solid rgba(255,255,255,0.06)",
       }}>
