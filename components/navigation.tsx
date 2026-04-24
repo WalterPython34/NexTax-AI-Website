@@ -107,16 +107,16 @@ export default function Navigation() {
           <div className="hidden md:flex items-center space-x-4">
             
             <Button
-              className="bg-white hover:bg-gradient-to-r hover:from-navy-400 hover:to-cyan-500 text-slate-600 hover:text-white transition-all duration-200 border border-navy-500"
-              onClick={() => window.open("https://valuationhub.emergent.host/", "_blank")}
+              className="bg-cyan-400 hover:bg-gradient-to-r hover:from-emerald-500 hover:to-cyan-500 text-slate-600 hover:text-white transition-all duration-200 border border-emerald-500"
+              onClick={() => window.open("https://nextax.ai/buyer-dashboard", "_blank")}
             >
               AcquiFlow
             </Button>
             <Button
-              className="bg-white hover:bg-gradient-to-r hover:from-emerald-500 hover:to-cyan-500 text-slate-600 hover:text-white transition-all duration-200 border border-emerald-500"
-              onClick={() => window.open("https://startsmartbiz.ai", "_blank")}
+              className="bg-white hover:bg-gradient-to-r hover:from-navy-400 hover:to-cyan-500 text-slate-600 hover:text-white transition-all duration-200 border border-navy-500"
+              onClick={() => window.open("https://valuationhub.emergent.host/", "_blank")}
             >
-              StartSmart App
+              DCF Modeling
             </Button>
           </div>
 
