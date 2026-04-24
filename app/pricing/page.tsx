@@ -20,6 +20,10 @@ import {
   Calculator,
 } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { AcquisitionsPricing } from "@/components/pricing/AcquisitionsPricing"
+import { PricingToggle, type PricingView } from "@/components/pricing/PricingToggle"
+import { useSearchParams } from "next/navigation"
+import { Suspense } from "react"
 import { StripeCheckoutButton } from "@/components/stripe-checkout-button"
 import Link from "next/link"
 import Image from "next/image"
@@ -71,7 +75,8 @@ const featureDescriptions: Record<string, string> = {
   "State fees absorbed": "State filing fees are covered as part of your package price.",
 }
 
-export default function PricingPage() {
+// Rename the existing component
+function FormationPricingContent() {
   const [selectedTier, setSelectedTier] = useState<PricingTier | null>(null)
   const [isConfiguratorOpen, setIsConfiguratorOpen] = useState(false)
 
@@ -890,5 +895,32 @@ export default function PricingPage() {
   )
 }
 
+// ─── Inner component that reads the URL param ────────────────────────────
+function PricingPageInner() {
+  const searchParams = useSearchParams()
+  const view: PricingView =
+    searchParams?.get("view") === "formation" ? "formation" : "acquisitions"
 
+  return (
+    <>
+      <div className="pt-8">
+        <PricingToggle view={view} />
+      </div>
+      {view === "acquisitions" ? (
+        <AcquisitionsPricing />
+      ) : (
+        <FormationPricingContent />
+      )}
+    </>
+  )
+}
+
+// ─── Default export with Suspense wrapper ────────────────────────────────
+export default function PricingPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-slate-950" />}>
+      <PricingPageInner />
+    </Suspense>
+  )
+}
 
