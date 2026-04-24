@@ -122,8 +122,7 @@ export default function AboutPage() {
         </p>
 
         <p>
-          Deals look attractive on the surface but fall apart under scrutiny:
-          inflated earnings, aggressive add-backs, weak coverage, or unrealistic pricing.
+          Deals look attractive on the surface but fall apart under scrutiny: inflated earnings, aggressive add-backs, weak coverage, or unrealistic pricing.
         </p>
 
         <p>
@@ -133,19 +132,19 @@ export default function AboutPage() {
         <p className="font-medium text-white">
           We built NexTax.AI to bridge that gap.
         </p>
+      </div>
 
-        <div className="text-left max-w-xl mx-auto">
-          <p className="mb-2 text-white">
-            A platform where any buyer can:
-          </p>
+      <div className="text-left max-w-xl mx-auto mt-8">
+        <p className="mb-3 text-xl text-white font-medium">
+          A platform where any buyer can:
+        </p>
 
-          <ul className="list-disc list-inside space-y-1 text-slate-300">
-            <li>Normalize earnings</li>
-            <li>Benchmark against real deals</li>
-            <li>Stress test financing</li>
-            <li>Generate a lender-ready view</li>
-          </ul>
-        </div>
+        <ul className="list-disc list-inside space-y-2 text-xl text-slate-300">
+          <li>Normalize earnings</li>
+          <li>Benchmark against real deals</li>
+          <li>Stress test financing</li>
+          <li>Generate a lender-ready view</li>
+        </ul>
       </div>
     </div>
   </div>
