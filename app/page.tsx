@@ -2,156 +2,194 @@
 
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import { Card, CardContent } from "@/components/ui/card"
-import { Bot, CheckCircle, Rocket, MessageSquare, Shield, Lock, Users, Zap, ArrowRight, Building2, TrendingUp, Clock, Flame, Lightbulb, DollarSign } from "lucide-react"
+import { Badge } from "@/components/ui/badge"
+import {
+  ArrowRight,
+  Shield,
+  CheckCircle,
+  TrendingUp,
+  TrendingDown,
+  DollarSign,
+  AlertTriangle,
+  BarChart3,
+  FileText,
+  Target,
+  Calculator,
+  Scale,
+  Lock,
+  Play,
+  ChevronDown,
+} from "lucide-react"
 import Link from "next/link"
-import { AuthModal } from "@/components/auth/auth-modal"
-import { Navigation } from "@/components/navigation"
-import { TaxSavingsWizard } from "@/components/tax-savings-wizard"
 
-export default function EcommLandingPage() {
-  const [authModal, setAuthModal] = useState<{ isOpen: boolean; mode: "signin" | "signup" }>({
-    isOpen: false,
-    mode: "signin",
-  })
+// FAQ Data
+const preLofiFaqs = [
+  {
+    question: "How do I know seller add-backs will hold up under lender scrutiny?",
+    answer: "We pressure-test earnings integrity to ensure normalized cash flow is defensible.",
+  },
+  {
+    question: "Will this deal survive SBA underwriting under conservative assumptions?",
+    answer: "We evaluate debt coverage durability before LOI to reduce late-stage resets.",
+  },
+  {
+    question: "Am I underestimating working capital requirements post-close?",
+    answer: "We model normalized working capital and liquidity buffers to prevent surprises.",
+  },
+  {
+    question: "Should this be structured as an asset or stock purchase?",
+    answer: "We analyze structure alignment for long-term tax efficiency and lender comfort.",
+  },
+  {
+    question: "What happens if revenue or margins compress after closing?",
+    answer: "We run downside scenarios to define a durable offer range and walk-away threshold.",
+  },
+]
 
-  const stats = [
-    { number: "48hrs", label: "Business Launch Time" },
-    { number: "99.7%", label: "Document Accuracy" },
-    { number: "24/7", label: "AI Support Available" },
-    { number: "50+", label: "States Supported" },
-  ]
+function PreLoiFaq() {
+  const [openIndex, setOpenIndex] = useState<number | null>(null)
 
   return (
+    <section className="py-20 border-t border-slate-800">
+      <div className="container mx-auto px-4">
+        <div className="max-w-3xl mx-auto">
+          <div className="mb-10 text-center">
+            <Badge className="bg-slate-700/50 text-slate-300 border-slate-600 mb-4">Due Diligence</Badge>
+            <h2 className="text-3xl font-bold text-white mb-3">Pre-LOI Questions We Help Buyers Answer</h2>
+            <div className="w-16 h-px bg-cyan-500/50 mx-auto" />
+          </div>
+
+          <div className="space-y-2">
+            {preLofiFaqs.map((faq, i) => (
+              <div
+                key={i}
+                className="border border-slate-800 rounded-lg overflow-hidden transition-colors hover:border-slate-700"
+              >
+                <button
+                  onClick={() => setOpenIndex(openIndex === i ? null : i)}
+                  className="w-full flex items-center justify-between px-6 py-4 text-left"
+                >
+                  <span className="text-sm font-medium text-slate-200 pr-4">{faq.question}</span>
+                  <ChevronDown
+                    className={`w-4 h-4 text-slate-500 flex-shrink-0 transition-transform ${openIndex === i ? "rotate-180" : ""}`}
+                  />
+                </button>
+                {openIndex === i && (
+                  <div className="px-6 pb-4 pt-0">
+                    <p className="text-sm text-slate-400 leading-relaxed">{faq.answer}</p>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+export default function HomePage() {
+  return (
     <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black">
-      {/* Hero Section - Copied from current homepage */}
+      {/* Hero Section */}
       <section className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-emerald-500/10 to-cyan-500/10" />
-        <div className="relative container mx-auto px-4 py-20 lg:py-10">
+        <div className="absolute inset-0 bg-gradient-to-r from-cyan-500/5 to-blue-500/5" />
+        <div className="relative container mx-auto px-4 py-20 lg:py-28">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             <div className="space-y-8">
-              <Badge className="bg-gradient-to-r from-emerald-500/20 to-blue-500/20 text-cyan-400 border-blue-500/30 text-lg px-2 py-2">
-                <Bot className="w-4 h-4 mr-2" />
-                Powered by StartSmart AI
+              <Badge className="bg-cyan-500/10 text-cyan-400 border-cyan-500/30 text-sm px-3 py-1.5">
+                <BarChart3 className="w-4 h-4 mr-2" />
+                Deal Analysis Platform
               </Badge>
 
               <div className="space-y-6">
-                <h1 className="text-3xl lg:text-5xl font-bold text-white leading-tight">
-                  Bring your vision to life.
-                  <span className="block text-white-400">We'll streamline the setup.</span>
-                  <span className="block text-emerald-300 text-xl lg:text-xl mt-8">
-                    From idea to new business in record time, our tax experts help you startup with confidence and stay
-                    organized with our AI-powered tools.
-                  </span>
+                <h1 className="text-4xl lg:text-5xl font-bold text-white leading-tight">
+                  Know if a deal is worth buying
+                  <span className="block text-cyan-400 mt-2">before you commit capital.</span>
                 </h1>
+
+                <p className="text-xl text-slate-300 leading-relaxed max-w-lg">
+                  Normalize earnings, stress test financing, and benchmark against real transactions — all in one
+                  workflow.
+                </p>
               </div>
 
+              {/* CTAs */}
               <div className="flex flex-col sm:flex-row gap-4">
-                <Link href="/pricing">
+                <Link href="/deal-reality-check">
                   <Button
                     size="lg"
-                    className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-purple-600 hover:to-blue-600 text-white px-8 py-6 text-lg font-semibold w-full sm:w-auto"
+                    className="bg-cyan-500 hover:bg-cyan-600 text-slate-900 font-semibold px-8 py-6 text-lg w-full sm:w-auto"
                   >
-                    <Rocket className="mr-3 w-6 h-6 text-orange-500" />
-                    Get Started
+                    Analyze a Deal
+                    <ArrowRight className="ml-2 w-5 h-5" />
                   </Button>
                 </Link>
-                <Link
-                    href="https://chatgpt.com/g/g-684641e9df808191a9d2025951aa3f09-nextax-ai-idea-validation-launch-assistant"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <Button 
-                      size="lg"
-                      className="w-full sm:w-auto bg-transparent border border-white/30 text-emerald-400 hover:bg-emerald-4=500 hover:text-yellow-200 px-8 py-6 text-lg font-semibold backdrop-blur">
-                      <Lightbulb className="mr-3 w-6 h-6 text-yellow-200"/>
-                      Validate my Idea
-                    </Button>
-                </Link>
-                <Link href="/features">
+                <Link href="/sample-deal">
                   <Button
                     size="lg"
-                    className="w-full sm:w-auto bg-transparent border border-white/30 text-white/80 hover:bg-white/10 hover:text-emerald-400 px-8 py-6 text-lg font-semibold backdrop-blur"
+                    variant="outline"
+                    className="border-slate-600 text-slate-300 hover:bg-slate-800 hover:text-white px-8 py-6 text-lg w-full sm:w-auto bg-transparent"
                   >
-                    <Bot className="ml-3 w-6 h-6 text-red-400" /> 
-                    Learn more                   
+                    See a Sample Deal
                   </Button>
-                </Link>               
-              </div>
-
-              <div className="space-y-3 py-4">
-                {[
-                  "Start your new business in less than 48 Hours",
-                  "EIN, Legal doc, Registered Agent & State registrations begin immediately",
-                  "StartSmart AI-powered App & Idea Validation GPT included in all startup packages",
-                ].map((feature, i) => (
-                  <div key={i} className="flex items-center gap-3">
-                    <CheckCircle className="w-5 h-5 text-emerald-400 flex-shrink-0" />
-                    <span className="text-slate-300">{feature}</span>
-                  </div>
-                ))}
+                </Link>
+                <Button
+                  size="lg"
+                  variant="ghost"
+                  className="text-slate-400 hover:text-white px-6 py-6 text-lg"
+                  onClick={() => document.getElementById("how-it-works")?.scrollIntoView({ behavior: "smooth" })}
+                >
+                  <Play className="mr-2 w-4 h-4" />
+                  How It Works
+                </Button>
               </div>
             </div>
 
-            {/* AI Demo Preview */}
-            <div className="relative -mt-8">
+            {/* Hero Visual - Deal Analysis Animation Placeholder */}
+            <div className="relative">
               <div className="relative bg-slate-800/50 backdrop-blur-sm rounded-2xl p-8 border border-slate-700">
-                <div className="absolute inset-0 bg-gradient-to-br from-emerald-500/10 to-cyan-500/10 rounded-2xl" />
+                <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-blue-500/5 rounded-2xl" />
                 <div className="relative space-y-6">
-                  <div className="flex items-center justify-between mb-6">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded-lg bg-gradient-to-r from-emerald-500/20 to-cyan-500/20 flex items-center justify-center">
-                        <Bot className="w-6 h-6 text-emerald-400" />
-                      </div>
-                      <div>
-                        <h3 className="text-xl font-semibold text-white">StartSmart AI</h3>
-                        <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 bg-green-400 rounded-full animate-pulse"></div>
-                          <Badge className="bg-green-500/20 text-green-300 text-xs">Online & Ready</Badge>
-                        </div>
-                      </div>
-                    </div>
+                  {/* Simulated Deal Analysis Output */}
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-white">Deal Analysis</h3>
+                    <Badge className="bg-yellow-500/20 text-yellow-300 border-yellow-500/30">Processing</Badge>
                   </div>
 
                   <div className="space-y-4">
-                    <div className="bg-slate-900/30 rounded-lg p-4">
-                      <p className="text-slate-300 text-sm">
-                        <strong className="text-emerald-400">You:</strong> "Should I elect S-Corp status for my new
-                        LLC?"
-                      </p>
+                    <div className="bg-slate-900/50 rounded-lg p-4">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-slate-400 text-sm">Adjusted SDE</span>
+                        <span className="text-red-400 font-mono">$285,000 ↓</span>
+                      </div>
+                      <div className="text-xs text-slate-500">Seller claimed: $340,000</div>
                     </div>
-                    <div className="bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 rounded-lg p-4 border border-emerald-500/20">
-                      <p className="text-slate-300 text-sm">
-                        <strong className="text-emerald-400">StartSmart AI:</strong> "Based on your projected $85K
-                        revenue and single-member structure, S-Corp election could save you ~$6,500 annually in
-                        self-employment taxes. However, you'll need to run payroll. Let me show you the breakeven
-                        analysis..."
-                      </p>
+
+                    <div className="bg-slate-900/50 rounded-lg p-4">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-slate-400 text-sm">DSCR</span>
+                        <span className="text-red-400 font-mono">1.18x</span>
+                      </div>
+                      <div className="text-xs text-slate-500">Below 1.25x threshold</div>
                     </div>
-                    <div className="bg-slate-900/30 rounded-lg p-4">
-                      <p className="text-slate-300 text-sm">
-                        <strong className="text-emerald-400">You:</strong> "What about multi-state tax implications?"
-                      </p>
-                    </div>
-                    <div className="bg-gradient-to-r from-emerald-500/10 to-cyan-500/10 rounded-lg p-4 border border-emerald-500/20">
-                      <p className="text-slate-300 text-sm">
-                        <strong className="text-emerald-400">StartSmart AI:</strong> "Great question! Since you
-                        mentioned clients in NY and CA, you'll need to consider nexus thresholds..."
-                      </p>
+
+                    <div className="bg-slate-900/50 rounded-lg p-4">
+                      <div className="flex justify-between items-center mb-2">
+                        <span className="text-slate-400 text-sm">Valuation Gap</span>
+                        <span className="text-yellow-400 font-mono">-22%</span>
+                      </div>
+                      <div className="text-xs text-slate-500">Overpriced vs comps</div>
                     </div>
                   </div>
 
-                  <Link
-                    href="https://chatgpt.com/g/g-684641e9df808191a9d2025951aa3f09-nextax-ai-idea-validation-launch-assistant"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    <Button className="w-full bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white">
-                      <MessageSquare className="mr-2 w-4 h-4" text-cyan-500/>
-                      Try StartSmart → Live on ChatGPT
-                    </Button>
-                    </Link>
+                  <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 mt-4">
+                    <div className="flex items-center gap-2">
+                      <AlertTriangle className="w-5 h-5 text-red-400" />
+                      <span className="text-red-300 font-semibold">Deal Fails Under Stress</span>
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -159,334 +197,308 @@ export default function EcommLandingPage() {
         </div>
       </section>
 
-      {/* Section 1: Launching Doesn't Need to Be Difficult (Video Left, Text Right) */}
-      <section className="py-20 bg-slate-900/50">
+      {/* Proof Strip */}
+      <section className="py-12 bg-slate-900/50 border-y border-slate-800">
         <div className="container mx-auto px-4">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            {/* Video/Image Left */}
-            <div className="relative">
-              <video
-                src="/videos/buried_paperwork1.mp4"
-                autoPlay
-                loop
-                muted
-                playsInline
-                className="max-h-[460px] mx-auto rounded-2xl border border-slate-700 object-contain bg-slate-900"
-              />
+          <p className="text-center text-slate-500 text-sm mb-8 uppercase tracking-wide">Built for serious buyers</p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center">
+            <div>
+              <div className="text-3xl font-bold text-cyan-400">100+</div>
+              <div className="text-sm text-slate-400 mt-1">Financial signals analyzed per deal</div>
             </div>
-
-            {/* Text Right */}
-            <div className="space-y-6">
-              <h2 className="text-3xl lg:text-4xl font-bold text-white">
-                Starting a Business Doesn't Have to Be Complicated
-              </h2>
-              <p className="text-xl text-slate-300 leading-relaxed">
-                Most founders get stuck before they start — buried in paperwork, tax forms, and state requirements.
-                StartSmart simplifies it all with guided, AI-powered setup that feels effortless.
-              </p>
-              <div className="space-y-3">
-                {[
-                  "Launch your LLC or S-Corp in as little as 48 hours",
-                  "Step-by-step guidance built for first-time founders",
-                  "No legal jargon. No stress. Just progress.",
-                  "AI + human experts to guide your every move",
-                ].map((item, i) => (
-                  <div key={i} className="flex items-center gap-3">
-                    <CheckCircle className="w-5 h-5 text-emerald-400 flex-shrink-0" />
-                    <span className="text-slate-300">{item}</span>
-                  </div>
-                ))}
-              </div>
-              <Link href="/features">
-              <Button className="mt-4 bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-3">Learn More</Button>
-            </Link>
+            <div>
+              <div className="text-3xl font-bold text-cyan-400">40+</div>
+              <div className="text-sm text-slate-400 mt-1">Industries benchmarked</div>
+            </div>
+            <div>
+              <div className="text-3xl font-bold text-emerald-400">Real</div>
+              <div className="text-sm text-slate-400 mt-1">Transaction comps — not listings</div>
+            </div>
+            <div>
+              <div className="text-3xl font-bold text-emerald-400">Minutes</div>
+              <div className="text-sm text-slate-400 mt-1">Lender-ready outputs</div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Section 2: Business Question Solved (Text Left, Video Right) */}
+      {/* Why Deals Fall Apart */}
       <section className="py-20">
-        <div className="container mx-auto px-4">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            {/* Text Left */}
-            <div className="space-y-6 lg:order-1">
-              <h2 className="text-3xl lg:text-4xl font-bold text-emerald-400">Got Questions? We've Got Answers.</h2>
-              <p className="text-xl text-slate-300 leading-relaxed">
-                Whether it's taxes, entity selection, or compliance — StartSmart AI is powered by real pros who know
-                small business inside out. Ask anything, anytime.
-              </p>
-              <div className="space-y-3">
-                {[
-                  "AI Assistant trained on real tax and business data",
-                  "Live access to experienced U.S. tax professionals",
-                  "Get clear, instant answers to complex business questions",
-                  "Stay compliant and confident year-round",
-                ].map((item, i) => (
-                  <div key={i} className="flex items-center gap-3">
-                    <CheckCircle className="w-5 h-5 text-emerald-400 flex-shrink-0" />
-                    <span className="text-slate-300">{item}</span>
-                  </div>
-                ))}
-              </div>
-              <Link href="/contact">
-              <Button className="mt-4 bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-3">See How It Works</Button>
-            </Link>
-            </div>
-
-            {/* Video/Image Right */}
-            <div className="relative lg:order-2">
-              <video
-                src="/videos/Question Solved_video.mp4"
-                autoPlay
-                loop
-                muted
-                playsInline
-                className="w-full aspect-video rounded-2xl border border-slate-700 object-cover"
-              />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Section 3: Secure Tax Info (Video Left, Text Right) */}
-      <section className="py-20 bg-slate-900/50">
-        <div className="container mx-auto px-4">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            {/* Video/Image Left */}
-            <div className="relative">
-              <video
-                src="/videos/Secure Tax Info_video.mp4"
-                autoPlay
-                loop
-                muted
-                playsInline
-                className="w-full aspect-video rounded-2xl border border-slate-700 object-cover"
-              />
-            </div>
-
-            {/* Text Right */}
-            <div className="space-y-6">
-              <h2 className="text-3xl lg:text-4xl font-bold text-cyan-300">
-                Your Data, Protected Like a Fortune 500 Company
-              </h2>
-              <p className="text-xl text-slate-300 leading-relaxed">
-                Security isn't optional — it's built into everything we do. From encrypted document storage to secure
-                tax data sharing, your information stays private and protected.
-              </p>
-              <div className="space-y-3 mb-6">
-                {[
-                  "Encrypted, bank-level data security",
-                  "Auto-organized tax and business documents",
-                  "Secure cloud sync for your startup's key files",
-                  "100% privacy — your data belongs to you",
-                ].map((item, i) => (
-                  <div key={i} className="flex items-center gap-3">
-                    <Lock className="w-5 h-5 text-emerald-400 flex-shrink-0" />
-                    <span className="text-slate-300">{item}</span>
-                  </div>
-                ))}
-              </div>
-              <Button className="mt-4 bg-emerald-500 hover:bg-emerald-600 text-white px-6 py-3">Learn About Security</Button>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Section 4: AI + Human Launch Support (Text Left, Video Right) */}
-      <section className="py-20">
-        <div className="container mx-auto px-4">
-          <div className="grid lg:grid-cols-2 gap-12 items-center">
-            {/* Text Left */}
-            <div className="space-y-6 lg:order-1">
-              <h2 className="text-3xl lg:text-4xl font-bold text-white">
-                Your AI Assistant. <span className="text-cyan-400">Your Expert Team.</span> <span className="text-emerald-400">Your Business, Launched</span>.
-              </h2>
-              <p className="text-xl text-slate-300 leading-relaxed">
-                Stop guessing. Start growing. StartSmart combines automation and expert insight so you can form, manage,
-                and scale your business with confidence — all in one place.
-              </p>
-              <div className="space-y-3">
-                {[
-                  "Guided business formation powered by AI",
-                  "Live expert chat when you need human help",
-                  "Tax setup, compliance tracking, and more",
-                  "Start today — see results instantly",
-                ].map((item, i) => (
-                  <div key={i} className="flex items-center gap-3">
-                    <CheckCircle className="w-5 h-5 text-emerald-400 flex-shrink-0" />
-                    <span className="text-slate-300">{item}</span>
-                  </div>
-                ))}
-              </div>
-              <Link href="/pricing">
-                <Button className="mt-4 bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white px-8 py-4 text-lg">
-                  <Rocket className="mr-2 w-5 h-5" />
-                  Get Started Now
-                </Button>
-              </Link>
-            </div>
-
-            {/* Video/Image Right */}
-            <div className="relative lg:order-2">
-              <video
-                src="/videos/Launching_made_easy.mp4"
-                autoPlay
-                loop
-                muted
-                playsInline
-                className="w-full aspect-video rounded-2xl border border-slate-700 object-cover"
-              />
-            </div>
-          </div>
-        </div>
-      </section>
-
-       {/* NEW: AI Differentiator Section */}
-      <section className="py-10 bg-slate-900/50">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">Why StartSmart AI Changes Everything</h2>
-            <p className="text-xl text-slate-300 max-w-3xl mx-auto">
-              Other services stop at paperwork. We give you an AI business partner trained on decades of real-world
-              experience.
+            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">
+              Most deals don&apos;t fail from lack of effort —<br />
+              <span className="text-red-400">they fail from bad assumptions.</span>
+            </h2>
+            <p className="text-xl text-slate-400 max-w-2xl mx-auto">
+              Deals look attractive on the surface but break under scrutiny.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8 mb-12">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
               {
-                icon: Bot,
-                title: "Custom-Trained on Your Business",
-                description:
-                  "Not generic ChatGPT. StartSmart AI knows your entity type, industry, state requirements, and growth plans.",
-                color: "purple",
+                icon: TrendingUp,
+                title: "Inflated Earnings",
+                description: "Seller add-backs often overstate true cash flow.",
+                color: "red",
               },
               {
-                icon: Shield,
-                title: "Big 4 Tax Expertise Built-In",
-                description:
-                  "Trained on 20+ years of Morgan Stanley, EY, and KPMG tax strategies. Get enterprise-level advice instantly.",
-                color: "emerald",
+                icon: TrendingDown,
+                title: "Weak Debt Coverage",
+                description: 'Deals that "work on paper" collapse under financing pressure.',
+                color: "red",
+              },
+              {
+                icon: BarChart3,
+                title: "No Real Benchmarking",
+                description: "Buyers rely on listings — not actual transaction comps.",
+                color: "yellow",
+              },
+              {
+                icon: DollarSign,
+                title: "Overpriced Deals",
+                description: "Without data, buyers consistently overpay.",
+                color: "yellow",
+              },
+            ].map((item, i) => (
+              <Card key={i} className="bg-slate-800/50 border-slate-700 hover:border-red-500/30 transition-colors">
+                <CardContent className="p-6">
+                  <div
+                    className={`w-12 h-12 mb-4 rounded-lg ${item.color === "red" ? "bg-red-500/20" : "bg-yellow-500/20"} flex items-center justify-center`}
+                  >
+                    <item.icon className={`w-6 h-6 ${item.color === "red" ? "text-red-400" : "text-yellow-400"}`} />
+                  </div>
+                  <h3 className="text-lg font-semibold text-white mb-2">{item.title}</h3>
+                  <p className="text-slate-400 text-sm">{item.description}</p>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* How AcquiFlow Works */}
+      <section id="how-it-works" className="py-20 bg-slate-900/50">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <Badge className="bg-cyan-500/10 text-cyan-400 border-cyan-500/30 mb-4">Platform Workflow</Badge>
+            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">How Buyers Use AcquiFlow</h2>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {[
+              {
+                step: "01",
+                title: "Input the Deal",
+                description: "Enter purchase price, SDE, revenue, and financing assumptions.",
+                icon: Calculator,
+              },
+              {
+                step: "02",
+                title: "Underwrite It",
+                description: "Normalize earnings, adjust add-backs, and stress test debt coverage.",
+                icon: Scale,
+              },
+              {
+                step: "03",
+                title: "Benchmark It",
+                description: "Compare against real transaction data across your industry.",
+                icon: BarChart3,
+              },
+              {
+                step: "04",
+                title: "Make the Decision",
+                description: "Instantly see if the deal holds up — or where it breaks.",
+                icon: Target,
+              },
+            ].map((item, i) => (
+              <div key={i} className="relative">
+                <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 h-full hover:border-cyan-500/30 transition-colors">
+                  <div className="text-cyan-500 font-mono text-sm mb-4">{item.step}</div>
+                  <div className="w-12 h-12 mb-4 rounded-lg bg-cyan-500/10 flex items-center justify-center">
+                    <item.icon className="w-6 h-6 text-cyan-400" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-white mb-2">{item.title}</h3>
+                  <p className="text-slate-400 text-sm">{item.description}</p>
+                </div>
+                {i < 3 && (
+                  <div className="hidden lg:block absolute top-1/2 -right-4 w-8 h-px bg-slate-700">
+                    <ArrowRight className="w-4 h-4 text-slate-600 absolute -right-1 -top-2" />
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Placeholder for animations */}
+          <div className="mt-12 text-center">
+            <p className="text-slate-500 text-sm">[Animation/video placeholder — deal flow visualization]</p>
+          </div>
+        </div>
+      </section>
+
+      {/* What You Get */}
+      <section className="py-20">
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">
+              Decision-grade outputs —<span className="text-cyan-400"> not just analysis</span>
+            </h2>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {[
+              {
+                icon: DollarSign,
+                title: "Normalized Earnings",
+                description: "True cash flow after removing aggressive add-backs",
               },
               {
                 icon: TrendingUp,
-                title: "Grows With Your Business",
-                description:
-                  "From startup questions to scaling challenges. Your AI advisor evolves as your business grows.",
-                color: "cyan",
+                title: "DSCR & Financing Stress Test",
+                description: "See how the deal performs under realistic lending scenarios",
               },
-            ].map((feature, i) => (
-              <Card key={i} className="bg-slate-800/50 border-slate-700 hover:border-emerald-500/50 transition-colors">
-                <CardContent className="p-8 text-center">
-                  <div
-                    className={`w-16 h-16 mx-auto mb-6 rounded-full ${
-                      feature.color === "purple"
-                        ? "bg-purple-500/20"
-                        : feature.color === "emerald"
-                          ? "bg-emerald-500/20"
-                          : "bg-cyan-500/20"
-                    } flex items-center justify-center`}
-                  >
-                    <feature.icon
-                      className={`w-8 h-8 ${
-                        feature.color === "purple"
-                          ? "text-purple-400"
-                          : feature.color === "emerald"
-                            ? "text-emerald-400"
-                            : "text-cyan-400"
-                      }`}
-                    />
+              {
+                icon: Target,
+                title: "Valuation Range",
+                description: "Understand what the business is actually worth",
+              },
+              {
+                icon: AlertTriangle,
+                title: "Risk Flags",
+                description: "Instantly identify weaknesses before you commit",
+              },
+              {
+                icon: BarChart3,
+                title: "Benchmark Comparison",
+                description: "Compare against real deals — not guesses",
+              },
+              {
+                icon: FileText,
+                title: "Lender-Ready Summary",
+                description: "Export a clean, structured view for financing conversations",
+              },
+            ].map((item, i) => (
+              <Card key={i} className="bg-slate-800/30 border-slate-700 hover:border-cyan-500/30 transition-colors">
+                <CardContent className="p-6">
+                  <div className="w-10 h-10 mb-4 rounded-lg bg-cyan-500/10 flex items-center justify-center">
+                    <item.icon className="w-5 h-5 text-cyan-400" />
                   </div>
-                  <h3 className="text-xl font-semibold text-white mb-4">{feature.title}</h3>
-                  <p className="text-slate-300">{feature.description}</p>
+                  <h3 className="text-lg font-semibold text-white mb-2">{item.title}</h3>
+                  <p className="text-slate-400 text-sm">{item.description}</p>
                 </CardContent>
               </Card>
             ))}
           </div>
-          </div>
-          </section>
-         
+        </div>
+      </section>
 
-      {/* What's Included Section */}
-      <section className="py-8 bg-slate-900/50">
+      {/* Pricing Split */}
+      <section className="py-20 bg-slate-900/50">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">Everything You Need to Start</h2>
-            <p className="text-xl text-slate-300 max-w-2xl mx-auto">
-              One simple price includes everything required to legally operate your business.
-            </p>
+            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">
+              Use the platform — or get full underwriting support
+            </h2>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-8 mb-12">
-            {[
-              {
-                icon: Building2,
-                title: "Legal Entity Formation",
-                items: [
-                  "LLC or Corporation filing",
-                  "Articles of organization",
-                  "State compliance",
-                  "Registered agent service",
-                ],
-              },
-              {
-                icon: Shield,
-                title: "Tax & Compliance Setup",
-                items: ["Federal EIN number", "State tax registration", "Operating agreements", "Compliance calendar"],
-              },
-              {
-                icon: Zap,
-                title: "Business Essentials",
-                items: [
-                  "Business plan generation",
-                  "Digital document vault",
-                  "Ongoing support",
-                  "Future filing reminders",
-                ],
-              },
-            ].map((feature, i) => (
-              <Card key={i} className="bg-slate-800/50 border-slate-700">
-                <CardContent className="p-8">
-                  <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                    <feature.icon className="w-8 h-8 text-emerald-400" />
-                  </div>
-                  <h3 className="text-xl font-semibold text-white mb-4 text-center">{feature.title}</h3>
-                  <ul className="space-y-2">
-                    {feature.items.map((item, j) => (
-                      <li key={j} className="flex items-center gap-2 text-slate-300">
-                        <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0" />
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-
-          {/* Pricing CTA */}
-          <div className="text-center">
-            <div className="inline-block bg-slate-800/50 rounded-2xl p-8 border border-slate-700">
-              <div className="mb-4">
-                <span className="text-4xl font-bold text-white">$499</span>
-                <span className="text-slate-400 ml-2">one-time fee</span>
-              </div>
-              <div className="space-y-4 mb-6">
-                <p className="text-slate-300">Everything included. What you see is what you pay.</p>
-                <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-4">
-                  <h4 className="text-cyan-300 font-semibold mb-2">Our Transparency Guarantee:</h4>
-                  <ul className="text-sm text-slate-300 space-y-1">
-                    <li>✓ No hidden state filing fees</li>
-                    <li>✓ No surprise registered agent charges</li>
-                    <li>✓ No mandatory add-ons or upsells</li>
-                  </ul>
+          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+            {/* SaaS Card */}
+            <Card className="bg-slate-800/50 border-slate-700 hover:border-cyan-500/30 transition-colors">
+              <CardContent className="p-8">
+                <Badge className="bg-cyan-500/10 text-cyan-400 border-cyan-500/30 mb-4">Platform</Badge>
+                <h3 className="text-2xl font-bold text-white mb-2">AcquiFlow Platform</h3>
+                <div className="mb-6">
+                  <span className="text-4xl font-bold text-white">$29–$79</span>
+                  <span className="text-slate-400 ml-2">/ month</span>
                 </div>
+                <ul className="space-y-3 mb-8">
+                  {[
+                    "Analyze unlimited deals",
+                    "Benchmark against real comps",
+                    "Stress test financing",
+                    "Save & compare opportunities",
+                  ].map((item, i) => (
+                    <li key={i} className="flex items-center gap-3 text-slate-300">
+                      <CheckCircle className="w-5 h-5 text-cyan-400 flex-shrink-0" />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+                <Link href="/deal-reality-check">
+                  <Button className="w-full bg-cyan-500 hover:bg-cyan-600 text-slate-900 font-semibold">
+                    Start Analyzing
+                    <ArrowRight className="ml-2 w-4 h-4" />
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+
+            {/* Service Card */}
+            <Card className="bg-slate-800/50 border-emerald-500/30 hover:border-emerald-500/50 transition-colors">
+              <CardContent className="p-8">
+                <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/30 mb-4">Advisory</Badge>
+                <h3 className="text-2xl font-bold text-white mb-2">Pro Deal Analysis</h3>
+                <div className="mb-6">
+                  <span className="text-4xl font-bold text-white">$1,500</span>
+                  <span className="text-slate-400 ml-2">starting</span>
+                </div>
+                <ul className="space-y-3 mb-8">
+                  {[
+                    "Full deal underwriting",
+                    "Custom financial modeling",
+                    "Tax-aware deal structuring",
+                    "Lender-ready report",
+                  ].map((item, i) => (
+                    <li key={i} className="flex items-center gap-3 text-slate-300">
+                      <CheckCircle className="w-5 h-5 text-emerald-400 flex-shrink-0" />
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+                <Link href="/acquisitions">
+                  <Button className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-semibold">
+                    Get a Pro Analysis
+                    <ArrowRight className="ml-2 w-4 h-4" />
+                  </Button>
+                </Link>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* Security Section */}
+      <section className="py-20">
+        <div className="container mx-auto px-4">
+          <div className="max-w-4xl mx-auto">
+            <div className="text-center mb-12">
+              <div className="w-16 h-16 mx-auto mb-6 rounded-full bg-slate-800 flex items-center justify-center">
+                <Lock className="w-8 h-8 text-cyan-400" />
               </div>
-              <Link href="/pricing">
-                <Button size="lg" className="bg-emerald-500 hover:bg-emerald-600 text-white px-8 py-4 text-lg">
-                  Get Started Now
-                  <ArrowRight className="ml-2 w-5 h-5" />
+              <h2 className="text-3xl font-bold text-white mb-4">Your data, protected like a Fortune 500 company</h2>
+            </div>
+
+            <div className="grid md:grid-cols-2 gap-6">
+              {[
+                { icon: Shield, text: "Encrypted, bank-level security" },
+                { icon: FileText, text: "Auto-organized financial data" },
+                { icon: Lock, text: "Secure document storage" },
+                { icon: CheckCircle, text: "100% data ownership" },
+              ].map((item, i) => (
+                <div key={i} className="flex items-center gap-4 bg-slate-800/30 rounded-lg p-4 border border-slate-700">
+                  <item.icon className="w-6 h-6 text-cyan-400 flex-shrink-0" />
+                  <span className="text-slate-300">{item.text}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="text-center mt-8">
+              <Link href="/security">
+                <Button variant="ghost" className="text-slate-400 hover:text-white">
+                  Learn About Security
+                  <ArrowRight className="ml-2 w-4 h-4" />
                 </Button>
               </Link>
             </div>
@@ -494,25 +506,51 @@ export default function EcommLandingPage() {
         </div>
       </section>
 
-       <section className="py-16 bg-slate-900/50">
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-8">
-            {stats.map((stat, index) => (
-              <div key={index} className="text-center">
-                <div className="text-4xl lg:text-5xl font-bold text-emerald-400 mb-2">{stat.number}</div>
-                <div className="text-slate-300 text-sm lg:text-base">{stat.label}</div>
-              </div>
-            ))}
+      {/* Final CTA */}
+      <section className="py-20 bg-gradient-to-r from-cyan-500/10 to-blue-500/10">
+        <div className="container mx-auto px-4 text-center">
+          <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">
+            The fastest way to know if a deal is worth buying
+          </h2>
+          <p className="text-xl text-slate-300 mb-8 max-w-2xl mx-auto">
+            Stop guessing. Start making data-driven acquisition decisions.
+          </p>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link href="/deal-reality-check">
+              <Button
+                size="lg"
+                className="bg-cyan-500 hover:bg-cyan-600 text-slate-900 font-semibold px-10 py-6 text-lg"
+              >
+                Analyze Your First Deal
+                <ArrowRight className="ml-2 w-5 h-5" />
+              </Button>
+            </Link>
+            <Link href="/sample-deal">
+              <Button
+                size="lg"
+                variant="outline"
+                className="border-slate-600 text-slate-300 hover:bg-slate-800 hover:text-white px-10 py-6 text-lg bg-transparent"
+              >
+                See a Sample Analysis
+              </Button>
+            </Link>
           </div>
         </div>
       </section>
-        
-      {/* Auth Modal */}
-      <AuthModal
-        isOpen={authModal.isOpen}
-        onClose={() => setAuthModal({ ...authModal, isOpen: false })}
-        mode={authModal.mode}
-      />
+
+      {/* Pre-LOI FAQ */}
+      <PreLoiFaq />
+
+      {/* Compliance Footer */}
+      <section className="py-8 border-t border-slate-800">
+        <div className="container mx-auto px-4">
+          <p className="text-center text-slate-500 text-xs max-w-3xl mx-auto">
+            NexTax.AI provides financial analysis tools and educational content. This is not legal, tax, or investment
+            advice. Consult qualified professionals before making business decisions. All transaction data used for
+            benchmarking is anonymized and aggregated.
+          </p>
+        </div>
+      </section>
     </div>
   )
 }
