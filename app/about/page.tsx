@@ -9,15 +9,23 @@ export default function AboutPage() {
     {
       name: "Steve Morello",
       role: "CEO & Founder",
-      bio: "After 20+ years navigating the tax landscape at Morgan Stanley and Big 4 firms like EY and KPMG, our founder, Steve Morello, realized the manual, high-cost systems that served enterprises were actively failing the modern entrepreneur. His vision was to take that high-level expertise, from M&A tax structuring to global compliance, and build a platform that democratizes access.",
+      bio: "After over two decades in tax, M&A structuring, and financial operations — including experience supporting private equity transactions and global tax functions — Steve Morello saw a consistent gap in the SMB market:
+
+            Buyers lacked access to structured, decision-grade underwriting.
+
+            Deals were evaluated with inconsistent assumptions, limited benchmarking, and heavy reliance on seller-provided narratives.
+
+            NexTax.AI was built to bring institutional discipline to SMB acquisitions — combining financial rigor, tax insight, and automation into a single decision workflow.
+
+            The goal is simple:
+            Help buyers make better decisions, faster — and avoid costly mistakes.",
       image: "/images/steve-morello-headshot.jpg",
-      credentials: [
-        "Registered Agent",
+      credentials: [        
         "Former Morgan Stanley Private Equity",
         "Big 4 Tax Experience (EY, KPMG)",
-        "20+ Years Tax & Wall Street Experience",
-        "M&A Tax Structuring Expert",
-        "Fintech & Cybersecurity Tax Leader",
+        "20+ Years Tax & Deal Structuring",
+        "M&A Tax & Transaction Specialist",
+        "Finance Leader in Cybersecurity & Fintech",
       ],
       linkedin: "https://www.linkedin.com/in/steve-morello-95b468365/",
     },
@@ -26,35 +34,35 @@ export default function AboutPage() {
   const values = [
     {
       icon: Bot,
-      title: "AI-First Innovation",
+      title: "Signal Over Noise",
       description:
-        "We believe AI should augment human expertise, not replace it. Our technology empowers tax professionals to focus on strategy while automating routine tasks.",
+        "We don’t surface more data — we surface the right data. Every metric, adjustment, and flag is designed to improve decision quality, not overwhelm it.",
     },
     {
       icon: Shield,
-      title: "Trust & Security",
+      title: "Lender-Grade Thinking",
       description:
-        "Your data security is paramount. We maintain the highest standards of encryption, compliance, and privacy protection in everything we do.",
+        "Our models reflect how lenders and experienced operators actually evaluate deals — from DSCR durability to earnings quality and structure risk.",
     },
     {
       icon: Zap,
-      title: "Speed & Efficiency",
+      title: "Truth Over Marketing",
       description:
-        "Time is money in business. Our platform reduces manual work by 90% and gets businesses launched in 48 hours instead of weeks.",
+        "We normalize earnings, challenge add-backs, and highlight risks — even when it makes a deal look worse. Better inputs lead to better outcomes.",
     },
     {
       icon: Users,
-      title: "Client Success",
+      title: "Built for Real Decisions",
       description:
-        "We measure our success by your success. Our dedicated support team ensures you get maximum value from our platform.",
+        "This isn’t a dashboard. It’s a workflow — from first pass to LOI — designed to help buyers move faster without sacrificing rigor.",
     },
   ]
 
   const stats = [
-    { number: "48hrs", label: "Business Launch Time" },
-    { number: "99.7%", label: "Document Accuracy" },
-    { number: "24/7", label: "AI Support Available" },
-    { number: "50+", label: "States Supported" },
+    { number: "< 60 sec", label: "Time to analyze a deal" },
+    { number: "41+", label: "Industries benchmarked with real transaction data" },
+    { number: "100+", label: "Financial signals evaluated per deal" },
+    { number: "24/7", label: "AI-powered underwriting assistant" },
   ]
 
   return (
@@ -77,13 +85,11 @@ export default function AboutPage() {
               />
             </div>
           <h1 className="text-4xl lg:text-6xl font-bold text-white mb-8">
-            Revolutionizing Tax & Business
-            <span className="block text-emerald-400">Formation with AI</span>
+            Bringing Institutional-Grade Deal Analysis 
+            <span className="block text-emerald-400">to SMB Buyers</span>
           </h1>
           <p className="text-xl text-slate-300 max-w-3xl mx-auto mb-8">
-            Founded by seasoned tax professionals and AI researchers, NexTax.AI combines decades of Big 4 and Wall
-            Street tax expertise with cutting-edge artificial intelligence to transform how businesses handle tax and
-            compliance.
+            NexTax.AI combines Big 4 tax expertise, private equity experience, and real transaction data to help buyers underwrite deals with clarity, confidence, and lender-ready precision.
           </p>          
         </div>
       </section>
@@ -107,12 +113,22 @@ export default function AboutPage() {
         <div className="container mx-auto px-4">
           <div className="text-center mb-10">
            <h2 className="text-3xl lg:text-4xl font-bold text-emerald-400 mb-6">
-            The Problem We Solved</h2>
+            Why We Built This</h2>
             <p className="text-xl text-slate-300 max-w-2xl mx-auto">
-              You shouldn't need a Wall Street budget to get Big 4 tax strategy. We founded NexTax on a simple, painful
-              truth: The best tax and legal advice is often locked behind prohibitive costs and outdated processes.
-              Every day, we saw entrepreneurs wasting thousands on simple formations and missing out on tens of
-              thousands in tax savings, simply because they couldn't afford an expert.
+              Most SMB buyers aren’t losing deals because of effort — they’re losing because of incomplete information.
+
+              Deals look attractive on the surface but fall apart under scrutiny:
+              inflated earnings, aggressive add-backs, weak coverage, or unrealistic pricing.
+
+              At the same time, institutional-quality underwriting is locked behind expensive advisors and slow processes.
+
+              We built NexTax.AI to bridge that gap.
+
+              A platform where any buyer can:
+                • Normalize earnings
+                • Benchmark against real deals
+                • Stress test financing
+                • Generate a lender-ready view
             </p>
           </div>
         </div>
@@ -123,9 +139,9 @@ export default function AboutPage() {
         <div className="container mx-auto px-4">
           <div className="text-center mb-8">
             <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">
-              Meet the Founder: Steve Morello, CEO & Founder</h2>
+              Meet the Founder: Steve Morello</h2>
             <p className="text-xl text-slate-300 max-w-2xl mx-auto">
-              Experienced tax professional combining decades of tax expertise with cutting-edge AI innovation.
+              Built at the intersection of tax, private equity, and real-world deal execution.
             </p>
           </div>
 
@@ -192,30 +208,18 @@ export default function AboutPage() {
             <div>
               <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">Our Mission</h2>
               <p className="text-xl text-slate-300 mb-6">
-                To put a Big 4 Tax Advisor in the pocket of every entrepreneur.
+                To give every serious buyer the analytical edge of a seasoned deal team without the cost, delay, or guesswork.
               </p>
               <p className="text-slate-300 mb-8">
-                We partnered with leading AI researchers to capture decades of real-world, high-stakes
-                tax knowledge and bake it into StartSmart App. Our goal is to make it possible for anyone to
-                launch their business with the ultimate competitive advantage:
+                We believe too many buyers rely on broker-provided numbers, surface-level comps, or manual spreadsheets that miss critical risks.
               </p>
               <p className="text-xl text-slate-300 mb-6">
-                unrivaled tax strategy, 48-hour speed, and zero compliance surprises.
+                NexTax.AI was built to change that.
               </p>
-              <div className="space-y-4">
-                <div className="flex items-center gap-3">
-                  <Target className="w-6 h-6 text-emerald-400" />
-                  <span className="text-white font-semibold">Simplify complex tax processes</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <Award className="w-6 h-6 text-emerald-400" />
-                  <span className="text-white font-semibold">Ensure 100% compliance</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <TrendingUp className="w-6 h-6 text-emerald-400" />
-                  <span className="text-white font-semibold">Maximize tax efficiency</span>
-                </div>
-              </div>
+              <p className="text-slate-300 mb-8">
+                By combining tax expertise, transaction data, and structured underwriting logic, we help buyers move from “this looks interesting” to “this is a disciplined decision.”
+              </p>
+              
             </div>
             <div className="relative">
               <div className="bg-slate-800/50 rounded-2xl p-8 border border-slate-700">
@@ -223,21 +227,23 @@ export default function AboutPage() {
                   <h3 className="text-xl font-semibold text-white">The Problem We Solve</h3>
                   <div className="space-y-4">
                     <div className="bg-slate-900/50 rounded-lg p-4">
-                      <h4 className="text-red-400 font-semibold mb-2">Traditional Business Formation</h4>
+                      <h4 className="text-red-400 font-semibold mb-2">Traditional Deal Evaluation</h4>
                       <ul className="text-slate-300 text-sm space-y-1">
-                        <li>• 4-6 weeks for complete business setup</li>
-                        <li>• $3,000-8,000+ in professional fees</li>
-                        <li>• Manual paperwork and errors</li>
-                        <li>• No ongoing compliance monitoring</li>
+                        <li>• Reliance on broker-reported SDE</li>
+                        <li>• Inconsistent or inflated add-backs</li>
+                        <li>• No standardized benchmarking</li>
+                        <li>• Manual spreadsheet analysis</li>
+                        <li>• Limited lender perspective until late stage</li>
                       </ul>
                     </div>
                     <div className="bg-slate-900/50 rounded-lg p-4">
                       <h4 className="text-emerald-400 font-semibold mb-2">With NexTax.AI</h4>
                       <ul className="text-slate-300 text-sm space-y-1">
-                        <li>• 48 hours to launch</li>
-                        <li>• 90% cost reduction</li>
-                        <li>• AI-powered accuracy</li>
-                        <li>• 24/7 compliance monitoring</li>
+                        <li>• Adjusted earnings with validation logic</li>
+                        <li>• Trust scoring + add-back flags</li>
+                        <li>• Benchmarking across real transactions</li>
+                        <li>• Instant DSCR + financing viability</li>
+                        <li>• Lender-ready outputs from day one</li>
                       </ul>
                     </div>
                   </div>
@@ -252,9 +258,9 @@ export default function AboutPage() {
       <section className="py-20">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">Our Core Values</h2>
+            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">Our Operating Principles</h2>
             <p className="text-xl text-slate-300 max-w-2xl mx-auto">
-              These principles guide everything we do and shape how we build products for our customers.
+              These principles guide how we build tools for serious buyers making real capital decisions.
             </p>
           </div>
 
