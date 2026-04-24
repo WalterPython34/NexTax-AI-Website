@@ -2,17 +2,9 @@
 
 // components/pricing/AcquisitionsPricing.tsx
 //
-// Acquisitions pricing view — built to sell, not to list features.
-// Structure:
-//   1. Hero
-//   2. Before / After transformation
-//   3. "What you walk away with" (outcomes, not features)
-//   4. Pricing cards (Free / Pro — 2 tiers only)
-//   5. Feature breakdown
-//   6. FAQ
-//   7. Repeat CTA
-//
-// Stripe Pro price ID + "analyze a deal" entry point are wired in.
+// Acquisitions pricing — matches Formation pricing design system.
+// Uses: bg-slate-800/50 cards, emerald-500 accents, emerald icon circles,
+// scale-105 popular card lift, Most Popular ribbon, same typography.
 
 import { useState } from "react"
 import Link from "next/link"
@@ -36,10 +28,8 @@ import {
   ChevronDown,
 } from "lucide-react"
 
-// ── Stripe Pro price ID (provided) ───────────────────────────────────────────
 const PRO_PRICE_ID = "price_1TPbTTGA3ir6ndSx14wKWA27"
 
-// ── Outcomes — what users walk away with (NOT features) ─────────────────────
 const OUTCOMES = [
   {
     icon: Target,
@@ -54,12 +44,12 @@ const OUTCOMES = [
   {
     icon: FileText,
     title: "A lender-ready deal memo",
-    body:  "Structured like a PE-style IC memo. Benchmarks, red flags, normalization, financing outlook — exportable to PDF for your banker or attorney.",
+    body:  "Structured like a PE-style IC memo. Benchmarks, red flags, normalization, financing outlook — exportable to PDF.",
   },
   {
     icon: Shield,
     title: "Identified risk and weak spots",
-    body:  "Add-back exposure, customer concentration, owner dependence — flagged with evidentiary basis so you know what's inferred vs. verified.",
+    body:  "Add-back exposure, customer concentration, owner dependence — flagged with evidentiary basis so you know what's verified vs. inferred.",
   },
   {
     icon: TrendingDown,
@@ -68,7 +58,6 @@ const OUTCOMES = [
   },
 ]
 
-// ── FAQ — objection handling ────────────────────────────────────────────────
 const FAQS = [
   {
     q: "Where does the benchmark data come from?",
@@ -96,13 +85,50 @@ const FAQS = [
   },
 ]
 
-// ─────────────────────────────────────────────────────────────────────────────
-// MAIN COMPONENT
-// ─────────────────────────────────────────────────────────────────────────────
+const ACQ_PACKAGES = [
+  {
+    name:        "Free",
+    icon:         Zap,
+    price:       "$0",
+    priceNote:   "/month",
+    description: "For early deal screening",
+    features: [
+      "Basic underwriting preview",
+      "Limited comps visibility",
+      "1 deal memo preview",
+      "Limited market insights",
+      "Up to 10 deal analyses / month",
+    ],
+    popular: false,
+    cta:     "Start free",
+    ctaHref: "/buyer-dashboard",
+    savings: "",
+  },
+  {
+    name:        "Pro",
+    icon:         Crown,
+    price:       "$39",
+    priceNote:   "/month",
+    description: "For serious acquisition decisions",
+    features: [
+      "Full underwriting across all tabs",
+      "Full comps + percentile positioning",
+      "Deal memo (PDF export)",
+      "LOI Builder + negotiation ranges",
+      "Compare deals side-by-side",
+      "Market saturation + competitor analysis",
+      "Unlimited deal analysis",
+    ],
+    popular: true,
+    cta:     "Upgrade to Pro",
+    ctaHref: null,
+    savings: "Cancel anytime",
+  },
+]
 
 export function AcquisitionsPricing() {
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <>
       <HeroSection />
       <BeforeAfterSection />
       <OutcomesSection />
@@ -110,285 +136,256 @@ export function AcquisitionsPricing() {
       <FeatureMatrixSection />
       <FaqSection />
       <FinalCtaSection />
-    </div>
+    </>
   )
 }
 
-// ─── 1. HERO ────────────────────────────────────────────────────────────────
 function HeroSection() {
   return (
-    <section className="pt-12 pb-8 text-center">
-      <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-400/25 text-indigo-300 text-xs font-semibold uppercase tracking-wider mb-5">
-        <Sparkles className="w-3.5 h-3.5" />
-        NexTax Intelligence · Acquisitions
+    <section className="py-20">
+      <div className="container mx-auto px-4">
+        <div className="text-center max-w-4xl mx-auto">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-xs font-semibold uppercase tracking-wider mb-6">
+            <Sparkles className="w-3.5 h-3.5" />
+            NexTax Intelligence · Acquisitions
+          </div>
+          <h1 className="text-5xl md:text-6xl font-bold text-white mb-6 leading-tight tracking-tight">
+            Stop wasting time on <span className="text-emerald-400">the wrong deals</span>
+          </h1>
+          <p className="text-xl text-slate-300 mb-4 max-w-3xl mx-auto leading-relaxed">
+            Get structured underwriting, real comps, and decision-ready outputs — before you commit to LOI.
+          </p>
+          <p className="text-sm text-slate-500 italic">
+            Replaces spreadsheets, broker guesswork, and back-of-the-envelope underwriting.
+          </p>
+        </div>
       </div>
-      <h1 className="text-4xl sm:text-5xl font-bold text-white leading-tight tracking-tight mb-4 max-w-3xl mx-auto">
-        Stop wasting time on the wrong deals.
-      </h1>
-      <p className="text-base sm:text-lg text-slate-400 leading-relaxed max-w-2xl mx-auto">
-        Get structured underwriting, real comps, and decision-ready outputs — before you commit to LOI.
-      </p>
-      <p className="text-xs text-slate-500 mt-3 italic">
-        Replaces spreadsheets, broker guesswork, and back-of-the-envelope underwriting.
-      </p>
     </section>
   )
 }
 
-// ─── 2. BEFORE / AFTER ──────────────────────────────────────────────────────
 function BeforeAfterSection() {
   return (
-    <section className="py-12">
-      <div className="text-center mb-8">
-        <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2 tracking-tight">
-          From messy listings to real decisions
-        </h2>
-        <p className="text-sm text-slate-400">
-          What a typical BizBuySell listing looks like — and what it becomes in NexTax.
+    <section className="py-20">
+      <div className="container mx-auto px-4">
+        <div className="text-center mb-12 max-w-3xl mx-auto">
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4 tracking-tight">
+            From messy listings to <span className="text-emerald-400">real decisions</span>
+          </h2>
+          <p className="text-slate-400">
+            What a typical BizBuySell listing looks like — and what it becomes in NexTax.
+          </p>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-8 max-w-6xl mx-auto">
+          <Card className="bg-slate-800/50 border-slate-700">
+            <CardHeader className="pb-4">
+              <div className="flex items-center justify-between mb-3">
+                <Badge variant="outline" className="text-xs uppercase tracking-wider border-slate-600 text-slate-400">
+                  Before
+                </Badge>
+                <span className="text-xs text-slate-500">Raw broker listing</span>
+              </div>
+              <CardTitle className="text-xl text-slate-200">Specialty Trade Services — Texas</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-3 font-mono text-sm text-slate-400 leading-relaxed">
+              <p>Asking: $2,450,000. Owner retiring after 22 yrs. MUST SELL!!</p>
+              <p>Cash flow: $780,000 (owner says). All reasonable offers considered.</p>
+              <p>Revenue: approx $4M. "Great books." 30+ employees.</p>
+              <p>Add-backs incl. family vehicle, owner travel, consulting fees…</p>
+              <p className="text-slate-500 pt-2 border-t border-slate-700/50">— contact broker for financials —</p>
+              <div className="mt-4 pt-3 flex items-center gap-2">
+                <TrendingDown className="w-4 h-4 text-amber-400 flex-shrink-0" />
+                <span className="text-xs text-amber-400/90">
+                  No multiples. No benchmarks. No diligence path.
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-slate-800/50 border-emerald-500/50 shadow-lg shadow-emerald-500/10">
+            <CardHeader className="pb-4">
+              <div className="flex items-center justify-between mb-3">
+                <Badge className="bg-emerald-500/20 text-emerald-300 border-emerald-500/40 uppercase tracking-wider">
+                  After
+                </Badge>
+                <span className="text-xs text-emerald-400/80">Structured output</span>
+              </div>
+              <CardTitle className="text-xl text-white flex items-center gap-2 flex-wrap">
+                Specialty Trade Services — TX
+                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-500/20 border border-amber-500/40 text-amber-400 text-[10px] font-bold tracking-wider">
+                  ⚠ INVESTIGATE
+                </span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-3 gap-2">
+                <MiniMetric label="Adjusted SDE" value="$640K" sub="−18% vs reported" />
+                <MiniMetric label="Multiple"     value="3.83x" sub="Top quartile" />
+                <MiniMetric label="DSCR"         value="1.28x" sub="Marginal" />
+              </div>
+              <div className="p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30">
+                <div className="text-xs uppercase tracking-wider text-emerald-400 font-semibold mb-1">
+                  Offer strategy
+                </div>
+                <div className="text-sm text-slate-200 font-mono">
+                  Anchor <span className="text-emerald-400 font-bold">$1.82M</span> · Range $1.75M–$2.05M · Max $2.05M
+                </div>
+              </div>
+              <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/30 space-y-1.5">
+                <div className="text-xs uppercase tracking-wider text-red-400 font-semibold">
+                  Red flags (2)
+                </div>
+                <div className="text-sm text-slate-200">• Customer concentration 32% (hard flag)</div>
+                <div className="text-sm text-slate-200">• Add-backs elevated (18% of SDE)</div>
+              </div>
+              <div className="flex items-center gap-2 pt-3 border-t border-slate-700/60">
+                <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0" />
+                <span className="text-sm text-emerald-300">
+                  Verdict, benchmarks, diligence plan — in 60 seconds.
+                </span>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <p className="text-center text-base text-slate-300 mt-10">
+          <span className="text-emerald-400 font-semibold">This is what Pro unlocks.</span>
         </p>
       </div>
-
-      <div className="grid md:grid-cols-2 gap-5">
-        {/* BEFORE — messy broker listing */}
-        <Card className="bg-slate-900/30 border-slate-700/60 overflow-hidden">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between mb-1">
-              <Badge variant="outline" className="text-[10px] uppercase tracking-wider border-slate-600 text-slate-400">
-                Before
-              </Badge>
-              <span className="text-[10px] text-slate-500">Raw broker listing</span>
-            </div>
-            <CardTitle className="text-base text-slate-200">Specialty Trade Services — Texas</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2 font-mono text-[11px] leading-relaxed text-slate-400">
-            <p>Asking: $2,450,000. Owner retiring after 22 yrs. MUST SELL!!</p>
-            <p>Cash flow: $780,000 (owner says). All reasonable offers considered.</p>
-            <p>Revenue: approx $4M. "Great books." 30+ employees. Real estate separate.</p>
-            <p>Add-backs incl. family vehicle, owner travel, consulting fees, various...</p>
-            <p className="text-slate-500">&mdash; contact broker for financials &mdash;</p>
-            <div className="mt-4 pt-3 border-t border-slate-700/50 flex items-center gap-2">
-              <TrendingDown className="w-3.5 h-3.5 text-amber-400" />
-              <span className="text-[10px] text-amber-400/90">
-                No multiples. No benchmarks. No diligence path.
-              </span>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* AFTER — structured output */}
-        <Card className="bg-gradient-to-br from-indigo-950/40 to-violet-950/30 border-indigo-500/30 overflow-hidden">
-          <CardHeader className="pb-3">
-            <div className="flex items-center justify-between mb-1">
-              <Badge className="text-[10px] uppercase tracking-wider bg-indigo-500/15 text-indigo-300 border-indigo-400/40">
-                After
-              </Badge>
-              <span className="text-[10px] text-indigo-300/80">Structured output</span>
-            </div>
-            <CardTitle className="text-base text-slate-100 flex items-center gap-2">
-              Specialty Trade Services — TX
-              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-amber-500/15 border border-amber-500/40 text-amber-400 text-[9px] font-bold tracking-wider">
-                ⚠ INVESTIGATE
-              </span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3 text-xs">
-            <div className="grid grid-cols-3 gap-2">
-              <MiniMetric label="Adjusted SDE"  value="$640K" accent="warn" sub="−18% vs reported" />
-              <MiniMetric label="Multiple"      value="3.83x" accent="warn" sub="Top quartile" />
-              <MiniMetric label="DSCR"          value="1.28x" accent="warn" sub="Marginal" />
-            </div>
-            <div className="p-2.5 rounded-md bg-emerald-500/5 border border-emerald-500/20">
-              <div className="text-[10px] uppercase tracking-wider text-emerald-400/80 font-semibold mb-1">
-                Offer strategy
-              </div>
-              <div className="text-[11px] text-slate-300 font-mono">
-                Anchor <span className="text-emerald-400 font-semibold">$1.82M</span> · Range $1.75M–$2.05M · Max $2.05M
-              </div>
-            </div>
-            <div className="p-2.5 rounded-md bg-red-500/5 border border-red-500/20 space-y-1">
-              <div className="text-[10px] uppercase tracking-wider text-red-400/80 font-semibold">
-                Red flags (2)
-              </div>
-              <div className="text-[11px] text-slate-300">• Customer concentration 32% (hard flag)</div>
-              <div className="text-[11px] text-slate-300">• Add-backs elevated (18% of SDE)</div>
-            </div>
-            <div className="flex items-center gap-2 pt-2 border-t border-indigo-500/20">
-              <CheckCircle className="w-3.5 h-3.5 text-indigo-400" />
-              <span className="text-[10px] text-indigo-300">
-                Verdict, benchmarks, diligence plan — in 60 seconds.
-              </span>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <p className="text-center text-sm text-slate-400 mt-6">
-        <span className="text-indigo-400 font-semibold">This is what Pro unlocks.</span>
-      </p>
     </section>
   )
 }
 
-function MiniMetric({
-  label, value, sub, accent,
-}: {
-  label: string; value: string; sub: string; accent: "warn" | "ok"
-}) {
-  const color = accent === "warn" ? "text-amber-400" : "text-emerald-400"
+function MiniMetric({ label, value, sub }: { label: string; value: string; sub: string }) {
   return (
-    <div className="p-2 rounded-md bg-slate-900/40 border border-slate-700/40">
-      <div className="text-[9px] uppercase tracking-wider text-slate-500 font-semibold mb-0.5">{label}</div>
-      <div className={`text-sm font-bold font-mono ${color}`}>{value}</div>
-      <div className="text-[9px] text-slate-500 mt-0.5">{sub}</div>
+    <div className="p-2.5 rounded-lg bg-slate-900/50 border border-slate-700/60">
+      <div className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold mb-1">{label}</div>
+      <div className="text-base font-bold font-mono text-amber-400">{value}</div>
+      <div className="text-[10px] text-slate-500 mt-0.5">{sub}</div>
     </div>
   )
 }
 
-// ─── 3. OUTCOMES — "What you walk away with" ────────────────────────────────
 function OutcomesSection() {
   return (
-    <section className="py-12">
-      <div className="text-center mb-9">
-        <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2 tracking-tight">
-          What you walk away with from every deal
-        </h2>
-        <p className="text-sm text-slate-400">
-          Outcomes, not features — the decisions NexTax helps you defend.
-        </p>
-      </div>
-      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {OUTCOMES.map((o) => {
-          const Icon = o.icon
-          return (
-            <Card
-              key={o.title}
-              className="bg-slate-900/40 border-slate-700/50 hover:border-indigo-500/40 transition-colors"
-            >
-              <CardContent className="pt-5 pb-5">
-                <div className="flex items-center gap-2.5 mb-3">
-                  <div className="w-9 h-9 rounded-lg bg-indigo-500/10 border border-indigo-400/25 flex items-center justify-center">
-                    <Icon className="w-4.5 h-4.5 text-indigo-300" />
+    <section className="py-20">
+      <div className="container mx-auto px-4">
+        <div className="text-center mb-14 max-w-3xl mx-auto">
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4 tracking-tight">
+            What you walk away with <span className="text-emerald-400">from every deal</span>
+          </h2>
+          <p className="text-slate-400">
+            Outcomes, not features — the decisions NexTax helps you defend.
+          </p>
+        </div>
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-6xl mx-auto">
+          {OUTCOMES.map((o) => {
+            const Icon = o.icon
+            return (
+              <Card
+                key={o.title}
+                className="bg-slate-800/50 border-slate-700 hover:border-emerald-500/50 transition-colors"
+              >
+                <CardContent className="pt-8 pb-8">
+                  <div className="w-14 h-14 mb-4 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                    <Icon className="w-7 h-7 text-emerald-400" />
                   </div>
-                  <h3 className="text-sm font-semibold text-slate-100 leading-tight">{o.title}</h3>
-                </div>
-                <p className="text-xs text-slate-400 leading-relaxed">{o.body}</p>
-              </CardContent>
-            </Card>
-          )
-        })}
+                  <h3 className="text-lg font-bold text-white mb-3 leading-tight">{o.title}</h3>
+                  <p className="text-sm text-slate-400 leading-relaxed">{o.body}</p>
+                </CardContent>
+              </Card>
+            )
+          })}
+        </div>
       </div>
     </section>
   )
 }
 
-// ─── 4. PRICING CARDS ───────────────────────────────────────────────────────
 function PricingCardsSection() {
   return (
-    <section className="py-12" id="pricing-cards">
-      <div className="text-center mb-9">
-        <h2 className="text-2xl sm:text-3xl font-bold text-white mb-2 tracking-tight">
-          Pricing
-        </h2>
-        <p className="text-sm text-slate-400">
-          Two tiers. No contracts. Cancel anytime.
-        </p>
-      </div>
+    <section className="py-20" id="pricing-cards">
+      <div className="container mx-auto px-4">
+        <div className="text-center mb-14 max-w-3xl mx-auto">
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4 tracking-tight">
+            Simple, transparent <span className="text-emerald-400">pricing</span>
+          </h2>
+          <p className="text-slate-400">
+            Two tiers. No contracts. Cancel anytime.
+          </p>
+        </div>
 
-      <div className="grid md:grid-cols-2 gap-5 max-w-4xl mx-auto">
-        {/* FREE */}
-        <Card className="bg-slate-900/40 border-slate-700/50 relative">
-          <CardHeader className="pb-4">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-8 h-8 rounded-lg bg-slate-700/40 flex items-center justify-center">
-                <Zap className="w-4 h-4 text-slate-300" />
-              </div>
-              <CardTitle className="text-base text-white">Free</CardTitle>
-            </div>
-            <p className="text-xs text-slate-400 mb-4">For early deal screening.</p>
-            <div className="flex items-baseline gap-1.5">
-              <span className="text-4xl font-bold text-white">$0</span>
-              <span className="text-xs text-slate-500">/month</span>
-            </div>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <ul className="space-y-2.5">
-              {[
-                "Basic underwriting preview",
-                "Limited comps visibility",
-                "1 deal memo preview",
-                "Limited market insights",
-                "Up to 10 deal analyses / month",
-              ].map((f) => (
-                <li key={f} className="flex items-start gap-2.5 text-xs text-slate-300">
-                  <CheckCircle className="w-4 h-4 text-slate-500 mt-0.5 flex-shrink-0" />
-                  <span>{f}</span>
-                </li>
-              ))}
-            </ul>
-            <Link href="/buyer-dashboard" className="block pt-3">
-              <Button
-                variant="outline"
-                className="w-full border-slate-600 bg-slate-800/40 hover:bg-slate-800 text-slate-100"
+        <div className="grid md:grid-cols-2 gap-8 max-w-5xl mx-auto">
+          {ACQ_PACKAGES.map((pkg) => {
+            const Icon = pkg.icon
+            return (
+              <Card
+                key={pkg.name}
+                className={`relative bg-slate-800/50 border-slate-700 ${
+                  pkg.popular ? "border-emerald-500/50 scale-105 shadow-xl shadow-emerald-500/10" : ""
+                }`}
               >
-                Start free
-              </Button>
-            </Link>
-          </CardContent>
-        </Card>
-
-        {/* PRO */}
-        <Card className="bg-gradient-to-br from-indigo-950/40 to-violet-950/30 border-indigo-500/40 relative overflow-hidden">
-          <div className="absolute top-0 right-0 bg-gradient-to-l from-indigo-500 to-violet-500 text-white text-[10px] font-bold px-3 py-1 rounded-bl-lg uppercase tracking-wider">
-            Most popular
-          </div>
-          <CardHeader className="pb-4">
-            <div className="flex items-center gap-2 mb-3">
-              <div className="w-8 h-8 rounded-lg bg-indigo-500/15 border border-indigo-400/30 flex items-center justify-center">
-                <Crown className="w-4 h-4 text-indigo-300" />
-              </div>
-              <CardTitle className="text-base text-white">Pro</CardTitle>
-            </div>
-            <p className="text-xs text-slate-300 mb-4">For serious acquisition decisions.</p>
-            <div className="flex items-baseline gap-1.5">
-              <span className="text-4xl font-bold text-white">$39</span>
-              <span className="text-xs text-slate-400">/month</span>
-            </div>
-            <p className="text-[10px] text-indigo-300/80 mt-1">Cancel anytime.</p>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <ul className="space-y-2.5">
-              {[
-                "Full underwriting across all tabs",
-                "Full comps + percentile positioning",
-                "Deal memo (PDF export)",
-                "LOI Builder + negotiation ranges",
-                "Compare deals side-by-side",
-                "Market saturation + competitor analysis",
-                "Unlimited deal analysis",
-              ].map((f) => (
-                <li key={f} className="flex items-start gap-2.5 text-xs text-slate-200">
-                  <CheckCircle className="w-4 h-4 text-indigo-400 mt-0.5 flex-shrink-0" />
-                  <span>{f}</span>
-                </li>
-              ))}
-            </ul>
-            <div className="pt-3">
-              <StripeCheckoutButton
-                priceId={PRO_PRICE_ID}
-                className="w-full bg-gradient-to-r from-indigo-500 to-violet-500 hover:from-indigo-400 hover:to-violet-400 text-white font-semibold"
-              >
-                Upgrade to Pro
-                <ArrowRight className="w-4 h-4 ml-1.5" />
-              </StripeCheckoutButton>
-            </div>
-          </CardContent>
-        </Card>
+                {pkg.popular && (
+                  <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
+                    <Badge className="bg-emerald-500 text-white px-4 py-1">Most Popular</Badge>
+                  </div>
+                )}
+                <CardHeader className="text-center pb-8">
+                  <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                    <Icon className="w-8 h-8 text-emerald-400" />
+                  </div>
+                  <CardTitle className="text-2xl text-white">{pkg.name}</CardTitle>
+                  <p className="text-slate-400">{pkg.description}</p>
+                  <div className="mt-6">
+                    <span className="text-5xl font-bold text-white">{pkg.price}</span>
+                    <span className="text-slate-400 text-lg">{pkg.priceNote}</span>
+                  </div>
+                  {pkg.savings && (
+                    <Badge className="bg-emerald-500/20 text-emerald-300 mt-3 border-0">
+                      {pkg.savings}
+                    </Badge>
+                  )}
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="space-y-3">
+                    {pkg.features.map((feature) => (
+                      <div key={feature} className="flex items-start gap-3">
+                        <CheckCircle className="w-5 h-5 text-emerald-400 flex-shrink-0 mt-0.5" />
+                        <span className="text-slate-300">{feature}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="pt-4">
+                    {pkg.ctaHref ? (
+                      <Link href={pkg.ctaHref} className="block">
+                        <Button
+                          variant="outline"
+                          className="w-full border-slate-600 bg-slate-900/50 hover:bg-slate-700 text-white h-12 text-base"
+                        >
+                          {pkg.cta}
+                        </Button>
+                      </Link>
+                    ) : (
+                      <StripeCheckoutButton
+                        priceId={PRO_PRICE_ID}
+                        className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-semibold h-12 text-base"
+                      >
+                        {pkg.cta}
+                        <ArrowRight className="w-5 h-5 ml-2" />
+                      </StripeCheckoutButton>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            )
+          })}
+        </div>
       </div>
     </section>
   )
 }
 
-// ─── 5. FEATURE MATRIX (optional depth) ─────────────────────────────────────
 function FeatureMatrixSection() {
   const rows = [
     { feature: "Deal verdict + DSCR screening",           free: true,   pro: true },
@@ -409,133 +406,137 @@ function FeatureMatrixSection() {
   ]
 
   return (
-    <section className="py-12">
-      <div className="text-center mb-8">
-        <h2 className="text-xl sm:text-2xl font-bold text-white mb-1 tracking-tight">
-          What's in each plan
-        </h2>
-        <p className="text-xs text-slate-400">
-          Free lets you screen. Pro lets you execute.
-        </p>
-      </div>
-
-      <Card className="bg-slate-900/40 border-slate-700/50 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="border-b border-slate-700/50 bg-slate-900/60">
-                <th className="text-left py-3 px-4 text-[10px] uppercase tracking-wider text-slate-500 font-semibold">Feature</th>
-                <th className="text-center py-3 px-4 text-[10px] uppercase tracking-wider text-slate-500 font-semibold">Free</th>
-                <th className="text-center py-3 px-4 text-[10px] uppercase tracking-wider text-indigo-400 font-semibold">Pro</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.map((r, i) => (
-                <tr
-                  key={r.feature}
-                  className={`border-b border-slate-700/30 ${i % 2 === 0 ? "bg-slate-900/20" : ""}`}
-                >
-                  <td className="py-2.5 px-4 text-xs text-slate-200">{r.feature}</td>
-                  <td className="py-2.5 px-4 text-center">
-                    <MatrixCell value={r.free} accent="free" />
-                  </td>
-                  <td className="py-2.5 px-4 text-center">
-                    <MatrixCell value={r.pro} accent="pro" />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+    <section className="py-20">
+      <div className="container mx-auto px-4">
+        <div className="text-center mb-12 max-w-3xl mx-auto">
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4 tracking-tight">
+            What's in <span className="text-emerald-400">each plan</span>
+          </h2>
+          <p className="text-slate-400">
+            Free lets you screen. Pro lets you execute.
+          </p>
         </div>
-      </Card>
+
+        <Card className="bg-slate-800/50 border-slate-700 overflow-hidden max-w-5xl mx-auto">
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-slate-700 bg-slate-900/50">
+                  <th className="text-left py-4 px-6 text-xs uppercase tracking-wider text-slate-400 font-semibold">Feature</th>
+                  <th className="text-center py-4 px-6 text-xs uppercase tracking-wider text-slate-400 font-semibold">Free</th>
+                  <th className="text-center py-4 px-6 text-xs uppercase tracking-wider text-emerald-400 font-semibold">Pro</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((r, i) => (
+                  <tr
+                    key={r.feature}
+                    className={`border-b border-slate-700/50 ${i % 2 === 0 ? "bg-slate-900/20" : ""}`}
+                  >
+                    <td className="py-3 px-6 text-sm text-slate-200">{r.feature}</td>
+                    <td className="py-3 px-6 text-center">
+                      <MatrixCell value={r.free} accent="free" />
+                    </td>
+                    <td className="py-3 px-6 text-center">
+                      <MatrixCell value={r.pro} accent="pro" />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Card>
+      </div>
     </section>
   )
 }
 
 function MatrixCell({ value, accent }: { value: boolean | string; accent: "free" | "pro" }) {
   if (value === true) {
-    return <CheckCircle className={`w-4 h-4 inline ${accent === "pro" ? "text-indigo-400" : "text-slate-400"}`} />
+    return <CheckCircle className={`w-5 h-5 inline ${accent === "pro" ? "text-emerald-400" : "text-slate-400"}`} />
   }
   if (value === false) {
-    return <X className="w-4 h-4 inline text-slate-700" />
+    return <X className="w-5 h-5 inline text-slate-600" />
   }
-  return <span className={`text-[11px] ${accent === "pro" ? "text-indigo-300" : "text-slate-500"}`}>{value}</span>
+  return <span className={`text-sm font-medium ${accent === "pro" ? "text-emerald-300" : "text-slate-400"}`}>{value}</span>
 }
 
-// ─── 6. FAQ ─────────────────────────────────────────────────────────────────
 function FaqSection() {
   const [openIdx, setOpenIdx] = useState<number | null>(0)
   return (
-    <section className="py-12 max-w-3xl mx-auto">
-      <div className="text-center mb-8">
-        <h2 className="text-xl sm:text-2xl font-bold text-white mb-1 tracking-tight">
-          Frequently asked
-        </h2>
-      </div>
-      <div className="space-y-2">
-        {FAQS.map((f, i) => {
-          const open = openIdx === i
-          return (
-            <div
-              key={i}
-              className="border border-slate-700/50 rounded-lg bg-slate-900/30 overflow-hidden"
-            >
-              <button
-                onClick={() => setOpenIdx(open ? null : i)}
-                className="w-full px-4 py-3 flex items-center justify-between gap-3 text-left hover:bg-slate-900/50 transition-colors"
+    <section className="py-20">
+      <div className="container mx-auto px-4">
+        <div className="text-center mb-12 max-w-3xl mx-auto">
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4 tracking-tight">
+            Frequently <span className="text-emerald-400">asked</span>
+          </h2>
+        </div>
+        <div className="space-y-3 max-w-3xl mx-auto">
+          {FAQS.map((f, i) => {
+            const open = openIdx === i
+            return (
+              <Card
+                key={i}
+                className="bg-slate-800/50 border-slate-700 overflow-hidden"
               >
-                <span className="text-sm font-medium text-slate-100">{f.q}</span>
-                <ChevronDown
-                  className={`w-4 h-4 text-slate-400 flex-shrink-0 transition-transform ${open ? "rotate-180" : ""}`}
-                />
-              </button>
-              {open && (
-                <div className="px-4 pb-4 pt-1 text-xs text-slate-300 leading-relaxed border-t border-slate-700/30">
-                  {f.a}
-                </div>
-              )}
-            </div>
-          )
-        })}
+                <button
+                  onClick={() => setOpenIdx(open ? null : i)}
+                  className="w-full px-6 py-5 flex items-center justify-between gap-3 text-left hover:bg-slate-800/70 transition-colors"
+                >
+                  <span className="text-base font-semibold text-white">{f.q}</span>
+                  <ChevronDown
+                    className={`w-5 h-5 text-emerald-400 flex-shrink-0 transition-transform ${open ? "rotate-180" : ""}`}
+                  />
+                </button>
+                {open && (
+                  <div className="px-6 pb-5 pt-1 text-sm text-slate-300 leading-relaxed">
+                    {f.a}
+                  </div>
+                )}
+              </Card>
+            )
+          })}
+        </div>
       </div>
     </section>
   )
 }
 
-// ─── 7. FINAL CTA ───────────────────────────────────────────────────────────
 function FinalCtaSection() {
   return (
-    <section className="py-16 mb-8">
-      <Card className="bg-gradient-to-br from-indigo-950/50 to-violet-950/40 border-indigo-500/30">
-        <CardContent className="py-10 text-center">
-          <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3 tracking-tight">
-            Before you sign an LOI,<br />
-            <span className="text-indigo-300">know what the deal is actually worth.</span>
-          </h2>
-          <p className="text-sm text-slate-400 mb-7 max-w-xl mx-auto">
-            Start with a free analysis. Upgrade when you're ready to execute.
-          </p>
-          <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Link href="/buyer-dashboard">
-              <Button
-                size="lg"
-                className="bg-gradient-to-r from-indigo-500 to-violet-500 hover:from-indigo-400 hover:to-violet-400 text-white font-semibold px-6"
+    <section className="py-20">
+      <div className="container mx-auto px-4">
+        <Card className="bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 border-emerald-500/30 max-w-4xl mx-auto">
+          <CardContent className="py-14 px-8 text-center">
+            <h2 className="text-3xl md:text-4xl font-bold text-white mb-4 tracking-tight leading-tight">
+              Before you sign an LOI,<br />
+              <span className="text-emerald-400">know what the deal is actually worth.</span>
+            </h2>
+            <p className="text-slate-300 mb-8 max-w-xl mx-auto text-lg">
+              Start with a free analysis. Upgrade when you're ready to execute.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
+              <Link href="/buyer-dashboard">
+                <Button
+                  size="lg"
+                  className="bg-emerald-500 hover:bg-emerald-600 text-white font-semibold px-8 h-12 text-base"
+                >
+                  Analyze a deal
+                  <ArrowRight className="w-5 h-5 ml-2" />
+                </Button>
+              </Link>
+              <StripeCheckoutButton
+                priceId={PRO_PRICE_ID}
+                variant="outline"
+                className="border-emerald-500/50 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 h-12 text-base px-8"
               >
-                Analyze a deal
-                <ArrowRight className="w-4 h-4 ml-2" />
-              </Button>
-            </Link>
-            <StripeCheckoutButton
-              priceId={PRO_PRICE_ID}
-              variant="outline"
-              className="border-indigo-400/40 bg-indigo-500/5 hover:bg-indigo-500/15 text-indigo-200"
-            >
-              <Lock className="w-4 h-4 mr-2" />
-              Upgrade to Pro — $39/mo
-            </StripeCheckoutButton>
-          </div>
-        </CardContent>
-      </Card>
+                <Lock className="w-4 h-4 mr-2" />
+                Upgrade to Pro — $39/mo
+              </StripeCheckoutButton>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </section>
   )
 }
