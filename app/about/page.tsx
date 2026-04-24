@@ -9,7 +9,7 @@ export default function AboutPage() {
     {
       name: "Steve Morello",
       role: "CEO & Founder",
-      bio: "After over two decades in tax, M&A structuring, and financial operations — including experience supporting private equity transactions and global tax functions — Steve Morello saw a consistent gap in the SMB market:
+      bio: `After over two decades in tax, M&A structuring, and financial operations — including experience supporting private equity transactions and global tax functions — Steve Morello saw a consistent gap in the SMB market:
 
             Buyers lacked access to structured, decision-grade underwriting.
 
@@ -18,7 +18,7 @@ export default function AboutPage() {
             NexTax.AI was built to bring institutional discipline to SMB acquisitions — combining financial rigor, tax insight, and automation into a single decision workflow.
 
             The goal is simple:
-            Help buyers make better decisions, faster — and avoid costly mistakes.",
+            Help buyers make better decisions, faster — and avoid costly mistakes.`,
       image: "/images/steve-morello-headshot.jpg",
       credentials: [        
         "Former Morgan Stanley Private Equity",
