@@ -111,7 +111,7 @@ export default function HomePage() {
               <div className="space-y-6">
                 <h1 className="text-4xl lg:text-5xl font-bold text-white leading-tight">
                   Know if a deal deserves an LOI 
-                  <span className="block text-cyan-400 mt-2">before you commit capital.</span>
+                  <span className="block text-emerald-500 mt-2">before you commit capital.</span>
                 </h1>
 
                 <p className="text-xl text-slate-300 leading-relaxed max-w-lg">
