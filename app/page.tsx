@@ -110,18 +110,17 @@ export default function HomePage() {
 
               <div className="space-y-6">
                 <h1 className="text-4xl lg:text-5xl font-bold text-white leading-tight">
-                  Know if a deal is worth buying
+                  Know if a deal deserves an LOI 
                   <span className="block text-cyan-400 mt-2">before you commit capital.</span>
                 </h1>
 
                 <p className="text-xl text-slate-300 leading-relaxed max-w-lg">
-                  Normalize earnings, stress test financing, and benchmark against real transactions — all in one
-                  workflow.
+                  AcquiFlow helps SMB buyers normalize seller earnings, benchmark against real transaction data, 
+                  stress-test financing, and generate lender-ready deal outputs — 
+                  before spending serious time or money on diligence.
                 </p>
 
-                <p className="text-base text-slate-400 mt-4">
-                  Built for SMB buyers, acquisition entrepreneurs, and investors evaluating real deals.
-                </p>
+                
                 <p className="text-sm text-slate-500 mt-2">
                   Built using real-world underwriting frameworks used by lenders and institutional investors.
                 </p>
@@ -144,7 +143,7 @@ export default function HomePage() {
                 variant="outline"
                 className="border-slate-600 text-slate-300 hover:bg-slate-800 hover:text-white px-8 py-6 text-lg w-full sm:w-auto bg-transparent"
                 >
-                See How It Works
+                See Sample Analysis
                </Button>
                 </Link>              
                 <Button
@@ -154,9 +153,12 @@ export default function HomePage() {
                   onClick={() => document.getElementById("how-it-works")?.scrollIntoView({ behavior: "smooth" })}
                 >
                   <Play className="mr-2 w-4 h-4" />
-                  See How It Works
+                  How It Works
                 </Button>
               </div>
+              <p className="text-base text-slate-400 mt-4">
+                  Built for searchers, acquisition entrepreneurs, independent sponsors, and SMB buyers evaluating real deals.
+                </p>
             </div>
 
             {/* Hero Visual - Deal Analysis Animation Placeholder */}
