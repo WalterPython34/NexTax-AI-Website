@@ -1,4 +1,5 @@
 import Link from "next/link"
+import Image from "next/image"
 
 export function Footer() {
   return (
@@ -9,7 +10,7 @@ export function Footer() {
           <div className="space-y-4">
             <img src="/images/nextax-logo.png" alt="NexTax.AI" className="h-8 w-auto" />
             <p className="text-slate-400 text-sm">
-              AI-powered business formation and tax services for modern entrepreneurs.
+              AI-powered underwriting, benchmarking, and deal analysis tools for SMB acquisition buyers.
             </p>
           </div>
 
@@ -75,8 +76,29 @@ export function Footer() {
           </div>
         </div>
 
-        <div className="border-t border-slate-800 mt-8 pt-8 text-center">
-          <p className="text-slate-400 text-sm">© {new Date().getFullYear()} NexTax.AI. All rights reserved.</p>
+        <div className="border-t border-slate-800 mt-8 pt-8">
+          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+            <p className="text-slate-400 text-sm">© {new Date().getFullYear()} NexTax.AI. All rights reserved.</p>
+            <Link
+              href="https://apps.apple.com/us/app/startsmart-by-nextax-ai/id6748315012"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <Image
+                src="/images/Download_on_the_App_Store_Badge.svg"
+                alt="Download on the App Store"
+                width={135}
+                height={40}
+                className="h-10 w-auto hover:opacity-80 transition-opacity"
+              />
+            </Link>
+          </div>
+
+          <p className="text-slate-500 text-xs text-center mt-6 max-w-3xl mx-auto">
+            NexTax.AI is a private service provider and is not affiliated with any government agency. We provide
+            professional assistance for business filings and tax strategy. Official forms can be obtained directly from
+            the state.
+          </p>
         </div>
       </div>
     </footer>
