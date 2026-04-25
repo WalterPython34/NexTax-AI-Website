@@ -35,7 +35,7 @@ export default function FeaturesPage() {
             {/* Left - Copy */}
             <div className="space-y-6">
               <Badge className="bg-cyan-500/20 text-cyan-300 border-cyan-500/30">
-                ACQUIFLOW FEATURES
+                PRE-LOI DEAL UNDERWRITING
               </Badge>
               <h1 className="text-4xl lg:text-5xl font-bold text-white leading-tight">
                 Everything You Need to Underwrite, Compare, and Choose Better Deals
@@ -132,7 +132,7 @@ export default function FeaturesPage() {
             </div>
             <div>
               <div className="text-4xl font-bold text-emerald-400">Minutes</div>
-              <div className="text-sm text-slate-400 mt-2">To lender-ready outputs</div>
+              <div className="text-sm text-slate-400 mt-2">To first underwriting view</div>
             </div>
           </div>
         </div>
@@ -154,16 +154,19 @@ export default function FeaturesPage() {
                 icon: DollarSign,
                 title: "Normalized Earnings",
                 description: "Adjust reported SDE for aggressive add-backs, owner compensation gaps, one-time items, and questionable adjustments.",
+                sample: "Seller SDE: $340K → Adjusted SDE: $285K",
               },
               {
                 icon: TrendingUp,
                 title: "DSCR & Financing Stress Test",
                 description: "See whether the deal can support debt under realistic SBA-style financing assumptions and downside scenarios.",
+                sample: "Base DSCR: 1.28x / Stress DSCR: 0.94x",
               },
               {
                 icon: BarChart3,
                 title: "Market Benchmarking",
                 description: "Compare asking multiples against real transaction data by industry instead of relying only on broker narratives.",
+                sample: "Asking multiple: 4.1x / Benchmark range: 2.7x–3.4x",
               },
               {
                 icon: AlertTriangle,
@@ -187,7 +190,12 @@ export default function FeaturesPage() {
                     <feature.icon className="w-6 h-6 text-cyan-400" />
                   </div>
                   <h3 className="text-xl font-semibold text-white mb-3">{feature.title}</h3>
-                  <p className="text-slate-400">{feature.description}</p>
+                  <p className="text-slate-400 mb-3">{feature.description}</p>
+                  {feature.sample && (
+                    <div className="bg-slate-900/50 rounded-lg px-3 py-2 border border-slate-700">
+                      <code className="text-xs text-cyan-300 font-mono">{feature.sample}</code>
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             ))}
@@ -199,7 +207,7 @@ export default function FeaturesPage() {
       <section className="py-20 bg-slate-900/50">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">From Seller Claim to Buyer Decision</h2>
+            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">How AcquiFlow Turns a Listing Into a Decision</h2>
           </div>
 
           {/* Workflow Steps */}
@@ -225,7 +233,7 @@ export default function FeaturesPage() {
               },
               {
                 step: "04",
-                title: "Decide the Posture",
+                title: "Choose the Next Move",
                 description: "Proceed, renegotiate, pause, or walk — with pricing discipline, LOI guidance, and diligence priorities.",
                 icon: Target,
               },
@@ -248,30 +256,42 @@ export default function FeaturesPage() {
             ))}
           </div>
 
-          {/* Sample Result */}
-          <div className="max-w-2xl mx-auto">
-            <div className="bg-slate-800/80 border border-slate-700 rounded-xl p-6">
-              <div className="text-sm text-slate-500 mb-4 uppercase tracking-wide">Sample Analysis Result</div>
-              <div className="grid grid-cols-2 gap-4 mb-4">
-                <div>
-                  <div className="text-xs text-slate-500">Seller-reported SDE</div>
-                  <div className="text-lg font-semibold text-slate-300">$340,000</div>
+          {/* Sample Result - Premium treatment */}
+          <div className="max-w-3xl mx-auto">
+            <div className="text-center mb-6">
+              <h3 className="text-2xl font-bold text-white mb-2">Example Output</h3>
+              <p className="text-slate-400">In minutes, AcquiFlow shows whether the seller&apos;s numbers survive lender-style scrutiny.</p>
+            </div>
+            <div className="bg-gradient-to-br from-slate-800/80 to-slate-900/80 border-2 border-cyan-500/30 rounded-2xl p-8 shadow-xl shadow-cyan-500/5">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-6">
+                <div className="text-center">
+                  <div className="text-xs text-slate-500 mb-1">Seller-reported SDE</div>
+                  <div className="text-2xl font-bold text-slate-300">$340,000</div>
                 </div>
-                <div>
-                  <div className="text-xs text-slate-500">Adjusted SDE</div>
-                  <div className="text-lg font-semibold text-white">$285,000</div>
+                <div className="text-center">
+                  <div className="text-xs text-slate-500 mb-1">Adjusted SDE</div>
+                  <div className="text-2xl font-bold text-white">$285,000</div>
+                  <div className="text-xs text-red-400">↓ $55K adjustment</div>
                 </div>
-                <div>
-                  <div className="text-xs text-slate-500">DSCR</div>
-                  <div className="text-lg font-semibold text-amber-400">1.18x</div>
+                <div className="text-center">
+                  <div className="text-xs text-slate-500 mb-1">DSCR</div>
+                  <div className="text-2xl font-bold text-amber-400">1.18x</div>
+                  <div className="text-xs text-amber-400">Below threshold</div>
                 </div>
-                <div>
-                  <div className="text-xs text-slate-500">Valuation Gap</div>
-                  <div className="text-lg font-semibold text-red-400">-22%</div>
+                <div className="text-center">
+                  <div className="text-xs text-slate-500 mb-1">Valuation Gap</div>
+                  <div className="text-2xl font-bold text-red-400">-22%</div>
+                  <div className="text-xs text-slate-500">vs. benchmark</div>
                 </div>
               </div>
-              <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3">
-                <span className="text-sm text-red-400 font-medium">Result: Deal fails under stress — renegotiate or walk</span>
+              <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4">
+                <div className="flex items-center gap-3">
+                  <AlertTriangle className="w-6 h-6 text-red-400 flex-shrink-0" />
+                  <div>
+                    <span className="font-semibold text-red-400">Deal Fails Under Stress</span>
+                    <p className="text-sm text-slate-400 mt-1">DSCR drops below 1.0x under conservative assumptions. Renegotiate price or walk away.</p>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -390,18 +410,52 @@ export default function FeaturesPage() {
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-            {[
-              { icon: TrendingUp, text: "Compare DSCR and downside durability" },
-              { icon: BarChart3, text: "Compare asking multiple vs benchmark range" },
-              { icon: DollarSign, text: "Compare adjusted SDE and valuation gap" },
-              { icon: GitCompare, text: "Compare deal risk, lender readiness, and negotiation posture" },
-            ].map((item, i) => (
-              <div key={i} className="flex items-start gap-3 bg-slate-800/30 rounded-lg p-4 border border-slate-700">
-                <item.icon className="w-5 h-5 text-cyan-400 flex-shrink-0 mt-0.5" />
-                <span className="text-slate-300 text-sm">{item.text}</span>
-              </div>
-            ))}
+          {/* Comparison Table Mockup */}
+          <div className="bg-slate-800/50 border border-slate-700 rounded-xl overflow-hidden mb-12">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-slate-700 bg-slate-900/50">
+                    <th className="text-left p-4 text-slate-400 font-medium">Metric</th>
+                    <th className="text-center p-4 text-slate-400 font-medium">Deal A</th>
+                    <th className="text-center p-4 text-slate-400 font-medium">Deal B</th>
+                    <th className="text-center p-4 text-slate-400 font-medium">Deal C</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="border-b border-slate-800">
+                    <td className="p-4 text-slate-300">Adjusted SDE</td>
+                    <td className="p-4 text-center text-white font-semibold">$285K</td>
+                    <td className="p-4 text-center text-white font-semibold">$412K</td>
+                    <td className="p-4 text-center text-white font-semibold">$198K</td>
+                  </tr>
+                  <tr className="border-b border-slate-800">
+                    <td className="p-4 text-slate-300">DSCR</td>
+                    <td className="p-4 text-center text-amber-400 font-semibold">1.18x</td>
+                    <td className="p-4 text-center text-emerald-400 font-semibold">1.42x</td>
+                    <td className="p-4 text-center text-red-400 font-semibold">0.94x</td>
+                  </tr>
+                  <tr className="border-b border-slate-800">
+                    <td className="p-4 text-slate-300">Asking Multiple</td>
+                    <td className="p-4 text-center text-slate-300">4.1x</td>
+                    <td className="p-4 text-center text-slate-300">3.2x</td>
+                    <td className="p-4 text-center text-slate-300">4.8x</td>
+                  </tr>
+                  <tr className="border-b border-slate-800">
+                    <td className="p-4 text-slate-300">Valuation Gap</td>
+                    <td className="p-4 text-center text-red-400 font-semibold">-22%</td>
+                    <td className="p-4 text-center text-emerald-400 font-semibold">+5%</td>
+                    <td className="p-4 text-center text-red-400 font-semibold">-38%</td>
+                  </tr>
+                  <tr>
+                    <td className="p-4 text-slate-300">Verdict</td>
+                    <td className="p-4 text-center"><span className="px-2 py-1 rounded text-xs font-medium bg-amber-500/20 text-amber-400">Renegotiate</span></td>
+                    <td className="p-4 text-center"><span className="px-2 py-1 rounded text-xs font-medium bg-emerald-500/20 text-emerald-400">Proceed</span></td>
+                    <td className="p-4 text-center"><span className="px-2 py-1 rounded text-xs font-medium bg-red-500/20 text-red-400">Walk</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
 
           <div className="text-center">
@@ -435,7 +489,7 @@ export default function FeaturesPage() {
               { icon: Map, text: "Local market saturation checks" },
               { icon: PieChart, text: "Representative transaction comps" },
               { icon: Percent, text: "Pricing percentile indicators" },
-              { icon: Bell, text: "Personalized deal feed signals" },
+              { icon: Bell, text: "Saved-deal tracking signals" },
             ].map((item, i) => (
               <div key={i} className="flex flex-col items-center gap-3 bg-slate-800/30 rounded-lg p-6 border border-slate-700 text-center">
                 <item.icon className="w-8 h-8 text-emerald-400" />
@@ -500,7 +554,7 @@ export default function FeaturesPage() {
             <Card className="bg-slate-800/50 border-emerald-500/50">
               <CardContent className="p-8">
                 <div className="text-center mb-6">
-                  <h3 className="text-2xl font-bold text-white mb-2">Pro Deal Analysis</h3>
+                  <h3 className="text-2xl font-bold text-white mb-2">Human-Led Deal Analysis</h3>
                   <div className="text-3xl font-bold text-emerald-400">$1,500<span className="text-lg text-slate-400"> starting</span></div>
                 </div>
                 <ul className="space-y-3 mb-8">
