@@ -22,6 +22,7 @@ import {
   ChevronDown,
 } from "lucide-react"
 import Link from "next/link"
+import { ListingTransformationPreview } from "@/components/ListingTransformationPreview"
 
 // FAQ Data
 const preLofiFaqs = [
@@ -133,14 +134,14 @@ export default function HomePage() {
                     <ArrowRight className="ml-2 w-5 h-5" />
                   </Button>
                 </Link>
-                <Link href="/sample-deal">
-                  <Button
-                    size="lg"
-                    variant="outline"
-                    className="border-slate-600 text-slate-300 hover:bg-slate-800 hover:text-white px-8 py-6 text-lg w-full sm:w-auto bg-transparent"
-                  >
-                    See a Sample Analysis
-                  </Button>
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="border-slate-600 text-slate-300 hover:bg-slate-800 hover:text-white px-8 py-6 text-lg w-full sm:w-auto bg-transparent"
+                  onClick={() => document.getElementById("sample-analysis")?.scrollIntoView({ behavior: "smooth" })}
+                >
+                  See a Sample Analysis
+                </Button>
                 </Link>
                 <Button
                   size="lg"
