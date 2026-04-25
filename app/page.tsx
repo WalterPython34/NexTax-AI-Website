@@ -161,54 +161,84 @@ export default function HomePage() {
                 </p>
             </div>
 
-            {/* Hero Visual - Deal Analysis Animation Placeholder */}
-            <div className="relative">
-              <div className="relative bg-slate-800/50 backdrop-blur-sm rounded-2xl p-8 border border-slate-700">
-                <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-blue-500/5 rounded-2xl" />
-                <div className="relative space-y-6">
-                  {/* Simulated Deal Analysis Output */}
-                  <div className="flex items-center justify-between mb-4">
-                    <h3 className="text-lg font-semibold text-white">Deal Analysis</h3>
-                    <Badge className="bg-yellow-500/20 text-yellow-300 border-yellow-500/30">Processing</Badge>
-                  </div>
+           {/* Hero Visual — Deal Decision Snapshot */}
+<div className="relative">
+  <div className="relative bg-slate-800/50 backdrop-blur-sm rounded-2xl p-7 border border-slate-700 shadow-2xl shadow-black/30">
+    <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-blue-500/5 rounded-2xl pointer-events-none" />
+    
+    <div className="relative space-y-5">
+      {/* Header */}
+      <div className="flex items-start justify-between gap-3 pb-4 border-b border-slate-700/60">
+        <div>
+          <div className="text-[10px] uppercase tracking-wider text-cyan-400/80 font-semibold mb-1">
+            Sample Output · Specialty Trade Services
+          </div>
+          <h3 className="text-lg font-bold text-white">Deal Decision Snapshot</h3>
+        </div>
+        <Badge className="bg-amber-500/15 text-amber-300 border-amber-500/40 font-bold tracking-wide flex-shrink-0">
+          ⚠ INVESTIGATE
+        </Badge>
+      </div>
 
-                  <div className="space-y-4">
-                    <div className="bg-slate-900/50 rounded-lg p-4">
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-slate-400 text-sm">Adjusted SDE</span>
-                        <span className="text-red-400 font-mono">$285,000 ↓</span>
-                      </div>
-                      <div className="text-xs text-slate-500">Seller claimed: $340,000</div>
-                    </div>
+      {/* Metrics — 2x2 grid */}
+      <div className="grid grid-cols-2 gap-2.5">
+        <div className="bg-slate-900/50 rounded-lg p-3 border border-slate-700/50">
+          <div className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold mb-1">
+            Adjusted SDE
+          </div>
+          <div className="text-xl font-bold font-mono text-amber-400">$640K</div>
+          <div className="text-[10px] text-slate-500 mt-0.5">−18% vs reported</div>
+        </div>
+        <div className="bg-slate-900/50 rounded-lg p-3 border border-slate-700/50">
+          <div className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold mb-1">
+            DSCR
+          </div>
+          <div className="text-xl font-bold font-mono text-amber-400">1.28x</div>
+          <div className="text-[10px] text-slate-500 mt-0.5">Marginal coverage</div>
+        </div>
+        <div className="bg-slate-900/50 rounded-lg p-3 border border-slate-700/50">
+          <div className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold mb-1">
+            Valuation Gap
+          </div>
+          <div className="text-xl font-bold font-mono text-amber-400">+20%</div>
+          <div className="text-[10px] text-slate-500 mt-0.5">Above justified range</div>
+        </div>
+        <div className="bg-slate-900/50 rounded-lg p-3 border border-slate-700/50">
+          <div className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold mb-1">
+            Trust Score
+          </div>
+          <div className="text-xl font-bold font-mono text-amber-400">72/100</div>
+          <div className="text-[10px] text-slate-500 mt-0.5">Adjustments material</div>
+        </div>
+      </div>
 
-                    <div className="bg-slate-900/50 rounded-lg p-4">
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-slate-400 text-sm">DSCR</span>
-                        <span className="text-red-400 font-mono">1.18x</span>
-                      </div>
-                      <div className="text-xs text-slate-500">Below 1.25x threshold</div>
-                    </div>
-
-                    <div className="bg-slate-900/50 rounded-lg p-4">
-                      <div className="flex justify-between items-center mb-2">
-                        <span className="text-slate-400 text-sm">Valuation Gap</span>
-                        <span className="text-yellow-400 font-mono">-22%</span>
-                      </div>
-                      <div className="text-xs text-slate-500">Overpriced vs comps</div>
-                    </div>
-                  </div>
-
-                  <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 mt-4">
-                    <div className="flex items-center gap-2">
-                      <AlertTriangle className="w-5 h-5 text-red-400" />
-                      <span className="text-red-300 font-semibold">Deal Fails Under Stress</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
+      {/* Recommended posture strip */}
+      <div className="bg-cyan-500/5 border border-cyan-500/30 rounded-lg p-3.5">
+        <div className="flex items-start gap-2.5">
+          <Target className="w-4 h-4 text-cyan-400 flex-shrink-0 mt-0.5" />
+          <div className="min-w-0">
+            <div className="text-[10px] uppercase tracking-wider text-cyan-400 font-bold mb-0.5">
+              Recommended Posture
+            </div>
+            <div className="text-sm text-slate-100 font-semibold">
+              Renegotiate before LOI
             </div>
           </div>
         </div>
+      </div>
+
+      {/* Bottom alert — earnings adjustment */}
+      <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-3.5">
+        <div className="flex items-start gap-2.5">
+          <AlertTriangle className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
+          <div className="text-[12px] text-amber-100/90 leading-relaxed">
+            Seller-reported earnings require adjustment. Validate add-backs before submitting an offer.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
       </section>
 
       {/* Proof Strip */}
