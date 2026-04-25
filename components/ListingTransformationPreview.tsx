@@ -71,7 +71,7 @@ export function ListingTransformationPreview({
               <p>Experienced staff in place</p>
               <p>Strong margins</p>
               <p>Great growth opportunity</p>
-              <p className="text-slate-600 italic mt-1">
+              <p className="text-slate-400 italic mt-1">
                 &ldquo;Seller says business is recession resistant&rdquo;
               </p>
               <div className="pt-2.5 mt-2.5 border-t border-slate-700/40">
