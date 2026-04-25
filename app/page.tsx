@@ -598,7 +598,7 @@ export default function HomePage() {
       <PreLoiFaq />
 
       {/* Compliance Footer */}
-      <section className="py-8 border-t border-slate-800">
+     <section className="py-8 border-t border-slate-800">
         <div className="container mx-auto px-4">
           <p className="text-center text-slate-500 text-xs max-w-3xl mx-auto">
             NexTax.AI provides financial analysis tools and educational content. This is not legal, tax, or investment
@@ -607,6 +607,21 @@ export default function HomePage() {
           </p>
         </div>
       </section>
+
+      {/* Sample Memo Preview Modal — opens from "See a Sample Analysis" buttons */}
+      {showSampleModal && (
+        <SampleMemoPreviewModal
+          onClose={() => setShowSampleModal(false)}
+          onAnalyzeDeal={() => {
+            setShowSampleModal(false)
+            router.push("/buyer-dashboard")
+          }}
+          onUpgrade={() => {
+            setShowSampleModal(false)
+            router.push("/pricing")
+          }}
+        />
+      )}
     </div>
   )
 }
