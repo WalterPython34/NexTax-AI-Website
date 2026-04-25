@@ -1,8 +1,10 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
+import { SampleMemoPreviewModal } from "@/components/SampleMemoPreviewModal"
 import { Badge } from "@/components/ui/badge"
 import {
   ArrowRight,
@@ -91,6 +93,8 @@ function PreLoiFaq() {
 }
 
 export default function HomePage() {
+  const router = useRouter()
+  const [showSampleModal, setShowSampleModal] = useState(false)
   return (
     <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black">
       {/* Hero Section */}
@@ -443,16 +447,15 @@ export default function HomePage() {
                   </li>
                 ))}
               </ul>
-              <Link href="/sample-deal">
-                <Button
-                  size="lg"
-                  variant="outline"
-                  className="border-cyan-500/50 text-cyan-400 hover:bg-cyan-500/10 px-8 py-6 text-lg bg-transparent"
-                >
-                  See a Sample Analysis
-                  <ArrowRight className="ml-2 w-5 h-5" />
-                </Button>
-              </Link>
+              <Button
+                 size="lg"
+                 variant="outline"
+                 onClick={() => setShowSampleModal(true)}
+                 className="border-cyan-500/50 text-cyan-400 hover:bg-cyan-500/10 px-8 py-6 text-lg bg-transparent"
+              >
+                See a Sample Analysis
+                <ArrowRight className="ml-2 w-5 h-5" />
+            </Button>
             </div>
           </div>
         </div>
