@@ -61,7 +61,7 @@ const OUTCOMES = [
 const FAQS = [
   {
     q: "Where does the benchmark data come from?",
-    a: "A blend of DealStats closed-transaction data (over 5,600 verified SMB sales), RMA industry benchmarks, and IBISWorld market intelligence — all normalized into what we call NexTax Intelligence. We never show raw licensed data; we show the blended signal.",
+    a: "A blend of closed-transaction data (currently over 21,000 verified SMB sales) from licensed industry sources (2), RMA industry benchmarks, our close broker contacts, and deals we have worked on. All normalized into what we call NexTax Intelligence. We never show raw licensed data; we show the blended signal. These closed transactions relate to the 40+ Industries currently housed in our database, and will continue to climb as new industries are added.",
   },
   {
     q: "Is this a replacement for a Quality of Earnings report?",
