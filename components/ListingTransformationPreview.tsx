@@ -61,8 +61,8 @@ export function ListingTransformationPreview({
             </div>
 
             {/* Listing — copy-paste-from-email feel, intentionally uncomfortable */}
-            <div className="font-mono text-[12.5px] leading-[1.5] text-slate-500">
-              <p className="text-slate-400 font-semibold mb-1.5">
+            <div className="font-mono text-[12.5px] leading-[1.5] text-slate-300">
+              <p className="text-slate-200 font-semibold mb-1.5">
                 Specialty Trade business in Texas
               </p>
               <p>Asking: $2,450,000</p>
@@ -75,7 +75,7 @@ export function ListingTransformationPreview({
                 &ldquo;Seller says business is recession resistant&rdquo;
               </p>
               <div className="pt-2.5 mt-2.5 border-t border-slate-700/40">
-                <p className="text-[10.5px] text-slate-600">
+                <p className="text-[10.5px] text-slate-400">
                   &mdash; contact broker for financials &mdash;
                 </p>
               </div>
