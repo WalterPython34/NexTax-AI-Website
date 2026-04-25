@@ -52,7 +52,7 @@ export function ListingTransformationPreview({
         <div className="relative grid grid-cols-1 lg:grid-cols-[1fr_auto_1.05fr] gap-6 lg:gap-4 items-stretch">
 
           {/* ─── LEFT — BEFORE ─────────────────────────────────────── */}
-          <div className="relative rounded-xl border border-slate-700/60 bg-slate-800/30 p-6 sm:p-7 overflow-hidden">
+          <div className="relative rounded-xl border border-slate-700/60 bg-slate-500 p-6 sm:p-7 overflow-hidden">
             <div className="flex items-center justify-between mb-5">
               <span className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold px-2 py-0.5 rounded border border-slate-700/80 bg-slate-900/50">
                 Before
