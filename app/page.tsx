@@ -141,8 +141,7 @@ export default function HomePage() {
                   onClick={() => document.getElementById("sample-analysis")?.scrollIntoView({ behavior: "smooth" })}
                 >
                   See a Sample Analysis
-                </Button>
-                </Link>
+                </Button>                
                 <Button
                   size="lg"
                   variant="ghost"
