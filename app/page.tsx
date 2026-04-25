@@ -163,7 +163,7 @@ export default function HomePage() {
 
            {/* Hero Visual — Deal Decision Snapshot */}
 <div className="relative">
-  <div className="relative bg-slate-800/50 backdrop-blur-sm rounded-2xl p-7 border border-slate-700 shadow-2xl shadow-black/30">
+  <div className="relative bg-slate-800/50 backdrop-blur-sm rounded-2xl p-6 border border-slate-700 shadow-2xl shadow-black/30">
     <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 to-blue-500/5 rounded-2xl pointer-events-none" />
     
     <div className="relative space-y-5">
