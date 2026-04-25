@@ -243,94 +243,71 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Proof Strip */}
-      <section className="py-12 bg-slate-900/50 border-y border-slate-800">
+      {/* Bad Assumptions — wake-up moment before the platform pitch */}
+      <section className="py-24 border-t border-slate-800">
         <div className="container mx-auto px-4">
-          <p className="text-center text-slate-500 text-sm mb-8 uppercase tracking-wide">Built for serious buyers</p>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 text-center mb-8">
-            <div>
-              <div className="text-3xl font-bold text-cyan-400">100+</div>
-              <div className="text-sm text-slate-400 mt-1">Financial signals analyzed per deal</div>
-            </div>
-            <div>
-              <div className="text-3xl font-bold text-cyan-400">40+</div>
-              <div className="text-sm text-slate-400 mt-1">Industries benchmarked</div>
-            </div>
-            <div>
-              <div className="text-3xl font-bold text-emerald-400">Real</div>
-              <div className="text-sm text-slate-400 mt-1">Transaction comps — not listings</div>
-            </div>
-            <div>
-              <div className="text-3xl font-bold text-emerald-400">Minutes</div>
-              <div className="text-sm text-slate-400 mt-1">Lender-ready outputs</div>
-            </div>
-          </div>
-          <div className="flex flex-wrap justify-center gap-6 text-sm text-slate-500">
-            <span>Analyzing deals across 40+ industries</span>
-            <span className="hidden sm:inline">•</span>
-            <span>100+ financial signals evaluated per deal</span>
-            <span className="hidden sm:inline">•</span>
-            <span>Designed for lender-ready underwriting</span>
-          </div>
-        </div>
-      </section>
-
-      {/* Why Deals Fall Apart */}
-      <section className="py-20">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">
-              Most deals don&apos;t fail from lack of effort —<br />
+          {/* Header */}
+          <div className="text-center mb-16 max-w-3xl mx-auto">
+            <h2 className="text-3xl lg:text-4xl font-bold text-white tracking-tight leading-tight mb-5">
+              Most deals don&apos;t fail from lack of effort —{" "}
               <span className="text-red-400">they fail from bad assumptions.</span>
             </h2>
-            <p className="text-xl text-slate-400 max-w-2xl mx-auto">
-              Deals look attractive on the surface but break under scrutiny.
+            <p className="text-lg text-slate-400 leading-relaxed">
+              AcquiFlow replaces guesswork with structured underwriting before you commit capital.
             </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {/* 4 cards — flat, terminal-style, generous spacing */}
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8 max-w-7xl mx-auto">
             {[
               {
                 icon: TrendingUp,
                 title: "Inflated Earnings",
                 description: "Seller add-backs often overstate true cash flow.",
-                color: "red",
               },
               {
                 icon: TrendingDown,
-                title: "Weak Debt Coverage",
-                description: 'Deals that "work on paper" collapse under financing pressure.',
-                color: "red",
+                title: "Fragile Debt Coverage",
+                description: "Deals that \u201cwork on paper\u201d fail under real financing terms.",
               },
               {
                 icon: BarChart3,
                 title: "No Real Benchmarking",
-                description: "Buyers rely on listings — not actual transaction comps.",
-                color: "yellow",
+                description: "Buyers rely on listings \u2014 not actual transaction comps.",
               },
               {
                 icon: DollarSign,
-                title: "Overpriced Deals",
+                title: "Mispriced Deals",
                 description: "Without data, buyers consistently overpay.",
-                color: "yellow",
               },
-            ].map((item, i) => (
-              <Card key={i} className="bg-slate-800/50 border-slate-700 hover:border-red-500/30 transition-colors">
-                <CardContent className="p-6">
-                  <div
-                    className={`w-12 h-12 mb-4 rounded-lg ${item.color === "red" ? "bg-red-500/20" : "bg-yellow-500/20"} flex items-center justify-center`}
-                  >
-                    <item.icon className={`w-6 h-6 ${item.color === "red" ? "text-red-400" : "text-yellow-400"}`} />
+            ].map((item, i) => {
+              const Icon = item.icon
+              return (
+                <div
+                  key={i}
+                  className="bg-slate-900/40 border border-slate-800 rounded-lg p-7 hover:border-emerald-400/40 transition-colors"
+                >
+                  <div className="w-10 h-10 mb-5 rounded-md bg-slate-800/80 border border-slate-700 flex items-center justify-center">
+                    <Icon className="w-5 h-5 text-slate-300" />
                   </div>
-                  <h3 className="text-lg font-semibold text-white mb-2">{item.title}</h3>
-                  <p className="text-slate-400 text-sm">{item.description}</p>
-                </CardContent>
-              </Card>
-            ))}
+                  <h3 className="text-base font-semibold text-white mb-2 leading-tight">
+                    {item.title}
+                  </h3>
+                  <p className="text-sm text-slate-400 leading-relaxed">
+                    {item.description}
+                  </p>
+                </div>
+              )
+            })}
           </div>
+
+          {/* Closer — single line, slightly muted, separated visually */}
+          <p className="text-center text-sm sm:text-base text-slate-300 mt-14 max-w-3xl mx-auto leading-relaxed">
+            AcquiFlow surfaces these issues instantly — <span className="text-emerald-400 font-medium">before LOI, before diligence, before capital is at risk.</span>
+          </p>
         </div>
       </section>
-
+      
       {/* How AcquiFlow Works */}
       <section id="how-it-works" className="py-20 bg-slate-900/50">
         <div className="container mx-auto px-4">
