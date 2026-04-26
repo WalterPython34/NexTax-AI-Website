@@ -511,17 +511,20 @@ export default function FeaturesPage() {
       {/* SECTION 8 — MARKET INTEL */}
       <section className="py-20 bg-slate-900/50">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
+          <div className="text-center mb-16 max-w-3xl mx-auto">
             <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">Market Intelligence Beyond the Listing</h2>
-            <p className="text-xl text-slate-400 max-w-3xl mx-auto">
+            <p className="text-xl text-slate-400 mb-3 leading-relaxed">
               Use deal data, industry benchmarks, and local market signals to understand whether an opportunity deserves deeper diligence.
+            </p>
+            <p className="text-base text-emerald-400/80 italic">
+              Most buyers miss this &mdash; market density and competition often determine outcomes more than the deal itself.
             </p>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-4 mb-12">
             {[
               { icon: BarChart3, text: "Industry benchmark ranges" },
-              { icon: Map, text: "Local market saturation checks" },
+              { icon: Map, text: "Local competition & saturation analysis" },
               { icon: PieChart, text: "Representative transaction comps" },
               { icon: Percent, text: "Pricing percentile indicators" },
               { icon: Bell, text: "Saved-deal tracking signals" },
@@ -540,7 +543,7 @@ export default function FeaturesPage() {
                 variant="outline"
                 className="border-emerald-500/50 text-emerald-400 hover:bg-emerald-500/10 px-8 py-6 text-lg bg-transparent"
               >
-                Explore Market Intel
+                See Market Conditions
                 <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
             </Link>
@@ -548,20 +551,28 @@ export default function FeaturesPage() {
         </div>
       </section>
 
-      {/* SECTION 9 — PLATFORM VS ADVISORY */}
+      {/* SECTION 9 — PLATFORM (DEFAULT) + EXPERT REVIEW (OPTIONAL UPGRADE) */}
       <section className="py-20">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">Use the Platform — or Get Full Underwriting Support</h2>
+          <div className="text-center mb-12 max-w-3xl mx-auto">
+            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">
+              Use the Platform &mdash; or Get Full Underwriting Support
+            </h2>
+            <p className="text-base text-slate-300 italic">
+              Start with the platform &mdash; bring in expert review when the deal gets serious.
+            </p>
           </div>
 
           <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-            {/* SaaS Card */}
-            <Card className="bg-slate-800/50 border-slate-700">
+            {/* SaaS Card — DEFAULT (visually emphasized) */}
+            <Card className="bg-slate-800/50 border-cyan-500/50 shadow-lg shadow-cyan-500/10 relative">
+              <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                <Badge className="bg-cyan-500 text-white px-3 py-0.5 text-xs">Start Here</Badge>
+              </div>
               <CardContent className="p-8">
                 <div className="text-center mb-6">
                   <h3 className="text-2xl font-bold text-white mb-2">AcquiFlow Platform</h3>
-                  <div className="text-3xl font-bold text-cyan-400">$29–$79<span className="text-lg text-slate-400">/month</span></div>
+                  <div className="text-3xl font-bold text-cyan-400">$29&ndash;$79<span className="text-lg text-slate-400">/month</span></div>
                 </div>
                 <ul className="space-y-3 mb-8">
                   {[
@@ -585,11 +596,12 @@ export default function FeaturesPage() {
               </CardContent>
             </Card>
 
-            {/* Advisory Card */}
-            <Card className="bg-slate-800/50 border-emerald-500/50">
+            {/* Expert Review Card — OPTIONAL upgrade (visually softer) */}
+            <Card className="bg-slate-800/30 border-slate-700">
               <CardContent className="p-8">
                 <div className="text-center mb-6">
-                  <h3 className="text-2xl font-bold text-white mb-2">Human-Led Deal Analysis</h3>
+                  <h3 className="text-2xl font-bold text-white mb-1">Expert Review</h3>
+                  <p className="text-xs uppercase tracking-wider text-slate-500 font-semibold mb-3">Optional &mdash; for serious deals</p>
                   <div className="text-3xl font-bold text-emerald-400">$1,500<span className="text-lg text-slate-400"> starting</span></div>
                 </div>
                 <ul className="space-y-3 mb-8">
@@ -610,7 +622,7 @@ export default function FeaturesPage() {
                     variant="outline"
                     className="w-full border-emerald-500/50 text-emerald-400 hover:bg-emerald-500/10 bg-transparent"
                   >
-                    Get a Pro Analysis
+                    Request Expert Review
                     <ArrowRight className="ml-2 w-4 h-4" />
                   </Button>
                 </Link>
