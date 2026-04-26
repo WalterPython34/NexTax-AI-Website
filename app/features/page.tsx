@@ -253,8 +253,8 @@ export default function FeaturesPage() {
             ))}
           </div>
 
-          {/* Sample Result - Premium treatment */}
-          <div className="max-w-3xl mx-auto">
+          {/* Sample Result - Premium treatment with image */}
+          <div className="max-w-4xl mx-auto">
             <div className="text-center mb-6">
               <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-[10px] font-bold uppercase tracking-wider mb-3">
                 <CheckCircle className="w-3 h-3" />
@@ -263,36 +263,16 @@ export default function FeaturesPage() {
               <h3 className="text-2xl font-bold text-white mb-2">Example Output</h3>
               <p className="text-slate-400">In minutes, AcquiFlow shows whether the seller&rsquo;s numbers survive lender-style scrutiny.</p>
             </div>
-            <div className="bg-gradient-to-br from-slate-800/80 to-slate-900/80 border-2 border-cyan-500/30 rounded-2xl p-8 shadow-xl shadow-cyan-500/5">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-6">
-                <div className="text-center">
-                  <div className="text-xs text-slate-500 mb-1">Seller-reported SDE</div>
-                  <div className="text-2xl font-bold text-slate-300">$340,000</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-xs text-slate-500 mb-1">Adjusted SDE</div>
-                  <div className="text-2xl font-bold text-white">$285,000</div>
-                  <div className="text-xs text-red-400">↓ $55K adjustment</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-xs text-slate-500 mb-1">DSCR</div>
-                  <div className="text-2xl font-bold text-amber-400">1.18x</div>
-                  <div className="text-xs text-amber-400">Below threshold</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-xs text-slate-500 mb-1">Valuation Gap</div>
-                  <div className="text-2xl font-bold text-red-400">-22%</div>
-                  <div className="text-xs text-slate-500">vs. benchmark</div>
-                </div>
-              </div>
-              <div className="bg-red-500/10 border border-red-500/30 rounded-xl p-4">
-                <div className="flex items-center gap-3">
-                  <AlertTriangle className="w-6 h-6 text-red-400 flex-shrink-0" />
-                  <div>
-                    <span className="font-semibold text-red-400">Deal Fails Under Stress</span>
-                    <p className="text-sm text-slate-400 mt-1">DSCR drops below 1.0x under conservative assumptions. Renegotiate price or walk away.</p>
-                  </div>
-                </div>
+            <div className="bg-gradient-to-br from-slate-800/80 to-slate-900/80 border-2 border-cyan-500/30 rounded-2xl p-4 sm:p-6 shadow-xl shadow-cyan-500/5">
+              <div className="rounded-xl overflow-hidden border border-slate-700/60">
+                <Image
+                  src="/lender-features.png"
+                  alt="AcquiFlow lender-ready output showing adjusted SDE, DSCR, valuation gap, and stress test verdict"
+                  width={1400}
+                  height={900}
+                  className="w-full h-auto"
+                  priority={false}
+                />
               </div>
             </div>
           </div>
