@@ -2,9 +2,8 @@
 
 // components/pricing/AcquisitionsPricing.tsx
 //
-// Acquisitions pricing — matches Formation pricing design system.
-// Uses: bg-slate-800/50 cards, emerald-500 accents, emerald icon circles,
-// scale-105 popular card lift, Most Popular ribbon, same typography.
+// Acquisitions pricing — institutional, conversion-driven layout.
+// Hero → Before/After → Outcomes (6 boxes) → Pricing cards → Compare table → FAQ → Final CTA.
 
 import { useState } from "react"
 import Link from "next/link"
@@ -26,14 +25,16 @@ import {
   Lock,
   Sparkles,
   ChevronDown,
+  MapPin,
 } from "lucide-react"
 
 const PRO_PRICE_ID = "price_1TPbTTGA3ir6ndSx14wKWA27"
 
+// ─── 6 outcome boxes — added "Local market saturation insight" ──────────────
 const OUTCOMES = [
   {
     icon: Target,
-    title: "A clear go / no-go decision",
+    title: "A confident go / no-go decision",
     body:  "Every deal gets a verdict — Proceed, Investigate, or Pass — synthesized across pricing, coverage, earnings quality, and lender fit.",
   },
   {
@@ -56,12 +57,21 @@ const OUTCOMES = [
     title: "A structured negotiation position",
     body:  "LOI Builder with pre-drafted language, negotiation anchors, and walk-away logic grounded in fair-value analysis.",
   },
+  {
+    icon: MapPin,
+    title: "Local market saturation insight",
+    body:  "Understand competition density, buyer demand, and deal flow in your specific market.",
+  },
 ]
 
 const FAQS = [
   {
+    q: "Why is this only $39/month?",
+    a: "Because this is designed to help you evaluate more deals faster — not replace full diligence. Most users recover the cost from avoiding one bad deal or negotiating better terms on a good one.",
+  },
+  {
     q: "Where does the benchmark data come from?",
-    a: "A blend of closed-transaction data (currently over 21,000 verified SMB sales) from licensed industry sources (2), RMA industry benchmarks, our close broker contacts, and deals we have worked on. All normalized into what we call NexTax Intelligence. We never show raw licensed data; we show the blended signal. These closed transactions relate to the 40+ Industries currently housed in our database, and will continue to climb as new industries are added.",
+    a: "A blend of closed-transaction data (currently over 21,000 verified SMB sales) from licensed industry sources, RMA industry benchmarks, our close broker contacts, and deals we have worked on. All normalized into what we call NexTax Intelligence. We never show raw licensed data; we show the blended signal. These closed transactions relate to the 40+ industries currently housed in our database, and will continue to climb as new industries are added.",
   },
   {
     q: "Is this a replacement for a Quality of Earnings report?",
@@ -73,7 +83,7 @@ const FAQS = [
   },
   {
     q: "How many deals can I analyze on the free plan?",
-    a: "Ten per calendar month. It resets on the 1st. Saved deals stay fully accessible forever — the cap only applies to new analyses.",
+    a: "Ten basic screenings per calendar month. It resets on the 1st. Saved deals stay fully accessible forever — the cap only applies to new analyses.",
   },
   {
     q: "Will lenders accept the deal memo?",
@@ -97,7 +107,7 @@ const ACQ_PACKAGES = [
       "Limited comps visibility",
       "1 deal memo preview",
       "Limited market insights",
-      "Up to 10 deal analyses / month",
+      "Up to 10 basic deal screenings / month",
     ],
     popular: false,
     cta:     "Start free",
@@ -120,7 +130,7 @@ const ACQ_PACKAGES = [
       "Unlimited deal analysis",
     ],
     popular: true,
-    cta:     "Upgrade to Pro",
+    cta:     "Unlock Full Deal Analysis",
     ctaHref: null,
     savings: "Cancel anytime",
   },
@@ -140,6 +150,9 @@ export function AcquisitionsPricing() {
   )
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// SCREEN 1 — HERO
+// ═══════════════════════════════════════════════════════════════════════════
 function HeroSection() {
   return (
     <section className="py-20">
@@ -149,21 +162,46 @@ function HeroSection() {
             <Sparkles className="w-3.5 h-3.5" />
             NexTax Intelligence · Acquisitions
           </div>
+
           <h1 className="text-5xl md:text-6xl font-bold text-white mb-6 leading-tight tracking-tight">
-            Stop wasting time on <span className="text-emerald-400">the wrong deals</span>
+            Stop wasting time —{" "}
+            <span className="text-emerald-400">and missing the right deals</span>
           </h1>
-          <p className="text-xl text-slate-300 mb-4 max-w-3xl mx-auto leading-relaxed">
-            Get structured underwriting, real comps, and decision-ready outputs — before you commit to LOI.
+
+          <p className="text-xl text-slate-300 mb-5 max-w-3xl mx-auto leading-relaxed">
+            Get structured underwriting, real comps, and decision-ready outputs &mdash; before you commit to LOI.
           </p>
-          <p className="text-sm text-slate-500 italic">
-            Replaces spreadsheets, broker guesswork, and back-of-the-envelope underwriting.
+
+          {/* Pricing anchor — shown immediately */}
+          <p className="text-base text-slate-300 mb-8 max-w-2xl mx-auto">
+            <span className="text-emerald-400 font-semibold">Start free.</span>{" "}
+            Upgrade to Pro for{" "}
+            <span className="text-white font-semibold">$39/month</span>{" "}
+            when you&rsquo;re ready to execute.
           </p>
+
+          {/* 3 micro-proof bullets */}
+          <div className="grid sm:grid-cols-3 gap-4 max-w-3xl mx-auto mt-8 pt-6 border-t border-slate-800">
+            {[
+              "Used by SMB buyers evaluating $300K–$10M deals",
+              "Built on real transaction comps (not listings)",
+              "Structured using PE-style underwriting frameworks",
+            ].map((item, i) => (
+              <div key={i} className="flex items-start gap-2.5 text-left">
+                <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+                <span className="text-xs text-slate-400 leading-snug">{item}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </section>
   )
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// SCREEN 2 — BEFORE / AFTER (with sharper Pro tie-in + CTA)
+// ═══════════════════════════════════════════════════════════════════════════
 function BeforeAfterSection() {
   return (
     <section className="py-20">
@@ -191,8 +229,8 @@ function BeforeAfterSection() {
             <CardContent className="space-y-3 font-mono text-sm text-slate-400 leading-relaxed">
               <p>Asking: $2,450,000. Owner retiring after 22 yrs. MUST SELL!!</p>
               <p>Cash flow: $780,000 (owner says). All reasonable offers considered.</p>
-              <p>Revenue: approx $4M. "Great books." 30+ employees.</p>
-              <p>Add-backs incl. family vehicle, owner travel, consulting fees…</p>
+              <p>Revenue: approx $4M. &ldquo;Great books.&rdquo; 30+ employees.</p>
+              <p>Add-backs incl. family vehicle, owner travel, consulting fees&hellip;</p>
               <p className="text-slate-500 pt-2 border-t border-slate-700/50">— contact broker for financials —</p>
               <div className="mt-4 pt-3 flex items-center gap-2">
                 <TrendingDown className="w-4 h-4 text-amber-400 flex-shrink-0" />
@@ -249,9 +287,23 @@ function BeforeAfterSection() {
           </Card>
         </div>
 
-        <p className="text-center text-base text-slate-300 mt-10">
-          <span className="text-emerald-400 font-semibold">This is what Pro unlocks.</span>
-        </p>
+        {/* Sharper Pro tie-in + CTA */}
+        <div className="text-center mt-12 max-w-2xl mx-auto">
+          <p className="text-base text-slate-300 mb-5">
+            This is what you unlock with{" "}
+            <span className="text-emerald-400 font-semibold">Pro</span>{" "}
+            — real underwriting, real comps, real decisions.
+          </p>
+          <a href="#pricing-cards">
+            <Button
+              size="lg"
+              className="bg-emerald-500 hover:bg-emerald-600 text-white font-semibold px-8 h-12 text-base"
+            >
+              Unlock Full Analysis
+              <ArrowRight className="w-5 h-5 ml-2" />
+            </Button>
+          </a>
+        </div>
       </div>
     </section>
   )
@@ -267,6 +319,9 @@ function MiniMetric({ label, value, sub }: { label: string; value: string; sub: 
   )
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// SCREEN 3 — OUTCOMES (now 6 boxes including local market saturation)
+// ═══════════════════════════════════════════════════════════════════════════
 function OutcomesSection() {
   return (
     <section className="py-20">
@@ -303,6 +358,9 @@ function OutcomesSection() {
   )
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// SCREEN 4 — PRICING CARDS (anchor comparison + value reinforcement)
+// ═══════════════════════════════════════════════════════════════════════════
 function PricingCardsSection() {
   return (
     <section className="py-20" id="pricing-cards">
@@ -341,6 +399,14 @@ function PricingCardsSection() {
                     <span className="text-5xl font-bold text-white">{pkg.price}</span>
                     <span className="text-slate-400 text-lg">{pkg.priceNote}</span>
                   </div>
+
+                  {/* Anchor comparison — only on Pro */}
+                  {pkg.popular && (
+                    <p className="text-xs text-emerald-400/80 mt-3 italic">
+                      Less than 1 hour of a CPA or QoE advisor
+                    </p>
+                  )}
+
                   {pkg.savings && (
                     <Badge className="bg-emerald-500/20 text-emerald-300 mt-3 border-0">
                       {pkg.savings}
@@ -356,6 +422,14 @@ function PricingCardsSection() {
                       </div>
                     ))}
                   </div>
+
+                  {/* Value reinforcement — only on Pro */}
+                  {pkg.popular && (
+                    <p className="text-xs text-slate-500 italic text-center pt-2 border-t border-slate-700/40">
+                      Used to evaluate deals worth $300K–$10M+
+                    </p>
+                  )}
+
                   <div className="pt-4">
                     {pkg.ctaHref ? (
                       <Link href={pkg.ctaHref} className="block">
@@ -386,6 +460,9 @@ function PricingCardsSection() {
   )
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// SCREEN 5 — FEATURE TABLE (intro + dual CTA above)
+// ═══════════════════════════════════════════════════════════════════════════
 function FeatureMatrixSection() {
   const rows = [
     { feature: "Deal verdict + DSCR screening",           free: true,   pro: true },
@@ -408,13 +485,32 @@ function FeatureMatrixSection() {
   return (
     <section className="py-20">
       <div className="container mx-auto px-4">
-        <div className="text-center mb-12 max-w-3xl mx-auto">
-          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4 tracking-tight">
-            What's in <span className="text-emerald-400">each plan</span>
+        <div className="text-center mb-8 max-w-3xl mx-auto">
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-3 tracking-tight">
+            What&rsquo;s in <span className="text-emerald-400">each plan</span>
           </h2>
-          <p className="text-slate-400">
-            Free lets you screen. Pro lets you execute.
+          <p className="text-slate-400 mb-7">
+            Compare plans in detail — or just start analyzing deals now.
           </p>
+
+          {/* Dual CTA above the table — for users mentally sold already */}
+          <div className="flex flex-col sm:flex-row gap-3 justify-center items-center mb-3">
+            <Link href="/buyer-dashboard">
+              <Button
+                variant="outline"
+                className="border-slate-600 bg-slate-900/50 hover:bg-slate-700 text-white h-11 text-sm px-6 w-full sm:w-auto"
+              >
+                Start Free
+              </Button>
+            </Link>
+            <StripeCheckoutButton
+              priceId={PRO_PRICE_ID}
+              className="bg-emerald-500 hover:bg-emerald-600 text-white font-semibold h-11 text-sm px-6 w-full sm:w-auto"
+            >
+              Go Pro
+              <ArrowRight className="w-4 h-4 ml-2" />
+            </StripeCheckoutButton>
+          </div>
         </div>
 
         <Card className="bg-slate-800/50 border-slate-700 overflow-hidden max-w-5xl mx-auto">
@@ -461,6 +557,9 @@ function MatrixCell({ value, accent }: { value: boolean | string; accent: "free"
   return <span className={`text-sm font-medium ${accent === "pro" ? "text-emerald-300" : "text-slate-400"}`}>{value}</span>
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// SCREEN 6 — FAQ (with new "Why $39" question)
+// ═══════════════════════════════════════════════════════════════════════════
 function FaqSection() {
   const [openIdx, setOpenIdx] = useState<number | null>(0)
   return (
@@ -502,36 +601,42 @@ function FaqSection() {
   )
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+// SCREEN 7 — FINAL CTA (darker bg, stronger headline, hierarchy, urgency)
+// ═══════════════════════════════════════════════════════════════════════════
 function FinalCtaSection() {
   return (
     <section className="py-20">
       <div className="container mx-auto px-4">
-        <Card className="bg-gradient-to-br from-emerald-500/10 to-emerald-500/5 border-emerald-500/30 max-w-4xl mx-auto">
+        <Card className="bg-gradient-to-r from-[#0B1F2A] to-[#0E2A38] border-white/10 max-w-4xl mx-auto shadow-2xl shadow-black/40">
           <CardContent className="py-14 px-8 text-center">
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-4 tracking-tight leading-tight">
-              Before you sign an LOI,<br />
-              <span className="text-emerald-400">know what the deal is actually worth.</span>
+              Know if the deal is worth it —<br />
+              <span className="text-emerald-400">before you commit.</span>
             </h2>
-            <p className="text-slate-300 mb-8 max-w-xl mx-auto text-lg">
-              Start with a free analysis. Upgrade when you're ready to execute.
+            <p className="text-slate-300 mb-8 max-w-xl mx-auto text-base">
+              Start free. Upgrade only when a deal is worth going deeper on.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center items-center">
+              {/* PRIMARY — bright emerald, action-driving */}
               <Link href="/buyer-dashboard">
                 <Button
                   size="lg"
-                  className="bg-emerald-500 hover:bg-emerald-600 text-white font-semibold px-8 h-12 text-base"
+                  className="bg-emerald-500 hover:bg-emerald-600 text-white font-semibold px-10 h-12 text-base shadow-lg shadow-emerald-500/20"
                 >
-                  Analyze a deal
+                  Analyze a Deal
                   <ArrowRight className="w-5 h-5 ml-2" />
                 </Button>
               </Link>
+
+              {/* SECONDARY — softer, smaller, supportive */}
               <StripeCheckoutButton
                 priceId={PRO_PRICE_ID}
                 variant="outline"
-                className="border-emerald-500/50 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 h-12 text-base px-8"
+                className="border-emerald-500/40 bg-transparent hover:bg-emerald-500/10 text-emerald-300 h-12 text-base px-8"
               >
                 <Lock className="w-4 h-4 mr-2" />
-                Upgrade to Pro — $39/mo
+                Upgrade to Pro &mdash; $39/mo
               </StripeCheckoutButton>
             </div>
           </CardContent>
