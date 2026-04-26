@@ -308,62 +308,101 @@ export default function HomePage() {
         </div>
       </section>
       
-      {/* How AcquiFlow Works */}
-      <section id="how-it-works" className="py-20 bg-slate-900/50">
+      {/* How AcquiFlow Works — lender-grade underwriting workflow */}
+      <section id="how-it-works" className="py-24 bg-slate-900/50 border-t border-slate-800">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <Badge className="bg-cyan-500/10 text-cyan-400 border-cyan-500/30 mb-4">Platform Workflow</Badge>
-            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">How Serious Buyers Evaluate Deals with AcquiFlow</h2>
+          {/* Header */}
+          <div className="text-center mb-16 max-w-3xl mx-auto">
+            <Badge className="bg-cyan-500/10 text-cyan-400 border-cyan-500/30 mb-5">
+              Platform Workflow
+            </Badge>
+            <h2 className="text-3xl lg:text-4xl font-bold text-white tracking-tight leading-tight mb-4">
+              How serious buyers evaluate deals with{" "}
+              <span className="text-cyan-400">AcquiFlow</span>
+            </h2>
+            <p className="text-lg text-slate-400 leading-relaxed">
+              A lender-style underwriting workflow — simplified for speed, not stripped of rigor.
+            </p>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+          {/* 4 numbered steps with subtle gradient progression + metric chips */}
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-7xl mx-auto">
             {[
               {
                 step: "01",
                 title: "Input the Deal",
-                description: "Enter purchase price, SDE, revenue, and financing assumptions.",
+                description: "Enter price, SDE, revenue, and financing assumptions.",
                 icon: Calculator,
+                chip: null,
+                accent: "from-slate-900/60 to-slate-900/40",
               },
               {
                 step: "02",
-                title: "Underwrite It",
-                description: "Normalize earnings, adjust add-backs, and stress test debt coverage.",
+                title: "Normalize Earnings",
+                description: "Pressure-test add-backs and reconstruct true cash flow.",
                 icon: Scale,
+                chip: "−18% normalized",
+                accent: "from-slate-900/60 to-cyan-950/30",
               },
               {
                 step: "03",
-                title: "Benchmark It",
-                description: "Compare against real transaction data across your industry.",
+                title: "Benchmark & Stress Test",
+                description: "Compare against real transactions and test debt coverage under realistic scenarios.",
                 icon: BarChart3,
+                chip: "DSCR 1.18x",
+                accent: "from-cyan-950/30 to-cyan-950/40",
               },
               {
                 step: "04",
                 title: "Decide with Confidence",
                 description: "Instantly see if the deal holds up — or where it breaks.",
                 icon: Target,
+                chip: "+20% overpriced",
+                accent: "from-cyan-950/40 to-emerald-950/40",
               },
-            ].map((item, i) => (
-              <div key={i} className="relative">
-                <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 h-full hover:border-cyan-500/30 transition-colors">
-                  <div className="text-cyan-500 font-mono text-sm mb-4">{item.step}</div>
-                  <div className="w-12 h-12 mb-4 rounded-lg bg-cyan-500/10 flex items-center justify-center">
-                    <item.icon className="w-6 h-6 text-cyan-400" />
-                  </div>
-                  <h3 className="text-lg font-semibold text-white mb-2">{item.title}</h3>
-                  <p className="text-slate-400 text-sm">{item.description}</p>
-                </div>
-                {i < 3 && (
-                  <div className="hidden lg:block absolute top-1/2 -right-4 w-8 h-px bg-slate-700">
-                    <ArrowRight className="w-4 h-4 text-slate-600 absolute -right-1 -top-2" />
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
+            ].map((item, i, arr) => {
+              const Icon = item.icon
+              return (
+                <div key={i} className="relative">
+                  <div
+                    className={`bg-gradient-to-br ${item.accent} border border-slate-800 rounded-lg p-6 h-full hover:border-cyan-400/40 transition-colors`}
+                  >
+                    {/* Step number — monospace, terminal-style */}
+                    <div className="text-cyan-400/80 font-mono text-xs font-bold tracking-wider mb-4">
+                      STEP {item.step}
+                    </div>
 
-          {/* Placeholder for animations */}
-          <div className="mt-12 text-center">
-            <p className="text-slate-500 text-sm">[Animation/video placeholder — deal flow visualization]</p>
+                    {/* Icon — flat, slate-toned for terminal feel */}
+                    <div className="w-10 h-10 mb-5 rounded-md bg-slate-800/80 border border-slate-700 flex items-center justify-center">
+                      <Icon className="w-5 h-5 text-cyan-300" />
+                    </div>
+
+                    {/* Title + body */}
+                    <h3 className="text-base font-semibold text-white mb-2 leading-tight">
+                      {item.title}
+                    </h3>
+                    <p className="text-sm text-slate-400 leading-relaxed mb-4">
+                      {item.description}
+                    </p>
+
+                    {/* Metric chip — only on steps that have one */}
+                    {item.chip && (
+                      <div className="inline-flex items-center px-2 py-1 rounded font-mono text-[11px] font-semibold bg-slate-800/80 border border-slate-700 text-amber-400">
+                        {item.chip}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Connecting arrow — desktop only, between cards */}
+                  {i < arr.length - 1 && (
+                    <div className="hidden lg:flex absolute top-1/2 -right-4 -translate-y-1/2 z-10 items-center justify-center">
+                      <div className="w-7 h-px bg-gradient-to-r from-cyan-500/40 to-cyan-500/10" />
+                      <ArrowRight className="w-3.5 h-3.5 text-cyan-500/50 -ml-1" />
+                    </div>
+                  )}
+                </div>
+              )
+            })}
           </div>
         </div>
       </section>
