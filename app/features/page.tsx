@@ -83,46 +83,17 @@ export default function FeaturesPage() {
               </p>
             </div>
 
-            {/* Right - Dashboard mockup */}
+            {/* Right - Dashboard preview image */}
             <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-6">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between mb-6">
-                  <span className="text-sm text-slate-400">Deal Analysis Dashboard</span>
-                  <Badge className="bg-emerald-500/20 text-emerald-400 border-emerald-500/30">Live</Badge>
-                </div>
-                
-                {/* Metrics Grid */}
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="bg-slate-900/50 rounded-lg p-4 border border-slate-700">
-                    <div className="text-xs text-slate-500 mb-1">Adjusted SDE</div>
-                    <div className="text-2xl font-bold text-white">$285,000</div>
-                    <div className="text-xs text-red-400 mt-1">↓ $55K from seller claim</div>
-                  </div>
-                  <div className="bg-slate-900/50 rounded-lg p-4 border border-slate-700">
-                    <div className="text-xs text-slate-500 mb-1">DSCR</div>
-                    <div className="text-2xl font-bold text-amber-400">1.18x</div>
-                    <div className="text-xs text-amber-400 mt-1">Below 1.25x threshold</div>
-                  </div>
-                  <div className="bg-slate-900/50 rounded-lg p-4 border border-slate-700">
-                    <div className="text-xs text-slate-500 mb-1">Valuation Gap</div>
-                    <div className="text-2xl font-bold text-red-400">-22%</div>
-                    <div className="text-xs text-slate-500 mt-1">vs. benchmark range</div>
-                  </div>
-                  <div className="bg-slate-900/50 rounded-lg p-4 border border-slate-700">
-                    <div className="text-xs text-slate-500 mb-1">Risk Flags</div>
-                    <div className="text-2xl font-bold text-amber-400">3</div>
-                    <div className="text-xs text-slate-500 mt-1">Requires attention</div>
-                  </div>
-                </div>
-
-                {/* Verdict */}
-                <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 mt-4">
-                  <div className="flex items-center gap-2">
-                    <AlertTriangle className="w-5 h-5 text-red-400" />
-                    <span className="font-semibold text-red-400">Deal Fails Under Stress</span>
-                  </div>
-                  <p className="text-sm text-slate-400 mt-2">DSCR drops below 1.0x under conservative assumptions. Renegotiate or walk.</p>
-                </div>
+              <div className="rounded-xl overflow-hidden border border-slate-700/60">
+                <Image
+                  src="/buyer-dash-home-features.png"
+                  alt="AcquiFlow buyer dashboard showing pressure-tested deal analysis"
+                  width={1200}
+                  height={800}
+                  className="w-full h-auto"
+                  priority
+                />
               </div>
             </div>
           </div>
