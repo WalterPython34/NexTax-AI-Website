@@ -512,7 +512,7 @@ export default function HomePage() {
               </div>
               <div className="bg-slate-800/40 border border-slate-700/60 rounded-xl overflow-hidden flex-1 flex items-center justify-center">
                 <Image
-                  src="/buyer-dash-home.png"
+                  src="/buyer-dash-home2.png"
                   alt="AcquiFlow buyer dashboard showing pressure-tested deal analysis"
                   width={900}
                   height={600}
@@ -593,81 +593,142 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Pricing Split */}
-      <section className="py-20">
+      {/* Pricing — platform → advisory journey */}
+      <section className="py-24 border-t border-slate-800">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-6">
-            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">
-              Use the platform — or get full underwriting support
+          {/* Header */}
+          <div className="text-center mb-14 max-w-3xl mx-auto">
+            <h2 className="text-3xl lg:text-4xl font-bold text-white tracking-tight leading-tight mb-4">
+              Start with AcquiFlow —{" "}
+              <span className="text-emerald-400">bring in expert underwriting when the deal gets serious</span>
             </h2>
+            <p className="text-lg text-slate-300 leading-relaxed">
+              Most deals don&rsquo;t justify full diligence. Start with data — go deeper only when it holds up.
+            </p>
           </div>
-          <p className="text-center text-slate-400 mb-16 max-w-2xl mx-auto">
-            Use the platform yourself — or get expert-level underwriting support when the deal matters most.
-          </p>
 
-          <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
-            {/* SaaS Card */}
-            <Card className="bg-slate-800/50 border-slate-700 hover:border-cyan-500/30 transition-colors">
-              <CardContent className="p-8">
-                <Badge className="bg-cyan-500/10 text-cyan-400 border-cyan-500/30 mb-4">Platform</Badge>
-                <h3 className="text-2xl font-bold text-white mb-2">AcquiFlow Platform</h3>
+          {/* Two cards with a subtle journey divider between them */}
+          <div className="grid lg:grid-cols-[1fr_auto_1fr] gap-6 lg:gap-8 max-w-5xl mx-auto items-stretch">
+
+            {/* ═══ LEFT CARD — PLATFORM ════════════════════════════════ */}
+            <Card className="bg-slate-800/50 border-slate-700 hover:border-cyan-500/40 transition-colors">
+              <CardContent className="p-8 flex flex-col h-full">
+                <Badge className="bg-cyan-500/10 text-cyan-400 border-cyan-500/30 mb-4 self-start">
+                  Platform
+                </Badge>
+
+                <h3 className="text-xl font-bold text-white mb-2 leading-tight">
+                  Screen deals before you waste time or money
+                </h3>
+
+                {/* Micro hook above price — usage anchor */}
+                <p className="text-xs uppercase tracking-wider text-slate-500 font-semibold mt-3 mb-1">
+                  Most buyers use this to evaluate 10–50 deals/month
+                </p>
+
                 <div className="mb-6">
-                  <span className="text-4xl font-bold text-white">$29–$79</span>
-                  <span className="text-slate-400 ml-2">/ month</span>
+                  <span className="text-3xl font-bold text-white">Starting at $39</span>
+                  <span className="text-slate-400 ml-2 text-base">/ month</span>
                 </div>
-                <ul className="space-y-3 mb-8">
+
+                <ul className="space-y-3 mb-8 flex-1">
                   {[
-                    "Analyze unlimited deals",
-                    "Benchmark against real comps",
-                    "Stress test financing",
-                    "Save & compare opportunities",
+                    "See true cash flow after add-back scrutiny",
+                    "Know if the deal survives SBA financing",
+                    "Benchmark against real closed transactions",
+                    "Identify risk before LOI or diligence",
+                    "Save & compare deals side-by-side",
                   ].map((item, i) => (
-                    <li key={i} className="flex items-center gap-3 text-slate-300">
-                      <CheckCircle className="w-5 h-5 text-cyan-400 flex-shrink-0" />
-                      {item}
+                    <li key={i} className="flex items-start gap-3 text-sm text-slate-300 leading-snug">
+                      <CheckCircle className="w-4 h-4 text-cyan-400 flex-shrink-0 mt-0.5" />
+                      <span>{item}</span>
                     </li>
                   ))}
                 </ul>
+
                 <Link href="/deal-reality-check">
                   <Button className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white font-semibold">
-                    Start Analyzing
+                    Analyze Your First Deal
                     <ArrowRight className="ml-2 w-4 h-4" />
                   </Button>
                 </Link>
               </CardContent>
             </Card>
 
-            {/* Service Card */}
-            <Card className="bg-slate-800/50 border-emerald-500/30 hover:border-emerald-500/50 transition-colors">
-              <CardContent className="p-8">
-                <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/30 mb-4">Advisory</Badge>
-                <h3 className="text-2xl font-bold text-white mb-2">Pro Deal Analysis</h3>
+            {/* ═══ JOURNEY DIVIDER (desktop) ═══════════════════════════ */}
+            <div className="hidden lg:flex flex-col items-center justify-center px-2">
+              <div className="h-16 w-px bg-gradient-to-b from-cyan-500/40 via-slate-700 to-transparent" />
+              <div className="my-3 px-3 py-2 rounded-full bg-slate-900 border border-slate-700">
+                <ArrowRight className="w-4 h-4 text-emerald-400" />
+              </div>
+              <div className="h-16 w-px bg-gradient-to-b from-transparent via-slate-700 to-emerald-500/40" />
+            </div>
+
+            {/* Mobile journey divider — horizontal */}
+            <div className="flex lg:hidden items-center justify-center py-2">
+              <div className="h-px flex-1 bg-gradient-to-r from-cyan-500/40 via-slate-700 to-transparent" />
+              <div className="mx-3 px-3 py-2 rounded-full bg-slate-900 border border-slate-700">
+                <ArrowRight className="w-4 h-4 text-emerald-400 rotate-90" />
+              </div>
+              <div className="h-px flex-1 bg-gradient-to-r from-transparent via-slate-700 to-emerald-500/40" />
+            </div>
+
+            {/* ═══ RIGHT CARD — ADVISORY ═══════════════════════════════ */}
+            <Card className="bg-slate-800/50 border-emerald-500/30 hover:border-emerald-500/60 transition-colors">
+              <CardContent className="p-8 flex flex-col h-full">
+                <Badge className="bg-emerald-500/10 text-emerald-400 border-emerald-500/30 mb-4 self-start">
+                  Advisory
+                </Badge>
+
+                <h3 className="text-xl font-bold text-white mb-2 leading-tight">
+                  Full underwriting when the deal is real
+                </h3>
+
+                {/* Use-case anchor above price */}
+                <p className="text-xs uppercase tracking-wider text-slate-500 font-semibold mt-3 mb-1">
+                  Used when you&rsquo;re preparing to submit an LOI or secure financing
+                </p>
+
                 <div className="mb-6">
-                  <span className="text-4xl font-bold text-white">$1,500</span>
-                  <span className="text-slate-400 ml-2">starting</span>
+                  <span className="text-3xl font-bold text-white">$1,500</span>
+                  <span className="text-slate-400 ml-2 text-base">starting</span>
                 </div>
-                <ul className="space-y-3 mb-8">
+
+                <ul className="space-y-3 mb-8 flex-1">
                   {[
-                    "Full deal underwriting",
-                    "Custom financial modeling",
-                    "Tax-aware deal structuring",
-                    "Lender-ready report",
+                    "Full deal underwriting & risk memo",
+                    "Custom financial modeling + scenario analysis",
+                    "Tax-aware structuring (asset vs stock)",
+                    "Lender-ready deal package",
                   ].map((item, i) => (
-                    <li key={i} className="flex items-center gap-3 text-slate-300">
-                      <CheckCircle className="w-5 h-5 text-emerald-400 flex-shrink-0" />
-                      {item}
+                    <li key={i} className="flex items-start gap-3 text-sm text-slate-300 leading-snug">
+                      <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+                      <span>{item}</span>
                     </li>
                   ))}
                 </ul>
+
                 <Link href="/acquisitions">
                   <Button className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-semibold">
-                    Get a Pro Analysis
+                    Request Full Underwriting
                     <ArrowRight className="ml-2 w-4 h-4" />
                   </Button>
                 </Link>
               </CardContent>
             </Card>
           </div>
+
+          {/* Trust line — credibility anchor */}
+          <p className="text-center text-sm text-slate-400 mt-10 max-w-3xl mx-auto leading-relaxed">
+            Built by <span className="text-slate-200 font-medium">CPAs and M&amp;A professionals.</span>{" "}
+            Designed for real SMB deals{" "}
+            <span className="text-slate-300 font-mono">($300K–$10M).</span>
+          </p>
+
+          {/* Subtle journey caption — reinforces the path */}
+          <p className="text-center text-xs uppercase tracking-wider text-emerald-400/70 font-semibold mt-2">
+            Start with the platform · Escalate when needed
+          </p>
         </div>
       </section>
 
