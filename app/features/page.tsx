@@ -589,7 +589,7 @@ export default function FeaturesPage() {
               <CardContent className="p-8">
                 <div className="text-center mb-6">
                   <h3 className="text-2xl font-bold text-white mb-2">AcquiFlow Platform</h3>
-                  <div className="text-3xl font-bold text-cyan-400">$29&ndash;$79<span className="text-lg text-slate-400">/month</span></div>
+                  <div className="text-3xl font-bold text-cyan-400">$39<span className="text-lg text-slate-400">/month</span></div>
                 </div>
                 <ul className="space-y-3 mb-8">
                   {[
