@@ -163,12 +163,12 @@ function HeroSection() {
             NexTax Intelligence · Acquisitions
           </div>
 
-          <h1 className="text-6xl md:text-6xl font-bold text-white mb-6 leading-tight tracking-tight">
+          <h1 className="text-7xl md:text-6xl font-bold text-white mb-6 leading-tight tracking-tight">
             Stop wasting time —{" "}
             <span className="text-emerald-400">and missing the right deals</span>
           </h1>
 
-          <p className="text-xl text-slate-300 mb-5 max-w-3xl mx-auto leading-relaxed">
+          <p className="text-2xl text-slate-300 mb-5 max-w-3xl mx-auto leading-relaxed">
             Get structured underwriting, real comps, and decision-ready outputs &mdash; before you commit to LOI.
           </p>
 
@@ -181,7 +181,7 @@ function HeroSection() {
           </p>
 
           {/* 3 micro-proof bullets */}
-          <div className="grid sm:grid-cols-3 gap-4 max-w-3xl mx-auto mt-8 pt-6 border-t border-slate-800">
+          <div className="grid sm:grid-cols-3 gap-4 max-w-2xl mx-auto mt-8 pt-6 border-t border-slate-800">
             {[
               "Used by SMB buyers evaluating $300K–$10M deals",
               "Built on real transaction comps (not listings)",
