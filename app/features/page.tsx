@@ -346,7 +346,7 @@ export default function FeaturesPage() {
               },
               {
                 icon: Briefcase,
-                title: "SBA Financing View",
+                title: "SBA Financing Scenario",
                 description: "Estimate loan amount, down payment, debt service, DSCR, and equity recovery under SBA-style assumptions.",
               },
               {
@@ -384,32 +384,32 @@ export default function FeaturesPage() {
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[
               {
-                title: "Underwriting Summary",
+                title: "Instant Deal Verdict (Go / No-Go)",
                 description: "Instantly see verdict, score, DSCR, asking multiple, adjusted earnings, and key risk signals.",
                 icon: LineChart,
               },
               {
-                title: "Stress Test",
+                title: "See Where the Deal Breaks",
                 description: "Model downside scenarios and see where debt coverage breaks under conservative assumptions.",
                 icon: TrendingUp,
               },
               {
-                title: "Market Comps",
+                title: "Know What It\u2019s Actually Worth",
                 description: "Compare asking price to transaction-backed benchmark ranges for the selected industry.",
                 icon: BarChart3,
               },
               {
-                title: "Lender Readiness",
+                title: "Will a Lender Actually Fund This?",
                 description: "See financing feasibility, coverage gaps, and what lenders will flag before you apply.",
                 icon: Shield,
               },
               {
-                title: "LOI Builder",
+                title: "Build a Defensible Offer",
                 description: "Translate analysis into anchor offer, target range, max justified price, and buyer protections.",
                 icon: Scale,
               },
               {
-                title: "Deal Memo",
+                title: "Export a Lender-Ready Deal Memo",
                 description: "Generate an IC-style memo with investment thesis, risks, benchmarks, and recommendation.",
                 icon: FileText,
               },
@@ -432,10 +432,16 @@ export default function FeaturesPage() {
       {/* SECTION 7 — COMPARE DEALS */}
       <section className="py-20">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">Stack Deals Side by Side</h2>
-            <p className="text-xl text-slate-400 max-w-3xl mx-auto">
+          <div className="text-center mb-16 max-w-3xl mx-auto">
+            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">
+              Compare Deals Side by Side &mdash;{" "}
+              <span className="text-cyan-400">and Know Which One Wins</span>
+            </h2>
+            <p className="text-xl text-slate-400 mb-3 leading-relaxed">
               Most buyers evaluate one deal at a time. AcquiFlow helps you compare multiple opportunities so the best use of your time and capital becomes obvious.
+            </p>
+            <p className="text-base text-slate-300 italic">
+              Stop evaluating deals in isolation &mdash; capital allocation is a relative decision.
             </p>
           </div>
 
@@ -494,7 +500,7 @@ export default function FeaturesPage() {
                 variant="outline"
                 className="border-cyan-500/50 text-cyan-400 hover:bg-cyan-500/10 px-8 py-6 text-lg bg-transparent"
               >
-                Compare Your Deals
+                See Which Deal Wins
                 <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
             </Link>
