@@ -487,49 +487,106 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Sample Analysis Section */}
-      <section className="py-20 bg-slate-900/50">
+      {/* Sample Analysis — pressure-test demo, decision-grade output */}
+      <section className="py-24 bg-slate-900/50 border-t border-slate-800">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">
-              See What a Real Deal Analysis Looks Like
+          {/* Header */}
+          <div className="text-center mb-14 max-w-3xl mx-auto">
+            <h2 className="text-3xl lg:text-4xl font-bold text-white tracking-tight leading-tight mb-4">
+              What this deal looks like{" "}
+              <span className="text-cyan-400">after real underwriting</span>
             </h2>
+            <p className="text-lg text-slate-300 leading-relaxed">
+              Seller-reported numbers rarely survive scrutiny. Here&rsquo;s what actually happens.
+            </p>
           </div>
 
-          <div className="grid lg:grid-cols-2 gap-12 items-center max-w-5xl mx-auto">
-            {/* Left - Screenshot placeholder */}
-            <div className="bg-slate-800/50 border border-slate-700 rounded-2xl p-8 aspect-video flex items-center justify-center">
-              <div className="text-center">
-                <BarChart3 className="w-16 h-16 text-slate-600 mx-auto mb-4" />
-                <p className="text-slate-500 text-sm">[Deal Analysis Dashboard Screenshot]</p>
+          {/* 2-col layout: dashboard image (left) + insights (right) */}
+          <div className="grid lg:grid-cols-[1.05fr_1fr] gap-8 lg:gap-10 items-stretch max-w-6xl mx-auto">
+
+            {/* ── LEFT — dashboard image with framing labels ───────── */}
+            <div className="flex flex-col">
+              <div className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold mb-3">
+                Sample Output &mdash; Specialty Trade Business
               </div>
+              <div className="bg-slate-800/40 border border-slate-700/60 rounded-xl overflow-hidden flex-1 flex items-center justify-center">
+                <Image
+                  src="/buyer-dash-home.png"
+                  alt="AcquiFlow buyer dashboard showing pressure-tested deal analysis"
+                  width={900}
+                  height={600}
+                  className="w-full h-auto"
+                  priority={false}
+                />
+              </div>
+              <p className="text-[11px] text-slate-500 italic mt-3 text-center">
+                Actual AcquiFlow output (simplified)
+              </p>
             </div>
 
-            {/* Right - Text block */}
-            <div className="space-y-6">
-              <h3 className="text-2xl font-bold text-white">Real insights. Not guesses.</h3>
-              <ul className="space-y-4">
+            {/* ── RIGHT — insights panel, slightly brighter than left ─ */}
+            <div className="bg-slate-800/60 border border-slate-700 rounded-xl p-7 lg:p-8 flex flex-col">
+
+              <h3 className="text-xl font-bold text-white mb-1 leading-tight">
+                Pressure-test results
+              </h3>
+              <p className="text-xs uppercase tracking-wider text-cyan-400/70 font-semibold mb-6">
+                Findings after underwriting
+              </p>
+
+              {/* Findings list */}
+              <ul className="space-y-3.5 mb-6 flex-1">
                 {[
-                  "Adjusted SDE reduced from $340K → $285K",
+                  "Adjusted SDE drops from $340K \u2192 $285K",
                   "DSCR falls below lender threshold (1.18x)",
-                  "Business is overpriced by ~22% vs real comps",
+                  "Valuation misaligned (\u22C522% overpriced vs comps)",
                   "Deal fails under conservative stress scenarios",
+                  "Requires renegotiation before LOI",
                 ].map((item, i) => (
                   <li key={i} className="flex items-start gap-3">
-                    <CheckCircle className="w-5 h-5 text-cyan-400 flex-shrink-0 mt-0.5" />
-                    <span className="text-slate-300">{item}</span>
+                    <CheckCircle className="w-4 h-4 text-cyan-400 flex-shrink-0 mt-0.5" />
+                    <span className="text-sm text-slate-300 leading-snug">{item}</span>
                   </li>
                 ))}
               </ul>
-              <Button
-                 size="lg"
-                 variant="outline"
-                 onClick={() => setShowSampleModal(true)}
-                 className="border-cyan-500/50 text-cyan-400 hover:bg-cyan-500/10 px-8 py-6 text-lg bg-transparent"
-              >
-                See a Sample Analysis
-                <ArrowRight className="ml-2 w-5 h-5" />
-            </Button>
+
+              {/* Divider */}
+              <div className="h-px bg-gradient-to-r from-transparent via-slate-700 to-transparent mb-5" />
+
+              {/* Verdict block — decision weight */}
+              <div className="bg-amber-500/10 border border-amber-500/30 rounded-lg p-4 mb-6">
+                <div className="flex items-start gap-3">
+                  <AlertTriangle className="w-5 h-5 text-amber-400 flex-shrink-0 mt-0.5" />
+                  <div className="min-w-0">
+                    <div className="text-[10px] uppercase tracking-wider text-amber-400 font-bold mb-1">
+                      Recommended Action
+                    </div>
+                    <div className="text-base font-bold text-amber-100 leading-tight">
+                      Renegotiate or walk away
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* CTAs — primary + soft secondary */}
+              <div className="space-y-2.5">
+                <Link href="/deal-reality-check">
+                  <Button
+                    size="lg"
+                    className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white font-semibold text-base px-6 py-5"
+                  >
+                    Analyze Your Own Deal
+                    <ArrowRight className="ml-2 w-4 h-4" />
+                  </Button>
+                </Link>
+                <button
+                  type="button"
+                  onClick={() => setShowSampleModal(true)}
+                  className="w-full text-center text-xs text-slate-400 hover:text-cyan-400 transition-colors py-1"
+                >
+                  or explore the full sample analysis
+                </button>
+              </div>
             </div>
           </div>
         </div>
