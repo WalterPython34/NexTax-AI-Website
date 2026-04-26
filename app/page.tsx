@@ -415,7 +415,7 @@ export default function HomePage() {
           <div className="text-center mb-16 max-w-3xl mx-auto">
             <h2 className="text-3xl lg:text-4xl font-bold text-white tracking-tight leading-tight">
               What you&rsquo;ll know{" "}
-              <span className="text-cyan-400">before you make an offer</span>
+              <span className="text-emerald-500">before you make an offer</span>
             </h2>
           </div>
 
@@ -495,7 +495,7 @@ export default function HomePage() {
           <div className="text-center mb-14 max-w-3xl mx-auto">
             <h2 className="text-3xl lg:text-4xl font-bold text-white tracking-tight leading-tight mb-4">
               What this deal looks like{" "}
-              <span className="text-cyan-400">after real underwriting</span>
+              <span className="text-emerald-500">after real underwriting</span>
             </h2>
             <p className="text-lg text-slate-300 leading-relaxed">
               Seller-reported numbers rarely survive scrutiny. Here&rsquo;s what actually happens.
@@ -531,7 +531,7 @@ export default function HomePage() {
               <h3 className="text-xl font-bold text-white mb-1 leading-tight">
                 Pressure-test results
               </h3>
-              <p className="text-xs uppercase tracking-wider text-cyan-400/70 font-semibold mb-6">
+              <p className="text-xs uppercase tracking-wider text-emerald-400/70 font-semibold mb-6">
                 Findings after underwriting
               </p>
 
@@ -545,7 +545,7 @@ export default function HomePage() {
                   "Requires renegotiation before LOI",
                 ].map((item, i) => (
                   <li key={i} className="flex items-start gap-3">
-                    <CheckCircle className="w-4 h-4 text-cyan-400 flex-shrink-0 mt-0.5" />
+                    <CheckCircle className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
                     <span className="text-sm text-slate-300 leading-snug">{item}</span>
                   </li>
                 ))}
