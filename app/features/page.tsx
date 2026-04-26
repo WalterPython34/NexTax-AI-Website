@@ -522,19 +522,7 @@ export default function FeaturesPage() {
             </p>
           </div>
 
-          {/* Market signals dashboard preview */}
-          <div className="max-w-4xl mx-auto mb-12">
-            <div className="rounded-xl overflow-hidden border border-slate-700 bg-slate-800/30 shadow-2xl shadow-black/20">
-              <Image
-                src="/market-signals.png"
-                alt="AcquiFlow market intelligence dashboard showing local saturation, competition, and benchmark signals"
-                width={1200}
-                height={700}
-                className="w-full h-auto"
-                priority={false}
-              />
-            </div>
-          </div>
+          
 
           <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-4 mb-12">
             {[
@@ -551,6 +539,20 @@ export default function FeaturesPage() {
             ))}
           </div>
 
+          {/* Market signals dashboard preview */}
+          <div className="max-w-4xl mx-auto mb-12">
+            <div className="rounded-xl overflow-hidden border border-slate-700 bg-slate-800/30 shadow-2xl shadow-black/20">
+              <Image
+                src="/market-signals.png"
+                alt="AcquiFlow market intelligence dashboard showing local saturation, competition, and benchmark signals"
+                width={1200}
+                height={700}
+                className="w-full h-auto"
+                priority={false}
+              />
+            </div>
+          </div>
+          
           <div className="text-center">
             <Link href="/buyer-dashboard?tab=market-intel">
               <Button
