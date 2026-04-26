@@ -493,8 +493,8 @@ export default function FeaturesPage() {
             </div>
           </div>
 
-          <div className="text-center">
-            <Link href="/compare">
+         <div className="text-center">
+            <Link href="/buyer-dashboard?tab=compare">
               <Button
                 size="lg"
                 variant="outline"
@@ -511,7 +511,7 @@ export default function FeaturesPage() {
       {/* SECTION 8 — MARKET INTEL */}
       <section className="py-20 bg-slate-900/50">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-16 max-w-3xl mx-auto">
+         <div className="text-center mb-10 max-w-3xl mx-auto">
             <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">Market Intelligence Beyond the Listing</h2>
             <p className="text-xl text-slate-400 mb-3 leading-relaxed">
               Use deal data, industry benchmarks, and local market signals to understand whether an opportunity deserves deeper diligence.
@@ -520,6 +520,22 @@ export default function FeaturesPage() {
               Most buyers miss this &mdash; market density and competition often determine outcomes more than the deal itself.
             </p>
           </div>
+
+          {/* Market signals dashboard preview */}
+          <div className="max-w-4xl mx-auto mb-12">
+            <div className="rounded-xl overflow-hidden border border-slate-700 bg-slate-800/30 shadow-2xl shadow-black/20">
+              <Image
+                src="/market-signals.png"
+                alt="AcquiFlow market intelligence dashboard showing local saturation, competition, and benchmark signals"
+                width={1200}
+                height={700}
+                className="w-full h-auto"
+                priority={false}
+              />
+            </div>
+          </div>
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-4 mb-12">
 
           <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-4 mb-12">
             {[
@@ -537,7 +553,7 @@ export default function FeaturesPage() {
           </div>
 
           <div className="text-center">
-            <Link href="/market-intel">
+            <Link href="/buyer-dashboard?tab=market-intel">
               <Button
                 size="lg"
                 variant="outline"
