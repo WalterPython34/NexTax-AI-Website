@@ -538,8 +538,6 @@ export default function FeaturesPage() {
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-4 mb-12">
-
-          <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-4 mb-12">
             {[
               { icon: BarChart3, text: "Industry benchmark ranges" },
               { icon: Map, text: "Local competition & saturation analysis" },
