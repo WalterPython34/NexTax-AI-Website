@@ -38,7 +38,7 @@ export default function FeaturesPage() {
                 PRE-LOI DEAL UNDERWRITING
               </Badge>
               <h1 className="text-4xl lg:text-5xl font-bold text-white leading-tight">
-                Everything You Need to Underwrite, Compare, and Choose Better Deals
+                Everything You Need to Underwrite, Compare, <span className="text-emerald-500">and Choose Better Deals</span>
               </h1>
               <p className="text-xl text-slate-300 leading-relaxed">
                 AcquiFlow turns raw listings, CIMs, and seller-provided numbers into decision-grade acquisition analysis — with normalized earnings, real transaction benchmarks, financing stress tests, risk flags, LOI guidance, and lender-ready outputs.
@@ -160,7 +160,7 @@ export default function FeaturesPage() {
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
             <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">
-              What Gets <span className="text-cyan-400">Pressure-Tested</span> in Every Deal
+              What Gets <span className="text-emerald-500">Pressure-Tested</span> in Every Deal
             </h2>
             <p className="text-xl text-slate-400 max-w-3xl mx-auto">
               Every deal is evaluated the same way lenders, investors, and experienced buyers think &mdash; not how brokers present it.
@@ -228,7 +228,7 @@ export default function FeaturesPage() {
           <div className="text-center mb-16 max-w-3xl mx-auto">
             <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">
               Turn Any Listing Into a Clear{" "}
-              <span className="text-cyan-400">Buy / Walk Decision</span>
+              <span className="text-emerald-500">Buy / Walk Decision</span>
             </h2>
             <p className="text-lg text-slate-400 leading-relaxed">
               Most deals look good on paper &mdash; until you apply lender-grade scrutiny.
@@ -446,7 +446,7 @@ export default function FeaturesPage() {
           </div>
 
           {/* Comparison Table Mockup */}
-          <div className="bg-slate-800/50 border border-slate-700 rounded-xl overflow-hidden mb-12">
+          <div className="bg-slate-800/50 border border-slate-700 rounded-xl overflow-hidden mb-12 max-w-3xl mx-auto">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
