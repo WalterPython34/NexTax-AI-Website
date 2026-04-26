@@ -254,7 +254,7 @@ export default function FeaturesPage() {
           </div>
 
           {/* Sample Result - Premium treatment with image */}
-          <div className="max-w-4xl mx-auto">
+          <div className="max-w-6xl mx-auto">
             <div className="text-center mb-6">
               <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-[10px] font-bold uppercase tracking-wider mb-3">
                 <CheckCircle className="w-3 h-3" />
