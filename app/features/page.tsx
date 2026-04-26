@@ -32,7 +32,7 @@ export default function FeaturesPage() {
       <section className="py-20">
         <div className="container mx-auto px-4">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
-            {/* Left - Copy */}
+           {/* Left - Copy */}
             <div className="space-y-6">
               <Badge className="bg-cyan-500/20 text-cyan-300 border-cyan-500/30">
                 PRE-LOI DEAL UNDERWRITING
@@ -43,6 +43,16 @@ export default function FeaturesPage() {
               <p className="text-xl text-slate-300 leading-relaxed">
                 AcquiFlow turns raw listings, CIMs, and seller-provided numbers into decision-grade acquisition analysis — with normalized earnings, real transaction benchmarks, financing stress tests, risk flags, LOI guidance, and lender-ready outputs.
               </p>
+
+              {/* Credibility strip */}
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs text-slate-400 pt-1">
+                <span>Built by <span className="text-slate-200 font-medium">CPA + M&amp;A operators</span></span>
+                <span className="text-slate-600">&bull;</span>
+                <span>Designed for <span className="text-slate-200 font-medium">$300K&ndash;$10M</span> SMB deals</span>
+                <span className="text-slate-600">&bull;</span>
+                <span>Based on <span className="text-slate-200 font-medium">real transaction data</span></span>
+              </div>
+
               <div className="flex flex-col sm:flex-row gap-4 pt-4">
                 <Link href="/deal-reality-check">
                   <Button
@@ -63,6 +73,13 @@ export default function FeaturesPage() {
                   </Button>
                 </Link>
               </div>
+
+              {/* Pricing anchor below buttons */}
+              <p className="text-sm text-slate-400 pt-1">
+                <span className="text-emerald-400 font-semibold">Start free.</span>{" "}
+                Full analysis unlocked at{" "}
+                <span className="text-white font-semibold">$39/month</span>.
+              </p>
             </div>
 
             {/* Right - Dashboard mockup */}
@@ -138,13 +155,15 @@ export default function FeaturesPage() {
         </div>
       </section>
 
-      {/* SECTION 3 — CORE FEATURE GRID */}
+      {/* SECTION 3 — WHAT GETS PRESSURE-TESTED */}
       <section className="py-20">
         <div className="container mx-auto px-4">
           <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">What AcquiFlow Analyzes</h2>
+            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">
+              What Gets <span className="text-cyan-400">Pressure-Tested</span> in Every Deal
+            </h2>
             <p className="text-xl text-slate-400 max-w-3xl mx-auto">
-              Every deal is reviewed across the same decision framework serious buyers, lenders, and advisors care about.
+              Every deal is evaluated the same way lenders, investors, and experienced buyers think &mdash; not how brokers present it.
             </p>
           </div>
 
@@ -152,35 +171,35 @@ export default function FeaturesPage() {
             {[
               {
                 icon: DollarSign,
-                title: "Normalized Earnings",
+                title: "True Cash Flow (Not Seller Narrative)",
                 description: "Adjust reported SDE for aggressive add-backs, owner compensation gaps, one-time items, and questionable adjustments.",
-                sample: "Seller SDE: $340K → Adjusted SDE: $285K",
+                sample: "Seller SDE: $340K \u2192 Adjusted SDE: $285K",
               },
               {
                 icon: TrendingUp,
-                title: "DSCR & Financing Stress Test",
+                title: "Will the Deal Survive Financing?",
                 description: "See whether the deal can support debt under realistic SBA-style financing assumptions and downside scenarios.",
                 sample: "Base DSCR: 1.28x / Stress DSCR: 0.94x",
               },
               {
                 icon: BarChart3,
-                title: "Market Benchmarking",
+                title: "What It\u2019s Actually Worth",
                 description: "Compare asking multiples against real transaction data by industry instead of relying only on broker narratives.",
-                sample: "Asking multiple: 4.1x / Benchmark range: 2.7x–3.4x",
+                sample: "Asking multiple: 4.1x / Benchmark range: 2.7x\u20133.4x",
               },
               {
                 icon: AlertTriangle,
-                title: "Risk Flag Engine",
+                title: "Hidden Risks & Red Flags",
                 description: "Surface issues such as weak coverage, inflated earnings, valuation gaps, concentration risk, and fragile downside protection.",
               },
               {
                 icon: Scale,
-                title: "LOI & Negotiation Guidance",
+                title: "Your Offer Strategy",
                 description: "Translate the analysis into offer ranges, walk-away pricing, seller note logic, earnout considerations, and buyer protections.",
               },
               {
                 icon: FileText,
-                title: "Deal Memo Output",
+                title: "Lender-Ready Deal Memo",
                 description: "Generate an IC-style memo with investment snapshot, red flags, diligence priorities, lender summary, and recommendation logic.",
               },
             ].map((feature, i) => (
@@ -189,8 +208,8 @@ export default function FeaturesPage() {
                   <div className="w-12 h-12 rounded-lg bg-cyan-500/20 flex items-center justify-center mb-4">
                     <feature.icon className="w-6 h-6 text-cyan-400" />
                   </div>
-                  <h3 className="text-xl font-semibold text-white mb-3">{feature.title}</h3>
-                  <p className="text-slate-400 mb-3">{feature.description}</p>
+                  <h3 className="text-xl font-semibold text-white mb-3 leading-tight">{feature.title}</h3>
+                  <p className="text-slate-400 mb-3 leading-relaxed">{feature.description}</p>
                   {feature.sample && (
                     <div className="bg-slate-900/50 rounded-lg px-3 py-2 border border-slate-700">
                       <code className="text-xs text-cyan-300 font-mono">{feature.sample}</code>
@@ -203,11 +222,17 @@ export default function FeaturesPage() {
         </div>
       </section>
 
-      {/* SECTION 4 — REAL DEAL WALKTHROUGH */}
+      {/* SECTION 4 — TURN ANY LISTING INTO A CLEAR DECISION */}
       <section className="py-20 bg-slate-900/50">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">How AcquiFlow Turns a Listing Into a Decision</h2>
+          <div className="text-center mb-16 max-w-3xl mx-auto">
+            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">
+              Turn Any Listing Into a Clear{" "}
+              <span className="text-cyan-400">Buy / Walk Decision</span>
+            </h2>
+            <p className="text-lg text-slate-400 leading-relaxed">
+              Most deals look good on paper &mdash; until you apply lender-grade scrutiny.
+            </p>
           </div>
 
           {/* Workflow Steps */}
@@ -215,26 +240,26 @@ export default function FeaturesPage() {
             {[
               {
                 step: "01",
-                title: "Input the Deal",
-                description: "Enter asking price, revenue, SDE, industry, location, and financing assumptions — or paste listing details.",
+                title: "Enter the Deal",
+                description: "Enter asking price, revenue, SDE, industry, location, and financing assumptions \u2014 or paste listing details.",
                 icon: Layers,
               },
               {
                 step: "02",
-                title: "Normalize the Earnings",
-                description: "AcquiFlow adjusts the seller's numbers into a cleaner cash-flow view buyers and lenders can actually evaluate.",
+                title: "Reveal True Earnings",
+                description: "Strip out inflated add-backs and reconstruct real cash flow.",
                 icon: DollarSign,
               },
               {
                 step: "03",
-                title: "Benchmark & Stress Test",
+                title: "Compare to Real Deals & Stress Test",
                 description: "The platform compares the deal to real transaction benchmarks and tests whether debt coverage holds under pressure.",
                 icon: BarChart3,
               },
               {
                 step: "04",
-                title: "Choose the Next Move",
-                description: "Proceed, renegotiate, pause, or walk — with pricing discipline, LOI guidance, and diligence priorities.",
+                title: "Make the Call",
+                description: "Proceed, renegotiate, or walk \u2014 with pricing discipline and clear reasoning.",
                 icon: Target,
               },
             ].map((item, i) => (
@@ -259,8 +284,12 @@ export default function FeaturesPage() {
           {/* Sample Result - Premium treatment */}
           <div className="max-w-3xl mx-auto">
             <div className="text-center mb-6">
+              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/25 text-emerald-400 text-[10px] font-bold uppercase tracking-wider mb-3">
+                <CheckCircle className="w-3 h-3" />
+                Real Output &mdash; Not a Mockup
+              </div>
               <h3 className="text-2xl font-bold text-white mb-2">Example Output</h3>
-              <p className="text-slate-400">In minutes, AcquiFlow shows whether the seller&apos;s numbers survive lender-style scrutiny.</p>
+              <p className="text-slate-400">In minutes, AcquiFlow shows whether the seller&rsquo;s numbers survive lender-style scrutiny.</p>
             </div>
             <div className="bg-gradient-to-br from-slate-800/80 to-slate-900/80 border-2 border-cyan-500/30 rounded-2xl p-8 shadow-xl shadow-cyan-500/5">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-6 mb-6">
