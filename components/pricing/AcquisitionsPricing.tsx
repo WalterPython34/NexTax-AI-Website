@@ -163,7 +163,7 @@ function HeroSection() {
             NexTax Intelligence · Acquisitions
           </div>
 
-          <h1 className="text-5xl md:text-6xl font-bold text-white mb-6 leading-tight tracking-tight">
+          <h1 className="text-6xl md:text-6xl font-bold text-white mb-6 leading-tight tracking-tight">
             Stop wasting time —{" "}
             <span className="text-emerald-400">and missing the right deals</span>
           </h1>
