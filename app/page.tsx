@@ -407,59 +407,83 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* What You Get */}
-      <section className="py-20">
+      {/* What You'll Know — outcome-focused, premium card design */}
+      <section className="py-24 border-t border-slate-800">
         <div className="container mx-auto px-4">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">
-              What You&apos;ll Know <span className="text-cyan-400">Before You Make an Offer</span>
+          {/* Header */}
+          <div className="text-center mb-16 max-w-3xl mx-auto">
+            <h2 className="text-3xl lg:text-4xl font-bold text-white tracking-tight leading-tight">
+              What you&rsquo;ll know{" "}
+              <span className="text-cyan-400">before you make an offer</span>
             </h2>
           </div>
 
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {/* 6-card outcome grid — premium spacing, subtle hover lift */}
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
             {[
               {
                 icon: DollarSign,
-                title: "True Cash Flow (After Add-Back Scrutiny)",
-                description: "Know the real earnings after pressure-testing seller adjustments",
+                title: "True Cash Flow",
+                description: "See earnings after real add-back scrutiny — not seller narratives.",
               },
               {
                 icon: TrendingUp,
-                title: "Will This Deal Survive SBA Financing?",
-                description: "See how the deal performs under realistic lending scenarios",
+                title: "Will It Survive Financing?",
+                description: "Instantly test DSCR under realistic SBA-style assumptions.",
               },
               {
                 icon: Target,
-                title: "What This Business Is Actually Worth",
-                description: "Get a defensible valuation range based on real transaction data",
+                title: "What It\u2019s Actually Worth",
+                description: "Get a defensible valuation range based on real transactions — not listings.",
               },
               {
                 icon: AlertTriangle,
-                title: "Where This Deal Breaks Under Pressure",
-                description: "Instantly identify weaknesses before you commit capital",
+                title: "Where It Breaks",
+                description: "Identify exactly what kills the deal under pressure.",
               },
               {
                 icon: BarChart3,
-                title: "How This Deal Compares to Real Transactions",
-                description: "Benchmark against actual closed deals — not listing prices",
+                title: "How It Compares",
+                description: "Benchmark against real closed deals in your industry.",
               },
               {
                 icon: FileText,
-                title: "What a Lender Will See Immediately",
-                description: "Export a clean, structured view for financing conversations",
+                title: "What a Lender Will See",
+                description: "Export a clean, structured view for financing conversations.",
               },
-            ].map((item, i) => (
-              <Card key={i} className="bg-slate-800/30 border-slate-700 hover:border-cyan-500/30 transition-colors">
-                <CardContent className="p-6">
-                  <div className="w-10 h-10 mb-4 rounded-lg bg-cyan-500/10 flex items-center justify-center">
-                    <item.icon className="w-5 h-5 text-cyan-400" />
+            ].map((item, i) => {
+              const Icon = item.icon
+              return (
+                <div
+                  key={i}
+                  className="bg-slate-900/40 border border-slate-800 rounded-xl p-8 hover:border-cyan-400/40 hover:-translate-y-0.5 transition-all duration-200"
+                >
+                  {/* Icon — circular background, subtle glow */}
+                  <div className="w-12 h-12 mb-5 rounded-full bg-cyan-500/10 border border-cyan-500/25 flex items-center justify-center">
+                    <Icon className="w-5 h-5 text-cyan-400" />
                   </div>
-                  <h3 className="text-lg font-semibold text-white mb-2">{item.title}</h3>
-                  <p className="text-slate-400 text-sm">{item.description}</p>
-                </CardContent>
-              </Card>
-            ))}
+
+                  {/* Title — bigger, tighter line height */}
+                  <h3 className="text-lg font-bold text-white mb-2.5 leading-tight">
+                    {item.title}
+                  </h3>
+
+                  {/* Body — tighter line height for readability */}
+                  <p className="text-sm text-slate-400 leading-snug">
+                    {item.description}
+                  </p>
+                </div>
+              )
+            })}
           </div>
+
+          {/* Closer line — the conversion line */}
+          <p className="text-center text-base sm:text-lg text-slate-300 mt-14 max-w-3xl mx-auto leading-relaxed">
+            This is the difference between{" "}
+            <span className="text-slate-500">liking a deal</span>{" "}
+            and{" "}
+            <span className="text-emerald-400 font-semibold">knowing if it works.</span>
+          </p>
         </div>
       </section>
 
