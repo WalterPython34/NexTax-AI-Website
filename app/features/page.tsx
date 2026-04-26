@@ -268,7 +268,7 @@ export default function FeaturesPage() {
                 <div className="bg-slate-800/50 border border-slate-700 rounded-xl p-6 h-full">
                   <div className="text-cyan-400 text-sm font-mono mb-3">Step {item.step}</div>
                   <div className="w-10 h-10 rounded-lg bg-cyan-500/20 flex items-center justify-center mb-4">
-                    <item.icon className="w-5 h-5 text-cyan-400" />
+                    <item.icon className="w-5 h-5 text-emerald-400" />
                   </div>
                   <h3 className="text-lg font-semibold text-white mb-2">{item.title}</h3>
                   <p className="text-sm text-slate-400">{item.description}</p>
