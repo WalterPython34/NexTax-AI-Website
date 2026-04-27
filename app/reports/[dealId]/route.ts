@@ -21,8 +21,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { cookies } from "next/headers";
-import { createServerClient } from "@supabase/ssr";
+
 
 import {
   DealReportInputs,
@@ -54,18 +53,12 @@ export async function GET(
   }
 
   // ─── 1. Auth ─────────────────────────────────────────────────────────
-  const cookieStore = cookies();
-  const supabaseAuth = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        get(name: string) { return cookieStore.get(name)?.value; },
-      },
-    }
-  );
-
-  const { data: { user }, error: authError } = await supabaseAuth.auth.getUser();
+  // Auth: extract token from cookie via supabaseAdmin
+  const token = req.cookies.get("sb-sgrosezedxunoicmglpj-auth-token")?.value
+             ?? req.headers.get("authorization")?.replace("Bearer ", "");
+  const { data: { user }, error: authError } = token
+    ? await supabaseAdmin.auth.getUser(token)
+    : { data: { user: null }, error: { message: "No token" } };
   if (authError || !user) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
