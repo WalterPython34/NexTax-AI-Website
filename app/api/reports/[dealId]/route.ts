@@ -53,23 +53,17 @@ export async function GET(
   }
 
   // ─── 1. Auth ─────────────────────────────────────────────────────────
- // Auth: pull user from any available Supabase auth cookie
-  const authCookie = req.cookies.getAll()
-    .find(c => c.name.includes("auth-token") && c.name.startsWith("sb-"));
-  const token = authCookie?.value
-             ?? req.headers.get("authorization")?.replace("Bearer ", "");
-  const { data: { user }, error: authError } = token
-    ? await supabaseAdmin.auth.getUser(token)
-    : { data: { user: null }, error: { message: "No token" } };
-  if (authError || !user) {
+ // Auth: user ID passed from authenticated client
+  const userId = req.nextUrl.searchParams.get("uid");
+  if (!userId) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  } 
 
   // ─── 2. Verify Pro plan ──────────────────────────────────────────────
   const { data: profile, error: profileError } = await supabaseAdmin
     .from("profiles")
     .select("plan")
-    .eq("id", user.id)
+    .eq("id", userId)
     .single();
 
   if (profileError || !profile) {
@@ -95,7 +89,7 @@ export async function GET(
   }
 
   // Optional: verify ownership
-  if (deal.user_id && deal.user_id !== user.id) {
+  if (deal.user_id && deal.user_id !== userId) {
     return NextResponse.json({ error: "Not authorized for this deal" }, { status: 403 });
   }
 
