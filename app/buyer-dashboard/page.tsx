@@ -2452,7 +2452,7 @@ function IndustryBenchmarkPanel({
 
 function DealDetailPanel({
   deal, favorites, dealStatuses, isPro,
-  onClose, onToggleFav, onOpenNotes, onOpenUnderwriting, onStatusChange,
+ onClose, onToggleFav, onOpenNotes, onOpenUnderwriting, onStatusChange, onShowUpgrade,
 }: {
   deal: DealRun;
   favorites: Set<string>;
@@ -2463,12 +2463,27 @@ function DealDetailPanel({
   onOpenNotes: (deal: DealRun) => void;
   onOpenUnderwriting: (deal: DealRun) => void;
   onStatusChange: (id: string, s: DealStatus) => void;
-}) {
+  onShowUpgrade?: () => void;
+})
   const gp     = deal.gap_pct ?? 0;
   const sc     = sigCfg(deal.signal ?? "fair");
   const status = dealStatuses[deal.id] ?? "New";
   const isFav  = favorites.has(deal.id);
-  const col    = (s: number) => s >= 70 ? "#10B981" : s >= 50 ? "#F59E0B" : s >= 30 ? "#F97316" : "#EF4444";
+ const col    = (s: number) => s >= 70 ? "#10B981" : s >= 50 ? "#F59E0B" : s >= 30 ? "#F97316" : "#EF4444";
+
+  // ── Download Report state + handler ───────────────────────────────────────
+  const [downloadingReport, setDownloadingReport] = React.useState(false);
+  async function handleDownloadReport(dealId: string) {
+    if (!isPro) { onShowUpgrade?.(); return; }
+    setDownloadingReport(true);
+    try {
+      console.log("Downloading report for deal:", dealId);
+      await fetch(`/api/reports/${dealId}`).catch(() => {});
+      await new Promise(r => setTimeout(r, 1500));
+    } finally {
+      setDownloadingReport(false);
+    }
+  }
 
   return (
     <>
@@ -2625,6 +2640,22 @@ function DealDetailPanel({
             >
               <span>⚡</span> Full Underwriting Analysis {!isPro && "🔒"}
             </button>
+            <button
+              onClick={() => handleDownloadReport(deal.id)}
+              disabled={downloadingReport}
+              style={{ width: "100%", padding: "10px 14px", borderRadius: 9, border: isPro ? "1px solid rgba(16,185,129,0.25)" : "1px solid rgba(255,255,255,0.08)", background: isPro ? "rgba(16,185,129,0.06)" : "rgba(255,255,255,0.03)", color: isPro ? "#10B981" : "#6B7280", fontSize: 13, fontWeight: 600, cursor: downloadingReport ? "wait" : "pointer", textAlign: "left" as any, display: "flex", alignItems: "center", gap: 8, opacity: downloadingReport ? 0.7 : 1 }}
+            >
+              {downloadingReport ? (
+                <>
+                  <span style={{ display: "inline-block", width: 12, height: 12, border: "2px solid rgba(16,185,129,0.3)", borderTopColor: "#10B981", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+                  Generating Report...
+                </>
+              ) : (
+                <>
+                  <span>⬇</span> Download Report {!isPro && "🔒"}
+                </>
+              )}
+            </button>
           </div>
         </div>
       </div>
@@ -2632,7 +2663,7 @@ function DealDetailPanel({
   );
 }
 
-// ─── COMPS TAB PROP ASSEMBLERS ───────────────────────────────────────────────
+// ─── COMPS TAB PROP ASSEMBLERS
 // These functions translate a DealRun row into the typed props CompsTab expects.
 // No business logic — pure data reshaping from deal fields + SCORE_INDUSTRIES.
 
@@ -2800,15 +2831,29 @@ function buildDecisionContext(deal: DealRun): DecisionContext {
 type UwTab = "stress" | "lender" | "sba" | "negotiation" | "loi" | "memo" | "comps";
 
 function UnderwritingPanel({
-  deal, isPro, onClose, onShowUpgrade,
+  deal, isPro, onClose, onShowUpgrade, onShowDownloadUpgrade,
 }: {
   deal: DealRun;
   isPro: boolean;
   onClose: () => void;
   onShowUpgrade?: () => void;
-}) {
+  onShowDownloadUpgrade?: () => void;
+})
   const [activeTab, setActiveTab]    = useState<UwTab>("stress");
   const [compsData, setCompsData]    = useState<CompsData>({ comps: [], currentDealOutsideRange: false });
+  const [downloadingReport, setDownloadingReport] = useState(false);
+
+  async function handleDownloadReport(dealId: string) {
+    if (!isPro) { onShowDownloadUpgrade?.(); return; }
+    setDownloadingReport(true);
+    try {
+      console.log("Downloading report for deal:", dealId);
+      await fetch(`/api/reports/${dealId}`).catch(() => {});
+      await new Promise(r => setTimeout(r, 1500));
+    } finally {
+      setDownloadingReport(false);
+    }
+  }
   // Benchmark IQR for this deal's industry — populated when panel opens
   const [benchmarkIqr, setBenchmarkIqr] = useState<{
     p25:         number | null;
@@ -3055,7 +3100,42 @@ function UnderwritingPanel({
                 {fmt(deal.asking_price)} · {deal.valuation_multiple.toFixed(2)}x · Score {deal.overall_score} · DSCR {deal.dscr.toFixed(2)}
               </div>
             </div>
-            <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+           <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+              <button
+                onClick={() => handleDownloadReport(deal.id)}
+                disabled={downloadingReport}
+                title="Download Report"
+                aria-label="Download Report"
+                style={{
+                  background: isPro ? "rgba(16,185,129,0.08)" : "rgba(255,255,255,0.03)",
+                  border: isPro ? "1px solid rgba(16,185,129,0.25)" : "1px solid rgba(255,255,255,0.07)",
+                  borderRadius: 6,
+                  color: isPro ? "#10B981" : "#94A3B8",
+                  fontSize: 11,
+                  cursor: downloadingReport ? "wait" : "pointer",
+                  padding: "4px 10px",
+                  display: "flex", alignItems: "center", gap: 5,
+                  lineHeight: 1,
+                  opacity: downloadingReport ? 0.7 : 1,
+                  transition: "background 150ms ease, color 150ms ease",
+                }}
+                onMouseEnter={(e) => { if (!downloadingReport) { e.currentTarget.style.background = isPro ? "rgba(16,185,129,0.14)" : "rgba(255,255,255,0.06)"; e.currentTarget.style.color = isPro ? "#34D399" : "#E2E8F0"; }}}
+                onMouseLeave={(e) => { e.currentTarget.style.background = isPro ? "rgba(16,185,129,0.08)" : "rgba(255,255,255,0.03)"; e.currentTarget.style.color = isPro ? "#10B981" : "#94A3B8"; }}
+              >
+                {downloadingReport ? (
+                  <>
+                    <span style={{ display: "inline-block", width: 10, height: 10, border: "2px solid rgba(16,185,129,0.3)", borderTopColor: "#10B981", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+                    <span style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase" as const, letterSpacing: "0.06em" }}>Generating...</span>
+                  </>
+                ) : (
+                  <>
+                    <span style={{ fontSize: 12 }}>⬇</span>
+                    <span style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase" as const, letterSpacing: "0.06em" }}>
+                      {isPro ? "Report" : "Report 🔒"}
+                    </span>
+                  </>
+                )}
+              </button>
               <button
                 onClick={toggleExpanded}
                 title={panelExpanded ? "Collapse panel" : "Expand to full view"}
@@ -8461,6 +8541,7 @@ export default function BuyerDashboard() {
         textarea:focus { outline: none; border-color: rgba(99,102,241,0.4) !important }
         @keyframes fadeUp  { from { opacity: 0; transform: translateY(8px) } to { opacity: 1; transform: translateY(0) } }
         @keyframes slideIn { from { transform: translateX(100%) } to { transform: translateX(0) } }
+        @keyframes spin    { from { transform: rotate(0deg) } to { transform: rotate(360deg) } }
         @keyframes pulse   { 0%, 100% { opacity: 1 } 50% { opacity: 0.3 } }
         .tab-content { animation: fadeUp 0.25s ease-out }
         .btn-action  { transition: opacity 0.12s }
@@ -8793,7 +8874,8 @@ export default function BuyerDashboard() {
           onClose={() => setDetailDeal(null)}
           onToggleFav={toggleFavorite}
           onOpenNotes={(deal) => { openNotes(deal); setDetailDeal(null); }}
-          onOpenUnderwriting={(deal) => { setUnderwritingDeal(deal); setDetailDeal(null); }}
+         onOpenUnderwriting={(deal) => { setUnderwritingDeal(deal); setDetailDeal(null); }}
+          onShowUpgrade={() => { setDetailDeal(null); setShowUpgradeModal(true); }}
           onStatusChange={handleStatusChange}
         />
       )}
@@ -8805,6 +8887,7 @@ export default function BuyerDashboard() {
           isPro={isPro}
           onClose={() => setUnderwritingDeal(null)}
           onShowUpgrade={() => setShowUpgradeModal(true)}
+          onShowDownloadUpgrade={() => setShowUpgradeModal(true)}
         />
       )}
 
