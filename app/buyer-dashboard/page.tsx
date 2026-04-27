@@ -4789,6 +4789,40 @@ function ProCommandModule({ deals, onOpenUnderwriting }: { deals: DealRun[]; onO
 // ─── PRO UPSELL CARD ─────────────────────────────────────────────────────────
 
 function ProUpsellCard({ deals, onOpenUnderwriting }: { deals: DealRun[]; onOpenUnderwriting: (deal: DealRun) => void }) {
+  const [authUser, setAuthUser] = useState<{ id: string; email: string | undefined } | null>(null);
+
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      if (data?.user) {
+        setAuthUser({ id: data.user.id, email: data.user.email });
+      }
+    });
+  }, []);
+
+  const handleUpgrade = async () => {
+    try {
+      const res = await fetch("/api/create-checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          priceId:   "price_1TPbTTGA3ir6ndSx14wKWA27",
+          userId:    authUser?.id,
+          userEmail: authUser?.email,
+        }),
+      });
+      const data = await res.json();
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        console.error("[upgrade-pro] no URL in response:", data);
+        alert("Could not start checkout. Please try again or contact support.");
+      }
+    } catch (err) {
+      console.error("[upgrade-pro] error:", err);
+      alert("Could not start checkout. Please try again.");
+    }
+  };
+
   return (
     <Card style={{ border: "1px solid rgba(99,102,241,0.15)", background: "rgba(99,102,241,0.04)" }}>
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 20, flexWrap: "wrap" }}>
@@ -4819,11 +4853,37 @@ function ProUpsellCard({ deals, onOpenUnderwriting }: { deals: DealRun[]; onOpen
             ))}
           </div>
           <div style={{ display: "flex", gap: 8 }}>
-            <button style={{
-              padding: "10px 20px", borderRadius: 9, border: "none",
-              background: "linear-gradient(135deg,#6366F1,#8B5CF6)",
-              color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer",
-            }}>
+            <button
+              onClick={async () => {
+                try {
+                  const res = await fetch("/api/create-checkout", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      priceId:   "price_1TPbTTGA3ir6ndSx14wKWA27",
+                      userId:    user?.id,
+                      userEmail: user?.email,
+                    }),
+                  });
+                  const data = await res.json();
+                  if (data.url) {
+                    window.location.href = data.url;
+                  } else {
+                    console.error("[upgrade-pro] no URL in response:", data);
+                    alert("Could not start checkout. Please try again or contact support.");
+                  }
+                } catch (err) {
+                  console.error("[upgrade-pro] error:", err);
+                  alert("Could not start checkout. Please try again.");
+                }
+              }}
+              style={{
+                padding: "10px 20px", borderRadius: 9, border: "none",
+                background: "linear-gradient(135deg,#6366F1,#8B5CF6)",
+                color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer",
+                fontFamily: "inherit",
+              }}
+            >
               Upgrade to Pro
             </button>
             <button
@@ -4832,6 +4892,7 @@ function ProUpsellCard({ deals, onOpenUnderwriting }: { deals: DealRun[]; onOpen
                 display: "inline-block", padding: "10px 16px", borderRadius: 9,
                 border: "1px solid rgba(99,102,241,0.25)", background: "transparent",
                 color: "#818CF8", fontSize: 13, fontWeight: 500, cursor: "pointer",
+                fontFamily: "inherit",
               }}
             >
               Preview Analysis →
