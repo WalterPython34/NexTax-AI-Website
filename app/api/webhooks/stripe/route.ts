@@ -134,7 +134,7 @@ async function upsertSubscription(opts: {
     stripe_subscription_id: sub.id,
     stripe_customer_id:     sub.customer as string,
     customer_email:         (sub as any).customer_email ?? null,
-    plan_name:              "Pro",
+    plan_name:              "premium",
     product_name:           "AcquiFlow Pro",
     product_type:           "acquiflow",
     status:                 sub.status,
