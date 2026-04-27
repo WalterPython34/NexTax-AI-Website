@@ -4854,29 +4854,7 @@ function ProUpsellCard({ deals, onOpenUnderwriting }: { deals: DealRun[]; onOpen
           </div>
           <div style={{ display: "flex", gap: 8 }}>
             <button
-              onClick={async () => {
-                try {
-                  const res = await fetch("/api/create-checkout", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                      priceId:   "price_1TPbTTGA3ir6ndSx14wKWA27",
-                      userId:    user?.id,
-                      userEmail: user?.email,
-                    }),
-                  });
-                  const data = await res.json();
-                  if (data.url) {
-                    window.location.href = data.url;
-                  } else {
-                    console.error("[upgrade-pro] no URL in response:", data);
-                    alert("Could not start checkout. Please try again or contact support.");
-                  }
-                } catch (err) {
-                  console.error("[upgrade-pro] error:", err);
-                  alert("Could not start checkout. Please try again.");
-                }
-              }}
+              onClick={handleUpgrade}
               style={{
                 padding: "10px 20px", borderRadius: 9, border: "none",
                 background: "linear-gradient(135deg,#6366F1,#8B5CF6)",
