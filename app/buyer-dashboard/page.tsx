@@ -2464,7 +2464,7 @@ function DealDetailPanel({
   onOpenUnderwriting: (deal: DealRun) => void;
   onStatusChange: (id: string, s: DealStatus) => void;
   onShowUpgrade?: () => void;
-})
+}) {
   const gp     = deal.gap_pct ?? 0;
   const sc     = sigCfg(deal.signal ?? "fair");
   const status = dealStatuses[deal.id] ?? "New";
