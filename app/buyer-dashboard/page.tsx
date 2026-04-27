@@ -2499,7 +2499,7 @@ function DealDetailPanel({
       setDownloadingReport(false);
     }
   }
-  }
+  
 
   return (
     <>
@@ -2885,7 +2885,7 @@ function UnderwritingPanel({
       setDownloadingReport(false);
     }
   }
-  }
+  
   // Benchmark IQR for this deal's industry — populated when panel opens
   const [benchmarkIqr, setBenchmarkIqr] = useState<{
     p25:         number | null;
