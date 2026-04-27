@@ -7713,7 +7713,7 @@ function LocalMarketRealityCheck({
                     </>
                   )}
                 </button>
-                
+                 <a
                   href="/marketview"
                   style={{
                     fontSize: 11, color: "#6366F1", textDecoration: "none",
