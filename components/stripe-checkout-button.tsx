@@ -1,113 +1,86 @@
+// components/stripe-checkout-button.tsx
+//
+// Stripe Checkout button — passes the current Supabase user's id and email
+// to the checkout route when the user is authenticated. Falls back to
+// anonymous checkout (Stripe collects email at form) when not signed in.
+//
+// Used on /pricing and inside /buyer-dashboard.
+
 "use client"
 
-import type React from "react"
-import { useState } from "react"
+import { useState, useEffect, type ReactNode } from "react"
 import { Button } from "@/components/ui/button"
-import { Loader2 } from "lucide-react"
+import { createClient } from "@supabase/supabase-js"
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+)
 
 interface StripeCheckoutButtonProps {
-  priceId: string
-  productName: string
-  children: React.ReactNode
+  priceId:    string
   className?: string
+  variant?:   "default" | "outline"
+  children:   ReactNode
 }
 
-export function StripeCheckoutButton({ priceId, productName, children, className }: StripeCheckoutButtonProps) {
+export function StripeCheckoutButton({
+  priceId,
+  className,
+  variant = "default",
+  children,
+}: StripeCheckoutButtonProps) {
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [user, setUser] = useState<{ id: string; email: string | undefined } | null>(null)
 
-  const handleCheckout = async () => {
-    setLoading(true)
-    setError(null)
-
-    try {
-      console.log("🛒 Starting checkout process...")
-      console.log("📦 Product:", productName)
-      console.log("💰 Price ID:", priceId)
-
-      // Check if Stripe is loaded
-      if (typeof window !== "undefined" && !window.Stripe) {
-        throw new Error("Stripe is not loaded. Please refresh the page and try again.")
+  // Pick up the current auth state on mount. Doesn't gate the button —
+  // it just enables the user-link path when signed in.
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      if (data?.user) {
+        setUser({ id: data.user.id, email: data.user.email })
       }
+    })
+  }, [])
 
-      console.log("🔑 Stripe publishable key:", process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY ? "Present" : "Missing")
-
-      const response = await fetch("/api/create-checkout-session", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+  const handleClick = async () => {
+    setLoading(true)
+    try {
+      const res = await fetch("/api/create-checkout", {
+        method:  "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           priceId,
-          productName,
+          userId:    user?.id,
+          userEmail: user?.email,
         }),
       })
 
-      console.log("📡 API Response status:", response.status)
-
-      if (!response.ok) {
-        const errorText = await response.text()
-        console.error("❌ API Error response:", errorText)
-        throw new Error(`Server error: ${response.status} - ${errorText}`)
+      const data = await res.json()
+      if (data.url) {
+        window.location.href = data.url
+      } else {
+        console.error("[stripe-checkout] no URL in response:", data)
+        alert("Could not start checkout. Please try again or contact support.")
+        setLoading(false)
       }
-
-      const { sessionId, error: apiError } = await response.json()
-
-      if (apiError) {
-        console.error("❌ API returned error:", apiError)
-        throw new Error(apiError)
-      }
-
-      if (!sessionId) {
-        throw new Error("No session ID returned from server")
-      }
-
-      console.log("✅ Session created:", sessionId)
-
-      // Initialize Stripe
-      if (typeof window !== "undefined") {
-        const stripe = window.Stripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || "")
-
-        if (!stripe) {
-          throw new Error("Failed to initialize Stripe. Please check your configuration.")
-        }
-
-        console.log("🔄 Redirecting to Stripe Checkout...")
-
-        // Redirect to Stripe Checkout
-        const { error: stripeError } = await stripe.redirectToCheckout({
-          sessionId,
-        })
-
-        if (stripeError) {
-          console.error("❌ Stripe redirect error:", stripeError)
-          throw new Error(stripeError.message || "Failed to redirect to Stripe Checkout")
-        }
-      }
-    } catch (error: any) {
-      console.error("❌ Checkout error:", error)
-      setError(error.message || "Something went wrong. Please try again.")
-    } finally {
+    } catch (err) {
+      console.error("[stripe-checkout] error:", err)
+      alert("Could not start checkout. Please try again.")
       setLoading(false)
     }
   }
 
   return (
-    <div>
-      <Button onClick={handleCheckout} disabled={loading} className={className}>
-        {loading ? (
-          <>
-            <Loader2 className="mr-2 w-4 h-4 animate-spin" />
-            Processing...
-          </>
-        ) : (
-          children
-        )}
-      </Button>
-      {error && (
-        <div className="mt-2 text-red-400 text-sm bg-red-500/10 border border-red-500/20 rounded p-2">{error}</div>
-      )}
-    </div>
+    <Button
+      onClick={handleClick}
+      disabled={loading}
+      variant={variant}
+      className={className}
+    >
+      {loading ? "Loading..." : children}
+    </Button>
   )
 }
 
+export default StripeCheckoutButton
