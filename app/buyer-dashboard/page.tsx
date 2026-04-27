@@ -2474,15 +2474,31 @@ function DealDetailPanel({
   // ── Download Report state + handler ───────────────────────────────────────
   const [downloadingReport, setDownloadingReport] = React.useState(false);
   async function handleDownloadReport(dealId: string) {
-    if (!isPro) { onShowUpgrade?.(); return; }
+    if (!isPro) { onShowDownloadUpgrade?.(); return; }
     setDownloadingReport(true);
     try {
-      console.log("Downloading report for deal:", dealId);
-      await fetch(`/api/reports/${dealId}`).catch(() => {});
-      await new Promise(r => setTimeout(r, 1500));
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      const res = await fetch(`/api/reports/${dealId}?uid=${authUser?.id}`);
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({ error: "Download failed" }));
+        throw new Error(errBody.error || `Request failed: ${res.status}`);
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `AcquiFlow-Deal-Report-${dealId.slice(0, 8)}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Download report failed:", err);
+      alert(`Could not generate report: ${(err as Error).message}`);
     } finally {
       setDownloadingReport(false);
     }
+  }
   }
 
   return (
@@ -2847,12 +2863,28 @@ function UnderwritingPanel({
     if (!isPro) { onShowDownloadUpgrade?.(); return; }
     setDownloadingReport(true);
     try {
-      console.log("Downloading report for deal:", dealId);
-      await fetch(`/api/reports/${dealId}`).catch(() => {});
-      await new Promise(r => setTimeout(r, 1500));
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      const res = await fetch(`/api/reports/${dealId}?uid=${authUser?.id}`);
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({ error: "Download failed" }));
+        throw new Error(errBody.error || `Request failed: ${res.status}`);
+      }
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `AcquiFlow-Deal-Report-${dealId.slice(0, 8)}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Download report failed:", err);
+      alert(`Could not generate report: ${(err as Error).message}`);
     } finally {
       setDownloadingReport(false);
     }
+  }
   }
   // Benchmark IQR for this deal's industry — populated when panel opens
   const [benchmarkIqr, setBenchmarkIqr] = useState<{
