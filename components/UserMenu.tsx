@@ -1,11 +1,3 @@
-// components/UserMenu.tsx
-//
-// Dropdown user menu shown in the buyer-dashboard nav.
-// Replaces the previous "click to sign out" tooltip on the avatar circle.
-//
-// Inline-styled to match buyer-dashboard.tsx aesthetic (no Tailwind dependency
-// for this isolated component — keeps the dashboard's visual cohesion).
-
 "use client"
 
 import { useState, useRef, useEffect } from "react"
@@ -28,7 +20,6 @@ export function UserMenu({ user, isPro }: UserMenuProps) {
 
   const userInitial = user?.email?.charAt(0)?.toUpperCase() ?? "?"
 
-  // Close on outside click
   useEffect(() => {
     if (!open) return
     const handleClickOutside = (e: MouseEvent) => {
@@ -40,7 +31,6 @@ export function UserMenu({ user, isPro }: UserMenuProps) {
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [open])
 
-  // Close on Escape
   useEffect(() => {
     if (!open) return
     const handleKey = (e: KeyboardEvent) => {
@@ -74,11 +64,9 @@ export function UserMenu({ user, isPro }: UserMenuProps) {
 
   return (
     <div ref={wrapperRef} style={{ position: "relative" }}>
-      {/* Avatar trigger */}
       <button
         onClick={() => setOpen(!open)}
         aria-label="Account menu"
-        aria-expanded={open}
         title={user.email ?? ""}
         style={{
           width: 30, height: 30, borderRadius: "50%",
@@ -94,13 +82,12 @@ export function UserMenu({ user, isPro }: UserMenuProps) {
         {userInitial}
       </button>
 
-      {/* Dropdown */}
       {open && (
         <div
           role="menu"
           style={{
             position: "absolute", top: "calc(100% + 8px)", right: 0,
-            minWidth: 220, borderRadius: 10,
+            minWidth: 240, borderRadius: 10,
             background: "rgba(15,23,42,0.98)",
             border: "1px solid rgba(255,255,255,0.08)",
             boxShadow: "0 10px 32px rgba(0,0,0,0.5)",
@@ -114,95 +101,78 @@ export function UserMenu({ user, isPro }: UserMenuProps) {
             padding: "12px 14px",
             borderBottom: "1px solid rgba(255,255,255,0.06)",
           }}>
-            <div style={{ fontSize: 12, color: "#94A3B8", marginBottom: 3, wordBreak: "break-all" }}>
+            <div style={{ fontSize: 12, color: "#94A3B8", marginBottom: 4, wordBreak: "break-all" }}>
               {user.email}
             </div>
-            <div style={{ fontSize: 10, color: isPro ? "#818CF8" : "#7C8593", fontWeight: 600, letterSpacing: "0.04em" }}>
+            <div style={{ fontSize: 10, color: isPro ? "#818CF8" : "#7C8593", fontWeight: 600, letterSpacing: "0.04em", marginBottom: isPro ? 3 : 0 }}>
               {isPro ? "⚡ PRO PLAN" : "FREE PLAN"}
             </div>
+            {isPro && (
+              <div style={{ fontSize: 10, color: "#7C8593" }}>
+                Renews monthly via Stripe
+              </div>
+            )}
           </div>
 
-          {/* Menu items */}
-          <div style={{ padding: "6px 0" }}>
-            <MenuLink href="/account" onClick={() => setOpen(false)} icon="👤">
-              Account
-            </MenuLink>
-            <MenuLink href="/account#billing" onClick={() => setOpen(false)} icon="💳">
-              Billing
-            </MenuLink>
-            <MenuLink href="/contact" onClick={() => setOpen(false)} icon="✉️">
-              Support
-            </MenuLink>
+          {/* Account group */}
+          <SectionLabel>Account</SectionLabel>
+          <Link href="/account" onClick={() => setOpen(false)} style={menuItemStyle}>
+            <span style={{ fontSize: 14, lineHeight: 1 }}>👤</span>
+            <span>Account</span>
+          </Link>
+          <Link href="/contact" onClick={() => setOpen(false)} style={menuItemStyle}>
+            <span style={{ fontSize: 14, lineHeight: 1 }}>✉️</span>
+            <span>Support</span>
+          </Link>
 
-            <div style={{
-              height: 1,
-              background: "rgba(255,255,255,0.06)",
-              margin: "6px 0",
-            }} />
+          {/* Billing group */}
+          <SectionLabel>Billing</SectionLabel>
+          <Link href="/account#billing" onClick={() => setOpen(false)} style={menuItemStyle}>
+            <span style={{ fontSize: 14, lineHeight: 1 }}>💳</span>
+            <span>Manage Billing</span>
+          </Link>
 
-            <button
-              onClick={handleSignOut}
-              style={{
-                width: "100%",
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                padding: "9px 14px",
-                background: "transparent",
-                border: "none",
-                color: "#94A3B8",
-                fontSize: 13,
-                cursor: "pointer",
-                textAlign: "left",
-                fontFamily: "inherit",
-              }}
-              onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(239,68,68,0.08)"; e.currentTarget.style.color = "#F87171" }}
-              onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = "#94A3B8" }}
-            >
-              <span style={{ fontSize: 14, lineHeight: 1 }}>↪</span>
-              Sign out
-            </button>
-          </div>
+          {/* Sign out (its own group, no label) */}
+          <div style={{ height: 1, background: "rgba(255,255,255,0.06)", margin: "6px 0" }} />
+          <button
+            onClick={handleSignOut}
+            style={{
+              width: "100%", display: "flex", alignItems: "center", gap: 10,
+              padding: "9px 14px", background: "transparent", border: "none",
+              color: "#94A3B8", fontSize: 13, cursor: "pointer", textAlign: "left",
+              fontFamily: "inherit",
+              marginBottom: 4,
+            }}
+          >
+            <span style={{ fontSize: 14, lineHeight: 1 }}>↪</span>
+            <span>Sign out</span>
+          </button>
         </div>
       )}
     </div>
   )
 }
 
-// ─── Helper component ───────────────────────────────────────────────────
-
-function MenuLink({
-  href,
-  onClick,
-  icon,
-  children,
-}: {
-  href:     string
-  onClick?: () => void
-  icon:     string
-  children: React.ReactNode
-}) {
+// Tiny header above each section group
+function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <Link
-      href={href}
-      onClick={onClick}
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 10,
-        padding: "9px 14px",
-        color: "#E2E8F0",
-        fontSize: 13,
-        textDecoration: "none",
-        fontFamily: "inherit",
-      }}
-      onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(99,102,241,0.08)" }}
-      onMouseLeave={(e) => { e.currentTarget.style.background = "transparent" }}
-    >
-      <span style={{ fontSize: 14, lineHeight: 1 }}>{icon}</span>
+    <div style={{
+      padding: "8px 14px 4px",
+      fontSize: 9,
+      fontWeight: 700,
+      color: "#5A6478",
+      letterSpacing: "0.1em",
+      textTransform: "uppercase" as const,
+    }}>
       {children}
-    </Link>
+    </div>
   )
+}
+
+const menuItemStyle: React.CSSProperties = {
+  display: "flex", alignItems: "center", gap: 10,
+  padding: "9px 14px", color: "#E2E8F0", fontSize: 13,
+  textDecoration: "none", fontFamily: "inherit",
 }
 
 export default UserMenu
