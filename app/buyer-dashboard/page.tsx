@@ -21,6 +21,7 @@ import { fetchOutcomesForUser, OUTCOME_LABELS, OUTCOME_COLORS, type DealOutcome 
 import { InfoTooltip } from "@/components/InfoTooltip";
 import { UserMenu } from "@/components/UserMenu"
 import { SampleMemoPreviewModal } from "@/components/SampleMemoPreviewModal";
+import { generatePDFReport } from "@/lib/marketview/pdf-generator";
 import { HowItWorksButton } from "@/components/HowItWorksModal";
 import {
   CompsTab,
@@ -7031,6 +7032,8 @@ function LocalMarketRealityCheck({
   const [result, setResult]                 = useState<SaturationResult | null>(null);
   const [aiInsight, setAiInsight]           = useState<string>("");
   const [error, setError]                   = useState<string>("");
+  const [fullApiResult, setFullApiResult]   = useState<any>(null);
+  const [downloadingPdf, setDownloadingPdf] = useState(false);
 
   // Free plan: soft limit of 3 market checks. Counter persists across sessions.
   const FREE_MARKET_CHECK_LIMIT = 3;
@@ -7172,6 +7175,7 @@ function LocalMarketRealityCheck({
       };
       setResult(normalized);
       setAiInsight(data.aiInsight ?? "");
+      setFullApiResult(data);
     } catch (err) {
       setError((err as Error).message);
     }
@@ -7670,9 +7674,46 @@ function LocalMarketRealityCheck({
                 );
               })()}
 
-              {/* Link to full MarketView tool */}
-              <div style={{ marginTop: 12, textAlign: "right" }}>
-                <a
+              {/* Download Report + Link to full MarketView tool */}
+              <div style={{ marginTop: 12, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <button
+                  onClick={async () => {
+                    if (!isPro) { window.location.href = "/pricing"; return; }
+                    if (!fullApiResult) return;
+                    setDownloadingPdf(true);
+                    try {
+                      await generatePDFReport(fullApiResult);
+                    } catch (err) {
+                      console.error("PDF generation failed:", err);
+                    } finally {
+                      setDownloadingPdf(false);
+                    }
+                  }}
+                  disabled={downloadingPdf || !result}
+                  style={{
+                    padding: "8px 16px", borderRadius: 8, border: "none",
+                    background: isPro
+                      ? "linear-gradient(135deg,#3B82F6,#6366F1)"
+                      : "rgba(99,102,241,0.12)",
+                    color: isPro ? "#fff" : "#A5B4FC",
+                    fontSize: 12, fontWeight: 600,
+                    cursor: downloadingPdf || !result ? "not-allowed" : "pointer",
+                    opacity: downloadingPdf || !result ? 0.6 : 1,
+                    display: "flex", alignItems: "center", gap: 6,
+                  }}
+                >
+                  {downloadingPdf ? (
+                    <>
+                      <span style={{ display: "inline-block", width: 12, height: 12, border: "2px solid rgba(255,255,255,0.3)", borderTopColor: "#fff", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+                      Generating PDF...
+                    </>
+                  ) : (
+                    <>
+                      📄 {isPro ? "Download Full Report" : "Download Full Report 🔒"}
+                    </>
+                  )}
+                </button>
+                
                   href="/marketview"
                   style={{
                     fontSize: 11, color: "#6366F1", textDecoration: "none",
