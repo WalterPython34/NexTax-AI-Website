@@ -2838,7 +2838,7 @@ function UnderwritingPanel({
   onClose: () => void;
   onShowUpgrade?: () => void;
   onShowDownloadUpgrade?: () => void;
-})
+}) {
   const [activeTab, setActiveTab]    = useState<UwTab>("stress");
   const [compsData, setCompsData]    = useState<CompsData>({ comps: [], currentDealOutsideRange: false });
   const [downloadingReport, setDownloadingReport] = useState(false);
