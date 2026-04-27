@@ -53,8 +53,10 @@ export async function GET(
   }
 
   // ─── 1. Auth ─────────────────────────────────────────────────────────
-  // Auth: extract token from cookie via supabaseAdmin
-  const token = req.cookies.get("sb-sgrosezedxunoicmglpj-auth-token")?.value
+ // Auth: pull user from any available Supabase auth cookie
+  const authCookie = req.cookies.getAll()
+    .find(c => c.name.includes("auth-token") && c.name.startsWith("sb-"));
+  const token = authCookie?.value
              ?? req.headers.get("authorization")?.replace("Bearer ", "");
   const { data: { user }, error: authError } = token
     ? await supabaseAdmin.auth.getUser(token)
