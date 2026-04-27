@@ -190,13 +190,18 @@ export async function POST(req: NextRequest) {
 
   console.log("[webhook] received event:", event.type, event.id)
 
-  // Acknowledge receipt to Stripe immediately, then process async.
-  // This prevents Stripe from timing out and retrying if our handler is slow.
-  setImmediate(() => {
-    handleEvent(event).catch((err) => {
-      console.error(`[webhook] error processing ${event.type}:`, err)
-    })
-  })
+  // Process the event synchronously and await completion before responding.
+  // On Vercel serverless functions, fire-and-forget patterns like setImmediate
+  // get killed when the response returns — so we must await the full work.
+  // Stripe's webhook timeout is 30 seconds; our DB writes complete in ~1-2s.
+  try {
+    await handleEvent(event)
+  } catch (err: any) {
+    console.error(`[webhook] error processing ${event.type}:`, err?.message ?? err)
+    // Still return 200 so Stripe doesn't retry — we logged the error and
+    // can investigate manually. If we returned 500, Stripe would retry
+    // and potentially write duplicate or partial data on later attempts.
+  }
 
   return NextResponse.json({ received: true }, { status: 200 })
 }
