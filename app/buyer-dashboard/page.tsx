@@ -19,6 +19,7 @@ import { buildTrajectory } from "@/lib/dealTrajectory";
 import { OutcomeModal } from "@/components/OutcomeModal";
 import { fetchOutcomesForUser, OUTCOME_LABELS, OUTCOME_COLORS, type DealOutcome } from "@/lib/dealOutcomes";
 import { InfoTooltip } from "@/components/InfoTooltip";
+import { UserMenu } from "@/components/UserMenu"
 import { SampleMemoPreviewModal } from "@/components/SampleMemoPreviewModal";
 import { HowItWorksButton } from "@/components/HowItWorksModal";
 import {
@@ -8552,33 +8553,7 @@ export default function BuyerDashboard() {
                 Free
               </div>
             )}
-            {user ? (
-              <div
-                onClick={() => supabase.auth.signOut().then(() => { window.location.href = "/login"; })}
-                title={`${user.email} — click to sign out`}
-                style={{
-                  width: 30, height: 30, borderRadius: "50%",
-                  background: "linear-gradient(135deg,#6366F1,#8B5CF6)",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: 12, fontWeight: 700, color: "#fff",
-                  cursor: "pointer", flexShrink: 0,
-                }}
-              >
-                {userInitial}
-              </div>
-            ) : (
-              <a
-                href="/login"
-                style={{
-                  padding: "5px 12px", borderRadius: 8,
-                  border: "1px solid rgba(99,102,241,0.25)",
-                  background: "rgba(99,102,241,0.08)",
-                  color: "#818CF8", fontSize: 12, fontWeight: 500, textDecoration: "none",
-                }}
-              >
-                Sign In
-              </a>
-            )}
+           <UserMenu user={user} isPro={isPro} />
           </div>
         </div>
       </nav>
