@@ -1,16 +1,3 @@
-// app/account/page.tsx
-//
-// Account / Billing page.
-// Trust layer for AcquiFlow paying users.
-//
-// Sections:
-//   1. Profile — email, login method (magic link)
-//   2. Subscription — real data when present, safe fallback when not
-//   3. Manage Billing — opens Stripe Customer Portal
-//
-// All copy is conservative: never claims an active subscription that
-// the database can't verify. Falls back to "managed via Stripe" message.
-
 "use client"
 
 import { useState, useEffect } from "react"
@@ -38,13 +25,12 @@ interface Subscription {
 export default function AccountPage() {
   const router = useRouter()
 
-  const [loading,         setLoading]         = useState(true)
-  const [user,            setUser]            = useState<{ id: string; email: string } | null>(null)
-  const [subscription,    setSubscription]    = useState<Subscription | null>(null)
-  const [portalLoading,   setPortalLoading]   = useState(false)
-  const [portalError,     setPortalError]     = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [user, setUser] = useState<{ id: string; email: string } | null>(null)
+  const [subscription, setSubscription] = useState<Subscription | null>(null)
+  const [portalLoading, setPortalLoading] = useState(false)
+  const [portalError, setPortalError] = useState<string | null>(null)
 
-  // Auth gate + load data
   useEffect(() => {
     let mounted = true
 
@@ -59,12 +45,11 @@ export default function AccountPage() {
       if (!mounted) return
 
       setUser({
-        id:    userData.user.id,
+        id: userData.user.id,
         email: userData.user.email ?? "",
       })
 
-      // Look up active subscription for this user (most recent first)
-      const { data: subData, error: subError } = await supabase
+      const { data: subData } = await supabase
         .from("subscriptions")
         .select("id, status, plan_name, product_name, current_period_start, current_period_end, cancel_at_period_end, canceled_at, stripe_customer_id")
         .eq("user_id", userData.user.id)
@@ -72,10 +57,6 @@ export default function AccountPage() {
         .order("updated_at", { ascending: false })
         .limit(1)
         .maybeSingle()
-
-      if (subError) {
-        console.error("[/account] subscription query error:", subError)
-      }
 
       if (mounted) {
         setSubscription(subData as Subscription | null)
@@ -87,7 +68,6 @@ export default function AccountPage() {
     return () => { mounted = false }
   }, [router])
 
-  // Open Customer Portal
   const handleManageBilling = async () => {
     setPortalLoading(true)
     setPortalError(null)
@@ -103,7 +83,7 @@ export default function AccountPage() {
       }
 
       const res = await fetch("/api/stripe/portal", {
-        method:  "POST",
+        method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ accessToken }),
       })
@@ -127,32 +107,25 @@ export default function AccountPage() {
 
   if (loading) {
     return (
-      <div style={loadingContainerStyle}>
+      <div style={{ minHeight: "100vh", background: "#080C13", display: "flex", alignItems: "center", justifyContent: "center" }}>
         <div style={{ fontSize: 13, color: "#6B7280" }}>Loading account...</div>
       </div>
     )
   }
 
-  // Format the next billing date for display
   const nextBilling = subscription?.current_period_end
-    ? new Date(subscription.current_period_end).toLocaleDateString("en-US", {
-        month: "long", day: "numeric", year: "numeric",
-      })
+    ? new Date(subscription.current_period_end).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })
     : null
 
   const isActive = subscription?.status === "active" || subscription?.status === "trialing"
   const willCancel = subscription?.cancel_at_period_end === true
 
   return (
-    <div style={pageStyle}>
+    <div style={{ minHeight: "100vh", background: "linear-gradient(180deg, #080C13 0%, #0F172A 100%)", fontFamily: "'Inter',sans-serif", color: "#E2E8F0" }}>
       <div style={{ maxWidth: 720, margin: "0 auto", padding: "60px 24px 80px" }}>
 
-        {/* Header */}
         <div style={{ marginBottom: 40 }}>
-          <Link href="/buyer-dashboard" style={{
-            color: "#94A3B8", fontSize: 12, textDecoration: "none",
-            display: "inline-flex", alignItems: "center", gap: 6, marginBottom: 16,
-          }}>
+          <Link href="/buyer-dashboard" style={{ color: "#94A3B8", fontSize: 12, textDecoration: "none", display: "inline-flex", alignItems: "center", gap: 6, marginBottom: 16 }}>
             <span>←</span> Back to dashboard
           </Link>
           <h1 style={{ fontSize: 28, fontWeight: 700, color: "#fff", margin: 0, letterSpacing: "-0.01em" }}>
@@ -163,25 +136,22 @@ export default function AccountPage() {
           </p>
         </div>
 
-        {/* ── PROFILE SECTION ── */}
+        {/* PROFILE */}
         <section style={sectionStyle}>
           <h2 style={sectionHeadingStyle}>Profile</h2>
           <div style={fieldRowStyle}>
             <div style={fieldLabelStyle}>Email</div>
             <div style={fieldValueStyle}>{user?.email}</div>
           </div>
-          <div style={fieldRowStyle}>
-            <div style={fieldLabelStyle}>Sign-in method</div>
+          <div style={{ ...fieldRowStyle, borderBottom: "none", paddingBottom: 0 }}>
+            <div style={fieldLabelStyle}>Sign-in</div>
             <div style={fieldValueStyle}>
-              Magic link
-              <span style={{ display: "block", fontSize: 11, color: "#7C8593", marginTop: 3 }}>
-                We email you a secure link to sign in. No password needed.
-              </span>
+              We email you a secure link each time you sign in.
             </div>
           </div>
         </section>
 
-        {/* ── SUBSCRIPTION SECTION ── */}
+        {/* SUBSCRIPTION */}
         <section style={{ ...sectionStyle, marginTop: 24 }} id="billing">
           <h2 style={sectionHeadingStyle}>Subscription</h2>
 
@@ -191,14 +161,7 @@ export default function AccountPage() {
                 <div style={fieldLabelStyle}>Plan</div>
                 <div style={fieldValueStyle}>
                   {subscription.product_name ?? "AcquiFlow Pro"}
-                  <span style={{
-                    display: "inline-block", marginLeft: 10,
-                    padding: "2px 8px", borderRadius: 12,
-                    background: "rgba(99,102,241,0.15)",
-                    border: "1px solid rgba(99,102,241,0.3)",
-                    fontSize: 10, color: "#818CF8", fontWeight: 600,
-                    letterSpacing: "0.04em",
-                  }}>
+                  <span style={{ display: "inline-block", marginLeft: 10, padding: "2px 8px", borderRadius: 12, background: "rgba(99,102,241,0.15)", border: "1px solid rgba(99,102,241,0.3)", fontSize: 10, color: "#818CF8", fontWeight: 600, letterSpacing: "0.04em" }}>
                     ⚡ ACTIVE
                   </span>
                 </div>
@@ -212,12 +175,7 @@ export default function AccountPage() {
               )}
 
               {willCancel && nextBilling && (
-                <div style={{
-                  marginTop: 14, padding: "12px 14px",
-                  borderRadius: 8,
-                  background: "rgba(245,158,11,0.08)",
-                  border: "1px solid rgba(245,158,11,0.25)",
-                }}>
+                <div style={{ marginTop: 14, padding: "12px 14px", borderRadius: 8, background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.25)" }}>
                   <div style={{ fontSize: 12, color: "#FBBF24", fontWeight: 600, marginBottom: 3 }}>
                     Cancellation scheduled
                   </div>
@@ -228,7 +186,6 @@ export default function AccountPage() {
               )}
             </>
           ) : subscription ? (
-            // Subscription exists but is not active (canceled, past_due, etc.)
             <div style={fieldRowStyle}>
               <div style={fieldLabelStyle}>Status</div>
               <div style={fieldValueStyle}>
@@ -239,57 +196,79 @@ export default function AccountPage() {
               </div>
             </div>
           ) : (
-            // No subscription record — fall back to safe message
             <div style={{ fontSize: 13, color: "#94A3B8", lineHeight: 1.6 }}>
               Subscription details are managed securely through Stripe. Use the button below to access your billing information, view invoices, or update your subscription.
             </div>
           )}
         </section>
 
-        {/* ── MANAGE BILLING ── */}
+        {/* BILLING */}
         <section style={{ ...sectionStyle, marginTop: 24 }}>
           <h2 style={sectionHeadingStyle}>Billing</h2>
 
-          <p style={{ fontSize: 13, color: "#94A3B8", lineHeight: 1.6, marginBottom: 16 }}>
-            Update your payment method, view invoices, or cancel your subscription. All billing is handled by Stripe.
+          <p style={{ fontSize: 13, color: "#CBD5E1", lineHeight: 1.6, marginBottom: 14 }}>
+            Access your billing portal to update payment methods, view invoices, or cancel your subscription.
           </p>
 
-          <button
-            onClick={handleManageBilling}
-            disabled={portalLoading}
-            style={{
-              padding: "11px 22px",
-              borderRadius: 9,
-              border: "1px solid rgba(16,185,129,0.4)",
-              background: portalLoading
-                ? "rgba(16,185,129,0.06)"
-                : "rgba(16,185,129,0.12)",
-              color: portalLoading ? "#6B7280" : "#10B981",
-              fontSize: 13, fontWeight: 600, cursor: portalLoading ? "wait" : "pointer",
-              fontFamily: "inherit",
-              transition: "background 0.15s",
-            }}
-          >
-            {portalLoading ? "Opening Stripe..." : "Manage Billing"}
-          </button>
+          {/* Reassurance ABOVE the button */}
+          <div style={{
+            display: "inline-flex", alignItems: "center", gap: 6,
+            fontSize: 11, color: "#94A3B8",
+            marginBottom: 12,
+          }}>
+            <span style={{ fontSize: 11 }}>🔒</span>
+            <span>Secure billing powered by <span style={{ color: "#E2E8F0", fontWeight: 500 }}>Stripe</span></span>
+          </div>
+
+          <div>
+            <button
+              onClick={handleManageBilling}
+              disabled={portalLoading}
+              onMouseEnter={(e) => {
+                if (!portalLoading) {
+                  e.currentTarget.style.background = "linear-gradient(135deg, rgba(16,185,129,0.22), rgba(16,185,129,0.14))"
+                  e.currentTarget.style.boxShadow = "0 0 0 1px rgba(16,185,129,0.5), 0 0 24px rgba(16,185,129,0.18)"
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!portalLoading) {
+                  e.currentTarget.style.background = "linear-gradient(135deg, rgba(16,185,129,0.16), rgba(16,185,129,0.10))"
+                  e.currentTarget.style.boxShadow = "0 0 0 1px rgba(16,185,129,0.35), 0 0 18px rgba(16,185,129,0.12)"
+                }
+              }}
+              style={{
+                display: "inline-flex", alignItems: "center", gap: 8,
+                padding: "12px 22px",
+                borderRadius: 10,
+                border: "none",
+                background: portalLoading
+                  ? "rgba(16,185,129,0.06)"
+                  : "linear-gradient(135deg, rgba(16,185,129,0.16), rgba(16,185,129,0.10))",
+                boxShadow: portalLoading
+                  ? "none"
+                  : "0 0 0 1px rgba(16,185,129,0.35), 0 0 18px rgba(16,185,129,0.12)",
+                color: portalLoading ? "#6B7280" : "#10B981",
+                fontSize: 13, fontWeight: 600, cursor: portalLoading ? "wait" : "pointer",
+                fontFamily: "inherit",
+                transition: "all 0.18s ease",
+              }}
+            >
+              {portalLoading ? "Opening Stripe..." : "Manage Subscription & Billing"}
+              {!portalLoading && (
+                <span style={{ fontSize: 13, lineHeight: 1, opacity: 0.85 }}>→</span>
+              )}
+            </button>
+          </div>
 
           {portalError && (
-            <div style={{
-              marginTop: 12, padding: "10px 12px",
-              borderRadius: 8,
-              background: "rgba(239,68,68,0.08)",
-              border: "1px solid rgba(239,68,68,0.25)",
-              fontSize: 12, color: "#F87171", lineHeight: 1.55,
-            }}>
+            <div style={{ marginTop: 12, padding: "10px 12px", borderRadius: 8, background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.25)", fontSize: 12, color: "#F87171", lineHeight: 1.55 }}>
               {portalError}
             </div>
           )}
 
-          {/* Trust microcopy */}
-          <div style={{ marginTop: 18, paddingTop: 16, borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+          <div style={{ marginTop: 20, paddingTop: 16, borderTop: "1px solid rgba(255,255,255,0.06)" }}>
             <div style={{ fontSize: 11, color: "#7C8593", lineHeight: 1.6 }}>
-              🔒 Secure billing powered by <span style={{ color: "#94A3B8" }}>Stripe</span>.
-              Cancel anytime. No contracts.
+              Cancel anytime. No contracts. All payment data handled by Stripe (PCI-DSS Level 1 certified).
             </div>
           </div>
         </section>
@@ -297,23 +276,6 @@ export default function AccountPage() {
       </div>
     </div>
   )
-}
-
-// ─── Inline styles ──────────────────────────────────────────────────────
-
-const pageStyle: React.CSSProperties = {
-  minHeight: "100vh",
-  background: "linear-gradient(180deg, #080C13 0%, #0F172A 100%)",
-  fontFamily: "'Inter',sans-serif",
-  color: "#E2E8F0",
-}
-
-const loadingContainerStyle: React.CSSProperties = {
-  minHeight: "100vh",
-  background: "#080C13",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
 }
 
 const sectionStyle: React.CSSProperties = {
@@ -324,31 +286,21 @@ const sectionStyle: React.CSSProperties = {
 }
 
 const sectionHeadingStyle: React.CSSProperties = {
-  fontSize: 11,
-  fontWeight: 700,
-  color: "#7C8593",
-  letterSpacing: "0.08em",
-  textTransform: "uppercase",
+  fontSize: 11, fontWeight: 700, color: "#7C8593",
+  letterSpacing: "0.08em", textTransform: "uppercase",
   margin: "0 0 16px 0",
 }
 
 const fieldRowStyle: React.CSSProperties = {
-  display: "grid",
-  gridTemplateColumns: "140px 1fr",
-  gap: 16,
-  padding: "10px 0",
-  borderBottom: "1px solid rgba(255,255,255,0.04)",
+  display: "grid", gridTemplateColumns: "140px 1fr", gap: 16,
+  padding: "10px 0", borderBottom: "1px solid rgba(255,255,255,0.04)",
   alignItems: "start",
 }
 
 const fieldLabelStyle: React.CSSProperties = {
-  fontSize: 12,
-  color: "#7C8593",
-  fontWeight: 500,
+  fontSize: 12, color: "#7C8593", fontWeight: 500,
 }
 
 const fieldValueStyle: React.CSSProperties = {
-  fontSize: 13,
-  color: "#E2E8F0",
-  wordBreak: "break-word",
+  fontSize: 13, color: "#E2E8F0", wordBreak: "break-word",
 }
