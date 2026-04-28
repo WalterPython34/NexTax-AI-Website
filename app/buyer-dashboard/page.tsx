@@ -2258,6 +2258,7 @@ function AnalyzeDealModal({
                   : null;
                 const dForV = { gap_pct: score.gap_pct, dscr: score.dscr, overall_score: score.overall, risk_level: score.riskLevel, normalization_trust_score: nts } as DealRun;
                 const vdm = verdictCfg(dealVerdict(dForV));
+                const vdExplain = verdictExplanation(dForV);
                 return (
                   <div style={{ display: "flex", gap: 10, marginBottom: 14 }}>
                     <div style={{
@@ -2270,11 +2271,31 @@ function AnalyzeDealModal({
                         <div style={{ fontSize: 12, fontWeight: 700, color: vdm.color, textTransform: "uppercase" as any, letterSpacing: "0.06em" }}>
                           Verdict: {vdm.label}
                         </div>
-                        <div style={{ fontSize: 10, color: "#6B7280", marginTop: 1, lineHeight: 1.4 }}>{vdm.subtext}</div>
+                        <div style={{ fontSize: 10, color: "#6B7280", marginTop: 1, lineHeight: 1.4 }}>{vdExplain}</div>
                         <div style={{ fontSize: 10, color: "#7C8593", marginTop: 3 }}>
                           FV Range: {fmt(score.fairValueLow)} – {fmt(score.fairValueHigh)}
                         </div>
                       </div>
+                      {(() => {
+  const dscr = score.dscr ?? 0;
+  const gp = score.gap_pct ?? 0;
+  const bizQ = dscr >= 1.75 ? "Strong" : dscr >= 1.25 ? "Average" : "Weak";
+  const bizC = bizQ === "Strong" ? "#10B981" : bizQ === "Average" ? "#F59E0B" : "#EF4444";
+  const priceQ = gp > 20 ? "Expensive" : gp > 5 ? "Above Market" : gp < -5 ? "Cheap" : "Fair";
+  const priceC = priceQ === "Cheap" ? "#10B981" : priceQ === "Fair" ? "#3B82F6" : priceQ === "Above Market" ? "#F59E0B" : "#EF4444";
+  return (
+    <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+      <div style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "3px 10px", borderRadius: 6, background: `${bizC}14`, border: `1px solid ${bizC}33` }}>
+        <span style={{ fontSize: 9, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.06em" }}>Business:</span>
+        <span style={{ fontSize: 11, fontWeight: 700, color: bizC }}>{bizQ}</span>
+      </div>
+      <div style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "3px 10px", borderRadius: 6, background: `${priceC}14`, border: `1px solid ${priceC}33` }}>
+        <span style={{ fontSize: 9, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.06em" }}>Pricing:</span>
+        <span style={{ fontSize: 11, fontWeight: 700, color: priceC }}>{priceQ}</span>
+      </div>
+    </div>
+  );
+})()}
                     </div>
                     {/* Sub-score pills */}
                     <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
