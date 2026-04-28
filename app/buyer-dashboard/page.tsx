@@ -2275,28 +2275,35 @@ function AnalyzeDealModal({
                           FV Range: {fmt(score.fairValueLow)} – {fmt(score.fairValueHigh)}
                         </div>
                       </div>
-                      </div>
-                     <div style={{ fontSize: 10, color: "#6B7280", marginTop: 1, lineHeight: 1.4 }}>{vdExplain}</div>
+                    </div>
+
+                    {/* Business + Pricing pills */}
                       {(() => {
-  const dscr = score.dscr ?? 0;
-  const gp = score.gap_pct ?? 0;
-  const bizQ = dscr >= 1.75 ? "Strong" : dscr >= 1.25 ? "Average" : "Weak";
-  const bizC = bizQ === "Strong" ? "#10B981" : bizQ === "Average" ? "#F59E0B" : "#EF4444";
-  const priceQ = gp > 20 ? "Expensive" : gp > 5 ? "Above Market" : gp < -5 ? "Cheap" : "Fair";
-  const priceC = priceQ === "Cheap" ? "#10B981" : priceQ === "Fair" ? "#3B82F6" : priceQ === "Above Market" ? "#F59E0B" : "#EF4444";
-  return (
-    <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
-      <div style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "3px 10px", borderRadius: 6, background: `${bizC}14`, border: `1px solid ${bizC}33` }}>
-        <span style={{ fontSize: 9, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.06em" }}>Business:</span>
-        <span style={{ fontSize: 11, fontWeight: 700, color: bizC }}>{bizQ}</span>
-      </div>
-      <div style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "3px 10px", borderRadius: 6, background: `${priceC}14`, border: `1px solid ${priceC}33` }}>
-        <span style={{ fontSize: 9, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.06em" }}>Pricing:</span>
-        <span style={{ fontSize: 11, fontWeight: 700, color: priceC }}>{priceQ}</span>
-      </div>
-    </div>
-  );
-})()}
+                        const dscr = score.dscr ?? 0;
+                        const gp = score.gap_pct ?? 0;
+                        const bizQ = dscr >= 1.75 ? "Strong" : dscr >= 1.25 ? "Average" : "Weak";
+                        const bizC = bizQ === "Strong" ? "#10B981" : bizQ === "Average" ? "#F59E0B" : "#EF4444";
+                        const priceQ = gp > 20 ? "Expensive" : gp > 5 ? "Above Market" : gp < -5 ? "Cheap" : "Fair";
+                        const priceC = priceQ === "Cheap" ? "#10B981" : priceQ === "Fair" ? "#3B82F6" : priceQ === "Above Market" ? "#F59E0B" : "#EF4444";
+                        return (
+                          <>
+                            <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "10px 14px", borderRadius: 10, background: `${bizC}14`, border: `1px solid ${bizC}33` }}>
+                              <span style={{ fontSize: 9, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.06em" }}>Business:</span>
+                              <span style={{ fontSize: 13, fontWeight: 700, color: bizC }}>{bizQ}</span>
+                            </div>
+                            <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "10px 14px", borderRadius: 10, background: `${priceC}14`, border: `1px solid ${priceC}33` }}>
+                              <span style={{ fontSize: 9, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.06em" }}>Pricing:</span>
+                              <span style={{ fontSize: 13, fontWeight: 700, color: priceC }}>{priceQ}</span>
+                            </div>
+                          </>
+                        );
+                      })()}
+                    </div>
+
+                    {/* Explanation — full width below the 3 boxes */}
+                    <div style={{ fontSize: 11, color: "#9CA3AF", lineHeight: 1.55, padding: "0 2px" }}>
+                      {vdExplain}
+                    </div>
                     
                     {/* Sub-score pills */}
                     <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
