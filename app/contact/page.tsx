@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
-import { Mail, MapPin, Clock, Send, MessageCircle, Calendar, Loader2, CheckCircle } from "lucide-react"
+import { Mail, Clock, Send, MessageCircle, Calendar, Loader2, CheckCircle, Briefcase, Users } from "lucide-react"
 import { CalendlyPopup } from "@/components/calendly-popup"
 import CalendlyButton from "@/components/calendly-button"
 
@@ -81,17 +81,17 @@ export default function ContactPage() {
   const contactMethods = [
     {
       icon: Mail,
-      title: "Email Support",
-      description: "Get help via email",
-      contact: "nextax.ai@outlook.com",
-      availability: "24/7 response within 4 hours",
+      title: "Deal Review & Support",
+      description: "Have a deal you're evaluating? Send it over — we'll review and point out pricing gaps, risks, and key considerations.",
+      contact: "steven.morello@nextax.ai",
+      availability: "Response within 24 hours",
     },
     {
       icon: MessageCircle,
-      title: "Live Chat",
-      description: "Instant messaging support",
-      contact: "Available on website",
-      availability: "24/7 AI + Human backup",
+      title: "Live Deal Chat",
+      description: "Ask questions in real-time while reviewing a deal.",
+      contact: "Available directly inside the platform",
+      availability: "AI-assisted + human follow-up when needed",
     },
     {
       icon: Calendar,
@@ -109,21 +109,6 @@ export default function ContactPage() {
     },
   ]
 
-  const offices = [
-    {
-      city: "Metro Detroit",
-      address: "121 W Main St",
-      zipcode: "Brighton, MI 48116",
-      phone: "Steven.Morello@NexTax.AI",
-    },
-    {
-      city: "Chicago",
-      address: "342 W Armitage Ave",
-      zipcode: "Chicago, IL 60614",
-      phone: "(312) 841-3388",
-    },
-  ]
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-900 pt-16">
       {/* Hero Section */}
@@ -134,12 +119,11 @@ export default function ContactPage() {
             Get in Touch
           </Badge>
           <h1 className="text-4xl lg:text-6xl font-bold text-white mb-6">
-            We're Here to Help
-            <span className="block text-emerald-400">Your Business Succeed</span>
+            Talk to Us About
+            <span className="block text-emerald-400">Your Next Acquisition</span>
           </h1>
           <p className="text-xl text-slate-300 max-w-3xl mx-auto mb-12">
-            Have questions about our AI tax services? Need help with business formation? Our expert team is ready to
-            assist you every step of the way.
+            Questions about a deal? Want a second opinion on pricing, risk, or market positioning? We'll help you pressure-test the numbers before you commit time, capital, or an LOI.
           </p>
         </div>
       </section>
@@ -175,9 +159,9 @@ export default function ContactPage() {
             {/* Contact Form */}
             <Card className="bg-slate-800/50 border-slate-700">
               <CardHeader>
-                <CardTitle className="text-2xl text-white">Send us a Message</CardTitle>
+                <CardTitle className="text-2xl text-white">Send Us a Deal or Question</CardTitle>
                 <p className="text-slate-400">
-                  Contact us below and one of our experts will get back to you within 24 hours.
+                  Share a deal, question, or use case — we'll respond with insights, not just answers.
                 </p>
               </CardHeader>
               <CardContent>
@@ -218,13 +202,13 @@ export default function ContactPage() {
                     <div className="grid md:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="name" className="text-white">
-                          Full Name
+                          Name
                         </Label>
                         <Input
                           id="name"
                           value={formData.name}
                           onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                          placeholder="Your full name"
+                          placeholder="Your name"
                           className="bg-slate-900 border-slate-600 text-white"
                           required
                         />
@@ -248,33 +232,34 @@ export default function ContactPage() {
                     <div className="grid md:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="company" className="text-white">
-                          Company (Optional)
+                          Company / Search Fund (optional)
                         </Label>
                         <Input
                           id="company"
                           value={formData.company}
                           onChange={(e) => setFormData({ ...formData, company: e.target.value })}
-                          placeholder="Your company name"
+                          placeholder="Your company or fund name"
                           className="bg-slate-900 border-slate-600 text-white"
                         />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="inquiryType" className="text-white">
-                          Inquiry Type
+                          What do you need help with?
                         </Label>
                         <Select
-                           value={formData.inquiryType}
-                            onValueChange={(value) => setFormData({ ...formData, inquiryType: value })}
-                            >
+                          value={formData.inquiryType}
+                          onValueChange={(value) => setFormData({ ...formData, inquiryType: value })}
+                        >
                           <SelectTrigger className="bg-slate-900 border-slate-600 text-white">
-                            <SelectValue placeholder="Select inquiry type" />
+                            <SelectValue placeholder="Select an option" />
                           </SelectTrigger>
                           <SelectContent>
+                            <SelectItem value="reviewing-deal">Reviewing a Deal</SelectItem>
+                            <SelectItem value="pricing-valuation">Pricing / Valuation Question</SelectItem>
+                            <SelectItem value="market-intelligence">Market Intelligence Question</SelectItem>
+                            <SelectItem value="platform-demo">Platform Demo / Access</SelectItem>
+                            <SelectItem value="partnership">Partnership / Integration</SelectItem>
                             <SelectItem value="general">General Question</SelectItem>
-                            <SelectItem value="sales">Sales Inquiry</SelectItem>
-                            <SelectItem value="support">Technical Support</SelectItem>
-                            <SelectItem value="partnership">Partnership</SelectItem>
-                            <SelectItem value="tax">Tax/Accounting</SelectItem>
                           </SelectContent>
                         </Select>
                       </div>
@@ -302,7 +287,7 @@ export default function ContactPage() {
                         id="message"
                         value={formData.message}
                         onChange={(e) => setFormData({ ...formData, message: e.target.value })}
-                        placeholder="Tell us how we can help you..."
+                        placeholder="Paste deal details, listing link, or describe what you're evaluating..."
                         className="bg-slate-900 border-slate-600 text-white"
                         rows={6}
                         required
@@ -327,7 +312,7 @@ export default function ContactPage() {
                         </>
                       ) : (
                         <>
-                          Send Message
+                          Submit & Get Feedback
                           <Send className="ml-2 w-4 h-4" />
                         </>
                       )}
@@ -337,62 +322,83 @@ export default function ContactPage() {
               </CardContent>
             </Card>
 
-            {/* Office Locations */}
+            {/* Work With Us — credibility + trust */}
             <div className="space-y-8">
               <div>
-                <h2 className="text-3xl font-bold text-white mb-6">Our Offices</h2>
+                <h2 className="text-3xl font-bold text-white mb-6">Work With Us</h2>
                 <p className="text-slate-300 mb-8">
-                  Visit us at one of our locations or schedule a virtual meeting with our team.
+                  Built by operators with institutional underwriting experience — for the buyers who actually have to live with the deal.
                 </p>
               </div>
 
               <div className="space-y-6">
-                {offices.map((office, i) => (
-                  <Card key={i} className="bg-slate-800/50 border-slate-700">
-                    <CardContent className="p-6">
-                      <div className="flex items-start gap-4">
-                        <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
-                          <MapPin className="w-5 h-5 text-emerald-400" />
-                        </div>
-                        <div>
-                          <h3 className="font-semibold text-white mb-2">{office.city}</h3>
-                          <p className="text-slate-300 text-sm mb-1">{office.address}</p>
-                          <p className="text-slate-300 text-sm mb-2">{office.zipcode}</p>
-                          <p className="text-emerald-400 text-sm">{office.phone}</p>
-                        </div>
+                {/* Founder */}
+                <Card className="bg-slate-800/50 border-slate-700">
+                  <CardContent className="p-6">
+                    <div className="flex items-start gap-4">
+                      <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
+                        <Briefcase className="w-5 h-5 text-emerald-400" />
                       </div>
-                    </CardContent>
-                  </Card>
-                ))}
+                      <div>
+                        <h3 className="font-semibold text-white mb-2">Founder</h3>
+                        <p className="text-emerald-400 text-sm font-medium mb-2">Steven Morello</p>
+                        <p className="text-slate-300 text-sm mb-3">
+                          Former Big 4 (EY) & Private Equity (Morgan Stanley)
+                        </p>
+                        <p className="text-slate-300 text-sm">
+                          Focused on helping buyers make better acquisition decisions through structured underwriting and market intelligence.
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Who This Is For */}
+                <Card className="bg-slate-800/50 border-slate-700">
+                  <CardContent className="p-6">
+                    <div className="flex items-start gap-4">
+                      <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
+                        <Users className="w-5 h-5 text-emerald-400" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-white mb-3">Who This Is For</h3>
+                        <ul className="space-y-1.5 text-sm text-slate-300 mb-3">
+                          <li>• Searchers evaluating deals</li>
+                          <li>• Independent sponsors</li>
+                          <li>• SMB buyers & operators</li>
+                          <li>• Lenders & advisors</li>
+                        </ul>
+                        <p className="text-emerald-400 text-sm">
+                          If you're looking at deals — this is built for you.
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
 
-              {/* Business Hours */}
+              {/* Availability */}
               <Card className="bg-slate-800/50 border-slate-700">
                 <CardContent className="p-6">
                   <div className="flex items-start gap-4">
                     <div className="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center flex-shrink-0">
                       <Clock className="w-5 h-5 text-emerald-400" />
                     </div>
-                    <div>
-                      <h3 className="font-semibold text-white mb-3">Business Hours</h3>
-                      <div className="space-y-1 text-sm">
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-white mb-3">Availability</h3>
+                      <div className="space-y-2 text-sm">
                         <div className="flex justify-between">
-                          <span className="text-slate-300">Monday - Friday:</span>
-                          <span className="text-white">9:00 AM - 6:00 PM PST</span>
+                          <span className="text-slate-300">AI Support:</span>
+                          <span className="text-emerald-400 font-medium">24/7</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="text-slate-300">Saturday:</span>
-                          <span className="text-white">10:00 AM - 4:00 PM PST</span>
+                          <span className="text-slate-300">Direct Response:</span>
+                          <span className="text-white font-medium">Within 24 hours</span>
                         </div>
-                        <div className="flex justify-between">
-                          <span className="text-slate-300">Sunday:</span>
-                          <span className="text-slate-400">Closed</span>
-                        </div>
-                        <div className="pt-2 border-t border-slate-700 mt-3">
-                          <div className="flex justify-between">
-                            <span className="text-slate-300">AI Support:</span>
-                            <span className="text-emerald-400">24/7 Available</span>
-                          </div>
+                        <div className="pt-3 border-t border-slate-700 mt-3">
+                          <p className="text-emerald-400 text-sm">
+                            For active deals, priority responses available.
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -410,26 +416,26 @@ export default function ContactPage() {
           <div className="text-center mb-16">
             <h2 className="text-3xl lg:text-4xl font-bold text-white mb-6">Frequently Asked Questions</h2>
             <p className="text-xl text-slate-300 max-w-2xl mx-auto">
-              Quick answers to common questions about our services and platform.
+              Quick answers to common questions about deal evaluation and how the platform works.
             </p>
           </div>
 
           <div className="max-w-3xl mx-auto space-y-6">
             {[
               {
-                question: "How quickly can you help me start my business?",
+                question: "How accurate is the underwriting analysis?",
                 answer:
-                  "With StartSmart, we can get your business legally formed and ready to operate in 48 hours or less. This includes entity formation, EIN acquisition, and basic compliance setup.",
+                  "Built on structured frameworks used in Big 4 and private equity deal reviews, combined with live and historical transaction data. Outputs are designed to support decision-making — not replace diligence.",
               },
               {
-                question: "What makes your AI different from other tax software?",
+                question: "Can I use this before submitting an LOI?",
                 answer:
-                  "Our AI is specifically trained on tax scenarios and business formation processes. Unlike generic software, our GPTs understand context, can handle complex situations, and provide personalized recommendations.",
+                  "Yes — that's the primary use case. Most users run deals through the platform before engaging brokers or starting formal diligence.",
               },
               {
-                question: "Do you work with existing businesses or just startups?",
+                question: "Do you review deals directly?",
                 answer:
-                  "We work with businesses of all sizes - from pre-launch startups to established enterprises. Our platform scales to meet your needs as you grow.",
+                  "Yes — you can submit deals through this page or the platform for additional review and feedback.",
               },
               {
                 question: "Is my data secure with NexTax.AI?",
@@ -439,7 +445,7 @@ export default function ContactPage() {
               {
                 question: "Can I speak with a human expert if needed?",
                 answer:
-                  "Yes! While our AI handles most tasks automatically, you always have access to our human experts for complex situations or strategic advice.",
+                  "Yes. While the platform handles most evaluation work automatically, you always have access to direct review and strategic feedback for complex deals.",
               },
             ].map((faq, i) => (
               <Card key={i} className="bg-slate-800/50 border-slate-700">
