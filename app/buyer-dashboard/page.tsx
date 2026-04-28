@@ -1121,11 +1121,15 @@ function TopOpportunities({
 
 function PriorityDeals({
   deals, favorites, onOpenNotes, onOpenDetail,
+  isPro, downloadingDealId, onDownloadReport,
 }: {
   deals: DealRun[];
   favorites: Set<string>;
   onOpenNotes: (deal: DealRun) => void;
   onOpenDetail: (deal: DealRun) => void;
+  isPro: boolean;
+  downloadingDealId: string | null;
+  onDownloadReport: (dealId: string) => void;
 }) {
   const starred = deals.filter(d => favorites.has(d.id)).slice(0, 5);
   if (starred.length === 0) return null;
@@ -1172,7 +1176,7 @@ function PriorityDeals({
               }}>
                 {vd.emoji} {vd.label}
               </span>
-              <div style={{ display: "flex", gap: 4 }}>
+             <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
                 <button
                   onClick={() => onOpenDetail(deal)}
                   style={{
@@ -1195,6 +1199,12 @@ function PriorityDeals({
                 >
                   📝
                 </button>
+                <DownloadReportIconButton
+                  dealId={deal.id}
+                  isPro={isPro}
+                  downloading={downloadingDealId === deal.id}
+                  onDownload={onDownloadReport}
+                />
               </div>
             </div>
           );
@@ -2491,7 +2501,7 @@ function DealDetailPanel({
       a.download = `AcquiFlow-Deal-Report-${dealId.slice(0, 8)}.pdf`;
       document.body.appendChild(a);
       a.click();
-      document.body.removeChild(a);
+      document.body.removeChild(a);      
       URL.revokeObjectURL(url);
     } catch (err) {
       console.error("Download report failed:", err);
@@ -2669,7 +2679,7 @@ function DealDetailPanel({
                 </>
               ) : (
                 <>
-                  <span>⬇</span> Download Report {!isPro && "🔒"}
+                  <span>⬇</span> ⬇ Download Full Deal Report {!isPro && "🔒"}
                 </>
               )}
             </button>
@@ -4773,7 +4783,15 @@ function StatCards({ deals, loading }: { deals: DealRun[]; loading: boolean }) {
 
 // ─── PRO COMMAND MODULE ───────────────────────────────────────────────────────
 
-function ProCommandModule({ deals, onOpenUnderwriting }: { deals: DealRun[]; onOpenUnderwriting: (deal: DealRun) => void }) {
+function ProCommandModule({
+  deals, onOpenUnderwriting, isPro, downloadingDealId, onDownloadReport,
+}: {
+  deals: DealRun[];
+  onOpenUnderwriting: (deal: DealRun) => void;
+  isPro: boolean;
+  downloadingDealId: string | null;
+  onDownloadReport: (dealId: string) => void;
+}) {
   const lastAnalysis = deals.find(d => d.tool_used === "risk_analyzer") ?? deals[0];
 
   return (
@@ -4843,17 +4861,26 @@ function ProCommandModule({ deals, onOpenUnderwriting }: { deals: DealRun[]; onO
               {ago(lastAnalysis.created_at)} · {lastAnalysis.valuation_multiple.toFixed(2)}x · DSCR {lastAnalysis.dscr.toFixed(2)}
             </div>
           </div>
-          <button
-            onClick={() => onOpenUnderwriting(lastAnalysis)}
-            style={{
-              padding: "6px 12px", borderRadius: 7,
-              border: "1px solid rgba(99,102,241,0.25)",
-              background: "rgba(99,102,241,0.08)",
-              color: "#818CF8", fontSize: 11, fontWeight: 500, cursor: "pointer",
-            }}
-          >
-            Open Analysis
-          </button>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <DownloadReportIconButton
+              dealId={lastAnalysis.id}
+              isPro={isPro}
+              downloading={downloadingDealId === lastAnalysis.id}
+              onDownload={onDownloadReport}
+              size="sm"
+            />
+            <button
+              onClick={() => onOpenUnderwriting(lastAnalysis)}
+              style={{
+                padding: "6px 12px", borderRadius: 7,
+                border: "1px solid rgba(99,102,241,0.25)",
+                background: "rgba(99,102,241,0.08)",
+                color: "#818CF8", fontSize: 11, fontWeight: 500, cursor: "pointer",
+              }}
+            >
+              Open Analysis
+            </button>
+          </div>
         </div>
       )}
 
@@ -5690,6 +5717,7 @@ function TabHome({
 function TabDashboard({
   deals, dri, trending, loading, loadingMkt, isPro, favorites, outcomesMap,
   onTabChange, onToggleFav, onOpenNotes, onOpenDetail, onOpenUnderwriting, onOpenOutcome, onAnalyzeNew,
+  downloadingDealId, onDownloadReport,
 }: {
   deals: DealRun[];
   dri: DriSnapshot[];
@@ -5706,6 +5734,8 @@ function TabDashboard({
   onOpenUnderwriting: (deal: DealRun) => void;
   onOpenOutcome: (deal: DealRun) => void;
   onAnalyzeNew: () => void;
+  downloadingDealId: string | null;
+  onDownloadReport: (dealId: string) => void;
 }) {
   const recent  = deals.slice(0, 3);
   const opps    = deals.filter(d => (d.gap_pct ?? 0) < -5).slice(0, 3);
@@ -5719,6 +5749,9 @@ function TabDashboard({
         favorites={favorites}
         onOpenNotes={onOpenNotes}
         onOpenDetail={onOpenDetail}
+        isPro={isPro}
+        downloadingDealId={downloadingDealId}
+        onDownloadReport={onDownloadReport}
       />
 
       {/* Recent Activity + Top Opportunities side-by-side */}
@@ -5765,7 +5798,7 @@ function TabDashboard({
                     style={{
                       padding: "12px 16px",
                       display: "grid",
-                      gridTemplateColumns: "auto 1fr auto auto",
+                      gridTemplateColumns: "auto 1fr auto auto auto",
                       gap: 12,
                       alignItems: "center",
                       cursor: "pointer",
@@ -5796,6 +5829,12 @@ function TabDashboard({
                     }}>
                       {vd.emoji} {vd.label}
                     </span>
+                    <DownloadReportIconButton
+                      dealId={deal.id}
+                      isPro={isPro}
+                      downloading={downloadingDealId === deal.id}
+                      onDownload={onDownloadReport}
+                    />
                   </div>
                 );
               })}
@@ -5829,7 +5868,7 @@ function TabDashboard({
                     style={{
                       padding: "10px 14px",
                       display: "grid",
-                      gridTemplateColumns: "1fr auto",
+                      gridTemplateColumns: "1fr auto auto",
                       gap: 10,
                       alignItems: "center",
                       cursor: "pointer",
@@ -5847,6 +5886,12 @@ function TabDashboard({
                     <div style={{ fontSize: 11, fontWeight: 700, color: "#10B981", fontFamily: "'JetBrains Mono',monospace" }}>
                       {gp}%
                     </div>
+                    <DownloadReportIconButton
+                      dealId={deal.id}
+                      isPro={isPro}
+                      downloading={downloadingDealId === deal.id}
+                      onDownload={onDownloadReport}
+                    />
                   </div>
                 );
               })}
@@ -5924,7 +5969,17 @@ function TabDashboard({
       )}
 
       {/* Pro Command Module — for Pro users only */}
-      {isPro ? <ProCommandModule deals={deals} onOpenUnderwriting={onOpenUnderwriting} /> : <ProUpsellCard deals={deals} onOpenUnderwriting={onOpenUnderwriting} />}
+      {isPro ? (
+  <ProCommandModule
+    deals={deals}
+    onOpenUnderwriting={onOpenUnderwriting}
+    isPro={isPro}
+    downloadingDealId={downloadingDealId}
+    onDownloadReport={onDownloadReport}
+  />
+) : (
+  <ProUpsellCard deals={deals} onOpenUnderwriting={onOpenUnderwriting} />
+)}
     </div>
   );
 }
@@ -8296,8 +8351,53 @@ function TabMarketIntel({
 }
 
 
-// ─── MAIN DASHBOARD ───────────────────────────────────────────────────────────
 
+function DownloadReportIconButton({
+  dealId, isPro, downloading, onDownload, size = "sm",
+}: {
+  dealId: string;
+  isPro: boolean;
+  downloading: boolean;
+  onDownload: (dealId: string) => void;
+  size?: "sm" | "md";
+}) {
+  const sm = size === "sm";
+  return (
+    <button
+      onClick={(e) => { e.stopPropagation(); onDownload(dealId); }}
+      disabled={downloading}
+      title={isPro ? "Download Full Report" : "Download Full Report (Pro)"}
+      style={{
+        padding: sm ? "5px 10px" : "8px 14px",
+        borderRadius: 7,
+        border: isPro ? "1px solid rgba(16,185,129,0.25)" : "1px solid rgba(255,255,255,0.08)",
+        background: isPro ? "rgba(16,185,129,0.08)" : "rgba(255,255,255,0.03)",
+        color: isPro ? "#10B981" : "#94A3B8",
+        fontSize: sm ? 10 : 12,
+        fontWeight: 600,
+        cursor: downloading ? "wait" : "pointer",
+        display: "inline-flex", alignItems: "center", gap: 5,
+        opacity: downloading ? 0.7 : 1,
+        textTransform: "uppercase" as const,
+        letterSpacing: "0.06em",
+      }}
+    >
+      {downloading ? (
+        <>
+          <span style={{ display: "inline-block", width: 10, height: 10, border: "2px solid rgba(16,185,129,0.3)", borderTopColor: "#10B981", borderRadius: "50%", animation: "spin 0.8s linear infinite" }} />
+          <span>Generating</span>
+        </>
+      ) : (
+        <>
+          <span>⬇</span>
+          <span>Report{!isPro && " 🔒"}</span>
+        </>
+      )}
+    </button>
+  );
+}
+
+// ─── MAIN DASHBOARD ───────────────────────────────────────────────────────────
 export default function BuyerDashboard() {
   const [user, setUser]               = useState<any>(null);
   const [profile, setProfile]         = useState<Profile | null>(null);
@@ -8320,6 +8420,29 @@ export default function BuyerDashboard() {
   const [detailDeal, setDetailDeal]             = useState<DealRun | null>(null);
   const [underwritingDeal, setUnderwritingDeal] = useState<DealRun | null>(null);
   const [showUpgradeModal, setShowUpgradeModal]   = useState(false);
+  const [downloadingDealId, setDownloadingDealId] = useState<string | null>(null);
+
+  async function handleDashboardDownloadReport(dealId: string) {
+    if (!isPro) { setShowUpgradeModal(true); return; }
+    setDownloadingDealId(dealId);
+    try {
+      const res = await fetch(`/api/reports/${dealId}?uid=${user?.id ?? ""}`);
+      if (!res.ok) throw new Error("Report generation failed");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = res.headers.get("x-filename") || `AcquiFlow-Report-${dealId.slice(0, 8)}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Report download failed:", err);
+    } finally {
+      setDownloadingDealId(null);
+    }
+  }
   // Deal outcome tracking — proprietary training data
   const [outcomesMap, setOutcomesMap]           = useState<Map<string, DealOutcome>>(new Map());
   const [outcomeDeal, setOutcomeDeal]           = useState<DealRun | null>(null);
@@ -8870,7 +8993,7 @@ export default function BuyerDashboard() {
                 dri={dri}
                 trending={trending}
                 loading={loadingDeals}
-                loading={loading}
+                loadingMkt={loading}
                 isPro={isPro}
                 favorites={favorites}
                 outcomesMap={outcomesMap}
@@ -8881,6 +9004,8 @@ export default function BuyerDashboard() {
                 onOpenUnderwriting={openUnderwriting}
                 onOpenOutcome={setOutcomeDeal}
                 onAnalyzeNew={handleAnalyzeNewClick}
+                downloadingDealId={downloadingDealId}
+                onDownloadReport={handleDashboardDownloadReport}
               />
             )}
             {activeTab === "my-deals" && (
