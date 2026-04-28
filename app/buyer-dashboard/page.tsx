@@ -1789,15 +1789,13 @@ function AnalyzeDealModal({
           user_id:              userId,
         }),
       });
-      const json = await res.json();
-      alert("API RESPONSE: " + JSON.stringify(json).slice(0, 200));
+      const json = await res.json();      
       if (!json.success) throw new Error(json.error || "Save failed");
       if (json.deal) {
         onDealSaved(json.deal as DealRun);
         setSaved(true);
       }
-     } catch (err) {
-      alert("SAVE FAILED: " + (err as Error).message);
+      } catch (err) {
       setSaveError((err as Error).message);
     }
     setSaving(false);
@@ -8523,7 +8521,7 @@ export default function BuyerDashboard() {
       .select("id,tool_used,industry,asking_price,fair_value,valuation_multiple,dscr,overall_score,risk_level,city,state,created_at,confidence_grade,revenue,sde,benchmark_family,rma_naics_code,classification_confidence,reported_sde,usable_sde,benchmark_implied_sde,earnings_source,normalization_trust_score,normalization_confidence_level,normalization_flags_json,manual_review_required,benchmark_is_proxy,evidence_profile,red_flags,green_flags")
       .eq("user_id", uid)
       .order("created_at", { ascending: false })
-      .limit(50);
+      .limit(100);
     // If the full select fails (usually because a new column isn't yet
     // visible to PostgREST's schema cache), fall back to the minimal set
     // that predates this migration. User still sees their deals.
@@ -8534,7 +8532,7 @@ export default function BuyerDashboard() {
         .select("id,tool_used,industry,asking_price,fair_value,valuation_multiple,dscr,overall_score,risk_level,city,state,created_at,confidence_grade,revenue,sde,benchmark_family,rma_naics_code,classification_confidence,reported_sde,usable_sde,benchmark_implied_sde,earnings_source,normalization_trust_score,normalization_confidence_level,normalization_flags_json,manual_review_required,benchmark_is_proxy")
         .eq("user_id", uid)
         .order("created_at", { ascending: false })
-        .limit(50);
+        .limit(100);
       data = fallback.data;
       error = fallback.error;
       if (error) console.error("fetchDeals fallback also failed:", error.message);
