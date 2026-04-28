@@ -2255,7 +2255,7 @@ function AnalyzeDealModal({
                 const trustNote = (nts !== null && nts !== undefined && nts < 85)
                   ? `Data confidence: ${nts}/100 — ${nts < 60 ? "manual review required" : "moderate — verify inputs"}`
                   : null;
-                const dForV = { gap_pct: score.gap_pct, dscr: score.dscr, overall_score: score.overall, risk_level: score.riskLevel, normalization_trust_score: nts } as DealRun;
+                const dForV = { gap_pct: score.gap_pct, dscr: score.dscr, overall_score: score.overall, risk_level: score.riskLevel, normalization_trust_score: nts, valuation_multiple: score.multiple, industry: inputs.industry } as DealRun;
                 const vdm = verdictCfg(dealVerdict(dForV));
                 const vdExplain = verdictExplanation(dForV);
                 return (
