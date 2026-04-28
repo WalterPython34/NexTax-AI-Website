@@ -2271,12 +2271,12 @@ function AnalyzeDealModal({
                         <div style={{ fontSize: 12, fontWeight: 700, color: vdm.color, textTransform: "uppercase" as any, letterSpacing: "0.06em" }}>
                           Verdict: {vdm.label}
                         </div>
-                        <div style={{ fontSize: 10, color: "#6B7280", marginTop: 1, lineHeight: 1.4 }}>{vdExplain}</div>
                         <div style={{ fontSize: 10, color: "#7C8593", marginTop: 3 }}>
                           FV Range: {fmt(score.fairValueLow)} – {fmt(score.fairValueHigh)}
                         </div>
                       </div>
                       </div>
+                     <div style={{ fontSize: 10, color: "#6B7280", marginTop: 1, lineHeight: 1.4 }}>{vdExplain}</div>
                       {(() => {
   const dscr = score.dscr ?? 0;
   const gp = score.gap_pct ?? 0;
