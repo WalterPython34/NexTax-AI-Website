@@ -77,7 +77,7 @@ Return ONLY a valid JSON object with no markdown formatting, no backticks, no ex
         "anthropic-version": "2023-06-01",
       },
       body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
+        model: "claude-sonnet-4-6",
         max_tokens: 1000,
         stop_sequences: ["\n\nNote:", "\n\nPlease", "\n\nI ", "\n\nThis "],
         tools: [{ type: "web_search_20250305", name: "web_search" }],
