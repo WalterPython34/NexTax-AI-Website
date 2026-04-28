@@ -21,9 +21,9 @@ const spaceGrotesk = Space_Grotesk({
 })
 
 export const metadata: Metadata = {
-  title: "NexTax.AI - AI Copilot for Modern Tax Teams",
+  title: "NexTax.AI | SMB Acquisition Platform & Underwriting",
   description:
-    "Automate entity formation, streamline tax workflows, and launch confidently with AI-powered services for startups and modern tax teams.",
+    "Analyze deals, compare against real transactions, and understand the market in just minutes.",
 }
 
 export default function RootLayout({
