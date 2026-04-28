@@ -2251,7 +2251,6 @@ function AnalyzeDealModal({
 
               {/* Verdict + fair value range */}
               {(() => {
-                // Add normalization trust note if trust score is below full confidence
                 const nts = score.normalizationTrustScore;
                 const trustNote = (nts !== null && nts !== undefined && nts < 85)
                   ? `Data confidence: ${nts}/100 — ${nts < 60 ? "manual review required" : "moderate — verify inputs"}`
@@ -2260,67 +2259,72 @@ function AnalyzeDealModal({
                 const vdm = verdictCfg(dealVerdict(dForV));
                 const vdExplain = verdictExplanation(dForV);
                 return (
-                  <div style={{ display: "flex", gap: 10, marginBottom: 14 }}>
-                    <div style={{
-                      flex: 1, padding: "10px 14px", borderRadius: 10,
-                      background: vdm.bg, border: `1px solid ${vdm.border}`,
-                      display: "flex", alignItems: "center", gap: 8,
-                    }}>
-                      <span style={{ fontSize: 20 }}>{vdm.emoji}</span>
-                      <div>
-                        <div style={{ fontSize: 12, fontWeight: 700, color: vdm.color, textTransform: "uppercase" as any, letterSpacing: "0.06em" }}>
-                          Verdict: {vdm.label}
+                  <>
+                    {/* Row 1: Verdict box + Sub-score pills */}
+                    <div style={{ display: "flex", gap: 10, marginBottom: 10 }}>
+                      <div style={{
+                        flex: 1, padding: "10px 14px", borderRadius: 10,
+                        background: vdm.bg, border: `1px solid ${vdm.border}`,
+                        display: "flex", alignItems: "center", gap: 8,
+                      }}>
+                        <span style={{ fontSize: 20 }}>{vdm.emoji}</span>
+                        <div>
+                          <div style={{ fontSize: 12, fontWeight: 700, color: vdm.color, textTransform: "uppercase" as any, letterSpacing: "0.06em" }}>
+                            Verdict: {vdm.label}
+                          </div>
+                          <div style={{ fontSize: 10, color: "#7C8593", marginTop: 3 }}>
+                            FV Range: {fmt(score.fairValueLow)} – {fmt(score.fairValueHigh)}
+                          </div>
                         </div>
-                        <div style={{ fontSize: 10, color: "#7C8593", marginTop: 3 }}>
-                          FV Range: {fmt(score.fairValueLow)} – {fmt(score.fairValueHigh)}
-                        </div>
+                      </div>
+                      {/* Sub-score pills */}
+                      <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
+                        {[
+                          { label: "Val", value: score.valuationScore },
+                          { label: "Debt", value: score.debtScore },
+                          { label: "Mkt", value: score.marketScore },
+                          { label: "Ind", value: score.industryScore },
+                        ].map(s => (
+                          <div key={s.label} style={{ textAlign: "center", padding: "6px 8px", borderRadius: 8, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", minWidth: 42 }}>
+                            <div style={{ fontSize: 8, color: "#7C8593", textTransform: "uppercase", marginBottom: 2 }}>{s.label}</div>
+                            <div style={{ fontSize: 13, fontWeight: 700, color: scoreColor(s.value), fontFamily: "'JetBrains Mono',monospace" }}>{s.value}</div>
+                          </div>
+                        ))}
                       </div>
                     </div>
 
-                    {/* Explanation — full width below the 3 boxes */}
-                    <div style={{ fontSize: 11, color: "#9CA3AF", lineHeight: 1.55, padding: "0 2px" }}>
-                      {vdExplain}
-                    </div>
-
-                    {/* Business vs Pricing chips */}
-                      {(() => {
-                        const dscr = score.dscr ?? 0;
-                        const gp = score.gap_pct ?? 0;
-                        const bizQ = dscr >= 1.75 ? "Strong" : dscr >= 1.25 ? "Average" : "Weak";
-                        const bizC = bizQ === "Strong" ? "#10B981" : bizQ === "Average" ? "#F59E0B" : "#EF4444";
-                        const priceQ = gp > 20 ? "Expensive" : gp > 5 ? "Above Market" : gp < -5 ? "Cheap" : "Fair";
-                        const priceC = priceQ === "Cheap" ? "#10B981" : priceQ === "Fair" ? "#3B82F6" : priceQ === "Above Market" ? "#F59E0B" : "#EF4444";
-                        return (
-                          <>
-                            <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "10px 14px", borderRadius: 10, background: `${bizC}14`, border: `1px solid ${bizC}33` }}>
-                              <span style={{ fontSize: 9, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.06em" }}>Business:</span>
-                              <span style={{ fontSize: 13, fontWeight: 700, color: bizC }}>{bizQ}</span>
-                            </div>
-                            <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", gap: 6, padding: "10px 14px", borderRadius: 10, background: `${priceC}14`, border: `1px solid ${priceC}33` }}>
-                              <span style={{ fontSize: 9, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.06em" }}>Pricing:</span>
-                              <span style={{ fontSize: 13, fontWeight: 700, color: priceC }}>{priceQ}</span>
-                            </div>
-                            </div>
-                          </>
-                        );
-                      })()}                   
-                   
-                    
-                    {/* Sub-score pills */}
-                    <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
-                      {[
-                        { label: "Val", value: score.valuationScore },
-                        { label: "Debt", value: score.debtScore },
-                        { label: "Mkt", value: score.marketScore },
-                        { label: "Ind", value: score.industryScore },
-                      ].map(s => (
-                        <div key={s.label} style={{ textAlign: "center", padding: "6px 8px", borderRadius: 8, background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", minWidth: 42 }}>
-                          <div style={{ fontSize: 8, color: "#7C8593", textTransform: "uppercase", marginBottom: 2 }}>{s.label}</div>
-                          <div style={{ fontSize: 13, fontWeight: 700, color: scoreColor(s.value), fontFamily: "'JetBrains Mono',monospace" }}>{s.value}</div>
+                    {/* Row 2: Business vs Pricing chips */}
+                    {(() => {
+                      const dscr = score.dscr ?? 0;
+                      const gp = score.gap_pct ?? 0;
+                      const bizQ = dscr >= 1.75 ? "Strong" : dscr >= 1.25 ? "Average" : "Weak";
+                      const bizC = bizQ === "Strong" ? "#10B981" : bizQ === "Average" ? "#F59E0B" : "#EF4444";
+                      const priceQ = gp > 20 ? "Expensive" : gp > 5 ? "Above Market" : gp < -5 ? "Cheap" : "Fair";
+                      const priceC = priceQ === "Cheap" ? "#10B981" : priceQ === "Fair" ? "#3B82F6" : priceQ === "Above Market" ? "#F59E0B" : "#EF4444";
+                      return (
+                        <div style={{ display: "flex", gap: 8, marginBottom: 10 }}>
+                          <div style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "5px 12px", borderRadius: 8, background: `${bizC}14`, border: `1px solid ${bizC}33` }}>
+                            <span style={{ fontSize: 9, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.06em" }}>Business:</span>
+                            <span style={{ fontSize: 12, fontWeight: 700, color: bizC }}>{bizQ}</span>
+                          </div>
+                          <div style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "5px 12px", borderRadius: 8, background: `${priceC}14`, border: `1px solid ${priceC}33` }}>
+                            <span style={{ fontSize: 9, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.06em" }}>Pricing:</span>
+                            <span style={{ fontSize: 12, fontWeight: 700, color: priceC }}>{priceQ}</span>
+                          </div>
                         </div>
-                      ))}
+                      );
+                    })()}
+
+                    {/* Row 3: Verdict explanation */}
+                    <div style={{
+                      padding: "10px 14px", borderRadius: 10, marginBottom: 14,
+                      background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
+                    }}>
+                      <div style={{ fontSize: 12, color: "#94A3B8", lineHeight: 1.65 }}>
+                        {vdExplain}
+                      </div>
                     </div>
-                  </div>
+                  </>
                 );
               })()}
 
