@@ -390,7 +390,7 @@ function verdictCfg(v: DealVerdict) {
     case "pass": return {
       emoji: "🔴", label: "Pass",
       color: "#EF4444", bg: "rgba(239,68,68,0.1)", border: "rgba(239,68,68,0.25)",
-      subtext: "Overpriced, risky, or structurally weak. Reprice or move on.",
+      subtext: "Does not meet investment criteria at current terms. See details below.",
     };
     case "manual_review": return {
       emoji: "⚠️", label: "Needs Manual Review",
@@ -398,6 +398,61 @@ function verdictCfg(v: DealVerdict) {
       subtext: "Data quality flags require manual review before any verdict can be issued. Verify financials before advancing.",
     };
   }
+}
+
+/** Dynamic verdict explanation — uses actual deal metrics to explain WHY */
+function verdictExplanation(d: DealRun): string {
+  const gp = d.gap_pct ?? 0;
+  const dscr = d.dscr ?? 0;
+  const rl = (d.risk_level || "").toLowerCase();
+  const isHighRisk = rl === "high" || rl === "critical";
+  const ind = IL[d.industry] || d.industry;
+  const v = d.verdict ?? dealVerdict(d);
+
+  // Business quality classification
+  const bizQuality = dscr >= 1.75 ? "Strong" : dscr >= 1.25 ? "Average" : "Weak";
+  const bizQualityColor = bizQuality === "Strong" ? "#10B981" : bizQuality === "Average" ? "#F59E0B" : "#EF4444";
+
+  // Deal pricing classification
+  const dealPricing = gp > 20 ? "Expensive" : gp > 5 ? "Above Market" : gp < -5 ? "Cheap" : "Fair";
+  const dealPricingColor = dealPricing === "Cheap" ? "#10B981" : dealPricing === "Fair" ? "#3B82F6" : dealPricing === "Above Market" ? "#F59E0B" : "#EF4444";
+
+  if (v === "high_conviction") {
+    return `This is a ${bizQuality.toLowerCase()} cash-flowing ${ind} with favorable pricing — ${Math.abs(gp)}% below market fair value with ${dscr.toFixed(2)}x debt coverage. Priority deal to advance.`;
+  }
+  if (v === "pursue") {
+    return `${bizQuality} business quality (DSCR ${dscr.toFixed(2)}x) at ${dealPricing.toLowerCase()} pricing. Clearly underpriced and financeable — move to diligence.`;
+  }
+  if (v === "investigate") {
+    return `${bizQuality} business quality (DSCR ${dscr.toFixed(2)}x). Pricing is ${gp > 0 ? `${gp}% above` : `${Math.abs(gp)}% below`} fair value — viable but needs validation before advancing.`;
+  }
+  if (v === "manual_review") {
+    return `Data quality flags prevent a reliable verdict. Verify financials independently before drawing conclusions.`;
+  }
+
+  // PASS — this is where the magic happens
+  // Case 1: Strong business, bad price
+  if (dscr >= 1.5 && gp > 15) {
+    return `This is a strong cash-flowing business (DSCR ${dscr.toFixed(2)}x) — but it is materially overpriced. The ${(d.valuation_multiple ?? 0).toFixed(2)}x multiple exceeds the typical range for ${ind} transactions. At the current ask, you are paying ~${gp}% above modeled fair value. This is not a structural failure — it is a pricing problem. Reprice into the fair value range or move on.`;
+  }
+  // Case 2: Decent business, moderate overpricing
+  if (dscr >= 1.25 && gp > 15) {
+    return `Financeable business (DSCR ${dscr.toFixed(2)}x meets lender minimums), but priced ${gp}% above fair value. The cash flow supports debt service — the issue is what you're paying for it. Negotiate toward fair value or pass.`;
+  }
+  // Case 3: Weak DSCR is the problem
+  if (dscr < 1.25 && gp <= 15) {
+    return `Pricing is ${gp > 5 ? "slightly above" : "near"} market, but DSCR of ${dscr.toFixed(2)}x falls below the 1.25x lender minimum. This deal cannot support standard financing at current terms. Requires repricing, higher equity injection, or structural changes.`;
+  }
+  // Case 4: Both overpriced AND weak DSCR
+  if (dscr < 1.25 && gp > 15) {
+    return `Overpriced (${gp}% above fair value) and underfinanceable (DSCR ${dscr.toFixed(2)}x below 1.25x minimum). Both pricing and debt coverage fail. Significant restructuring required.`;
+  }
+  // Case 5: High risk level is the driver
+  if (isHighRisk && gp <= 15) {
+    return `Pricing is ${gp > 5 ? "moderately above" : "near"} market, but risk profile is ${rl}. Operational or structural concerns outweigh the pricing position. Resolve risk factors before advancing.`;
+  }
+  // Default
+  return `Does not meet investment criteria at current terms. ${gp > 15 ? `Priced ${gp}% above fair value.` : ""} ${dscr < 1.25 ? `DSCR of ${dscr.toFixed(2)}x below financing threshold.` : ""} ${isHighRisk ? `Risk level: ${d.risk_level}.` : ""}`.trim();
 }
 
 // ─── UI ATOMS ─────────────────────────────────────────────────────────────────
@@ -3267,9 +3322,31 @@ function UnderwritingPanel({
                   }))}
                 />
               </div>
-              <div style={{ fontSize: 11, color: "#94A3B8", lineHeight: 1.5 }}>{vd.subtext}</div>
+              <div style={{ fontSize: 11, color: "#94A3B8", lineHeight: 1.5 }}>{verdictExplanation(deal)}</div>              
             </div>
           </div>
+
+          {/* Business vs Price classification */}
+{(() => {
+  const dscr = deal.dscr ?? 0;
+  const gp = deal.gap_pct ?? 0;
+  const bizQ = dscr >= 1.75 ? "Strong" : dscr >= 1.25 ? "Average" : "Weak";
+  const bizC = bizQ === "Strong" ? "#10B981" : bizQ === "Average" ? "#F59E0B" : "#EF4444";
+  const priceQ = gp > 20 ? "Expensive" : gp > 5 ? "Above Market" : gp < -5 ? "Cheap" : "Fair";
+  const priceC = priceQ === "Cheap" ? "#10B981" : priceQ === "Fair" ? "#3B82F6" : priceQ === "Above Market" ? "#F59E0B" : "#EF4444";
+  return (
+    <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+      <div style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "3px 10px", borderRadius: 6, background: `${bizC}14`, border: `1px solid ${bizC}33` }}>
+        <span style={{ fontSize: 9, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.06em" }}>Business:</span>
+        <span style={{ fontSize: 11, fontWeight: 700, color: bizC }}>{bizQ}</span>
+      </div>
+      <div style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "3px 10px", borderRadius: 6, background: `${priceC}14`, border: `1px solid ${priceC}33` }}>
+        <span style={{ fontSize: 9, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.06em" }}>Pricing:</span>
+        <span style={{ fontSize: 11, fontWeight: 700, color: priceC }}>{priceQ}</span>
+      </div>
+    </div>
+  );
+})()}
 
           {/* Trajectory chip — compact hook below verdict banner */}
           {(() => {
@@ -3346,7 +3423,7 @@ function UnderwritingPanel({
                     textTransform: "uppercase", letterSpacing: "0.06em" }}>
                     {vd.label}
                   </div>
-                  <div style={{ fontSize: 10, color: "#6B7280", marginTop: 1 }}>{vd.subtext}</div>
+                  <div style={{ fontSize: 10, color: "#6B7280", marginTop: 1, lineHeight: 1.4 }}>{verdictExplanation(deal)}</div>
                 </div>
                 <div style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 5 }}>
                   <div style={{ fontFamily: "'JetBrains Mono',monospace",
