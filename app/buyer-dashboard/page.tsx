@@ -8390,7 +8390,7 @@ function DownloadReportIconButton({
       ) : (
         <>
           <span>⬇</span>
-          <span>Report{!isPro && " 🔒"}</span>
+          <span>Run Report{!isPro && " 🔒"}</span>
         </>
       )}
     </button>
