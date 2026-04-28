@@ -1790,12 +1790,14 @@ function AnalyzeDealModal({
         }),
       });
       const json = await res.json();
+      alert("API RESPONSE: " + JSON.stringify(json).slice(0, 200));
       if (!json.success) throw new Error(json.error || "Save failed");
       if (json.deal) {
         onDealSaved(json.deal as DealRun);
         setSaved(true);
       }
-    } catch (err) {
+     } catch (err) {
+      alert("SAVE FAILED: " + (err as Error).message);
       setSaveError((err as Error).message);
     }
     setSaving(false);
