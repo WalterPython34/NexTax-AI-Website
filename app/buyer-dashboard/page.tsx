@@ -8204,11 +8204,13 @@ function TabMarketIntel({
 
       {/* ══ SECTION 2.5: TRENDING VALUATION MULTIPLES ═══════════════════════════
            Side-by-side SDE + Revenue multiples with transaction sample sizes.
-           Free users see top 3; Pro sees full list. IQR bar visible on hover.      */}
+           Free users see top 3; Pro sees full list. IQR bar visible on hover.      
+           NOTE: Hidden when no benchmark data is available — re-enables automatically.*/}
+      {!loading && trending.length > 0 && trending.some(t => t.median_multiple) && (
       <div style={{ marginBottom: 24 }}>
         <SectionHeader
           title="Trending Valuation Multiples"
-          sub="Live closed-deal multiples from the DealStats transaction database"
+          sub="Live closed-deal multiples from the NexTax.AI industry transaction database"
         />
         <Card style={{ padding: 0, overflow: "hidden" }}>
           {/* Header row */}
@@ -8314,6 +8316,7 @@ function TabMarketIntel({
           )}
         </Card>
       </div>
+      )}
 
       {/* ══ SECTION 3: LOCAL MARKET SATURATION (always available w/ soft limit) ═ */}
       <div style={{ marginBottom: 24 }}>
