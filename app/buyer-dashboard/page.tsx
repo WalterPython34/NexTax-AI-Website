@@ -2277,6 +2277,11 @@ function AnalyzeDealModal({
                       </div>
                     </div>
 
+                    {/* Explanation — full width below the 3 boxes */}
+                    <div style={{ fontSize: 11, color: "#9CA3AF", lineHeight: 1.55, padding: "0 2px" }}>
+                      {vdExplain}
+                    </div>
+
                     {/* Business vs Pricing chips */}
                       {(() => {
                         const dscr = score.dscr ?? 0;
@@ -2298,13 +2303,8 @@ function AnalyzeDealModal({
                             </div>
                           </>
                         );
-                      })()}
+                      })()}                   
                    
-
-                    {/* Explanation — full width below the 3 boxes */}
-                    <div style={{ fontSize: 11, color: "#9CA3AF", lineHeight: 1.55, padding: "0 2px" }}>
-                      {vdExplain}
-                    </div>
                     
                     {/* Sub-score pills */}
                     <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
