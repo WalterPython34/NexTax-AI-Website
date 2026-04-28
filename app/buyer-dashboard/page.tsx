@@ -2260,7 +2260,7 @@ function AnalyzeDealModal({
                 const vdExplain = verdictExplanation(dForV);
                 return (
                   <>
-                    {/* Row 1: Verdict box + Sub-score pills */}
+                    {/* Row 1: Verdict box + Sub-score pills update*/}
                     <div style={{ display: "flex", gap: 10, marginBottom: 10 }}>
                       <div style={{
                         flex: 1, padding: "10px 14px", borderRadius: 10,
