@@ -2276,6 +2276,7 @@ function AnalyzeDealModal({
                           FV Range: {fmt(score.fairValueLow)} – {fmt(score.fairValueHigh)}
                         </div>
                       </div>
+                      </div>
                       {(() => {
   const dscr = score.dscr ?? 0;
   const gp = score.gap_pct ?? 0;
@@ -2296,7 +2297,7 @@ function AnalyzeDealModal({
     </div>
   );
 })()}
-                    </div>
+                    
                     {/* Sub-score pills */}
                     <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
                       {[
