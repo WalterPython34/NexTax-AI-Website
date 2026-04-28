@@ -2277,7 +2277,7 @@ function AnalyzeDealModal({
                       </div>
                     </div>
 
-                    {/* Business + Pricing pills */}
+                    {/* Business vs Pricing chips */}
                       {(() => {
                         const dscr = score.dscr ?? 0;
                         const gp = score.gap_pct ?? 0;
@@ -2295,10 +2295,11 @@ function AnalyzeDealModal({
                               <span style={{ fontSize: 9, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.06em" }}>Pricing:</span>
                               <span style={{ fontSize: 13, fontWeight: 700, color: priceC }}>{priceQ}</span>
                             </div>
+                            </div>
                           </>
                         );
                       })()}
-                    </div>
+                   
 
                     {/* Explanation — full width below the 3 boxes */}
                     <div style={{ fontSize: 11, color: "#9CA3AF", lineHeight: 1.55, padding: "0 2px" }}>
