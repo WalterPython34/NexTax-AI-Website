@@ -5629,7 +5629,7 @@ function TabHome({
                     display: "inline-flex", alignItems: "center", gap: 6,
                   }}
                 >
-                  Get Pro Analysis →
+                  Pre-LOI Diligence →
                 </a>
               </div>
             </div>
