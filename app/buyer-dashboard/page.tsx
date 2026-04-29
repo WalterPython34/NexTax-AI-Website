@@ -1941,7 +1941,7 @@ function AnalyzeDealModal({
               </div>
 
               {/* Financial inputs */}
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10, marginBottom: 14 }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: 10, marginBottom: 14 }}>
                 {([
                   { k: "revenue" as const,     label: "Annual Revenue ($)" },
                   { k: "sde" as const,          label: "SDE / Cash Flow ($)" },
@@ -2012,7 +2012,7 @@ function AnalyzeDealModal({
                 <div style={{ fontSize: 10, color: "#7C8593", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600, marginBottom: 10 }}>
                   Debt Terms (for DSCR)
                 </div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(120px, 1fr))", gap: 10 }}>
                   {([
                     { k: "debtPercent" as const,  label: "Debt %",   placeholder: "80" },
                     { k: "interestRate" as const,  label: "Rate %",   placeholder: "10.5" },
@@ -2111,7 +2111,7 @@ function AnalyzeDealModal({
 
               {/* Hero row */}
               <div style={{
-                display: "grid", gridTemplateColumns: "auto 1fr", gap: 20,
+                display: "grid", gridTemplateColumns: "auto minmax(0, 1fr)", gap: 20,
                 padding: "16px 18px", borderRadius: 12, marginBottom: 8,
                 background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)",
                 alignItems: "center",
@@ -2145,7 +2145,7 @@ function AnalyzeDealModal({
                 </div>
 
                 {/* Key metrics */}
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 10 }}>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(100px, 1fr))", gap: 10 }}>
                   {[
                     { label: "Fair Value",    value: fmt(score.fairValue),           color: "#10B981" },
                     { label: "Multiple",      value: score.multiple.toFixed(2) + "x", color: "#E2E8F0" },
@@ -4783,7 +4783,7 @@ function SignInRequired() {
             </button>
             <p style={{ fontSize: 11, color: "#6B7280", marginTop: 10 }}>
               Already analyzed a deal?{" "}
-              <a href="#" onClick={(e) => { e.preventDefault(); }} style={{ color: "#818CF8", textDecoration: "none" }}>
+              <a href="/login" style={{ color: "#818CF8", textDecoration: "none" }}>
                 Pick up where you left off →
               </a>
             </p>
@@ -4861,7 +4861,7 @@ function StatCards({ deals, loading }: { deals: DealRun[]; loading: boolean }) {
   ];
 
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10, marginBottom: 28 }}>
+    <div className="nxtax-stat-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 10, marginBottom: 28 }}>
       {cards.map(c => (
         <div key={c.label} style={{
           padding: "16px 18px", borderRadius: 12,
@@ -8860,6 +8860,30 @@ export default function BuyerDashboard() {
         .btn-qv:hover { background: rgba(255,255,255,0.06) !important; color: #E2E8F0 !important; border-color: rgba(255,255,255,0.15) !important }
         .btn-uw { transition: background 0.12s, box-shadow 0.12s }
         .btn-uw:hover { background: rgba(99,102,241,0.2) !important; box-shadow: 0 0 0 1px rgba(99,102,241,0.4) }
+          /* ── Mobile responsive ── */
+        @media (max-width: 768px) {
+          /* Nav tabs: horizontal scroll */
+          .nxtax-nav-tabs {
+            overflow-x: auto !important;
+            -webkit-overflow-scrolling: touch;
+            scrollbar-width: none;
+          }
+          .nxtax-nav-tabs::-webkit-scrollbar { display: none; }
+
+          /* Stat cards: 2 columns */
+          .nxtax-stat-grid { grid-template-columns: 1fr 1fr !important; }
+
+          /* Deal table: hide columns, reduce padding */
+          .nxtax-deal-header, .nxtax-deal-row {
+            grid-template-columns: 1fr auto auto !important;
+          }
+          .nxtax-deal-hide-mobile { display: none !important; }
+        }
+
+        @media (max-width: 480px) {
+          /* Stat cards: single column */
+          .nxtax-stat-grid { grid-template-columns: 1fr !important; }
+        }
 
         /* Trust badge tooltip */
         .nxtax-trust-badge:hover .nxtax-trust-tooltip {
@@ -8894,7 +8918,7 @@ export default function BuyerDashboard() {
           </a>
 
           {/* Tab buttons */}
-          <div style={{ display: "flex", gap: 2, flex: 1 }}>
+          <div className="nxtax-nav-tabs" style={{ display: "flex", gap: 2, flex: 1 }}>
             {TABS.map(tab => (
               <button
                 key={tab.id}
