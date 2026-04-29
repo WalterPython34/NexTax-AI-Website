@@ -45,10 +45,7 @@ const [freeFullDealId, setFreeFullDealId] = useState<string | null>(() => {
   return localStorage.getItem("nxtax_free_full_deal") ?? null;
 });
 
-const unlockFreeDeal = (dealId: string) => {
-  setFreeFullDealId(dealId);
-  localStorage.setItem("nxtax_free_full_deal", dealId);
-};
+
 
 
 // ─── TYPES ───────────────────────────────────────────────────────────────────
