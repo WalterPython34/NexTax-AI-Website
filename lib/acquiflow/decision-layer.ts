@@ -388,10 +388,133 @@ function detectRiskFlags(d: DealReportInputs, scenarios: StressScenario[]): Risk
     });
   }
 
+    // ── POSITIVE SIGNALS ─────────────────────────────────────────────────
+  if (inputs.dscr >= 1.5) {
+    const headroom = Math.round(((inputs.dscr - 1.25) / 1.25) * 100);
+    riskFlags.push({
+      severity: "LOW" as const,
+      label: "Strong Debt Coverage",
+      detail: `DSCR of ${inputs.dscr.toFixed(2)}x provides ${headroom}% headroom above the 1.25x lender minimum.`,
+      isDealBreaker: false,
+    });
+  }
+
+  if (inputs.trustScore >= 85) {
+    riskFlags.push({
+      severity: "LOW" as const,
+      label: "Credible Financials",
+      detail: `Data confidence score of ${inputs.trustScore}/100 — reported financials appear internally consistent.`,
+      isDealBreaker: false,
+    });
+  }
+
+  if (stressScenarios[1] && stressScenarios[1].dscr >= 1.25) {
+    riskFlags.push({
+      severity: "LOW" as const,
+      label: "Stress Resilient",
+      detail: `Deal maintains ${stressScenarios[1].dscr.toFixed(2)}x DSCR under -15% revenue stress — resilient under moderate downside.`,
+      isDealBreaker: false,
+    });
+  }
+
+  if (inputs.gapPct <= -10) {
+    riskFlags.push({
+      severity: "LOW" as const,
+      label: "Favorable Pricing",
+      detail: `Asking price is ${Math.abs(inputs.gapPct)}% below modeled fair value — favorable entry point if earnings are verified.`,
+      isDealBreaker: false,
+    });
+  }
+
+  // ── STANDARD DILIGENCE ITEMS ─────────────────────────────────────────
+  riskFlags.push({
+    severity: "MEDIUM" as const,
+    label: "Owner Compensation",
+    detail: "Verify owner compensation is at or below market replacement cost. Above-market owner comp inflates SDE.",
+    isDealBreaker: false,
+  });
+
+  riskFlags.push({
+    severity: "MEDIUM" as const,
+    label: "Lease Terms",
+    detail: "Confirm lease term extends at least 3 years beyond acquisition close.",
+    isDealBreaker: false,
+  });
+
+  riskFlags.push({
+    severity: "MEDIUM" as const,
+    label: "Customer Concentration",
+    detail: "Request top 5 customer breakdown as % of revenue. Single-customer concentration above 20% attracts lender scrutiny.",
+    isDealBreaker: false,
+  });
+
+  riskFlags.push({
+    severity: "MEDIUM" as const,
+    label: "Non-Recurring Items",
+    detail: "Validate SDE excludes one-time items (PPP loans, insurance settlements, asset sales).",
+    isDealBreaker: false,
+  });
+
+  riskFlags.push({
+    severity: "MEDIUM" as const,
+    label: "Litigation & Liabilities",
+    detail: "Confirm no pending litigation, environmental liabilities, or regulatory actions.",
+    isDealBreaker: false,
+  });
+
+  riskFlags.push({
+    severity: "MEDIUM" as const,
+    label: "Accounts Receivable",
+    detail: "Request aged AR report. AR beyond 90 days signals collection risk and may require working capital adjustment.",
+    isDealBreaker: false,
+  });
+
+  // ── INDUSTRY-SPECIFIC ────────────────────────────────────────────────
+  const industryContext: Record<string, { label: string; detail: string }> = {
+    dental:          { label: "Provider Retention", detail: "Patient base follows the dentist, not the practice. Transition period and non-compete are critical." },
+    hvac:            { label: "License Transfer", detail: "HVAC trade licenses are state-specific — confirm they transfer with the acquisition." },
+    plumbing:        { label: "License Transfer", detail: "Plumbing licenses are state-specific — confirm they transfer with the acquisition." },
+    electrical:      { label: "License Transfer", detail: "Electrical licenses are state-specific — confirm they transfer with the acquisition." },
+    restaurant:      { label: "Liquor License", detail: "Verify liquor license transferability and lease assignment. Both are deal-breakers if non-transferable." },
+    daycare:         { label: "Licensing Capacity", detail: "Confirm staff-to-child ratios meet state requirements. Licensing lapses can shut down operations." },
+    insurance:       { label: "Book Transfer", detail: "Verify retention rates and confirm carrier appointments transfer to the buyer entity." },
+    pharmacy:        { label: "DEA Registration", detail: "Confirm DEA registration and state pharmacy license transfer with the acquisition." },
+    medspa:          { label: "Medical Director", detail: "Verify medical director agreement transfers. Med spas require physician oversight in most states." },
+    physicaltherapy: { label: "Credentialing", detail: "Confirm provider credentialing with insurance panels transfers. Re-credentialing delays can create 90-180 day revenue gaps." },
+    veterinary:      { label: "DVM Requirement", detail: "Some states require the practice owner to hold a DVM license." },
+    seniorcare:      { label: "Certification Transfer", detail: "State licensing and Medicare/Medicaid recertification timelines can exceed 6 months." },
+    healthcare:      { label: "Provider Credentialing", detail: "Verify all provider credentialing, Medicare enrollment, and state licensing transfers." },
+    staffing:        { label: "EMR Rate", detail: "Verify workers' comp experience modification rate. High EMR indicates claims history affecting insurance costs." },
+    accounting:      { label: "Client Retention", detail: "Confirm client engagement letters are assignable. Non-transferable relationships erode value." },
+    gym:             { label: "Membership Churn", detail: "Verify membership contract terms. Monthly churn rates above 8% signal retention risk." },
+    autorepair:      { label: "Certifications", detail: "Confirm OEM certifications (ASE, manufacturer-specific) transfer and verify environmental compliance." },
+    saas:            { label: "Churn Rate", detail: "Confirm customer churn rate. MRR with annual contracts is more defensible than month-to-month." },
+    ecommerce:       { label: "Platform Standing", detail: "Verify platform account standing and confirm all IP, trademarks, and supplier agreements transfer." },
+    laundromat:      { label: "Equipment Age", detail: "Verify equipment replacement schedule. Washer/dryer lifecycle is 7-10 years." },
+    storage:         { label: "Occupancy Trend", detail: "Verify trailing 12-month occupancy rates. Use annualized figures, not peak-month." },
+    construction:    { label: "License & Bonding", detail: "Verify GC license transfers and confirm bonding capacity carries over." },
+    cleaning:        { label: "Contract Revenue", detail: "Confirm contract vs recurring split. Businesses with >60% contract revenue have more defensible cash flows." },
+    marketing:       { label: "Key Person Risk", detail: "Verify client contract terms and key employee retention. Agency value is tied to relationships." },
+    transportation:  { label: "DOT Compliance", detail: "Verify DOT compliance, CDL driver retention, and operating authority transfers." },
+    realestatebrok:  { label: "Broker License", detail: "Verify broker license requirements and confirm agent agreements are assignable." },
+    propertymanage:  { label: "Contract Assignment", detail: "Confirm management agreements are assignable without owner consent." },
+  };
+
+  const indCtx = industryContext[inputs.industry];
+  if (indCtx) {
+    riskFlags.push({
+      severity: "MEDIUM" as const,
+      label: indCtx.label,
+      detail: indCtx.detail,
+      isDealBreaker: false,
+    });
+  }
+
+  
   // Sort by severity (HIGH first, then MEDIUM, then LOW)
   const order: Record<RiskSeverity, number> = { HIGH: 0, MEDIUM: 1, LOW: 2 };
   flags.sort((a, b) => order[a.severity] - order[b.severity]);
-
+ 
   return flags;
 }
 
