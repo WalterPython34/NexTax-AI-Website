@@ -8661,15 +8661,18 @@ export default function BuyerDashboard() {
 
   const isPro       = profile?.plan === "pro" || profile?.plan === "premium";
   const userInitial = user?.email?.charAt(0)?.toUpperCase() ?? "?";
-  const [freeFullDealId, setFreeFullDealId] = useState<string | null>(() => {
+  const freeFullDealKey = user?.id ? `nxtax_free_full_deal_${user.id}` : "nxtax_free_full_deal";
+
+const [freeFullDealId, setFreeFullDealId] = useState<string | null>(() => {
   if (typeof window === "undefined") return null;
-  return localStorage.getItem("nxtax_free_full_deal") ?? null;
+  return localStorage.getItem(freeFullDealKey) ?? null;
 });
 
 const unlockFreeDeal = (dealId: string) => {
   setFreeFullDealId(dealId);
-  localStorage.setItem("nxtax_free_full_deal", dealId);
+  localStorage.setItem(freeFullDealKey, dealId);
 };
+  
 const dealHasFullAccess = (dealId: string): boolean => {
   if (isPro) return true;
   return dealId === freeFullDealId;
