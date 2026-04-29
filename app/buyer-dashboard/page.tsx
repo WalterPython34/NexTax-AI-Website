@@ -3352,7 +3352,7 @@ function UnderwritingPanel({
                   <>
                     <span style={{ fontSize: 12 }}>⬇</span>
                     <span style={{ fontSize: 10, fontWeight: 600, textTransform: "uppercase" as const, letterSpacing: "0.06em" }}>
-                      {isPro ? "Report" : "Report 🔒"}
+                      {isPro ? "Download Full Report" : "Download Full Report 🔒"}
                     </span>
                   </>
                 )}
