@@ -9267,7 +9267,7 @@ export default function BuyerDashboard() {
       {underwritingDeal && (
         <UnderwritingPanel
           deal={underwritingDeal}
-          isPro={isPro || dealHasFullAccess(underwritingDeal.id)}
+          isPro={isPro}
           onClose={() => setUnderwritingDeal(null)}
           onShowUpgrade={() => setShowUpgradeModal(true)}
           onShowDownloadUpgrade={() => setShowUpgradeModal(true)}
