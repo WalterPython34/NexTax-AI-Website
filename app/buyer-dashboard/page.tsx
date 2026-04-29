@@ -50,10 +50,6 @@ const unlockFreeDeal = (dealId: string) => {
   localStorage.setItem("nxtax_free_full_deal", dealId);
 };
 
-const dealHasFullAccess = (dealId: string): boolean => {
-  if (isPro) return true;
-  return dealId === freeFullDealId;
-};
 
 // ─── TYPES ───────────────────────────────────────────────────────────────────
 
