@@ -40,14 +40,6 @@ const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 );
 
-const [freeFullDealId, setFreeFullDealId] = useState<string | null>(() => {
-  if (typeof window === "undefined") return null;
-  return localStorage.getItem("nxtax_free_full_deal") ?? null;
-});
-
-
-
-
 // ─── TYPES ───────────────────────────────────────────────────────────────────
 
 type TabId       = "home" | "dashboard" | "my-deals" | "compare" | "market-intel";
