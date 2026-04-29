@@ -123,41 +123,37 @@ export function buildRiskFlags(d: DealMemoInput): RiskFlag[] {
     flags.push({ level: "low", text: `Data confidence of ${d.trustScore}/100 — standard verification procedures apply.` });
   }
 
-    // ── POSITIVE SIGNALS (green) — fire when deal is clean ────────────────
-  const sdeMargin = inputs.usableSDE > 0 && inputs.asking_price > 0
-    ? (inputs.usableSDE / (inputs.usableSDE / (inputs.valuation_multiple || 1))) * 100
-    : null;
-
-  if (inputs.dscr >= 1.5) {
-    const headroom = Math.round(((inputs.dscr - 1.25) / 1.25) * 100);
+  // ── POSITIVE SIGNALS (green) — fire when deal is clean ────────────────
+  if (d.dscr >= 1.5) {
+    const headroom = Math.round(((d.dscr - 1.25) / 1.25) * 100);
     flags.push({
       level: "low",
-      text: `DSCR of ${inputs.dscr.toFixed(2)}x provides ${headroom}% headroom above the 1.25x lender minimum — debt service coverage is strong.`,
+      text: `DSCR of ${d.dscr.toFixed(2)}x provides ${headroom}% headroom above the 1.25x lender minimum — debt service coverage is strong.`,
     });
   }
 
-  if (inputs.trustScore >= 85) {
+  if (d.trustScore >= 85) {
     flags.push({
       level: "low",
-      text: `Data confidence score of ${inputs.trustScore}/100 — reported financials appear credible and internally consistent.`,
+      text: `Data confidence score of ${d.trustScore}/100 — reported financials appear credible and internally consistent.`,
     });
   }
 
-  if (inputs.stressDscr15 >= 1.25) {
+  if (d.stressDscr15 >= 1.25) {
     flags.push({
       level: "low",
-      text: `Deal survives -15% revenue stress test with DSCR still at ${inputs.stressDscr15.toFixed(2)}x — resilient under moderate downside.`,
+      text: `Deal survives -15% revenue stress test with DSCR still at ${d.stressDscr15.toFixed(2)}x — resilient under moderate downside.`,
     });
   }
 
-  if (inputs.gap_pct !== null && inputs.gap_pct <= -10) {
+  if (d.gap_pct !== null && d.gap_pct <= -10) {
     flags.push({
       level: "low",
-      text: `Asking price is ${Math.abs(inputs.gap_pct)}% below modeled fair value — favorable entry point if earnings are verified.`,
+      text: `Asking price is ${Math.abs(d.gap_pct)}% below modeled fair value — favorable entry point if earnings are verified.`,
     });
   }
 
-  if (inputs.earningsSource === "reported" && inputs.trustScore >= 80) {
+  if (d.earningsSource === "reported" && d.trustScore >= 80) {
     flags.push({
       level: "low",
       text: `Reported SDE used as underwriting basis without adjustment — no material normalization flags triggered.`,
@@ -240,13 +236,14 @@ export function buildRiskFlags(d: DealMemoInput): RiskFlag[] {
     clothing:        "Verify inventory valuation methodology and confirm supplier/brand authorization agreements transfer.",
   };
 
-  const industryFlag = industryFlags[inputs.industry];
+  const industryFlag = industryFlags[d.industry];
   if (industryFlag) {
     flags.push({
       level: "medium",
       text: industryFlag,
     });
-  }  
+  }
+
   return flags;
 }
 
