@@ -1657,6 +1657,7 @@ function AnalyzeDealModal({
   const [saved, setSaved]     = useState(false);
   const [saveError, setSaveError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showBreakdown, setShowBreakdown] = React.useState(false);
 
   // ── Input validation — prevents nonsense verdicts from garbage input ──────
   // Parse a locale-formatted currency string ("1,500,000") back to a number
@@ -2263,6 +2264,63 @@ function AnalyzeDealModal({
                   </div>
                 );
               })()}
+
+              {/* Normalization breakdown — expandable */}
+{score.normalizationBullets && score.normalizationBullets.length > 0 && (() => {
+  const rawSDE = parseFloat(inputs.sde.replace(/,/g, "")) || 0;
+  const usedSDE = Math.round(score.fairValue / ((SCORE_INDUSTRIES[inputs.industry]?.benchmarkMid) ?? 2.75));
+  const totalAdj = rawSDE - usedSDE;
+  
+  return (
+    <div style={{
+      padding: "10px 14px", borderRadius: 9, marginBottom: 10,
+      background: "rgba(129,140,248,0.05)", border: "1px solid rgba(129,140,248,0.15)",
+    }}>
+      <div
+        onClick={() => setShowBreakdown(!showBreakdown)}
+        style={{ display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer" }}
+      >
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <span style={{ fontSize: 12, fontWeight: 700, color: "#A5B4FC" }}>
+            SDE Normalization Applied
+          </span>
+          <span style={{ fontSize: 11, color: "#F59E0B", fontFamily: "'JetBrains Mono',monospace", fontWeight: 600 }}>
+            -${totalAdj.toLocaleString()}
+          </span>
+        </div>
+        <span style={{ fontSize: 11, color: "#7C8593" }}>{showBreakdown ? "▲ Hide" : "▼ Details"}</span>
+      </div>
+      {showBreakdown && (
+        <div style={{ marginTop: 10, paddingTop: 10, borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: "6px 12px", marginBottom: 10 }}>
+            <span style={{ fontSize: 10, color: "#7C8593", textTransform: "uppercase", letterSpacing: "0.07em", fontWeight: 600 }}>Reported SDE</span>
+            <span style={{ fontSize: 12, color: "#E2E8F0", fontFamily: "'JetBrains Mono',monospace", fontWeight: 600, textAlign: "right" }}>${rawSDE.toLocaleString()}</span>
+            <span style={{ fontSize: 10, color: "#7C8593", textTransform: "uppercase", letterSpacing: "0.07em", fontWeight: 600 }}>Usable SDE (adjusted)</span>
+            <span style={{ fontSize: 12, color: "#818CF8", fontFamily: "'JetBrains Mono',monospace", fontWeight: 600, textAlign: "right" }}>${usedSDE.toLocaleString()}</span>
+            <span style={{ fontSize: 10, color: "#7C8593", textTransform: "uppercase", letterSpacing: "0.07em", fontWeight: 600 }}>Total Adjustment</span>
+            <span style={{ fontSize: 12, color: "#F59E0B", fontFamily: "'JetBrains Mono',monospace", fontWeight: 600, textAlign: "right" }}>-${totalAdj.toLocaleString()}</span>
+          </div>
+          <div style={{ fontSize: 10, color: "#7C8593", textTransform: "uppercase", letterSpacing: "0.07em", fontWeight: 600, marginBottom: 6 }}>
+            Adjustment Factors
+          </div>
+          {score.normalizationBullets.map((bullet, i) => (
+            <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: 5 }}>
+              <span style={{ color: "#F59E0B", fontSize: 10, flexShrink: 0, marginTop: 2 }}>&#x2022;</span>
+              <span style={{ fontSize: 11, color: "#94A3B8", lineHeight: 1.5 }}>{bullet}</span>
+            </div>
+          ))}
+          <div style={{
+            marginTop: 10, padding: "8px 10px", borderRadius: 7,
+            background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.05)",
+            fontSize: 11, color: "#6B7280", lineHeight: 1.55,
+          }}>
+            Normalization compares reported SDE margin against RMA industry benchmarks ({score.benchmarkBasis === "direct" ? "direct match" : score.benchmarkBasis === "proxy" ? "proxy match" : "fallback estimate"}). When reported margins significantly exceed industry norms, the engine applies a conservative haircut to approximate what a lender would underwrite. This protects against inflated add-backs and above-market owner compensation.
+          </div>
+        </div>
+      )}
+    </div>
+  );
+})()}
 
               {/* Verdict + fair value range */}
               {(() => {
