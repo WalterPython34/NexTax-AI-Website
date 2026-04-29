@@ -9262,38 +9262,7 @@ export default function BuyerDashboard() {
         />
       )}
 
-      {underwritingDeal && !isPro && !freeFullDealId && (
-  <div style={{
-    position: "fixed", bottom: 20, left: "50%", transform: "translateX(-50%)",
-    zIndex: 300, maxWidth: 480, width: "calc(100% - 32px)",
-    padding: "14px 18px", borderRadius: 12,
-    background: "rgba(99,102,241,0.12)", border: "1px solid rgba(99,102,241,0.3)",
-    backdropFilter: "blur(8px)",
-    display: "flex", alignItems: "center", gap: 12,
-  }}>
-    <span style={{ fontSize: 20 }}>🔓</span>
-    <div style={{ flex: 1 }}>
-      <div style={{ fontSize: 13, fontWeight: 600, color: "#E2E8F0", marginBottom: 2 }}>
-        Unlock this deal completely — free
-      </div>
-      <div style={{ fontSize: 11, color: "#94A3B8" }}>
-        Your first deal gets full underwriting, comps, and report access. Choose wisely — it's one per account.
-      </div>
-    </div>
-    <button
-      onClick={() => unlockFreeDeal(underwritingDeal.id)}
-      style={{
-        padding: "8px 16px", borderRadius: 8, border: "none",
-        background: "linear-gradient(135deg,#6366F1,#8B5CF6)",
-        color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer",
-        whiteSpace: "nowrap",
-      }}
-    >
-      Unlock this deal →
-    </button>
-  </div>
-)}
-
+     
       {/* ── UNDERWRITING PANEL ── */}
       {underwritingDeal && (
         <UnderwritingPanel
