@@ -123,6 +123,130 @@ export function buildRiskFlags(d: DealMemoInput): RiskFlag[] {
     flags.push({ level: "low", text: `Data confidence of ${d.trustScore}/100 — standard verification procedures apply.` });
   }
 
+    // ── POSITIVE SIGNALS (green) — fire when deal is clean ────────────────
+  const sdeMargin = inputs.usableSDE > 0 && inputs.asking_price > 0
+    ? (inputs.usableSDE / (inputs.usableSDE / (inputs.valuation_multiple || 1))) * 100
+    : null;
+
+  if (inputs.dscr >= 1.5) {
+    const headroom = Math.round(((inputs.dscr - 1.25) / 1.25) * 100);
+    flags.push({
+      level: "low",
+      text: `DSCR of ${inputs.dscr.toFixed(2)}x provides ${headroom}% headroom above the 1.25x lender minimum — debt service coverage is strong.`,
+    });
+  }
+
+  if (inputs.trustScore >= 85) {
+    flags.push({
+      level: "low",
+      text: `Data confidence score of ${inputs.trustScore}/100 — reported financials appear credible and internally consistent.`,
+    });
+  }
+
+  if (inputs.stressDscr15 >= 1.25) {
+    flags.push({
+      level: "low",
+      text: `Deal survives -15% revenue stress test with DSCR still at ${inputs.stressDscr15.toFixed(2)}x — resilient under moderate downside.`,
+    });
+  }
+
+  if (inputs.gap_pct !== null && inputs.gap_pct <= -10) {
+    flags.push({
+      level: "low",
+      text: `Asking price is ${Math.abs(inputs.gap_pct)}% below modeled fair value — favorable entry point if earnings are verified.`,
+    });
+  }
+
+  if (inputs.earningsSource === "reported" && inputs.trustScore >= 80) {
+    flags.push({
+      level: "low",
+      text: `Reported SDE used as underwriting basis without adjustment — no material normalization flags triggered.`,
+    });
+  }
+
+  // ── NEUTRAL DILIGENCE ITEMS — always surface regardless of deal quality ──
+  flags.push({
+    level: "medium",
+    text: `Verify owner compensation is at or below market replacement cost for this role. Above-market owner comp inflates SDE and will be adjusted by lenders.`,
+  });
+
+  flags.push({
+    level: "medium",
+    text: `Confirm lease term extends at least 3 years beyond acquisition close. Short remaining lease terms create refinancing and relocation risk.`,
+  });
+
+  flags.push({
+    level: "medium",
+    text: `Request customer concentration breakdown — top 5 customers as percentage of revenue. Concentration above 20% in any single customer attracts lender scrutiny.`,
+  });
+
+  flags.push({
+    level: "medium",
+    text: `Validate that reported SDE excludes one-time or non-recurring items (PPP loans, insurance settlements, asset sales).`,
+  });
+
+  flags.push({
+    level: "medium",
+    text: `Confirm no pending litigation, environmental liabilities, or regulatory actions that could impair post-close cash flow.`,
+  });
+
+  flags.push({
+    level: "medium",
+    text: `Request aged accounts receivable report. AR beyond 90 days signals collection risk and may require a working capital adjustment at close.`,
+  });
+
+  // ── INDUSTRY-SPECIFIC CONTEXT — fires based on industry key ──────────
+  const industryFlags: Record<string, string> = {
+    dental:          "Verify provider retention plan — patient base typically follows the dentist, not the practice. Transition period and non-compete are critical.",
+    hvac:            "Confirm all trade licenses transfer with the acquisition. HVAC licensing is state-specific and may require the buyer to be independently licensed.",
+    plumbing:        "Confirm all trade licenses transfer with the acquisition. Plumbing licensing is state-specific and may require the buyer to be independently licensed.",
+    electrical:      "Confirm all trade licenses transfer with the acquisition. Electrical licensing is state-specific and may require the buyer to be independently licensed.",
+    restaurant:      "Verify liquor license transferability and lease assignment for the premises. Both are deal-breakers if non-transferable.",
+    daycare:         "Confirm licensing capacity and staff-to-child ratios meet current state requirements. Licensing lapses can shut down operations.",
+    insurance:       "Verify book of business retention rates and confirm carrier appointments transfer to the buyer entity.",
+    pharmacy:        "Confirm DEA registration and state pharmacy license transfer. Controlled substance handling adds regulatory complexity.",
+    medspa:          "Verify medical director agreement transfers or can be renegotiated. Med spas require physician oversight in most states.",
+    physicaltherapy: "Confirm provider credentialing with insurance panels transfers. Re-credentialing delays can create a 90-180 day revenue gap.",
+    veterinary:      "Verify veterinary license requirements for the acquiring entity. Some states require the practice owner to hold a DVM.",
+    seniorcare:      "Confirm state licensing and Medicare/Medicaid certification transfers. Recertification timelines can exceed 6 months.",
+    healthcare:      "Verify all provider credentialing, Medicare enrollment, and state licensing transfers with the acquisition.",
+    landscaping:     "Confirm pesticide application licenses and any municipal contracts transfer. Seasonal revenue patterns require working capital planning.",
+    pestcontrol:     "Confirm all pesticide applicator licenses and regulatory certifications transfer with the acquisition.",
+    construction:    "Verify general contractor license transfers and confirm bonding capacity carries over to the new entity.",
+    remodeling:      "Verify contractor licensing transfers. Home improvement contractor licensing varies by state and municipality.",
+    roofing:         "Confirm contractor license and manufacturer certifications (GAF, Owens Corning, etc.) transfer to the acquiring entity.",
+    staffing:        "Verify workers' compensation experience modification rate (EMR). High EMR indicates claims history that affects insurance costs post-close.",
+    accounting:      "Confirm client engagement letters are assignable. Accounting practices with non-transferable client relationships lose value rapidly.",
+    realestatebrok:  "Verify broker license requirements for the acquiring entity and confirm agent independent contractor agreements are assignable.",
+    propertymanage:  "Confirm all property management agreements are assignable without owner consent. Non-assignable contracts reduce transferable value.",
+    gym:             "Verify membership contract terms — month-to-month vs annual commitments. High monthly churn rates (>8%) signal retention risk.",
+    autorepair:      "Confirm any OEM certifications (ASE, manufacturer-specific) transfer and verify environmental compliance for waste disposal.",
+    carwash:         "Verify water reclamation compliance and confirm equipment maintenance history. Car wash equipment replacement is capital-intensive.",
+    laundromat:      "Confirm equipment age and replacement schedule. Washer/dryer lifecycle is 7-10 years — equipment nearing end-of-life reduces value.",
+    storage:         "Verify occupancy rates over trailing 12 months. Self-storage is highly seasonal — use annualized occupancy, not peak-month figures.",
+    cleaning:        "Confirm contract vs recurring revenue split. Cleaning businesses with >60% contract revenue have more defensible cash flows.",
+    petcare:         "Verify any required animal handling permits and confirm grooming/boarding facility meets local zoning requirements.",
+    ecommerce:       "Verify platform account standing (Amazon, Shopify, etc.) and confirm all IP, trademarks, and supplier agreements transfer.",
+    saas:            "Confirm customer churn rate and contract terms. MRR with annual contracts is more defensible than month-to-month subscriptions.",
+    printing:        "Verify equipment age and technology relevance. Digital printing equipment depreciates quickly as technology advances.",
+    signmaking:      "Verify equipment condition and confirm any municipal sign permit relationships transfer with the business.",
+    marketing:       "Verify client contract terms and key employee retention. Agency value is heavily tied to client relationships and creative talent.",
+    engineering:     "Confirm professional engineering (PE) license requirements and verify any government contract set-aside eligibility transfers.",
+    grocery:         "Verify supplier agreements and confirm any exclusive distribution rights. Grocery operates on thin margins — supplier terms are critical.",
+    transportation:  "Verify DOT compliance, CDL driver retention, and confirm all operating authority transfers to the acquiring entity.",
+    security:        "Confirm all security guard licenses and alarm installer certifications transfer. State licensing requirements vary significantly.",
+    painting:        "Verify contractor licensing and confirm any lead paint abatement certifications if servicing pre-1978 properties.",
+    hairsalon:       "Verify booth rental vs employee model. Booth rental salons have lower margins but less payroll risk. Confirm stylist retention plan.",
+    clothing:        "Verify inventory valuation methodology and confirm supplier/brand authorization agreements transfer.",
+  };
+
+  const industryFlag = industryFlags[inputs.industry];
+  if (industryFlag) {
+    flags.push({
+      level: "medium",
+      text: industryFlag,
+    });
+  }  
   return flags;
 }
 
