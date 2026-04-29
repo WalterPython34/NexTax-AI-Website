@@ -371,31 +371,37 @@ function dealVerdict(d: DealRun): DealVerdict {
 
 /** Verdict display config — emoji, label, colors */
 function verdictCfg(v: DealVerdict) {
+  const disclaimer = "This is a risk-adjusted underwriting view, not a pricing opinion.";
   switch (v) {
     case "high_conviction": return {
       emoji: "🔥", label: "High Conviction",
       color: "#F97316", bg: "rgba(249,115,22,0.1)", border: "rgba(249,115,22,0.25)",
       subtext: "Strong mispricing + durable DSCR. Priority deal to advance.",
+      disclaimer,
     };
     case "pursue": return {
       emoji: "🟢", label: "Pursue",
       color: "#10B981", bg: "rgba(16,185,129,0.1)", border: "rgba(16,185,129,0.25)",
       subtext: "Clearly underpriced, financeable, and not fragile. Move to diligence.",
+      disclaimer,
     };
     case "investigate": return {
       emoji: "🟡", label: "Investigate",
       color: "#F59E0B", bg: "rgba(245,158,11,0.1)", border: "rgba(245,158,11,0.25)",
       subtext: "Viable deal — not obviously mispriced. Needs diligence before advancing.",
+      disclaimer,
     };
     case "pass": return {
       emoji: "🔴", label: "Pass",
       color: "#EF4444", bg: "rgba(239,68,68,0.1)", border: "rgba(239,68,68,0.25)",
       subtext: "Does not meet investment criteria at current terms. See details below.",
+      disclaimer,
     };
     case "manual_review": return {
       emoji: "⚠️", label: "Needs Manual Review",
       color: "#F97316", bg: "rgba(249,115,22,0.08)", border: "rgba(249,115,22,0.28)",
       subtext: "Data quality flags require manual review before any verdict can be issued. Verify financials before advancing.",
+      disclaimer,
     };
   }
 }
@@ -2373,6 +2379,7 @@ function AnalyzeDealModal({
                     }}>
                       <div style={{ fontSize: 12, color: "#94A3B8", lineHeight: 1.65 }}>
                         {vdExplain}
+                        <div style={{ fontSize: 10, color: "#64748B", fontStyle: "italic", marginTop: 6 }}>{vdm.disclaimer}</div>
                       </div>
                     </div>
                   </>
@@ -3438,7 +3445,8 @@ function UnderwritingPanel({
                   }))}
                 />
               </div>
-              <div style={{ fontSize: 11, color: "#94A3B8", lineHeight: 1.5 }}>{verdictExplanation(deal)}</div>              
+              <div style={{ fontSize: 11, color: "#94A3B8", lineHeight: 1.5 }}>{verdictExplanation(deal)}</div> 
+              <div style={{ fontSize: 10, color: "#64748B", fontStyle: "italic", marginTop: 6 }}>{vd.disclaimer}</div>
             </div>
           </div>
 
@@ -3540,6 +3548,7 @@ function UnderwritingPanel({
                     {vd.label}
                   </div>
                   <div style={{ fontSize: 10, color: "#6B7280", marginTop: 1, lineHeight: 1.4 }}>{verdictExplanation(deal)}</div>
+                  <div style={{ fontSize: 10, color: "#64748B", fontStyle: "italic", marginTop: 6 }}>{vd.disclaimer}</div>
                 </div>
                 <div style={{ marginLeft: "auto", display: "inline-flex", alignItems: "center", gap: 5 }}>
                   <div style={{ fontFamily: "'JetBrains Mono',monospace",
