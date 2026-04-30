@@ -1648,6 +1648,7 @@ function AnalyzeDealModal({
   const [saved, setSaved]     = useState(false);
   const [saveError, setSaveError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showBreakdown, setShowBreakdown] = useState(false);
 
   // ── Input validation — prevents nonsense verdicts from garbage input ──────
   // Parse a locale-formatted currency string ("1,500,000") back to a number
