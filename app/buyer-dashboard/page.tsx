@@ -6913,7 +6913,7 @@ function TabCompare({ deals, isPro, onAnalyzeNew, comparisonsRemaining, hitCompa
           )}
 
           {/* ── 2. CATEGORY WINNERS STRIP (Pro only) ─────────────────────────── */}
-          {(isPro || !hitCompareCap) && (
+          {isPro && (
           <div style={{
             display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 8, marginBottom: 14,
           }}>
@@ -7008,8 +7008,8 @@ function TabCompare({ deals, isPro, onAnalyzeNew, comparisonsRemaining, hitCompa
             </div>
           </Card>
 
-          {/* ── 4. INSIGHT BAR  ────────────────────────────────────── */}
-          {(isPro || !hitCompareCap) && (
+          {/* ── 4. INSIGHT BAR (Pro only) ────────────────────────────────────── */}
+          {isPro && (
           <div style={{
             padding: "14px 18px", borderRadius: 10, marginBottom: 14,
             background: "rgba(245,158,11,0.04)", border: "1px solid rgba(245,158,11,0.14)",
@@ -7020,8 +7020,8 @@ function TabCompare({ deals, isPro, onAnalyzeNew, comparisonsRemaining, hitCompa
           </div>
           )}
 
-          {/* ── 5. WHAT WOULD FLIP THE VERDICT ────────────────────── */}
-           {(isPro || !hitCompareCap) && (
+          {/* ── 5. WHAT WOULD FLIP THE VERDICT (Pro only) ────────────────────── */}
+          {isPro && (
           <div style={{
             padding: "14px 18px", borderRadius: 10,
             background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)",
