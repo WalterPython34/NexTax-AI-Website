@@ -9335,17 +9335,17 @@ const dealHasFullAccess = (dealId: string): boolean => {
               />
             )}
             {activeTab === "compare" && (
-              <TabCompare deals={deals} isPro={isPro} onAnalyzeNew={handleAnalyzeNewClick} />
-            )}
-            {activeTab === "market-intel" && (
-              <TabCompare
+               <TabCompare
                 deals={deals}
                 isPro={isPro}
                 onAnalyzeNew={handleAnalyzeNewClick}
                 comparisonsRemaining={comparisonsRemaining}
                 hitCompareCap={hitCompareCap}
                 onComparisonUsed={incrementComparisons}
-               />
+              />
+            )}
+            {activeTab === "market-intel" && (
+              <TabMarketIntel dri={dri} trending={trending} loading={loading} isPro={isPro} deals={deals} />
             )}
           </div>
         </div>
