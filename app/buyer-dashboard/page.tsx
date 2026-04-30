@@ -6632,7 +6632,14 @@ function CompareRangeTrack({
   );
 }
 
-function TabCompare({ deals, isPro, onAnalyzeNew }: { deals: DealRun[]; isPro: boolean; onAnalyzeNew: () => void }) {
+function TabCompare({ deals, isPro, onAnalyzeNew, comparisonsRemaining, hitCompareCap, onComparisonUsed }: {
+  deals: DealRun[];
+  isPro: boolean;
+  onAnalyzeNew: () => void;
+  comparisonsRemaining: number;
+  hitCompareCap: boolean;
+  onComparisonUsed: () => void;
+}) {
   const [mode, setMode] = useState<CompareMode>("my-deals");
   const [ai, setAi]     = useState(0);
   const [bi, setBi]     = useState(Math.min(1, deals.length - 1));
@@ -6643,6 +6650,8 @@ function TabCompare({ deals, isPro, onAnalyzeNew }: { deals: DealRun[]; isPro: b
     setAi(bi);
     setBi(tmp);
   };
+
+  const FREE_MONTHLY_COMPARE_LIMIT = 3;
 
   const selStyle: React.CSSProperties = {
     padding: "9px 12px", borderRadius: 8,
@@ -6765,9 +6774,7 @@ function TabCompare({ deals, isPro, onAnalyzeNew }: { deals: DealRun[]; isPro: b
   ];
 
   // Free users see a limited row set — Verdict / DSCR / Multiple only
-  const visibleRows = isPro
-    ? rows
-    : rows.filter(r => r.label === "Verdict" || r.label === "DSCR" || r.label === "Multiple");
+  const visibleRows = rows;   
 
   return (
     <div>
@@ -6798,7 +6805,7 @@ function TabCompare({ deals, isPro, onAnalyzeNew }: { deals: DealRun[]; isPro: b
           <div style={{ display: "grid", gridTemplateColumns: "1fr auto 1fr", gap: 10, alignItems: "flex-end", marginBottom: 20 }}>
             <div>
               <label style={{ display: "block", fontSize: 10, color: "#7C8593", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 5 }}>Deal A</label>
-              <select value={ai} onChange={(e) => setAi(Number(e.target.value))} style={selStyle}>
+              <select value={ai} onChange={(e) => { if (!isPro && hitCompareCap) return; setAi(Number(e.target.value)); onComparisonUsed(); }} style={selStyle}>
                 {deals.map((d, i) => (<option key={d.id} value={i}>{IL[d.industry] || d.industry} — {fmt(d.asking_price)}</option>))}
               </select>
             </div>
@@ -6817,7 +6824,7 @@ function TabCompare({ deals, isPro, onAnalyzeNew }: { deals: DealRun[]; isPro: b
             </button>
             <div>
               <label style={{ display: "block", fontSize: 10, color: "#7C8593", textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 5 }}>Deal B</label>
-              <select value={bi} onChange={(e) => setBi(Number(e.target.value))} style={selStyle}>
+              <select value={bi} onChange={(e) => { if (!isPro && hitCompareCap) return; setBi(Number(e.target.value)); onComparisonUsed(); }} style={selStyle}>
                 {deals.map((d, i) => (<option key={d.id} value={i}>{IL[d.industry] || d.industry} — {fmt(d.asking_price)}</option>))}
               </select>
             </div>
@@ -6852,27 +6859,57 @@ function TabCompare({ deals, isPro, onAnalyzeNew }: { deals: DealRun[]; isPro: b
             )}
           </div>
 
-          {/* ── FREE-USER GATE: Compare advanced features are Pro ── */}
+             {/* Free user comparison gate */}
           {!isPro && (
-            <div style={{ marginBottom: 14, padding: "16px 18px", borderRadius: 12, background: "rgba(99,102,241,0.05)", border: "1px solid rgba(99,102,241,0.2)", textAlign: "center" as const }}>
-              <div style={{ fontSize: 24, marginBottom: 8 }}>🔒</div>
-              <div style={{ fontSize: 14, fontWeight: 700, color: "#F1F5F9", marginBottom: 6, fontFamily: "'Inter Tight',sans-serif" }}>
-                Compare deals across risk, pricing, and financing
+            hitCompareCap ? (
+              <div style={{ marginBottom: 14, padding: "16px 18px", borderRadius: 12, background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.25)", textAlign: "center" as const }}>
+                <div style={{ fontSize: 20, marginBottom: 8 }}>📊</div>
+                <div style={{ fontSize: 14, fontWeight: 700, color: "#F1F5F9", marginBottom: 6, fontFamily: "'Inter Tight',sans-serif" }}>
+                  You've used all {FREE_MONTHLY_COMPARE_LIMIT} free comparisons this month
+                </div>
+                <div style={{ fontSize: 12, color: "#9CA3AF", marginBottom: 14, lineHeight: 1.6 }}>
+                  Your comparison results above are still visible. Upgrade for unlimited comparisons plus Market Comps and Closed Comps.
+                </div>
+                <button
+                  onClick={() => window.location.href = "/pricing"}
+                  style={{
+                    padding: "9px 22px", borderRadius: 8, border: "none",
+                    background: "linear-gradient(135deg,#6366F1,#8B5CF6)",
+                    color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer",
+                  }}
+                >
+                  Upgrade to Pro →
+                </button>
               </div>
-              <div style={{ fontSize: 12, color: "#9CA3AF", marginBottom: 14, lineHeight: 1.6 }}>
-                Unlock category winners, benchmark overlays, detailed differences, and ranking across all your deals.
+            ) : (
+              <div style={{
+                marginBottom: 14, padding: "10px 14px", borderRadius: 10,
+                background: "rgba(99,102,241,0.05)", border: "1px solid rgba(99,102,241,0.18)",
+                display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" as const,
+              }}>
+                <span style={{ fontSize: 11, fontWeight: 600, color: "#A5B4FC" }}>
+                  {comparisonsRemaining} of {FREE_MONTHLY_COMPARE_LIMIT} free comparisons remaining this month
+                </span>
+                <div style={{ flex: 1, minWidth: 80, height: 4, borderRadius: 2, background: "rgba(255,255,255,0.05)", overflow: "hidden" }}>
+                  <div style={{
+                    height: "100%",
+                    width: `${((FREE_MONTHLY_COMPARE_LIMIT - comparisonsRemaining) / FREE_MONTHLY_COMPARE_LIMIT) * 100}%`,
+                    background: "#818CF8",
+                    transition: "width 0.3s ease",
+                  }} />
+                </div>
+                <button
+                  onClick={() => window.location.href = "/pricing"}
+                  style={{
+                    padding: "4px 10px", borderRadius: 6, border: "none",
+                    background: "rgba(99,102,241,0.12)", color: "#A5B4FC",
+                    fontSize: 11, fontWeight: 600, cursor: "pointer",
+                  }}
+                >
+                  Go unlimited
+                </button>
               </div>
-              <button
-                onClick={() => window.location.href = "/pricing"}
-                style={{
-                  padding: "9px 22px", borderRadius: 8, border: "none",
-                  background: "linear-gradient(135deg,#6366F1,#8B5CF6)",
-                  color: "#fff", fontSize: 13, fontWeight: 600, cursor: "pointer",
-                }}
-              >
-                Upgrade to Pro →
-              </button>
-            </div>
+            )
           )}
 
           {/* ── 2. CATEGORY WINNERS STRIP (Pro only) ─────────────────────────── */}
@@ -8679,6 +8716,33 @@ const dealHasFullAccess = (dealId: string): boolean => {
   return dealId === freeFullDealId;
 };
 
+  // ── Free-plan monthly comparison cap ─────────────────────────────────
+  const FREE_MONTHLY_COMPARE_LIMIT = 3;
+  const compareMonthKey = currentMonthKey;
+  const [comparisonsThisMonth, setComparisonsThisMonth] = useState<number>(() => {
+    if (typeof window === "undefined") return 0;
+    try {
+      const raw = localStorage.getItem("nxtax_comparisons_by_month");
+      if (!raw) return 0;
+      const obj = JSON.parse(raw);
+      return obj[compareMonthKey] ?? 0;
+    } catch { return 0; }
+  });
+  const comparisonsRemaining = Math.max(0, FREE_MONTHLY_COMPARE_LIMIT - comparisonsThisMonth);
+  const hitCompareCap = !isPro && comparisonsRemaining === 0;
+
+  const incrementComparisons = useCallback(() => {
+    if (isPro) return;
+    const next = comparisonsThisMonth + 1;
+    setComparisonsThisMonth(next);
+    try {
+      const raw = localStorage.getItem("nxtax_comparisons_by_month");
+      const obj = raw ? JSON.parse(raw) : {};
+      obj[compareMonthKey] = next;
+      localStorage.setItem("nxtax_comparisons_by_month", JSON.stringify(obj));
+    } catch {}
+  }, [isPro, comparisonsThisMonth, compareMonthKey]);
+
 
   // ── Free-plan monthly deal-analysis cap ───────────────────────────────────
   // 10 deal analyses per calendar month. Resets on the 1st.
@@ -9276,7 +9340,14 @@ const dealHasFullAccess = (dealId: string): boolean => {
               <TabCompare deals={deals} isPro={isPro} onAnalyzeNew={handleAnalyzeNewClick} />
             )}
             {activeTab === "market-intel" && (
-              <TabMarketIntel dri={dri} trending={trending} loading={loading} isPro={isPro} deals={deals} />
+              <TabCompare
+                deals={deals}
+                isPro={isPro}
+                onAnalyzeNew={handleAnalyzeNewClick}
+                comparisonsRemaining={comparisonsRemaining}
+                hitCompareCap={hitCompareCap}
+                onComparisonUsed={incrementComparisons}
+               />
             )}
           </div>
         </div>
