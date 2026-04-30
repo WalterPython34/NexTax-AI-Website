@@ -7470,6 +7470,12 @@ function LocalMarketRealityCheck({
       };
       setResult(normalized);
       setAiInsight(data.aiInsight ?? "");
+       // Increment free-plan counter
+        if (!isPro) {
+          const next = freeChecksUsed + 1;
+          setFreeChecksUsed(next);
+          localStorage.setItem("nxtax_free_market_checks", String(next));
+        }
       setFullApiResult(data);
     } catch (err) {
       setError((err as Error).message);
