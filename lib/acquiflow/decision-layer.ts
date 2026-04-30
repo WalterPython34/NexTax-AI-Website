@@ -410,7 +410,7 @@ function detectRiskFlags(d: DealReportInputs, scenarios: StressScenario[]): Risk
     });
   }
 
-  if (stressScenarios[1] && stressScenarios[1].dscr >= 1.25) {
+ if (scenarios[1] && scenarios[1].dscr >= 1.25) {
     flags.push({
       severity:      "LOW",
       category:      "FINANCIAL",
