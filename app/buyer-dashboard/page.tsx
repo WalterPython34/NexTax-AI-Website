@@ -1283,47 +1283,47 @@ const SCORE_INDUSTRIES: Record<string, {
   marginRange: [number, number]; growth: string; riskFactor: number;
   demandScore: number; buyerInterestRank: number; competitionLevel: string;
 }> = {
-  laundromat:     { label:"Laundromat",           benchmarkLow:2.8, benchmarkMid:3.48, benchmarkHigh:4.4,  marginRange:[25,40], growth:"Stable",   riskFactor:0.85, demandScore:82, buyerInterestRank:3,  competitionLevel:"Moderate"      },
-  hvac:           { label:"HVAC",                 benchmarkLow:1.8, benchmarkMid:2.45, benchmarkHigh:3.2,  marginRange:[15,30], growth:"Growing",  riskFactor:0.75, demandScore:88, buyerInterestRank:2,  competitionLevel:"Low-Moderate"  },
-  landscaping:    { label:"Landscaping",          benchmarkLow:1.7, benchmarkMid:2.21, benchmarkHigh:2.9,  marginRange:[10,25], growth:"Stable",   riskFactor:0.90, demandScore:70, buyerInterestRank:7,  competitionLevel:"High"          },
-  carwash:        { label:"Car Wash",             benchmarkLow:2.0, benchmarkMid:2.74, benchmarkHigh:3.6,  marginRange:[25,45], growth:"Growing",  riskFactor:0.80, demandScore:79, buyerInterestRank:5,  competitionLevel:"Moderate"      },
-  dental:         { label:"Dental Practice",      benchmarkLow:0.8, benchmarkMid:1.30, benchmarkHigh:1.9,  marginRange:[20,40], growth:"Growing",  riskFactor:0.65, demandScore:74, buyerInterestRank:8,  competitionLevel:"Low"           },
-  gym:            { label:"Gym / Fitness",        benchmarkLow:1.8, benchmarkMid:2.32, benchmarkHigh:3.0,  marginRange:[15,35], growth:"Stable",   riskFactor:0.95, demandScore:71, buyerInterestRank:9,  competitionLevel:"Moderate-High" },
+  laundromat:     { label:"Laundromat",           benchmarkLow:2.65,benchmarkMid:3.48, benchmarkHigh:4.48,  marginRange:[25,40], growth:"Stable",   riskFactor:0.85, demandScore:82, buyerInterestRank:3,  competitionLevel:"Moderate"      },
+  hvac:           { label:"HVAC",                 benchmarkLow:1.96, benchmarkMid:2.68, benchmarkHigh:3.65,  marginRange:[15,30], growth:"Growing",  riskFactor:0.75, demandScore:88, buyerInterestRank:2,  competitionLevel:"Low-Moderate"  },
+  landscaping:    { label:"Landscaping",          benchmarkLow:1.71, benchmarkMid:2.22, benchmarkHigh:3.00,  marginRange:[10,25], growth:"Stable",   riskFactor:0.90, demandScore:70, buyerInterestRank:7,  competitionLevel:"High"          },
+  carwash:        { label:"Car Wash",             benchmarkLow:1.85, benchmarkMid:2.74, benchmarkHigh:4.88, marginRange:[25,45], growth:"Growing",  riskFactor:0.80, demandScore:79, buyerInterestRank:5,  competitionLevel:"Moderate"      },
+  dental:         { label:"Dental Practice",      benchmarkLow:1.10, benchmarkMid:1.30, benchmarkHigh:1.67,  marginRange:[20,40], growth:"Growing",  riskFactor:0.65, demandScore:74, buyerInterestRank:8,  competitionLevel:"Low"           },
+  gym:            { label:"Gym / Fitness",        benchmarkLow:1.79, benchmarkMid:2.32, benchmarkHigh:2.97,  marginRange:[15,35], growth:"Stable",   riskFactor:0.95, demandScore:71, buyerInterestRank:9,  competitionLevel:"Moderate-High" },
   restaurant:     { label:"Restaurant",           benchmarkLow:1.4, benchmarkMid:1.85, benchmarkHigh:2.4,  marginRange:[5,15],  growth:"Volatile", riskFactor:1.10, demandScore:65, buyerInterestRank:11, competitionLevel:"Very High"     },
-  autorepair:     { label:"Auto Repair",          benchmarkLow:1.6, benchmarkMid:2.11, benchmarkHigh:2.8,  marginRange:[15,30], growth:"Stable",   riskFactor:0.85, demandScore:73, buyerInterestRank:6,  competitionLevel:"Moderate"      },
-  cleaning:       { label:"Cleaning Service",     benchmarkLow:1.8, benchmarkMid:2.22, benchmarkHigh:2.9,  marginRange:[15,30], growth:"Growing",  riskFactor:0.80, demandScore:76, buyerInterestRank:4,  competitionLevel:"High"          },
-  ecommerce:      { label:"Ecommerce Brand",      benchmarkLow:1.9, benchmarkMid:2.41, benchmarkHigh:3.1,  marginRange:[15,35], growth:"Variable", riskFactor:0.95, demandScore:83, buyerInterestRank:1,  competitionLevel:"Very High"     },
-  saas:           { label:"SaaS Product",         benchmarkLow:2.1, benchmarkMid:2.60, benchmarkHigh:3.4,  marginRange:[60,85], growth:"Growing",  riskFactor:0.70, demandScore:91, buyerInterestRank:1,  competitionLevel:"High"          },
-  insurance:      { label:"Insurance Agency",     benchmarkLow:1.4, benchmarkMid:1.82, benchmarkHigh:2.4,  marginRange:[20,40], growth:"Stable",   riskFactor:0.70, demandScore:68, buyerInterestRank:10, competitionLevel:"Low"           },
-  plumbing:       { label:"Plumbing",             benchmarkLow:1.7, benchmarkMid:2.30, benchmarkHigh:3.0,  marginRange:[15,30], growth:"Growing",  riskFactor:0.75, demandScore:85, buyerInterestRank:3,  competitionLevel:"Low-Moderate"  },
-  roofing:        { label:"Roofing",              benchmarkLow:1.7, benchmarkMid:2.21, benchmarkHigh:2.9,  marginRange:[15,30], growth:"Stable",   riskFactor:0.90, demandScore:72, buyerInterestRank:6,  competitionLevel:"Moderate"      },
-  petcare:        { label:"Pet Care / Grooming",  benchmarkLow:2.0, benchmarkMid:2.46, benchmarkHigh:3.2,  marginRange:[20,40], growth:"Growing",  riskFactor:0.80, demandScore:77, buyerInterestRank:5,  competitionLevel:"Moderate"      },
+  autorepair:     { label:"Auto Repair",          benchmarkLow:1.58, benchmarkMid:2.11, benchmarkHigh:2.74,  marginRange:[15,30], growth:"Stable",   riskFactor:0.85, demandScore:73, buyerInterestRank:6,  competitionLevel:"Moderate"      },
+  cleaning:       { label:"Cleaning Service",     benchmarkLow:1.70, benchmarkMid:2.22, benchmarkHigh:2.67,  marginRange:[15,30], growth:"Growing",  riskFactor:0.80, demandScore:76, buyerInterestRank:4,  competitionLevel:"High"          },
+  ecommerce:      { label:"Ecommerce Brand",      benchmarkLow:1.82, benchmarkMid:2.41, benchmarkHigh:3.27,  marginRange:[15,35], growth:"Variable", riskFactor:0.95, demandScore:83, buyerInterestRank:1,  competitionLevel:"Very High"     },
+  saas:           { label:"SaaS Product",         benchmarkLow:1.78, benchmarkMid:2.60, benchmarkHigh:3.64,  marginRange:[60,85], growth:"Growing",  riskFactor:0.70, demandScore:91, buyerInterestRank:1,  competitionLevel:"High"          },
+  insurance:      { label:"Insurance Agency",     benchmarkLow:2.53, benchmarkMid:3.40, benchmarkHigh:5.06,  marginRange:[20,40], growth:"Stable",   riskFactor:0.70, demandScore:68, buyerInterestRank:10, competitionLevel:"Low"           },
+  plumbing:       { label:"Plumbing",             benchmarkLow:1.96, benchmarkMid:2.68, benchmarkHigh:3.65,  marginRange:[15,30], growth:"Growing",  riskFactor:0.75, demandScore:85, buyerInterestRank:3,  competitionLevel:"Low-Moderate"  },
+  roofing:        { label:"Roofing",              benchmarkLow:1.65, benchmarkMid:2.21, benchmarkHigh:2.88,  marginRange:[15,30], growth:"Stable",   riskFactor:0.90, demandScore:72, buyerInterestRank:6,  competitionLevel:"Moderate"      },
+  petcare:        { label:"Pet Care / Grooming",  benchmarkLow:1.84, benchmarkMid:2.46, benchmarkHigh:3.32,  marginRange:[20,40], growth:"Growing",  riskFactor:0.80, demandScore:77, buyerInterestRank:5,  competitionLevel:"Moderate"      },
   pharmacy:       { label:"Pharmacy",             benchmarkLow:0.5, benchmarkMid:0.66, benchmarkHigh:0.9,  marginRange:[18,30], growth:"Stable",   riskFactor:0.75, demandScore:62, buyerInterestRank:14, competitionLevel:"Low"           },
-  daycare:        { label:"Daycare / Childcare",  benchmarkLow:1.9, benchmarkMid:2.29, benchmarkHigh:3.0,  marginRange:[15,30], growth:"Growing",  riskFactor:0.80, demandScore:74, buyerInterestRank:10, competitionLevel:"Moderate"      },
+  daycare:        { label:"Daycare / Childcare",  benchmarkLow:1.68, benchmarkMid:2.41, benchmarkHigh:3.23,  marginRange:[15,30], growth:"Growing",  riskFactor:0.80, demandScore:74, buyerInterestRank:10, competitionLevel:"Moderate"      },
   medspa:         { label:"Med Spa",              benchmarkLow:2.0, benchmarkMid:2.75, benchmarkHigh:3.6,  marginRange:[25,45], growth:"Growing",  riskFactor:0.75, demandScore:80, buyerInterestRank:7,  competitionLevel:"Moderate"      },
-  accounting:     { label:"Accounting / Tax",     benchmarkLow:1.0, benchmarkMid:1.30, benchmarkHigh:1.7,  marginRange:[30,55], growth:"Stable",   riskFactor:0.60, demandScore:86, buyerInterestRank:3,  competitionLevel:"Low-Moderate"  },
-  electrical:     { label:"Electrical",           benchmarkLow:1.7, benchmarkMid:2.30, benchmarkHigh:3.0,  marginRange:[15,30], growth:"Growing",  riskFactor:0.75, demandScore:84, buyerInterestRank:3,  competitionLevel:"Low-Moderate"  },
-  healthcare:     { label:"Healthcare",           benchmarkLow:1.8, benchmarkMid:2.50, benchmarkHigh:3.3,  marginRange:[10,25], growth:"Growing",  riskFactor:0.70, demandScore:80, buyerInterestRank:4,  competitionLevel:"Moderate"      },
-  transportation: { label:"Transportation",       benchmarkLow:1.5, benchmarkMid:2.10, benchmarkHigh:2.8,  marginRange:[10,20], growth:"Stable",   riskFactor:0.90, demandScore:68, buyerInterestRank:8,  competitionLevel:"Moderate"      },
-  printing:       { label:"Printing / Signage",   benchmarkLow:1.5, benchmarkMid:2.00, benchmarkHigh:2.7,  marginRange:[15,30], growth:"Stable",   riskFactor:0.85, demandScore:60, buyerInterestRank:12, competitionLevel:"Moderate"      },
-  storage:        { label:"Self-Storage",         benchmarkLow:2.5, benchmarkMid:3.20, benchmarkHigh:4.2,  marginRange:[35,55], growth:"Growing",  riskFactor:0.70, demandScore:85, buyerInterestRank:2,  competitionLevel:"Low-Moderate"  },
-  painting:       { label:"Painting",             benchmarkLow:1.5, benchmarkMid:2.10, benchmarkHigh:2.8,  marginRange:[15,30], growth:"Stable",   riskFactor:0.85, demandScore:68, buyerInterestRank:8,  competitionLevel:"High"          },
-  security:       { label:"Security Services",    benchmarkLow:1.8, benchmarkMid:2.40, benchmarkHigh:3.2,  marginRange:[15,30], growth:"Growing",  riskFactor:0.75, demandScore:74, buyerInterestRank:6,  competitionLevel:"Moderate"      },
-  construction:   { label:"Construction",         benchmarkLow:1.5, benchmarkMid:2.10, benchmarkHigh:2.8,  marginRange:[10,20], growth:"Growing",  riskFactor:0.90, demandScore:75, buyerInterestRank:5,  competitionLevel:"High"          },
-  engineering:    { label:"Engineering",          benchmarkLow:1.8, benchmarkMid:2.50, benchmarkHigh:3.3,  marginRange:[20,40], growth:"Stable",   riskFactor:0.65, demandScore:72, buyerInterestRank:7,  competitionLevel:"Low"           },
-  grocery:        { label:"Grocery",              benchmarkLow:0.8, benchmarkMid:1.10, benchmarkHigh:1.5,  marginRange:[2,8],   growth:"Stable",   riskFactor:0.90, demandScore:60, buyerInterestRank:13, competitionLevel:"Very High"     },
-  propertymanage: { label:"Property Management",  benchmarkLow:2.0, benchmarkMid:2.80, benchmarkHigh:3.7,  marginRange:[20,40], growth:"Growing",  riskFactor:0.70, demandScore:78, buyerInterestRank:4,  competitionLevel:"Moderate"      },
-  realestatebrok: { label:"Real Estate Brok.",    benchmarkLow:1.5, benchmarkMid:2.10, benchmarkHigh:2.8,  marginRange:[20,40], growth:"Growing",  riskFactor:0.75, demandScore:72, buyerInterestRank:6,  competitionLevel:"Moderate"      },
-  remodeling:     { label:"Remodeling",           benchmarkLow:1.5, benchmarkMid:2.10, benchmarkHigh:2.8,  marginRange:[12,25], growth:"Growing",  riskFactor:0.85, demandScore:74, buyerInterestRank:5,  competitionLevel:"High"          },
-  seniorcare:     { label:"Senior Care",          benchmarkLow:2.0, benchmarkMid:2.80, benchmarkHigh:3.7,  marginRange:[15,30], growth:"Growing",  riskFactor:0.70, demandScore:82, buyerInterestRank:3,  competitionLevel:"Moderate"      },
-  staffing:       { label:"Staffing Agency",      benchmarkLow:1.2, benchmarkMid:1.70, benchmarkHigh:2.3,  marginRange:[5,15],  growth:"Stable",   riskFactor:0.80, demandScore:70, buyerInterestRank:7,  competitionLevel:"Moderate-High" },
-  veterinary:     { label:"Veterinary Practice",  benchmarkLow:1.5, benchmarkMid:2.10, benchmarkHigh:2.9,  marginRange:[15,30], growth:"Growing",  riskFactor:0.70, demandScore:78, buyerInterestRank:5,  competitionLevel:"Moderate"      },
-  marketing:      { label:"Marketing Agency",     benchmarkLow:1.5, benchmarkMid:2.20, benchmarkHigh:3.0,  marginRange:[20,40], growth:"Growing",  riskFactor:0.80, demandScore:72, buyerInterestRank:6,  competitionLevel:"High"          },
-  pestcontrol:    { label:"Pest Control",         benchmarkLow:1.8, benchmarkMid:2.50, benchmarkHigh:3.3,  marginRange:[20,35], growth:"Stable",   riskFactor:0.75, demandScore:76, buyerInterestRank:5,  competitionLevel:"Moderate"      },
-  physicaltherapy:{ label:"Physical Therapy",     benchmarkLow:1.5, benchmarkMid:2.10, benchmarkHigh:2.8,  marginRange:[15,30], growth:"Stable",   riskFactor:0.70, demandScore:74, buyerInterestRank:6,  competitionLevel:"Low-Moderate"  },
+  accounting:     { label:"Accounting / Tax",     benchmarkLow:1.72, benchmarkMid:2.18, benchmarkHigh:2.92,  marginRange:[30,55], growth:"Stable",   riskFactor:0.60, demandScore:86, buyerInterestRank:3,  competitionLevel:"Low-Moderate"  },
+  electrical:     { label:"Electrical",           benchmarkLow:1.78, benchmarkMid:2.41, benchmarkHigh:3.19,  marginRange:[15,30], growth:"Growing",  riskFactor:0.75, demandScore:84, buyerInterestRank:3,  competitionLevel:"Low-Moderate"  },
+  healthcare:     { label:"Healthcare",           benchmarkLow:1.05, benchmarkMid:1.72, benchmarkHigh:2.62,  marginRange:[10,25], growth:"Growing",  riskFactor:0.70, demandScore:80, buyerInterestRank:4,  competitionLevel:"Moderate"      },
+  transportation: { label:"Transportation",       benchmarkLow:1.98, benchmarkMid:2.65, benchmarkHigh:3.51,  marginRange:[10,20], growth:"Stable",   riskFactor:0.90, demandScore:68, buyerInterestRank:8,  competitionLevel:"Moderate"      },
+  printing:       { label:"Printing / Signage",   benchmarkLow:2.10, benchmarkMid:2.62, benchmarkHigh:3.32,  marginRange:[15,30], growth:"Stable",   riskFactor:0.85, demandScore:60, buyerInterestRank:12, competitionLevel:"Moderate"      },
+  storage:        { label:"Self-Storage",         benchmarkLow:2.72, benchmarkMid:3.61, benchmarkHigh:5.46,  marginRange:[35,55], growth:"Growing",  riskFactor:0.70, demandScore:85, buyerInterestRank:2,  competitionLevel:"Low-Moderate"  },
+  painting:       { label:"Painting",             benchmarkLow:1.60, benchmarkMid:2.05, benchmarkHigh:2.49,  marginRange:[15,30], growth:"Stable",   riskFactor:0.85, demandScore:68, buyerInterestRank:8,  competitionLevel:"High"          },
+  security:       { label:"Security Services",    benchmarkLow:1.52, benchmarkMid:1.94, benchmarkHigh:2.54,  marginRange:[15,30], growth:"Growing",  riskFactor:0.75, demandScore:74, buyerInterestRank:6,  competitionLevel:"Moderate"      },
+  construction:   { label:"Construction",         benchmarkLow:1.81, benchmarkMid:2.41, benchmarkHigh:3.17,  marginRange:[10,20], growth:"Growing",  riskFactor:0.90, demandScore:75, buyerInterestRank:5,  competitionLevel:"High"          },
+  engineering:    { label:"Engineering",          benchmarkLow:1.83, benchmarkMid:2.43, benchmarkHigh:3.34,  marginRange:[20,40], growth:"Stable",   riskFactor:0.65, demandScore:72, buyerInterestRank:7,  competitionLevel:"Low"           },
+  grocery:        { label:"Grocery",              benchmarkLow:1.57, benchmarkMid:2.27, benchmarkHigh:3.30,  marginRange:[2,8],   growth:"Stable",   riskFactor:0.90, demandScore:60, buyerInterestRank:13, competitionLevel:"Very High"     },
+  propertymanage: { label:"Property Management",  benchmarkLow:1.86, benchmarkMid:2.38, benchmarkHigh:3.09,  marginRange:[20,40], growth:"Growing",  riskFactor:0.70, demandScore:78, buyerInterestRank:4,  competitionLevel:"Moderate"      },
+  realestatebrok: { label:"Real Estate Brok.",    benchmarkLow:1.66, benchmarkMid:2.08, benchmarkHigh:2.58,  marginRange:[20,40], growth:"Growing",  riskFactor:0.75, demandScore:72, buyerInterestRank:6,  competitionLevel:"Moderate"      },
+  remodeling:     { label:"Remodeling",           benchmarkLow:1.42, benchmarkMid:2.08, benchmarkHigh:2.74,  marginRange:[12,25], growth:"Growing",  riskFactor:0.85, demandScore:74, buyerInterestRank:5,  competitionLevel:"High"          },
+  seniorcare:     { label:"Senior Care",          benchmarkLow:2.03, benchmarkMid:2.90, benchmarkHigh:3.80,  marginRange:[15,30], growth:"Growing",  riskFactor:0.70, demandScore:82, buyerInterestRank:3,  competitionLevel:"Moderate"      },
+  staffing:       { label:"Staffing Agency",      benchmarkLow:1.54, benchmarkMid:2.33, benchmarkHigh:2.98,  marginRange:[5,15],  growth:"Stable",   riskFactor:0.80, demandScore:70, buyerInterestRank:7,  competitionLevel:"Moderate-High" },
+  veterinary:     { label:"Veterinary Practice",  benchmarkLow:2.39, benchmarkMid:3.01, benchmarkHigh:4.10,  marginRange:[15,30], growth:"Growing",  riskFactor:0.70, demandScore:78, buyerInterestRank:5,  competitionLevel:"Moderate"      },
+  marketing:      { label:"Marketing Agency",     benchmarkLow:1.80, benchmarkMid:2.27, benchmarkHigh:3.15,  marginRange:[20,40], growth:"Growing",  riskFactor:0.80, demandScore:72, buyerInterestRank:6,  competitionLevel:"High"          },
+  pestcontrol:    { label:"Pest Control",         benchmarkLow:2.02, benchmarkMid:3.19, benchmarkHigh:4.24,  marginRange:[20,35], growth:"Stable",   riskFactor:0.75, demandScore:76, buyerInterestRank:5,  competitionLevel:"Moderate"      },
+  physicaltherapy:{ label:"Physical Therapy",     benchmarkLow:1.60, benchmarkMid:2.16, benchmarkHigh:2.90,  marginRange:[15,30], growth:"Stable",   riskFactor:0.70, demandScore:74, buyerInterestRank:6,  competitionLevel:"Low-Moderate"  },
   gasstation:     { label:"Gas Station / C-Store", benchmarkLow:2.5, benchmarkMid:3.20, benchmarkHigh:4.5,  marginRange:[3,8],   growth:"Stable",   riskFactor:0.85, demandScore:58, buyerInterestRank:13, competitionLevel:"Moderate"      },
-  signmaking:     { label:"Sign Mfg.",            benchmarkLow:1.5, benchmarkMid:2.00, benchmarkHigh:2.7,  marginRange:[15,30], growth:"Stable",   riskFactor:0.85, demandScore:60, buyerInterestRank:12, competitionLevel:"Moderate"      },
-  hairsalon:      { label:"Hair Salon",           benchmarkLow:0.8, benchmarkMid:1.20, benchmarkHigh:1.8,  marginRange:[15,35], growth:"Stable",   riskFactor:0.90, demandScore:65, buyerInterestRank:10, competitionLevel:"High"          },
+  signmaking:     { label:"Sign Mfg.",            benchmarkLow:1.94, benchmarkMid:2.45, benchmarkHigh:3.27,  marginRange:[15,30], growth:"Stable",   riskFactor:0.85, demandScore:60, buyerInterestRank:12, competitionLevel:"Moderate"      },
+  hairsalon:      { label:"Hair Salon",           benchmarkLow:1.11, benchmarkMid:1.61, benchmarkHigh:2.33,  marginRange:[15,35], growth:"Stable",   riskFactor:0.90, demandScore:65, buyerInterestRank:10, competitionLevel:"High"          },
 };
 
 interface ModalDealInputs {
@@ -3175,7 +3175,7 @@ function UnderwritingPanel({
       .from("dealstats_benchmarks")
       .select("p25_mvic_to_sde,median_mvic_to_sde,p75_mvic_to_sde,sample_size")
       .eq("industry_key", deal.industry)
-      .eq("size_band", "mid")
+      .eq("size_band", null)
       .maybeSingle()
       .then(({ data }) => {
         if (!data) { setBenchmarkIqr(null); return; }
@@ -8936,7 +8936,7 @@ const dealHasFullAccess = (dealId: string): boolean => {
     const { data: bm } = await supabase
       .from("dealstats_benchmarks")
       .select("industry_key,median_mvic_to_sde,median_mvic_to_revenue,p25_mvic_to_sde,p75_mvic_to_sde,sample_size")
-      .eq("size_band", "mid")
+      .eq("size_band", null)
       .order("sample_size", { ascending: false })
       .limit(12);
     // Map to the TrendingMultiple shape — both multiples + IQR for percentile math
