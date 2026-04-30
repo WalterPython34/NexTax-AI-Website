@@ -415,7 +415,7 @@ function detectRiskFlags(d: DealReportInputs, scenarios: StressScenario[]): Risk
       severity:      "LOW",
       category:      "FINANCIAL",
       headline:      "Stress Resilient",
-      detail:        `Deal maintains ${stressScenarios[1].dscr.toFixed(2)}x DSCR under -15% revenue stress — resilient under moderate downside.`,
+      detail:        `Deal maintains ${scenarios[1].dscr.toFixed(2)}x DSCR under -15% revenue stress — resilient under moderate downside.`,
       isDealBreaker: false,
     });
   }
