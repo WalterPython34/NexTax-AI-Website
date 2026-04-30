@@ -8716,6 +8716,12 @@ const dealHasFullAccess = (dealId: string): boolean => {
   return dealId === freeFullDealId;
 };
 
+   // ── Shared month key ─────────────────────────────────────────────────
+  const currentMonthKey = React.useMemo(() => {
+    const now = new Date();
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  }, []);
+
   // ── Free-plan monthly comparison cap ─────────────────────────────────
   const FREE_MONTHLY_COMPARE_LIMIT = 3;
   const compareMonthKey = currentMonthKey;
@@ -8743,15 +8749,8 @@ const dealHasFullAccess = (dealId: string): boolean => {
     } catch {}
   }, [isPro, comparisonsThisMonth, compareMonthKey]);
 
-
   // ── Free-plan monthly deal-analysis cap ───────────────────────────────────
-  // 10 deal analyses per calendar month. Resets on the 1st.
-  // Pro users bypass. Tracked in localStorage keyed by month.
   const FREE_MONTHLY_DEAL_LIMIT = 10;
-  const currentMonthKey = React.useMemo(() => {
-    const now = new Date();
-    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
-  }, []);
   const [dealAnalysesThisMonth, setDealAnalysesThisMonth] = useState<number>(() => {
     if (typeof window === "undefined") return 0;
     try {
@@ -8764,7 +8763,6 @@ const dealHasFullAccess = (dealId: string): boolean => {
   const dealAnalysesRemaining = Math.max(0, FREE_MONTHLY_DEAL_LIMIT - dealAnalysesThisMonth);
   const hitDealCap            = !isPro && dealAnalysesRemaining === 0;
   const nearDealCap           = !isPro && dealAnalysesRemaining <= 2 && dealAnalysesRemaining > 0;
-  // Days until reset (shown in counter UI)
   const daysUntilReset = (() => {
     const now = new Date();
     const firstOfNext = new Date(now.getFullYear(), now.getMonth() + 1, 1);
