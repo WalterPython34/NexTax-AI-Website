@@ -406,7 +406,7 @@ export default function AcquiFlowPage() {
             <div className="price-card">
               <div className="price-tier">Free</div>
               <div className="price-amount"><span className="num">$0</span><span className="denom">/ forever</span></div>
-              <Link href="/signup" className="btn btn-secondary" style={{ width: "100%", justifyContent: "center" }}>Start free</Link>
+              <Link href="/buyer-dashboard" className="btn btn-secondary" style={{ width: "100%", justifyContent: "center" }}>Start free</Link>
               <ul className="price-features">
                 <li className="included">10 deal analyses / month</li>
                 <li className="included">Scoring + verdict</li>
