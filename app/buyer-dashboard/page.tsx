@@ -1938,7 +1938,7 @@ function AnalyzeDealModal({
                 <select
                   value={inputs.industry}
                   onChange={e => set("industry", e.target.value)}
-                  style={{ ...inputStyle, appearance: "none" as any, cursor: "pointer" }}
+                  style={{ ...inputStyle, appearance: "none" as any, cursor: "pointer", background: "#1E293B", color: "#F1F5F9" }}
                 >
                   <option value="">Select industry...</option>
                   {Object.entries(SCORE_INDUSTRIES).map(([k, v]) => (
