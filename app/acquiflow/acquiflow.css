@@ -235,6 +235,8 @@
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
+  padding-right: 0.08em;
+  margin-right: -0.08em; 
 }
 
 .acquiflow-root .hero-sub {
@@ -1366,6 +1368,8 @@
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
+  padding-right: 0.08em;
+  margin-right: -0.08em; 
 }
 .acquiflow-root .final-cta-buttons {
   display: flex;
