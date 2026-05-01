@@ -42,7 +42,7 @@ export default function AcquiFlowPage() {
           <div className="nav-cta">
             {/* TODO: Wire to your dashboard auth */}
             <Link href="/login" className="btn btn-ghost">Sign in</Link>
-            <Link href="/dashboard" className="btn btn-primary">Analyze a deal →</Link>
+            <Link href="/buyer-dashboard" className="btn btn-primary">Analyze a deal →</Link>
           </div>
         </div>
       </nav>
@@ -64,7 +64,7 @@ export default function AcquiFlowPage() {
             </p>
             <div className="hero-ctas">
               {/* TODO: Wire to your signup / dashboard route */}
-              <Link href="/dashboard" className="btn btn-primary">Analyze Your First Deal Free →</Link>
+              <Link href="/buyer-dashboard" className="btn btn-primary">Analyze Your First Deal Free →</Link>
               <a href="#video" className="btn btn-secondary">Watch 90-sec demo</a>
             </div>
             <div className="micro-proof">
@@ -501,7 +501,7 @@ export default function AcquiFlowPage() {
               <div className="faq-help-card">
                 <div className="label">— Still have questions?</div>
                 <div className="copy">Talk to the team that built it. We respond within one business day.</div>
-                <a href="mailto:hello@nextax.ai" className="btn btn-secondary">Contact us →</a>
+                <a href="mailto:steven.morello@nextax.ai" className="btn btn-secondary">Contact us →</a>
               </div>
             </div>
 
@@ -576,7 +576,7 @@ export default function AcquiFlowPage() {
         <div className="container">
           <h2>Know if your next deal is worth pursuing — <span className="accent">before</span> you spend a dollar finding out.</h2>
           <div className="final-cta-buttons">
-            <Link href="/dashboard" className="btn btn-primary">Analyze Your First Deal Free →</Link>
+            <Link href="/buyer-dashboard" className="btn btn-primary">Analyze Your First Deal Free →</Link>
             <a href="/sample-report.pdf" className="btn btn-secondary">See sample report</a>
           </div>
           <div className="micro">No credit card required · First full deal free · Cancel anytime</div>
