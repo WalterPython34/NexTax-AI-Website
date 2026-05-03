@@ -21,6 +21,7 @@ import type {
   QuartileTriple,
   StatusLabel,
   StatusColor,
+  OutlierKind,
 } from './types';
 
 // ── Direction map ────────────────────────────────────────────────────────────
@@ -167,6 +168,54 @@ export function computePercentileWithStatus(
     status_label: label,
     status_color: color,
   };
+}
+
+// ── Outlier classification ───────────────────────────────────────────────────
+
+/**
+ * Metrics where unusually high values trigger a validation flag rather than
+ * a strength badge. Inflated SDE / gross margins typically indicate
+ * aggressive add-backs or COGS misclassification, not genuine outperformance.
+ */
+const VALIDATION_OUTLIER_METRICS = new Set([
+  'sde_margin_pct',
+  'gross_margin_pct',
+]);
+
+/**
+ * Three-way outlier classification. Called AFTER raw + display percentiles
+ * are computed.
+ *
+ *   - Display percentile < 25 → 'risk' (bottom of the distribution after
+ *     direction flip; this metric is hurting the deal).
+ *   - Display percentile >= 75 AND metric_key in validation set AND raw
+ *     value is > 1.5x median → 'validation' (suspiciously high).
+ *   - Display percentile >= 75 (otherwise) → 'strong' (genuine outperformance).
+ *   - Otherwise → null.
+ */
+export function classifyOutlier(
+  metric_key: string,
+  deal_value: number | null,
+  industry_median: number | null,
+  display_percentile: number | null,
+): OutlierKind {
+  if (display_percentile === null) return null;
+
+  if (display_percentile < 25) return 'risk';
+
+  if (display_percentile >= 75) {
+    // Check if this metric should be flagged for validation when high
+    if (VALIDATION_OUTLIER_METRICS.has(metric_key)
+        && deal_value !== null
+        && industry_median !== null
+        && industry_median > 0
+        && deal_value / industry_median > 1.5) {
+      return 'validation';
+    }
+    return 'strong';
+  }
+
+  return null;
 }
 
 // ── 10-segment percentile bar generator (for UI) ─────────────────────────────
