@@ -9,6 +9,7 @@ import { getDscrRange } from "@/lib/dscrRanges";
 import { LenderReadinessTab } from "@/components/LenderReadinessTab";
 import { buildLenderReadiness } from "@/lib/lenderReadiness";
 import { DealMemoTab } from "@/components/DealMemoTab";
+import FinancialBenchmarksTab from "@/components/FinancialBenchmarksTab";
 import { buildRiskFlags, buildDiligenceQuestions, buildDecisionTriggers } from "@/lib/dealMemo";
 import { INDUSTRY_FIT } from "@/lib/lenderReadiness";
 import { LoiBuilderTab } from "@/components/LoiBuilderTab";
@@ -42,7 +43,7 @@ const supabase = createClient(
 
 // ─── TYPES ───────────────────────────────────────────────────────────────────
 
-type TabId       = "home" | "dashboard" | "my-deals" | "compare" | "market-intel";
+type TabId = "home" | "dashboard" | "my-deals" | "compare" | "benchmarks" | "market-intel";
 type CompareMode = "my-deals" | "market" | "closed";
 type DealStatus  = "New" | "Reviewing" | "Under LOI" | "Paused" | "Passed";
 type SortKey     = "date" | "score" | "gap" | "asking";
@@ -9014,6 +9015,7 @@ const dealHasFullAccess = (dealId: string): boolean => {
     { id: "dashboard",    label: "Dashboard"   },
     { id: "my-deals",     label: "My Deals"    },
     { id: "compare",      label: "Compare"     },
+    { id: "benchmarks",   label: "Financial Benchmarks" },
     { id: "market-intel", label: "Market Intel" },
   ];
 
@@ -9212,6 +9214,7 @@ const dealHasFullAccess = (dealId: string): boolean => {
                 {activeTab === "dashboard"    && "Deal Command Center"}
                 {activeTab === "my-deals"     && "My Deals"}
                 {activeTab === "compare"      && "Compare Deals"}
+                {activeTab === "benchmarks"   && "Financial Benchmarks"}
                 {activeTab === "market-intel" && "Market Intelligence"}
               </h1>
             </div>
@@ -9348,6 +9351,13 @@ const dealHasFullAccess = (dealId: string): boolean => {
                 comparisonsRemaining={comparisonsRemaining}
                 hitCompareCap={hitCompareCap}
                 onComparisonUsed={incrementComparisons}
+              />
+            )}
+            {activeTab === "benchmarks" && (
+              <FinancialBenchmarksTab
+               deals={deals}
+               isPro={isPro}
+               onShowUpgrade={() => setShowUpgradeModal(true)}
               />
             )}
             {activeTab === "market-intel" && (
