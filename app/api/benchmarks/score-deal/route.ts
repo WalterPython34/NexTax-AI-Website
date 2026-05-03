@@ -36,6 +36,7 @@ import {
   generateOperatingFlags,
   analyzeDealStructure,
 } from "@/lib/benchmarks/risk-flags";
+import { runInteractionLayer } from "@/lib/benchmarks/interactions";
 import type {
   BenchmarkInputs,
   DealStructureInputs,
@@ -432,7 +433,17 @@ export async function POST(req: NextRequest) {
     // Step 7: Composite score
     const { score: financial_score, drivers: score_drivers } = computeFinancialScore(financial_position, ratios);
 
-    // Step 8: Identify metrics where we couldn't compute anything useful
+    // Step 8: Interaction layer — second-order observations across domains.
+    // Runs LAST because it consumes the output of the deterministic engine.
+    const interactionOutput = runInteractionLayer({
+      inputs,
+      ratios,
+      rows: financial_position,
+      ds: deal_structure_analysis,
+      financial_score,
+    });
+
+    // Step 9: Identify metrics where we couldn't compute anything useful
     const unsupported_metrics = financial_position
       .filter(r => r.insufficient_data)
       .map(r => r.metric_key);
@@ -443,12 +454,16 @@ export async function POST(req: NextRequest) {
       industry_name,
       benchmark_year,
       generated_at: new Date().toISOString(),
+      tension_indicator: interactionOutput.tension_indicator,
       financial_position,
       risk_flags,
       strengths,
+      interaction_insights: interactionOutput.interaction_insights,
+      sensitivity: interactionOutput.sensitivity ?? undefined,
       deal_structure: deal_structure_analysis,
       financial_score,
       score_drivers,
+      score_risk_dependencies: interactionOutput.score_risk_dependencies,
       unsupported_metrics,
     };
 
