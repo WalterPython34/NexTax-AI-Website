@@ -1,241 +1,223 @@
-// lib/benchmarks/types.ts
+// lib/benchmarks/calculations.ts
 // ─────────────────────────────────────────────────────────────────────────────
-// Shared types for the Financial Benchmarks module.
+// Pure financial math. No I/O, no side effects, no React.
 //
-// Two distinct domains modeled here:
-//   1. RMA OPERATING BENCHMARKS — compares the deal's *operating* ratios
-//      (margins, liquidity, efficiency) against industry distributions from
-//      RMA Annual Statement Studies. Quartile-based percentile math.
-//
-//   2. DEAL STRUCTURE & LEVERAGE — evaluates the *proposed acquisition
-//      structure* (purchase price, debt stack, equity contribution). These
-//      metrics are NOT compared to RMA — they're rule-based lender thresholds
-//      because RMA Debt/Worth measures historical business equity, not buyer
-//      equity, and conflating the two destroys credibility.
+// Every ratio returns RatioResult — never a fabricated number. If a required
+// input is missing or zero (where division would NaN), we return
+// { ok: false, value: null, reason: "..." } so the UI can show "—" or
+// "insufficient data" instead of a misleading 0 or Infinity.
 // ─────────────────────────────────────────────────────────────────────────────
 
-// ── Inputs ───────────────────────────────────────────────────────────────────
+import type {
+  BenchmarkInputs,
+  CalculatedRatios,
+  RatioResult,
+} from './types';
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+/** True for finite numbers > 0. Catches null, undefined, NaN, Infinity, 0, negatives. */
+function isPositive(n: number | null | undefined): n is number {
+  return typeof n === 'number' && Number.isFinite(n) && n > 0;
+}
+
+/** True for finite numbers >= 0. Use when 0 is a legitimate input (e.g. inventory for a service biz). */
+function isNonNegative(n: number | null | undefined): n is number {
+  return typeof n === 'number' && Number.isFinite(n) && n >= 0;
+}
+
+const ok = (value: number): RatioResult => ({ ok: true, value });
+const fail = (reason: string): RatioResult => ({ ok: false, value: null, reason });
+
+// ── Income statement ratios ──────────────────────────────────────────────────
 
 /**
- * What the user enters in the Financial Benchmarks tab. Most of this is
- * auto-populated from a saved deal; the post-NDA fields (working capital,
- * debt structure) are added by the user once they have the seller's books.
+ * Gross Margin = (Revenue - COGS) / Revenue
+ * Returned as a percentage value (e.g. 35.2 means 35.2%, not 0.352).
  */
-export interface BenchmarkInputs {
-  // Identity (auto-populated from saved deal)
-  industry:        string;   // IndustryKey from your existing system
-  naics_code?:     string;   // resolved from industry, used for RMA lookup
-
-  // Income statement (auto-populated where possible)
-  revenue:             number;
-  cogs:                number | null;
-  operating_expenses:  number | null;
-  sde:                 number;   // or EBITDA — toggle in UI
-
-  // Working capital (post-NDA)
-  cash:                 number | null;
-  accounts_receivable:  number | null;
-  inventory:            number | null;
-  accounts_payable:     number | null;
-
-  // Debt structure (used for OPERATING DSCR — see also DealStructureInputs
-  // for acquisition-structure DSCR which lives in its own card)
-  total_debt:        number | null;
-  interest_rate_pct: number | null;   // e.g. 10.5 for 10.5%
-  loan_term_years:   number | null;   // e.g. 10
-
-  // V1.1 optional
-  capex?:        number;
-  rent?:         number;
-  owner_salary?: number;
+export function grossMarginPct(inputs: Pick<BenchmarkInputs, 'revenue' | 'cogs'>): RatioResult {
+  if (!isPositive(inputs.revenue)) return fail('revenue is missing or zero');
+  if (!isNonNegative(inputs.cogs)) return fail('COGS not provided');
+  const margin = ((inputs.revenue - inputs.cogs) / inputs.revenue) * 100;
+  return ok(margin);
 }
 
 /**
- * Acquisition structure inputs for the Deal Structure & Leverage card.
- * Completely separate from BenchmarkInputs because these are about the
- * proposed deal, not the underlying business.
+ * SDE Margin = SDE / Revenue
+ * Percentage (e.g. 18.5 = 18.5%).
  */
-export interface DealStructureInputs {
-  purchase_price:           number;
-  buyer_equity:             number;
-  senior_debt:              number;
-  seller_note:              number;
-  working_capital_needed:   number;
-  sde:                      number;
-  annual_debt_service:      number;   // computed PMT or user-provided
+export function sdeMarginPct(inputs: Pick<BenchmarkInputs, 'revenue' | 'sde'>): RatioResult {
+  if (!isPositive(inputs.revenue)) return fail('revenue is missing or zero');
+  if (typeof inputs.sde !== 'number' || !Number.isFinite(inputs.sde)) {
+    return fail('SDE not provided');
+  }
+  return ok((inputs.sde / inputs.revenue) * 100);
 }
 
-// ── RMA Benchmark data shape (matches Supabase rma_benchmarks rows) ─────────
+// ── Liquidity ────────────────────────────────────────────────────────────────
 
-export type Quartile = 'q1' | 'median' | 'q3';
-
-export interface RmaBenchmarkRow {
-  naics_code:      string;
-  industry_name:   string;
-  year:            string;
-  metric_name:     string;
-  metric_quartile: Quartile;
-  metric_value:    number;
+/**
+ * Current Assets = Cash + AR + Inventory.
+ * Returns null if any component is missing — we don't fabricate.
+ */
+export function currentAssets(inputs: Pick<BenchmarkInputs, 'cash' | 'accounts_receivable' | 'inventory'>): number | null {
+  const c = inputs.cash;
+  const ar = inputs.accounts_receivable;
+  const inv = inputs.inventory;
+  if (!isNonNegative(c) || !isNonNegative(ar) || !isNonNegative(inv)) return null;
+  return c + ar + inv;
 }
 
 /**
- * Convenience shape: all three quartiles for one metric, looked up at runtime.
+ * Current Liabilities = AP + (Total Debt × current portion).
+ * For SMB acquisition diligence, the current portion of LTD is approximated as
+ * one year of debt service principal. Without that detail, we use AP only and
+ * note this as a limitation in the spec.
  */
-export interface QuartileTriple {
-  q1:     number | null;
-  median: number | null;
-  q3:     number | null;
+export function currentLiabilities(inputs: Pick<BenchmarkInputs, 'accounts_payable'>): number | null {
+  const ap = inputs.accounts_payable;
+  if (!isNonNegative(ap)) return null;
+  return ap;
 }
-
-// ── Calculated ratios (output of calculations.ts) ────────────────────────────
 
 /**
- * Discriminated by ok flag. When ok=false, value is null and reason explains
- * why — e.g. "missing inventory data" or "revenue is zero". Never returns a
- * fabricated number.
+ * Current Ratio = Current Assets / Current Liabilities.
  */
-export type RatioResult =
-  | { ok: true;  value: number; }
-  | { ok: false; value: null;   reason: string };
-
-export interface CalculatedRatios {
-  gross_margin_pct:           RatioResult;
-  sde_margin_pct:             RatioResult;
-  current_ratio:              RatioResult;
-  dscr:                       RatioResult;
-  inventory_turnover:         RatioResult;
-  days_inventory_outstanding: RatioResult;
-  solvency_ratio:             RatioResult;
-  debt_to_equity:             RatioResult;   // calculated only if data supports it
-  annual_debt_service:        RatioResult;   // PMT helper
+export function currentRatio(inputs: BenchmarkInputs): RatioResult {
+  const ca = currentAssets(inputs);
+  const cl = currentLiabilities(inputs);
+  if (ca === null) return fail('working capital data incomplete (need cash, AR, inventory)');
+  if (cl === null) return fail('accounts payable not provided');
+  if (cl === 0) return fail('current liabilities are zero — ratio undefined');
+  return ok(ca / cl);
 }
 
-// ── Percentile output (output of percentile-engine.ts) ───────────────────────
+// ── Debt service ─────────────────────────────────────────────────────────────
 
 /**
- * 'higher_is_better' — DSCR, margins, current ratio. Raw percentile = display.
- * 'lower_is_better'  — Debt/Worth, DIO, debt-to-equity. Display = 100 - raw.
+ * Annual debt service via standard PMT formula:
+ *   PMT = P × [r(1+r)^n] / [(1+r)^n − 1]
+ * Where r is the periodic (monthly) rate and n is total periods. Multiplied by
+ * 12 to get annual debt service.
+ *
+ * Edge cases:
+ *   - rate = 0 → PMT = principal / total_payments × 12 (interest-free loan)
+ *   - any input missing → null
  */
-export type Direction = 'higher_is_better' | 'lower_is_better';
+export function annualDebtService(inputs: Pick<BenchmarkInputs, 'total_debt' | 'interest_rate_pct' | 'loan_term_years'>): RatioResult {
+  const principal = inputs.total_debt;
+  const ratePct   = inputs.interest_rate_pct;
+  const termYrs   = inputs.loan_term_years;
+
+  if (!isPositive(principal)) return fail('total debt missing');
+  if (ratePct === null || ratePct === undefined || !Number.isFinite(ratePct) || ratePct < 0) {
+    return fail('interest rate missing');
+  }
+  if (!isPositive(termYrs)) return fail('loan term missing');
+
+  const monthlyRate = (ratePct / 100) / 12;
+  const totalMonths = termYrs * 12;
+
+  if (monthlyRate === 0) {
+    return ok((principal / totalMonths) * 12);
+  }
+
+  const factor = Math.pow(1 + monthlyRate, totalMonths);
+  const monthlyPmt = (principal * monthlyRate * factor) / (factor - 1);
+  return ok(monthlyPmt * 12);
+}
 
 /**
- * Status labels match the spec exactly. Bands are based on the *display*
- * percentile (post-direction-flip), so "Strong" always means good.
+ * DSCR = SDE / Annual Debt Service.
+ * Higher is better; lender-typical floor is 1.25-1.30x.
  */
-export type StatusLabel =
-  | 'Bottom Quartile'
-  | 'Below Median'
-  | 'In Line'
-  | 'Strong'
-  | 'Outlier';
+export function dscr(inputs: BenchmarkInputs): RatioResult {
+  const sde = inputs.sde;
+  if (typeof sde !== 'number' || !Number.isFinite(sde)) return fail('SDE not provided');
+  const ads = annualDebtService(inputs);
+  if (!ads.ok) return fail(`DSCR requires debt terms — ${ads.reason}`);
+  if (ads.value === 0) return fail('annual debt service is zero — DSCR undefined');
+  return ok(sde / ads.value);
+}
 
-export type StatusColor = 'red' | 'yellow' | 'blue' | 'green';
+// ── Operations ───────────────────────────────────────────────────────────────
 
 /**
- * One row of the main benchmark table. Carries everything the UI needs to
- * render a row including the percentile bar segments.
+ * Inventory Turnover = COGS / Inventory.
+ * For a service business with no inventory, we return insufficient data
+ * rather than a misleading "infinite turnover."
  */
-export interface MetricBenchmarkRow {
-  metric_key:        string;          // internal key e.g. "current_ratio"
-  metric_label:      string;          // display label e.g. "Current Ratio"
-  deal_value:        number | null;
-  industry_q1:       number | null;
-  industry_median:   number | null;
-  industry_q3:       number | null;
-  raw_percentile:    number | null;   // 1-99 on raw scale (null if no data)
-  display_percentile: number | null;  // post-direction-flip, used for status
-  direction:         Direction;
-  status:            StatusLabel | null;
-  status_color:      StatusColor | null;
-  insufficient_data: boolean;
-  reason?:           string;          // populated when insufficient_data=true
+export function inventoryTurnover(inputs: Pick<BenchmarkInputs, 'cogs' | 'inventory'>): RatioResult {
+  if (!isPositive(inputs.cogs)) return fail('COGS not provided');
+  if (inputs.inventory === null || inputs.inventory === undefined) {
+    return fail('inventory not provided');
+  }
+  if (!Number.isFinite(inputs.inventory) || inputs.inventory <= 0) {
+    return fail('inventory is zero or negative — likely a service business');
+  }
+  return ok(inputs.cogs / inputs.inventory);
 }
 
-// ── Risk flags (output of risk-flags.ts) ─────────────────────────────────────
-
-export type RiskSeverity = 'high' | 'medium' | 'low' | 'info';
-
-export interface RiskFlag {
-  severity:    RiskSeverity;
-  metric_key:  string;
-  message:     string;          // e.g. "DSCR of 1.22x is below the 1.30x lender threshold"
-  rule:        string;          // e.g. "dscr_below_sba_threshold"
+/**
+ * Days Inventory Outstanding = 365 / Inventory Turnover.
+ * Lower is better for most operating businesses.
+ */
+export function daysInventoryOutstanding(inputs: Pick<BenchmarkInputs, 'cogs' | 'inventory'>): RatioResult {
+  const turn = inventoryTurnover(inputs);
+  if (!turn.ok) return fail(`DIO requires inventory turnover — ${turn.reason}`);
+  if (turn.value === 0) return fail('inventory turnover is zero — DIO undefined');
+  return ok(365 / turn.value);
 }
 
-export interface Strength {
-  metric_key: string;
-  message:    string;
+// ── Leverage / Solvency ──────────────────────────────────────────────────────
+
+/**
+ * Solvency Ratio = Total Assets / Total Liabilities.
+ *
+ * Limitation: we don't have full balance sheet from the seller in V1. We
+ * approximate "total assets" with current assets only and "total liabilities"
+ * with AP + total debt. This is a *partial* solvency picture and the UI
+ * should label it as such, OR we could omit and return insufficient data.
+ *
+ * For V1 we return null + reason — better to show "—" than mislead.
+ * The UI can hide this row entirely until V2 captures full BS data.
+ */
+export function solvencyRatio(_inputs: BenchmarkInputs): RatioResult {
+  // Intentionally not calculated in V1. Full balance sheet needed.
+  return fail('full balance sheet required (fixed assets, intangibles, LTD)');
 }
 
-// ── Deal Structure & Leverage outputs ────────────────────────────────────────
-
-export type DealStructureStatus =
-  // DSCR statuses
-  | 'Risk' | 'Borderline' | 'Strong'
-  // Debt/SDE statuses
-  | 'Conservative' | 'Normal' | 'Elevated' | 'Aggressive'
-  // LTV statuses
-  | 'Typical' | 'High' | 'Very High'
-  // Universal
-  | 'Insufficient Data';
-
-export interface DealStructureMetric {
-  key:         'dscr' | 'debt_to_sde' | 'ltv';
-  label:       string;
-  value:       number | null;
-  display:     string;        // formatted for UI e.g. "1.22x" or "—"
-  status:      DealStructureStatus;
-  status_color: StatusColor | null;
-  explanation: string;        // one-line deterministic interpretation
+/**
+ * Debt-to-Equity = Debt / Equity.
+ *
+ * Per the build spec: in V1 we do NOT calculate this for the OPERATING
+ * benchmark table because we don't have historical business equity. The
+ * Deal Structure & Leverage card uses Debt-to-SDE instead, which is
+ * structurally appropriate for acquisition financing analysis.
+ *
+ * Returns insufficient data here so the UI can hide the row cleanly.
+ */
+export function debtToEquity(_inputs: BenchmarkInputs): RatioResult {
+  return fail('historical equity not available pre-acquisition (use Deal Structure card for buyer leverage)');
 }
 
-export interface DealStructureAnalysis {
-  metrics:        DealStructureMetric[];
-  sources_uses:   {
-    purchase_price:         number;
-    buyer_equity:           number;
-    senior_debt:            number;
-    seller_note:            number;
-    working_capital_needed: number;
-    total_uses:             number;
-    total_sources:          number;
-    balanced:               boolean;
+// ── Top-level: calculate everything in one call ──────────────────────────────
+
+/**
+ * Run the full ratio set against a deal's inputs. Each result independently
+ * carries ok/fail status so the UI can render rows row-by-row, showing "—"
+ * for ratios it can't compute.
+ */
+export function calculateAllRatios(inputs: BenchmarkInputs): CalculatedRatios {
+  return {
+    gross_margin_pct:           grossMarginPct(inputs),
+    sde_margin_pct:             sdeMarginPct(inputs),
+    current_ratio:              currentRatio(inputs),
+    dscr:                       dscr(inputs),
+    inventory_turnover:         inventoryTurnover(inputs),
+    days_inventory_outstanding: daysInventoryOutstanding(inputs),
+    solvency_ratio:             solvencyRatio(inputs),
+    debt_to_equity:             debtToEquity(inputs),
+    annual_debt_service:        annualDebtService(inputs),
   };
-  flags:          RiskFlag[];   // 2-3 leverage-specific flags
-  interpretation: string[];     // 2-3 sentences in "What This Means" panel
-}
-
-// ── Top-level engine output ──────────────────────────────────────────────────
-
-/**
- * Final structured output the API returns and the UI consumes. Mirrors the
- * spec's required JSON shape with extras for the table UI.
- */
-export interface BenchmarkAnalysis {
-  // Identity & context
-  industry:       string;
-  naics_code:     string | null;
-  industry_name:  string | null;
-  benchmark_year: string;
-  generated_at:   string;        // ISO timestamp
-
-  // Operating metrics (RMA-compared)
-  financial_position: MetricBenchmarkRow[];
-
-  // Deterministic flags (non-AI)
-  risk_flags:        RiskFlag[];
-  strengths:         Strength[];
-
-  // Deal structure (separate domain)
-  deal_structure?:   DealStructureAnalysis;
-
-  // Score (0-100)
-  financial_score:   number | null;
-  score_drivers:     string[];   // top 3 contributing factors
-
-  // For UI: which metrics had no benchmark data
-  unsupported_metrics: string[];
-
-  // AI-layer output is added separately by /api/benchmarks/interpret —
-  // not part of the deterministic engine.
 }
