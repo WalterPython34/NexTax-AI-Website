@@ -132,6 +132,27 @@ export type StatusLabel =
 export type StatusColor = 'red' | 'yellow' | 'blue' | 'green';
 
 /**
+ * Three-way outlier classification — distinguishes a *good* outlier (strong
+ * performance) from a *concerning* one (suspiciously high margin) from a
+ * *risk* outlier (bottom-quartile on a directional metric). Computed
+ * deterministically by the percentile engine so the UI can render
+ * differentiated badges instead of a single ambiguous "Outlier" label.
+ *
+ *   'strong'     — good-direction outlier. Display percentile >= 75 AND the
+ *                  raw value isn't in the high-margin/low-confidence zone.
+ *                  Color: green.
+ *   'validation' — suspiciously elevated metric where "too high" hurts
+ *                  credibility (SDE margin > 1.5x median, gross margin
+ *                  > 1.5x median). Color: yellow. Triggers a validation flag.
+ *   'risk'       — bottom-quartile reading on a higher-is-better metric or
+ *                  top-quartile on a lower-is-better metric AFTER direction
+ *                  flip. Display percentile < 25. Color: red.
+ *   null         — not an outlier; falls in the In Line / Below Median /
+ *                  Strong bands.
+ */
+export type OutlierKind = 'strong' | 'validation' | 'risk' | null;
+
+/**
  * One row of the main benchmark table. Carries everything the UI needs to
  * render a row including the percentile bar segments.
  */
@@ -147,6 +168,7 @@ export interface MetricBenchmarkRow {
   direction:         Direction;
   status:            StatusLabel | null;
   status_color:      StatusColor | null;
+  outlier_kind:      OutlierKind;       // three-way: strong | validation | risk | null
   insufficient_data: boolean;
   reason?:           string;          // populated when insufficient_data=true
 }
