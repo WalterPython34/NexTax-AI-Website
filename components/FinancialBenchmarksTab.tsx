@@ -85,18 +85,40 @@ type DealStructureAnalysis = {
   interpretation: string[];
 };
 
+type InteractionInsight = {
+  severity: "high" | "medium" | "info";
+  rule: string;
+  message: string;
+  metrics: string[];
+};
+
+type SensitivityAnalysis = {
+  source_metric: string;
+  reported_value: number;
+  industry_median: number;
+  normalized_sde: number;
+  reported_sde: number;
+  normalized_dscr: number | null;
+  reported_dscr: number | null;
+  insight: string;
+};
+
 type BenchmarkAnalysis = {
   industry: string;
   naics_code: string | null;
   industry_name: string | null;
   benchmark_year: string;
   generated_at: string;
+  tension_indicator: string | null;
   financial_position: MetricRow[];
   risk_flags: RiskFlag[];
   strengths: { metric_key: string; message: string }[];
+  interaction_insights: InteractionInsight[];
+  sensitivity?: SensitivityAnalysis;
   deal_structure?: DealStructureAnalysis;
   financial_score: number | null;
   score_drivers: string[];
+  score_risk_dependencies: string[];
   unsupported_metrics: string[];
 };
 
@@ -612,7 +634,69 @@ export default function FinancialBenchmarksTab({
                 </div>
               )}
             </div>
+
+            {/* Score Caveats — only when score_risk_dependencies has entries */}
+            {analysis.score_risk_dependencies.length > 0 && (
+              <div style={{
+                marginTop: 18, paddingTop: 16,
+                borderTop: "1px solid rgba(255,255,255,0.06)",
+              }}>
+                <div style={{
+                  display: "flex", alignItems: "center", gap: 6, marginBottom: 8,
+                }}>
+                  <span style={{ fontSize: 11 }}>⚠</span>
+                  <span style={{
+                    fontSize: 10, color: "#FCD34D", textTransform: "uppercase",
+                    letterSpacing: "0.1em", fontWeight: 600,
+                  }}>
+                    Score Caveats
+                  </span>
+                </div>
+                <ul style={{
+                  margin: 0, padding: 0, listStyle: "none",
+                  display: "flex", flexDirection: "column", gap: 5,
+                }}>
+                  {analysis.score_risk_dependencies.map((d, i) => (
+                    <li key={i} style={{
+                      fontSize: 12, color: "#E2E8F0", lineHeight: 1.55,
+                      paddingLeft: 14, position: "relative",
+                    }}>
+                      <span style={{
+                        position: "absolute", left: 0, top: 7,
+                        width: 4, height: 4, borderRadius: "50%",
+                        background: "#F59E0B",
+                      }} />
+                      {d}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
           </Card>
+
+          {/* Tension Indicator — amber banner when conflicting signals exist */}
+          {analysis.tension_indicator && (
+            <div style={{
+              padding: "14px 18px", borderRadius: 12,
+              background: "rgba(245,158,11,0.08)",
+              border: "1px solid rgba(245,158,11,0.28)",
+              display: "flex", alignItems: "flex-start", gap: 12,
+            }}>
+              <span style={{ fontSize: 18, lineHeight: 1, flexShrink: 0, marginTop: 1 }}>⚖️</span>
+              <div style={{ flex: 1 }}>
+                <div style={{
+                  fontSize: 11, fontWeight: 700, color: "#FCD34D",
+                  textTransform: "uppercase", letterSpacing: "0.08em",
+                  marginBottom: 4,
+                }}>
+                  Mixed Signals
+                </div>
+                <div style={{ fontSize: 13, color: "#E2E8F0", lineHeight: 1.55 }}>
+                  {analysis.tension_indicator}
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Financial Position table */}
           <Card style={{ padding: 0, overflow: "hidden" }}>
@@ -648,6 +732,9 @@ export default function FinancialBenchmarksTab({
             ))}
           </Card>
 
+          {/* SDE Normalization Sensitivity — only when sensitivity exists */}
+          {analysis.sensitivity && <SensitivityCard s={analysis.sensitivity} />}
+
           {/* Risk Signals + What This Means (two-column) */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18 }} className="benchmarks-panels-grid">
 
@@ -668,28 +755,72 @@ export default function FinancialBenchmarksTab({
 
               {!isPro ? (
                 <ProGatedHint label="Risk flag detection requires Pro" onUpgrade={onShowUpgrade} />
-              ) : analysis.risk_flags.length === 0 ? (
-                <p style={{ fontSize: 12, color: "#7C8593", margin: 0 }}>
-                  No deterministic risk flags triggered.
-                </p>
               ) : (
-                <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 10 }}>
-                  {analysis.risk_flags.map((f, i) => (
-                    <li key={i} style={{
-                      fontSize: 12, color: "#E2E8F0", lineHeight: 1.55,
-                      paddingLeft: 14, position: "relative",
-                    }}>
-                      <span style={{
-                        position: "absolute", left: 0, top: 6,
-                        width: 6, height: 6, borderRadius: "50%",
-                        background: f.severity === "high" ? "#EF4444"
-                                  : f.severity === "medium" ? "#F59E0B"
-                                  : "#94A3B8",
-                      }} />
-                      {f.message}
-                    </li>
-                  ))}
-                </ul>
+                <>
+                  {/* Cross-Metric Risks — interaction insights surfaced first because
+                      they connect multiple metrics and matter more than single-metric flags */}
+                  {analysis.interaction_insights.length > 0 && (
+                    <div style={{ marginBottom: 16 }}>
+                      <div style={{
+                        fontSize: 10, color: "#FCA5A5", textTransform: "uppercase",
+                        letterSpacing: "0.1em", fontWeight: 700, marginBottom: 8,
+                        display: "flex", alignItems: "center", gap: 6,
+                      }}>
+                        <span style={{ fontSize: 11 }}>⚡</span>
+                        Cross-Metric Risks
+                      </div>
+                      <ul style={{
+                        margin: 0, padding: 0, listStyle: "none",
+                        display: "flex", flexDirection: "column", gap: 10,
+                      }}>
+                        {analysis.interaction_insights.map((ins, i) => (
+                          <li key={i} style={{
+                            padding: "10px 12px", borderRadius: 8,
+                            background: "rgba(239,68,68,0.06)",
+                            border: "1px solid rgba(239,68,68,0.18)",
+                            fontSize: 12, color: "#E2E8F0", lineHeight: 1.55,
+                          }}>
+                            {ins.message}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {analysis.risk_flags.length === 0 && analysis.interaction_insights.length === 0 ? (
+                    <p style={{ fontSize: 12, color: "#7C8593", margin: 0 }}>
+                      No deterministic risk flags triggered.
+                    </p>
+                  ) : analysis.risk_flags.length > 0 ? (
+                    <>
+                      {analysis.interaction_insights.length > 0 && (
+                        <div style={{
+                          fontSize: 10, color: "#FCD34D", textTransform: "uppercase",
+                          letterSpacing: "0.1em", fontWeight: 700, marginBottom: 8,
+                        }}>
+                          Single-Metric Flags
+                        </div>
+                      )}
+                      <ul style={{ margin: 0, padding: 0, listStyle: "none", display: "flex", flexDirection: "column", gap: 10 }}>
+                        {analysis.risk_flags.map((f, i) => (
+                          <li key={i} style={{
+                            fontSize: 12, color: "#E2E8F0", lineHeight: 1.55,
+                            paddingLeft: 14, position: "relative",
+                          }}>
+                            <span style={{
+                              position: "absolute", left: 0, top: 6,
+                              width: 6, height: 6, borderRadius: "50%",
+                              background: f.severity === "high" ? "#EF4444"
+                                        : f.severity === "medium" ? "#F59E0B"
+                                        : "#94A3B8",
+                            }} />
+                            {f.message}
+                          </li>
+                        ))}
+                      </ul>
+                    </>
+                  ) : null}
+                </>
               )}
 
               {analysis.strengths.length > 0 && isPro && (
@@ -841,6 +972,127 @@ function MetricTableRow({ row, last }: { row: MetricRow; last: boolean }) {
       </div>
     </div>
   );
+}
+
+// ── Sensitivity Card — what happens to DSCR if SDE outlier resolves ──────────
+
+function SensitivityCard({ s }: { s: SensitivityAnalysis }) {
+  const breaches = s.normalized_dscr !== null && s.normalized_dscr < 1.30;
+  const accentColor = breaches ? "rgba(239,68,68,0.3)" : "rgba(245,158,11,0.28)";
+  const bgColor = breaches ? "rgba(239,68,68,0.04)" : "rgba(245,158,11,0.04)";
+  const titleColor = breaches ? "#FCA5A5" : "#FCD34D";
+
+  return (
+    <Card style={{
+      background: bgColor,
+      border: `1px solid ${accentColor}`,
+    }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 14 }}>
+        <span style={{ fontSize: 16 }}>🔬</span>
+        <h3 style={{
+          fontSize: 15, fontWeight: 700, margin: 0,
+          fontFamily: "'Inter Tight',sans-serif", color: titleColor,
+        }}>
+          SDE Normalization Sensitivity
+        </h3>
+      </div>
+
+      <p style={{ fontSize: 12, color: "#94A3B8", margin: "0 0 16px", lineHeight: 1.55 }}>
+        If SDE normalized to the {s.industry_median.toFixed(1)}% industry median margin,
+        DSCR would fall from {s.reported_dscr !== null ? `${s.reported_dscr.toFixed(2)}x` : "—"} to
+        {" "}{s.normalized_dscr !== null ? `${s.normalized_dscr.toFixed(2)}x` : "—"}.
+      </p>
+
+      {/* Comparison grid: reported vs normalized */}
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))",
+        gap: 12,
+      }}>
+        <SensitivityCell
+          label="Reported SDE"
+          value={fmtBigMoney(s.reported_sde)}
+          mono
+        />
+        <SensitivityCell
+          label="Normalized SDE"
+          value={fmtBigMoney(s.normalized_sde)}
+          mono
+          subdued
+        />
+        <SensitivityCell
+          label="Reported DSCR"
+          value={s.reported_dscr !== null ? `${s.reported_dscr.toFixed(2)}x` : "—"}
+          mono
+        />
+        <SensitivityCell
+          label="Normalized DSCR"
+          value={s.normalized_dscr !== null ? `${s.normalized_dscr.toFixed(2)}x` : "—"}
+          mono
+          highlight={breaches ? "red" : undefined}
+        />
+        <SensitivityCell
+          label="Lender Threshold"
+          value="1.30x"
+          mono
+          subdued
+        />
+      </div>
+
+      {breaches && (
+        <div style={{
+          marginTop: 14, padding: "10px 12px", borderRadius: 8,
+          background: "rgba(239,68,68,0.08)",
+          border: "1px solid rgba(239,68,68,0.22)",
+          fontSize: 12, color: "#FCA5A5", lineHeight: 1.55,
+          display: "flex", alignItems: "flex-start", gap: 8,
+        }}>
+          <span style={{ flexShrink: 0 }}>⚠</span>
+          <span>
+            Normalized DSCR falls below the 1.30x lender threshold — financing viability
+            depends on validating the reported earnings.
+          </span>
+        </div>
+      )}
+    </Card>
+  );
+}
+
+function SensitivityCell({
+  label, value, mono, subdued, highlight,
+}: {
+  label: string;
+  value: string;
+  mono?: boolean;
+  subdued?: boolean;
+  highlight?: "red";
+}) {
+  const valueColor = highlight === "red"
+    ? "#FCA5A5"
+    : subdued ? "#94A3B8" : "#F1F5F9";
+  return (
+    <div>
+      <div style={{
+        fontSize: 9, color: "#7C8593", textTransform: "uppercase",
+        letterSpacing: "0.1em", fontWeight: 600, marginBottom: 5,
+      }}>
+        {label}
+      </div>
+      <div style={{
+        fontSize: 17, fontWeight: 700, color: valueColor,
+        fontFamily: mono ? "'JetBrains Mono',monospace" : "'Inter',sans-serif",
+        letterSpacing: "-0.02em",
+      }}>
+        {value}
+      </div>
+    </div>
+  );
+}
+
+function fmtBigMoney(n: number): string {
+  if (Math.abs(n) >= 1_000_000) return `$${(n / 1_000_000).toFixed(2)}M`;
+  if (Math.abs(n) >= 1_000) return `$${Math.round(n / 1_000)}K`;
+  return `$${Math.round(n)}`;
 }
 
 function DealStructureCard({ ds }: { ds: DealStructureAnalysis }) {
