@@ -132,9 +132,25 @@ interface FinancialBenchmarksTabProps {
   deals: SavedDeal[];
   /** Existing Pro detection from the parent dashboard */
   isPro: boolean;
+  /** Authenticated user ID, used for snapshot scoping. Pass null when not authenticated. */
+  userId: string | null;
   /** Optional: when free user hits a Pro feature, escalate to existing modal */
   onShowUpgrade?: () => void;
 }
+
+type SnapshotSummary = {
+  snapshot_id: string;
+  deal_id: string;
+  created_at: string;
+  industry: string | null;
+  revenue_band: string | null;
+  view_type: string;
+  is_saved: boolean;
+  financial_score: number | null;
+  tension_indicator: string | null;
+  risk_flag_count: number;
+  interaction_insight_count: number;
+};
 
 // ── Visual primitives (match existing dashboard language) ────────────────────
 
@@ -310,6 +326,7 @@ function formatMetricValue(metric_key: string, value: number | null): string {
 export default function FinancialBenchmarksTab({
   deals,
   isPro,
+  userId,
   onShowUpgrade,
 }: FinancialBenchmarksTabProps) {
   const [selectedDealId, setSelectedDealId] = useState<string>("");
@@ -361,6 +378,113 @@ export default function FinancialBenchmarksTab({
   const [interpretationLoading, setInterpretationLoading] = useState(false);
   const [interpretationError, setInterpretationError] = useState<string | null>(null);
 
+  // ── Snapshot state ─────────────────────────────────────────────────────────
+
+  const [currentSnapshotId, setCurrentSnapshotId] = useState<string | null>(null);
+  const [currentSnapshotIsSaved, setCurrentSnapshotIsSaved] = useState<boolean>(false);
+  const [savingSnapshot, setSavingSnapshot] = useState(false);
+  const [pastSnapshots, setPastSnapshots] = useState<SnapshotSummary[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [lastAnalyzedAt, setLastAnalyzedAt] = useState<string | null>(null);
+
+  // When the user picks a deal, load that deal's snapshot list and rehydrate
+  // the latest analysis (if any) so they pick up where they left off.
+  React.useEffect(() => {
+    if (!selectedDealId || !userId) {
+      setPastSnapshots([]);
+      setCurrentSnapshotId(null);
+      setCurrentSnapshotIsSaved(false);
+      return;
+    }
+    loadSnapshotList(selectedDealId, userId).then(rows => {
+      setPastSnapshots(rows);
+      // Auto-rehydrate the most recent snapshot for this deal
+      if (rows.length > 0) {
+        loadSnapshotDetail(rows[0].snapshot_id, userId);
+      } else {
+        // Fresh deal, no history — leave inputs/analysis blank
+        setAnalysis(null);
+        setLastAnalyzedAt(null);
+        setCurrentSnapshotId(null);
+        setCurrentSnapshotIsSaved(false);
+      }
+    });
+  }, [selectedDealId, userId]);
+
+  async function loadSnapshotList(dealId: string, uid: string): Promise<SnapshotSummary[]> {
+    setHistoryLoading(true);
+    try {
+      const res = await fetch(`/api/benchmarks/snapshots?deal_id=${encodeURIComponent(dealId)}&user_id=${encodeURIComponent(uid)}`);
+      const json = await res.json();
+      return json.ok ? (json.snapshots ?? []) : [];
+    } catch {
+      return [];
+    } finally {
+      setHistoryLoading(false);
+    }
+  }
+
+  async function loadSnapshotDetail(snapshotId: string, uid: string) {
+    try {
+      const res = await fetch(`/api/benchmarks/snapshots/${snapshotId}?user_id=${encodeURIComponent(uid)}`);
+      const json = await res.json();
+      if (!json.ok || !json.snapshot) return;
+
+      const snap = json.snapshot;
+      const fi = snap.financial_inputs ?? {};
+
+      // Rehydrate inputs
+      const num = (n: any) => typeof n === "number" && Number.isFinite(n) ? String(n) : "";
+      setCogs(num(fi.cogs));
+      setOpex(num(fi.operating_expenses));
+      setCash(num(fi.cash));
+      setAr(num(fi.accounts_receivable));
+      setInventory(num(fi.inventory));
+      setAp(num(fi.accounts_payable));
+      setTotalDebt(num(fi.total_debt));
+      setRate(num(fi.interest_rate_pct) || "10.5");
+      setTerm(num(fi.loan_term_years) || "10");
+
+      // Deal structure inputs (embedded under _deal_structure_inputs)
+      const dsi = fi._deal_structure_inputs ?? {};
+      setPurchasePrice(num(dsi.purchase_price));
+      setBuyerEquity(num(dsi.buyer_equity));
+      setSeniorDebt(num(dsi.senior_debt));
+      setSellerNote(num(dsi.seller_note));
+      setWcNeeded(num(dsi.working_capital_needed));
+
+      // Reconstruct the analysis object the UI expects
+      const ao = snap.analysis_outputs ?? {};
+      const reconstructed: BenchmarkAnalysis = {
+        industry: snap.industry ?? "",
+        naics_code: snap.naics_code ?? null,
+        industry_name: null,    // not stored in snapshot blob; lost on reload
+        benchmark_year: "2025-26",
+        generated_at: snap.generated_at ?? snap.created_at,
+        tension_indicator: ao.tension_indicator ?? null,
+        financial_position: snap.benchmark_results ?? [],
+        risk_flags: ao.risk_flags ?? [],
+        strengths: ao.strengths ?? [],
+        interaction_insights: ao.interaction_insights ?? [],
+        sensitivity: ao.sensitivity ?? undefined,
+        deal_structure: snap.deal_structure ?? undefined,
+        financial_score: ao.financial_score ?? null,
+        score_drivers: ao.score_drivers ?? [],
+        score_risk_dependencies: ao.score_risk_dependencies ?? [],
+        unsupported_metrics: ao.unsupported_metrics ?? [],
+      };
+      setAnalysis(reconstructed);
+      setLastAnalyzedAt(snap.created_at);
+      setCurrentSnapshotId(snap.snapshot_id);
+      setCurrentSnapshotIsSaved(!!snap.is_saved);
+      setInterpretation(null);
+      setInterpretationError(null);
+    } catch (err) {
+      console.error("[loadSnapshotDetail] error:", err);
+    }
+  }
+
   // ── Run deterministic analysis ─────────────────────────────────────────────
 
   async function runAnalysis() {
@@ -411,18 +535,56 @@ export default function FinancialBenchmarksTab({
       const res = await fetch("/api/benchmarks/score-deal", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ inputs, deal_structure }),
+        body: JSON.stringify({
+          inputs,
+          deal_structure,
+          deal_id: selectedDeal.id,
+          user_id: userId ?? undefined,
+        }),
       });
       const json = await res.json();
       if (!json.ok) {
         setError(json.error ?? "Analysis failed");
       } else {
         setAnalysis(json.analysis);
+        setLastAnalyzedAt(json.analysis?.generated_at ?? new Date().toISOString());
+        setCurrentSnapshotId(json.snapshot_id ?? null);
+        setCurrentSnapshotIsSaved(false);
+        // Refresh history list so the new snapshot appears
+        if (userId && selectedDeal.id) {
+          loadSnapshotList(selectedDeal.id, userId).then(setPastSnapshots);
+        }
       }
     } catch (err: any) {
       setError(err?.message ?? "Network error");
     } finally {
       setRunning(false);
+    }
+  }
+
+  // ── Save Snapshot (mark current snapshot as saved) ────────────────────────
+
+  async function saveSnapshot() {
+    if (!currentSnapshotId || !userId) return;
+    setSavingSnapshot(true);
+    try {
+      const res = await fetch(`/api/benchmarks/snapshots/${currentSnapshotId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_id: userId, is_saved: true }),
+      });
+      const json = await res.json();
+      if (json.ok) {
+        setCurrentSnapshotIsSaved(true);
+        // Refresh history list so the saved-flag updates
+        if (selectedDeal?.id) {
+          loadSnapshotList(selectedDeal.id, userId).then(setPastSnapshots);
+        }
+      }
+    } catch (err) {
+      console.error("[saveSnapshot] error:", err);
+    } finally {
+      setSavingSnapshot(false);
     }
   }
 
@@ -487,6 +649,122 @@ export default function FinancialBenchmarksTab({
           )}
         </div>
       </Card>
+
+      {/* ── Past Analyses (collapsible) ── */}
+      {selectedDeal && pastSnapshots.length > 0 && (
+        <Card>
+          <button
+            onClick={() => setHistoryOpen(o => !o)}
+            style={{
+              width: "100%", display: "flex", justifyContent: "space-between", alignItems: "center",
+              background: "transparent", border: "none", padding: 0, cursor: "pointer",
+              color: "#E2E8F0",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+              <SectionLabel>Past Analyses</SectionLabel>
+              <span style={{
+                fontSize: 11, color: "#7C8593",
+                padding: "2px 8px", borderRadius: 10,
+                background: "rgba(255,255,255,0.04)",
+              }}>
+                {pastSnapshots.length} {pastSnapshots.length === 1 ? "version" : "versions"}
+              </span>
+              {pastSnapshots.some(s => s.is_saved) && (
+                <span style={{
+                  fontSize: 10, color: "#6EE7B7", fontWeight: 600,
+                  textTransform: "uppercase", letterSpacing: "0.08em",
+                }}>
+                  {pastSnapshots.filter(s => s.is_saved).length} saved
+                </span>
+              )}
+            </div>
+            <span style={{
+              fontSize: 12, color: "#7C8593",
+              transform: historyOpen ? "rotate(180deg)" : "rotate(0deg)",
+              transition: "transform 0.2s",
+            }}>▼</span>
+          </button>
+
+          {historyOpen && (
+            <div style={{
+              marginTop: 14, paddingTop: 14,
+              borderTop: "1px solid rgba(255,255,255,0.06)",
+              display: "flex", flexDirection: "column", gap: 6,
+            }}>
+              {pastSnapshots.map(snap => {
+                const isCurrent = snap.snapshot_id === currentSnapshotId;
+                return (
+                  <button
+                    key={snap.snapshot_id}
+                    onClick={() => userId && loadSnapshotDetail(snap.snapshot_id, userId)}
+                    style={{
+                      display: "grid",
+                      gridTemplateColumns: "minmax(0, 1.6fr) minmax(0, 0.7fr) minmax(0, 1.4fr) auto",
+                      gap: 14, alignItems: "center",
+                      padding: "10px 14px", borderRadius: 9,
+                      background: isCurrent ? "rgba(99,102,241,0.10)" : "rgba(255,255,255,0.02)",
+                      border: `1px solid ${isCurrent ? "rgba(99,102,241,0.3)" : "rgba(255,255,255,0.04)"}`,
+                      cursor: "pointer", textAlign: "left" as const,
+                      color: "#E2E8F0",
+                    }}
+                  >
+                    {/* Timestamp */}
+                    <div style={{ fontSize: 12, color: "#E2E8F0" }}>
+                      {new Date(snap.created_at).toLocaleString()}
+                      {isCurrent && (
+                        <span style={{ marginLeft: 8, fontSize: 10, color: "#A5B4FC", fontWeight: 600 }}>
+                          CURRENT
+                        </span>
+                      )}
+                    </div>
+
+                    {/* Score */}
+                    <div style={{
+                      fontSize: 13, fontWeight: 700, fontFamily: "'JetBrains Mono',monospace",
+                      color: snap.financial_score === null ? "#6B7280" : scoreColor(snap.financial_score),
+                    }}>
+                      {snap.financial_score !== null ? `${snap.financial_score}/100` : "—"}
+                    </div>
+
+                    {/* Tension / lean */}
+                    <div style={{
+                      fontSize: 11, color: "#94A3B8",
+                      overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const,
+                    }}>
+                      {snap.tension_indicator
+                        ? <span title={snap.tension_indicator}>⚖ {snap.tension_indicator}</span>
+                        : snap.risk_flag_count > 0
+                          ? <span style={{ color: "#FCA5A5" }}>{snap.risk_flag_count} risk {snap.risk_flag_count === 1 ? "flag" : "flags"}</span>
+                          : <span style={{ color: "#6EE7B7" }}>No flags</span>}
+                    </div>
+
+                    {/* Saved badge */}
+                    <div>
+                      {snap.is_saved ? (
+                        <span style={{
+                          fontSize: 10, color: "#6EE7B7", fontWeight: 600,
+                          padding: "3px 8px", borderRadius: 6,
+                          background: "rgba(16,185,129,0.10)",
+                          border: "1px solid rgba(16,185,129,0.25)",
+                        }}>
+                          ✓ Saved
+                        </span>
+                      ) : (
+                        <span style={{
+                          fontSize: 10, color: "#7C8593", fontStyle: "italic",
+                        }}>
+                          Auto
+                        </span>
+                      )}
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
+          )}
+        </Card>
+      )}
 
       {/* ── Inputs section ── */}
       <Card>
@@ -578,6 +856,30 @@ export default function FinancialBenchmarksTab({
 
         <div style={{ marginTop: 22, display: "flex", justifyContent: "flex-end", gap: 12, alignItems: "center" }}>
           {error && <span style={{ fontSize: 12, color: "#FCA5A5" }}>{error}</span>}
+          {lastAnalyzedAt && !running && (
+            <span style={{ fontSize: 11, color: "#7C8593" }}>
+              Last analyzed: {new Date(lastAnalyzedAt).toLocaleString()}
+            </span>
+          )}
+          {analysis && currentSnapshotId && userId && (
+            <button
+              onClick={saveSnapshot}
+              disabled={savingSnapshot || currentSnapshotIsSaved}
+              className="btn-action"
+              style={{
+                padding: "10px 18px", borderRadius: 9,
+                border: "1px solid rgba(16,185,129,0.3)",
+                background: currentSnapshotIsSaved ? "rgba(16,185,129,0.10)" : "rgba(16,185,129,0.06)",
+                color: currentSnapshotIsSaved ? "#6EE7B7" : "#A5F3D0",
+                fontSize: 13, fontWeight: 600,
+                cursor: savingSnapshot || currentSnapshotIsSaved ? "default" : "pointer",
+                opacity: savingSnapshot ? 0.6 : 1,
+                display: "inline-flex", alignItems: "center", gap: 6,
+              }}
+            >
+              {currentSnapshotIsSaved ? "✓ Saved" : (savingSnapshot ? "Saving…" : "Save Snapshot")}
+            </button>
+          )}
           <button
             onClick={runAnalysis}
             disabled={running || !selectedDeal}
