@@ -372,7 +372,7 @@ function percentile(sorted: number[], p: number): number {
 
 // ── Input validation ─────────────────────────────────────────────────────────
 
-function validateInputs(body: any): { ok: true; inputs: BenchmarkInputs; deal_structure?: DealStructureInputs } | { ok: false; error: string } {
+function validateInputs(body: any): { ok: true; inputs: BenchmarkInputs; deal_structure?: DealStructureInputs; deal_id?: string; user_id?: string; client_run_id?: string } | { ok: false; error: string } {
   if (!body || typeof body !== "object") {
     return { ok: false, error: "request body must be JSON object" };
   }
@@ -423,7 +423,104 @@ function validateInputs(body: any): { ok: true; inputs: BenchmarkInputs; deal_st
     };
   }
 
-  return { ok: true, inputs, deal_structure };
+  return {
+    ok: true,
+    inputs,
+    deal_structure,
+    deal_id: typeof body.deal_id === "string" ? body.deal_id : undefined,
+    user_id: typeof body.user_id === "string" ? body.user_id : undefined,
+    client_run_id: typeof body.client_run_id === "string" ? body.client_run_id : undefined,
+  };
+}
+
+// ── Snapshot persistence (fire-and-forget) ───────────────────────────────────
+
+/** Bucket revenue into a coarse band for analytics. Mirrors snapshots route. */
+function revenueBand(revenue: number | null | undefined): string | null {
+  if (typeof revenue !== "number" || !Number.isFinite(revenue) || revenue <= 0) return null;
+  if (revenue < 500_000)    return "<500K";
+  if (revenue < 1_000_000)  return "500K-1M";
+  if (revenue < 2_500_000)  return "1M-2.5M";
+  if (revenue < 5_000_000)  return "2.5M-5M";
+  if (revenue < 10_000_000) return "5M-10M";
+  return "10M+";
+}
+
+/**
+ * Insert a snapshot row. Best-effort: errors are logged but never propagated
+ * to the analysis response. Snapshot persistence is a moat-building side
+ * effect, never a blocker.
+ *
+ * Returns the new snapshot_id on success, null on any failure.
+ */
+async function persistSnapshot(args: {
+  deal_id: string;
+  user_id: string;
+  inputs: BenchmarkInputs;
+  deal_structure_inputs?: DealStructureInputs;
+  ratios: CalculatedRatios;
+  analysis: BenchmarkAnalysis;
+  client_run_id?: string;
+}): Promise<string | null> {
+  try {
+    const supabase = getSupabase();
+
+    // financial_inputs combines operating + structural inputs the user typed,
+    // so a future reload can rehydrate the form completely.
+    const financial_inputs = {
+      ...args.inputs,
+      // Embed the deal-structure inputs alongside so reload is one-shot
+      _deal_structure_inputs: args.deal_structure_inputs ?? null,
+    };
+
+    // computed_ratios: flatten RatioResult shapes to value-or-null for easier
+    // analytics queries later (no JSONB navigation needed for common cases).
+    const flatRatios: Record<string, number | null> = {};
+    for (const [key, r] of Object.entries(args.ratios)) {
+      flatRatios[key] = r.ok ? r.value : null;
+    }
+
+    const { data, error } = await supabase
+      .from("benchmark_snapshots")
+      .insert({
+        deal_id:        args.deal_id,
+        user_id:        args.user_id,
+        industry:       args.inputs.industry ?? null,
+        naics_code:     args.analysis.naics_code ?? args.inputs.naics_code ?? null,
+        revenue_band:   revenueBand(args.inputs.revenue),
+        view_type:      "buyer_adjusted",
+        is_saved:       false,
+        financial_inputs,
+        computed_ratios: flatRatios,
+        benchmark_results: args.analysis.financial_position,
+        analysis_outputs: {
+          tension_indicator:        args.analysis.tension_indicator,
+          financial_score:          args.analysis.financial_score,
+          score_drivers:            args.analysis.score_drivers,
+          score_risk_dependencies:  args.analysis.score_risk_dependencies,
+          risk_flags:               args.analysis.risk_flags,
+          strengths:                args.analysis.strengths,
+          interaction_insights:     args.analysis.interaction_insights,
+          sensitivity:              args.analysis.sensitivity ?? null,
+          unsupported_metrics:      args.analysis.unsupported_metrics,
+          generated_at:             args.analysis.generated_at,
+        },
+        deal_structure: args.analysis.deal_structure ?? null,
+        client_run_id:  args.client_run_id ?? null,
+        generated_at:   args.analysis.generated_at,
+      })
+      .select("snapshot_id")
+      .single();
+
+    if (error) {
+      console.error("[score-deal] snapshot insert failed:", error);
+      return null;
+    }
+    return data?.snapshot_id ?? null;
+  } catch (err: any) {
+    console.error("[score-deal] snapshot uncaught:", err);
+    return null;
+  }
 }
 
 // ── POST handler ─────────────────────────────────────────────────────────────
@@ -435,7 +532,7 @@ export async function POST(req: NextRequest) {
     if (!v.ok) {
       return NextResponse.json({ ok: false, error: v.error }, { status: 400 });
     }
-    const { inputs, deal_structure } = v;
+    const { inputs, deal_structure, deal_id, user_id, client_run_id } = v;
 
     // Step 1: Resolve NAICS
     const naics_code = inputs.naics_code ?? getNaicsFromIndustry(inputs.industry) ?? null;
@@ -616,7 +713,24 @@ export async function POST(req: NextRequest) {
       unsupported_metrics,
     };
 
-    return NextResponse.json({ ok: true, analysis });
+    // Step 10: Persist snapshot (best-effort; doesn't affect analysis response).
+    // Only attempts persistence when both deal_id and user_id were provided —
+    // anonymous test calls (e.g. DevTools fetches without auth) skip the
+    // database write but still get the full analysis back.
+    let snapshot_id: string | null = null;
+    if (deal_id && user_id) {
+      snapshot_id = await persistSnapshot({
+        deal_id,
+        user_id,
+        inputs,
+        deal_structure_inputs: deal_structure,
+        ratios,
+        analysis,
+        client_run_id,
+      });
+    }
+
+    return NextResponse.json({ ok: true, analysis, snapshot_id });
   } catch (err: any) {
     console.error("[score-deal] uncaught error:", err);
     return NextResponse.json(
