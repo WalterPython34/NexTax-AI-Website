@@ -34,10 +34,12 @@ type SavedDeal = {
 
 type OutlierKind = "strong" | "validation" | "risk" | null;
 type StatusColor = "red" | "yellow" | "blue" | "green";
+type BenchmarkSource = "rma" | "dealstats" | null;
 
 type MetricRow = {
   metric_key: string;
   metric_label: string;
+  benchmark_source: BenchmarkSource;
   deal_value: number | null;
   industry_q1: number | null;
   industry_median: number | null;
@@ -48,6 +50,7 @@ type MetricRow = {
   status: string | null;
   status_color: StatusColor | null;
   outlier_kind: OutlierKind;
+  median_only: boolean;
   insufficient_data: boolean;
   reason?: string;
 };
@@ -232,7 +235,12 @@ function StatusBadge({ row }: { row: MetricRow }) {
     );
   }
 
-  // Three-way outlier labels per Steve's spec
+  // Median-only directional status — shown as a directional badge
+  if (row.median_only && row.status && row.status_color) {
+    return <Badge color={row.status_color} label={row.status} />;
+  }
+
+  // Three-way outlier labels per spec
   if (row.outlier_kind === "strong") {
     return <Badge color="green" label="Strong Outlier" />;
   }
@@ -712,7 +720,7 @@ export default function FinancialBenchmarksTab({
 
             <div style={{
               display: "grid",
-              gridTemplateColumns: "minmax(0, 1.4fr) minmax(0, 0.9fr) minmax(0, 0.9fr) minmax(0, 0.7fr) auto minmax(0, 1.1fr)",
+              gridTemplateColumns: "minmax(0, 1.4fr) minmax(0, 0.9fr) minmax(0, 1.2fr) minmax(0, 0.7fr) auto minmax(0, 1.1fr)",
               gap: 14, alignItems: "center",
               padding: "10px 24px",
               borderTop: "1px solid rgba(255,255,255,0.04)",
@@ -721,7 +729,12 @@ export default function FinancialBenchmarksTab({
             }}>
               <ColHeader>Metric</ColHeader>
               <ColHeader align="right">Your Deal</ColHeader>
-              <ColHeader align="right">Industry Median</ColHeader>
+              <ColHeader align="right">
+                <span style={{ display: "inline-flex", alignItems: "center", gap: 4 }}>
+                  Benchmark Median
+                  <InfoIcon tip="Median value from one of two reference sets — see the source label under each row's median value." />
+                </span>
+              </ColHeader>
               <ColHeader align="right">Percentile</ColHeader>
               <ColHeader>Visual</ColHeader>
               <ColHeader>Status</ColHeader>
@@ -921,30 +934,84 @@ export default function FinancialBenchmarksTab({
 
 // ── Sub-components ──────────────────────────────────────────────────────────
 
+// ── Source labels (NEVER expose internal source names like 'rma'/'dealstats') ──
+
+const SOURCE_LABEL: Record<NonNullable<BenchmarkSource>, string> = {
+  rma:       "Industry Median (Financial Statement Data)",
+  dealstats: "Market Median (Observed Transactions)",
+};
+
+const SOURCE_TOOLTIP: Record<NonNullable<BenchmarkSource>, string> = {
+  rma:       "Based on aggregated industry financial statement data across comparable firms.",
+  dealstats: "Based on observed SMB transactions and aggregated deal data across comparable businesses. May include adjusted financials.",
+};
+
+function InfoIcon({ tip }: { tip: string }) {
+  return (
+    <span
+      title={tip}
+      style={{
+        display: "inline-flex", alignItems: "center", justifyContent: "center",
+        width: 13, height: 13, borderRadius: "50%",
+        background: "rgba(255,255,255,0.06)",
+        color: "#94A3B8",
+        fontSize: 9, fontWeight: 700,
+        cursor: "help",
+        userSelect: "none" as const,
+        flexShrink: 0,
+      }}
+    >
+      i
+    </span>
+  );
+}
+
 function MetricTableRow({ row, last }: { row: MetricRow; last: boolean }) {
+  const sourceLabel = row.benchmark_source ? SOURCE_LABEL[row.benchmark_source] : null;
+  const sourceTooltip = row.benchmark_source ? SOURCE_TOOLTIP[row.benchmark_source] : null;
+
   return (
     <div style={{
       display: "grid",
-      gridTemplateColumns: "minmax(0, 1.4fr) minmax(0, 0.9fr) minmax(0, 0.9fr) minmax(0, 0.7fr) auto minmax(0, 1.1fr)",
+      gridTemplateColumns: "minmax(0, 1.4fr) minmax(0, 0.9fr) minmax(0, 1.2fr) minmax(0, 0.7fr) auto minmax(0, 1.1fr)",
       gap: 14, alignItems: "center",
       padding: "16px 24px",
       borderBottom: last ? "none" : "1px solid rgba(255,255,255,0.04)",
     }}>
+      {/* Metric label */}
       <div style={{ fontSize: 13, color: "#E2E8F0", fontWeight: 500 }}>
         {row.metric_label}
       </div>
+
+      {/* Your Deal */}
       <div style={{
         fontSize: 14, fontWeight: 700, color: "#F1F5F9", textAlign: "right" as const,
         fontFamily: "'JetBrains Mono',monospace",
       }}>
         {formatMetricValue(row.metric_key, row.deal_value)}
       </div>
-      <div style={{
-        fontSize: 13, color: "#7C8593", textAlign: "right" as const,
-        fontFamily: "'JetBrains Mono',monospace",
-      }}>
-        {formatMetricValue(row.metric_key, row.industry_median)}
+
+      {/* Benchmark Median + source caption */}
+      <div style={{ textAlign: "right" as const }}>
+        <div style={{
+          fontSize: 13, color: row.industry_median !== null ? "#E2E8F0" : "#6B7280",
+          fontFamily: "'JetBrains Mono',monospace", fontWeight: 500,
+        }}>
+          {formatMetricValue(row.metric_key, row.industry_median)}
+        </div>
+        {sourceLabel && (
+          <div style={{
+            fontSize: 9, color: "#7C8593", marginTop: 3, fontWeight: 500,
+            display: "inline-flex", alignItems: "center", gap: 3,
+            justifyContent: "flex-end" as const, width: "100%",
+          }}>
+            <span>{sourceLabel}</span>
+            {sourceTooltip && <InfoIcon tip={sourceTooltip} />}
+          </div>
+        )}
       </div>
+
+      {/* Percentile column — only shown when we have full quartile data */}
       <div style={{ textAlign: "right" as const }}>
         {row.display_percentile !== null ? (
           <span style={{
@@ -955,13 +1022,25 @@ function MetricTableRow({ row, last }: { row: MetricRow; last: boolean }) {
           }}>
             {row.display_percentile}th
           </span>
+        ) : row.median_only ? (
+          <span style={{ fontSize: 10, color: "#7C8593", fontStyle: "italic" }}>
+            ±10% comparison
+          </span>
         ) : (
           <span style={{ fontSize: 12, color: "#6B7280" }}>—</span>
         )}
       </div>
+
+      {/* Visual column — percentile bar OR directional badge for median-only */}
       <div>
-        <PercentileBar percentile={row.display_percentile} />
+        {row.median_only ? (
+          <DirectionalBadgeInline status={row.status} statusColor={row.status_color} />
+        ) : (
+          <PercentileBar percentile={row.display_percentile} />
+        )}
       </div>
+
+      {/* Status column */}
       <div>
         <StatusBadge row={row} />
         {row.insufficient_data && row.reason && (
@@ -971,6 +1050,33 @@ function MetricTableRow({ row, last }: { row: MetricRow; last: boolean }) {
         )}
       </div>
     </div>
+  );
+}
+
+function DirectionalBadgeInline({
+  status, statusColor,
+}: {
+  status: string | null;
+  statusColor: StatusColor | null;
+}) {
+  if (!status || !statusColor) return null;
+  const colorMap = {
+    red:    { bg: "rgba(239,68,68,0.10)",  border: "rgba(239,68,68,0.25)",  text: "#FCA5A5" },
+    yellow: { bg: "rgba(245,158,11,0.10)", border: "rgba(245,158,11,0.25)", text: "#FCD34D" },
+    blue:   { bg: "rgba(59,130,246,0.10)", border: "rgba(59,130,246,0.25)", text: "#93C5FD" },
+    green:  { bg: "rgba(16,185,129,0.10)", border: "rgba(16,185,129,0.25)", text: "#6EE7B7" },
+  } as const;
+  const c = colorMap[statusColor];
+  return (
+    <span style={{
+      display: "inline-flex", alignItems: "center",
+      padding: "4px 10px", borderRadius: 6,
+      background: c.bg, border: `1px solid ${c.border}`,
+      fontSize: 11, fontWeight: 600, color: c.text,
+      whiteSpace: "nowrap" as const,
+    }}>
+      {status}
+    </span>
   );
 }
 
