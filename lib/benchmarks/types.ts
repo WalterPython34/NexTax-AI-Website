@@ -101,6 +101,7 @@ export type RatioResult =
 export interface CalculatedRatios {
   gross_margin_pct:           RatioResult;
   sde_margin_pct:             RatioResult;
+  operating_margin_pct:       RatioResult;
   current_ratio:              RatioResult;
   dscr:                       RatioResult;
   inventory_turnover:         RatioResult;
@@ -132,6 +133,24 @@ export type StatusLabel =
 export type StatusColor = 'red' | 'yellow' | 'blue' | 'green';
 
 /**
+ * Internal source tag for a benchmark — drives lookup logic but is NEVER
+ * shown in the UI. The UI translates these to standardized public labels:
+ *   'rma'       → "Industry Median (Financial Statement Data)"
+ *   'dealstats' → "Market Median (Observed Transactions)"
+ *   null        → no benchmark available for this row
+ */
+export type BenchmarkSource = 'rma' | 'dealstats' | null;
+
+/**
+ * Directional comparison label used when we only have a median (no quartiles)
+ * and percentile interpolation isn't possible. ±10% band around the median.
+ */
+export type DirectionalStatus =
+  | 'Above Market'
+  | 'In Line'
+  | 'Below Market';
+
+/**
  * Three-way outlier classification — distinguishes a *good* outlier (strong
  * performance) from a *concerning* one (suspiciously high margin) from a
  * *risk* outlier (bottom-quartile on a directional metric). Computed
@@ -155,20 +174,29 @@ export type OutlierKind = 'strong' | 'validation' | 'risk' | null;
 /**
  * One row of the main benchmark table. Carries everything the UI needs to
  * render a row including the percentile bar segments.
+ *
+ * Two paths:
+ *   - Quartile path (q1+median+q3 all present): percentile + percentile bar + status
+ *   - Median-only path (median present, q1/q3 null): directional status only,
+ *     no percentile bar, status label is one of "Above Market" / "In Line" / "Below Market"
  */
 export interface MetricBenchmarkRow {
   metric_key:        string;          // internal key e.g. "current_ratio"
   metric_label:      string;          // display label e.g. "Current Ratio"
+  /** Internal source tag — drives logic, NEVER rendered in UI. */
+  benchmark_source:  BenchmarkSource;
   deal_value:        number | null;
   industry_q1:       number | null;
   industry_median:   number | null;
   industry_q3:       number | null;
-  raw_percentile:    number | null;   // 1-99 on raw scale (null if no data)
+  raw_percentile:    number | null;   // 1-99 on raw scale (null if no data or median-only)
   display_percentile: number | null;  // post-direction-flip, used for status
   direction:         Direction;
-  status:            StatusLabel | null;
+  status:            StatusLabel | DirectionalStatus | null;
   status_color:      StatusColor | null;
   outlier_kind:      OutlierKind;       // three-way: strong | validation | risk | null
+  /** True when the row uses median-only directional comparison (no quartile bar). */
+  median_only:       boolean;
   insufficient_data: boolean;
   reason?:           string;          // populated when insufficient_data=true
 }
