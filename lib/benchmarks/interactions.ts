@@ -34,6 +34,14 @@ const fmt = {
 const findRow = (rows: MetricBenchmarkRow[], key: string) =>
   rows.find(r => r.metric_key === key);
 
+/**
+ * Find the RMA-sourced row for a metric. Important for SDE margin where
+ * we may have parallel rows from RMA (lender view) and DealStats (market view) —
+ * risk flags and sensitivity should anchor on the RMA row.
+ */
+const findRmaRow = (rows: MetricBenchmarkRow[], key: string) =>
+  rows.find(r => r.metric_key === key && r.benchmark_source === 'rma');
+
 // ── 1. Sensitivity Analysis ──────────────────────────────────────────────────
 // When SDE margin is a validation outlier (>1.5x industry median), recalculate
 // DSCR using a normalized SDE (industry median margin × revenue) so the user
@@ -44,11 +52,26 @@ export function generateSensitivity(
   ratios: CalculatedRatios,
   rows: MetricBenchmarkRow[],
 ): SensitivityAnalysis | null {
-  const sdeRow = findRow(rows, 'sde_margin_pct');
+  // Anchor on the RMA-sourced SDE row (lender view). DealStats agreement is
+  // factored into the message wording but doesn't suppress the analysis —
+  // a lender will still want to see the sensitivity even if market data agrees.
+  const sdeRow = findRmaRow(rows, 'sde_margin_pct');
   if (!sdeRow || sdeRow.outlier_kind !== 'validation') return null;
   if (sdeRow.industry_median === null || sdeRow.deal_value === null) return null;
+
+  // Check whether DealStats market view agrees (deal in line with observed
+  // transactions) — if so, the framing changes meaningfully.
+  const marketRow = rows.find(r =>
+    r.metric_key === 'sde_margin_pct' && r.benchmark_source === 'dealstats'
+  );
+  const marketAgrees =
+    marketRow?.median_only === false &&
+    marketRow?.display_percentile !== null &&
+    marketRow.display_percentile !== undefined &&
+    marketRow.display_percentile >= 25 &&
+    marketRow.display_percentile <= 75;
+
   if (!ratios.annual_debt_service.ok) {
-    // Can still report the SDE adjustment, but no DSCR impact possible.
     const normalized_sde = (sdeRow.industry_median / 100) * inputs.revenue;
     return {
       source_metric: 'sde_margin_pct',
@@ -58,18 +81,29 @@ export function generateSensitivity(
       reported_sde: inputs.sde,
       normalized_dscr: null,
       reported_dscr: ratios.dscr.ok ? ratios.dscr.value : null,
-      insight: `SDE appears elevated relative to industry. Normalized to the ${fmt.pct(sdeRow.industry_median)} industry median, SDE would be ${fmtMoney(normalized_sde)} — meaningfully lower than the reported ${fmtMoney(inputs.sde)}.`,
+      insight: marketAgrees
+        ? `SDE is elevated vs. financial-statement industry data, but in line with observed transactions. Owner add-backs appear normal for actual SMB deals — should still be validated for lender underwriting.`
+        : `SDE appears elevated relative to industry. Normalized to the ${fmt.pct(sdeRow.industry_median)} industry median, SDE would be ${fmtMoney(normalized_sde)} — meaningfully lower than the reported ${fmtMoney(inputs.sde)}.`,
     };
   }
 
-  // Normalized SDE = industry_median margin × revenue
   const normalized_sde = (sdeRow.industry_median / 100) * inputs.revenue;
   const annual_ds = ratios.annual_debt_service.value;
   const normalized_dscr = annual_ds > 0 ? normalized_sde / annual_ds : null;
   const reported_dscr = ratios.dscr.ok ? ratios.dscr.value : null;
 
   let insight: string;
-  if (normalized_dscr !== null && reported_dscr !== null) {
+  if (marketAgrees && normalized_dscr !== null && reported_dscr !== null) {
+    // Most informative case: market validates the SDE, but lender stress
+    // test still matters.
+    if (normalized_dscr < 1.30) {
+      insight = `Owner add-backs appear normal vs. observed transactions, but lender stress test against financial-statement peers takes DSCR from ${fmt.ratio(reported_dscr)} to ${fmt.ratio(normalized_dscr)} — below the 1.30x threshold. Validate add-backs to satisfy underwriting.`;
+    } else if (normalized_dscr < 1.50) {
+      insight = `Owner add-backs appear normal vs. observed transactions. Even under lender stress, DSCR holds at ${fmt.ratio(normalized_dscr)} — borderline but not breaking.`;
+    } else {
+      insight = `Owner add-backs appear normal vs. observed transactions, and even under lender stress DSCR holds at ${fmt.ratio(normalized_dscr)}. Sensitivity is contained.`;
+    }
+  } else if (normalized_dscr !== null && reported_dscr !== null) {
     if (normalized_dscr < 1.30) {
       insight = `SDE appears elevated relative to industry. If normalized to peer levels, DSCR would decline from ${fmt.ratio(reported_dscr)} to ${fmt.ratio(normalized_dscr)} — below the ${fmt.ratio(1.30)} lender threshold, potentially impacting financing viability.`;
     } else if (normalized_dscr < 1.50) {
@@ -109,9 +143,9 @@ export function generateInteractionInsights(
 ): InteractionInsight[] {
   const insights: InteractionInsight[] = [];
 
-  // Rule: SDE validation outlier + DSCR > 2.0
+  // Rule: SDE validation outlier (per RMA / financial-statement view) + DSCR > 2.0
   // → "Strong DSCR may be dependent on elevated SDE"
-  const sdeRow = findRow(rows, 'sde_margin_pct');
+  const sdeRow = findRmaRow(rows, 'sde_margin_pct');
   const isSdeValidation = sdeRow?.outlier_kind === 'validation';
   if (isSdeValidation && ratios.dscr.ok && ratios.dscr.value > 2.0) {
     insights.push({
@@ -152,7 +186,7 @@ export function generateTensionIndicator(
   ds: DealStructureAnalysis | undefined,
   insights: InteractionInsight[],
 ): string | null {
-  const sdeRow = findRow(rows, 'sde_margin_pct');
+  const sdeRow = findRmaRow(rows, 'sde_margin_pct');
   const isSdeValidation = sdeRow?.outlier_kind === 'validation';
   const hasStrongDscr = ratios.dscr.ok && ratios.dscr.value >= 1.50;
 
@@ -199,7 +233,7 @@ export function generateScoreDependencies(
   const deps: string[] = [];
 
   // SDE accuracy is the biggest single dependency when it's outlier-classified
-  const sdeRow = findRow(rows, 'sde_margin_pct');
+  const sdeRow = findRmaRow(rows, 'sde_margin_pct');
   if (sdeRow?.outlier_kind === 'validation') {
     if (sensitivity?.normalized_dscr !== null && sensitivity?.normalized_dscr !== undefined && sensitivity.normalized_dscr < 1.30) {
       deps.push('Score highly dependent on SDE accuracy — coverage falls below lender threshold if normalized');
@@ -228,7 +262,8 @@ export function generateScoreDependencies(
   // Liquidity dependency: if current ratio is the score's main contributor
   // but accounts payable could spike
   const crRow = findRow(rows, 'current_ratio');
-  if (crRow?.outlier_kind === 'strong' && (!sdeRow?.deal_value || sdeRow.deal_value < (sdeRow.industry_median ?? 0))) {
+  const sdeRmaRow = findRmaRow(rows, 'sde_margin_pct');
+  if (crRow?.outlier_kind === 'strong' && (!sdeRmaRow?.deal_value || sdeRmaRow.deal_value < (sdeRmaRow.industry_median ?? 0))) {
     deps.push('Liquidity score elevated by working-capital position; underlying profitability is below industry');
   }
 
