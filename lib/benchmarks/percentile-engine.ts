@@ -22,6 +22,7 @@ import type {
   StatusLabel,
   StatusColor,
   OutlierKind,
+  DirectionalStatus,
 } from './types';
 
 // ── Direction map ────────────────────────────────────────────────────────────
@@ -30,12 +31,13 @@ import type {
 
 export const METRIC_DIRECTIONS: Record<string, Direction> = {
   // Higher is better
-  gross_margin_pct:   'higher_is_better',
-  sde_margin_pct:     'higher_is_better',
-  current_ratio:      'higher_is_better',
-  dscr:               'higher_is_better',
-  inventory_turnover: 'higher_is_better',
-  solvency_ratio:     'higher_is_better',
+  gross_margin_pct:    'higher_is_better',
+  sde_margin_pct:      'higher_is_better',
+  operating_margin_pct:'higher_is_better',
+  current_ratio:       'higher_is_better',
+  dscr:                'higher_is_better',
+  inventory_turnover:  'higher_is_better',
+  solvency_ratio:      'higher_is_better',
   // Lower is better
   days_inventory_outstanding: 'lower_is_better',
   debt_to_equity:             'lower_is_better',
@@ -218,7 +220,52 @@ export function classifyOutlier(
   return null;
 }
 
+// ── Directional comparison (median-only path) ────────────────────────────────
+
+/**
+ * Used when we only have a median value, not full quartiles. Performs a simple
+ * ±10% comparison and returns one of three labels.
+ *
+ * Direction-aware: for "lower is better" metrics, "Above Market" = bad and
+ * gets a red color; for "higher is better" metrics, "Above Market" = good
+ * and gets green.
+ *
+ *   value within ±10% of median → 'In Line'  (blue, neutral)
+ *   value > 110% of median       → 'Above Market'  (color depends on direction)
+ *   value < 90% of median        → 'Below Market'  (color depends on direction)
+ *
+ * Returns null if either input is missing or median is zero.
+ */
+export function directionalCompare(
+  value: number | null,
+  median: number | null,
+  direction: Direction,
+): { status: DirectionalStatus; color: StatusColor } | null {
+  if (value === null || median === null) return null;
+  if (!Number.isFinite(value) || !Number.isFinite(median) || median === 0) return null;
+
+  const ratio = value / median;
+  const higherIsBetter = direction === 'higher_is_better';
+
+  if (ratio > 1.10) {
+    return {
+      status: 'Above Market',
+      color: higherIsBetter ? 'green' : 'red',
+    };
+  }
+  if (ratio < 0.90) {
+    return {
+      status: 'Below Market',
+      color: higherIsBetter ? 'red' : 'green',
+    };
+  }
+  return { status: 'In Line', color: 'blue' };
+}
+
 // ── 10-segment percentile bar generator (for UI) ─────────────────────────────
+
+/**
+ * Convert a display percentile to a 10-element array of segment colors.
 
 /**
  * Convert a display percentile to a 10-element array of segment colors.
