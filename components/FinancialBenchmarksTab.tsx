@@ -134,6 +134,15 @@ interface FinancialBenchmarksTabProps {
   isPro: boolean;
   /** Authenticated user ID, used for snapshot scoping. Pass null when not authenticated. */
   userId: string | null;
+  /**
+   * When set, pre-select this deal in the dropdown on first render. Used by
+   * the Compare tab's "Add Financials →" CTA to deep-link the user here with
+   * the right deal already chosen. Parent should clear this after consumption
+   * to avoid re-selection on subsequent visits.
+   */
+  pendingDealId?: string | null;
+  /** Optional callback fired after pendingDealId is consumed (clear parent state). */
+  onPendingDealIdConsumed?: () => void;
   /** Optional: when free user hits a Pro feature, escalate to existing modal */
   onShowUpgrade?: () => void;
 }
@@ -327,6 +336,8 @@ export default function FinancialBenchmarksTab({
   deals,
   isPro,
   userId,
+  pendingDealId,
+  onPendingDealIdConsumed,
   onShowUpgrade,
 }: FinancialBenchmarksTabProps) {
   const [selectedDealId, setSelectedDealId] = useState<string>("");
@@ -334,6 +345,14 @@ export default function FinancialBenchmarksTab({
     () => deals.find(d => d.id === selectedDealId) ?? null,
     [deals, selectedDealId],
   );
+
+  // Consume pendingDealId from parent (e.g. Compare tab's "Add Financials →" CTA)
+  React.useEffect(() => {
+    if (pendingDealId && deals.some(d => d.id === pendingDealId)) {
+      setSelectedDealId(pendingDealId);
+      onPendingDealIdConsumed?.();
+    }
+  }, [pendingDealId, deals, onPendingDealIdConsumed]);
 
   // ── Inputs state ───────────────────────────────────────────────────────────
   // Auto-populated when a saved deal is picked. User edits/adds the rest.
