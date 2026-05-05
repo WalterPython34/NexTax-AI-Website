@@ -10,6 +10,7 @@ import { LenderReadinessTab } from "@/components/LenderReadinessTab";
 import { buildLenderReadiness } from "@/lib/lenderReadiness";
 import { DealMemoTab } from "@/components/DealMemoTab";
 import FinancialBenchmarksTab from "@/components/FinancialBenchmarksTab";
+import TabCompareNew from "@/components/TabCompare";
 import { buildRiskFlags, buildDiligenceQuestions, buildDecisionTriggers } from "@/lib/dealMemo";
 import { INDUSTRY_FIT } from "@/lib/lenderReadiness";
 import { LoiBuilderTab } from "@/components/LoiBuilderTab";
@@ -8653,7 +8654,7 @@ export default function BuyerDashboard() {
   const [profile, setProfile]         = useState<Profile | null>(null);
   const [loadingUser, setLoadingUser] = useState(true);
   const [activeTab, setActiveTab]     = useState<TabId>("home");
-
+  const [pendingBenchmarkDealId, setPendingBenchmarkDealId] = useState<string | null>(null);
   const [deals, setDeals]             = useState<DealRun[]>([]);
   const [dri, setDri]                 = useState<DriSnapshot[]>([]);
   const [trending, setTrending]       = useState<TrendingMultiple[]>([]);
@@ -9344,22 +9345,32 @@ const dealHasFullAccess = (dealId: string): boolean => {
               />
             )}
             {activeTab === "compare" && (
-               <TabCompare
+              <TabCompareNew
                 deals={deals}
                 isPro={isPro}
+                userId={user?.id ?? null}
                 onAnalyzeNew={handleAnalyzeNewClick}
                 comparisonsRemaining={comparisonsRemaining}
                 hitCompareCap={hitCompareCap}
                 onComparisonUsed={incrementComparisons}
-              />
+                onNavigateToTab={(tabId, dealId) => {
+           if (tabId === "benchmarks") {
+          if (dealId) setPendingBenchmarkDealId(dealId);
+               setActiveTab("benchmarks");
+                }
+              }}
+             />
             )}
             {activeTab === "benchmarks" && (
               <FinancialBenchmarksTab
-               deals={deals}
-               isPro={isPro}
-               onShowUpgrade={() => setShowUpgradeModal(true)}
+                deals={deals}
+                isPro={isPro}
+                userId={user?.id ?? null}
+                pendingDealId={pendingBenchmarkDealId}
+                onPendingDealIdConsumed={() => setPendingBenchmarkDealId(null)}
+                onShowUpgrade={() => setShowUpgradeModal(true)}
               />
-            )}
+             )}
             {activeTab === "market-intel" && (
               <TabMarketIntel dri={dri} trending={trending} loading={loading} isPro={isPro} deals={deals} />
             )}
