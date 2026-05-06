@@ -410,23 +410,8 @@ export default function ResourcesPage() {
                 </CardContent>
               </Card>
             ))}
-          </div>
+          </div>         
           
-          <div className="mb-16">
-        <div className="text-center mb-8">
-          <div className="flex items-center justify-center gap-3 mb-4">
-            <div className="w-12 h-12 rounded-lg bg-orange-500/20 flex items-center justify-center">
-              <ClipboardList className="w-6 h-6 text-orange-400" />
-            </div>
-            <h2 className="text-3xl font-bold text-white">LLC or S-Corp Quiz</h2>
-          </div>
-          <p className="text-slate-300 max-w-2xl mx-auto">
-            Not sure which business structure is right for you? Take our quick assessment to get personalized
-            recommendations based on your specific situation.
-          </p>
-        </div>
-      <SimpleQuiz />
-      </div>        
     </div>
     </section>
 
