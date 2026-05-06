@@ -467,7 +467,7 @@ export default function AcquisitionsPage() {
                   ))}
                 </div>
                 <Link href="/contact">
-                  <Button variant="outline" className="w-full border-slate-600 text-slate-200 hover:bg-slate-700">
+                  <Button variant="outline" className="w-full border-slate-600 text-slate-200 hover:bg-slate-700 bg-black">
                     Book Intro Call
                   </Button>
                 </Link>
