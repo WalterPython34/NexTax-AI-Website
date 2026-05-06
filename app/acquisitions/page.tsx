@@ -472,7 +472,7 @@ export default function AcquisitionsPage() {
                   </Button>
                 </Link>
                 <a
-                  href="https://buy.stripe.com/5kQ4gz0GKcE46kA8ewbMQ07"
+                  href="https://buy.stripe.com/4gMfZh1KO0Vm7oE9iAbMQ08"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="block mt-3"
