@@ -420,6 +420,17 @@ export default function AcquisitionsPage() {
                     Book Intro Call
                   </Button>
                 </Link>
+                 <a
+                  href="https://buy.stripe.com/cNi7sLexAeMc24kgL2bMQ06"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block mt-3"
+                >
+                  <Button className="w-full bg-gradient-to-r from-emerald-500 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white">
+                    Get Started
+                    <ArrowRight className="ml-2 w-4 h-4" />
+                  </Button>
+                </a>
               </CardContent>
             </Card>
 
@@ -460,6 +471,17 @@ export default function AcquisitionsPage() {
                     Book Intro Call
                   </Button>
                 </Link>
+                <a
+                  href="https://buy.stripe.com/5kQ4gz0GKcE46kA8ewbMQ07"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block mt-3"
+                >
+                  <Button variant="outline" className="w-full border-white/30 text-white hover:bg-white/10 bg-transparent">
+                    Get Started
+                    <ArrowRight className="ml-2 w-4 h-4" />
+                  </Button>
+                </a>
               </CardContent>
             </Card>
 
