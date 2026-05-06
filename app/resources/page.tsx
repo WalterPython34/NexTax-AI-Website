@@ -78,6 +78,19 @@ export default function ResourcesPage() {
 
   const blogPosts = [
      {
+      id: 15,
+      title: "Why SMB Deals Fall Apart Before Closing — And How Smart Buyers Keep Them Alive",
+      excerpt:
+        "Most SMB acquisitions fail for predictable reasons: weak pre-LOI diligence, vague LOIs, poor project management, and financing friction. Learn how disciplined buyers avoid these deal killers.",
+      category: "Acquisitions",
+      author: "Steve Morello, CPA",
+      date: "January 25, 2026",
+      readTime: "18 min read",
+      image: "/images/blog/smb-deal-closing.jpg",
+      slug: "why-smb-deals-fall-apart",
+      featured: true,
+    },
+     {
       id: 9,
       title: "The 5-Step Bulletproof Framework: How to Validate Your Business Idea",
       excerpt: "Before you file your LLC, learn how to validate your business idea using our 5-step framework.",
@@ -239,7 +252,7 @@ export default function ResourcesPage() {
     },
   ]
 
-  const blogCategories = ["All", "Tax Strategy", "Business Formation", "Compliance", "Growth"]
+  const blogCategories = ["All", "Acquisitions", "Tax Strategy", "Business Formation", "Compliance", "Growth"]
 
   const [selectedCategory, setSelectedCategory] = React.useState("All")
 
@@ -467,7 +480,9 @@ export default function ResourcesPage() {
                             ? "bg-blue-500/90 text-white"
                             : post.category === "Compliance"
                               ? "bg-orange-500/90 text-white"
-                              : "bg-violet-500/90 text-white"
+                              : post.category === "Acquisitions"
+                                ? "bg-cyan-500/90 text-white"
+                                : "bg-violet-500/90 text-white"
                       }
                     >
                       {post.category}
