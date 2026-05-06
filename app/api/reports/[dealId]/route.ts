@@ -13,8 +13,10 @@
 //   4. Fetch industry benchmarks (DealStats / listings)
 //   5. Fetch representative comparables (dealstats_transactions, anonymized)
 //   6. Generate negotiation posture via Claude (with fallback)
-//   7. Generate PDF
-//   8. Return as application/pdf with download disposition
+//   7. Fetch latest benchmark snapshot for pages 6-7 (optional)
+//   8. Fetch interpretation for "What this means" section (optional)
+//   9. Generate PDF
+//  10. Return as application/pdf with download disposition
 //
 // File path: app/api/reports/[dealId]/route.ts
 // =====================================================================
@@ -31,6 +33,7 @@ import {
 import {
   DealReportData,
   ComparableDeal,
+  BenchmarkSnapshotForReport,
   generateDealReportPDF,
 } from "@/lib/acquiflow/deal-report-generator";
 
@@ -207,13 +210,87 @@ export async function GET(
     posture = buildFallbackPosture(decision.negotiation_posture_inputs);
   }
 
-  // ─── 8. Generate PDF ──────────────────────────────────────────────────
+  // ─── 7. Fetch latest benchmark snapshot (optional, gates pages 6-7) ───
+  // When present, the report renders pages 6-7 (Financial Benchmarking +
+  // Deal Structure & Risk Review). When absent, the report stays at 5 pages.
+  // Fetch is best-effort — any failure logs and falls through to a 5-page report.
+  let benchmarkSnapshot: BenchmarkSnapshotForReport | undefined = undefined;
+  let interpretation: string[] | undefined = undefined;
+
+  try {
+    const { data: snapRow, error: snapError } = await supabaseAdmin
+      .from("benchmark_snapshots")
+      .select("*")
+      .eq("deal_id", dealId)
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (snapError) {
+      console.warn("[reports] snapshot fetch error (continuing 5-page):", snapError);
+    } else if (snapRow) {
+      benchmarkSnapshot = {
+        industry_name:           snapRow.industry,
+        naics_code:              snapRow.naics_code,
+        benchmark_year:          snapRow.analysis_outputs?.benchmark_year ?? "2025-26",
+        tension_indicator:       snapRow.analysis_outputs?.tension_indicator ?? null,
+        financial_position:      snapRow.benchmark_results ?? [],
+        risk_flags:              snapRow.analysis_outputs?.risk_flags ?? [],
+        strengths:               snapRow.analysis_outputs?.strengths ?? [],
+        interaction_insights:    snapRow.analysis_outputs?.interaction_insights ?? [],
+        sensitivity:             snapRow.analysis_outputs?.sensitivity ?? undefined,
+        deal_structure:          snapRow.deal_structure ?? undefined,
+        financial_score:         snapRow.analysis_outputs?.financial_score ?? null,
+        score_drivers:           snapRow.analysis_outputs?.score_drivers ?? [],
+        score_risk_dependencies: snapRow.analysis_outputs?.score_risk_dependencies ?? [],
+      };
+
+      // ─── 8. Fetch interpretation for page 7's "What this means" ─────
+      // Best-effort — page 7 simply omits the section if this fails.
+      try {
+        const analysisForInterp = {
+          industry_name:           benchmarkSnapshot.industry_name,
+          tension_indicator:       benchmarkSnapshot.tension_indicator,
+          financial_position:      benchmarkSnapshot.financial_position,
+          risk_flags:              benchmarkSnapshot.risk_flags,
+          strengths:               benchmarkSnapshot.strengths,
+          interaction_insights:    benchmarkSnapshot.interaction_insights,
+          sensitivity:             benchmarkSnapshot.sensitivity,
+          deal_structure:          benchmarkSnapshot.deal_structure,
+          financial_score:         benchmarkSnapshot.financial_score,
+          score_drivers:           benchmarkSnapshot.score_drivers,
+          score_risk_dependencies: benchmarkSnapshot.score_risk_dependencies,
+        };
+
+        const baseUrl = process.env.NEXT_PUBLIC_SITE_URL
+          ?? `https://${req.headers.get("host")}`;
+        const interpRes = await fetch(`${baseUrl}/api/benchmarks/interpret`, {
+          method:  "POST",
+          headers: { "Content-Type": "application/json" },
+          body:    JSON.stringify({ analysis: analysisForInterp }),
+        });
+        const interpJson = await interpRes.json();
+        if (interpJson.ok && Array.isArray(interpJson.interpretation)) {
+          interpretation = interpJson.interpretation;
+        }
+      } catch (err) {
+        console.warn("[reports] interpretation fetch failed (page 7 will skip section):", err);
+      }
+    }
+  } catch (err) {
+    console.warn("[reports] snapshot fetch failed (continuing 5-page):", err);
+  }
+
+  // ─── 9. Generate PDF ──────────────────────────────────────────────────
   const reportData: DealReportData = {
     inputs,
     comparables,
     posture,
     generated_at: new Date(),
     decision,
+    benchmarkSnapshot,    // undefined when no snapshot exists → pages 6-7 skipped
+    interpretation,       // undefined when interpret call fails → "What this means" skipped
   };
 
   let pdfBuffer: Buffer;
@@ -227,7 +304,7 @@ export async function GET(
     );
   }
 
-  // ─── 9. Return PDF ────────────────────────────────────────────────────
+  // ─── 10. Return PDF ───────────────────────────────────────────────────
   const filename = `AcquiFlow-${slugify(humanizeIndustryLabel(deal.industry))}-${dealId.slice(0, 8)}.pdf`;
   return new NextResponse(pdfBuffer, {
     status: 200,
@@ -323,7 +400,7 @@ Write the posture now (1-2 sentences, no preamble).`;
       "anthropic-version": "2023-06-01",
     },
     body: JSON.stringify({
-      model:       "claude-sonnet-4-20250514",
+      model:       "claude-sonnet-4-6",
       max_tokens:  300,
       system:      systemPrompt,
       messages:    [{ role: "user", content: userPrompt }],
