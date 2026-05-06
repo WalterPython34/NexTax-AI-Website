@@ -467,7 +467,7 @@ export default function AcquisitionsPage() {
                   ))}
                 </div>
                 <Link href="/contact">
-                  <Button variant="outline" className="w-full border-slate-600 text-slate-200 hover:bg-slate-700 bg-transparent">
+                  <Button variant="outline" className="w-full border-slate-600 text-slate-200 hover:bg-slate-700">
                     Book Intro Call
                   </Button>
                 </Link>
@@ -477,7 +477,7 @@ export default function AcquisitionsPage() {
                   rel="noopener noreferrer"
                   className="block mt-3"
                 >
-                  <Button variant="outline" className="w-full border-slate-600 bg-gradient-to-r from-emerald-600 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white">
+                  <Button className="w-full border-slate-600 bg-gradient-to-r from-emerald-600 to-cyan-500 hover:from-emerald-600 hover:to-cyan-600 text-white">
                     Get Started
                     <ArrowRight className="ml-2 w-4 h-4" />
                   </Button>
