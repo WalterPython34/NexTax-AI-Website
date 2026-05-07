@@ -78,7 +78,7 @@ export default function ResourcesPage() {
 
   const blogPosts = [
     {
-      id: 16,
+      id: 17,
       title: "Pre-LOI Diligence for SMB Acquisitions: How Smart Buyers Avoid Bad Deals Before They Sign",
       excerpt:
         "Most bad SMB acquisitions fail because the buyer signed an LOI too early. Learn the five critical questions to answer before committing to any deal.",
@@ -88,6 +88,19 @@ export default function ResourcesPage() {
       readTime: "16 min read",
       image: "/pre-loi-diligence.jpg",
       slug: "pre-loi-diligence-smb-acquisitions",
+      featured: true,
+    },
+     {
+      id: 16,
+      title: "Asset vs Stock Sales: What You'll Pay in Tax (And What Sellers Don't Want You to Know)",
+      excerpt:
+        "Deal structure determines your tax bill for years. Learn why buyers want asset deals, why sellers push for stock, and how to negotiate the allocation that saves you $40-80K.",
+      category: "Acquisitions",
+      author: "Steve Morello, CPA",
+      date: "January 30, 2026",
+      readTime: "12 min read",
+      image: "/asset-vs-stock-sale.jpg",
+      slug: "asset-vs-stock-sales-tax",
       featured: true,
     },
      {
