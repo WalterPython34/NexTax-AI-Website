@@ -178,9 +178,16 @@ function extractNumericCores(text: string): Set<string> {
   const bareRe = /\b([\d,]+\.?\d+|\d+)\b/g;
 
   const stripCommas = (s: string) => s.replace(/,/g, "");
-  const normalize = (s: string) => {
+  const normalize = (s: string): string | null => {
     const n = parseFloat(stripCommas(s));
-    return Number.isFinite(n) ? String(+n.toFixed(4)).replace(/\.?0+$/, "") || "0" : null;
+    if (!Number.isFinite(n)) return null;
+    // Format to 4 decimals max, strip trailing zeros AFTER a decimal point only.
+    // (Bug fix: previous regex stripped zeros from integers too, e.g. 200000 → "2".)
+    const formatted = String(+n.toFixed(4));
+    if (formatted.includes(".")) {
+      return formatted.replace(/0+$/, "").replace(/\.$/, "") || "0";
+    }
+    return formatted;
   };
   const add = (raw: string) => {
     const n = normalize(raw);
@@ -258,6 +265,47 @@ function validateNoFabrication(
   const sourceText = JSON.stringify(source);
   const sourceCores = extractNumericCores(sourceText);
 
+  // Seed abbreviation variants and rounding tolerance for large numbers.
+  // If source has 320000, also accept "320" (i.e. "$320K"). If source has
+  // 151200, also accept "151" via rounding to nearest thousand.
+  // Also seed rounded decimal variants so source 28.34 matches output 28.3.
+  // This handles legitimate cases where the LLM uses abbreviated/rounded forms.
+  const seeds = [...sourceCores];
+  for (const v of seeds) {
+    const n = parseFloat(v);
+    if (!Number.isFinite(n)) continue;
+
+    // Decimal rounding variants for non-integer source numbers
+    if (!Number.isInteger(n)) {
+      const fmt = (x: number): string => {
+        const s = String(x);
+        if (s.includes(".")) return s.replace(/0+$/, "").replace(/\.$/, "") || "0";
+        return s;
+      };
+      sourceCores.add(fmt(+n.toFixed(1)));    // 28.34 → "28.3"
+      sourceCores.add(fmt(+n.toFixed(2)));    // 28.345 → "28.35"
+      sourceCores.add(String(Math.round(n))); // 28.34 → "28"
+    }
+
+    // Large-number abbreviation variants
+    if (n >= 1000 && n < 1_000_000) {
+      // Exact thousands abbreviation
+      if (n % 1000 === 0) sourceCores.add(String(n / 1000));
+      // Rounded-to-nearest-thousand abbreviation (e.g. 151200 → "151")
+      const rounded = Math.round(n / 1000) * 1000;
+      sourceCores.add(String(rounded));
+      sourceCores.add(String(rounded / 1000));
+    }
+    if (n >= 1_000_000) {
+      const mn = n / 1_000_000;
+      const mnStr = String(mn).includes(".") ? String(mn).replace(/0+$/, "").replace(/\.$/, "") : String(mn);
+      sourceCores.add(mnStr);
+      const mnRounded = Math.round(mn * 10) / 10;
+      const mnRoundedStr = String(mnRounded).includes(".") ? String(mnRounded).replace(/0+$/, "").replace(/\.$/, "") : String(mnRounded);
+      sourceCores.add(mnRoundedStr);
+    }
+  }
+
   // Pre-seed common derived/threshold values
   sourceCores.add("1.30");        // DSCR financing threshold
   sourceCores.add("1.50");        // DSCR strong threshold
@@ -281,10 +329,16 @@ function validateNoFabrication(
     if (Number.isInteger(n) && n >= 0 && n <= 10) continue;
 
     if (!sourceCores.has(v)) {
-      // Last-chance match: try with rounded variants (e.g. 8.4 vs 8.40)
+      // Last-chance match: try with rounded variants (e.g. 8.4 vs 8.40).
+      // Helper strips trailing zeros only after a decimal point (matches normalize logic).
+      const fmt = (x: number): string => {
+        const s = String(x);
+        if (s.includes(".")) return s.replace(/0+$/, "").replace(/\.$/, "") || "0";
+        return s;
+      };
       const variants = [
-        String(+n.toFixed(2)).replace(/\.?0+$/, "") || "0",
-        String(+n.toFixed(1)).replace(/\.?0+$/, "") || "0",
+        fmt(+n.toFixed(2)),
+        fmt(+n.toFixed(1)),
         String(Math.round(n)),
       ];
       const ok = variants.some(vv => sourceCores.has(vv));
