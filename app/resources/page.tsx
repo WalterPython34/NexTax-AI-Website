@@ -77,6 +77,19 @@ export default function ResourcesPage() {
   ]
 
   const blogPosts = [
+    {
+      id: 16,
+      title: "Pre-LOI Diligence for SMB Acquisitions: How Smart Buyers Avoid Bad Deals Before They Sign",
+      excerpt:
+        "Most bad SMB acquisitions fail because the buyer signed an LOI too early. Learn the five critical questions to answer before committing to any deal.",
+      category: "Acquisitions",
+      author: "Steve Morello, CPA",
+      date: "January 28, 2026",
+      readTime: "16 min read",
+      image: "/pre-loi-diligence.jpg",
+      slug: "pre-loi-diligence-smb-acquisitions",
+      featured: true,
+    },
      {
       id: 15,
       title: "Why SMB Deals Fall Apart Before Closing — And How Smart Buyers Keep Them Alive",
