@@ -46,7 +46,7 @@ const supabaseAdmin = createClient(
 );
 
 export const runtime    = "nodejs";
-export const maxDuration = 30;
+export const maxDuration = 60;
 
 export async function GET(
   req: NextRequest,
@@ -623,6 +623,20 @@ function validateProse(
   for (const v of seeds) {
     const n = parseFloat(v);
     if (!Number.isFinite(n)) continue;
+
+    // Decimal rounding variants for non-integer source numbers
+    // (e.g. source has 28.34, allow output "28.3")
+    if (!Number.isInteger(n)) {
+      const fmt = (x: number): string => {
+        const s = String(x);
+        if (s.includes(".")) return s.replace(/0+$/, "").replace(/\.$/, "") || "0";
+        return s;
+      };
+      sourceCores.add(fmt(+n.toFixed(1)));
+      sourceCores.add(fmt(+n.toFixed(2)));
+      sourceCores.add(String(Math.round(n)));
+    }
+
     if (n >= 1000 && n < 1_000_000 && n % 1000 === 0) {
       sourceCores.add(String(n / 1000));         // 320000 → "320" (matches "$320K")
     }
@@ -749,7 +763,7 @@ async function fetchCommitteeProse(
 
   // Sonnet 4.6 — committee memo is "lender-style narrative synthesis" per model policy
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 18_000);   // generous; Sonnet may take 4-8s
+  const timeout = setTimeout(() => controller.abort(), 25_000);   // 25s — leaves 5s buffer under maxDuration=60
 
   let raw: string;
   try {
