@@ -61,7 +61,7 @@ export default function WhySMBDealsFallApartPage() {
         headline: "Pre-LOI: Helping Prevent Deals from Falling Apart Before Closing",
         description:
           "Most SMB acquisitions fail for predictable reasons: weak pre-LOI diligence, vague LOIs, poor project management, and financing friction. Learn how disciplined buyers avoid these deal killers.",
-        image: "https://www.nextax.ai/images/smb-deal-closing.jpg",
+        image: "/smb-deal-closing.jpg",
         datePublished: "2026-01-25",
         dateModified: "2026-01-25",
         author: {
