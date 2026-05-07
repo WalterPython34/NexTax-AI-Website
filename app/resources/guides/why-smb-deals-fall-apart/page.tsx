@@ -187,7 +187,7 @@ export default function WhySMBDealsFallApartPage() {
           <div className="max-w-4xl mx-auto">
             <div className="rounded-2xl overflow-hidden border border-slate-800">
               <img
-                src="/images/blog/smb-deal-closing.jpg"
+                src="/smb-deal-closing.jpg"
                 alt="Business acquisition deal closing - professionals reviewing documents"
                 className="w-full h-[400px] object-cover"
               />
