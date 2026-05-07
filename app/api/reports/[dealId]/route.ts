@@ -12,11 +12,12 @@
 //   3. Fetch deal_run row
 //   4. Fetch industry benchmarks (DealStats / listings)
 //   5. Fetch representative comparables (dealstats_transactions, anonymized)
-//   6. Generate negotiation posture via Claude (with fallback)
-//   7. Fetch latest benchmark snapshot for pages 6-7 (optional)
-//   8. Fetch interpretation for "What this means" section (optional)
-//   9. Generate PDF
-//  10. Return as application/pdf with download disposition
+//   6. Generate negotiation posture via Claude Sonnet 4.6 (with fallback)
+//   7. Fetch latest benchmark snapshot for pages 6-8 (optional)
+//   8. Fetch interpretation for "What this means" section (optional, Haiku)
+//   9. Fetch committee memo prose for pages 6-8 (optional, Sonnet 4.6)
+//  10. Generate PDF (5, 7, or 8 pages depending on data)
+//  11. Return as application/pdf with download disposition
 //
 // File path: app/api/reports/[dealId]/route.ts
 // =====================================================================
@@ -34,6 +35,7 @@ import {
   DealReportData,
   ComparableDeal,
   BenchmarkSnapshotForReport,
+  CommitteeMemoProse,
   generateDealReportPDF,
 } from "@/lib/acquiflow/deal-report-generator";
 
@@ -282,15 +284,29 @@ export async function GET(
     console.warn("[reports] snapshot fetch failed (continuing 5-page):", err);
   }
 
-  // ─── 9. Generate PDF ──────────────────────────────────────────────────
+  // ─── 9. Fetch committee memo prose (optional, gates Page 8) ───────────
+  // Only fires when we have a snapshot AND the posture call succeeded
+  // (page 8's negotiation_leverage section references the posture text).
+  // Best-effort: any failure means Page 8 simply won't render.
+  let committeeProse: CommitteeMemoProse | undefined = undefined;
+  if (benchmarkSnapshot && posture) {
+    try {
+      committeeProse = await fetchCommitteeProse(benchmarkSnapshot, posture, decision);
+    } catch (err) {
+      console.warn("[reports] committee prose fetch failed (page 8 will skip):", err);
+    }
+  }
+
+  // ─── 10. Generate PDF ─────────────────────────────────────────────────
   const reportData: DealReportData = {
     inputs,
     comparables,
     posture,
     generated_at: new Date(),
     decision,
-    benchmarkSnapshot,    // undefined when no snapshot exists → pages 6-7 skipped
+    benchmarkSnapshot,    // undefined when no snapshot exists → pages 6-8 skipped
     interpretation,       // undefined when interpret call fails → "What this means" skipped
+    committeeProse,       // undefined when Sonnet call/validation fails → page 8 skipped
   };
 
   let pdfBuffer: Buffer;
@@ -304,7 +320,7 @@ export async function GET(
     );
   }
 
-  // ─── 10. Return PDF ───────────────────────────────────────────────────
+  // ─── 11. Return PDF ───────────────────────────────────────────────────
   const filename = `AcquiFlow-${slugify(humanizeIndustryLabel(deal.industry))}-${dealId.slice(0, 8)}.pdf`;
   return new NextResponse(pdfBuffer, {
     status: 200,
@@ -424,4 +440,391 @@ Write the posture now (1-2 sentences, no preamble).`;
 
   // Strip surrounding quotes if Claude wrapped the response
   return text.replace(/^["']|["']$/g, "").trim();
+}
+
+// ─── Committee Memo Prose via Claude Sonnet 4.6 ──────────────────────────
+//
+// One Sonnet call that returns prose for pages 6 (normalization), 7
+// (diligence priorities additions), and 8 (full investment committee memo).
+// Includes numeric fabrication validator — if any number in the AI output
+// doesn't appear in the source analysis, the entire prose payload is
+// rejected and the report falls back to deterministic-only rendering for
+// these sections.
+//
+// On any failure the caller catches and continues — Page 8 simply won't
+// render, and Pages 6-7 fall back to deterministic prose.
+
+const COMMITTEE_MEMO_SYSTEM_PROMPT = `You are writing the prose layer of an institutional acquisition diligence report. The deterministic engine has already done all the analysis — your job is to translate structured findings into measured, lender-aware committee prose.
+
+ROLE
+You are the writer of a credit committee memorandum, not an analyst. You translate structured signals into prose that a senior PE associate or lender's underwriter would write for a committee deck. You add no new analysis, no new claims, no new metrics. Your only contribution is calibrated, professional language that surfaces what the engine has already determined.
+
+VOICE — these are non-negotiable:
+- Measured. Never assert what is uncertain.
+- Lender-aware. Default mental frame: "what would a SBA underwriter or PE LP actually want highlighted?"
+- Understated. The strongest claims are the smallest ones.
+- Institutional. Use professional underwriting vocabulary (coverage, exposure, normalized, contingent, sensitivity, dependence, structural).
+- Occasionally skeptical. Skepticism is reserved for genuine tension; never manufactured.
+- Never salesy. No upside language, no enthusiasm, no superlatives.
+- Never dramatic. No urgency, no warnings, no "critical" or "serious" without precise grounds.
+
+PROHIBITED LANGUAGE
+- "incredible," "exceptional," "remarkable," "exciting," "tremendous," "huge"
+- "great opportunity," "strong potential," "solid foundation"
+- "must," "critical," "urgent," "essential" (unless quoting a hard threshold)
+- Em-dashes used for emphasis (use them only for parenthetical clauses)
+- Exclamation points anywhere
+- Adjective stacks ("strong, solid, healthy financial profile")
+- Any phrasing that could appear in marketing copy
+
+PREFERRED LANGUAGE PATTERNS
+- "Coverage appears adequate but remains partially dependent on elevated SDE assumptions."
+- "Reported earnings sustain stated debt service; normalized earnings would not."
+- "Leverage is supportable on current cash flow, less so on industry-typical margins."
+- "Profile is internally consistent across coverage, profitability, and structural metrics."
+- "Earnings quality cannot be confirmed without add-back validation."
+- "Negotiation room is constrained by the seller's pricing relative to peer transactions."
+
+NUMERIC FIDELITY — STRICT
+Every number you write must appear in the analysis JSON. Do not introduce derived numbers, rounded values, or comparative figures not present in the source.
+
+OUTPUT FORMAT
+Return EXACTLY this JSON shape, no preamble, no code fences, no commentary:
+
+{
+  "page6_normalization_interpretation": "<2-3 sentences only, only if sensitivity data was provided. If sensitivity is null, return null.>",
+  "page7_diligence_additions": [<0-2 strings; each is a single, specific diligence priority derived from a flag or insight already present in the analysis. Order matters — most material first.>],
+  "page8_memo": {
+    "investment_merits": { "lead": "<1 sentence>", "body": "<2-3 sentences>", "pull_quote": "<6-9 words, no period>" },
+    "primary_risks":     { "lead": "<1 sentence>", "body": "<2-3 sentences>", "pull_quote": "<6-9 words, no period>" },
+    "financing_outlook": { "lead": "<1 sentence>", "body": "<2-3 sentences>", "pull_quote": "<6-9 words, no period>" },
+    "negotiation_leverage": { "lead": "<1 sentence>", "body": "<2-3 sentences referencing posture>", "pull_quote": "<6-9 words, no period>" },
+    "recommended_path_forward": { "lead": "<1 sentence>", "body": "<2-3 sentences>", "pull_quote": "<6-9 words, no period>" }
+  }
+}
+
+CRITICAL
+- Each section's "lead" is one sentence, strongest single claim.
+- Each section's "body" is 2-3 sentences. Concise. No filler.
+- Each section's "pull_quote" is 6-9 words, no trailing period.
+- "negotiation_leverage" must align with the posture text supplied. Reference its conclusion; don't restate it verbatim.
+
+TONE CALIBRATION
+- Clean deal (financial_score >= 75, no tension, 0-1 flags): confident, brief, almost terse. Tone: "this transaction underwrites cleanly under stated assumptions."
+- Mixed deal (financial_score 55-74): balanced. Tone: "this transaction is supportable but contingent on validation."
+- Messy deal (financial_score <55, tension or multiple flags): primary risks dominant. Tone: "this transaction faces structural and quality questions that should be resolved before LOI."
+
+CONSISTENCY
+The narrative threads must agree. Internal contradictions across sections are a worse failure mode than understatement.`;
+
+interface CommitteeMemoSection {
+  lead: string;
+  body: string;
+  pull_quote: string;
+}
+
+interface RawCommitteeMemoResponse {
+  page6_normalization_interpretation: string | null;
+  page7_diligence_additions: string[];
+  page8_memo: {
+    investment_merits:        CommitteeMemoSection;
+    primary_risks:            CommitteeMemoSection;
+    financing_outlook:        CommitteeMemoSection;
+    negotiation_leverage:     CommitteeMemoSection;
+    recommended_path_forward: CommitteeMemoSection;
+  };
+}
+
+/**
+ * Extract every number-shaped token from a string. Used for numeric
+ * fabrication validation — every number in Sonnet's output must appear
+ * in the source analysis.
+ */
+function extractNumericCores(text: string): Set<string> {
+  const out = new Set<string>();
+  const moneyAbbrevRe = /\$([\d,]+\.?\d*)\s*([KMB])/gi;
+  const moneyRe       = /\$([\d,]+\.?\d*)/g;
+  const pctRe         = /([\d,]+\.?\d*)\s*%/g;
+  const ratioRe       = /([\d,]+\.?\d*)\s*x\b/gi;
+  const scoreRe       = /(\d+)\s*\/\s*100\b/g;
+  const bareRe        = /\b([\d,]+\.?\d+|\d+)\b/g;
+
+  const stripCommas = (s: string) => s.replace(/,/g, "");
+  const normalize = (s: string): string | null => {
+    const n = parseFloat(stripCommas(s));
+    if (!Number.isFinite(n)) return null;
+    // Format to 4 decimals max, strip trailing zeros AFTER a decimal point only
+    const formatted = String(+n.toFixed(4));
+    // Only strip trailing zeros if the string contains a decimal point
+    if (formatted.includes(".")) {
+      return formatted.replace(/0+$/, "").replace(/\.$/, "") || "0";
+    }
+    return formatted;
+  };
+  const add = (raw: string) => { const n = normalize(raw); if (n !== null) out.add(n); };
+
+  let m: RegExpExecArray | null;
+  const consumed = new Set<number>();
+
+  while ((m = moneyAbbrevRe.exec(text)) !== null) {
+    const base = parseFloat(stripCommas(m[1]));
+    if (!Number.isFinite(base)) continue;
+    const mult = m[2].toUpperCase() === "K" ? 1_000 : m[2].toUpperCase() === "M" ? 1_000_000 : 1_000_000_000;
+    add(String(base * mult));
+    add(String(base));
+    for (let i = m.index; i < m.index + m[0].length; i++) consumed.add(i);
+  }
+  while ((m = moneyRe.exec(text)) !== null) {
+    if (consumed.has(m.index)) continue;
+    add(m[1]);
+    for (let i = m.index; i < m.index + m[0].length; i++) consumed.add(i);
+  }
+  while ((m = pctRe.exec(text)) !== null) {
+    if (consumed.has(m.index)) continue;
+    add(m[1]);
+    for (let i = m.index; i < m.index + m[0].length; i++) consumed.add(i);
+  }
+  while ((m = ratioRe.exec(text)) !== null) {
+    if (consumed.has(m.index)) continue;
+    add(m[1]);
+    for (let i = m.index; i < m.index + m[0].length; i++) consumed.add(i);
+  }
+  while ((m = scoreRe.exec(text)) !== null) {
+    if (consumed.has(m.index)) continue;
+    add(m[1]); add("100");
+    for (let i = m.index; i < m.index + m[0].length; i++) consumed.add(i);
+  }
+  while ((m = bareRe.exec(text)) !== null) {
+    if (consumed.has(m.index)) continue;
+    add(m[1]);
+  }
+  return out;
+}
+
+/**
+ * Validate that every numeric token in the AI prose appears in the source.
+ * Small integer counts (0-10) are exempt as they're typically array lengths
+ * or ordinals that legitimately appear without being explicitly written in
+ * the source JSON.
+ */
+function validateProse(
+  prose: string,
+  source: BenchmarkSnapshotForReport,
+  posture: string,
+): { ok: true } | { ok: false; reason: string } {
+  // Build the source corpus: snapshot JSON + posture + threshold reference values
+  const sourceText = JSON.stringify(source) + " " + posture;
+  const sourceCores = extractNumericCores(sourceText);
+
+  // Pre-seed abbreviation variants for large numbers in source.
+  // If source has 320000, also accept 320 (i.e. "$320K"), since Sonnet may
+  // legitimately write abbreviated forms. Same for millions: 1500000 → 1.5.
+  const seeds = [...sourceCores];
+  for (const v of seeds) {
+    const n = parseFloat(v);
+    if (!Number.isFinite(n)) continue;
+    if (n >= 1000 && n < 1_000_000 && n % 1000 === 0) {
+      sourceCores.add(String(n / 1000));         // 320000 → "320" (matches "$320K")
+    }
+    // Round large values to nearest thousand and add both abbreviated forms,
+    // since Sonnet may say "$151K" when source has 151200.
+    if (n >= 1000 && n < 1_000_000) {
+      const rounded = Math.round(n / 1000) * 1000;
+      sourceCores.add(String(rounded));
+      sourceCores.add(String(rounded / 1000));
+    }
+    if (n >= 1_000_000) {
+      const mn = n / 1_000_000;
+      const mnStr = String(mn).includes(".") ? String(mn).replace(/0+$/, "").replace(/\.$/, "") : String(mn);
+      sourceCores.add(mnStr);                    // 1500000 → "1.5" (matches "$1.5M")
+      // Round to nearest 0.1M for abbreviated forms
+      const mnRounded = Math.round(mn * 10) / 10;
+      const mnRoundedStr = String(mnRounded).includes(".") ? String(mnRounded).replace(/0+$/, "").replace(/\.$/, "") : String(mnRounded);
+      sourceCores.add(mnRoundedStr);
+    }
+  }
+
+  // Threshold reference values that may appear legitimately
+  sourceCores.add("1.30"); sourceCores.add("1.50"); sourceCores.add("1.5");
+  sourceCores.add("100"); sourceCores.add("80"); sourceCores.add("85");
+  if (source.financial_score !== null) sourceCores.add(String(source.financial_score));
+  sourceCores.add(String(source.risk_flags.length));
+  sourceCores.add(String(source.interaction_insights.length));
+  sourceCores.add(String(source.strengths?.length ?? 0));
+  sourceCores.add(String(source.score_drivers.length));
+  sourceCores.add(String(source.score_risk_dependencies.length));
+
+  const outputCores = extractNumericCores(prose);
+  for (const v of outputCores) {
+    const n = parseFloat(v);
+    // Small integer counts are exempt
+    if (Number.isInteger(n) && n >= 0 && n <= 10) continue;
+
+    if (!sourceCores.has(v)) {
+      // Check rounded variants (e.g. "8" matches "8.4")
+      const fmt = (x: number): string => {
+        const s = String(x);
+        if (s.includes(".")) return s.replace(/0+$/, "").replace(/\.$/, "") || "0";
+        return s;
+      };
+      const variants = [
+        fmt(+n.toFixed(2)),
+        fmt(+n.toFixed(1)),
+        String(Math.round(n)),
+      ];
+      const ok = variants.some(vv => sourceCores.has(vv));
+      if (!ok) {
+        return { ok: false, reason: `prose contains number "${v}" not in source` };
+      }
+    }
+  }
+  return { ok: true };
+}
+
+/**
+ * Build a compact analysis prompt for the Sonnet committee call. Strips the
+ * fields that don't contribute to prose and includes the posture text so
+ * Page 8's negotiation_leverage section can reference (not regenerate) it.
+ */
+function buildCommitteePrompt(
+  snap: BenchmarkSnapshotForReport,
+  posture: string,
+  decision: ReturnType<typeof computeDecisionLayer>,
+): string {
+  const compact = {
+    industry_name:           snap.industry_name,
+    financial_score:         snap.financial_score,
+    score_drivers:           snap.score_drivers,
+    score_risk_dependencies: snap.score_risk_dependencies,
+    tension_indicator:       snap.tension_indicator,
+    sensitivity:             snap.sensitivity ?? null,
+    risk_flags:              snap.risk_flags.map(f => ({ severity: f.severity, message: f.message })),
+    interaction_insights:    snap.interaction_insights.map(i => ({ severity: i.severity, message: i.message })),
+    strengths:               snap.strengths.map(s => s.message),
+    metrics_summary:         snap.financial_position
+      .filter(r => r.deal_value !== null || r.outlier_kind !== null)
+      .map(r => ({
+        label: r.metric_label,
+        deal_value: r.deal_value,
+        industry_median: r.industry_median,
+        percentile: r.display_percentile,
+        outlier_kind: r.outlier_kind,
+      })),
+    deal_structure: snap.deal_structure
+      ? {
+          metrics: snap.deal_structure.metrics.map(m => ({
+            label: m.label, value: m.value, display: m.display, status: m.status,
+          })),
+          sources_uses_balanced: snap.deal_structure.sources_uses.balanced,
+          flags: snap.deal_structure.flags.map(f => ({ severity: f.severity, message: f.message })),
+        }
+      : null,
+    negotiation_posture: posture,
+    decision_summary: {
+      verdict:              decision.verdict,
+      target_price_low:     decision.target_price_low,
+      target_price_high:    decision.target_price_high,
+      walk_away_threshold:  decision.walk_away_threshold,
+    },
+  };
+
+  return `Here is the deterministic analysis. Generate the committee memo prose per the system rules:
+
+${JSON.stringify(compact, null, 2)}`;
+}
+
+/**
+ * Main fetcher. Returns CommitteeMemoProse on success; throws on any failure
+ * (caller in the route catches and continues without page 8).
+ */
+async function fetchCommitteeProse(
+  snap: BenchmarkSnapshotForReport,
+  posture: string,
+  decision: ReturnType<typeof computeDecisionLayer>,
+): Promise<CommitteeMemoProse> {
+  const apiKey = process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) throw new Error("ANTHROPIC_API_KEY not configured");
+
+  const prompt = buildCommitteePrompt(snap, posture, decision);
+
+  // Sonnet 4.6 — committee memo is "lender-style narrative synthesis" per model policy
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 18_000);   // generous; Sonnet may take 4-8s
+
+  let raw: string;
+  try {
+    const res = await fetch("https://api.anthropic.com/v1/messages", {
+      method: "POST",
+      headers: {
+        "Content-Type":      "application/json",
+        "x-api-key":         apiKey,
+        "anthropic-version": "2023-06-01",
+      },
+      body: JSON.stringify({
+        model:      "claude-sonnet-4-6",
+        max_tokens: 1500,    // memo + diligence additions + interpretation
+        system:     COMMITTEE_MEMO_SYSTEM_PROMPT,
+        messages:   [{ role: "user", content: prompt }],
+      }),
+      signal: controller.signal,
+    });
+    if (!res.ok) {
+      const errText = await res.text().catch(() => "");
+      throw new Error(`Sonnet API ${res.status}: ${errText.slice(0, 200)}`);
+    }
+    const data = await res.json();
+    const content = data?.content?.[0]?.text;
+    if (typeof content !== "string" || !content.trim()) {
+      throw new Error("Empty Sonnet response");
+    }
+    raw = content;
+  } finally {
+    clearTimeout(timeout);
+  }
+
+  // Parse — strip code fences if Sonnet adds any
+  let text = raw.trim();
+  if (text.startsWith("```")) {
+    text = text.replace(/^```(?:json)?\s*/, "").replace(/\s*```$/, "");
+  }
+  let parsed: RawCommitteeMemoResponse;
+  try {
+    parsed = JSON.parse(text);
+  } catch (err: any) {
+    throw new Error(`Sonnet JSON parse failed: ${err?.message ?? "unknown"}`);
+  }
+
+  // Shape validation
+  if (!parsed.page8_memo) throw new Error("Response missing page8_memo");
+  const required = ["investment_merits", "primary_risks", "financing_outlook", "negotiation_leverage", "recommended_path_forward"] as const;
+  for (const k of required) {
+    const sec = (parsed.page8_memo as any)[k];
+    if (!sec || typeof sec.lead !== "string" || typeof sec.body !== "string" || typeof sec.pull_quote !== "string") {
+      throw new Error(`Response missing or malformed page8_memo.${k}`);
+    }
+  }
+
+  // Numeric fabrication validation across every prose field
+  const allProse = [
+    parsed.page6_normalization_interpretation ?? "",
+    ...(parsed.page7_diligence_additions ?? []),
+    ...required.flatMap(k => {
+      const sec = (parsed.page8_memo as any)[k];
+      return [sec.lead, sec.body, sec.pull_quote];
+    }),
+  ].join(" ");
+
+  const validation = validateProse(allProse, snap, posture);
+  if (!validation.ok) {
+    throw new Error(`prose validation: ${validation.reason}`);
+  }
+
+  // Cap diligence additions at 2 items (per spec)
+  const diligenceAdditions = (parsed.page7_diligence_additions ?? []).slice(0, 2);
+
+  return {
+    page6_normalization_interpretation: parsed.page6_normalization_interpretation ?? null,
+    page7_diligence_additions:          diligenceAdditions,
+    page8_memo:                          parsed.page8_memo,
+  };
 }
