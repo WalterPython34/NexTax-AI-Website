@@ -218,7 +218,7 @@ export default function PreLoiDiligencePage() {
 
             <div className="relative aspect-video rounded-2xl overflow-hidden">
               <Image
-                src="/images/blog/pre-loi-diligence.jpg"
+                src="/pre-loi-diligence.jpg"
                 alt="Pre-LOI Diligence for SMB Acquisitions"
                 fill
                 className="object-cover"
