@@ -12,12 +12,19 @@
 //   3. Fetch deal_run row
 //   4. Fetch industry benchmarks (DealStats / listings)
 //   5. Fetch representative comparables (dealstats_transactions, anonymized)
-//   6. Generate negotiation posture via Claude Sonnet 4.6 (with fallback)
-//   7. Fetch latest benchmark snapshot for pages 6-8 (optional)
-//   8. Fetch interpretation for "What this means" section (optional, Haiku)
-//   9. Fetch committee memo prose for pages 6-8 (optional, Sonnet 4.6)
-//  10. Generate PDF (5, 7, or 8 pages depending on data)
-//  11. Return as application/pdf with download disposition
+//   6. Build DealReportInputs and decision layer
+//   7. Generate negotiation posture via Sonnet 4.6 (with fallback)
+//   8. Fetch latest benchmark snapshot for pages 6-8 (optional)
+//   9. Fetch interpretation for page 7's "What this means" (optional, Haiku)
+//  10. Fetch committee memo prose for pages 6, 7, 8 (optional, Sonnet 4.6)
+//  11. Generate PDF (5, 7, or 8 pages depending on data)
+//  12. Return as application/pdf with download disposition
+//
+// Why posture and committee run sequentially (not parallel):
+//   The committee memo's negotiation_leverage section references the posture
+//   text directly, preserving voice consistency across pages 1, 5, and 8.
+//   This is a deliberate trade — we accept ~5s additional latency to keep
+//   the analytical voice cohesive across the whole report.
 //
 // File path: app/api/reports/[dealId]/route.ts
 // =====================================================================
@@ -203,7 +210,10 @@ export async function GET(
 
   const decision = computeDecisionLayer(inputs);
 
-  // ─── 7. Negotiation posture via Claude ────────────────────────────────
+  // ─── 7. Negotiation posture via Claude Sonnet 4.6 (with fallback) ─────
+  // Runs first because its output feeds into the committee memo's
+  // negotiation_leverage section. Preserving narrative voice consistency
+  // across pages 1, 5, and 8 is worth the sequential cost.
   let posture: string;
   try {
     posture = await generateNegotiationPosture(inputs, decision);
@@ -212,10 +222,9 @@ export async function GET(
     posture = buildFallbackPosture(decision.negotiation_posture_inputs);
   }
 
-  // ─── 7. Fetch latest benchmark snapshot (optional, gates pages 6-7) ───
-  // When present, the report renders pages 6-7 (Financial Benchmarking +
-  // Deal Structure & Risk Review). When absent, the report stays at 5 pages.
-  // Fetch is best-effort — any failure logs and falls through to a 5-page report.
+  // ─── 8. Fetch latest benchmark snapshot (optional, gates pages 6-8) ───
+  // When present, the report renders pages 6-8. When absent, the report
+  // stays at 5 pages. Best-effort — any failure logs and falls through.
   let benchmarkSnapshot: BenchmarkSnapshotForReport | undefined = undefined;
   let interpretation: string[] | undefined = undefined;
 
@@ -248,7 +257,7 @@ export async function GET(
         score_risk_dependencies: snapRow.analysis_outputs?.score_risk_dependencies ?? [],
       };
 
-      // ─── 8. Fetch interpretation for page 7's "What this means" ─────
+      // ─── 9. Fetch interpretation for page 7's "What this means" ─────
       // Best-effort — page 7 simply omits the section if this fails.
       try {
         const analysisForInterp = {
@@ -284,9 +293,10 @@ export async function GET(
     console.warn("[reports] snapshot fetch failed (continuing 5-page):", err);
   }
 
-  // ─── 9. Fetch committee memo prose (optional, gates Page 8) ───────────
-  // Only fires when we have a snapshot AND the posture call succeeded
-  // (page 8's negotiation_leverage section references the posture text).
+  // ─── 10. Fetch committee memo prose (optional, gates Page 8) ──────────
+  // Sonnet 4.6 generates the page 6/7 additions and page 8 memo. Posture
+  // is passed in so the negotiation_leverage section can reference its
+  // conclusion (preserving voice consistency with pages 1 and 5).
   // Best-effort: any failure means Page 8 simply won't render.
   let committeeProse: CommitteeMemoProse | undefined = undefined;
   if (benchmarkSnapshot && posture) {
@@ -297,7 +307,7 @@ export async function GET(
     }
   }
 
-  // ─── 10. Generate PDF ─────────────────────────────────────────────────
+  // ─── 11. Generate PDF ─────────────────────────────────────────────────
   const reportData: DealReportData = {
     inputs,
     comparables,
@@ -320,7 +330,7 @@ export async function GET(
     );
   }
 
-  // ─── 11. Return PDF ───────────────────────────────────────────────────
+  // ─── 12. Return PDF ───────────────────────────────────────────────────
   const filename = `AcquiFlow-${slugify(humanizeIndustryLabel(deal.industry))}-${dealId.slice(0, 8)}.pdf`;
   return new NextResponse(pdfBuffer, {
     status: 200,
@@ -457,62 +467,57 @@ Write the posture now (1-2 sentences, no preamble).`;
 const COMMITTEE_MEMO_SYSTEM_PROMPT = `You are writing the prose layer of an institutional acquisition diligence report. The deterministic engine has already done all the analysis — your job is to translate structured findings into measured, lender-aware committee prose.
 
 ROLE
-You are the writer of a credit committee memorandum, not an analyst. You translate structured signals into prose that a senior PE associate or lender's underwriter would write for a committee deck. You add no new analysis, no new claims, no new metrics. Your only contribution is calibrated, professional language that surfaces what the engine has already determined.
+You are the writer of a credit committee memorandum, not an analyst. You translate structured signals into prose that a senior PE associate or lender's underwriter would write for a committee deck. You add no new analysis, no new claims, no new metrics.
 
-VOICE — these are non-negotiable:
+VOICE — non-negotiable:
 - Measured. Never assert what is uncertain.
-- Lender-aware. Default mental frame: "what would a SBA underwriter or PE LP actually want highlighted?"
-- Understated. The strongest claims are the smallest ones.
-- Institutional. Use professional underwriting vocabulary (coverage, exposure, normalized, contingent, sensitivity, dependence, structural).
-- Occasionally skeptical. Skepticism is reserved for genuine tension; never manufactured.
-- Never salesy. No upside language, no enthusiasm, no superlatives.
-- Never dramatic. No urgency, no warnings, no "critical" or "serious" without precise grounds.
+- Lender-aware. Frame: "what would a SBA underwriter or PE LP want highlighted?"
+- Terse. Real committee memos are dense. Short sentences are stronger.
+- Institutional vocabulary (coverage, exposure, normalized, contingent, sensitivity, dependence, structural).
+- Skeptical only when warranted. Never manufactured.
+- No salesy language, no enthusiasm, no superlatives, no urgency.
 
 PROHIBITED LANGUAGE
 - "incredible," "exceptional," "remarkable," "exciting," "tremendous," "huge"
 - "great opportunity," "strong potential," "solid foundation"
 - "must," "critical," "urgent," "essential" (unless quoting a hard threshold)
-- Em-dashes used for emphasis (use them only for parenthetical clauses)
-- Exclamation points anywhere
-- Adjective stacks ("strong, solid, healthy financial profile")
-- Any phrasing that could appear in marketing copy
+- Em-dashes for emphasis (only for parenthetical clauses)
+- Exclamation points. Adjective stacks. Anything resembling marketing copy.
 
-PREFERRED LANGUAGE PATTERNS
-- "Coverage appears adequate but remains partially dependent on elevated SDE assumptions."
-- "Reported earnings sustain stated debt service; normalized earnings would not."
-- "Leverage is supportable on current cash flow, less so on industry-typical margins."
-- "Profile is internally consistent across coverage, profitability, and structural metrics."
+PREFERRED PATTERNS
+- "Coverage adequate but contingent on SDE validation."
+- "Reported earnings sustain debt service; normalized earnings would not."
+- "Profile internally consistent across coverage, profitability, and structure."
 - "Earnings quality cannot be confirmed without add-back validation."
-- "Negotiation room is constrained by the seller's pricing relative to peer transactions."
 
 NUMERIC FIDELITY — STRICT
-Every number you write must appear in the analysis JSON. Do not introduce derived numbers, rounded values, or comparative figures not present in the source.
+Every number you write must appear in the analysis JSON. No derived numbers, no rounded values not in source, no comparative figures introduced.
 
 OUTPUT FORMAT
-Return EXACTLY this JSON shape, no preamble, no code fences, no commentary:
+Return EXACTLY this JSON, no preamble, no fences, no commentary:
 
 {
-  "page6_normalization_interpretation": "<2-3 sentences only, only if sensitivity data was provided. If sensitivity is null, return null.>",
-  "page7_diligence_additions": [<0-2 strings; each is a single, specific diligence priority derived from a flag or insight already present in the analysis. Order matters — most material first.>],
+  "page6_normalization_interpretation": "<2 sentences max, only if sensitivity provided. Else null.>",
+  "page7_diligence_additions": [<0-2 strings; specific diligence priorities derived from existing flags. Most material first.>],
   "page8_memo": {
-    "investment_merits": { "lead": "<1 sentence>", "body": "<2-3 sentences>", "pull_quote": "<6-9 words, no period>" },
-    "primary_risks":     { "lead": "<1 sentence>", "body": "<2-3 sentences>", "pull_quote": "<6-9 words, no period>" },
-    "financing_outlook": { "lead": "<1 sentence>", "body": "<2-3 sentences>", "pull_quote": "<6-9 words, no period>" },
-    "negotiation_leverage": { "lead": "<1 sentence>", "body": "<2-3 sentences referencing posture>", "pull_quote": "<6-9 words, no period>" },
-    "recommended_path_forward": { "lead": "<1 sentence>", "body": "<2-3 sentences>", "pull_quote": "<6-9 words, no period>" }
+    "investment_merits":        { "lead": "<1 sentence>", "body": "<1-2 sentences>", "pull_quote": "<4-7 words, no period>" },
+    "primary_risks":            { "lead": "<1 sentence>", "body": "<1-2 sentences>", "pull_quote": "<4-7 words, no period>" },
+    "financing_outlook":        { "lead": "<1 sentence>", "body": "<1-2 sentences>", "pull_quote": "<4-7 words, no period>" },
+    "negotiation_leverage":     { "lead": "<1 sentence>", "body": "<1-2 sentences referencing posture>", "pull_quote": "<4-7 words, no period>" },
+    "recommended_path_forward": { "lead": "<1 sentence>", "body": "<1-2 sentences>", "pull_quote": "<4-7 words, no period>" }
   }
 }
 
 CRITICAL
-- Each section's "lead" is one sentence, strongest single claim.
-- Each section's "body" is 2-3 sentences. Concise. No filler.
-- Each section's "pull_quote" is 6-9 words, no trailing period.
-- "negotiation_leverage" must align with the posture text supplied. Reference its conclusion; don't restate it verbatim.
+- Lead = strongest single claim, one sentence.
+- Body = 1-2 sentences. Aim for 1 when possible. Density beats length.
+- Pull quote = 4-7 words, no period, must contain a number from source.
+- "negotiation_leverage" body references posture conclusion; does not regenerate it.
 
-TONE CALIBRATION
-- Clean deal (financial_score >= 75, no tension, 0-1 flags): confident, brief, almost terse. Tone: "this transaction underwrites cleanly under stated assumptions."
-- Mixed deal (financial_score 55-74): balanced. Tone: "this transaction is supportable but contingent on validation."
-- Messy deal (financial_score <55, tension or multiple flags): primary risks dominant. Tone: "this transaction faces structural and quality questions that should be resolved before LOI."
+TONE BY DEAL PROFILE
+- Clean (score >= 75, no tension, 0-1 flags): confident, brief. "Underwrites cleanly under stated assumptions."
+- Mixed (55-74): balanced. "Supportable but contingent on validation."
+- Messy (<55, tension or multiple flags): risks dominant. "Faces structural and quality questions."
 
 CONSISTENCY
 The narrative threads must agree. Internal contradictions across sections are a worse failure mode than understatement.`;
@@ -742,7 +747,9 @@ function buildCommitteePrompt(
     },
   };
 
-  return `Here is the deterministic analysis. Generate the committee memo prose per the system rules:
+  return `Here is the deterministic analysis. Generate the committee memo prose per the system rules.
+
+Use the negotiation_posture text as canonical input for the negotiation_leverage section. Reference its conclusion; do not regenerate it.
 
 ${JSON.stringify(compact, null, 2)}`;
 }
@@ -763,7 +770,7 @@ async function fetchCommitteeProse(
 
   // Sonnet 4.6 — committee memo is "lender-style narrative synthesis" per model policy
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 25_000);   // 25s — leaves 5s buffer under maxDuration=60
+  const timeout = setTimeout(() => controller.abort(), 32_000);   // 32s — leaves 28s for rest of route under maxDuration=60
 
   let raw: string;
   try {
@@ -776,7 +783,7 @@ async function fetchCommitteeProse(
       },
       body: JSON.stringify({
         model:      "claude-sonnet-4-6",
-        max_tokens: 1500,    // memo + diligence additions + interpretation
+        max_tokens: 900,    // tightened prompt: 5 sections × ~50 tokens + interpretation + diligence
         system:     COMMITTEE_MEMO_SYSTEM_PROMPT,
         messages:   [{ role: "user", content: prompt }],
       }),
