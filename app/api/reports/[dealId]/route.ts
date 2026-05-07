@@ -757,22 +757,60 @@ ${JSON.stringify(compact, null, 2)}`;
 /**
  * Main fetcher. Returns CommitteeMemoProse on success; throws on any failure
  * (caller in the route catches and continues without page 8).
+ *
+ * Includes structured diagnostic logging so we can see exactly where time is
+ * being spent and what's coming back from Sonnet. Every log line is prefixed
+ * with "[committee-diag]" for easy grep in Vercel logs.
  */
 async function fetchCommitteeProse(
   snap: BenchmarkSnapshotForReport,
   posture: string,
   decision: ReturnType<typeof computeDecisionLayer>,
 ): Promise<CommitteeMemoProse> {
+  const t0 = Date.now();
+  const elapsed = () => Date.now() - t0;
+
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) throw new Error("ANTHROPIC_API_KEY not configured");
 
   const prompt = buildCommitteePrompt(snap, posture, decision);
 
+  // Input size diagnostics: char count + rough token estimate (~4 chars/token).
+  // Exact input tokens come back in usage.input_tokens after the call.
+  const promptCharCount = prompt.length;
+  const systemCharCount = COMMITTEE_MEMO_SYSTEM_PROMPT.length;
+  const totalInputCharCount = promptCharCount + systemCharCount;
+  const roughInputTokenEstimate = Math.round(totalInputCharCount / 4);
+
+  console.info("[committee-diag] start", {
+    deal_industry:       snap.industry_name,
+    has_sensitivity:     !!snap.sensitivity,
+    risk_flag_count:     snap.risk_flags.length,
+    insight_count:       snap.interaction_insights.length,
+    metric_count:        snap.financial_position.length,
+    has_deal_structure:  !!snap.deal_structure,
+    posture_char_count:  posture.length,
+    prompt_char_count:   promptCharCount,
+    system_char_count:   systemCharCount,
+    total_input_chars:   totalInputCharCount,
+    rough_input_tokens:  roughInputTokenEstimate,
+  });
+
   // Sonnet 4.6 — committee memo is "lender-style narrative synthesis" per model policy
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 32_000);   // 32s — leaves 28s for rest of route under maxDuration=60
+  const TIMEOUT_MS = 45_000;
+  const timeout = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  // Also track whether timeout fired (controller.signal.aborted is set on either
+  // explicit abort or other reasons; this lets us distinguish in catch).
+  let timedOut = false;
+  const timeoutTracker = setTimeout(() => { timedOut = true; }, TIMEOUT_MS);
 
+  const tBeforeFetch = elapsed();
   let raw: string;
+  let usageInputTokens: number | undefined;
+  let usageOutputTokens: number | undefined;
+  let stopReason: string | undefined;
+
   try {
     const res = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
@@ -789,18 +827,66 @@ async function fetchCommitteeProse(
       }),
       signal: controller.signal,
     });
+    const tAfterFetch = elapsed();
+
     if (!res.ok) {
       const errText = await res.text().catch(() => "");
+      console.warn("[committee-diag] api_error", {
+        status:           res.status,
+        elapsed_ms:       tAfterFetch,
+        time_to_response: tAfterFetch - tBeforeFetch,
+      });
       throw new Error(`Sonnet API ${res.status}: ${errText.slice(0, 200)}`);
     }
+
     const data = await res.json();
     const content = data?.content?.[0]?.text;
     if (typeof content !== "string" || !content.trim()) {
+      console.warn("[committee-diag] empty_response", {
+        elapsed_ms:       elapsed(),
+        time_to_response: tAfterFetch - tBeforeFetch,
+        usage:            data?.usage,
+        stop_reason:      data?.stop_reason,
+      });
       throw new Error("Empty Sonnet response");
     }
     raw = content;
+    usageInputTokens  = data?.usage?.input_tokens;
+    usageOutputTokens = data?.usage?.output_tokens;
+    stopReason        = data?.stop_reason;
+
+    // Headline diagnostic: this is the single most useful log line for
+    // understanding what's happening on subsequent runs.
+    console.info("[committee-diag] sonnet_response", {
+      elapsed_ms:       elapsed(),
+      time_to_response: tAfterFetch - tBeforeFetch,
+      input_tokens:     usageInputTokens,
+      output_tokens:    usageOutputTokens,
+      stop_reason:      stopReason,
+      hit_max_tokens:   stopReason === "max_tokens",
+      response_chars:   content.length,
+    });
+  } catch (err: any) {
+    const tFail = elapsed();
+    if (err?.name === "AbortError" || timedOut) {
+      console.warn("[committee-diag] timeout", {
+        elapsed_ms:       tFail,
+        timeout_ms:       TIMEOUT_MS,
+        time_to_response: tFail - tBeforeFetch,
+        // Note: input token count not available because the response never came back.
+        rough_input_tokens: roughInputTokenEstimate,
+      });
+      throw new Error(`Sonnet timeout after ${TIMEOUT_MS}ms (input ~${roughInputTokenEstimate} tokens)`);
+    }
+    console.warn("[committee-diag] fetch_error", {
+      elapsed_ms:    tFail,
+      error_name:    err?.name,
+      error_message: err?.message?.slice(0, 200),
+    });
+    throw err;
   } finally {
     clearTimeout(timeout);
+    clearTimeout(timeoutTracker);
   }
 
   // Parse — strip code fences if Sonnet adds any
@@ -812,15 +898,25 @@ async function fetchCommitteeProse(
   try {
     parsed = JSON.parse(text);
   } catch (err: any) {
+    console.warn("[committee-diag] parse_failure", {
+      elapsed_ms:     elapsed(),
+      raw_preview:    text.slice(0, 300),
+      output_tokens:  usageOutputTokens,
+      hit_max_tokens: stopReason === "max_tokens",
+    });
     throw new Error(`Sonnet JSON parse failed: ${err?.message ?? "unknown"}`);
   }
 
   // Shape validation
-  if (!parsed.page8_memo) throw new Error("Response missing page8_memo");
+  if (!parsed.page8_memo) {
+    console.warn("[committee-diag] shape_failure", { reason: "missing page8_memo" });
+    throw new Error("Response missing page8_memo");
+  }
   const required = ["investment_merits", "primary_risks", "financing_outlook", "negotiation_leverage", "recommended_path_forward"] as const;
   for (const k of required) {
     const sec = (parsed.page8_memo as any)[k];
     if (!sec || typeof sec.lead !== "string" || typeof sec.body !== "string" || typeof sec.pull_quote !== "string") {
+      console.warn("[committee-diag] shape_failure", { reason: `malformed page8_memo.${k}` });
       throw new Error(`Response missing or malformed page8_memo.${k}`);
     }
   }
@@ -837,11 +933,24 @@ async function fetchCommitteeProse(
 
   const validation = validateProse(allProse, snap, posture);
   if (!validation.ok) {
+    console.warn("[committee-diag] validation_failure", {
+      elapsed_ms:     elapsed(),
+      reason:         validation.reason,
+      output_tokens:  usageOutputTokens,
+    });
     throw new Error(`prose validation: ${validation.reason}`);
   }
 
   // Cap diligence additions at 2 items (per spec)
   const diligenceAdditions = (parsed.page7_diligence_additions ?? []).slice(0, 2);
+
+  console.info("[committee-diag] success", {
+    total_elapsed_ms:    elapsed(),
+    input_tokens:        usageInputTokens,
+    output_tokens:       usageOutputTokens,
+    diligence_additions: diligenceAdditions.length,
+    has_normalization:   !!parsed.page6_normalization_interpretation,
+  });
 
   return {
     page6_normalization_interpretation: parsed.page6_normalization_interpretation ?? null,
