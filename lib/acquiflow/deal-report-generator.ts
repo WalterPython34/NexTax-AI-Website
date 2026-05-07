@@ -1,7 +1,7 @@
 // =====================================================================
 // AcquiFlow — Deal Report Generator (jsPDF)
 // ---------------------------------------------------------------------
-// Generates an institutional-grade PDF deal report (5 or 7 pages).
+// Generates an institutional-grade PDF deal report (5, 7, or 8 pages).
 //
 // Core pages (always rendered):
 //   1. Executive Snapshot   — Decision Bar, verdict, metrics, negotiation
@@ -11,8 +11,16 @@
 //   5. Recommendation       — verdict, walk-away, sequenced actions
 //
 // Optional pages (rendered only when benchmarkSnapshot is provided):
-//   6. Financial Benchmarking — operating ratios vs industry & market
-//   7. Deal Structure & Risk Review — leverage, sources & uses, signals
+//   6. Financial Quality & Benchmark Risk
+//        — score snapshot, internal consistency analysis,
+//          normalization sensitivity (Sonnet interpretation)
+//   7. Deal Structure & Credit Committee Review
+//        — capital structure, sources & uses, committee concerns
+//          (grouped), diligence priorities (deterministic + Sonnet)
+//
+// Optional page (rendered only when committeeProse is also provided):
+//   8. Investment Committee Summary
+//        — five-section structured prose memo, Sonnet 4.6
 //
 // Pattern: matches lib/marketview/pdf-generator.ts (jsPDF, letter portrait,
 // dark theme #0A0E14, indigo spine, manual y-cursor positioning).
@@ -130,6 +138,37 @@ export interface BenchmarkSnapshotForReport {
   score_risk_dependencies: string[];
 }
 
+// ─── Committee memo prose shape (optional input for page 8) ─────────────
+//
+// Returned by the Sonnet 4.6 committee call in the API route. Optional —
+// when present, page 8 renders. When absent, the report stays at 7 pages
+// (or 5 if no snapshot either).
+//
+// All numeric tokens in these strings are validated against the snapshot
+// before this object reaches the report. If validation failed, the route
+// passes undefined and page 8 is silently skipped.
+
+export interface CommitteeMemoSection {
+  lead:       string;   // 1 sentence — strongest single claim
+  body:       string;   // 2-3 sentences supporting paragraph
+  pull_quote: string;   // 6-9 words, no period — visually highlighted
+}
+
+export interface CommitteeMemoProse {
+  /** 2-3 sentences for Page 6's normalization sensitivity card. May be null. */
+  page6_normalization_interpretation: string | null;
+  /** 0-2 additional diligence priority items appended to the deterministic core. */
+  page7_diligence_additions: string[];
+  /** Five-section investment committee memo for Page 8. */
+  page8_memo: {
+    investment_merits:        CommitteeMemoSection;
+    primary_risks:            CommitteeMemoSection;
+    financing_outlook:        CommitteeMemoSection;
+    negotiation_leverage:     CommitteeMemoSection;
+    recommended_path_forward: CommitteeMemoSection;
+  };
+}
+
 export interface DealReportData {
   inputs:        DealReportInputs;
   comparables:   ComparableDeal[];
@@ -142,6 +181,9 @@ export interface DealReportData {
   // Optional pre-fetched interpretation from /api/benchmarks/interpret
   // Used to populate the "What this means" section on page 7
   interpretation?: string[];
+  // Optional pre-fetched committee prose from Sonnet 4.6 — gates page 8
+  // and supplies the normalization interpretation on page 6
+  committeeProse?: CommitteeMemoProse;
 }
 
 // ─── Color palette (canonical, used throughout) ─────────────────────────
@@ -1459,12 +1501,17 @@ function buildWalkAwayTriggers(d: DecisionLayerResult): { category: string; deta
 }
 
 // =====================================================================
-// PAGE 6 — FINANCIAL BENCHMARKING & OPERATING QUALITY
+// PAGE 6 — FINANCIAL QUALITY & BENCHMARK RISK
 // ---------------------------------------------------------------------
-// Renders only when data.benchmarkSnapshot is provided. Shows score
-// banner, optional tension banner, operating-ratio benchmark table
-// (no colored bars — percentile badges + status pills), and the
-// SDE Normalization Sensitivity card.
+// The "credibility stress test" page. Psychologically frames quality of
+// earnings / earnings durability rather than raw benchmarking.
+//
+// Sections:
+//   1. Financial Score Snapshot (score / industry / drivers + caveats footer)
+//   2. Internal Consistency Analysis (always renders; framing adapts)
+//   3. Normalization Sensitivity (Sonnet interpretation when available)
+//
+// Renders only when data.benchmarkSnapshot is provided.
 // =====================================================================
 
 function drawPage6(
@@ -1475,7 +1522,7 @@ function drawPage6(
   const snap = data.benchmarkSnapshot;
   if (!snap) return;
 
-  newPage(doc, 6, "Financial Benchmarking");
+  newPage(doc, 6, "Financial Quality");
   const { inputs } = data;
 
   let y = 70;
@@ -1484,24 +1531,24 @@ function drawPage6(
   doc.setFont("helvetica", "bold");
   doc.setFontSize(8);
   setHex(doc, COLOR.indigo, "text");
-  doc.text("FINANCIAL BENCHMARKING", M, y);
+  doc.text("FINANCIAL QUALITY & BENCHMARK RISK", M, y);
   y += 14;
 
   doc.setFontSize(14);
   setHex(doc, COLOR.textPrimary, "text");
-  doc.text("Operating quality vs industry & market peers", M, y);
+  doc.text("Earnings durability and quality of underlying performance", M, y);
   y += 13;
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8.5);
   setHex(doc, COLOR.textDim, "text");
   doc.text(
-    "Benchmarking against aggregated industry financial statement data and observed SMB transaction data.",
+    "Tests whether reported metrics reflect durable performance, or depend on assumptions that warrant validation.",
     M, y,
   );
   y += 22;
 
-  // ─── SECTION 1 — Score Snapshot banner ───────────────────────────────
+  // ─── SECTION 1 — Score Snapshot card ─────────────────────────────────
   drawSectionHeader(doc, M, y, "Financial score snapshot");
   y += 14;
 
@@ -1514,7 +1561,7 @@ function drawPage6(
 
   const colW = CW / 3;
 
-  // Left: big score
+  // Left column: big score
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7);
   setHex(doc, COLOR.textDim, "text");
@@ -1545,7 +1592,7 @@ function drawPage6(
   doc.text("Composite of profitability, coverage,", M + 16, y + 72);
   doc.text("liquidity, and efficiency",              M + 16, y + 82);
 
-  // Center: industry context
+  // Center column: industry context
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7);
   setHex(doc, COLOR.textDim, "text");
@@ -1576,7 +1623,7 @@ function drawPage6(
   setHex(doc, COLOR.textDim, "text");
   doc.text(`Benchmark year: ${snap.benchmark_year}`, M + colW + 16, y + 82);
 
-  // Right: top drivers
+  // Right column: top drivers
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7);
   setHex(doc, COLOR.textDim, "text");
@@ -1589,228 +1636,290 @@ function drawPage6(
     doc.text(`\u2022  ${driver}`, M + colW * 2 + 16, y + 38 + i * 13);
   });
 
-  y += snapshotBoxH + 18;
+  y += snapshotBoxH + 6;
 
-  // ─── Tension Indicator banner (if present) ───────────────────────────
-  if (snap.tension_indicator) {
-    const tensionLines = doc.splitTextToSize(snap.tension_indicator, CW - 32);
-    const tensionH = 14 + tensionLines.length * 11 + 10;
+  // ─── Score caveats — subdued footer line under the card ──────────────
+  if (snap.score_risk_dependencies && snap.score_risk_dependencies.length > 0) {
+    doc.setFont("helvetica", "italic");
+    doc.setFontSize(7.5);
+    setHex(doc, COLOR.textMuted, "text");
+    const caveatPrefix = snap.score_risk_dependencies.length === 1
+      ? "Score sensitivity: "
+      : "Score sensitivities: ";
+    const caveatText = caveatPrefix + snap.score_risk_dependencies.join("; ");
+    const caveatLines = doc.splitTextToSize(caveatText, CW);
+    caveatLines.slice(0, 2).forEach((line: string, i: number) => {
+      doc.text(line, M, y + i * 10);
+    });
+    y += Math.min(caveatLines.length, 2) * 10 + 8;
+  } else {
+    y += 8;
+  }
 
-    setHex(doc, "#1F1808", "fill");
-    doc.rect(M, y, CW, tensionH, "F");
-    setHex(doc, COLOR.amber, "fill");
-    doc.rect(M, y, 3, tensionH, "F");
+  // ─── SECTION 2 — Internal Consistency Analysis ───────────────────────
+  // Always renders. Framing adapts:
+  //   - Tensions present → emphasize what doesn't add up
+  //   - Clean profile     → emphasize cross-metric coherence
+  drawSectionHeader(doc, M, y, "Internal consistency analysis");
+  y += 14;
+
+  const tensions = buildConsistencyTensions(snap);
+
+  if (tensions.length === 0) {
+    // Clean deal — single confident card
+    const cleanH = 56;
+    setHex(doc, "#0F1B17", "fill");
+    doc.rect(M, y, CW, cleanH, "F");
+    setHex(doc, COLOR.emerald, "fill");
+    doc.rect(M, y, 3, cleanH, "F");
 
     doc.setFont("helvetica", "bold");
     doc.setFontSize(8);
-    setHex(doc, COLOR.amberText, "text");
-    doc.text("MIXED SIGNALS", M + 14, y + 14);
+    setHex(doc, COLOR.emeraldText, "text");
+    doc.text("PROFILE INTERNALLY CONSISTENT", M + 14, y + 16);
 
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
     setHex(doc, COLOR.textBody, "text");
-    tensionLines.forEach((line: string, i: number) => {
-      doc.text(line, M + 14, y + 28 + i * 11);
+    const cleanMsg = "Financial profile appears internally consistent across coverage, profitability, and structural metrics. No major cross-metric contradictions detected.";
+    const lines = doc.splitTextToSize(cleanMsg, CW - 28);
+    lines.forEach((line: string, i: number) => {
+      doc.text(line, M + 14, y + 30 + i * 11);
     });
-
-    y += tensionH + 14;
-  }
-
-  // ─── SECTION 2 — Operating Ratios benchmark table ────────────────────
-  drawSectionHeader(doc, M, y, "Operating ratios vs benchmarks");
-  y += 14;
-
-  // Column anchors (right-aligned for value cols, left-aligned for label/status)
-  const colMetric = M + 12;
-  const colDeal   = M + 220;
-  const colBench  = M + 310;
-  const colPctile = M + 400;
-  const colStatus = M + 460;
-
-  // Header row
-  setHex(doc, "#13181F", "fill");
-  doc.rect(M, y, CW, 22, "F");
-  setHex(doc, COLOR.borderSoft, "draw");
-  doc.setLineWidth(0.5);
-  doc.rect(M, y, CW, 22, "S");
-
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(8);
-  setHex(doc, COLOR.textMuted, "text");
-  doc.text("METRIC",     colMetric, y + 14);
-  doc.text("DEAL",       colDeal,   y + 14, { align: "right" });
-  doc.text("BENCHMARK",  colBench,  y + 14, { align: "right" });
-  doc.text("PERCENTILE", colPctile, y + 14, { align: "right" });
-  doc.text("STATUS",     colStatus, y + 14);
-  y += 22;
-
-  // Body rows
-  const rowH = 26;
-  const rowsToRender = snap.financial_position.filter(r =>
-    !(r.deal_value === null && r.industry_median === null && !r.insufficient_data)
-  );
-
-  rowsToRender.forEach((row, rowIdx) => {
-    if (y + rowH > PH - 220) return;   // leave room for sensitivity card
-
-    if (rowIdx % 2 === 1) {
-      setHex(doc, "#0E1218", "fill");
-      doc.rect(M, y, CW, rowH, "F");
-    }
+    y += cleanH + 14;
+  } else {
+    // Tensions present — render top 2-3 as signal/why-it-matters rows
+    const headerH = 22;
+    setHex(doc, "#13181F", "fill");
+    doc.rect(M, y, CW, headerH, "F");
     setHex(doc, COLOR.borderSoft, "draw");
-    doc.setLineWidth(0.4);
-    doc.line(M, y + rowH, M + CW, y + rowH);
+    doc.setLineWidth(0.5);
+    doc.rect(M, y, CW, headerH, "S");
 
-    // Metric label
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(9);
-    setHex(doc, COLOR.textBody, "text");
-    doc.text(row.metric_label, colMetric, y + 16);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8);
+    setHex(doc, COLOR.textMuted, "text");
+    doc.text("SIGNAL",          M + 12,           y + 14);
+    doc.text("WHY IT MATTERS",  M + (CW * 0.42),  y + 14);
+    y += headerH;
 
-    // Deal value
-    doc.setFont("courier", "bold");
-    doc.setFontSize(9);
-    setHex(doc, COLOR.textPrimary, "text");
-    doc.text(fmtMetricValue(row.metric_key, row.deal_value), colDeal, y + 16, { align: "right" });
+    // Top 2-3 tensions only — avoid forcing rows
+    const shown = tensions.slice(0, 3);
+    for (const t of shown) {
+      const signalLines = doc.splitTextToSize(t.signal, (CW * 0.42) - 14);
+      const whyLines    = doc.splitTextToSize(t.why,    CW - (CW * 0.42) - 16);
+      const rowH        = Math.max(signalLines.length, whyLines.length) * 11 + 14;
 
-    // Benchmark
-    doc.setFont("courier", "normal");
-    doc.setFontSize(9);
-    setHex(doc, row.industry_median !== null ? COLOR.textBody : COLOR.textDim, "text");
-    doc.text(fmtMetricValue(row.metric_key, row.industry_median), colBench, y + 16, { align: "right" });
+      setHex(doc, COLOR.borderSoft, "draw");
+      doc.setLineWidth(0.4);
+      doc.line(M, y + rowH, M + CW, y + rowH);
 
-    // Percentile (badge or directional indicator or em-dash)
-    if (row.display_percentile !== null) {
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(8);
-      const pctText = fmtPercentile(row.display_percentile);
-      const pctW = doc.getTextWidth(pctText) + 10;
-      setHex(doc, "#1A2438", "fill");
-      doc.rect(colPctile - pctW, y + 9, pctW, 13, "F");
-      setHex(doc, COLOR.indigo, "text");
-      doc.text(pctText, colPctile - 5, y + 18, { align: "right" });
-    } else if (row.median_only) {
-      doc.setFont("helvetica", "italic");
-      doc.setFontSize(7);
-      setHex(doc, COLOR.textDim, "text");
-      doc.text("\u00B110%", colPctile, y + 16, { align: "right" });
-    } else {
+      doc.setFontSize(9);
+      setHex(doc, t.severity === "high" ? COLOR.amberText : COLOR.textBody, "text");
+      signalLines.forEach((line: string, i: number) => {
+        doc.text(line, M + 12, y + 14 + i * 11);
+      });
+
       doc.setFont("helvetica", "normal");
       doc.setFontSize(9);
-      setHex(doc, COLOR.textDim, "text");
-      doc.text("\u2014", colPctile, y + 16, { align: "right" });
+      setHex(doc, COLOR.textBody, "text");
+      whyLines.forEach((line: string, i: number) => {
+        doc.text(line, M + (CW * 0.42), y + 14 + i * 11);
+      });
+
+      y += rowH;
     }
+    y += 12;
+  }
 
-    // Status pill
-    const pill = statusPillForRow(row);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(7.5);
-    const pillW = doc.getTextWidth(pill.label) + 12;
-    setHex(doc, pill.bg, "fill");
-    doc.rect(colStatus, y + 8, pillW, 14, "F");
-    setHex(doc, pill.text, "text");
-    doc.text(pill.label, colStatus + 6, y + 17);
-
-    y += rowH;
-  });
-
-  y += 14;
-
-  // ─── SECTION 3 — SDE Normalization Sensitivity ───────────────────────
-  if (snap.sensitivity && y < PH - 200) {
-    drawSectionHeader(doc, M, y, "SDE normalization sensitivity");
+  // ─── SECTION 3 — Normalization Sensitivity ───────────────────────────
+  if (snap.sensitivity && y < PH - 220) {
+    drawSectionHeader(doc, M, y, "Normalization sensitivity");
     y += 14;
 
     const breaches = snap.sensitivity.normalized_dscr !== null && snap.sensitivity.normalized_dscr < 1.30;
-    const sensColor = breaches ? COLOR.red : COLOR.amber;
-    const sensBg    = breaches ? "#1F0A0A" : "#1F1808";
-    const sensText  = breaches ? COLOR.redText : COLOR.amberText;
 
-    // Headline insight callout
-    const insightLines = doc.splitTextToSize(snap.sensitivity.insight, CW - 32);
-    const insightH = 14 + insightLines.length * 11 + 10;
+    // Three-row comparison block — visually emphasized per spec
+    // Reported DSCR | Normalized DSCR | Lender Threshold
+    const compH = 92;
+    setHex(doc, "#13181F", "fill");
+    doc.rect(M, y, CW, compH, "F");
+    setHex(doc, breaches ? COLOR.red : COLOR.amber, "fill");
+    doc.rect(M, y, 3, compH, "F");
 
-    setHex(doc, sensBg, "fill");
-    doc.rect(M, y, CW, insightH, "F");
-    setHex(doc, sensColor, "fill");
-    doc.rect(M, y, 3, insightH, "F");
+    const colW2 = CW / 3;
 
+    // Reported DSCR
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(8);
-    setHex(doc, sensText, "text");
-    doc.text("WHAT IF SDE NORMALIZES?", M + 14, y + 14);
+    doc.setFontSize(7);
+    setHex(doc, COLOR.textDim, "text");
+    doc.text("REPORTED DSCR", M + 16, y + 18);
+
+    doc.setFont("courier", "bold");
+    doc.setFontSize(28);
+    setHex(doc, COLOR.textPrimary, "text");
+    doc.text(fmtRatio(snap.sensitivity.reported_dscr), M + 16, y + 50);
 
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(9);
-    setHex(doc, COLOR.textBody, "text");
-    insightLines.forEach((line: string, i: number) => {
-      doc.text(line, M + 14, y + 28 + i * 11);
-    });
-    y += insightH + 12;
+    doc.setFontSize(7);
+    setHex(doc, COLOR.textMuted, "text");
+    doc.text("Under seller-reported", M + 16, y + 68);
+    doc.text("earnings",               M + 16, y + 78);
 
-    // Five comparison cells: Reported SDE | Normalized SDE | Reported DSCR | Normalized DSCR | Lender Threshold
-    const cellH = 50;
-    const cellW = (CW - 16) / 5;
-    const cells = [
-      { label: "REPORTED SDE",     value: fmtUsd(snap.sensitivity.reported_sde),      muted: false, highlight: false },
-      { label: "NORMALIZED SDE",   value: fmtUsd(snap.sensitivity.normalized_sde),    muted: true,  highlight: false },
-      { label: "REPORTED DSCR",    value: fmtRatio(snap.sensitivity.reported_dscr),   muted: false, highlight: false },
-      { label: "NORMALIZED DSCR",  value: fmtRatio(snap.sensitivity.normalized_dscr), muted: false, highlight: breaches },
-      { label: "LENDER THRESHOLD", value: "1.30x",                                    muted: true,  highlight: false },
-    ];
+    // Normalized DSCR
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(7);
+    setHex(doc, COLOR.textDim, "text");
+    doc.text("NORMALIZED DSCR", M + colW2 + 16, y + 18);
 
-    let cellX = M;
-    for (const cell of cells) {
-      setHex(doc, "#13181F", "fill");
-      doc.rect(cellX, y, cellW, cellH, "F");
-      setHex(doc, COLOR.borderSoft, "draw");
-      doc.setLineWidth(0.5);
-      doc.rect(cellX, y, cellW, cellH, "S");
+    doc.setFont("courier", "bold");
+    doc.setFontSize(28);
+    setHex(doc, breaches ? COLOR.redText : COLOR.amberText, "text");
+    doc.text(fmtRatio(snap.sensitivity.normalized_dscr), M + colW2 + 16, y + 50);
 
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7);
+    setHex(doc, COLOR.textMuted, "text");
+    doc.text("If SDE normalized to",   M + colW2 + 16, y + 68);
+    doc.text("industry median margin",  M + colW2 + 16, y + 78);
+
+    // Lender Threshold
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(7);
+    setHex(doc, COLOR.textDim, "text");
+    doc.text("LENDER THRESHOLD", M + colW2 * 2 + 16, y + 18);
+
+    doc.setFont("courier", "bold");
+    doc.setFontSize(28);
+    setHex(doc, COLOR.textMuted, "text");
+    doc.text("1.30x", M + colW2 * 2 + 16, y + 50);
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7);
+    setHex(doc, COLOR.textMuted, "text");
+    doc.text("Standard SBA / commercial",  M + colW2 * 2 + 16, y + 68);
+    doc.text("debt service minimum",        M + colW2 * 2 + 16, y + 78);
+
+    y += compH + 14;
+
+    // Interpretation block — Sonnet-generated when available, fallback otherwise
+    const interpText = data.committeeProse?.page6_normalization_interpretation
+      ?? buildDeterministicNormalizationInterp(snap.sensitivity, breaches);
+
+    if (interpText) {
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(7);
+      doc.setFontSize(8);
       setHex(doc, COLOR.textDim, "text");
-      doc.text(cell.label, cellX + 8, y + 14);
+      doc.text("INTERPRETATION", M, y);
+      y += 12;
 
-      doc.setFont("courier", "bold");
-      doc.setFontSize(13);
-      const valueColor =
-        cell.highlight ? COLOR.redText
-        : cell.muted   ? COLOR.textMuted
-        :                COLOR.textPrimary;
-      setHex(doc, valueColor, "text");
-      doc.text(cell.value, cellX + 8, y + 36);
-
-      cellX += cellW + 4;
-    }
-    y += cellH + 10;
-
-    // Threshold breach warning banner
-    if (breaches && y < PH - 60) {
-      const warnH = 26;
-      setHex(doc, "#1F0A0A", "fill");
-      doc.rect(M, y, CW, warnH, "F");
-      setHex(doc, COLOR.red, "fill");
-      doc.rect(M, y, 3, warnH, "F");
-
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(8.5);
-      setHex(doc, COLOR.redText, "text");
-      doc.text(
-        "Normalized DSCR falls below the 1.30x lender threshold \u2014 financing depends on validating reported earnings.",
-        M + 14, y + 17,
-      );
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      setHex(doc, COLOR.textBody, "text");
+      const lines = doc.splitTextToSize(interpText, CW);
+      lines.forEach((line: string) => {
+        if (y > PH - 50) return;
+        doc.text(line, M, y);
+        y += 12;
+      });
     }
   }
 }
 
+/**
+ * Build the prioritized list of internal consistency tensions for Page 6
+ * Section 2. Pulls from interaction_insights (cross-metric) first as those
+ * are the highest-quality signals, then validation/risk outliers as
+ * fallback. Returns at most 3 entries; can return 0 for clean deals.
+ */
+function buildConsistencyTensions(
+  snap: BenchmarkSnapshotForReport,
+): { signal: string; why: string; severity: "high" | "medium" | "low" }[] {
+  const out: { signal: string; why: string; severity: "high" | "medium" | "low" }[] = [];
+
+  // Cross-metric interactions are highest-quality signals
+  for (const ins of snap.interaction_insights) {
+    if (out.length >= 3) break;
+    // Pull a "signal" header from the rule, body from the message
+    const signal = humanizeInteractionRule(ins.rule);
+    out.push({
+      signal,
+      why: ins.message,
+      severity: ins.severity === "high" ? "high" : "medium",
+    });
+  }
+
+  // Validation outliers (potential add-back inflation) are second
+  if (out.length < 3) {
+    const validationOutliers = snap.financial_position.filter(r => r.outlier_kind === "validation");
+    for (const row of validationOutliers) {
+      if (out.length >= 3) break;
+      // Skip if already covered by an interaction insight
+      const alreadyCovered = out.some(t =>
+        t.why.toLowerCase().includes(row.metric_label.toLowerCase().split(" ")[0])
+      );
+      if (alreadyCovered) continue;
+      out.push({
+        signal: `${row.metric_label} elevated vs peers`,
+        why:    `${row.metric_label} sits in the ${fmtPercentile(row.display_percentile)} percentile against industry, raising the question of whether reported figures reflect normalized operations.`,
+        severity: "medium",
+      });
+    }
+  }
+
+  // Sources & uses imbalance (structural)
+  if (out.length < 3 && snap.deal_structure && !snap.deal_structure.sources_uses.balanced) {
+    out.push({
+      signal: "Sources & uses imbalance",
+      why:    "Total sources do not match total uses, suggesting capital structure has not yet been finalized or working capital assumptions need reconciliation.",
+      severity: "medium",
+    });
+  }
+
+  return out;
+}
+
+/**
+ * Map an interaction_insight rule key into a short signal headline.
+ * These are the rule names emitted by the engine's risk-flags module.
+ */
+function humanizeInteractionRule(rule: string): string {
+  const map: Record<string, string> = {
+    sde_validation_with_strong_dscr: "Strong DSCR contingent on elevated SDE",
+    high_leverage_strong_cashflow:   "High leverage despite strong cash flow",
+    weak_margin_strong_dscr:         "Weak operating margin vs strong DSCR",
+    multiple_validation_outliers:    "Multiple validation outliers present",
+    risk_outlier_with_strong_score:  "Risk outlier in otherwise strong profile",
+  };
+  return map[rule] ?? rule.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+}
+
+/**
+ * Deterministic fallback for Page 6's normalization interpretation when
+ * Sonnet prose isn't available. Lender-aware tone, no fabrication.
+ */
+function buildDeterministicNormalizationInterp(
+  s: NonNullable<BenchmarkSnapshotForReport["sensitivity"]>,
+  breaches: boolean,
+): string {
+  if (breaches) {
+    return `The acquisition appears comfortably financeable under seller-reported earnings. However, if earnings normalize toward observed industry margins, debt coverage compresses to ${fmtRatio(s.normalized_dscr)} — below the 1.30x lender minimum. Transaction viability is highly sensitive to add-back validation during diligence.`;
+  }
+  return `Reported earnings sustain stated debt coverage. If SDE were normalized toward the industry median margin, coverage would compress to ${fmtRatio(s.normalized_dscr)}, which remains above the 1.30x lender threshold but materially reduces cushion. Add-back validation remains a core diligence item.`;
+}
+
 // =====================================================================
-// PAGE 7 — DEAL STRUCTURE & RISK REVIEW
+// PAGE 7 — DEAL STRUCTURE & CREDIT COMMITTEE REVIEW
 // ---------------------------------------------------------------------
-// Renders only when data.benchmarkSnapshot is provided. Shows three
-// large metric cards (DSCR / Debt-SDE / LTV), Sources & Uses table
-// with balance check, three risk subsections, and the optional
-// "What this means" interpretation paragraphs.
+// Lender-grade, financing-focused review. Frames the deal less as a
+// dashboard widget and more as a financing memorandum.
+//
+// Sections:
+//   1. Capital Structure Overview (metric / result / commentary table)
+//   2. Sources & Uses (with imbalance warning)
+//   3. Credit Committee Concerns (grouped by Earnings / Structural / Financing)
+//   4. Recommended Diligence Priorities (deterministic + Sonnet add-ons)
 // =====================================================================
 
 function drawPage7(
@@ -1821,7 +1930,7 @@ function drawPage7(
   const snap = data.benchmarkSnapshot;
   if (!snap) return;
 
-  newPage(doc, 7, "Deal Structure & Risk Review");
+  newPage(doc, 7, "Credit Committee Review");
 
   let y = 70;
 
@@ -1829,65 +1938,89 @@ function drawPage7(
   doc.setFont("helvetica", "bold");
   doc.setFontSize(8);
   setHex(doc, COLOR.indigo, "text");
-  doc.text("DEAL STRUCTURE & RISK REVIEW", M, y);
+  doc.text("DEAL STRUCTURE & CREDIT COMMITTEE REVIEW", M, y);
   y += 14;
 
   doc.setFontSize(14);
   setHex(doc, COLOR.textPrimary, "text");
-  doc.text("Acquisition structure, leverage, and committee-level risks", M, y);
+  doc.text("Capital structure, lender perspective, and diligence sequencing", M, y);
   y += 13;
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8.5);
   setHex(doc, COLOR.textDim, "text");
   doc.text(
-    "Tests whether the proposed structure can support the debt \u2014 separate from operating ratios.",
+    "Tests whether the proposed financing structure underwrites cleanly and identifies items requiring resolution.",
     M, y,
   );
   y += 22;
 
-  // ─── SECTION 1 — Three deal-structure metric cards ───────────────────
+  // ─── SECTION 1 — Capital Structure Overview ──────────────────────────
   if (snap.deal_structure && snap.deal_structure.metrics.length > 0) {
-    drawSectionHeader(doc, M, y, "Deal structure overview");
+    drawSectionHeader(doc, M, y, "Capital structure overview");
     y += 14;
 
-    const cardH = 70;
-    const cardW = (CW - 16) / 3;
-    let cardX = M;
+    // Three-column table: Metric | Result | Commentary
+    const headerH = 22;
+    const colMetric = M + 12;
+    const colResult = M + 180;
+    const colComment = M + 270;
+
+    setHex(doc, "#13181F", "fill");
+    doc.rect(M, y, CW, headerH, "F");
+    setHex(doc, COLOR.borderSoft, "draw");
+    doc.setLineWidth(0.5);
+    doc.rect(M, y, CW, headerH, "S");
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8);
+    setHex(doc, COLOR.textMuted, "text");
+    doc.text("METRIC",     colMetric,  y + 14);
+    doc.text("RESULT",     colResult,  y + 14);
+    doc.text("COMMENTARY", colComment, y + 14);
+    y += headerH;
 
     for (const metric of snap.deal_structure.metrics) {
       const c = metric.status_color
         ? STATUS_COLOR_MAP[metric.status_color]
         : { fill: "#13181F", stroke: COLOR.borderSoft, text: COLOR.textMuted };
 
-      setHex(doc, c.fill, "fill");
-      doc.rect(cardX, y, cardW, cardH, "F");
-      setHex(doc, c.stroke, "draw");
-      doc.setLineWidth(0.7);
-      doc.rect(cardX, y, cardW, cardH, "S");
+      const rowH = 32;
+      setHex(doc, COLOR.borderSoft, "draw");
+      doc.setLineWidth(0.4);
+      doc.line(M, y + rowH, M + CW, y + rowH);
 
-      // Label
+      // Metric label
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(10);
+      setHex(doc, COLOR.textPrimary, "text");
+      doc.text(metric.label, colMetric, y + 18);
+
+      // Result (value + status pill below)
+      doc.setFont("courier", "bold");
+      doc.setFontSize(13);
+      setHex(doc, COLOR.textPrimary, "text");
+      doc.text(metric.display, colResult, y + 18);
+
+      // Status text (small, indented under result)
       doc.setFont("helvetica", "bold");
       doc.setFontSize(7);
-      setHex(doc, COLOR.textDim, "text");
-      doc.text(metric.label.toUpperCase(), cardX + 12, y + 16);
-
-      // Big value
-      doc.setFont("courier", "bold");
-      doc.setFontSize(22);
-      setHex(doc, COLOR.textPrimary, "text");
-      doc.text(metric.display, cardX + 12, y + 42);
-
-      // Status
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(8);
       setHex(doc, c.text, "text");
-      doc.text(metric.status, cardX + 12, y + 60);
+      doc.text(metric.status.toUpperCase(), colResult, y + 28);
 
-      cardX += cardW + 8;
+      // Commentary — derive deterministic commentary from metric status
+      const commentary = buildCapitalStructureCommentary(metric);
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(8.5);
+      setHex(doc, COLOR.textBody, "text");
+      const commLines = doc.splitTextToSize(commentary, CW - (colComment - M) - 12);
+      commLines.slice(0, 2).forEach((line: string, i: number) => {
+        doc.text(line, colComment, y + 14 + i * 10);
+      });
+
+      y += rowH;
     }
-
-    y += cardH + 20;
+    y += 14;
   }
 
   // ─── SECTION 2 — Sources & Uses ──────────────────────────────────────
@@ -1900,9 +2033,7 @@ function drawPage7(
     const tableW = (CW - 12) / 2;
     const rowH2 = 22;
 
-    // Two parallel tables: Uses (left), Sources (right)
-
-    // Uses table
+    // Uses table (left)
     let leftY = y;
     setHex(doc, "#13181F", "fill");
     doc.rect(M, leftY, tableW, rowH2, "F");
@@ -1940,7 +2071,7 @@ function drawPage7(
       leftY += rowH2;
     }
 
-    // Sources table
+    // Sources table (right)
     let rightY = y;
     const rightX = M + tableW + 12;
     setHex(doc, "#13181F", "fill");
@@ -1981,7 +2112,7 @@ function drawPage7(
 
     y = Math.max(leftY, rightY) + 8;
 
-    // Balance check banner
+    // Imbalance warning banner — emphasized per spec
     if (!su.balanced) {
       const gap = su.total_uses - su.total_sources;
       const bannerH = 24;
@@ -1994,7 +2125,7 @@ function drawPage7(
       doc.setFontSize(8.5);
       setHex(doc, COLOR.amberText, "text");
       doc.text(
-        `\u26A0  Sources & Uses do not balance \u2014 ${gap > 0 ? "short" : "over"} by ${fmtUsd(Math.abs(gap))}. Review structure.`,
+        `\u26A0  Sources & uses do not balance \u2014 ${gap > 0 ? "short" : "over"} by ${fmtUsd(Math.abs(gap))}. Resolve before lender submission.`,
         M + 14, y + 16,
       );
       y += bannerH + 14;
@@ -2002,7 +2133,7 @@ function drawPage7(
       y += 4;
     }
   } else {
-    // No deal-structure inputs provided
+    // No deal structure inputs
     setHex(doc, "#13181F", "fill");
     doc.rect(M, y, CW, 32, "F");
     setHex(doc, COLOR.borderSoft, "draw");
@@ -2019,90 +2150,36 @@ function drawPage7(
     y += 38;
   }
 
-  // ─── SECTION 3 — Risk Signals ────────────────────────────────────────
-  if (y > PH - 180) return;
+  // ─── SECTION 3 — Credit Committee Concerns (grouped) ─────────────────
+  if (y > PH - 200) return;
 
-  drawSectionHeader(doc, M, y, "Risk signals");
+  drawSectionHeader(doc, M, y, "Credit committee concerns");
   y += 14;
 
-  // Cross-Metric Risks (red bordered callouts — most important)
-  if (snap.interaction_insights.length > 0) {
+  const grouped = groupCommitteeConcerns(snap);
+  let renderedAny = false;
+
+  for (const group of grouped) {
+    if (group.items.length === 0) continue;
+    if (y > PH - 80) break;
+    renderedAny = true;
+
+    // Group header
     doc.setFont("helvetica", "bold");
     doc.setFontSize(8);
-    setHex(doc, COLOR.redText, "text");
-    doc.text("\u26A1  CROSS-METRIC RISKS", M, y);
+    setHex(doc, group.color, "text");
+    doc.text(group.label.toUpperCase(), M, y);
     y += 12;
 
-    for (const insight of snap.interaction_insights.slice(0, 3)) {
-      if (y > PH - 110) break;
-      const lines = doc.splitTextToSize(insight.message, CW - 28);
-      const calloutH = 8 + lines.length * 11 + 8;
-
-      setHex(doc, "#1F0A0A", "fill");
-      doc.rect(M, y, CW, calloutH, "F");
-      setHex(doc, "#7F1D1D", "draw");
-      doc.setLineWidth(0.5);
-      doc.rect(M, y, CW, calloutH, "S");
-
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(8.5);
-      setHex(doc, COLOR.textBody, "text");
-      lines.forEach((line: string, i: number) => {
-        doc.text(line, M + 14, y + 16 + i * 11);
-      });
-
-      y += calloutH + 6;
-    }
-    y += 6;
-  }
-
-  // Single-Metric Flags
-  if (snap.risk_flags.length > 0 && y < PH - 100) {
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(8);
-    setHex(doc, COLOR.amberText, "text");
-    doc.text("SINGLE-METRIC FLAGS", M, y);
-    y += 12;
-
-    for (const flag of snap.risk_flags.slice(0, 4)) {
-      if (y > PH - 90) break;
-      const lines = doc.splitTextToSize(flag.message, CW - 24);
-
-      const bulletColor =
-        flag.severity === "high"     ? COLOR.red
-        : flag.severity === "medium" ? COLOR.amber
-        :                              COLOR.textMuted;
-      setHex(doc, bulletColor, "fill");
-      doc.circle(M + 4, y + 5, 1.8, "F");
-
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(8.5);
-      setHex(doc, COLOR.textBody, "text");
-      lines.forEach((line: string, i: number) => {
-        doc.text(line, M + 12, y + 8 + i * 11);
-      });
-      y += lines.length * 11 + 4;
-    }
-    y += 6;
-  }
-
-  // Strengths
-  if (snap.strengths.length > 0 && y < PH - 90) {
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(8);
-    setHex(doc, COLOR.emeraldText, "text");
-    doc.text("STRENGTHS", M, y);
-    y += 12;
-
-    for (const strength of snap.strengths.slice(0, 3)) {
+    for (const item of group.items.slice(0, 3)) {
       if (y > PH - 80) break;
-      const lines = doc.splitTextToSize(strength.message, CW - 24);
+      const lines = doc.splitTextToSize(item, CW - 16);
 
-      setHex(doc, COLOR.emerald, "fill");
+      setHex(doc, group.bullet, "fill");
       doc.circle(M + 4, y + 5, 1.8, "F");
 
       doc.setFont("helvetica", "normal");
-      doc.setFontSize(8.5);
+      doc.setFontSize(9);
       setHex(doc, COLOR.textBody, "text");
       lines.forEach((line: string, i: number) => {
         doc.text(line, M + 12, y + 8 + i * 11);
@@ -2112,26 +2189,376 @@ function drawPage7(
     y += 6;
   }
 
-  // ─── SECTION 4 — What This Means (interpretation) ────────────────────
-  // No "AI" labeling per spec; section title is descriptive.
-  if (data.interpretation && data.interpretation.length > 0 && y < PH - 100) {
-    drawSectionHeader(doc, M, y, "What this means");
-    y += 14;
-
-    doc.setFont("helvetica", "normal");
+  // If no concerns at all, show a clean-deal note
+  if (!renderedAny) {
+    doc.setFont("helvetica", "italic");
     doc.setFontSize(9);
-    setHex(doc, COLOR.textBody, "text");
+    setHex(doc, COLOR.emeraldText, "text");
+    doc.text(
+      "No structural or quality concerns flagged at the committee level.",
+      M, y,
+    );
+    y += 16;
+  }
+  y += 4;
 
-    for (const sentence of data.interpretation) {
-      if (y > PH - 60) break;
-      const lines = doc.splitTextToSize(sentence, CW);
-      lines.forEach((line: string) => {
-        doc.text(line, M, y);
-        y += 12;
-      });
-      y += 4;
+  // ─── SECTION 4 — Recommended Diligence Priorities ────────────────────
+  if (y > PH - 100) return;
+
+  drawSectionHeader(doc, M, y, "Recommended diligence priorities");
+  y += 14;
+
+  const priorities = buildDiligencePriorities(snap, data.committeeProse);
+
+  if (priorities.length === 0) {
+    doc.setFont("helvetica", "italic");
+    doc.setFontSize(9);
+    setHex(doc, COLOR.textMuted, "text");
+    doc.text(
+      "Standard diligence applies; no transaction-specific priorities flagged.",
+      M, y,
+    );
+    return;
+  }
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
+  setHex(doc, COLOR.textBody, "text");
+
+  for (let i = 0; i < priorities.length; i++) {
+    if (y > PH - 50) break;
+    const lines = doc.splitTextToSize(priorities[i], CW - 24);
+
+    // Numbered marker
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9);
+    setHex(doc, COLOR.indigo, "text");
+    doc.text(`${i + 1}.`, M, y + 8);
+
+    // Body
+    doc.setFont("helvetica", "normal");
+    setHex(doc, COLOR.textBody, "text");
+    lines.forEach((line: string, lineI: number) => {
+      doc.text(line, M + 16, y + 8 + lineI * 11);
+    });
+    y += lines.length * 11 + 6;
+  }
+}
+
+/**
+ * Build deterministic commentary for a capital-structure metric. Lender-aware
+ * tone. The metric's status_color drives the framing.
+ */
+function buildCapitalStructureCommentary(
+  metric: NonNullable<BenchmarkSnapshotForReport["deal_structure"]>["metrics"][number],
+): string {
+  if (metric.value === null) return "Insufficient inputs to evaluate.";
+
+  if (metric.key === "dscr") {
+    if (metric.value >= 1.50) return "Coverage exceeds standard lender comfort thresholds with cushion for variability.";
+    if (metric.value >= 1.30) return "Coverage meets the standard lender minimum with limited cushion.";
+    return "Coverage falls below the 1.30x lender minimum; financing as proposed is at risk.";
+  }
+
+  if (metric.key === "debt_to_sde") {
+    if (metric.value <= 2.50) return "Leverage profile is conservative relative to typical SBA acquisition debt levels.";
+    if (metric.value <= 4.00) return "Leverage is within the standard SBA acquisition range.";
+    return "Leverage exceeds typical SBA comfort levels; lenders may require structural adjustments.";
+  }
+
+  if (metric.key === "ltv") {
+    if (metric.value <= 0.75) return "LTV provides comfortable lender cushion against valuation drift.";
+    if (metric.value <= 0.85) return "LTV is within typical SBA acceptance, with limited cushion against valuation risk.";
+    return "LTV exceeds preferred lender comfort; expect tighter underwriting and possible equity injection requests.";
+  }
+
+  return metric.explanation || "";
+}
+
+/**
+ * Group risk flags and interactions into committee concern categories.
+ * Returns three groups with potentially empty items[] arrays.
+ */
+function groupCommitteeConcerns(
+  snap: BenchmarkSnapshotForReport,
+): { label: string; color: string; bullet: string; items: string[] }[] {
+  const earnings:   string[] = [];
+  const structural: string[] = [];
+  const financing:  string[] = [];
+
+  // SDE-related and validation outliers → Earnings Quality
+  for (const f of snap.risk_flags) {
+    if (f.metric_key.includes("sde") || f.metric_key.includes("margin") || f.metric_key.includes("revenue")) {
+      earnings.push(f.message);
     }
   }
+  for (const ins of snap.interaction_insights) {
+    if (ins.metrics.some(m => m.includes("sde") || m.includes("margin"))) {
+      if (!earnings.some(e => e === ins.message)) earnings.push(ins.message);
+    }
+  }
+  if (snap.sensitivity && snap.sensitivity.normalized_dscr !== null && snap.sensitivity.normalized_dscr < 1.30) {
+    earnings.push("Normalization sensitivity: DSCR compresses below the 1.30x lender minimum if SDE normalizes to industry margins.");
+  }
+
+  // Sources & uses imbalance, LTV, leverage → Structural Risk
+  if (snap.deal_structure) {
+    if (!snap.deal_structure.sources_uses.balanced) {
+      structural.push("Capital structure does not balance \u2014 reconciliation required before lender submission.");
+    }
+    for (const m of snap.deal_structure.metrics) {
+      if (m.key === "ltv" && m.value !== null && m.value > 0.85) {
+        structural.push("Loan-to-value exceeds preferred lender comfort, increasing exposure to valuation drift.");
+      }
+      if (m.key === "debt_to_sde" && m.value !== null && m.value > 4.00) {
+        structural.push("Debt-to-SDE leverage exceeds typical SBA acquisition guidelines.");
+      }
+    }
+    for (const f of snap.deal_structure.flags) {
+      if (!structural.some(s => s === f.message)) structural.push(f.message);
+    }
+  }
+
+  // DSCR-specific and coverage flags → Financing Risk
+  for (const f of snap.risk_flags) {
+    if (f.metric_key === "dscr" || f.metric_key === "current_ratio") {
+      financing.push(f.message);
+    }
+  }
+  if (snap.deal_structure) {
+    for (const m of snap.deal_structure.metrics) {
+      if (m.key === "dscr" && m.value !== null && m.value < 1.30) {
+        financing.push("Reported DSCR falls below the 1.30x lender minimum; financing as proposed is at risk.");
+      }
+    }
+  }
+
+  return [
+    { label: "Earnings Quality",  color: COLOR.amberText,   bullet: COLOR.amber,   items: earnings   },
+    { label: "Structural Risk",   color: "#FCA5A5",         bullet: COLOR.red,     items: structural },
+    { label: "Financing Risk",    color: "#93C5FD",         bullet: COLOR.indigo,  items: financing  },
+  ];
+}
+
+/**
+ * Build the diligence priorities list. Deterministic core (driven by which
+ * flag patterns fired) plus optional Sonnet additions. Capped at 6 items.
+ */
+function buildDiligencePriorities(
+  snap: BenchmarkSnapshotForReport,
+  prose?: CommitteeMemoProse,
+): string[] {
+  const out: string[] = [];
+
+  // Validation outlier on SDE → add-back validation is priority
+  const hasSdeValidation = snap.financial_position.some(
+    r => r.metric_key === "sde_margin_pct" && r.outlier_kind === "validation"
+  );
+  if (hasSdeValidation) {
+    out.push("Validate seller add-backs against trailing-twelve-month tax returns and bank statements.");
+  }
+
+  // Sensitivity present → stress-test debt
+  if (snap.sensitivity) {
+    out.push("Stress-test debt service under normalized earnings assumptions to confirm coverage durability.");
+  }
+
+  // Sources & uses imbalance
+  if (snap.deal_structure && !snap.deal_structure.sources_uses.balanced) {
+    out.push("Reconcile sources & uses imbalance before submission to lender.");
+  }
+
+  // Working capital not provided or zero → call out
+  if (snap.deal_structure && (snap.deal_structure.sources_uses.working_capital_needed === 0)) {
+    out.push("Confirm working capital requirements at close; current model assumes zero working capital need.");
+  }
+
+  // High LTV
+  if (snap.deal_structure) {
+    const ltv = snap.deal_structure.metrics.find(m => m.key === "ltv");
+    if (ltv && ltv.value !== null && ltv.value > 0.85) {
+      out.push("Review lender appetite for elevated LTV and prepare for possible equity injection requirement.");
+    }
+  }
+
+  // Inventory turnover anomaly
+  const invTurnover = snap.financial_position.find(r => r.metric_key === "inventory_turnover");
+  if (invTurnover && invTurnover.deal_value !== null && invTurnover.industry_median !== null) {
+    const ratio = invTurnover.deal_value / invTurnover.industry_median;
+    if (ratio > 5 || ratio < 0.2) {
+      out.push("Verify inventory accounting basis; reported turnover differs materially from peer norms.");
+    }
+  }
+
+  // Customer concentration is a standard line for any deal under intense scrutiny
+  const hasMaterialRisk =
+    snap.tension_indicator !== null ||
+    snap.risk_flags.some(f => f.severity === "high");
+  if (hasMaterialRisk && out.length < 5) {
+    out.push("Confirm transferability of key customer contracts and supplier relationships post-close.");
+  }
+
+  // Append Sonnet additions (capped at 2 by validator)
+  if (prose?.page7_diligence_additions) {
+    for (const add of prose.page7_diligence_additions) {
+      if (out.length >= 6) break;
+      // De-dupe against deterministic core by simple substring match
+      if (!out.some(existing => similarItem(existing, add))) {
+        out.push(add);
+      }
+    }
+  }
+
+  return out.slice(0, 6);
+}
+
+/** Quick fuzzy de-dupe — checks if two diligence items share key terms. */
+function similarItem(a: string, b: string): boolean {
+  const aLower = a.toLowerCase();
+  const bLower = b.toLowerCase();
+  // If one is a clear substring or shares a high-signal phrase, treat as similar
+  const phrases = ["add-back", "add back", "sources & uses", "sources and uses", "working capital", "ltv", "loan-to-value", "stress-test", "stress test"];
+  for (const p of phrases) {
+    if (aLower.includes(p) && bLower.includes(p)) return true;
+  }
+  return false;
+}
+
+// =====================================================================
+// PAGE 8 — INVESTMENT COMMITTEE SUMMARY
+// ---------------------------------------------------------------------
+// One-page narrative memo. Five sections, structured prose: bold lead
+// sentence, supporting paragraph, optional pull quote in shaded box.
+// Renders only when data.committeeProse is provided (i.e. the Sonnet
+// committee call succeeded and passed numeric validation).
+// =====================================================================
+
+function drawPage8(
+  doc: jsPDF,
+  data: DealReportData,
+  decision: DecisionLayerResult,
+): void {
+  const prose = data.committeeProse;
+  if (!prose) return;
+
+  newPage(doc, 8, "Investment Committee Summary");
+
+  let y = 70;
+
+  // ─── Page title ──────────────────────────────────────────────────────
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8);
+  setHex(doc, COLOR.indigo, "text");
+  doc.text("INVESTMENT COMMITTEE SUMMARY", M, y);
+  y += 14;
+
+  doc.setFontSize(14);
+  setHex(doc, COLOR.textPrimary, "text");
+  doc.text("Synthesized recommendation memorandum", M, y);
+  y += 13;
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8.5);
+  setHex(doc, COLOR.textDim, "text");
+  doc.text(
+    "Single-page narrative integration of merits, risks, financing outlook, and recommended path forward.",
+    M, y,
+  );
+  y += 22;
+
+  const memo = prose.page8_memo;
+  const sections = [
+    { key: "investment_merits",        title: "Investment Merits",        section: memo.investment_merits },
+    { key: "primary_risks",            title: "Primary Risks",            section: memo.primary_risks },
+    { key: "financing_outlook",        title: "Financing Outlook",        section: memo.financing_outlook },
+    { key: "negotiation_leverage",     title: "Negotiation Leverage",     section: memo.negotiation_leverage },
+    { key: "recommended_path_forward", title: "Recommended Path Forward", section: memo.recommended_path_forward },
+  ];
+
+  // Render each section
+  for (const s of sections) {
+    if (y > PH - 80) break;
+    y = drawCommitteeMemoSection(doc, y, s.title, s.section);
+    y += 14;
+  }
+}
+
+/**
+ * Render a single Page-8 section with structured-prose layout:
+ *   [Indigo header]
+ *   [Bold lead sentence]
+ *   [Supporting paragraph]   [Pull-quote box on right]
+ *
+ * Returns the new y position after the section.
+ */
+function drawCommitteeMemoSection(
+  doc: jsPDF,
+  y: number,
+  title: string,
+  section: CommitteeMemoSection,
+): number {
+  // Section header — small indigo institutional style
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8);
+  setHex(doc, COLOR.indigo, "text");
+  doc.text(title.toUpperCase(), M, y);
+
+  // Indigo underline accent
+  setHex(doc, COLOR.indigo, "draw");
+  doc.setLineWidth(0.6);
+  doc.line(M, y + 3, M + 24, y + 3);
+  y += 14;
+
+  // Pull-quote box on the right
+  const pullQuoteW = 160;
+  const proseW = CW - pullQuoteW - 16;
+
+  // Bold lead sentence
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10);
+  setHex(doc, COLOR.textPrimary, "text");
+  const leadLines = doc.splitTextToSize(section.lead, proseW);
+  leadLines.slice(0, 3).forEach((line: string, i: number) => {
+    doc.text(line, M, y + i * 13);
+  });
+  let proseY = y + Math.min(leadLines.length, 3) * 13 + 6;
+
+  // Supporting paragraph
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9);
+  setHex(doc, COLOR.textBody, "text");
+  const bodyLines = doc.splitTextToSize(section.body, proseW);
+  bodyLines.slice(0, 6).forEach((line: string, i: number) => {
+    doc.text(line, M, proseY + i * 11);
+  });
+  proseY += Math.min(bodyLines.length, 6) * 11;
+
+  // Pull-quote box (right side, vertically centered against prose block)
+  if (section.pull_quote) {
+    const pullQuoteX = M + CW - pullQuoteW;
+    const pullQuoteH = 50;
+    const pullQuoteY = y - 4;   // align with lead sentence top
+
+    setHex(doc, "#13181F", "fill");
+    doc.rect(pullQuoteX, pullQuoteY, pullQuoteW, pullQuoteH, "F");
+    setHex(doc, COLOR.indigo, "fill");
+    doc.rect(pullQuoteX, pullQuoteY, 3, pullQuoteH, "F");
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(7);
+    setHex(doc, COLOR.indigo, "text");
+    doc.text("KEY METRIC", pullQuoteX + 12, pullQuoteY + 14);
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    setHex(doc, COLOR.textPrimary, "text");
+    const quoteLines = doc.splitTextToSize(section.pull_quote, pullQuoteW - 20);
+    quoteLines.slice(0, 3).forEach((line: string, i: number) => {
+      doc.text(line, pullQuoteX + 12, pullQuoteY + 30 + i * 11);
+    });
+  }
+
+  return Math.max(proseY, y - 4 + 50);
 }
 
 // ─── Main entry: generatePDF() ──────────────────────────────────────────
@@ -2155,6 +2582,12 @@ export async function generateDealReportPDF(data: DealReportData): Promise<Buffe
   if (data.benchmarkSnapshot) {
     drawPage6(doc, data, decision);
     drawPage7(doc, data, decision);
+  }
+
+  // Page 8 renders only when committee prose was successfully generated
+  // (and validated). Implies snapshot was also present.
+  if (data.committeeProse) {
+    drawPage8(doc, data, decision);
   }
 
   // Return as Node Buffer for the API route to stream
@@ -2183,6 +2616,11 @@ export async function downloadDealReportPDF(data: DealReportData, filename?: str
   if (data.benchmarkSnapshot) {
     drawPage6(doc, data, decision);
     drawPage7(doc, data, decision);
+  }
+
+  // Page 8 renders only when committee prose is provided
+  if (data.committeeProse) {
+    drawPage8(doc, data, decision);
   }
 
   const fname = filename ?? `AcquiFlow-Deal-Report-${data.inputs.industry_label?.replace(/\s+/g, "-") ?? "Deal"}-${data.generated_at.toISOString().split("T")[0]}.pdf`;
