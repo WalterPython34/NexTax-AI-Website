@@ -86,7 +86,7 @@ export default function ResourcesPage() {
       author: "Steve Morello, CPA",
       date: "January 25, 2026",
       readTime: "18 min read",
-      image: "/images/blog/smb-deal-closing.jpg",
+      image: "/smb-deal-closing.jpg",
       slug: "why-smb-deals-fall-apart",
       featured: true,
     },
