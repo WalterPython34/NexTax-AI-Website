@@ -301,7 +301,7 @@ export async function GET(
   let committeeProse: CommitteeMemoProse | undefined = undefined;
   if (benchmarkSnapshot && posture) {
     try {
-      committeeProse = await fetchCommitteeProse(benchmarkSnapshot, posture, decision);
+      committeeProse = await fetchCommitteeProse(benchmarkSnapshot, posture, decision, inputs);
     } catch (err) {
       console.warn("[reports] committee prose fetch failed (page 8 will skip):", err);
     }
@@ -491,7 +491,7 @@ PREFERRED PATTERNS
 - "Earnings quality cannot be confirmed without add-back validation."
 
 NUMERIC FIDELITY — STRICT
-Every number you write must appear in the analysis JSON. No derived numbers, no rounded values not in source, no comparative figures introduced.
+Every number you write must appear in the analysis JSON or the posture text. The user prompt enumerates specifically which dollar values, ratios, and percentages are available. Do not introduce derived numbers, do not compute sums or differences, do not cite values that are merely implied. If a number you want to use isn't in the source, discuss the topic qualitatively without numbers.
 
 OUTPUT FORMAT
 Return EXACTLY this JSON, no preamble, no fences, no commentary:
@@ -616,9 +616,33 @@ function validateProse(
   prose: string,
   source: BenchmarkSnapshotForReport,
   posture: string,
+  inputs: DealReportInputs,
+  decision: ReturnType<typeof computeDecisionLayer>,
 ): { ok: true } | { ok: false; reason: string } {
-  // Build the source corpus: snapshot JSON + posture + threshold reference values
-  const sourceText = JSON.stringify(source) + " " + posture;
+  // Build the source corpus from EVERY field that appears in the prompt:
+  //   - snapshot JSON (metrics, deal_structure, sensitivity, flags, etc.)
+  //   - posture text (negotiation prose with embedded dollar values)
+  //   - inputs (asking_price, fair_value, sde, revenue, multiple — sent in prompt as deal_values)
+  //   - decision summary (target prices, walk-away threshold)
+  // Validator and prompt must stay in sync: any field included in the prompt
+  // must appear in the source corpus, otherwise Sonnet will be punished for
+  // citing legitimate values it was given.
+  const dealValuesPayload = JSON.stringify({
+    asking_price:           inputs.asking_price,
+    fair_value:             inputs.fair_value,
+    fair_value_low:         inputs.fair_value_low ?? null,
+    fair_value_high:        inputs.fair_value_high ?? null,
+    recommended_offer_low:  inputs.recommended_offer_low ?? null,
+    recommended_offer_high: inputs.recommended_offer_high ?? null,
+    target_price_low:       decision.target_price_low,
+    target_price_high:      decision.target_price_high,
+    walk_away_threshold:    decision.walk_away_threshold,
+    revenue:                inputs.revenue,
+    sde:                    inputs.sde,
+    valuation_multiple:     inputs.valuation_multiple,
+  });
+
+  const sourceText = JSON.stringify(source) + " " + posture + " " + dealValuesPayload;
   const sourceCores = extractNumericCores(sourceText);
 
   // Pre-seed abbreviation variants for large numbers in source.
@@ -709,7 +733,17 @@ function buildCommitteePrompt(
   snap: BenchmarkSnapshotForReport,
   posture: string,
   decision: ReturnType<typeof computeDecisionLayer>,
+  inputs: DealReportInputs,
 ): string {
+  // Surface every dollar value Sonnet is permitted to cite. Without these,
+  // Sonnet either fabricates plausible-looking dollar amounts or stays vague —
+  // both bad outcomes. By including them explicitly, the writer can speak in
+  // concrete terms and the validator has the values it needs to accept them.
+  const su = snap.deal_structure?.sources_uses;
+  const imbalance = su && !su.balanced
+    ? Math.abs(su.total_uses - su.total_sources)
+    : null;
+
   const compact = {
     industry_name:           snap.industry_name,
     financial_score:         snap.financial_score,
@@ -734,22 +768,57 @@ function buildCommitteePrompt(
           metrics: snap.deal_structure.metrics.map(m => ({
             label: m.label, value: m.value, display: m.display, status: m.status,
           })),
-          sources_uses_balanced: snap.deal_structure.sources_uses.balanced,
+          // Full sources & uses dollar values — Sonnet may cite any of these.
+          sources_uses: {
+            purchase_price:         su!.purchase_price,
+            buyer_equity:           su!.buyer_equity,
+            senior_debt:            su!.senior_debt,
+            seller_note:            su!.seller_note,
+            working_capital_needed: su!.working_capital_needed,
+            total_uses:             su!.total_uses,
+            total_sources:          su!.total_sources,
+            balanced:               su!.balanced,
+            imbalance_amount:       imbalance,    // null when balanced; positive number when not
+          },
           flags: snap.deal_structure.flags.map(f => ({ severity: f.severity, message: f.message })),
         }
       : null,
+    // Deal-level dollar values — sourced directly from inputs and decision layer.
+    // These give Sonnet the canonical figures for valuation, fair value, target
+    // offer range, and walk-away threshold.
+    deal_values: {
+      asking_price:           inputs.asking_price,
+      fair_value:             inputs.fair_value,
+      fair_value_low:         inputs.fair_value_low ?? null,
+      fair_value_high:        inputs.fair_value_high ?? null,
+      recommended_offer_low:  inputs.recommended_offer_low ?? null,
+      recommended_offer_high: inputs.recommended_offer_high ?? null,
+      target_price_low:       decision.target_price_low,
+      target_price_high:      decision.target_price_high,
+      walk_away_threshold:    decision.walk_away_threshold,
+      revenue:                inputs.revenue,
+      sde:                    inputs.sde,
+      valuation_multiple:     inputs.valuation_multiple,
+    },
     negotiation_posture: posture,
     decision_summary: {
-      verdict:              decision.verdict,
-      target_price_low:     decision.target_price_low,
-      target_price_high:    decision.target_price_high,
-      walk_away_threshold:  decision.walk_away_threshold,
+      verdict:                decision.verdict,
+      target_price_low:       decision.target_price_low,
+      target_price_high:      decision.target_price_high,
+      walk_away_threshold:    decision.walk_away_threshold,
     },
   };
 
   return `Here is the deterministic analysis. Generate the committee memo prose per the system rules.
 
-Use the negotiation_posture text as canonical input for the negotiation_leverage section. Reference its conclusion; do not regenerate it.
+CITATION RULES — STRICT
+You may cite ONLY the numeric values present in this JSON or in the negotiation_posture text. Specifically:
+- Dollar amounts: only those in deal_structure.sources_uses, deal_values, or posture
+- Ratios and percentages: only those in metrics_summary, sensitivity, financial_score, score_drivers, or deal_structure.metrics
+- Do NOT compute new dollar amounts, sums, differences, or derived totals
+- Do NOT cite values that are merely implied (e.g. "around 25% margin" if 25 isn't in the source)
+- If a number you want to use isn't here, discuss the topic qualitatively without numbers
+- Use the negotiation_posture text as canonical input for the negotiation_leverage section — reference its conclusion, do not regenerate it
 
 ${JSON.stringify(compact, null, 2)}`;
 }
@@ -766,6 +835,7 @@ async function fetchCommitteeProse(
   snap: BenchmarkSnapshotForReport,
   posture: string,
   decision: ReturnType<typeof computeDecisionLayer>,
+  inputs: DealReportInputs,
 ): Promise<CommitteeMemoProse> {
   const t0 = Date.now();
   const elapsed = () => Date.now() - t0;
@@ -773,7 +843,7 @@ async function fetchCommitteeProse(
   const apiKey = process.env.ANTHROPIC_API_KEY;
   if (!apiKey) throw new Error("ANTHROPIC_API_KEY not configured");
 
-  const prompt = buildCommitteePrompt(snap, posture, decision);
+  const prompt = buildCommitteePrompt(snap, posture, decision, inputs);
 
   // Input size diagnostics: char count + rough token estimate (~4 chars/token).
   // Exact input tokens come back in usage.input_tokens after the call.
@@ -931,7 +1001,7 @@ async function fetchCommitteeProse(
     }),
   ].join(" ");
 
-  const validation = validateProse(allProse, snap, posture);
+  const validation = validateProse(allProse, snap, posture, inputs, decision);
   if (!validation.ok) {
     console.warn("[committee-diag] validation_failure", {
       elapsed_ms:     elapsed(),
