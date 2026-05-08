@@ -891,7 +891,7 @@ async function fetchCommitteeProse(
       },
       body: JSON.stringify({
         model:      "claude-sonnet-4-6",
-        max_tokens: 900,    // tightened prompt: 5 sections × ~50 tokens + interpretation + diligence
+        max_tokens: 1200,    // bumped from 900 after observing stop_reason=max_tokens on real deals
         system:     COMMITTEE_MEMO_SYSTEM_PROMPT,
         messages:   [{ role: "user", content: prompt }],
       }),
