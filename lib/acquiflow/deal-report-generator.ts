@@ -1581,10 +1581,19 @@ function buildWalkAwayTriggers(d: DecisionLayerResult): { category: string; deta
 // The "credibility stress test" page. Psychologically frames quality of
 // earnings / earnings durability rather than raw benchmarking.
 //
+// Commit 3 redesign: de-dashboarded toward a credit-committee memo voice.
+// The numbers support the underwriting argument; they don't lead it.
+//
 // Sections:
-//   1. Financial Score Snapshot (score / industry / drivers + caveats footer)
-//   2. Internal Consistency Analysis (always renders; framing adapts)
-//   3. Normalization Sensitivity (Sonnet interpretation when available)
+//   1. Financial Score Snapshot — asymmetric. Score on the left as a quiet
+//      anchor (~30% width); structured prose interpretation of the score
+//      on the right (~70% width). No 3-column equal grid.
+//   2. Internal Consistency Analysis — memo-style observations. Top 2
+//      tensions render as bold lead sentence + supporting paragraph. No
+//      Signal/Why-It-Matters table. Clean profile = single italic line.
+//   3. Normalization Sensitivity — narrative-left, metrics-right. The
+//      interpretation paragraph is the lead; reported / normalized /
+//      threshold DSCR stack compactly on the right as evidence.
 //
 // Renders only when data.benchmarkSnapshot is provided.
 // =====================================================================
@@ -1600,42 +1609,45 @@ function drawPage6(
   newPage(doc, 6, "Financial Quality");
   const { inputs } = data;
 
-  let y = 70;
+  let y = 78;
 
-  // ─── Page title ──────────────────────────────────────────────────────
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(8);
+  // ─── Eyebrow + page title (page-8 voice) ─────────────────────────────
+  setType(doc, "eyebrow");
   setHex(doc, COLOR.indigo, "text");
   doc.text("FINANCIAL QUALITY & BENCHMARK RISK", M, y);
-  y += 14;
+  y += 18;
 
-  doc.setFontSize(14);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(15);
   setHex(doc, COLOR.textPrimary, "text");
   doc.text("Earnings durability and quality of underlying performance", M, y);
-  y += 13;
+  y += 14;
 
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8.5);
-  setHex(doc, COLOR.textDim, "text");
+  setType(doc, "L4");
+  setHex(doc, COLOR.textMuted, "text");
   doc.text(
     "Tests whether reported metrics reflect durable performance, or depend on assumptions that warrant validation.",
     M, y,
   );
-  y += 22;
+  y += 30;
 
-  // ─── SECTION 1 — Score Snapshot ──────────────────────────────────────
-  // Hairline-only treatment: subtle bottom rule under the three-column block,
-  // no surrounding box, no fill. Whitespace separates columns.
-  drawSectionHeader(doc, M, y, "Financial score snapshot");
-  y += SP.md;
+  // ───────────────────────────────────────────────────────────────────────
+  // SECTION 1 — Financial score snapshot
+  // Asymmetric: score on the left as a quiet anchor (~30%), interpretation
+  // prose on the right (~70%). The reading of the score is the headline,
+  // not the score itself.
+  // ───────────────────────────────────────────────────────────────────────
 
-  const snapshotBoxH = 92;   // visual block height — used for column layout, not rendered as a box
-  const colW = CW / 3;
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8);
+  setHex(doc, COLOR.indigo, "text");
+  doc.text("FINANCIAL SCORE SNAPSHOT", M, y);
+  y += 16;
 
-  // Left column: big score
-  setType(doc, "label");
-  setHex(doc, COLOR.textDim, "text");
-  doc.text("FINANCIAL SCORE", M, y + 8);
+  const scoreColW = 150;
+  const proseColX = M + scoreColW + 24;
+  const proseColW = CW - scoreColW - 24;
+  const sectionTopY = y;
 
   const scoreColor =
     snap.financial_score === null ? COLOR.textDim
@@ -1644,74 +1656,68 @@ function drawPage6(
     : snap.financial_score >= 35   ? COLOR.amber
     :                                COLOR.red;
 
-  // Big score number — Helvetica bold (no Courier), large but not shouting.
+  // Left anchor: score
+  setType(doc, "label");
+  setHex(doc, COLOR.textDim, "text");
+  doc.text("COMPOSITE", M, y);
+
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(32);
+  doc.setFontSize(28);
   setHex(doc, scoreColor, "text");
   const scoreStr = snap.financial_score !== null ? String(snap.financial_score) : "\u2014";
-  doc.text(scoreStr, M, y + 46);
-
-  // " / 100" suffix
-  setType(doc, "L5");
-  setHex(doc, COLOR.textDim, "text");
-  const scoreW = snap.financial_score !== null ? doc.getTextWidth(scoreStr) + 4 : 24;
-  doc.text("/ 100", M + scoreW, y + 46);
+  doc.text(scoreStr, M, y + 36);
 
   setType(doc, "L5");
   setHex(doc, COLOR.textMuted, "text");
-  doc.text("Composite of profitability, coverage,", M, y + 64);
-  doc.text("liquidity, and efficiency",              M, y + 74);
+  const scoreW = snap.financial_score !== null ? doc.getTextWidth(scoreStr) + 4 : 24;
+  doc.text("of 100", M + scoreW, y + 36);
 
-  // Center column: industry context
-  setType(doc, "label");
-  setHex(doc, COLOR.textDim, "text");
-  doc.text("INDUSTRY CONTEXT", M + colW, y + 8);
+  // Right side: structured prose reading of the score
+  let proseY = y;
 
+  // Lead sentence — the score interpreted, not announced
+  const scoreReading = buildScoreReading(snap, scoreStr);
   setType(doc, "L3");
   setHex(doc, COLOR.textPrimary, "text");
-  const industryName = snap.industry_name ?? inputs.industry_label ?? "\u2014";
-  const industryLines = doc.splitTextToSize(industryName, colW - 16);
-  industryLines.slice(0, 2).forEach((line: string, i: number) => {
-    doc.text(line, M + colW, y + 26 + i * 14);
+  const leadLines = doc.splitTextToSize(scoreReading.lead, proseColW);
+  leadLines.slice(0, 2).forEach((line: string, i: number) => {
+    doc.text(line, proseColX, proseY + i * 14);
   });
+  proseY += Math.min(leadLines.length, 2) * 14 + 8;
 
-  if (snap.naics_code) {
-    setType(doc, "L5");
-    setHex(doc, COLOR.textMuted, "text");
-    doc.text(
-      `NAICS ${snap.naics_code}`,
-      M + colW,
-      y + 26 + Math.min(industryLines.length, 2) * 14 + 4,
-    );
-  }
-
-  setType(doc, "L5");
-  setHex(doc, COLOR.textDim, "text");
-  doc.text(`Benchmark year: ${snap.benchmark_year}`, M + colW, y + 74);
-
-  // Right column: top drivers
-  setType(doc, "label");
-  setHex(doc, COLOR.textDim, "text");
-  doc.text("TOP DRIVERS", M + colW * 2, y + 8);
+  // Industry context as inline body prose
+  const industryName = snap.industry_name ?? inputs.industry_label ?? null;
+  const naicsTag = snap.naics_code ? ` (NAICS ${snap.naics_code})` : "";
+  const industryLine = industryName
+    ? `Industry context: ${industryName}${naicsTag}. Benchmark year ${snap.benchmark_year}.`
+    : `Benchmark year ${snap.benchmark_year}.`;
 
   setType(doc, "L4");
   setHex(doc, COLOR.textBody, "text");
-  snap.score_drivers.slice(0, 3).forEach((driver, i) => {
-    doc.text(`\u2022  ${driver}`, M + colW * 2, y + 26 + i * 13);
+  const ctxLines = doc.splitTextToSize(industryLine, proseColW);
+  ctxLines.slice(0, 2).forEach((line: string, i: number) => {
+    doc.text(line, proseColX, proseY + i * 13);
   });
+  proseY += Math.min(ctxLines.length, 2) * 13 + 8;
 
-  y += snapshotBoxH;
+  // Drivers as flowing prose, not a bullet list
+  const driverLine = buildDriversLine(snap.score_drivers);
+  if (driverLine) {
+    setType(doc, "L4");
+    setHex(doc, COLOR.textBody, "text");
+    const driverLines = doc.splitTextToSize(driverLine, proseColW);
+    driverLines.slice(0, 3).forEach((line: string, i: number) => {
+      doc.text(line, proseColX, proseY + i * 13);
+    });
+    proseY += Math.min(driverLines.length, 3) * 13;
+  }
 
-  // Subtle bottom hairline — closes the section visually without a box
-  setHex(doc, COLOR.borderSoft, "draw");
-  doc.setLineWidth(0.4);
-  doc.line(M, y, M + CW, y);
-  y += SP.sm;
+  y = Math.max(sectionTopY + 64, proseY) + SP.md;
 
-  // ─── Score caveats — subdued footer line under the card ──────────────
+  // Score caveats — italic muted, restrained, no decorative bar
   if (snap.score_risk_dependencies && snap.score_risk_dependencies.length > 0) {
     doc.setFont("helvetica", "italic");
-    doc.setFontSize(7.5);
+    doc.setFontSize(8);
     setHex(doc, COLOR.textMuted, "text");
     const caveatPrefix = snap.score_risk_dependencies.length === 1
       ? "Score sensitivity: "
@@ -1719,177 +1725,226 @@ function drawPage6(
     const caveatText = caveatPrefix + snap.score_risk_dependencies.join("; ");
     const caveatLines = doc.splitTextToSize(caveatText, CW);
     caveatLines.slice(0, 2).forEach((line: string, i: number) => {
-      doc.text(line, M, y + i * 10);
+      doc.text(line, M, y + i * 11);
     });
-    y += Math.min(caveatLines.length, 2) * 10 + 8;
+    y += Math.min(caveatLines.length, 2) * 11 + SP.lg;
   } else {
-    y += 8;
+    y += SP.md;
   }
 
-  // ─── SECTION 2 — Internal Consistency Analysis ───────────────────────
-  // Always renders. Framing adapts:
-  //   - Tensions present → emphasize what doesn't add up
-  //   - Clean profile     → emphasize cross-metric coherence
-  drawSectionHeader(doc, M, y, "Internal consistency analysis");
-  y += 14;
+  // ───────────────────────────────────────────────────────────────────────
+  // SECTION 2 — Internal consistency analysis
+  // Memo-style observations. No table chrome. No header strip. Each tension
+  // is a mini-section: bold lead sentence (signal) + paragraph (why).
+  // Top 2 only — restraint over coverage.
+  // ───────────────────────────────────────────────────────────────────────
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8);
+  setHex(doc, COLOR.indigo, "text");
+  doc.text("INTERNAL CONSISTENCY ANALYSIS", M, y);
+  y += 18;
 
   const tensions = buildConsistencyTensions(snap);
 
   if (tensions.length === 0) {
-    // Clean deal — single confident card
-    const cleanH = 56;
-    setHex(doc, "#ECFDF5", "fill");
-    doc.rect(M, y, CW, cleanH, "F");
-    setHex(doc, COLOR.emerald, "fill");
-    doc.rect(M, y, 3, cleanH, "F");
-
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(8);
-    setHex(doc, COLOR.emeraldText, "text");
-    doc.text("PROFILE INTERNALLY CONSISTENT", M + 14, y + 16);
-
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(9);
-    setHex(doc, COLOR.textBody, "text");
-    const cleanMsg = "Financial profile appears internally consistent across coverage, profitability, and structural metrics. No major cross-metric contradictions detected.";
-    const lines = doc.splitTextToSize(cleanMsg, CW - 28);
-    lines.forEach((line: string, i: number) => {
-      doc.text(line, M + 14, y + 30 + i * 11);
-    });
-    y += cleanH + 14;
-  } else {
-    // Tensions present — render top 2-3 as signal/why-it-matters rows
-    const headerH = 22;
-    setHex(doc, "#F8FAFC", "fill");
-    doc.rect(M, y, CW, headerH, "F");
-    setHex(doc, COLOR.borderSoft, "draw");
-    doc.setLineWidth(0.5);
-    doc.rect(M, y, CW, headerH, "S");
-
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(8);
+    // Clean deal — single line of italic body prose, nothing more
+    setType(doc, "L4");
+    doc.setFont("helvetica", "italic");
     setHex(doc, COLOR.textMuted, "text");
-    doc.text("SIGNAL",          M + 12,           y + 14);
-    doc.text("WHY IT MATTERS",  M + (CW * 0.42),  y + 14);
-    y += headerH;
+    const cleanLines = doc.splitTextToSize(
+      "Financial profile is internally consistent across coverage, profitability, and structural metrics. No cross-metric contradictions detected at this level of review.",
+      CW,
+    );
+    cleanLines.slice(0, 2).forEach((line: string, i: number) => {
+      doc.text(line, M, y + i * 13);
+    });
+    y += Math.min(cleanLines.length, 2) * 13 + SP.lg;
+  } else {
+    // Top 2 tensions as memo observations
+    const shown = tensions.slice(0, 2);
+    for (let i = 0; i < shown.length; i++) {
+      if (y > PH - 220) break;
+      const t = shown[i];
 
-    // Top 2-3 tensions only — avoid forcing rows
-    const shown = tensions.slice(0, 3);
-    for (const t of shown) {
-      const signalLines = doc.splitTextToSize(t.signal, (CW * 0.42) - 14);
-      const whyLines    = doc.splitTextToSize(t.why,    CW - (CW * 0.42) - 16);
-      const rowH        = Math.max(signalLines.length, whyLines.length) * 11 + 14;
-
-      setHex(doc, COLOR.borderSoft, "draw");
-      doc.setLineWidth(0.4);
-      doc.line(M, y + rowH, M + CW, y + rowH);
-
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(9);
-      setHex(doc, t.severity === "high" ? COLOR.amberText : COLOR.textBody, "text");
-      signalLines.forEach((line: string, i: number) => {
-        doc.text(line, M + 12, y + 14 + i * 11);
+      // Lead sentence — bold L3, charcoal-black
+      setType(doc, "L3");
+      setHex(doc, COLOR.textPrimary, "text");
+      const signalLines = doc.splitTextToSize(t.signal, CW);
+      signalLines.slice(0, 2).forEach((line: string, idx: number) => {
+        doc.text(line, M, y + idx * 14);
       });
+      y += Math.min(signalLines.length, 2) * 14 + 6;
 
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(9);
+      // Supporting prose — L4 body
+      setType(doc, "L4");
       setHex(doc, COLOR.textBody, "text");
-      whyLines.forEach((line: string, i: number) => {
-        doc.text(line, M + (CW * 0.42), y + 14 + i * 11);
+      const whyLines = doc.splitTextToSize(t.why, CW);
+      whyLines.slice(0, 4).forEach((line: string, idx: number) => {
+        doc.text(line, M, y + idx * 13);
       });
+      y += Math.min(whyLines.length, 4) * 13;
 
-      y += rowH;
+      // Inter-observation gap — generous, page-8 rhythm
+      if (i < shown.length - 1) y += SP.md;
     }
-    y += 12;
+    y += SP.lg;
   }
 
-  // ─── SECTION 3 — Normalization Sensitivity ───────────────────────────
-  // Hairline-only treatment: subtle bottom rule, no surrounding box.
-  // Status edge (red/amber) becomes a thin top accent rule instead of left bar.
-  if (snap.sensitivity && y < PH - 220) {
-    drawSectionHeader(doc, M, y, "Normalization sensitivity");
-    y += SP.md;
+  // ───────────────────────────────────────────────────────────────────────
+  // SECTION 3 — Normalization sensitivity
+  // Narrative-left, metrics-right. Interpretation is the lead. The three
+  // numbers stack compactly on the right as evidence supporting the read.
+  // ───────────────────────────────────────────────────────────────────────
+
+  if (snap.sensitivity && y < PH - 180) {
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8);
+    setHex(doc, COLOR.indigo, "text");
+    doc.text("NORMALIZATION SENSITIVITY", M, y);
+    y += 18;
 
     const breaches = snap.sensitivity.normalized_dscr !== null && snap.sensitivity.normalized_dscr < 1.30;
 
-    // Subtle status accent above the comparison block
+    // Subtle status accent — single short tick above the section
     setHex(doc, breaches ? COLOR.red : COLOR.amber, "draw");
     doc.setLineWidth(1.0);
-    doc.line(M, y - 4, M + 24, y - 4);
+    doc.line(M, y - 8, M + 24, y - 8);
 
-    const compH = 84;
-    const colW2 = CW / 3;
+    // Layout: metrics column on the right (~150pt), prose fills the rest
+    const metricsColW = 150;
+    const proseW = CW - metricsColW - 24;
+    const metricsX = M + CW - metricsColW;
+    const sensitivityTopY = y;
 
-    // Reported DSCR
+    // Right column: stacked metrics as quiet evidence
+    let metricY = y;
+
     setType(doc, "label");
     setHex(doc, COLOR.textDim, "text");
-    doc.text("REPORTED DSCR", M, y + 8);
-
-    setType(doc, "stat-large");
+    doc.text("REPORTED", metricsX, metricY);
+    setType(doc, "stat-medium");
     setHex(doc, COLOR.textPrimary, "text");
-    doc.text(fmtRatio(snap.sensitivity.reported_dscr), M, y + 40);
+    doc.text(fmtRatio(snap.sensitivity.reported_dscr), metricsX + 70, metricY);
+    metricY += 22;
 
-    setType(doc, "L5");
-    setHex(doc, COLOR.textMuted, "text");
-    doc.text("Under seller-reported", M, y + 58);
-    doc.text("earnings",               M, y + 68);
-
-    // Normalized DSCR
     setType(doc, "label");
     setHex(doc, COLOR.textDim, "text");
-    doc.text("NORMALIZED DSCR", M + colW2, y + 8);
-
-    setType(doc, "stat-large");
+    doc.text("NORMALIZED", metricsX, metricY);
+    setType(doc, "stat-medium");
     setHex(doc, breaches ? COLOR.redText : COLOR.amberText, "text");
-    doc.text(fmtRatio(snap.sensitivity.normalized_dscr), M + colW2, y + 40);
+    doc.text(fmtRatio(snap.sensitivity.normalized_dscr), metricsX + 70, metricY);
+    metricY += 22;
 
-    setType(doc, "L5");
-    setHex(doc, COLOR.textMuted, "text");
-    doc.text("If SDE normalized to",   M + colW2, y + 58);
-    doc.text("industry median margin",  M + colW2, y + 68);
-
-    // Lender Threshold
     setType(doc, "label");
     setHex(doc, COLOR.textDim, "text");
-    doc.text("LENDER THRESHOLD", M + colW2 * 2, y + 8);
-
-    setType(doc, "stat-large");
+    doc.text("THRESHOLD", metricsX, metricY);
+    setType(doc, "stat-medium");
     setHex(doc, COLOR.textMuted, "text");
-    doc.text("1.30x", M + colW2 * 2, y + 40);
+    doc.text("1.30x", metricsX + 70, metricY);
+    metricY += 14;
 
     setType(doc, "L5");
-    setHex(doc, COLOR.textMuted, "text");
-    doc.text("Standard SBA / commercial",  M + colW2 * 2, y + 58);
-    doc.text("debt service minimum",        M + colW2 * 2, y + 68);
+    setHex(doc, COLOR.textFaint, "text");
+    doc.text("SBA / commercial minimum", metricsX, metricY);
 
-    y += compH;
-
-    // Subtle bottom hairline closes the section
-    setHex(doc, COLOR.borderSoft, "draw");
-    doc.setLineWidth(0.4);
-    doc.line(M, y, M + CW, y);
-    y += SP.md;
-
-    // Interpretation block — Sonnet-generated when available, fallback otherwise
+    // Left column: interpretation as the lead
     const interpText = data.committeeProse?.page6_normalization_interpretation
       ?? buildDeterministicNormalizationInterp(snap.sensitivity, breaches);
 
     if (interpText) {
-      setType(doc, "label");
-      setHex(doc, COLOR.textDim, "text");
-      doc.text("INTERPRETATION", M, y);
-      y += SP.sm + 4;
+      // Split the interpretation into lead (first sentence) + body (rest).
+      // This mirrors the page-8 lead/body pattern within a single block.
+      const { lead, body } = splitLeadAndBody(interpText);
 
-      setType(doc, "L4");
-      setHex(doc, COLOR.textBody, "text");
-      const lines = doc.splitTextToSize(interpText, CW);
-      lines.forEach((line: string) => {
-        if (y > PH - 50) return;
-        doc.text(line, M, y);
-        y += 12;
+      setType(doc, "L3");
+      setHex(doc, COLOR.textPrimary, "text");
+      const leadLines = doc.splitTextToSize(lead, proseW);
+      leadLines.slice(0, 3).forEach((line: string, i: number) => {
+        doc.text(line, M, sensitivityTopY + i * 14);
       });
+      let bodyY = sensitivityTopY + Math.min(leadLines.length, 3) * 14 + 6;
+
+      if (body) {
+        setType(doc, "L4");
+        setHex(doc, COLOR.textBody, "text");
+        const bodyLines = doc.splitTextToSize(body, proseW);
+        bodyLines.slice(0, 5).forEach((line: string, i: number) => {
+          if (sensitivityTopY + (i * 13) > PH - 60) return;
+          doc.text(line, M, bodyY + i * 13);
+        });
+        bodyY += Math.min(bodyLines.length, 5) * 13;
+      }
+
+      y = Math.max(bodyY, metricY);
+    } else {
+      y = metricY + SP.sm;
     }
   }
+}
+
+/**
+ * Build the lead reading of the financial score — interprets the number
+ * rather than restating it. Fed into the asymmetric Section 1 layout.
+ */
+function buildScoreReading(
+  snap: BenchmarkSnapshotForReport,
+  scoreStr: string,
+): { lead: string } {
+  if (snap.financial_score === null) {
+    return {
+      lead: "Composite score unavailable — benchmark coverage was insufficient to produce a confident reading.",
+    };
+  }
+  const s = snap.financial_score;
+  if (s >= 75) {
+    return {
+      lead: `A ${scoreStr}/100 composite places this profile in the upper band — durable across profitability, coverage, liquidity, and efficiency relative to industry norms.`,
+    };
+  }
+  if (s >= 55) {
+    return {
+      lead: `A ${scoreStr}/100 composite reads as broadly healthy — financial fundamentals align with industry expectations across most measured dimensions.`,
+    };
+  }
+  if (s >= 35) {
+    return {
+      lead: `A ${scoreStr}/100 composite reflects a mixed financial profile — strengths in some dimensions, but material gaps that warrant validation before underwriting.`,
+    };
+  }
+  return {
+    lead: `A ${scoreStr}/100 composite signals meaningful weakness — the underlying metrics fall short of industry norms across multiple dimensions and require explanation before proceeding.`,
+  };
+}
+
+/**
+ * Convert score drivers (a list of short phrases from the engine) into a
+ * single sentence of flowing prose. Returns null if no drivers.
+ */
+function buildDriversLine(drivers: string[]): string | null {
+  if (!drivers || drivers.length === 0) return null;
+  const top = drivers.slice(0, 3).map(d => {
+    const s = d.trim();
+    return s.charAt(0).toLowerCase() + s.slice(1);
+  });
+  if (top.length === 1) return `Score is anchored by ${top[0]}.`;
+  if (top.length === 2) return `Score is anchored by ${top[0]} and ${top[1]}.`;
+  return `Score is anchored by ${top[0]}, ${top[1]}, and ${top[2]}.`;
+}
+
+/**
+ * Split a multi-sentence interpretation string into a lead sentence and
+ * body remainder. Used to render Page 6's normalization interpretation in
+ * the page-8 lead/body pattern. Falls back gracefully on short text.
+ */
+function splitLeadAndBody(text: string): { lead: string; body: string } {
+  const trimmed = text.trim();
+  // Match the first sentence ending in . ! or ?
+  const m = trimmed.match(/^([^.!?]+[.!?])\s+(.*)$/s);
+  if (m) {
+    return { lead: m[1].trim(), body: m[2].trim() };
+  }
+  return { lead: trimmed, body: "" };
 }
 
 /**
@@ -1906,11 +1961,9 @@ function buildConsistencyTensions(
   // Cross-metric interactions are highest-quality signals
   for (const ins of snap.interaction_insights) {
     if (out.length >= 3) break;
-    // Pull a "signal" header from the rule, body from the message
-    const signal = humanizeInteractionRule(ins.rule);
     out.push({
-      signal,
-      why: ins.message,
+      signal: humanizeInteractionRule(ins.rule),
+      why:    ins.message,
       severity: ins.severity === "high" ? "high" : "medium",
     });
   }
@@ -1926,8 +1979,8 @@ function buildConsistencyTensions(
       );
       if (alreadyCovered) continue;
       out.push({
-        signal: `${row.metric_label} elevated vs peers`,
-        why:    `${row.metric_label} sits in the ${fmtPercentile(row.display_percentile)} percentile against industry, raising the question of whether reported figures reflect normalized operations.`,
+        signal: `${row.metric_label} reads materially above peer norms.`,
+        why:    `${row.metric_label} sits in the ${fmtPercentile(row.display_percentile)} percentile against industry, raising the question of whether reported figures reflect normalized operations or carry add-backs that warrant validation.`,
         severity: "medium",
       });
     }
@@ -1936,8 +1989,8 @@ function buildConsistencyTensions(
   // Sources & uses imbalance (structural)
   if (out.length < 3 && snap.deal_structure && !snap.deal_structure.sources_uses.balanced) {
     out.push({
-      signal: "Sources & uses imbalance",
-      why:    "Total sources do not match total uses, suggesting capital structure has not yet been finalized or working capital assumptions need reconciliation.",
+      signal: "Capital structure does not currently balance.",
+      why:    "Total sources do not match total uses, suggesting the financing stack has not yet been finalized or working capital assumptions remain unresolved. Reconciliation is required before lender submission.",
       severity: "medium",
     });
   }
@@ -1946,18 +1999,22 @@ function buildConsistencyTensions(
 }
 
 /**
- * Map an interaction_insight rule key into a short signal headline.
- * These are the rule names emitted by the engine's risk-flags module.
+ * Map an interaction_insight rule key into a complete declarative sentence
+ * suitable as a memo-style lead line. These are the rule names emitted by
+ * the engine's risk-flags module.
  */
 function humanizeInteractionRule(rule: string): string {
   const map: Record<string, string> = {
-    sde_validation_with_strong_dscr: "Strong DSCR contingent on elevated SDE",
-    high_leverage_strong_cashflow:   "High leverage despite strong cash flow",
-    weak_margin_strong_dscr:         "Weak operating margin vs strong DSCR",
-    multiple_validation_outliers:    "Multiple validation outliers present",
-    risk_outlier_with_strong_score:  "Risk outlier in otherwise strong profile",
+    sde_validation_with_strong_dscr: "Reported coverage strength is contingent on an elevated SDE figure that warrants validation.",
+    high_leverage_strong_cashflow:   "Capital structure carries elevated leverage despite reported cash flow strength.",
+    weak_margin_strong_dscr:         "Reported coverage holds despite operating margins that read below peer norms.",
+    multiple_validation_outliers:    "Multiple metrics sit in validation-outlier territory simultaneously.",
+    risk_outlier_with_strong_score:  "A material risk outlier sits within an otherwise strong financial profile.",
   };
-  return map[rule] ?? rule.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+  if (map[rule]) return map[rule];
+  // Fallback: title-case the rule key and add a period so it still reads as a sentence
+  const titled = rule.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+  return titled.endsWith(".") ? titled : `${titled}.`;
 }
 
 /**
@@ -1980,11 +2037,22 @@ function buildDeterministicNormalizationInterp(
 // Lender-grade, financing-focused review. Frames the deal less as a
 // dashboard widget and more as a financing memorandum.
 //
+// Commit 3 redesign: converged toward Page 8's editorial voice. Concerns
+// and diligence items now read like committee findings, not UI risk cards.
+//
 // Sections:
-//   1. Capital Structure Overview (metric / result / commentary table)
-//   2. Sources & Uses (with imbalance warning)
-//   3. Credit Committee Concerns (grouped by Earnings / Structural / Financing)
-//   4. Recommended Diligence Priorities (deterministic + Sonnet add-ons)
+//   1. Capital Structure Overview — softened. Column labels without
+//      underline rule, taller rows, true-hairline dividers only.
+//   2. Sources & Uses — unified typography (setType throughout), restrained
+//      dividers, hairline-only imbalance notice.
+//   3. Credit Committee Concerns — callout strips. Each concern: navy left
+//      edge, no fill, category eyebrow, bold lead sentence (the issue),
+//      supporting paragraph (the implication). Deterministic lead/body
+//      pairs from groupCommitteeConcerns(). No bullet groups.
+//   4. Recommended Diligence Priorities — memo-style numbered. Each item:
+//      bold lead sentence (the priority) + italic muted why-line (the
+//      rationale). Deterministic lead/why pairs from
+//      buildDiligencePriorities(). Sonnet additions append as lead-only.
 // =====================================================================
 
 function drawPage7(
@@ -1997,49 +2065,56 @@ function drawPage7(
 
   newPage(doc, 7, "Credit Committee Review");
 
-  let y = 70;
+  let y = 78;
 
-  // ─── Page title ──────────────────────────────────────────────────────
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(8);
+  // ─── Eyebrow + page title (page-8 voice) ─────────────────────────────
+  setType(doc, "eyebrow");
   setHex(doc, COLOR.indigo, "text");
   doc.text("DEAL STRUCTURE & CREDIT COMMITTEE REVIEW", M, y);
-  y += 14;
+  y += 18;
 
-  doc.setFontSize(14);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(15);
   setHex(doc, COLOR.textPrimary, "text");
   doc.text("Capital structure, lender perspective, and diligence sequencing", M, y);
-  y += 13;
+  y += 14;
 
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8.5);
-  setHex(doc, COLOR.textDim, "text");
+  setType(doc, "L4");
+  setHex(doc, COLOR.textMuted, "text");
   doc.text(
     "Tests whether the proposed financing structure underwrites cleanly and identifies items requiring resolution.",
     M, y,
   );
-  y += 22;
+  y += 30;
 
-  // ─── SECTION 1 — Capital Structure Overview ──────────────────────────
-  // Header-underline-only treatment. No header strip box, no surrounding fill.
-  // Row dividers stay (subtle hairlines). Unified type scale throughout.
+  // ───────────────────────────────────────────────────────────────────────
+  // SECTION 1 — Capital structure overview
+  // Softened: column headers without underline rule, taller rows for
+  // breathing room, true-hairline row separators only.
+  // ───────────────────────────────────────────────────────────────────────
+
   if (snap.deal_structure && snap.deal_structure.metrics.length > 0) {
-    drawSectionHeader(doc, M, y, "Capital structure overview");
-    y += SP.md;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8);
+    setHex(doc, COLOR.indigo, "text");
+    doc.text("CAPITAL STRUCTURE OVERVIEW", M, y);
+    y += 18;
 
     const colMetric = M;
     const colResult = M + 180;
     const colComment = M + 270;
 
-    // Header row — labels only, no fill, with underline below
+    // Column labels — labels alone, no underline rule
     setType(doc, "label");
-    setHex(doc, COLOR.textMuted, "text");
+    setHex(doc, COLOR.textDim, "text");
     doc.text("METRIC",     colMetric,  y);
     doc.text("RESULT",     colResult,  y);
     doc.text("COMMENTARY", colComment, y);
-    y += SP.sm;
-    setHex(doc, COLOR.borderHairline, "draw");
-    doc.setLineWidth(0.4);
+    y += 14;
+
+    // Hairline above first row
+    setHex(doc, COLOR.borderSoft, "draw");
+    doc.setLineWidth(0.3);
     doc.line(M, y, M + CW, y);
     y += SP.sm + 2;
 
@@ -2048,7 +2123,7 @@ function drawPage7(
         ? STATUS_COLOR_MAP[metric.status_color]
         : { fill: "#F8FAFC", stroke: COLOR.borderSoft, text: COLOR.textMuted };
 
-      const rowH = 32;
+      const rowH = 38;  // taller rows for breathing room (was 32)
 
       // Metric label
       setType(doc, "L4");
@@ -2056,14 +2131,14 @@ function drawPage7(
       setHex(doc, COLOR.textPrimary, "text");
       doc.text(metric.label, colMetric, y + 6);
 
-      // Result (value + status text below)
+      // Result — value + status text below
       setType(doc, "stat-medium");
       setHex(doc, COLOR.textPrimary, "text");
       doc.text(metric.display, colResult, y + 6);
 
       setType(doc, "label");
       setHex(doc, c.text, "text");
-      doc.text(metric.status.toUpperCase(), colResult, y + 18);
+      doc.text(metric.status.toUpperCase(), colResult, y + 20);
 
       // Commentary
       const commentary = buildCapitalStructureCommentary(metric);
@@ -2071,37 +2146,45 @@ function drawPage7(
       setHex(doc, COLOR.textBody, "text");
       const commLines = doc.splitTextToSize(commentary, CW - (colComment - M));
       commLines.slice(0, 2).forEach((line: string, i: number) => {
-        doc.text(line, colComment, y + 4 + i * 11);
+        doc.text(line, colComment, y + 6 + i * 11);
       });
 
       y += rowH;
-      // Subtle row separator
+      // True hairline divider
       setHex(doc, COLOR.borderSoft, "draw");
       doc.setLineWidth(0.3);
       doc.line(M, y, M + CW, y);
     }
-    y += SP.md;
+    y += SP.lg;
   }
 
-  // ─── SECTION 2 — Sources & Uses ──────────────────────────────────────
+  // ───────────────────────────────────────────────────────────────────────
+  // SECTION 2 — Sources & uses
+  // Two-column tables, unified typography (setType throughout), restrained
+  // dividers. Imbalance notice keeps the existing hairline-only treatment.
+  // ───────────────────────────────────────────────────────────────────────
+
   if (snap.deal_structure) {
     const su = snap.deal_structure.sources_uses;
 
-    drawSectionHeader(doc, M, y, "Sources & uses");
-    y += 14;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8);
+    setHex(doc, COLOR.indigo, "text");
+    doc.text("SOURCES & USES", M, y);
+    y += 16;
 
-    const tableW = (CW - 12) / 2;
-    const rowH2 = 22;
+    const tableW = (CW - 16) / 2;
+    const rowH2 = 24;
 
-    // Uses table (left) — header underline + subtle row separation
+    // Uses (left)
     let leftY = y;
     setType(doc, "label");
-    setHex(doc, COLOR.textMuted, "text");
+    setHex(doc, COLOR.textDim, "text");
     doc.text("USES",   M + 4,           leftY);
     doc.text("AMOUNT", M + tableW - 4,  leftY, { align: "right" });
-    leftY += SP.sm;
-    setHex(doc, COLOR.borderHairline, "draw");
-    doc.setLineWidth(0.4);
+    leftY += SP.sm + 2;
+    setHex(doc, COLOR.borderSoft, "draw");
+    doc.setLineWidth(0.3);
     doc.line(M, leftY, M + tableW, leftY);
     leftY += SP.sm + 2;
 
@@ -2112,29 +2195,28 @@ function drawPage7(
     ];
 
     for (const r of usesRows) {
+      setType(doc, "L4");
       doc.setFont("helvetica", r.bold ? "bold" : "normal");
-      doc.setFontSize(10);
       setHex(doc, r.bold ? COLOR.textPrimary : COLOR.textBody, "text");
       doc.text(r.label, M + 4, leftY + 6);
       doc.text(fmtUsd(r.amount), M + tableW - 4, leftY + 6, { align: "right" });
 
       leftY += rowH2;
-      // Subtle row divider — slightly stronger above totals
       setHex(doc, r.bold ? COLOR.borderHairline : COLOR.borderSoft, "draw");
       doc.setLineWidth(r.bold ? 0.4 : 0.3);
       doc.line(M, leftY, M + tableW, leftY);
     }
 
-    // Sources table (right) — same treatment
+    // Sources (right)
     let rightY = y;
-    const rightX = M + tableW + 12;
+    const rightX = M + tableW + 16;
     setType(doc, "label");
-    setHex(doc, COLOR.textMuted, "text");
+    setHex(doc, COLOR.textDim, "text");
     doc.text("SOURCES", rightX + 4,           rightY);
     doc.text("AMOUNT",  rightX + tableW - 4,  rightY, { align: "right" });
-    rightY += SP.sm;
-    setHex(doc, COLOR.borderHairline, "draw");
-    doc.setLineWidth(0.4);
+    rightY += SP.sm + 2;
+    setHex(doc, COLOR.borderSoft, "draw");
+    doc.setLineWidth(0.3);
     doc.line(rightX, rightY, rightX + tableW, rightY);
     rightY += SP.sm + 2;
 
@@ -2146,8 +2228,8 @@ function drawPage7(
     ];
 
     for (const r of sourcesRows) {
+      setType(doc, "L4");
       doc.setFont("helvetica", r.bold ? "bold" : "normal");
-      doc.setFontSize(10);
       setHex(doc, r.bold ? COLOR.textPrimary : COLOR.textBody, "text");
       doc.text(r.label, rightX + 4, rightY + 6);
       doc.text(fmtUsd(r.amount), rightX + tableW - 4, rightY + 6, { align: "right" });
@@ -2160,7 +2242,7 @@ function drawPage7(
 
     y = Math.max(leftY, rightY) + SP.sm;
 
-    // Imbalance notice — hairline-only treatment, no fill, no surrounding box
+    // Imbalance notice — hairline-only, italic body prose
     if (!su.balanced) {
       const gap = su.total_uses - su.total_sources;
       setHex(doc, COLOR.amber, "draw");
@@ -2171,88 +2253,111 @@ function drawPage7(
       setType(doc, "L4");
       setHex(doc, COLOR.amberText, "text");
       doc.text(
-        `Sources & uses do not balance \u2014 ${gap > 0 ? "short" : "over"} by ${fmtUsd(Math.abs(gap))}. Resolve before lender submission.`,
+        `Sources & uses do not balance — ${gap > 0 ? "short" : "over"} by ${fmtUsd(Math.abs(gap))}. Resolve before lender submission.`,
         M, y,
       );
-      y += SP.md;
+      y += SP.lg;
     } else {
-      y += SP.sm;
+      y += SP.md;
     }
   } else {
-    // No deal structure inputs — italic muted note, no surrounding box
-    setType(doc, "L5");
+    setType(doc, "L4");
     doc.setFont("helvetica", "italic");
     setHex(doc, COLOR.textMuted, "text");
     doc.text(
       "Acquisition structure inputs (purchase price, equity, debt mix) not provided in this analysis.",
-      M, y + 8,
+      M, y,
     );
     y += SP.lg;
   }
 
-  // ─── SECTION 3 — Credit Committee Concerns (grouped) ─────────────────
+  // ───────────────────────────────────────────────────────────────────────
+  // SECTION 3 — Credit committee concerns (callout strips)
+  // Each concern: navy left edge, no fill, category eyebrow above lead.
+  // Bold lead sentence at L3. One paragraph of supporting prose at L4.
+  // ───────────────────────────────────────────────────────────────────────
+
   if (y > PH - 200) return;
 
-  drawSectionHeader(doc, M, y, "Credit committee concerns");
-  y += 14;
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8);
+  setHex(doc, COLOR.indigo, "text");
+  doc.text("CREDIT COMMITTEE CONCERNS", M, y);
+  y += 18;
 
-  const grouped = groupCommitteeConcerns(snap);
-  let renderedAny = false;
+  const concerns = groupCommitteeConcerns(snap);
 
-  for (const group of grouped) {
-    if (group.items.length === 0) continue;
-    if (y > PH - 80) break;
-    renderedAny = true;
-
-    // Group header
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(8);
-    setHex(doc, group.color, "text");
-    doc.text(group.label.toUpperCase(), M, y);
-    y += 12;
-
-    for (const item of group.items.slice(0, 3)) {
-      if (y > PH - 80) break;
-      const lines = doc.splitTextToSize(item, CW - 16);
-
-      setHex(doc, group.bullet, "fill");
-      doc.circle(M + 4, y + 5, 1.8, "F");
-
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(9);
-      setHex(doc, COLOR.textBody, "text");
-      lines.forEach((line: string, i: number) => {
-        doc.text(line, M + 12, y + 8 + i * 11);
-      });
-      y += lines.length * 11 + 4;
-    }
-    y += 6;
-  }
-
-  // If no concerns at all, show a clean-deal note
-  if (!renderedAny) {
+  if (concerns.length === 0) {
+    setType(doc, "L4");
     doc.setFont("helvetica", "italic");
-    doc.setFontSize(9);
-    setHex(doc, COLOR.emeraldText, "text");
+    setHex(doc, COLOR.textMuted, "text");
     doc.text(
-      "No structural or quality concerns flagged at the committee level.",
+      "No structural or quality concerns surfaced at the committee level for this transaction.",
       M, y,
     );
-    y += 16;
-  }
-  y += 4;
+    y += SP.lg;
+  } else {
+    // Render up to 5 callout strips. Generous spacing between them.
+    const shown = concerns.slice(0, 5);
+    for (let i = 0; i < shown.length; i++) {
+      if (y > PH - 110) break;
+      const c = shown[i];
 
-  // ─── SECTION 4 — Recommended Diligence Priorities ────────────────────
+      // Estimate strip height to know if we have room
+      setType(doc, "L4");
+      const bodyLines = doc.splitTextToSize(c.body, CW - 16);
+      const linesShown = Math.min(bodyLines.length, 3);
+      const stripH = 18 + 14 + linesShown * 13 + 4;  // eyebrow + lead + body lines
+
+      if (y + stripH > PH - 60) break;
+
+      // Navy left edge — single 1.5pt rule running the full height
+      setHex(doc, COLOR.indigo, "fill");
+      doc.rect(M, y - 2, 1.5, stripH, "F");
+
+      // Category eyebrow — slate small-caps
+      setType(doc, "label");
+      setHex(doc, COLOR.textDim, "text");
+      doc.text(c.category.toUpperCase(), M + 12, y + 6);
+
+      // Lead — bold L3, charcoal-black
+      setType(doc, "L3");
+      setHex(doc, COLOR.textPrimary, "text");
+      const leadLines = doc.splitTextToSize(c.lead, CW - 16);
+      leadLines.slice(0, 2).forEach((line: string, idx: number) => {
+        doc.text(line, M + 12, y + 22 + idx * 14);
+      });
+      const leadH = Math.min(leadLines.length, 2) * 14;
+
+      // Body — L4, supporting prose
+      setType(doc, "L4");
+      setHex(doc, COLOR.textBody, "text");
+      bodyLines.slice(0, 3).forEach((line: string, idx: number) => {
+        doc.text(line, M + 12, y + 22 + leadH + 6 + idx * 13);
+      });
+
+      y += 22 + leadH + 6 + linesShown * 13 + SP.md;
+    }
+  }
+
+  // ───────────────────────────────────────────────────────────────────────
+  // SECTION 4 — Recommended diligence priorities (memo-style numbered)
+  // Each item: bold lead sentence + one line of muted italic context.
+  // ───────────────────────────────────────────────────────────────────────
+
   if (y > PH - 100) return;
 
-  drawSectionHeader(doc, M, y, "Recommended diligence priorities");
-  y += 14;
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8);
+  setHex(doc, COLOR.indigo, "text");
+  doc.text("RECOMMENDED DILIGENCE PRIORITIES", M, y);
+  y += 18;
 
   const priorities = buildDiligencePriorities(snap, data.committeeProse);
 
   if (priorities.length === 0) {
+    setType(doc, "L4");
     doc.setFont("helvetica", "italic");
-    doc.setFontSize(9);
     setHex(doc, COLOR.textMuted, "text");
     doc.text(
       "Standard diligence applies; no transaction-specific priorities flagged.",
@@ -2261,27 +2366,46 @@ function drawPage7(
     return;
   }
 
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(9);
-  setHex(doc, COLOR.textBody, "text");
+  // Show up to 5 priorities (saves vertical room for memo-style)
+  const shownPriorities = priorities.slice(0, 5);
+  for (let i = 0; i < shownPriorities.length; i++) {
+    if (y > PH - 60) break;
+    const p = shownPriorities[i];
 
-  for (let i = 0; i < priorities.length; i++) {
-    if (y > PH - 50) break;
-    const lines = doc.splitTextToSize(priorities[i], CW - 24);
+    // Estimate height
+    setType(doc, "L4");
+    const leadLines = doc.splitTextToSize(p.lead, CW - 24);
+    const whyLines = p.why ? doc.splitTextToSize(p.why, CW - 24) : [];
+    const itemH = Math.min(leadLines.length, 2) * 13 + (whyLines.length > 0 ? Math.min(whyLines.length, 2) * 12 + 4 : 0) + SP.sm;
 
-    // Numbered marker
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(9);
+    if (y + itemH > PH - 50) break;
+
+    // Numbered marker — navy, modest
+    setType(doc, "L3");
     setHex(doc, COLOR.indigo, "text");
-    doc.text(`${i + 1}.`, M, y + 8);
+    doc.text(`${i + 1}.`, M, y + 10);
 
-    // Body
-    doc.setFont("helvetica", "normal");
-    setHex(doc, COLOR.textBody, "text");
-    lines.forEach((line: string, lineI: number) => {
-      doc.text(line, M + 16, y + 8 + lineI * 11);
+    // Lead — bold body
+    setType(doc, "L4");
+    doc.setFont("helvetica", "bold");
+    setHex(doc, COLOR.textPrimary, "text");
+    leadLines.slice(0, 2).forEach((line: string, idx: number) => {
+      doc.text(line, M + 18, y + 10 + idx * 13);
     });
-    y += lines.length * 11 + 6;
+    let nextY = y + 10 + Math.min(leadLines.length, 2) * 13;
+
+    // Why — italic muted, restrained
+    if (whyLines.length > 0) {
+      doc.setFont("helvetica", "italic");
+      doc.setFontSize(9);
+      setHex(doc, COLOR.textMuted, "text");
+      whyLines.slice(0, 2).forEach((line: string, idx: number) => {
+        doc.text(line, M + 18, nextY + 2 + idx * 12);
+      });
+      nextY += 2 + Math.min(whyLines.length, 2) * 12;
+    }
+
+    y = nextY + SP.md;
   }
 }
 
@@ -2319,105 +2443,220 @@ function buildCapitalStructureCommentary(
  * Group risk flags and interactions into committee concern categories.
  * Returns three groups with potentially empty items[] arrays.
  */
+/**
+ * Build the prioritized list of credit committee concerns as memo-style
+ * callout-strip data. Each concern carries a category tag, a bold lead
+ * sentence (the issue), and a supporting paragraph (the implication).
+ *
+ * Categories: Earnings Quality, Structural Risk, Financing Risk
+ *
+ * Output is ordered by category and capped at 6 total. Empty categories
+ * are simply absent — the renderer doesn't need to know what's missing.
+ */
 function groupCommitteeConcerns(
   snap: BenchmarkSnapshotForReport,
-): { label: string; color: string; bullet: string; items: string[] }[] {
-  const earnings:   string[] = [];
-  const structural: string[] = [];
-  const financing:  string[] = [];
+): { category: string; lead: string; body: string }[] {
+  const out: { category: string; lead: string; body: string }[] = [];
+  const seenLeads = new Set<string>();
 
-  // SDE-related and validation outliers → Earnings Quality
+  const push = (category: string, lead: string, body: string) => {
+    const key = lead.toLowerCase().trim();
+    if (seenLeads.has(key)) return;
+    seenLeads.add(key);
+    out.push({ category, lead, body });
+  };
+
+  // ─── Earnings Quality ────────────────────────────────────────────────
+  // SDE / margin / revenue flags + interaction insights citing those metrics
+  // + normalization sensitivity breach when DSCR compresses below 1.30x.
+
   for (const f of snap.risk_flags) {
     if (f.metric_key.includes("sde") || f.metric_key.includes("margin") || f.metric_key.includes("revenue")) {
-      earnings.push(f.message);
+      push(
+        "Earnings Quality",
+        normalizeLead(f.message),
+        buildEarningsBody(f.metric_key, f.severity),
+      );
     }
-  }
-  for (const ins of snap.interaction_insights) {
-    if (ins.metrics.some(m => m.includes("sde") || m.includes("margin"))) {
-      if (!earnings.some(e => e === ins.message)) earnings.push(ins.message);
-    }
-  }
-  if (snap.sensitivity && snap.sensitivity.normalized_dscr !== null && snap.sensitivity.normalized_dscr < 1.30) {
-    earnings.push("Normalization sensitivity: DSCR compresses below the 1.30x lender minimum if SDE normalizes to industry margins.");
   }
 
-  // Sources & uses imbalance, LTV, leverage → Structural Risk
+  for (const ins of snap.interaction_insights) {
+    if (ins.metrics.some(m => m.includes("sde") || m.includes("margin"))) {
+      push(
+        "Earnings Quality",
+        normalizeLead(ins.message),
+        "Cross-metric tensions of this kind typically resolve only through trailing-twelve-month verification of reported figures against tax returns and bank deposits.",
+      );
+    }
+  }
+
+  if (snap.sensitivity && snap.sensitivity.normalized_dscr !== null && snap.sensitivity.normalized_dscr < 1.30) {
+    push(
+      "Earnings Quality",
+      "Coverage compresses below the lender minimum under normalized earnings.",
+      `If SDE were normalized toward industry median margins, DSCR would compress to ${fmtRatio(snap.sensitivity.normalized_dscr)} — short of the 1.30x lender threshold. Add-back validation is therefore decisive to the financing path, not incidental to it.`,
+    );
+  }
+
+  // ─── Structural Risk ─────────────────────────────────────────────────
+  // Sources & uses balance, LTV, leverage, and any structure-level flags.
+
   if (snap.deal_structure) {
     if (!snap.deal_structure.sources_uses.balanced) {
-      structural.push("Capital structure does not balance \u2014 reconciliation required before lender submission.");
+      const gap = snap.deal_structure.sources_uses.total_uses - snap.deal_structure.sources_uses.total_sources;
+      push(
+        "Structural Risk",
+        "Capital structure does not balance as currently modeled.",
+        `Sources fall ${gap > 0 ? "short of" : "above"} uses by ${fmtUsd(Math.abs(gap))}. Reconciliation of equity contribution, debt sizing, or working capital assumption is required before this stack can be presented to a lender.`,
+      );
     }
     for (const m of snap.deal_structure.metrics) {
       if (m.key === "ltv" && m.value !== null && m.value > 0.85) {
-        structural.push("Loan-to-value exceeds preferred lender comfort, increasing exposure to valuation drift.");
+        push(
+          "Structural Risk",
+          "Loan-to-value exceeds preferred lender comfort.",
+          "LTV at this level reduces the cushion lenders rely on for valuation drift and may prompt either a higher equity injection requirement or a lower senior debt commitment than modeled.",
+        );
       }
       if (m.key === "debt_to_sde" && m.value !== null && m.value > 4.00) {
-        structural.push("Debt-to-SDE leverage exceeds typical SBA acquisition guidelines.");
+        push(
+          "Structural Risk",
+          "Total leverage exceeds typical SBA acquisition guidelines.",
+          "Debt-to-SDE above 4.0x signals an aggressive stack relative to standard SBA underwriting. Expect probing on add-back validity and stress-test sensitivities during lender review.",
+        );
       }
     }
     for (const f of snap.deal_structure.flags) {
-      if (!structural.some(s => s === f.message)) structural.push(f.message);
+      push(
+        "Structural Risk",
+        normalizeLead(f.message),
+        "Structural items at this severity typically warrant explicit resolution in the term sheet rather than deferral to closing diligence.",
+      );
     }
   }
 
-  // DSCR-specific and coverage flags → Financing Risk
+  // ─── Financing Risk ──────────────────────────────────────────────────
+  // DSCR, current ratio, and reported coverage shortfalls.
+
   for (const f of snap.risk_flags) {
     if (f.metric_key === "dscr" || f.metric_key === "current_ratio") {
-      financing.push(f.message);
+      push(
+        "Financing Risk",
+        normalizeLead(f.message),
+        f.metric_key === "dscr"
+          ? "Debt service coverage at this level constrains the lender's willingness to commit at proposed terms; pricing, amortization, or equity contribution may need to flex to bring coverage into the comfort band."
+          : "Liquidity at this level may not absorb a typical first-year working capital draw without supplemental capital, raising the prospect of a revolver requirement at close.",
+      );
     }
   }
   if (snap.deal_structure) {
     for (const m of snap.deal_structure.metrics) {
       if (m.key === "dscr" && m.value !== null && m.value < 1.30) {
-        financing.push("Reported DSCR falls below the 1.30x lender minimum; financing as proposed is at risk.");
+        push(
+          "Financing Risk",
+          "Reported DSCR sits below the 1.30x lender minimum.",
+          "Coverage at this level means financing as currently proposed is unlikely to clear underwriting without restructuring — typically through reduced senior debt, extended amortization, or a larger seller note.",
+        );
       }
     }
   }
 
-  return [
-    { label: "Earnings Quality",  color: COLOR.amberText,   bullet: COLOR.amber,   items: earnings   },
-    { label: "Structural Risk",   color: "#FCA5A5",         bullet: COLOR.red,     items: structural },
-    { label: "Financing Risk",    color: "#93C5FD",         bullet: COLOR.indigo,  items: financing  },
-  ];
+  return out.slice(0, 6);
+}
+
+/**
+ * Strip awkward leading conjunctions, ensure sentence-final punctuation,
+ * and capitalize the first character so a flag message can sit comfortably
+ * as a memo lead.
+ */
+function normalizeLead(s: string): string {
+  let t = s.trim();
+  if (!t) return t;
+  t = t.charAt(0).toUpperCase() + t.slice(1);
+  if (!/[.!?]$/.test(t)) t += ".";
+  return t;
+}
+
+/**
+ * Build a deterministic supporting paragraph for an earnings-quality flag,
+ * keyed off the metric type and severity. Pure mapping, no fabrication.
+ */
+function buildEarningsBody(metricKey: string, severity: "high" | "medium" | "low" | "info"): string {
+  if (metricKey.includes("sde")) {
+    return severity === "high"
+      ? "The committee will treat the reported SDE figure as provisional until validated against tax returns and bank statements. The financial case for the deal materially depends on resolving this."
+      : "Reported SDE warrants validation against trailing-twelve-month documentation. Add-backs at this level are a routine area of probing during diligence.";
+  }
+  if (metricKey.includes("margin")) {
+    return "Operating margins outside peer norms warrant explanation — typically resolved by mapping the chart of accounts against industry standard categorization, or by isolating non-recurring costs from steady-state operations.";
+  }
+  if (metricKey.includes("revenue")) {
+    return "Revenue concentration or trajectory at this level is a standard area of probing for both the buyer and the lender; customer concentration analysis and trailing growth detail will be required.";
+  }
+  return "This signal warrants explanation during diligence before committee approval.";
 }
 
 /**
  * Build the diligence priorities list. Deterministic core (driven by which
  * flag patterns fired) plus optional Sonnet additions. Capped at 6 items.
  */
+/**
+ * Build the diligence priorities list as memo-style entries: a bold lead
+ * sentence (the priority) and a single supporting why-line (the rationale).
+ *
+ * Deterministic core (driven by which flag patterns fired) plus optional
+ * Sonnet additions appended without why-lines (we don't trust ourselves
+ * to generate rationale prose for outside additions). Capped at 6.
+ */
 function buildDiligencePriorities(
   snap: BenchmarkSnapshotForReport,
   prose?: CommitteeMemoProse,
-): string[] {
-  const out: string[] = [];
+): { lead: string; why: string | null }[] {
+  const out: { lead: string; why: string | null }[] = [];
 
-  // Validation outlier on SDE → add-back validation is priority
+  // Validation outlier on SDE → add-back validation is the priority
   const hasSdeValidation = snap.financial_position.some(
     r => r.metric_key === "sde_margin_pct" && r.outlier_kind === "validation"
   );
   if (hasSdeValidation) {
-    out.push("Validate seller add-backs against trailing-twelve-month tax returns and bank statements.");
+    out.push({
+      lead: "Validate seller add-backs against trailing-twelve-month tax returns and bank statements.",
+      why:  "Add-backs of the magnitude implied by reported margins typically warrant CPA-prepared quality-of-earnings work before lender submission.",
+    });
   }
 
-  // Sensitivity present → stress-test debt
+  // Sensitivity present → stress-test debt service
   if (snap.sensitivity) {
-    out.push("Stress-test debt service under normalized earnings assumptions to confirm coverage durability.");
+    out.push({
+      lead: "Stress-test debt service under normalized earnings assumptions.",
+      why:  "Coverage durability — not just headline DSCR — drives both lender comfort and the buyer's downside protection in the first twenty-four months post-close.",
+    });
   }
 
   // Sources & uses imbalance
   if (snap.deal_structure && !snap.deal_structure.sources_uses.balanced) {
-    out.push("Reconcile sources & uses imbalance before submission to lender.");
+    out.push({
+      lead: "Reconcile sources & uses imbalance before lender submission.",
+      why:  "Lenders will not engage on a stack that does not balance; this is a gating item, not a diligence subtopic.",
+    });
   }
 
   // Working capital not provided or zero → call out
   if (snap.deal_structure && (snap.deal_structure.sources_uses.working_capital_needed === 0)) {
-    out.push("Confirm working capital requirements at close; current model assumes zero working capital need.");
+    out.push({
+      lead: "Confirm working capital requirements at close.",
+      why:  "The current model assumes no working capital need; absent verification, this is the most common source of post-close cash crunch in lower-middle-market acquisitions.",
+    });
   }
 
   // High LTV
   if (snap.deal_structure) {
     const ltv = snap.deal_structure.metrics.find(m => m.key === "ltv");
     if (ltv && ltv.value !== null && ltv.value > 0.85) {
-      out.push("Review lender appetite for elevated LTV and prepare for possible equity injection requirement.");
+      out.push({
+        lead: "Review lender appetite for elevated LTV early in the process.",
+        why:  "An equity injection requirement at term-sheet stage is materially less disruptive than discovering one during final underwriting.",
+      });
     }
   }
 
@@ -2426,25 +2665,31 @@ function buildDiligencePriorities(
   if (invTurnover && invTurnover.deal_value !== null && invTurnover.industry_median !== null) {
     const ratio = invTurnover.deal_value / invTurnover.industry_median;
     if (ratio > 5 || ratio < 0.2) {
-      out.push("Verify inventory accounting basis; reported turnover differs materially from peer norms.");
+      out.push({
+        lead: "Verify inventory accounting basis against peer norms.",
+        why:  "Reported turnover differs materially from industry medians; reconciliation determines whether this reflects operational distinction or accounting treatment.",
+      });
     }
   }
 
-  // Customer concentration is a standard line for any deal under intense scrutiny
+  // Customer concentration as a standard line for any deal under scrutiny
   const hasMaterialRisk =
     snap.tension_indicator !== null ||
     snap.risk_flags.some(f => f.severity === "high");
   if (hasMaterialRisk && out.length < 5) {
-    out.push("Confirm transferability of key customer contracts and supplier relationships post-close.");
+    out.push({
+      lead: "Confirm transferability of key customer contracts and supplier relationships.",
+      why:  "For deals carrying elevated risk markers, contract-by-contract review of post-close consent requirements becomes a standard committee expectation.",
+    });
   }
 
-  // Append Sonnet additions (capped at 2 by validator)
+  // Append Sonnet additions as lead-only entries (no rationale prose generated)
   if (prose?.page7_diligence_additions) {
     for (const add of prose.page7_diligence_additions) {
       if (out.length >= 6) break;
-      // De-dupe against deterministic core by simple substring match
-      if (!out.some(existing => similarItem(existing, add))) {
-        out.push(add);
+      // De-dupe against deterministic core by lead substring match
+      if (!out.some(existing => similarItem(existing.lead, add))) {
+        out.push({ lead: normalizeLead(add), why: null });
       }
     }
   }
@@ -2456,7 +2701,7 @@ function buildDiligencePriorities(
 function similarItem(a: string, b: string): boolean {
   const aLower = a.toLowerCase();
   const bLower = b.toLowerCase();
-  // If one is a clear substring or shares a high-signal phrase, treat as similar
+  // If both share a high-signal phrase, treat as similar
   const phrases = ["add-back", "add back", "sources & uses", "sources and uses", "working capital", "ltv", "loan-to-value", "stress-test", "stress test"];
   for (const p of phrases) {
     if (aLower.includes(p) && bLower.includes(p)) return true;
