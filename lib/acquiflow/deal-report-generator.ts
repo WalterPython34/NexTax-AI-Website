@@ -528,203 +528,213 @@ function drawPage1(doc: jsPDF, data: DealReportData, decision: DecisionLayerResu
   newPage(doc, 1, "Executive Snapshot", true);
   const { inputs } = data;
 
-  let y = 70;
+  let y = 78;
 
-  // Eyebrow
+  // ─── EYEBROW ─────────────────────────────────────────────────────────
+  // Small navy uppercase label. Restrained — no mark, no decoration.
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(8);
+  doc.setFontSize(7.5);
   setHex(doc, COLOR.indigo, "text");
   doc.text("EXECUTIVE SNAPSHOT", M, y);
-  y += 16;
+  y += 18;
 
-  // Deal title
+  // ─── DEAL TITLE ──────────────────────────────────────────────────────
+  // Industry label as the primary deal identifier. Larger than before
+  // (18 vs 16) and given more breathing room.
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(16);
+  doc.setFontSize(18);
   setHex(doc, COLOR.textPrimary, "text");
   doc.text(inputs.industry_label || "Untitled Deal", M, y);
-  y += 13;
+  y += 14;
 
-  // Subtitle
+  // ─── SUBTITLE ────────────────────────────────────────────────────────
+  // Location · industry · generated-date. Slate, smaller, more space below.
   const locParts = [inputs.city, inputs.state].filter(Boolean).join(", ");
   const subtitleParts = [
     locParts || null,
-    inputs.industry_label,
     `Generated ${data.generated_at.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}`,
   ].filter(Boolean);
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(8.5);
-  setHex(doc, COLOR.textDim, "text");
+  doc.setFontSize(9);
+  setHex(doc, COLOR.textMuted, "text");
   doc.text(subtitleParts.join(" \u00B7 "), M, y);
-  y += 18;
+  y += 36;   // generous whitespace before the hero block
 
-  // ─── DECISION BAR ──────────────────────────────────────────────────────
+  // ─── HERO BLOCK (DOMINANT) ───────────────────────────────────────────
+  // Two-anchor layout: Recommendation word on left, Target range on right.
+  // Both at L1+ size. No fill, no border — typography carries the weight.
+  // This is the visual cover of the report.
   const recColor =
     decision.recommendation === "PURSUE"      ? COLOR.emerald :
     decision.recommendation === "INVESTIGATE" ? COLOR.amber :
     decision.recommendation === "RESTRUCTURE" ? COLOR.orange :
                                                  COLOR.red;
-  const barH = 50;
-  setHex(doc, COLOR.emeraldDark, "fill");
-  doc.rect(M, y, CW, barH, "F");
-  setHex(doc, recColor, "draw");
-  doc.setLineWidth(0.8);
-  doc.rect(M, y, CW, barH, "S");
 
-  // 5 fields, each separated by a thin divider
-  const fieldW = CW / 5;
-  const labelY = y + 14;
-  const valueY = y + 33;
-
-  const decisionFields: [string, string, string][] = [
-    ["RECOMMENDATION", decision.recommendation, recColor],
-    ["TARGET PRICE",   `${fmtUsd(decision.target_price_low)}-${fmtUsd(decision.target_price_high)}`, COLOR.textPrimary],
-    ["CONFIDENCE",     decision.confidence, decision.confidence === "High" ? COLOR.emerald : decision.confidence === "Medium" ? COLOR.amber : COLOR.orange],
-    ["LEVERAGE",       decision.leverage,    decision.leverage === "STRONG" ? COLOR.indigo : decision.leverage === "MODERATE" ? COLOR.amber : COLOR.orange],
-    ["LENDER READY",   decision.lender_readiness === "FAIL" ? "Fail" : decision.lender_readiness === "CONDITIONAL" ? "Conditional" : "Pass OK", decision.lender_readiness === "FAIL" ? COLOR.red : decision.lender_readiness === "CONDITIONAL" ? COLOR.amber : COLOR.emerald],
-  ];
-
-  decisionFields.forEach((field, i) => {
-    const fx = M + i * fieldW;
-    // Divider (right edge of all but last)
-    if (i < decisionFields.length - 1) {
-      setHex(doc, "#E2E8F0", "draw");
-      doc.setLineWidth(0.4);
-      doc.line(fx + fieldW, y + 8, fx + fieldW, y + barH - 8);
-    }
-    // Label
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(6);
-    setHex(doc, COLOR.textDim, "text");
-    doc.text(field[0], fx + 8, labelY);
-    // Value
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(11);
-    setHex(doc, field[2], "text");
-    doc.text(field[1], fx + 8, valueY);
-  });
-
-  y += barH + 14;
-
-  // ─── VERDICT BANNER ────────────────────────────────────────────────────
-  const banH = 50;
-  setHex(doc, "#ECFDF5", "fill");
-  doc.rect(M, y, CW, banH, "F");
-  setHex(doc, COLOR.emerald, "draw");
-  doc.setLineWidth(0.6);
-  doc.rect(M, y, CW, banH, "S");
-
-  // Score circle
-  const scoreCx = M + 30;
-  const scoreCy = y + banH / 2;
-  const scoreR  = 17;
-  setHex(doc, "#ECFDF5", "fill");
-  doc.circle(scoreCx, scoreCy, scoreR, "F");
-  setHex(doc, COLOR.emerald, "draw");
-  doc.setLineWidth(1.5);
-  doc.circle(scoreCx, scoreCy, scoreR, "S");
-  doc.setFont("courier", "bold");
-  doc.setFontSize(15);
-  setHex(doc, COLOR.emerald, "text");
-  doc.text(String(inputs.overall_score), scoreCx, scoreCy + 2, { align: "center" });
+  // Left anchor: RECOMMENDATION
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(5);
-  doc.text("SCORE", scoreCx, scoreCy + 10, { align: "center" });
-
-  // Verdict text
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(8);
-  setHex(doc, COLOR.emerald, "text");
-  doc.text("VERDICT", M + 60, y + 17);
-  doc.setFontSize(13);
-  doc.text(verdictLabel(inputs.overall_score, decision.recommendation), M + 60, y + 31);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8);
+  doc.setFontSize(7);
   setHex(doc, COLOR.textDim, "text");
-  doc.text(verdictSubline(decision), M + 60, y + 42);
+  doc.text("RECOMMENDATION", M, y);
 
-  y += banH + 18;
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(28);
+  setHex(doc, recColor, "text");
+  doc.text(decision.recommendation, M, y + 30);
 
-  // ─── KEY METRICS ───────────────────────────────────────────────────────
-  drawSectionHeader(doc, M, y, "Key metrics");
-  y += 10;
+  // Right anchor: TARGET PRICE
+  const rightX = M + CW / 2 + 10;
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(7);
+  setHex(doc, COLOR.textDim, "text");
+  doc.text("TARGET PRICE", rightX, y);
 
-  const cellH = 32;
-  const cellGap = 4;
+  doc.setFont("courier", "bold");
+  doc.setFontSize(24);
+  setHex(doc, COLOR.textPrimary, "text");
+  const targetRange = `${fmtUsd(decision.target_price_low)}–${fmtUsd(decision.target_price_high)}`;
+  doc.text(targetRange, rightX, y + 30);
+
+  y += 38;
+
+  // ─── HERO METADATA STRIP ─────────────────────────────────────────────
+  // Score + Confidence + Leverage + Lender Ready as quiet inline text.
+  // Same data as the old decision bar, but visually subordinate to the
+  // hero. Comma-separated, single line, slate text.
+  const lenderReadyDisplay = decision.lender_readiness === "FAIL" ? "Fail"
+    : decision.lender_readiness === "CONDITIONAL" ? "Conditional"
+    : "Pass";
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(8.5);
+  setHex(doc, COLOR.textMuted, "text");
+  const metaParts = [
+    `Score ${inputs.overall_score}/100`,
+    `${decision.confidence} confidence`,
+    `${decision.leverage.toLowerCase().replace(/^\w/, c => c.toUpperCase())} leverage`,
+    `Lender ${lenderReadyDisplay.toLowerCase()}`,
+  ];
+  doc.text(metaParts.join("   ·   "), M, y);
+  y += 22;
+
+  // ─── VERDICT SUBLINE ─────────────────────────────────────────────────
+  // Single line of supporting context. Italic charcoal, restrained.
+  // This is the "thesis sentence" that supports the recommendation.
+  doc.setFont("helvetica", "italic");
+  doc.setFontSize(10);
+  setHex(doc, COLOR.textBody, "text");
+  doc.text(verdictSubline(decision), M, y);
+  y += 30;
+
+  // ─── HAIRLINE DIVIDER ────────────────────────────────────────────────
+  setHex(doc, COLOR.borderSoft, "draw");
+  doc.setLineWidth(0.4);
+  doc.line(M, y, M + CW, y);
+  y += 24;
+
+  // ─── KEY METRICS (subordinate strip) ─────────────────────────────────
+  // Same 8 metrics as before but rendered as a quiet 4-column grid with
+  // no per-cell borders or fills. Whitespace separates the cells.
+  // Each cell: tiny uppercase label, then bold value below.
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(7.5);
+  setHex(doc, COLOR.indigo, "text");
+  doc.text("KEY METRICS", M, y);
+  y += 18;
+
   const cellsPerRow = 4;
-  const cellW = (CW - cellGap * (cellsPerRow - 1)) / cellsPerRow;
+  const cellW = CW / cellsPerRow;
+  const askGapPct = inputs.fair_value > 0
+    ? round(((inputs.asking_price - inputs.fair_value) / inputs.fair_value) * 100, 1)
+    : 0;
 
   const row1: [string, string, string][] = [
-    ["Asking",        fmtUsd(inputs.asking_price), COLOR.textPrimary],
-    ["Adj. SDE",      fmtUsd(inputs.usable_sde ?? inputs.sde), COLOR.textPrimary],
-    ["Multiple",      `${inputs.valuation_multiple.toFixed(2)}x`, COLOR.textPrimary],
+    ["Asking",        fmtUsd(inputs.asking_price),                                       COLOR.textPrimary],
+    ["Adj. SDE",      fmtUsd(inputs.usable_sde ?? inputs.sde),                          COLOR.textPrimary],
+    ["Multiple",      `${inputs.valuation_multiple.toFixed(2)}x`,                       COLOR.textPrimary],
     ["DSCR",          `${inputs.dscr.toFixed(2)}x`, inputs.dscr >= 1.5 ? COLOR.emerald : inputs.dscr >= 1.25 ? COLOR.amber : COLOR.red],
   ];
   row1.forEach((cell, i) => {
-    drawCell(doc, M + i * (cellW + cellGap), y, cellW, cellH, cell[0], cell[1], cell[2]);
+    const cx = M + i * cellW;
+    // Tiny uppercase label
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7);
+    setHex(doc, COLOR.textDim, "text");
+    doc.text(cell[0].toUpperCase(), cx, y);
+    // Bold value
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(13);
+    setHex(doc, cell[2], "text");
+    doc.text(cell[1], cx, y + 16);
   });
-  y += cellH + cellGap;
+  y += 38;
 
-  const askGapPct = inputs.fair_value > 0 ? round(((inputs.asking_price - inputs.fair_value) / inputs.fair_value) * 100, 1) : 0;
   const row2: [string, string, string][] = [
-    ["Fair value",     fmtUsd(inputs.fair_value), askGapPct < 0 ? COLOR.emerald : COLOR.textPrimary],
-    ["Valuation gap",  fmtPct(askGapPct), askGapPct < 0 ? COLOR.emerald : askGapPct > 15 ? COLOR.red : COLOR.textPrimary],
-    ["Percentile",     decision.pricing_insight.percentile_ordinal, COLOR.textPrimary],
-    ["Risk level",     inputs.risk_level, riskLevelColor(inputs.risk_level)],
+    ["Fair value",     fmtUsd(inputs.fair_value),                                           askGapPct < 0 ? COLOR.emerald : COLOR.textPrimary],
+    ["Valuation gap",  fmtPct(askGapPct),                                                   askGapPct < 0 ? COLOR.emerald : askGapPct > 15 ? COLOR.red : COLOR.textPrimary],
+    ["Percentile",     decision.pricing_insight.percentile_ordinal,                        COLOR.textPrimary],
+    ["Risk level",     inputs.risk_level,                                                    riskLevelColor(inputs.risk_level)],
   ];
   row2.forEach((cell, i) => {
-    drawCell(doc, M + i * (cellW + cellGap), y, cellW, cellH, cell[0], cell[1], cell[2]);
+    const cx = M + i * cellW;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7);
+    setHex(doc, COLOR.textDim, "text");
+    doc.text(cell[0].toUpperCase(), cx, y);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(13);
+    setHex(doc, cell[2], "text");
+    doc.text(cell[1], cx, y + 16);
   });
-  y += cellH + 16;
+  y += 36;
 
-  // ─── NEGOTIATION POSITIONING ──────────────────────────────────────────
-  drawSectionHeader(doc, M, y, "Negotiation positioning");
-  y += 10;
-
-  const negBoxY = y;
-  const negBoxH = 78;
-  setHex(doc, "#F8FAFC", "fill");
-  doc.rect(M, negBoxY, CW, negBoxH, "F");
-  setHex(doc, COLOR.indigo, "draw");
-  doc.setLineWidth(0.5);
-  doc.rect(M, negBoxY, CW, negBoxH, "S");
-
-  // Top row: leverage label
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(7);
-  setHex(doc, COLOR.textMuted, "text");
-  doc.text("BUYER LEVERAGE", M + 10, y + 13);
-  doc.setFontSize(11);
-  const leverageColor = decision.leverage === "STRONG" ? COLOR.indigo : decision.leverage === "MODERATE" ? COLOR.amber : COLOR.orange;
-  setHex(doc, leverageColor, "text");
-  doc.text(decision.leverage, PW - M - 10, y + 13, { align: "right" });
-
-  // Divider
-  setHex(doc, "#E2E8F0", "draw");
+  // ─── HAIRLINE DIVIDER ────────────────────────────────────────────────
+  setHex(doc, COLOR.borderSoft, "draw");
   doc.setLineWidth(0.4);
-  doc.line(M + 8, y + 19, PW - M - 8, y + 19);
+  doc.line(M, y, M + CW, y);
+  y += 24;
 
-  // Tactical posture box (inset, dark)
-  const postureY = y + 26;
-  const postureH = 44;
-  setHex(doc, "#F8FAFC", "fill");
-  doc.rect(M + 8, postureY, CW - 16, postureH, "F");
+  // ─── NEGOTIATION POSTURE (callout) ───────────────────────────────────
+  // Single block: navy left edge, no fill, no surrounding box.
+  // The posture text gets a small label header, then the prose itself.
+  // Italic body, charcoal, generous line-height.
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(6.5);
+  doc.setFontSize(7.5);
   setHex(doc, COLOR.indigo, "text");
-  doc.text("RECOMMENDED POSTURE", M + 14, postureY + 11);
-  drawWrappedText(doc, data.posture, M + 14, postureY + 22, CW - 28, 9, COLOR.textPrimary, 1.3, "italic");
+  doc.text("NEGOTIATION POSTURE", M, y);
+  y += 16;
 
-  y += negBoxH + 14;
+  // Navy left edge — the whole posture block aligns to it
+  const postureLines = doc.splitTextToSize(data.posture, CW - 16);
+  const postureLineHeight = 13;
+  const postureBlockH = postureLines.length * postureLineHeight + 4;
 
-  // ─── INVESTMENT TAKE ──────────────────────────────────────────────────
-  drawSectionHeader(doc, M, y, "Investment take");
-  y += 10;
-
-  // Italic body w/ left bar
   setHex(doc, COLOR.indigo, "fill");
-  doc.rect(M, y - 3, 1.5, 38, "F");
+  doc.rect(M, y - 6, 2, postureBlockH, "F");
+
+  doc.setFont("helvetica", "italic");
+  doc.setFontSize(10);
+  setHex(doc, COLOR.textBody, "text");
+  postureLines.forEach((line: string, i: number) => {
+    doc.text(line, M + 12, y + 4 + i * postureLineHeight);
+  });
+  y += postureBlockH + 16;
+
+  // ─── INVESTMENT TAKE ─────────────────────────────────────────────────
+  // Final supporting paragraph. No left edge — just label + body.
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(7.5);
+  setHex(doc, COLOR.indigo, "text");
+  doc.text("INVESTMENT TAKE", M, y);
+  y += 14;
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9.5);
+  setHex(doc, COLOR.textBody, "text");
   const take = buildInvestmentTake(decision, inputs);
-  drawWrappedText(doc, take, M + 8, y + 7, CW - 16, 9, COLOR.textBody, 1.5, "italic");
+  const takeLines = doc.splitTextToSize(take, CW);
+  takeLines.forEach((line: string, i: number) => {
+    doc.text(line, M, y + i * 13);
+  });
 }
 
 // ─── PAGE 2 — FINANCIAL UNDERWRITING ────────────────────────────────────
@@ -2530,28 +2540,31 @@ function drawPage8(
 
   newPage(doc, 8, "Investment Committee Summary");
 
-  let y = 70;
+  let y = 78;
+
+  // ─── Eyebrow ─────────────────────────────────────────────────────────
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(7.5);
+  setHex(doc, COLOR.indigo, "text");
+  doc.text("INVESTMENT COMMITTEE SUMMARY", M, y);
+  y += 18;
 
   // ─── Page title ──────────────────────────────────────────────────────
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(8);
-  setHex(doc, COLOR.indigo, "text");
-  doc.text("INVESTMENT COMMITTEE SUMMARY", M, y);
-  y += 14;
-
-  doc.setFontSize(14);
+  doc.setFontSize(15);
   setHex(doc, COLOR.textPrimary, "text");
   doc.text("Synthesized recommendation memorandum", M, y);
-  y += 13;
+  y += 14;
 
+  // ─── Subtitle ────────────────────────────────────────────────────────
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(8.5);
-  setHex(doc, COLOR.textDim, "text");
+  doc.setFontSize(9);
+  setHex(doc, COLOR.textMuted, "text");
   doc.text(
-    "Single-page narrative integration of merits, risks, financing outlook, and recommended path forward.",
+    "Single-page integration of merits, risks, financing outlook, and recommended path forward.",
     M, y,
   );
-  y += 22;
+  y += 30;
 
   const memo = prose.page8_memo;
   const sections = [
@@ -2562,21 +2575,39 @@ function drawPage8(
     { key: "recommended_path_forward", title: "Recommended Path Forward", section: memo.recommended_path_forward },
   ];
 
-  // Render each section
-  for (const s of sections) {
+  // Render each section with generous spacing.
+  // 22pt between sections (was 14pt) — institutional whitespace rhythm.
+  for (let i = 0; i < sections.length; i++) {
     if (y > PH - 80) break;
+    const s = sections[i];
     y = drawCommitteeMemoSection(doc, y, s.title, s.section);
-    y += 14;
+
+    // Section spacer with optional hairline divider for the first 4 (not the last)
+    if (i < sections.length - 1 && y < PH - 100) {
+      y += 12;
+      setHex(doc, COLOR.borderSoft, "draw");
+      doc.setLineWidth(0.3);
+      doc.line(M, y, M + CW, y);
+      y += 14;
+    } else {
+      y += 22;
+    }
   }
 }
 
 /**
  * Render a single Page-8 section with structured-prose layout:
- *   [Indigo header]
- *   [Bold lead sentence]
- *   [Supporting paragraph]   [Pull-quote box on right]
+ *   [Section header — uppercase navy, no decorative mark]
+ *   [Bold lead sentence — strongest contrast on the page]
+ *   [Supporting paragraph]   [Pull quote — navy edge only, no fill]
  *
  * Returns the new y position after the section.
+ *
+ * Page 8 polish (commit 2):
+ *   - Section marks dropped — typography carries the structure
+ *   - Lead sentence increased to L3 (11pt bold charcoal-black)
+ *   - Body line height increased from 11 to 13
+ *   - Pull quote soft: navy left edge only, white fill, more breathing room
  */
 function drawCommitteeMemoSection(
   doc: jsPDF,
@@ -2584,68 +2615,66 @@ function drawCommitteeMemoSection(
   title: string,
   section: CommitteeMemoSection,
 ): number {
-  // Section header — small indigo institutional style
+  // Section header — uppercase navy, no mark, no underline. Typography only.
   doc.setFont("helvetica", "bold");
   doc.setFontSize(8);
   setHex(doc, COLOR.indigo, "text");
   doc.text(title.toUpperCase(), M, y);
+  y += 16;
 
-  // Indigo underline accent
-  setHex(doc, COLOR.indigo, "draw");
-  doc.setLineWidth(0.6);
-  doc.line(M, y + 3, M + 24, y + 3);
-  y += 14;
-
-  // Pull-quote box on the right
+  // Pull-quote zone reserved on the right
   const pullQuoteW = 160;
-  const proseW = CW - pullQuoteW - 16;
+  const proseW = CW - pullQuoteW - 24;
 
-  // Bold lead sentence
+  // Bold lead sentence — increased contrast (charcoal-black) and size
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(10);
+  doc.setFontSize(11);
   setHex(doc, COLOR.textPrimary, "text");
   const leadLines = doc.splitTextToSize(section.lead, proseW);
+  const leadLineHeight = 14;
   leadLines.slice(0, 3).forEach((line: string, i: number) => {
-    doc.text(line, M, y + i * 13);
+    doc.text(line, M, y + i * leadLineHeight);
   });
-  let proseY = y + Math.min(leadLines.length, 3) * 13 + 6;
+  let proseY = y + Math.min(leadLines.length, 3) * leadLineHeight + 8;
 
-  // Supporting paragraph
+  // Supporting paragraph — generous line height for editorial feel
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(9);
+  doc.setFontSize(9.5);
   setHex(doc, COLOR.textBody, "text");
   const bodyLines = doc.splitTextToSize(section.body, proseW);
+  const bodyLineHeight = 13;
   bodyLines.slice(0, 6).forEach((line: string, i: number) => {
-    doc.text(line, M, proseY + i * 11);
+    doc.text(line, M, proseY + i * bodyLineHeight);
   });
-  proseY += Math.min(bodyLines.length, 6) * 11;
+  proseY += Math.min(bodyLines.length, 6) * bodyLineHeight;
 
-  // Pull-quote box (right side, vertically centered against prose block)
+  // Pull quote — navy left edge only, no fill, no border. Editorial feel.
   if (section.pull_quote) {
     const pullQuoteX = M + CW - pullQuoteW;
+    const pullQuoteY = y - 2;
     const pullQuoteH = 50;
-    const pullQuoteY = y - 4;   // align with lead sentence top
 
-    setHex(doc, "#F8FAFC", "fill");
-    doc.rect(pullQuoteX, pullQuoteY, pullQuoteW, pullQuoteH, "F");
+    // Navy left edge — single 2pt rule
     setHex(doc, COLOR.indigo, "fill");
-    doc.rect(pullQuoteX, pullQuoteY, 3, pullQuoteH, "F");
+    doc.rect(pullQuoteX, pullQuoteY, 2, pullQuoteH, "F");
 
+    // Tiny label — "KEY METRIC" in slate, restrained
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(7);
-    setHex(doc, COLOR.indigo, "text");
+    doc.setFontSize(6.5);
+    setHex(doc, COLOR.textDim, "text");
     doc.text("KEY METRIC", pullQuoteX + 12, pullQuoteY + 14);
 
+    // The quote itself — bold charcoal-black, roomy line height
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(10);
+    doc.setFontSize(11);
     setHex(doc, COLOR.textPrimary, "text");
     const quoteLines = doc.splitTextToSize(section.pull_quote, pullQuoteW - 20);
     quoteLines.slice(0, 3).forEach((line: string, i: number) => {
-      doc.text(line, pullQuoteX + 12, pullQuoteY + 30 + i * 11);
+      doc.text(line, pullQuoteX + 12, pullQuoteY + 30 + i * 13);
     });
   }
 
-  return Math.max(proseY, y - 4 + 50);
+  return Math.max(proseY, y - 2 + 50);
 }
 
 // ─── Main entry: generatePDF() ──────────────────────────────────────────
