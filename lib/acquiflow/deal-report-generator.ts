@@ -696,6 +696,11 @@ function drawPage1(doc: jsPDF, data: DealReportData, decision: DecisionLayerResu
   y += SP.md - 2;
 
   // Navy left edge, no fill, no surrounding box.
+  // CRITICAL: set the draw font BEFORE splitTextToSize, otherwise lines wrap
+  // against the previously-set font (eyebrow bold 7.5pt) and overflow when
+  // drawn at italic 10pt.
+  doc.setFont("helvetica", "italic");
+  doc.setFontSize(10);
   const postureLines = doc.splitTextToSize(data.posture, CW - 16);
   const postureLineHeight = 13;
   const postureBlockH = postureLines.length * postureLineHeight + 4;
@@ -703,8 +708,6 @@ function drawPage1(doc: jsPDF, data: DealReportData, decision: DecisionLayerResu
   setHex(doc, COLOR.indigo, "fill");
   doc.rect(M, y - 6, 2, postureBlockH, "F");
 
-  doc.setFont("helvetica", "italic");
-  doc.setFontSize(10);
   setHex(doc, COLOR.textBody, "text");
   postureLines.forEach((line: string, i: number) => {
     doc.text(line, M + 12, y + 4 + i * postureLineHeight);
@@ -1211,7 +1214,11 @@ function drawPage4(doc: jsPDF, data: DealReportData, decision: DecisionLayerResu
   doc.rect(M - 2, y - 9, CW + 4, 14, "F");
   doc.setFont("helvetica", "bold");
   setHex(doc, COLOR.indigo, "text");
-  doc.text("\u25B6 This deal", cCols[0], y);
+  // No decorative glyph — the navy text + bold weight + faint background
+  // fill is enough emphasis for the row. Earlier versions used U+25B6
+  // (BLACK RIGHT-POINTING TRIANGLE) which jsPDF's Helvetica subset cannot
+  // render and which displayed as "%¶" in production output.
+  doc.text("This deal", cCols[0], y);
   doc.setFont("helvetica", "bold");
   doc.text(fmtUsd(inputs.revenue),                          cCols[1], y);
   doc.text(fmtUsd(inputs.usable_sde ?? inputs.sde),         cCols[2], y);
@@ -1243,39 +1250,34 @@ function drawPage5(doc: jsPDF, data: DealReportData, decision: DecisionLayerResu
   doc.text("Sequenced actions, pricing guidance, and walk-away discipline", M, y);
   y += 18;
 
-  // ─── RECOMMENDATION BANNER ────────────────────────────────────────────
+  // ─── RECOMMENDATION ──────────────────────────────────────────────────
+  // Editorial treatment, page-8 voice. Navy left edge anchors the finding;
+  // the recommendation color appears only on the recommendation text
+  // itself, not as a frame around it. No fill, no rectangle, no icon.
+  // (Earlier versions used a colored fill + Unicode arrow which jsPDF's
+  // default Helvetica subset cannot render — see the strikethrough-mark
+  // artifact in pre-fix outputs.)
   const recColor = decision.recommendation === "PURSUE"      ? COLOR.emerald :
                    decision.recommendation === "INVESTIGATE" ? COLOR.amber :
                    decision.recommendation === "RESTRUCTURE" ? COLOR.orange : COLOR.red;
-  const recBg    = decision.recommendation === "PURSUE"      ? "#ECFDF5"    :
-                   decision.recommendation === "INVESTIGATE" ? "#FFFBEB"    :
-                   decision.recommendation === "RESTRUCTURE" ? "#FFFBEB"    : "#FEF2F2";
-  const recH = 38;
-  setHex(doc, recBg, "fill");
-  doc.rect(M, y, CW, recH, "F");
-  setHex(doc, recColor, "draw");
-  doc.setLineWidth(0.6);
-  doc.rect(M, y, CW, recH, "S");
 
-  // Icon circle
-  setHex(doc, "#ECFDF5", "fill");
-  doc.circle(M + 22, y + recH / 2, 11, "F");
-  setHex(doc, recColor, "draw");
-  doc.setLineWidth(1);
-  doc.circle(M + 22, y + recH / 2, 11, "S");
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(13);
+  const recBlockH = 44;
+
+  // Navy left edge — single 1.5pt rule running the height of the block
+  setHex(doc, COLOR.indigo, "fill");
+  doc.rect(M, y, 1.5, recBlockH, "F");
+
+  // RECOMMENDATION eyebrow — slate small-caps
+  setType(doc, "label");
+  setHex(doc, COLOR.textDim, "text");
+  doc.text("RECOMMENDATION", M + 12, y + 12);
+
+  // The recommendation itself — hero-secondary in the recommendation color
+  setType(doc, "hero-secondary");
   setHex(doc, recColor, "text");
-  doc.text("\u2197", M + 22, y + recH / 2 + 4, { align: "center" });
+  doc.text(buildRecommendationLine(decision.recommendation), M + 12, y + 32);
 
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(7);
-  setHex(doc, recColor, "text");
-  doc.text("RECOMMENDATION", M + 42, y + 14);
-  doc.setFontSize(15);
-  doc.text(buildRecommendationLine(decision.recommendation), M + 42, y + 30);
-
-  y += recH + 12;
+  y += recBlockH + SP.lg;
 
   // ─── WALK-AWAY THRESHOLD ──────────────────────────────────────────────
   // Hairline-only treatment: top rule, label + value, supporting line,
@@ -1661,29 +1663,37 @@ function drawPage6(
   setHex(doc, COLOR.textDim, "text");
   doc.text("COMPOSITE", M, y);
 
+  // Score number — bold 28pt. Measure its width WHILE this font is set,
+  // before switching to L5 for the suffix, so getTextWidth returns the
+  // actual rendered width.
   doc.setFont("helvetica", "bold");
   doc.setFontSize(28);
   setHex(doc, scoreColor, "text");
   const scoreStr = snap.financial_score !== null ? String(snap.financial_score) : "\u2014";
+  const scoreNumWidth = snap.financial_score !== null ? doc.getTextWidth(scoreStr) : 24;
   doc.text(scoreStr, M, y + 36);
 
+  // " of 100" suffix — measured AFTER the score width was captured at
+  // the right font; placed with a small visual gap.
   setType(doc, "L5");
   setHex(doc, COLOR.textMuted, "text");
-  const scoreW = snap.financial_score !== null ? doc.getTextWidth(scoreStr) + 4 : 24;
-  doc.text("of 100", M + scoreW, y + 36);
+  doc.text("of 100", M + scoreNumWidth + 6, y + 36);
 
   // Right side: structured prose reading of the score
-  let proseY = y;
+  // Start the prose just below the COMPOSITE label so the lead sentence
+  // visually anchors against the score number's top edge rather than
+  // floating above it.
+  let proseY = y + 14;
 
   // Lead sentence — the score interpreted, not announced
   const scoreReading = buildScoreReading(snap, scoreStr);
   setType(doc, "L3");
   setHex(doc, COLOR.textPrimary, "text");
   const leadLines = doc.splitTextToSize(scoreReading.lead, proseColW);
-  leadLines.slice(0, 2).forEach((line: string, i: number) => {
+  leadLines.slice(0, 3).forEach((line: string, i: number) => {
     doc.text(line, proseColX, proseY + i * 14);
   });
-  proseY += Math.min(leadLines.length, 2) * 14 + 8;
+  proseY += Math.min(leadLines.length, 3) * 14 + 8;
 
   // Industry context as inline body prose
   const industryName = snap.industry_name ?? inputs.industry_label ?? null;
@@ -1848,37 +1858,38 @@ function drawPage6(
     setHex(doc, COLOR.textFaint, "text");
     doc.text("SBA / commercial minimum", metricsX, metricY);
 
-    // Left column: interpretation as the lead
+    // Interpretation — Sonnet-generated when available, deterministic
+    // fallback otherwise. Render as continuous body prose: trying to split
+    // into lead/body via sentence-boundary regex breaks on em-dash-heavy
+    // Sonnet output, so we keep the page-8 lead/body pattern out of this
+    // block and let the prose flow naturally beneath an INTERPRETATION
+    // eyebrow.
     const interpText = data.committeeProse?.page6_normalization_interpretation
       ?? buildDeterministicNormalizationInterp(snap.sensitivity, breaches);
 
     if (interpText) {
-      // Split the interpretation into lead (first sentence) + body (rest).
-      // This mirrors the page-8 lead/body pattern within a single block.
-      const { lead, body } = splitLeadAndBody(interpText);
+      // INTERPRETATION eyebrow — small navy uppercase
+      setType(doc, "label");
+      setHex(doc, COLOR.textDim, "text");
+      doc.text("INTERPRETATION", M, sensitivityTopY);
 
-      setType(doc, "L3");
-      setHex(doc, COLOR.textPrimary, "text");
-      const leadLines = doc.splitTextToSize(lead, proseW);
-      leadLines.slice(0, 3).forEach((line: string, i: number) => {
-        doc.text(line, M, sensitivityTopY + i * 14);
-      });
-      let bodyY = sensitivityTopY + Math.min(leadLines.length, 3) * 14 + 6;
-
-      if (body) {
-        setType(doc, "L4");
-        setHex(doc, COLOR.textBody, "text");
-        const bodyLines = doc.splitTextToSize(body, proseW);
-        bodyLines.slice(0, 5).forEach((line: string, i: number) => {
-          if (sensitivityTopY + (i * 13) > PH - 60) return;
-          doc.text(line, M, bodyY + i * 13);
-        });
-        bodyY += Math.min(bodyLines.length, 5) * 13;
+      // Body prose — set the font BEFORE measuring so wrap matches draw
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      setHex(doc, COLOR.textBody, "text");
+      const interpLines = doc.splitTextToSize(interpText, proseW);
+      const startY = sensitivityTopY + 16;
+      const maxLines = 8;
+      const linesShown = Math.min(interpLines.length, maxLines);
+      for (let i = 0; i < linesShown; i++) {
+        doc.text(interpLines[i], M, startY + i * 13);
       }
 
-      y = Math.max(bodyY, metricY);
+      // Place the cursor below whichever column extends further; add a
+      // generous gap so the page doesn't feel crowded at the bottom.
+      y = Math.max(startY + linesShown * 13, metricY) + SP.lg;
     } else {
-      y = metricY + SP.sm;
+      y = metricY + SP.lg;
     }
   }
 }
@@ -1896,25 +1907,37 @@ function buildScoreReading(
       lead: "Composite score unavailable — benchmark coverage was insufficient to produce a confident reading.",
     };
   }
+  // Indefinite article matches the leading digit's spoken sound:
+  //   8 → "eight" (vowel)         → "An 8…"
+  //   11, 18 → "eleven/eighteen"  → "An 11…", "An 18…"
+  // Everything else takes "A".
+  const article = scoreStartsWithVowelSound(scoreStr) ? "An" : "A";
   const s = snap.financial_score;
   if (s >= 75) {
     return {
-      lead: `A ${scoreStr}/100 composite places this profile in the upper band — durable across profitability, coverage, liquidity, and efficiency relative to industry norms.`,
+      lead: `${article} ${scoreStr}/100 composite places this profile in the upper band — durable across profitability, coverage, liquidity, and efficiency relative to industry norms.`,
     };
   }
   if (s >= 55) {
     return {
-      lead: `A ${scoreStr}/100 composite reads as broadly healthy — financial fundamentals align with industry expectations across most measured dimensions.`,
+      lead: `${article} ${scoreStr}/100 composite reads as broadly healthy — financial fundamentals align with industry expectations across most measured dimensions.`,
     };
   }
   if (s >= 35) {
     return {
-      lead: `A ${scoreStr}/100 composite reflects a mixed financial profile — strengths in some dimensions, but material gaps that warrant validation before underwriting.`,
+      lead: `${article} ${scoreStr}/100 composite reflects a mixed financial profile — strengths in some dimensions, but material gaps that warrant validation before underwriting.`,
     };
   }
   return {
-    lead: `A ${scoreStr}/100 composite signals meaningful weakness — the underlying metrics fall short of industry norms across multiple dimensions and require explanation before proceeding.`,
+    lead: `${article} ${scoreStr}/100 composite signals meaningful weakness — the underlying metrics fall short of industry norms across multiple dimensions and require explanation before proceeding.`,
   };
+}
+
+/** Numbers that take "an" rather than "a" when spoken aloud. */
+function scoreStartsWithVowelSound(scoreStr: string): boolean {
+  if (scoreStr === "8" || scoreStr.startsWith("8")) return true;   // eight, eighty, eighty-eight
+  if (scoreStr === "11" || scoreStr === "18") return true;          // eleven, eighteen
+  return false;
 }
 
 /**
@@ -2001,20 +2024,30 @@ function buildConsistencyTensions(
 /**
  * Map an interaction_insight rule key into a complete declarative sentence
  * suitable as a memo-style lead line. These are the rule names emitted by
- * the engine's risk-flags module.
+ * the engine's risk-flags / interactions module.
+ *
+ * If a new rule key surfaces that isn't in this map, we render a generic
+ * fallback rather than auto-title-casing the rule name — the latter
+ * produces awkward output like "Sde Outlier Dscr Dependency." which leaks
+ * implementation detail into the memo.
  */
 function humanizeInteractionRule(rule: string): string {
   const map: Record<string, string> = {
+    // Original rule names
     sde_validation_with_strong_dscr: "Reported coverage strength is contingent on an elevated SDE figure that warrants validation.",
     high_leverage_strong_cashflow:   "Capital structure carries elevated leverage despite reported cash flow strength.",
     weak_margin_strong_dscr:         "Reported coverage holds despite operating margins that read below peer norms.",
     multiple_validation_outliers:    "Multiple metrics sit in validation-outlier territory simultaneously.",
     risk_outlier_with_strong_score:  "A material risk outlier sits within an otherwise strong financial profile.",
+    // Rules surfaced from the engine in production
+    sde_outlier_dscr_dependency:     "Reported coverage strength may depend on an elevated SDE figure that warrants validation.",
+    high_ltv_with_context:           "Loan-to-value remains elevated relative to purchase price despite otherwise strong cash flow.",
   };
   if (map[rule]) return map[rule];
-  // Fallback: title-case the rule key and add a period so it still reads as a sentence
-  const titled = rule.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
-  return titled.endsWith(".") ? titled : `${titled}.`;
+  // Unknown rule — return a generic, memo-toned sentence rather than
+  // exposing the raw rule key as a title. This is the failsafe that
+  // prevents "Sde Outlier Dscr Dependency."-style leakage into the report.
+  return "Cross-metric tension surfaced during analysis warrants attention during diligence.";
 }
 
 /**
@@ -2123,7 +2156,7 @@ function drawPage7(
         ? STATUS_COLOR_MAP[metric.status_color]
         : { fill: "#F8FAFC", stroke: COLOR.borderSoft, text: COLOR.textMuted };
 
-      const rowH = 38;  // taller rows for breathing room (was 32)
+      const rowH = 34;  // moderate breathing room — Page 7 is space-constrained
 
       // Metric label
       setType(doc, "L4");
@@ -2155,7 +2188,7 @@ function drawPage7(
       doc.setLineWidth(0.3);
       doc.line(M, y, M + CW, y);
     }
-    y += SP.lg;
+    y += SP.md;
   }
 
   // ───────────────────────────────────────────────────────────────────────
@@ -2174,7 +2207,7 @@ function drawPage7(
     y += 16;
 
     const tableW = (CW - 16) / 2;
-    const rowH2 = 24;
+    const rowH2 = 21;
 
     // Uses (left)
     let leftY = y;
@@ -2256,7 +2289,7 @@ function drawPage7(
         `Sources & uses do not balance — ${gap > 0 ? "short" : "over"} by ${fmtUsd(Math.abs(gap))}. Resolve before lender submission.`,
         M, y,
       );
-      y += SP.lg;
+      y += SP.md;
     } else {
       y += SP.md;
     }
@@ -2283,7 +2316,7 @@ function drawPage7(
   doc.setFontSize(8);
   setHex(doc, COLOR.indigo, "text");
   doc.text("CREDIT COMMITTEE CONCERNS", M, y);
-  y += 18;
+  y += 14;
 
   const concerns = groupCommitteeConcerns(snap);
 
@@ -2297,19 +2330,19 @@ function drawPage7(
     );
     y += SP.lg;
   } else {
-    // Render up to 5 callout strips. Generous spacing between them.
-    const shown = concerns.slice(0, 5);
+    // Render up to 3 callout strips. Tighter inter-strip spacing than the
+    // page-8 sections to fit alongside diligence priorities below.
+    const shown = concerns.slice(0, 3);
     for (let i = 0; i < shown.length; i++) {
-      if (y > PH - 110) break;
       const c = shown[i];
 
       // Estimate strip height to know if we have room
       setType(doc, "L4");
       const bodyLines = doc.splitTextToSize(c.body, CW - 16);
-      const linesShown = Math.min(bodyLines.length, 3);
+      const linesShown = Math.min(bodyLines.length, 2);
       const stripH = 18 + 14 + linesShown * 13 + 4;  // eyebrow + lead + body lines
 
-      if (y + stripH > PH - 60) break;
+      if (y + stripH > PH - 110) break;  // leave room for diligence below
 
       // Navy left edge — single 1.5pt rule running the full height
       setHex(doc, COLOR.indigo, "fill");
@@ -2332,11 +2365,11 @@ function drawPage7(
       // Body — L4, supporting prose
       setType(doc, "L4");
       setHex(doc, COLOR.textBody, "text");
-      bodyLines.slice(0, 3).forEach((line: string, idx: number) => {
+      bodyLines.slice(0, 2).forEach((line: string, idx: number) => {
         doc.text(line, M + 12, y + 22 + leadH + 6 + idx * 13);
       });
 
-      y += 22 + leadH + 6 + linesShown * 13 + SP.md;
+      y += 22 + leadH + 6 + linesShown * 13 + SP.sm;
     }
   }
 
@@ -2345,13 +2378,13 @@ function drawPage7(
   // Each item: bold lead sentence + one line of muted italic context.
   // ───────────────────────────────────────────────────────────────────────
 
-  if (y > PH - 100) return;
-
+  // No upfront-bail — we rely on the per-item check below so at least the
+  // section header renders even when items don't fit.
   doc.setFont("helvetica", "bold");
   doc.setFontSize(8);
   setHex(doc, COLOR.indigo, "text");
   doc.text("RECOMMENDED DILIGENCE PRIORITIES", M, y);
-  y += 18;
+  y += 16;
 
   const priorities = buildDiligencePriorities(snap, data.committeeProse);
 
@@ -2366,46 +2399,63 @@ function drawPage7(
     return;
   }
 
-  // Show up to 5 priorities (saves vertical room for memo-style)
-  const shownPriorities = priorities.slice(0, 5);
+  // Show up to 4 priorities. Each item has a bold lead + optional italic
+  // why-line. If space is tight, drop the why-line for that item rather
+  // than skipping the priority entirely — the lead is what matters most.
+  const shownPriorities = priorities.slice(0, 4);
   for (let i = 0; i < shownPriorities.length; i++) {
-    if (y > PH - 60) break;
     const p = shownPriorities[i];
 
-    // Estimate height
-    setType(doc, "L4");
+    // Measure lead at the actual draw font (L4 bold) before splitting.
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
     const leadLines = doc.splitTextToSize(p.lead, CW - 24);
-    const whyLines = p.why ? doc.splitTextToSize(p.why, CW - 24) : [];
-    const itemH = Math.min(leadLines.length, 2) * 13 + (whyLines.length > 0 ? Math.min(whyLines.length, 2) * 12 + 4 : 0) + SP.sm;
 
-    if (y + itemH > PH - 50) break;
+    // Measure why at the actual draw font (italic 9pt) before splitting.
+    let whyLines: string[] = [];
+    if (p.why) {
+      doc.setFont("helvetica", "italic");
+      doc.setFontSize(9);
+      whyLines = doc.splitTextToSize(p.why, CW - 24);
+    }
+
+    const leadH = Math.min(leadLines.length, 2) * 13;
+    const fullWhyH = whyLines.length > 0 ? Math.min(whyLines.length, 2) * 12 + 2 : 0;
+    const leadOnlyH = 4 + leadH;
+    const fullItemH = 4 + leadH + fullWhyH;
+
+    // Bail only if we can't even fit the lead. Otherwise render lead +
+    // optional why depending on space.
+    if (y + leadOnlyH > PH - 50) break;
+    const renderWhy = whyLines.length > 0 && (y + fullItemH <= PH - 50);
 
     // Numbered marker — navy, modest
     setType(doc, "L3");
     setHex(doc, COLOR.indigo, "text");
     doc.text(`${i + 1}.`, M, y + 10);
 
-    // Lead — bold body
-    setType(doc, "L4");
+    // Lead — L4 bold
     doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
     setHex(doc, COLOR.textPrimary, "text");
     leadLines.slice(0, 2).forEach((line: string, idx: number) => {
       doc.text(line, M + 18, y + 10 + idx * 13);
     });
-    let nextY = y + 10 + Math.min(leadLines.length, 2) * 13;
+    let nextY = y + 10 + leadH;
 
-    // Why — italic muted, restrained
-    if (whyLines.length > 0) {
+    // Why — only when there's headroom
+    if (renderWhy) {
+      const whyShown = Math.min(whyLines.length, 2);
       doc.setFont("helvetica", "italic");
       doc.setFontSize(9);
       setHex(doc, COLOR.textMuted, "text");
       whyLines.slice(0, 2).forEach((line: string, idx: number) => {
         doc.text(line, M + 18, nextY + 2 + idx * 12);
       });
-      nextY += 2 + Math.min(whyLines.length, 2) * 12;
+      nextY += 2 + whyShown * 12;
     }
 
-    y = nextY + SP.md;
+    y = nextY + SP.sm;
   }
 }
 
