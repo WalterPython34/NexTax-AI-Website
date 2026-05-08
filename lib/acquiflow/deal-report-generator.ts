@@ -266,26 +266,43 @@ const SP = {
 } as const;
 
 // ─── Typography helpers ─────────────────────────────────────────────────
-// Five-level hierarchy. Use these wrappers instead of raw setFont/setFontSize
-// calls wherever possible. Keeps weight and size consistent across pages.
+// Unified Helvetica hierarchy. Use these levels everywhere — no off-scale
+// font sizes, no Courier, no ad-hoc setFontSize calls outside of these.
 //
-// L1: page title          — Helvetica bold 16
-// L2: section header      — Helvetica bold 9  (small caps via uppercase + tracking)
-// L3: lead sentence       — Helvetica bold 11
-// L4: body prose          — Helvetica normal 10
-// L5: muted/metadata      — Helvetica normal 8
+// Document-level levels:
+//   L1: page title          — Helvetica bold 16
+//   L2: section header      — Helvetica bold 9   (uppercase, navy)
+//   L3: lead sentence       — Helvetica bold 11
+//   L4: body prose          — Helvetica normal 10
+//   L5: muted/metadata      — Helvetica normal 8
+//
+// Specialized levels:
+//   eyebrow:       Helvetica bold 7.5  (small navy uppercase tag)
+//   label:         Helvetica bold 7    (all-caps tiny label above values)
+//   stat-medium:   Helvetica bold 14   (metric-strip values)
+//   stat-large:    Helvetica bold 28   (Page 6 score)
+//   hero-primary:  Helvetica bold 20   (Page 1 recommendation)
+//   hero-secondary:Helvetica bold 16   (Page 1 target range)
 
-function setType(doc: jsPDF, level: "L1" | "L2" | "L3" | "L4" | "L5" | "mono-lg" | "mono-md" | "mono-sm" | "label"): void {
+type TypeLevel =
+  | "L1" | "L2" | "L3" | "L4" | "L5"
+  | "eyebrow" | "label"
+  | "stat-medium" | "stat-large"
+  | "hero-primary" | "hero-secondary";
+
+function setType(doc: jsPDF, level: TypeLevel): void {
   switch (level) {
-    case "L1":      doc.setFont("helvetica", "bold");   doc.setFontSize(16); break;
-    case "L2":      doc.setFont("helvetica", "bold");   doc.setFontSize(9);  break;
-    case "L3":      doc.setFont("helvetica", "bold");   doc.setFontSize(11); break;
-    case "L4":      doc.setFont("helvetica", "normal"); doc.setFontSize(10); break;
-    case "L5":      doc.setFont("helvetica", "normal"); doc.setFontSize(8);  break;
-    case "label":   doc.setFont("helvetica", "bold");   doc.setFontSize(7);  break;
-    case "mono-lg": doc.setFont("courier",   "bold");   doc.setFontSize(20); break;
-    case "mono-md": doc.setFont("courier",   "bold");   doc.setFontSize(11); break;
-    case "mono-sm": doc.setFont("courier",   "normal"); doc.setFontSize(9);  break;
+    case "L1":             doc.setFont("helvetica", "bold");   doc.setFontSize(16);  break;
+    case "L2":             doc.setFont("helvetica", "bold");   doc.setFontSize(9);   break;
+    case "L3":             doc.setFont("helvetica", "bold");   doc.setFontSize(11);  break;
+    case "L4":             doc.setFont("helvetica", "normal"); doc.setFontSize(10);  break;
+    case "L5":             doc.setFont("helvetica", "normal"); doc.setFontSize(8);   break;
+    case "eyebrow":        doc.setFont("helvetica", "bold");   doc.setFontSize(7.5); break;
+    case "label":          doc.setFont("helvetica", "bold");   doc.setFontSize(7);   break;
+    case "stat-medium":    doc.setFont("helvetica", "bold");   doc.setFontSize(14);  break;
+    case "stat-large":     doc.setFont("helvetica", "bold");   doc.setFontSize(28);  break;
+    case "hero-primary":   doc.setFont("helvetica", "bold");   doc.setFontSize(20);  break;
+    case "hero-secondary": doc.setFont("helvetica", "bold");   doc.setFontSize(16);  break;
   }
 }
 
@@ -457,7 +474,7 @@ function drawCell(
   setHex(doc, COLOR.textDim, "text");
   doc.text(label.toUpperCase(), x + 7, y + 11);
   // Value
-  doc.setFont("courier", "bold");
+  doc.setFont("helvetica", "bold");
   doc.setFontSize(valueSize);
   setHex(doc, valueColor, "text");
   doc.text(value, x + 7, y + 24);
@@ -528,42 +545,36 @@ function drawPage1(doc: jsPDF, data: DealReportData, decision: DecisionLayerResu
   newPage(doc, 1, "Executive Snapshot", true);
   const { inputs } = data;
 
-  let y = 78;
+  let y = 70;
 
   // ─── EYEBROW ─────────────────────────────────────────────────────────
-  // Small navy uppercase label. Restrained — no mark, no decoration.
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(7.5);
+  setType(doc, "eyebrow");
   setHex(doc, COLOR.indigo, "text");
   doc.text("EXECUTIVE SNAPSHOT", M, y);
-  y += 18;
+  y += SP.md;
 
   // ─── DEAL TITLE ──────────────────────────────────────────────────────
-  // Industry label as the primary deal identifier. Larger than before
-  // (18 vs 16) and given more breathing room.
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(18);
+  setType(doc, "L1");
   setHex(doc, COLOR.textPrimary, "text");
   doc.text(inputs.industry_label || "Untitled Deal", M, y);
-  y += 14;
+  y += SP.md - 2;
 
   // ─── SUBTITLE ────────────────────────────────────────────────────────
-  // Location · industry · generated-date. Slate, smaller, more space below.
   const locParts = [inputs.city, inputs.state].filter(Boolean).join(", ");
   const subtitleParts = [
     locParts || null,
     `Generated ${data.generated_at.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}`,
   ].filter(Boolean);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(9);
+  setType(doc, "L5");
   setHex(doc, COLOR.textMuted, "text");
   doc.text(subtitleParts.join(" \u00B7 "), M, y);
-  y += 36;   // generous whitespace before the hero block
+  y += SP.lg;
 
-  // ─── HERO BLOCK (DOMINANT) ───────────────────────────────────────────
-  // Two-anchor layout: Recommendation word on left, Target range on right.
-  // Both at L1+ size. No fill, no border — typography carries the weight.
-  // This is the visual cover of the report.
+  // ─── HERO BLOCK ──────────────────────────────────────────────────────
+  // Two anchors: RECOMMENDATION (left, hero-primary 20pt) and
+  // TARGET PRICE (right, hero-secondary 16pt). Both Helvetica bold.
+  // No fill, no border — typography carries the weight.
+  // Restraint: this is a memo cover, not a presentation slide.
   const recColor =
     decision.recommendation === "PURSUE"      ? COLOR.emerald :
     decision.recommendation === "INVESTIGATE" ? COLOR.amber :
@@ -571,41 +582,35 @@ function drawPage1(doc: jsPDF, data: DealReportData, decision: DecisionLayerResu
                                                  COLOR.red;
 
   // Left anchor: RECOMMENDATION
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(7);
+  setType(doc, "label");
   setHex(doc, COLOR.textDim, "text");
   doc.text("RECOMMENDATION", M, y);
 
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(28);
+  setType(doc, "hero-primary");
   setHex(doc, recColor, "text");
-  doc.text(decision.recommendation, M, y + 30);
+  doc.text(decision.recommendation, M, y + 22);
 
   // Right anchor: TARGET PRICE
-  const rightX = M + CW / 2 + 10;
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(7);
+  const rightX = M + CW / 2 + SP.sm;
+  setType(doc, "label");
   setHex(doc, COLOR.textDim, "text");
   doc.text("TARGET PRICE", rightX, y);
 
-  doc.setFont("courier", "bold");
-  doc.setFontSize(24);
+  setType(doc, "hero-secondary");
   setHex(doc, COLOR.textPrimary, "text");
   const targetRange = `${fmtUsd(decision.target_price_low)}–${fmtUsd(decision.target_price_high)}`;
-  doc.text(targetRange, rightX, y + 30);
+  doc.text(targetRange, rightX, y + 22);
 
-  y += 38;
+  y += SP.lg + SP.sm;   // tighter than before — hero is restrained
 
   // ─── HERO METADATA STRIP ─────────────────────────────────────────────
-  // Score + Confidence + Leverage + Lender Ready as quiet inline text.
-  // Same data as the old decision bar, but visually subordinate to the
-  // hero. Comma-separated, single line, slate text.
+  // Score + Confidence + Leverage + Lender Ready as quiet inline metadata.
+  // Visually subordinate to the hero — slate, single line, comma-separated.
   const lenderReadyDisplay = decision.lender_readiness === "FAIL" ? "Fail"
     : decision.lender_readiness === "CONDITIONAL" ? "Conditional"
     : "Pass";
 
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8.5);
+  setType(doc, "L5");
   setHex(doc, COLOR.textMuted, "text");
   const metaParts = [
     `Score ${inputs.overall_score}/100`,
@@ -613,33 +618,29 @@ function drawPage1(doc: jsPDF, data: DealReportData, decision: DecisionLayerResu
     `${decision.leverage.toLowerCase().replace(/^\w/, c => c.toUpperCase())} leverage`,
     `Lender ${lenderReadyDisplay.toLowerCase()}`,
   ];
-  doc.text(metaParts.join("   ·   "), M, y);
-  y += 22;
+  doc.text(metaParts.join("   \u00B7   "), M, y);
+  y += SP.md;
 
   // ─── VERDICT SUBLINE ─────────────────────────────────────────────────
-  // Single line of supporting context. Italic charcoal, restrained.
-  // This is the "thesis sentence" that supports the recommendation.
+  // Single line of supporting context. Italic charcoal — the thesis sentence.
   doc.setFont("helvetica", "italic");
   doc.setFontSize(10);
   setHex(doc, COLOR.textBody, "text");
   doc.text(verdictSubline(decision), M, y);
-  y += 30;
+  y += SP.lg;
 
   // ─── HAIRLINE DIVIDER ────────────────────────────────────────────────
   setHex(doc, COLOR.borderSoft, "draw");
   doc.setLineWidth(0.4);
   doc.line(M, y, M + CW, y);
-  y += 24;
+  y += SP.lg;
 
-  // ─── KEY METRICS (subordinate strip) ─────────────────────────────────
-  // Same 8 metrics as before but rendered as a quiet 4-column grid with
-  // no per-cell borders or fills. Whitespace separates the cells.
-  // Each cell: tiny uppercase label, then bold value below.
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(7.5);
+  // ─── KEY METRICS ─────────────────────────────────────────────────────
+  // Quiet 4-column grid, no cell borders or fills. Labels above values.
+  setType(doc, "eyebrow");
   setHex(doc, COLOR.indigo, "text");
   doc.text("KEY METRICS", M, y);
-  y += 18;
+  y += SP.md;
 
   const cellsPerRow = 4;
   const cellW = CW / cellsPerRow;
@@ -647,26 +648,31 @@ function drawPage1(doc: jsPDF, data: DealReportData, decision: DecisionLayerResu
     ? round(((inputs.asking_price - inputs.fair_value) / inputs.fair_value) * 100, 1)
     : 0;
 
+  const renderMetricRow = (
+    cells: [string, string, string][],
+    rowY: number,
+  ): void => {
+    cells.forEach((cell, i) => {
+      const cx = M + i * cellW;
+      // Tiny uppercase label
+      setType(doc, "label");
+      setHex(doc, COLOR.textDim, "text");
+      doc.text(cell[0].toUpperCase(), cx, rowY);
+      // Stat-medium value below
+      setType(doc, "stat-medium");
+      setHex(doc, cell[2], "text");
+      doc.text(cell[1], cx, rowY + 16);
+    });
+  };
+
   const row1: [string, string, string][] = [
     ["Asking",        fmtUsd(inputs.asking_price),                                       COLOR.textPrimary],
     ["Adj. SDE",      fmtUsd(inputs.usable_sde ?? inputs.sde),                          COLOR.textPrimary],
     ["Multiple",      `${inputs.valuation_multiple.toFixed(2)}x`,                       COLOR.textPrimary],
     ["DSCR",          `${inputs.dscr.toFixed(2)}x`, inputs.dscr >= 1.5 ? COLOR.emerald : inputs.dscr >= 1.25 ? COLOR.amber : COLOR.red],
   ];
-  row1.forEach((cell, i) => {
-    const cx = M + i * cellW;
-    // Tiny uppercase label
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(7);
-    setHex(doc, COLOR.textDim, "text");
-    doc.text(cell[0].toUpperCase(), cx, y);
-    // Bold value
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(13);
-    setHex(doc, cell[2], "text");
-    doc.text(cell[1], cx, y + 16);
-  });
-  y += 38;
+  renderMetricRow(row1, y);
+  y += SP.lg + SP.sm;   // 32pt — room for label + value + breathing space
 
   const row2: [string, string, string][] = [
     ["Fair value",     fmtUsd(inputs.fair_value),                                           askGapPct < 0 ? COLOR.emerald : COLOR.textPrimary],
@@ -674,36 +680,22 @@ function drawPage1(doc: jsPDF, data: DealReportData, decision: DecisionLayerResu
     ["Percentile",     decision.pricing_insight.percentile_ordinal,                        COLOR.textPrimary],
     ["Risk level",     inputs.risk_level,                                                    riskLevelColor(inputs.risk_level)],
   ];
-  row2.forEach((cell, i) => {
-    const cx = M + i * cellW;
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(7);
-    setHex(doc, COLOR.textDim, "text");
-    doc.text(cell[0].toUpperCase(), cx, y);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(13);
-    setHex(doc, cell[2], "text");
-    doc.text(cell[1], cx, y + 16);
-  });
-  y += 36;
+  renderMetricRow(row2, y);
+  y += SP.lg + SP.sm;
 
   // ─── HAIRLINE DIVIDER ────────────────────────────────────────────────
   setHex(doc, COLOR.borderSoft, "draw");
   doc.setLineWidth(0.4);
   doc.line(M, y, M + CW, y);
-  y += 24;
+  y += SP.lg;
 
-  // ─── NEGOTIATION POSTURE (callout) ───────────────────────────────────
-  // Single block: navy left edge, no fill, no surrounding box.
-  // The posture text gets a small label header, then the prose itself.
-  // Italic body, charcoal, generous line-height.
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(7.5);
+  // ─── NEGOTIATION POSTURE ─────────────────────────────────────────────
+  setType(doc, "eyebrow");
   setHex(doc, COLOR.indigo, "text");
   doc.text("NEGOTIATION POSTURE", M, y);
-  y += 16;
+  y += SP.md - 2;
 
-  // Navy left edge — the whole posture block aligns to it
+  // Navy left edge, no fill, no surrounding box.
   const postureLines = doc.splitTextToSize(data.posture, CW - 16);
   const postureLineHeight = 13;
   const postureBlockH = postureLines.length * postureLineHeight + 4;
@@ -717,18 +709,15 @@ function drawPage1(doc: jsPDF, data: DealReportData, decision: DecisionLayerResu
   postureLines.forEach((line: string, i: number) => {
     doc.text(line, M + 12, y + 4 + i * postureLineHeight);
   });
-  y += postureBlockH + 16;
+  y += postureBlockH + SP.md;
 
   // ─── INVESTMENT TAKE ─────────────────────────────────────────────────
-  // Final supporting paragraph. No left edge — just label + body.
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(7.5);
+  setType(doc, "eyebrow");
   setHex(doc, COLOR.indigo, "text");
   doc.text("INVESTMENT TAKE", M, y);
-  y += 14;
+  y += SP.md - 2;
 
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(9.5);
+  setType(doc, "L4");
   setHex(doc, COLOR.textBody, "text");
   const take = buildInvestmentTake(decision, inputs);
   const takeLines = doc.splitTextToSize(take, CW);
@@ -817,7 +806,7 @@ function drawPage2(doc: jsPDF, data: DealReportData, decision: DecisionLayerResu
       doc.setFont("helvetica", "bold");
       setHex(doc, COLOR.textPrimary, "text");
       doc.text(row[0], colX[0], y);
-      doc.setFont("courier", "bold");
+      doc.setFont("helvetica", "bold");
       setHex(doc, COLOR.indigo, "text");
       doc.text(row[2], colX[2], y);
       doc.text(row[3], colX[3], y);
@@ -825,7 +814,7 @@ function drawPage2(doc: jsPDF, data: DealReportData, decision: DecisionLayerResu
       doc.setFont("helvetica", "normal");
       setHex(doc, COLOR.textBody, "text");
       doc.text(row[0], colX[0], y);
-      doc.setFont("courier", "normal");
+      doc.setFont("helvetica", "normal");
       setHex(doc, COLOR.textBody, "text");
       doc.text(row[1], colX[1], y);
       const isAmberDelta = row[2].startsWith("-") || row[3].startsWith("-");
@@ -893,7 +882,7 @@ function drawPage2(doc: jsPDF, data: DealReportData, decision: DecisionLayerResu
     const statusLabel = s.passed ? "PASS" : "FAIL";
     setHex(doc, COLOR.textBody, "text");
     doc.text(s.label, sCols[0], y);
-    doc.setFont("courier", "normal");
+    doc.setFont("helvetica", "normal");
     doc.text(fmtUsd(s.sde), sCols[1], y);
     setHex(doc, dscrColor, "text");
     doc.text(`${s.dscr.toFixed(2)}x`, sCols[2], y);
@@ -998,7 +987,7 @@ function drawPage3(doc: jsPDF, data: DealReportData, decision: DecisionLayerResu
     doc.setFontSize(6.5);
     setHex(doc, COLOR.textDim, "text");
     doc.text(c[0], cx, y + 56);
-    doc.setFont("courier", "bold");
+    doc.setFont("helvetica", "bold");
     doc.setFontSize(10);
     setHex(doc, c[2], "text");
     doc.text(c[1], cx, y + 70);
@@ -1006,24 +995,22 @@ function drawPage3(doc: jsPDF, data: DealReportData, decision: DecisionLayerResu
 }
 
 function drawRiskFlag(doc: jsPDF, x: number, y: number, w: number, flag: RiskFlag): number {
-  // Determine palette by severity
-  const palette = flag.severity === "HIGH"   ? { stripe: COLOR.red,    bg: "#FEF2F2", text: COLOR.redText,    badgeBg: COLOR.red,    badgeText: "#FFFFFF" } :
-                  flag.severity === "MEDIUM" ? { stripe: COLOR.orange, bg: "#FFFBEB", text: COLOR.orangeText, badgeBg: COLOR.orange, badgeText: "#FFFFFF" } :
-                                                { stripe: COLOR.amber,  bg: "#FFFBEB", text: COLOR.amberText,  badgeBg: COLOR.amber,  badgeText: "#FEF2F2" };
+  // Severity-driven palette. Background fill REMOVED — only the left stripe
+  // and badge text carry the semantic color. Cleaner, less dashboard-y.
+  const palette = flag.severity === "HIGH"   ? { stripe: COLOR.red,    text: COLOR.redText,    badgeBg: COLOR.red,    badgeText: "#FFFFFF" } :
+                  flag.severity === "MEDIUM" ? { stripe: COLOR.orange, text: COLOR.orangeText, badgeBg: COLOR.orange, badgeText: "#FFFFFF" } :
+                                                { stripe: COLOR.amber,  text: COLOR.amberText,  badgeBg: COLOR.amber,  badgeText: "#FFFFFF" };
 
   // Compute height based on detail wrapping
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8.5);
-  const detailLines = doc.splitTextToSize(flag.detail, w - 20);
+  setType(doc, "L4");
+  const detailLines = doc.splitTextToSize(flag.detail, w - 16);
   const baseH = 22;
-  const detailH = detailLines.length * 11;
-  const h = baseH + detailH + 8;
+  const detailH = detailLines.length * 12;
+  const h = baseH + detailH + 6;
 
-  // Background + left stripe
-  setHex(doc, palette.bg, "fill");
-  doc.rect(x, y, w, h, "F");
+  // Left stripe only — no fill, no surrounding box
   setHex(doc, palette.stripe, "fill");
-  doc.rect(x, y, 3, h, "F");
+  doc.rect(x, y, 2, h, "F");
 
   // Badge row
   let bx = x + 10;
@@ -1035,23 +1022,21 @@ function drawRiskFlag(doc: jsPDF, x: number, y: number, w: number, flag: RiskFla
   }
 
   // Headline
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(9);
-  setHex(doc, palette.text, "text");
+  setType(doc, "L3");
+  setHex(doc, COLOR.textPrimary, "text");
   doc.text(flag.headline, bx, y + 14);
 
   // Category right-aligned
+  setType(doc, "label");
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(6.5);
   setHex(doc, COLOR.textDim, "text");
-  doc.text(flag.category, x + w - 8, y + 14, { align: "right" });
+  doc.text(flag.category, x + w, y + 14, { align: "right" });
 
   // Detail
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8.5);
+  setType(doc, "L4");
   setHex(doc, COLOR.textBody, "text");
   detailLines.forEach((line: string, i: number) => {
-    doc.text(line, x + 10, y + 26 + i * 11);
+    doc.text(line, x + 10, y + 26 + i * 12);
   });
 
   return y + h;
@@ -1136,7 +1121,7 @@ function drawPage4(doc: jsPDF, data: DealReportData, decision: DecisionLayerResu
   doc.text("THIS DEAL",  M + CW / 4 - 50, statY);
   doc.text("PERCENTILE", M + CW / 2 - 30, statY);
   doc.text("POSITION",   M + (3 * CW) / 4 - 8, statY);
-  doc.setFont("courier", "bold");
+  doc.setFont("helvetica", "bold");
   doc.setFontSize(11);
   setHex(doc, COLOR.indigo, "text");
   doc.text(`${askMult.toFixed(2)}x`, M + CW / 4 - 50, statY + 12);
@@ -1207,7 +1192,7 @@ function drawPage4(doc: jsPDF, data: DealReportData, decision: DecisionLayerResu
     setHex(doc, COLOR.textBody, "text");
     const stateSuffix = c.state ? ` (${c.state})` : "";
     doc.text(`${c.industry_label}${stateSuffix}`, cCols[0], y);
-    doc.setFont("courier", "normal");
+    doc.setFont("helvetica", "normal");
     doc.text(fmtUsd(c.revenue), cCols[1], y);
     doc.text(fmtUsd(c.sde),     cCols[2], y);
     doc.text(`${c.multiple.toFixed(1)}x`, cCols[3], y);
@@ -1227,7 +1212,7 @@ function drawPage4(doc: jsPDF, data: DealReportData, decision: DecisionLayerResu
   doc.setFont("helvetica", "bold");
   setHex(doc, COLOR.indigo, "text");
   doc.text("\u25B6 This deal", cCols[0], y);
-  doc.setFont("courier", "bold");
+  doc.setFont("helvetica", "bold");
   doc.text(fmtUsd(inputs.revenue),                          cCols[1], y);
   doc.text(fmtUsd(inputs.usable_sde ?? inputs.sde),         cCols[2], y);
   doc.text(`${inputs.valuation_multiple.toFixed(2)}x`,      cCols[3], y);
@@ -1293,42 +1278,35 @@ function drawPage5(doc: jsPDF, data: DealReportData, decision: DecisionLayerResu
   y += recH + 12;
 
   // ─── WALK-AWAY THRESHOLD ──────────────────────────────────────────────
-  const waH = 50;
-  setHex(doc, "#FEF2F2", "fill");
-  doc.rect(M, y, CW, waH, "F");
+  // Hairline-only treatment: top rule, label + value, supporting line,
+  // bottom rule. No fill, no surrounding box, no icon.
   setHex(doc, COLOR.red, "draw");
-  doc.setLineWidth(1);
-  doc.rect(M, y, CW, waH, "S");
+  doc.setLineWidth(0.6);
+  doc.line(M, y, M + CW, y);
+  y += SP.md;
 
-  // Icon circle
-  setHex(doc, "#FEF2F2", "fill");
-  doc.circle(M + 22, y + waH / 2, 12, "F");
-  setHex(doc, COLOR.red, "draw");
-  doc.setLineWidth(1);
-  doc.circle(M + 22, y + waH / 2, 12, "S");
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(13);
+  setType(doc, "label");
   setHex(doc, COLOR.red, "text");
-  doc.text("\u00D7", M + 22, y + waH / 2 + 4, { align: "center" });
+  doc.text("WALK-AWAY THRESHOLD", M, y);
 
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(7);
+  setType(doc, "hero-secondary");
   setHex(doc, COLOR.red, "text");
-  doc.text("WALK-AWAY THRESHOLD", M + 42, y + 14);
-  doc.setFont("courier", "bold");
-  doc.setFontSize(15);
-  doc.text(fmtUsd(decision.walk_away_threshold), M + 42 + 130, y + 14);
+  doc.text(fmtUsd(decision.walk_away_threshold), M + CW, y, { align: "right" });
+  y += SP.md;
 
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8);
-  setHex(doc, COLOR.redText, "text");
+  setType(doc, "L5");
+  setHex(doc, COLOR.textBody, "text");
   const waLine = `Above ${fmtUsd(decision.walk_away_threshold)}, expected return falls below acceptable risk threshold. Do not proceed without structural changes \u2014 seller note, earn-out, or revised debt terms.`;
-  const waLines = doc.splitTextToSize(waLine, CW - 60);
+  const waLines = doc.splitTextToSize(waLine, CW);
   waLines.forEach((line: string, i: number) => {
-    doc.text(line, M + 42, y + 26 + i * 10);
+    doc.text(line, M, y + i * 11);
   });
+  y += waLines.length * 11 + SP.sm;
 
-  y += waH + 14;
+  setHex(doc, COLOR.borderSoft, "draw");
+  doc.setLineWidth(0.4);
+  doc.line(M, y, M + CW, y);
+  y += SP.lg;
 
   // ─── SUGGESTED ACTIONS ────────────────────────────────────────────────
   drawSectionHeader(doc, M, y, "Suggested actions (sequenced)");
@@ -1342,7 +1320,7 @@ function drawPage5(doc: jsPDF, data: DealReportData, decision: DecisionLayerResu
     setHex(doc, COLOR.indigo, "fill");
     doc.rect(M, y, 2, actH, "F");
 
-    doc.setFont("courier", "bold");
+    doc.setFont("helvetica", "bold");
     doc.setFontSize(8.5);
     setHex(doc, COLOR.indigo, "text");
     doc.text(String(i + 1).padStart(2, "0"), M + 8, y + 13);
@@ -1645,24 +1623,19 @@ function drawPage6(
   );
   y += 22;
 
-  // ─── SECTION 1 — Score Snapshot card ─────────────────────────────────
+  // ─── SECTION 1 — Score Snapshot ──────────────────────────────────────
+  // Hairline-only treatment: subtle bottom rule under the three-column block,
+  // no surrounding box, no fill. Whitespace separates columns.
   drawSectionHeader(doc, M, y, "Financial score snapshot");
-  y += 14;
+  y += SP.md;
 
-  const snapshotBoxH = 92;
-  setHex(doc, "#F8FAFC", "fill");
-  doc.rect(M, y, CW, snapshotBoxH, "F");
-  setHex(doc, COLOR.borderSoft, "draw");
-  doc.setLineWidth(0.5);
-  doc.rect(M, y, CW, snapshotBoxH, "S");
-
+  const snapshotBoxH = 92;   // visual block height — used for column layout, not rendered as a box
   const colW = CW / 3;
 
   // Left column: big score
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(7);
+  setType(doc, "label");
   setHex(doc, COLOR.textDim, "text");
-  doc.text("FINANCIAL SCORE", M + 16, y + 18);
+  doc.text("FINANCIAL SCORE", M, y + 8);
 
   const scoreColor =
     snap.financial_score === null ? COLOR.textDim
@@ -1671,69 +1644,69 @@ function drawPage6(
     : snap.financial_score >= 35   ? COLOR.amber
     :                                COLOR.red;
 
-  doc.setFont("courier", "bold");
-  doc.setFontSize(36);
+  // Big score number — Helvetica bold (no Courier), large but not shouting.
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(32);
   setHex(doc, scoreColor, "text");
   const scoreStr = snap.financial_score !== null ? String(snap.financial_score) : "\u2014";
-  doc.text(scoreStr, M + 16, y + 56);
+  doc.text(scoreStr, M, y + 46);
 
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8);
+  // " / 100" suffix
+  setType(doc, "L5");
   setHex(doc, COLOR.textDim, "text");
-  const scoreW = snap.financial_score !== null ? doc.getTextWidth(scoreStr) + 6 : 24;
-  doc.text("/ 100", M + 16 + scoreW, y + 56);
+  const scoreW = snap.financial_score !== null ? doc.getTextWidth(scoreStr) + 4 : 24;
+  doc.text("/ 100", M + scoreW, y + 46);
 
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(7);
+  setType(doc, "L5");
   setHex(doc, COLOR.textMuted, "text");
-  doc.text("Composite of profitability, coverage,", M + 16, y + 72);
-  doc.text("liquidity, and efficiency",              M + 16, y + 82);
+  doc.text("Composite of profitability, coverage,", M, y + 64);
+  doc.text("liquidity, and efficiency",              M, y + 74);
 
   // Center column: industry context
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(7);
+  setType(doc, "label");
   setHex(doc, COLOR.textDim, "text");
-  doc.text("INDUSTRY CONTEXT", M + colW + 16, y + 18);
+  doc.text("INDUSTRY CONTEXT", M + colW, y + 8);
 
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(11);
+  setType(doc, "L3");
   setHex(doc, COLOR.textPrimary, "text");
   const industryName = snap.industry_name ?? inputs.industry_label ?? "\u2014";
-  const industryLines = doc.splitTextToSize(industryName, colW - 32);
+  const industryLines = doc.splitTextToSize(industryName, colW - 16);
   industryLines.slice(0, 2).forEach((line: string, i: number) => {
-    doc.text(line, M + colW + 16, y + 38 + i * 14);
+    doc.text(line, M + colW, y + 26 + i * 14);
   });
 
   if (snap.naics_code) {
-    doc.setFont("courier", "normal");
-    doc.setFontSize(8);
+    setType(doc, "L5");
     setHex(doc, COLOR.textMuted, "text");
     doc.text(
       `NAICS ${snap.naics_code}`,
-      M + colW + 16,
-      y + 38 + Math.min(industryLines.length, 2) * 14 + 4,
+      M + colW,
+      y + 26 + Math.min(industryLines.length, 2) * 14 + 4,
     );
   }
 
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(7);
+  setType(doc, "L5");
   setHex(doc, COLOR.textDim, "text");
-  doc.text(`Benchmark year: ${snap.benchmark_year}`, M + colW + 16, y + 82);
+  doc.text(`Benchmark year: ${snap.benchmark_year}`, M + colW, y + 74);
 
   // Right column: top drivers
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(7);
+  setType(doc, "label");
   setHex(doc, COLOR.textDim, "text");
-  doc.text("TOP DRIVERS", M + colW * 2 + 16, y + 18);
+  doc.text("TOP DRIVERS", M + colW * 2, y + 8);
 
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8.5);
+  setType(doc, "L4");
   setHex(doc, COLOR.textBody, "text");
   snap.score_drivers.slice(0, 3).forEach((driver, i) => {
-    doc.text(`\u2022  ${driver}`, M + colW * 2 + 16, y + 38 + i * 13);
+    doc.text(`\u2022  ${driver}`, M + colW * 2, y + 26 + i * 13);
   });
 
-  y += snapshotBoxH + 6;
+  y += snapshotBoxH;
+
+  // Subtle bottom hairline — closes the section visually without a box
+  setHex(doc, COLOR.borderSoft, "draw");
+  doc.setLineWidth(0.4);
+  doc.line(M, y, M + CW, y);
+  y += SP.sm;
 
   // ─── Score caveats — subdued footer line under the card ──────────────
   if (snap.score_risk_dependencies && snap.score_risk_dependencies.length > 0) {
@@ -1831,88 +1804,83 @@ function drawPage6(
   }
 
   // ─── SECTION 3 — Normalization Sensitivity ───────────────────────────
+  // Hairline-only treatment: subtle bottom rule, no surrounding box.
+  // Status edge (red/amber) becomes a thin top accent rule instead of left bar.
   if (snap.sensitivity && y < PH - 220) {
     drawSectionHeader(doc, M, y, "Normalization sensitivity");
-    y += 14;
+    y += SP.md;
 
     const breaches = snap.sensitivity.normalized_dscr !== null && snap.sensitivity.normalized_dscr < 1.30;
 
-    // Three-row comparison block — visually emphasized per spec
-    // Reported DSCR | Normalized DSCR | Lender Threshold
-    const compH = 92;
-    setHex(doc, "#F8FAFC", "fill");
-    doc.rect(M, y, CW, compH, "F");
-    setHex(doc, breaches ? COLOR.red : COLOR.amber, "fill");
-    doc.rect(M, y, 3, compH, "F");
+    // Subtle status accent above the comparison block
+    setHex(doc, breaches ? COLOR.red : COLOR.amber, "draw");
+    doc.setLineWidth(1.0);
+    doc.line(M, y - 4, M + 24, y - 4);
 
+    const compH = 84;
     const colW2 = CW / 3;
 
     // Reported DSCR
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(7);
+    setType(doc, "label");
     setHex(doc, COLOR.textDim, "text");
-    doc.text("REPORTED DSCR", M + 16, y + 18);
+    doc.text("REPORTED DSCR", M, y + 8);
 
-    doc.setFont("courier", "bold");
-    doc.setFontSize(28);
+    setType(doc, "stat-large");
     setHex(doc, COLOR.textPrimary, "text");
-    doc.text(fmtRatio(snap.sensitivity.reported_dscr), M + 16, y + 50);
+    doc.text(fmtRatio(snap.sensitivity.reported_dscr), M, y + 40);
 
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(7);
+    setType(doc, "L5");
     setHex(doc, COLOR.textMuted, "text");
-    doc.text("Under seller-reported", M + 16, y + 68);
-    doc.text("earnings",               M + 16, y + 78);
+    doc.text("Under seller-reported", M, y + 58);
+    doc.text("earnings",               M, y + 68);
 
     // Normalized DSCR
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(7);
+    setType(doc, "label");
     setHex(doc, COLOR.textDim, "text");
-    doc.text("NORMALIZED DSCR", M + colW2 + 16, y + 18);
+    doc.text("NORMALIZED DSCR", M + colW2, y + 8);
 
-    doc.setFont("courier", "bold");
-    doc.setFontSize(28);
+    setType(doc, "stat-large");
     setHex(doc, breaches ? COLOR.redText : COLOR.amberText, "text");
-    doc.text(fmtRatio(snap.sensitivity.normalized_dscr), M + colW2 + 16, y + 50);
+    doc.text(fmtRatio(snap.sensitivity.normalized_dscr), M + colW2, y + 40);
 
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(7);
+    setType(doc, "L5");
     setHex(doc, COLOR.textMuted, "text");
-    doc.text("If SDE normalized to",   M + colW2 + 16, y + 68);
-    doc.text("industry median margin",  M + colW2 + 16, y + 78);
+    doc.text("If SDE normalized to",   M + colW2, y + 58);
+    doc.text("industry median margin",  M + colW2, y + 68);
 
     // Lender Threshold
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(7);
+    setType(doc, "label");
     setHex(doc, COLOR.textDim, "text");
-    doc.text("LENDER THRESHOLD", M + colW2 * 2 + 16, y + 18);
+    doc.text("LENDER THRESHOLD", M + colW2 * 2, y + 8);
 
-    doc.setFont("courier", "bold");
-    doc.setFontSize(28);
+    setType(doc, "stat-large");
     setHex(doc, COLOR.textMuted, "text");
-    doc.text("1.30x", M + colW2 * 2 + 16, y + 50);
+    doc.text("1.30x", M + colW2 * 2, y + 40);
 
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(7);
+    setType(doc, "L5");
     setHex(doc, COLOR.textMuted, "text");
-    doc.text("Standard SBA / commercial",  M + colW2 * 2 + 16, y + 68);
-    doc.text("debt service minimum",        M + colW2 * 2 + 16, y + 78);
+    doc.text("Standard SBA / commercial",  M + colW2 * 2, y + 58);
+    doc.text("debt service minimum",        M + colW2 * 2, y + 68);
 
-    y += compH + 14;
+    y += compH;
+
+    // Subtle bottom hairline closes the section
+    setHex(doc, COLOR.borderSoft, "draw");
+    doc.setLineWidth(0.4);
+    doc.line(M, y, M + CW, y);
+    y += SP.md;
 
     // Interpretation block — Sonnet-generated when available, fallback otherwise
     const interpText = data.committeeProse?.page6_normalization_interpretation
       ?? buildDeterministicNormalizationInterp(snap.sensitivity, breaches);
 
     if (interpText) {
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(8);
+      setType(doc, "label");
       setHex(doc, COLOR.textDim, "text");
       doc.text("INTERPRETATION", M, y);
-      y += 12;
+      y += SP.sm + 4;
 
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(9);
+      setType(doc, "L4");
       setHex(doc, COLOR.textBody, "text");
       const lines = doc.splitTextToSize(interpText, CW);
       lines.forEach((line: string) => {
@@ -2053,29 +2021,27 @@ function drawPage7(
   y += 22;
 
   // ─── SECTION 1 — Capital Structure Overview ──────────────────────────
+  // Header-underline-only treatment. No header strip box, no surrounding fill.
+  // Row dividers stay (subtle hairlines). Unified type scale throughout.
   if (snap.deal_structure && snap.deal_structure.metrics.length > 0) {
     drawSectionHeader(doc, M, y, "Capital structure overview");
-    y += 14;
+    y += SP.md;
 
-    // Three-column table: Metric | Result | Commentary
-    const headerH = 22;
-    const colMetric = M + 12;
+    const colMetric = M;
     const colResult = M + 180;
     const colComment = M + 270;
 
-    setHex(doc, "#F8FAFC", "fill");
-    doc.rect(M, y, CW, headerH, "F");
-    setHex(doc, COLOR.borderSoft, "draw");
-    doc.setLineWidth(0.5);
-    doc.rect(M, y, CW, headerH, "S");
-
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(8);
+    // Header row — labels only, no fill, with underline below
+    setType(doc, "label");
     setHex(doc, COLOR.textMuted, "text");
-    doc.text("METRIC",     colMetric,  y + 14);
-    doc.text("RESULT",     colResult,  y + 14);
-    doc.text("COMMENTARY", colComment, y + 14);
-    y += headerH;
+    doc.text("METRIC",     colMetric,  y);
+    doc.text("RESULT",     colResult,  y);
+    doc.text("COMMENTARY", colComment, y);
+    y += SP.sm;
+    setHex(doc, COLOR.borderHairline, "draw");
+    doc.setLineWidth(0.4);
+    doc.line(M, y, M + CW, y);
+    y += SP.sm + 2;
 
     for (const metric of snap.deal_structure.metrics) {
       const c = metric.status_color
@@ -2083,41 +2049,38 @@ function drawPage7(
         : { fill: "#F8FAFC", stroke: COLOR.borderSoft, text: COLOR.textMuted };
 
       const rowH = 32;
-      setHex(doc, COLOR.borderSoft, "draw");
-      doc.setLineWidth(0.4);
-      doc.line(M, y + rowH, M + CW, y + rowH);
 
       // Metric label
+      setType(doc, "L4");
       doc.setFont("helvetica", "bold");
-      doc.setFontSize(10);
       setHex(doc, COLOR.textPrimary, "text");
-      doc.text(metric.label, colMetric, y + 18);
+      doc.text(metric.label, colMetric, y + 6);
 
-      // Result (value + status pill below)
-      doc.setFont("courier", "bold");
-      doc.setFontSize(13);
+      // Result (value + status text below)
+      setType(doc, "stat-medium");
       setHex(doc, COLOR.textPrimary, "text");
-      doc.text(metric.display, colResult, y + 18);
+      doc.text(metric.display, colResult, y + 6);
 
-      // Status text (small, indented under result)
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(7);
+      setType(doc, "label");
       setHex(doc, c.text, "text");
-      doc.text(metric.status.toUpperCase(), colResult, y + 28);
+      doc.text(metric.status.toUpperCase(), colResult, y + 18);
 
-      // Commentary — derive deterministic commentary from metric status
+      // Commentary
       const commentary = buildCapitalStructureCommentary(metric);
-      doc.setFont("helvetica", "normal");
-      doc.setFontSize(8.5);
+      setType(doc, "L5");
       setHex(doc, COLOR.textBody, "text");
-      const commLines = doc.splitTextToSize(commentary, CW - (colComment - M) - 12);
+      const commLines = doc.splitTextToSize(commentary, CW - (colComment - M));
       commLines.slice(0, 2).forEach((line: string, i: number) => {
-        doc.text(line, colComment, y + 14 + i * 10);
+        doc.text(line, colComment, y + 4 + i * 11);
       });
 
       y += rowH;
+      // Subtle row separator
+      setHex(doc, COLOR.borderSoft, "draw");
+      doc.setLineWidth(0.3);
+      doc.line(M, y, M + CW, y);
     }
-    y += 14;
+    y += SP.md;
   }
 
   // ─── SECTION 2 — Sources & Uses ──────────────────────────────────────
@@ -2130,20 +2093,17 @@ function drawPage7(
     const tableW = (CW - 12) / 2;
     const rowH2 = 22;
 
-    // Uses table (left)
+    // Uses table (left) — header underline + subtle row separation
     let leftY = y;
-    setHex(doc, "#F8FAFC", "fill");
-    doc.rect(M, leftY, tableW, rowH2, "F");
-    setHex(doc, COLOR.borderSoft, "draw");
-    doc.setLineWidth(0.5);
-    doc.rect(M, leftY, tableW, rowH2, "S");
-
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(8);
+    setType(doc, "label");
     setHex(doc, COLOR.textMuted, "text");
-    doc.text("USES", M + 12, leftY + 14);
-    doc.text("AMOUNT", M + tableW - 12, leftY + 14, { align: "right" });
-    leftY += rowH2;
+    doc.text("USES",   M + 4,           leftY);
+    doc.text("AMOUNT", M + tableW - 4,  leftY, { align: "right" });
+    leftY += SP.sm;
+    setHex(doc, COLOR.borderHairline, "draw");
+    doc.setLineWidth(0.4);
+    doc.line(M, leftY, M + tableW, leftY);
+    leftY += SP.sm + 2;
 
     const usesRows = [
       { label: "Purchase Price",   amount: su.purchase_price,         bold: false },
@@ -2152,36 +2112,31 @@ function drawPage7(
     ];
 
     for (const r of usesRows) {
-      setHex(doc, COLOR.borderSoft, "draw");
-      doc.line(M, leftY + rowH2, M + tableW, leftY + rowH2);
-
       doc.setFont("helvetica", r.bold ? "bold" : "normal");
-      doc.setFontSize(9);
+      doc.setFontSize(10);
       setHex(doc, r.bold ? COLOR.textPrimary : COLOR.textBody, "text");
-      doc.text(r.label, M + 12, leftY + 14);
-
-      doc.setFont("courier", r.bold ? "bold" : "normal");
-      doc.setFontSize(9);
-      setHex(doc, r.bold ? COLOR.textPrimary : COLOR.textBody, "text");
-      doc.text(fmtUsd(r.amount), M + tableW - 12, leftY + 14, { align: "right" });
+      doc.text(r.label, M + 4, leftY + 6);
+      doc.text(fmtUsd(r.amount), M + tableW - 4, leftY + 6, { align: "right" });
 
       leftY += rowH2;
+      // Subtle row divider — slightly stronger above totals
+      setHex(doc, r.bold ? COLOR.borderHairline : COLOR.borderSoft, "draw");
+      doc.setLineWidth(r.bold ? 0.4 : 0.3);
+      doc.line(M, leftY, M + tableW, leftY);
     }
 
-    // Sources table (right)
+    // Sources table (right) — same treatment
     let rightY = y;
     const rightX = M + tableW + 12;
-    setHex(doc, "#F8FAFC", "fill");
-    doc.rect(rightX, rightY, tableW, rowH2, "F");
-    setHex(doc, COLOR.borderSoft, "draw");
-    doc.rect(rightX, rightY, tableW, rowH2, "S");
-
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(8);
+    setType(doc, "label");
     setHex(doc, COLOR.textMuted, "text");
-    doc.text("SOURCES", rightX + 12, rightY + 14);
-    doc.text("AMOUNT", rightX + tableW - 12, rightY + 14, { align: "right" });
-    rightY += rowH2;
+    doc.text("SOURCES", rightX + 4,           rightY);
+    doc.text("AMOUNT",  rightX + tableW - 4,  rightY, { align: "right" });
+    rightY += SP.sm;
+    setHex(doc, COLOR.borderHairline, "draw");
+    doc.setLineWidth(0.4);
+    doc.line(rightX, rightY, rightX + tableW, rightY);
+    rightY += SP.sm + 2;
 
     const sourcesRows = [
       { label: "Buyer Equity",  amount: su.buyer_equity,  bold: false },
@@ -2191,60 +2146,48 @@ function drawPage7(
     ];
 
     for (const r of sourcesRows) {
-      setHex(doc, COLOR.borderSoft, "draw");
-      doc.line(rightX, rightY + rowH2, rightX + tableW, rightY + rowH2);
-
       doc.setFont("helvetica", r.bold ? "bold" : "normal");
-      doc.setFontSize(9);
+      doc.setFontSize(10);
       setHex(doc, r.bold ? COLOR.textPrimary : COLOR.textBody, "text");
-      doc.text(r.label, rightX + 12, rightY + 14);
-
-      doc.setFont("courier", r.bold ? "bold" : "normal");
-      doc.setFontSize(9);
-      setHex(doc, r.bold ? COLOR.textPrimary : COLOR.textBody, "text");
-      doc.text(fmtUsd(r.amount), rightX + tableW - 12, rightY + 14, { align: "right" });
+      doc.text(r.label, rightX + 4, rightY + 6);
+      doc.text(fmtUsd(r.amount), rightX + tableW - 4, rightY + 6, { align: "right" });
 
       rightY += rowH2;
+      setHex(doc, r.bold ? COLOR.borderHairline : COLOR.borderSoft, "draw");
+      doc.setLineWidth(r.bold ? 0.4 : 0.3);
+      doc.line(rightX, rightY, rightX + tableW, rightY);
     }
 
-    y = Math.max(leftY, rightY) + 8;
+    y = Math.max(leftY, rightY) + SP.sm;
 
-    // Imbalance warning banner — emphasized per spec
+    // Imbalance notice — hairline-only treatment, no fill, no surrounding box
     if (!su.balanced) {
       const gap = su.total_uses - su.total_sources;
-      const bannerH = 24;
-      setHex(doc, "#FFFBEB", "fill");
-      doc.rect(M, y, CW, bannerH, "F");
-      setHex(doc, COLOR.amber, "fill");
-      doc.rect(M, y, 3, bannerH, "F");
+      setHex(doc, COLOR.amber, "draw");
+      doc.setLineWidth(0.8);
+      doc.line(M, y, M + 24, y);
+      y += SP.sm + 4;
 
-      doc.setFont("helvetica", "bold");
-      doc.setFontSize(8.5);
+      setType(doc, "L4");
       setHex(doc, COLOR.amberText, "text");
       doc.text(
-        `\u26A0  Sources & uses do not balance \u2014 ${gap > 0 ? "short" : "over"} by ${fmtUsd(Math.abs(gap))}. Resolve before lender submission.`,
-        M + 14, y + 16,
+        `Sources & uses do not balance \u2014 ${gap > 0 ? "short" : "over"} by ${fmtUsd(Math.abs(gap))}. Resolve before lender submission.`,
+        M, y,
       );
-      y += bannerH + 14;
+      y += SP.md;
     } else {
-      y += 4;
+      y += SP.sm;
     }
   } else {
-    // No deal structure inputs
-    setHex(doc, "#F8FAFC", "fill");
-    doc.rect(M, y, CW, 32, "F");
-    setHex(doc, COLOR.borderSoft, "draw");
-    doc.setLineWidth(0.5);
-    doc.rect(M, y, CW, 32, "S");
-
+    // No deal structure inputs — italic muted note, no surrounding box
+    setType(doc, "L5");
     doc.setFont("helvetica", "italic");
-    doc.setFontSize(8.5);
     setHex(doc, COLOR.textMuted, "text");
     doc.text(
       "Acquisition structure inputs (purchase price, equity, debt mix) not provided in this analysis.",
-      M + 14, y + 20,
+      M, y + 8,
     );
-    y += 38;
+    y += SP.lg;
   }
 
   // ─── SECTION 3 — Credit Committee Concerns (grouped) ─────────────────
