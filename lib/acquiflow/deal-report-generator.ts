@@ -1517,34 +1517,96 @@ function verdictLabel(score: number, rec: string): string {
 }
 
 function verdictSubline(d: DecisionLayerResult): string {
-  const parts: string[] = [];
-  if (d.leverage === "STRONG") parts.push("Strong fundamentals");
-  if (d.pricing_insight.position === "below") parts.push("Below-market pricing");
-  if (d.lender_readiness === "PASS+" || d.lender_readiness === "PASS") parts.push("DSCR comfortable");
-  if (parts.length === 0) {
-    if (d.recommendation === "PASS") parts.push("Multiple risk concentrations identified");
-    else if (d.recommendation === "RESTRUCTURE") parts.push("Pricing premium requires structural concessions");
-    else parts.push("Mixed signals \u2014 see full analysis");
+  // A single declarative thesis line. Replaces the previous three-adjective
+  // marketing strip ("Strong fundamentals · Below-market pricing · DSCR
+  // comfortable") with one underwriter's read of the deal.
+
+  const askBelowFair  = d.pricing_insight.position === "below";
+  const askAboveFair  = d.pricing_insight.position === "above";
+  const lenderClears  = d.lender_readiness === "PASS+" || d.lender_readiness === "PASS";
+  const lenderFails   = d.lender_readiness === "FAIL";
+  const hasHighFlag   = d.risk_flags.some(f => f.severity === "HIGH");
+
+  // Recommendation-driven theses. Each one is a complete sentence that
+  // interprets the deal — not a metric label.
+  if (d.recommendation === "PURSUE") {
+    if (askBelowFair && lenderClears && !hasHighFlag) {
+      return "Below-market entry, durable coverage, no high-severity flags — the deal underwrites cleanly as proposed.";
+    }
+    return "Fundamentals support the proposed terms; advancing to diligence on validation, not viability.";
   }
-  return parts.slice(0, 3).join(" \u00B7 ");
+
+  if (d.recommendation === "INVESTIGATE") {
+    if (hasHighFlag) {
+      return "Underwriting holds in headline form; one or more risk concentrations require validation before LOI.";
+    }
+    if (askBelowFair) {
+      return "Pricing is supportive; the open question is whether reported earnings hold up under diligence.";
+    }
+    return "The deal is financeable as modeled; the underwriting case rests on assumptions still to be tested.";
+  }
+
+  if (d.recommendation === "RESTRUCTURE") {
+    return "As priced and structured, the deal does not clear underwriting — terms must move before LOI.";
+  }
+
+  if (d.recommendation === "PASS") {
+    if (lenderFails) {
+      return "Coverage and structure both fall short of lender requirements at proposed terms.";
+    }
+    return "Risk concentration outweighs available leverage; the deal does not justify advancement.";
+  }
+
+  return "Mixed signals across coverage, pricing, and risk warrant a closer read of the analysis.";
 }
 
 function buildInvestmentTake(d: DecisionLayerResult, inputs: DealReportInputs): string {
-  const positionClause = d.pricing_insight.position === "below"
-    ? `${Math.abs(d.pricing_insight.fair_value_gap / inputs.fair_value * 100).toFixed(0)}% below the ${fmtUsd(inputs.fair_value)} implied fair value`
-    : d.pricing_insight.position === "above"
-      ? `${(d.pricing_insight.fair_value_gap / inputs.fair_value * -100).toFixed(0)}% above the ${fmtUsd(inputs.fair_value)} implied fair value`
-      : `consistent with the ${fmtUsd(inputs.fair_value)} implied fair value`;
-  const dscrClause = d.lender_readiness === "PASS+" || d.lender_readiness === "PASS"
-    ? "with durable DSCR coverage"
-    : d.lender_readiness === "CONDITIONAL"
-      ? "with marginal DSCR coverage"
-      : "with insufficient DSCR coverage at proposed terms";
-  const riskClause = d.risk_flags.find(f => f.severity === "HIGH")
-    ? `Primary risk concentration: ${d.risk_flags.find(f => f.severity === "HIGH")!.headline.toLowerCase()} \u2014 must be addressed before LOI.`
-    : "No HIGH-severity risk flags identified.";
+  // Single underwriter's read. Two short sentences:
+  //   1. The thesis — what makes this deal what it is, in declarative form.
+  //   2. The watchpoint — the assumption or risk that decides outcomes.
+  // No metric restatement. Numbers from the metrics grid are NOT repeated.
 
-  return `${capitalize(d.pricing_insight.position === "below" ? "Strong" : d.pricing_insight.position === "above" ? "Premium" : "Fair")} pricing relative to industry comps ${dscrClause}. Asking multiple of ${inputs.valuation_multiple.toFixed(2)}x sits ${positionClause}. ${riskClause}`;
+  const askBelowFair = d.pricing_insight.position === "below";
+  const askAboveFair = d.pricing_insight.position === "above";
+  const gapPctAbs    = inputs.fair_value > 0
+    ? Math.abs((d.pricing_insight.fair_value_gap / inputs.fair_value) * 100)
+    : 0;
+  const lenderClears = d.lender_readiness === "PASS+" || d.lender_readiness === "PASS";
+  const highFlag     = d.risk_flags.find(f => f.severity === "HIGH");
+  const concentrationRisk = d.risk_flags.find(f => /customer|concentration/i.test(f.headline));
+  const sdeRisk      = d.risk_flags.find(f => /add-back|sde|margin/i.test(f.headline));
+
+  // Sentence 1 — the thesis
+  let thesis: string;
+  if (askBelowFair && lenderClears && gapPctAbs >= 5) {
+    thesis = "Pricing sits below comparable transactions and coverage holds with cushion, giving the buyer leverage on entry rather than at exit.";
+  } else if (askBelowFair && lenderClears) {
+    thesis = "Coverage holds under reported numbers and pricing is at or below the median band, supporting a clean financing path.";
+  } else if (askAboveFair && lenderClears) {
+    thesis = "Coverage holds under reported numbers, but the asking multiple sits above peer transactions and depends on continued earnings strength to justify the premium.";
+  } else if (askAboveFair) {
+    thesis = "Pricing exceeds comparable transactions and coverage is thin — the deal underwrites only under optimistic assumptions.";
+  } else if (!lenderClears) {
+    thesis = "Coverage falls short of standard lender thresholds at the proposed structure; financing requires either stronger earnings validation or different terms.";
+  } else {
+    thesis = "Pricing aligns with comparable transactions and coverage holds, leaving the underwriting case dependent on validating the assumptions behind reported earnings.";
+  }
+
+  // Sentence 2 — the decisive watchpoint
+  let watch: string;
+  if (highFlag) {
+    watch = `The decisive item is ${highFlag.headline.toLowerCase()} — until resolved, the underwriting thesis rests on an unverified assumption.`;
+  } else if (sdeRisk) {
+    watch = "Add-back integrity is the single largest assumption in the model; the deal is sensitive to even modest haircuts in reported SDE.";
+  } else if (concentrationRisk) {
+    watch = "Revenue concentration is the largest source of post-close cash flow risk and the most likely lever for negotiated structure (earn-out, holdback).";
+  } else if (askBelowFair && gapPctAbs >= 5) {
+    watch = "The remaining question is whether reported earnings survive validation; the entry price absorbs modest haircuts, but not material ones.";
+  } else {
+    watch = "The remaining question is durability — whether the trailing earnings profile reflects steady-state operations or a moment in the cycle.";
+  }
+
+  return `${thesis} ${watch}`;
 }
 
 function capitalize(s: string): string {
@@ -1566,48 +1628,51 @@ function buildSuggestedActions(
   inputs: DealReportInputs
 ): { title: string; detail: string }[] {
   const targetLow  = d.target_price_low;
-  const targetHigh = d.target_price_high;
   const askMult    = inputs.valuation_multiple;
   const adjSDE     = inputs.usable_sde ?? inputs.sde;
   const offerMult  = adjSDE > 0 ? targetLow / adjSDE : 0;
+  const askPct     = inputs.asking_price > 0
+    ? Math.round(((inputs.asking_price - targetLow) / inputs.asking_price) * 100)
+    : 0;
 
   const actions: { title: string; detail: string }[] = [];
 
-  // Action 1: opening offer
+  // Action 1 — opening offer
   actions.push({
-    title:  `Open negotiation at ${fmtUsd(targetLow)}`,
-    detail: `${offerMult.toFixed(2)}x SDE \u2014 anchored to lower-bound comps. Walk-away ceiling: ${fmtUsd(d.walk_away_threshold)}.`,
+    title:  `Open at ${fmtUsd(targetLow)}`,
+    detail: `${offerMult.toFixed(2)}x SDE, ${askPct}% below ask. Anchored to lower-band comparable transactions.`,
   });
 
-  // Action 2: financial validation
+  // Action 2 — earnings validation
   actions.push({
-    title:  "Request 3 years of tax returns + add-back schedule",
-    detail: "Validate normalization adjustments via verifiable earnings record before signing LOI.",
+    title:  "Pull three years of tax returns and the add-back schedule",
+    detail: "Reported SDE is the model's largest single assumption; haircuts here flow through every other calculation.",
   });
 
-  // Action 3: dynamic based on risk profile
-  const customerRisk = d.risk_flags.find(f => f.headline.toLowerCase().includes("customer"));
+  // Action 3 — deal-specific
+  const customerRisk = d.risk_flags.find(f => /customer|concentration/i.test(f.headline));
+  const sdeRisk      = d.risk_flags.find(f => /add-back|sde|margin/i.test(f.headline));
   if (customerRisk) {
     actions.push({
-      title:  "Validate top-customer relationships and contracts",
-      detail: customerRisk.detail.split(".")[0] + ". Confirm contracts transfer and survive owner exit.",
+      title:  "Map the top-five customer relationships",
+      detail: "Concentration is the deal's largest cash flow risk and the most natural lever for negotiated structure (earn-out or holdback).",
     });
-  } else if (d.risk_flags.find(f => f.headline.toLowerCase().includes("add-back"))) {
+  } else if (sdeRisk) {
     actions.push({
-      title:  "Independently verify all reported add-backs",
-      detail: "Document each adjustment with supporting evidence \u2014 unverified add-backs reduce effective SDE and compress justified multiple.",
+      title:  "Document each add-back against contemporaneous evidence",
+      detail: "Unverified adjustments compress the justified multiple; the spread between reported and verifiable SDE drives the negotiation.",
     });
   } else {
     actions.push({
-      title:  "Conduct customer/operational interviews",
-      detail: "Validate revenue concentration, contract structure, and owner dependency before advancing to LOI.",
+      title:  "Interview operations on owner dependency and supplier relationships",
+      detail: "Transferability of relationships is harder to verify in financials than in conversation; surface it before LOI, not during diligence.",
     });
   }
 
-  // Action 4: structural protection
+  // Action 4 — structural protection
   actions.push({
-    title:  "Structure 90-day seller transition + 12-month earn-out",
-    detail: "Earn-out tied to revenue retention de-risks key-person concentration and aligns seller incentives post-close.",
+    title:  "Build in a 90-day transition and a revenue-tied earn-out",
+    detail: "Aligns seller incentives through the period when post-close cash flow is most fragile.",
   });
 
   return actions;
@@ -1616,23 +1681,26 @@ function buildSuggestedActions(
 function buildWalkAwayTriggers(d: DecisionLayerResult): { category: string; detail: string }[] {
   const out: { category: string; detail: string }[] = [];
 
-  // Always include financial trigger
+  // Earnings trigger — always present, calibrated to risk profile
+  const sdeRisk = d.risk_flags.find(f => /add-back|sde|margin/i.test(f.headline));
   out.push({
-    category: "FINANCIAL",
-    detail:   "If reported SDE is >15% lower than verified, pricing thesis collapses. Renegotiate or walk.",
+    category: "EARNINGS",
+    detail:   sdeRisk
+      ? "Verified SDE 15% or more below reported. The pricing thesis is built on the reported figure; a haircut of that size resets the deal."
+      : "Verified SDE materially below reported, or revenue concentration emerges that wasn't disclosed. Either resets the model.",
   });
 
-  // Customer trigger if customer risk present
-  const customerRisk = d.risk_flags.find(f => f.headline.toLowerCase().includes("customer"));
+  // Second trigger — calibrated to the most material non-earnings risk
+  const customerRisk = d.risk_flags.find(f => /customer|concentration/i.test(f.headline));
   if (customerRisk) {
     out.push({
-      category: "CUSTOMER",
-      detail:   "If top-customer retention is at risk and seller resists earn-out structure, walk.",
+      category: "STRUCTURE",
+      detail:   "Top-customer retention is uncertain and the seller refuses earn-out or holdback. Without protection, the buyer assumes the full concentration risk at close.",
     });
   } else {
     out.push({
-      category: "OPERATIONAL",
-      detail:   "If owner-dependency risks cannot be mitigated through structured transition, walk.",
+      category: "STRUCTURE",
+      detail:   "Owner-dependency cannot be transferred through documented training and transition; key-person risk shifts entirely to the buyer.",
     });
   }
 
@@ -1965,33 +2033,30 @@ function buildScoreReading(
   scoreStr: string,
 ): { lead: string } {
   if (snap.financial_score === null) {
-    return {
-      lead: "Composite score unavailable — benchmark coverage was insufficient to produce a confident reading.",
-    };
+    return { lead: "Composite score unavailable; benchmark coverage was insufficient to support a confident reading." };
   }
-  // Indefinite article matches the leading digit's spoken sound:
-  //   8 → "eight" (vowel)         → "An 8…"
-  //   11, 18 → "eleven/eighteen"  → "An 11…", "An 18…"
-  // Everything else takes "A".
   const article = scoreStartsWithVowelSound(scoreStr) ? "An" : "A";
   const s = snap.financial_score;
+
+  // Interpret the score, don't narrate it. The reader can see the number.
+  // Each band leads to a different underwriting implication.
   if (s >= 75) {
     return {
-      lead: `${article} ${scoreStr}/100 composite places this profile in the upper band — durable across profitability, coverage, liquidity, and efficiency relative to industry norms.`,
+      lead: `${article} ${scoreStr}/100 composite indicates a profile that underwrites cleanly under reported numbers — the diligence question is durability, not viability.`,
     };
   }
   if (s >= 55) {
     return {
-      lead: `${article} ${scoreStr}/100 composite reads as broadly healthy — financial fundamentals align with industry expectations across most measured dimensions.`,
+      lead: `${article} ${scoreStr}/100 composite reads as broadly healthy, with the underwriting case dependent on validating the assumptions behind the headline figures.`,
     };
   }
   if (s >= 35) {
     return {
-      lead: `${article} ${scoreStr}/100 composite reflects a mixed financial profile — strengths in some dimensions, but material gaps that warrant validation before underwriting.`,
+      lead: `${article} ${scoreStr}/100 composite signals a profile with material gaps; the deal underwrites only if specific assumptions hold under diligence.`,
     };
   }
   return {
-    lead: `${article} ${scoreStr}/100 composite signals meaningful weakness — the underlying metrics fall short of industry norms across multiple dimensions and require explanation before proceeding.`,
+    lead: `${article} ${scoreStr}/100 composite reflects fundamentals that fall short of peer norms across multiple dimensions; financing as proposed is at risk.`,
   };
 }
 
@@ -2043,12 +2108,15 @@ function buildConsistencyTensions(
 ): { signal: string; why: string; severity: "high" | "medium" | "low" }[] {
   const out: { signal: string; why: string; severity: "high" | "medium" | "low" }[] = [];
 
-  // Cross-metric interactions are highest-quality signals
+  // Cross-metric interactions are highest-quality signals.
+  // Lead from humanizeInteractionRule (sharp, declarative); why generated
+  // here from the rule type so it adds implication rather than echoing the
+  // lead with engine-supplied verbose prose.
   for (const ins of snap.interaction_insights) {
     if (out.length >= 3) break;
     out.push({
       signal: humanizeInteractionRule(ins.rule),
-      why:    ins.message,
+      why:    interactionImplication(ins.rule),
       severity: ins.severity === "high" ? "high" : "medium",
     });
   }
@@ -2065,7 +2133,7 @@ function buildConsistencyTensions(
       if (alreadyCovered) continue;
       out.push({
         signal: `${row.metric_label} reads materially above peer norms.`,
-        why:    `${row.metric_label} sits in the ${fmtPercentile(row.display_percentile)} percentile against industry, raising the question of whether reported figures reflect normalized operations or carry add-backs that warrant validation.`,
+        why:    `Sits at the ${fmtPercentile(row.display_percentile)} percentile against industry. Either the operations genuinely outperform, or add-backs have inflated the headline figure — diligence decides which.`,
         severity: "medium",
       });
     }
@@ -2074,13 +2142,31 @@ function buildConsistencyTensions(
   // Sources & uses imbalance (structural)
   if (out.length < 3 && snap.deal_structure && !snap.deal_structure.sources_uses.balanced) {
     out.push({
-      signal: "Capital structure does not currently balance.",
-      why:    "Total sources do not match total uses, suggesting the financing stack has not yet been finalized or working capital assumptions remain unresolved. Reconciliation is required before lender submission.",
+      signal: "The capital stack does not currently balance.",
+      why:    "Sources and uses don't reconcile, which means either the financing isn't finalized or working capital assumptions remain open. The gap closes before any lender will engage.",
       severity: "medium",
     });
   }
 
   return out;
+}
+
+/**
+ * Implication line for each interaction rule. Pairs with humanizeInteractionRule
+ * (the lead). The why should extend the lead with a specific underwriting
+ * consequence — not restate the same observation in softer words.
+ */
+function interactionImplication(rule: string): string {
+  const map: Record<string, string> = {
+    sde_validation_with_strong_dscr: "The deal is financeable on the headline figures but sensitive to even modest haircuts during diligence. Add-back integrity becomes the principal underwriting question.",
+    high_leverage_strong_cashflow:   "Coverage holds today, but the structure compresses any tolerance for earnings volatility. The deal performs well in flat operating environments and poorly otherwise.",
+    weak_margin_strong_dscr:         "Coverage is real but narrow; the deal is more dependent on sustained operating performance than the leverage profile alone would suggest.",
+    multiple_validation_outliers:    "Each individual outlier may be defensible; together, they raise the question of whether the trailing period reflects steady-state operations.",
+    risk_outlier_with_strong_score:  "Composite scores can mask concentration risk. The strong number invites confidence; the outlier requires it be earned through diligence.",
+    sde_outlier_dscr_dependency:     "The deal is financeable on the headline figures but sensitive to even modest haircuts during diligence. Add-back integrity becomes the principal underwriting question.",
+    high_ltv_with_context:           "Coverage is comfortable; the lender's concern shifts to collateral cushion and the recovery position if operations soften.",
+  };
+  return map[rule] ?? "The interaction warrants a specific diligence step rather than treatment as a general concern.";
 }
 
 /**
@@ -2096,20 +2182,17 @@ function buildConsistencyTensions(
 function humanizeInteractionRule(rule: string): string {
   const map: Record<string, string> = {
     // Original rule names
-    sde_validation_with_strong_dscr: "Reported coverage strength is contingent on an elevated SDE figure that warrants validation.",
-    high_leverage_strong_cashflow:   "Capital structure carries elevated leverage despite reported cash flow strength.",
-    weak_margin_strong_dscr:         "Reported coverage holds despite operating margins that read below peer norms.",
-    multiple_validation_outliers:    "Multiple metrics sit in validation-outlier territory simultaneously.",
-    risk_outlier_with_strong_score:  "A material risk outlier sits within an otherwise strong financial profile.",
+    sde_validation_with_strong_dscr: "Reported coverage strength is contingent on the reported SDE figure holding up under validation.",
+    high_leverage_strong_cashflow:   "Cash flow is strong, but the capital structure carries enough leverage to make the deal earnings-dependent.",
+    weak_margin_strong_dscr:         "Coverage holds despite operating margins below peer norms — earnings strength is concentrated, not broad-based.",
+    multiple_validation_outliers:    "More than one metric sits in validation-outlier territory; the deal's headline picture is built on stacked assumptions.",
+    risk_outlier_with_strong_score:  "A material risk outlier sits inside an otherwise strong profile — the score masks a real exposure.",
     // Rules surfaced from the engine in production
-    sde_outlier_dscr_dependency:     "Reported coverage strength may depend on an elevated SDE figure that warrants validation.",
-    high_ltv_with_context:           "Loan-to-value remains elevated relative to purchase price despite otherwise strong cash flow.",
+    sde_outlier_dscr_dependency:     "Reported coverage strength depends on the reported SDE figure; if add-backs compress, so does coverage.",
+    high_ltv_with_context:           "Cash flow is strong, but loan-to-value sits high enough that valuation drift, not coverage, becomes the lender's primary concern.",
   };
   if (map[rule]) return map[rule];
-  // Unknown rule — return a generic, memo-toned sentence rather than
-  // exposing the raw rule key as a title. This is the failsafe that
-  // prevents "Sde Outlier Dscr Dependency."-style leakage into the report.
-  return "Cross-metric tension surfaced during analysis warrants attention during diligence.";
+  return "A cross-metric tension surfaced in analysis warrants attention during diligence.";
 }
 
 /**
@@ -2121,9 +2204,9 @@ function buildDeterministicNormalizationInterp(
   breaches: boolean,
 ): string {
   if (breaches) {
-    return `The acquisition appears comfortably financeable under seller-reported earnings. However, if earnings normalize toward observed industry margins, debt coverage compresses to ${fmtRatio(s.normalized_dscr)} — below the 1.30x lender minimum. Transaction viability is highly sensitive to add-back validation during diligence.`;
+    return `The deal underwrites cleanly at reported earnings. Normalize SDE toward the industry median and coverage compresses to ${fmtRatio(s.normalized_dscr)} — below the 1.30x lender threshold. The financing path turns on add-back validation, not on the reported headline number.`;
   }
-  return `Reported earnings sustain stated debt coverage. If SDE were normalized toward the industry median margin, coverage would compress to ${fmtRatio(s.normalized_dscr)}, which remains above the 1.30x lender threshold but materially reduces cushion. Add-back validation remains a core diligence item.`;
+  return `Reported earnings sustain stated coverage with cushion. Normalized to the industry median margin, coverage holds at ${fmtRatio(s.normalized_dscr)} — above the lender minimum but with materially less buffer. Add-back validation remains the most consequential diligence item.`;
 }
 
 // =====================================================================
@@ -2531,21 +2614,21 @@ function buildCapitalStructureCommentary(
   if (metric.value === null) return "Insufficient inputs to evaluate.";
 
   if (metric.key === "dscr") {
-    if (metric.value >= 1.50) return "Coverage exceeds standard lender comfort thresholds with cushion for variability.";
-    if (metric.value >= 1.30) return "Coverage meets the standard lender minimum with limited cushion.";
-    return "Coverage falls below the 1.30x lender minimum; financing as proposed is at risk.";
+    if (metric.value >= 1.50) return "Cushion above the lender comfort band.";
+    if (metric.value >= 1.30) return "Meets the lender minimum; cushion is thin.";
+    return "Below the 1.30x lender minimum; financing as proposed is at risk.";
   }
 
   if (metric.key === "debt_to_sde") {
-    if (metric.value <= 2.50) return "Leverage profile is conservative relative to typical SBA acquisition debt levels.";
-    if (metric.value <= 4.00) return "Leverage is within the standard SBA acquisition range.";
-    return "Leverage exceeds typical SBA comfort levels; lenders may require structural adjustments.";
+    if (metric.value <= 2.50) return "Conservative against typical SBA acquisition leverage.";
+    if (metric.value <= 4.00) return "In line with the standard SBA range.";
+    return "Above SBA comfort; expect structural pressure during underwriting.";
   }
 
   if (metric.key === "ltv") {
-    if (metric.value <= 0.75) return "LTV provides comfortable lender cushion against valuation drift.";
-    if (metric.value <= 0.85) return "LTV is within typical SBA acceptance, with limited cushion against valuation risk.";
-    return "LTV exceeds preferred lender comfort; expect tighter underwriting and possible equity injection requests.";
+    if (metric.value <= 0.75) return "Comfortable lender cushion against valuation drift.";
+    if (metric.value <= 0.85) return "Within SBA acceptance, with limited valuation cushion.";
+    return "Above lender comfort; expect equity-injection or smaller senior commitment.";
   }
 
   return metric.explanation || "";
@@ -2579,8 +2662,8 @@ function groupCommitteeConcerns(
   };
 
   // ─── Earnings Quality ────────────────────────────────────────────────
-  // SDE / margin / revenue flags + interaction insights citing those metrics
-  // + normalization sensitivity breach when DSCR compresses below 1.30x.
+  // Each body extends the lead with implication — what this means for
+  // financing, valuation, or diligence — rather than restating the issue.
 
   for (const f of snap.risk_flags) {
     if (f.metric_key.includes("sde") || f.metric_key.includes("margin") || f.metric_key.includes("revenue")) {
@@ -2596,8 +2679,8 @@ function groupCommitteeConcerns(
     if (ins.metrics.some(m => m.includes("sde") || m.includes("margin"))) {
       push(
         "Earnings Quality",
-        normalizeLead(ins.message),
-        "Cross-metric tensions of this kind typically resolve only through trailing-twelve-month verification of reported figures against tax returns and bank deposits.",
+        humanizeInteractionRule(ins.rule),
+        "Coverage strength is therefore a function of the add-back set, not the operating model. The deal is financeable under reported figures but sensitive to even modest haircuts during diligence.",
       );
     }
   }
@@ -2605,36 +2688,35 @@ function groupCommitteeConcerns(
   if (snap.sensitivity && snap.sensitivity.normalized_dscr !== null && snap.sensitivity.normalized_dscr < 1.30) {
     push(
       "Earnings Quality",
-      "Coverage compresses below the lender minimum under normalized earnings.",
-      `If SDE were normalized toward industry median margins, DSCR would compress to ${fmtRatio(snap.sensitivity.normalized_dscr)} — short of the 1.30x lender threshold. Add-back validation is therefore decisive to the financing path, not incidental to it.`,
+      "Normalized coverage falls below the lender minimum.",
+      `At industry-median margins, DSCR compresses to ${fmtRatio(snap.sensitivity.normalized_dscr)}. The financing path is therefore decided in diligence — not at term sheet — and the deal is one validation step away from requiring restructured terms.`,
     );
   }
 
   // ─── Structural Risk ─────────────────────────────────────────────────
-  // Sources & uses balance, LTV, leverage, and any structure-level flags.
 
   if (snap.deal_structure) {
     if (!snap.deal_structure.sources_uses.balanced) {
       const gap = snap.deal_structure.sources_uses.total_uses - snap.deal_structure.sources_uses.total_sources;
       push(
         "Structural Risk",
-        "Capital structure does not balance as currently modeled.",
-        `Sources fall ${gap > 0 ? "short of" : "above"} uses by ${fmtUsd(Math.abs(gap))}. Reconciliation of equity contribution, debt sizing, or working capital assumption is required before this stack can be presented to a lender.`,
+        "The capital stack does not currently balance.",
+        `Sources fall ${gap > 0 ? "short of" : "above"} uses by ${fmtUsd(Math.abs(gap))}. This is a gating item — no lender will engage on a stack that does not reconcile, and the gap typically resolves through equity contribution or revised debt sizing.`,
       );
     }
     for (const m of snap.deal_structure.metrics) {
       if (m.key === "ltv" && m.value !== null && m.value > 0.85) {
         push(
           "Structural Risk",
-          "Loan-to-value exceeds preferred lender comfort.",
-          "LTV at this level reduces the cushion lenders rely on for valuation drift and may prompt either a higher equity injection requirement or a lower senior debt commitment than modeled.",
+          "Loan-to-value sits above preferred lender comfort.",
+          "Expect either an equity injection requirement at term sheet or a senior debt commitment below modeled levels. Either outcome reshapes the capital structure before the deal reaches LOI.",
         );
       }
       if (m.key === "debt_to_sde" && m.value !== null && m.value > 4.00) {
         push(
           "Structural Risk",
-          "Total leverage exceeds typical SBA acquisition guidelines.",
-          "Debt-to-SDE above 4.0x signals an aggressive stack relative to standard SBA underwriting. Expect probing on add-back validity and stress-test sensitivities during lender review.",
+          "Total leverage sits above standard SBA acquisition guidelines.",
+          "The stack is aggressive on reported earnings; the lender's first probe will be add-back integrity, with stress sensitivities close behind. A larger seller note often emerges as the practical resolution.",
         );
       }
     }
@@ -2642,13 +2724,12 @@ function groupCommitteeConcerns(
       push(
         "Structural Risk",
         normalizeLead(f.message),
-        "Structural items at this severity typically warrant explicit resolution in the term sheet rather than deferral to closing diligence.",
+        "Items at this severity are resolved at term sheet, not deferred to closing diligence.",
       );
     }
   }
 
   // ─── Financing Risk ──────────────────────────────────────────────────
-  // DSCR, current ratio, and reported coverage shortfalls.
 
   for (const f of snap.risk_flags) {
     if (f.metric_key === "dscr" || f.metric_key === "current_ratio") {
@@ -2656,8 +2737,8 @@ function groupCommitteeConcerns(
         "Financing Risk",
         normalizeLead(f.message),
         f.metric_key === "dscr"
-          ? "Debt service coverage at this level constrains the lender's willingness to commit at proposed terms; pricing, amortization, or equity contribution may need to flex to bring coverage into the comfort band."
-          : "Liquidity at this level may not absorb a typical first-year working capital draw without supplemental capital, raising the prospect of a revolver requirement at close.",
+          ? "Pricing, amortization, or equity contribution will need to flex to bring coverage into the comfort band — the question is which lever moves, not whether one does."
+          : "A revolver requirement at close becomes likely; first-year working capital draws cannot rest on operating cash flow alone.",
       );
     }
   }
@@ -2667,7 +2748,7 @@ function groupCommitteeConcerns(
         push(
           "Financing Risk",
           "Reported DSCR sits below the 1.30x lender minimum.",
-          "Coverage at this level means financing as currently proposed is unlikely to clear underwriting without restructuring — typically through reduced senior debt, extended amortization, or a larger seller note.",
+          "Financing as proposed will not clear underwriting. The standard resolutions are reduced senior debt, extended amortization, or a larger seller note — typically some combination.",
         );
       }
     }
@@ -2696,16 +2777,16 @@ function normalizeLead(s: string): string {
 function buildEarningsBody(metricKey: string, severity: "high" | "medium" | "low" | "info"): string {
   if (metricKey.includes("sde")) {
     return severity === "high"
-      ? "The committee will treat the reported SDE figure as provisional until validated against tax returns and bank statements. The financial case for the deal materially depends on resolving this."
-      : "Reported SDE warrants validation against trailing-twelve-month documentation. Add-backs at this level are a routine area of probing during diligence.";
+      ? "The reported SDE figure is the financial case for this deal; until it's validated against tax returns and bank deposits, every downstream calculation rests on an unverified input."
+      : "Add-backs in this range are routine probe territory; expect the lender to ask for documented evidence on each adjustment before committing.";
   }
   if (metricKey.includes("margin")) {
-    return "Operating margins outside peer norms warrant explanation — typically resolved by mapping the chart of accounts against industry standard categorization, or by isolating non-recurring costs from steady-state operations.";
+    return "Margin variance against peer norms typically traces to one of three things: a real operational advantage, non-recurring items embedded in the trailing period, or a chart-of-accounts mismatch with industry standard categorization.";
   }
   if (metricKey.includes("revenue")) {
-    return "Revenue concentration or trajectory at this level is a standard area of probing for both the buyer and the lender; customer concentration analysis and trailing growth detail will be required.";
+    return "Trailing growth and customer composition need a closer look; both the buyer and the lender will probe concentration before underwriting commits.";
   }
-  return "This signal warrants explanation during diligence before committee approval.";
+  return "The signal warrants explanation in diligence.";
 }
 
 /**
@@ -2732,32 +2813,32 @@ function buildDiligencePriorities(
   );
   if (hasSdeValidation) {
     out.push({
-      lead: "Validate seller add-backs against trailing-twelve-month tax returns and bank statements.",
-      why:  "Add-backs of the magnitude implied by reported margins typically warrant CPA-prepared quality-of-earnings work before lender submission.",
+      lead: "Pull three years of tax returns and the add-back schedule line by line.",
+      why:  "Reported margins sit far enough above peer norms to warrant CPA-prepared quality-of-earnings work before lender submission.",
     });
   }
 
   // Sensitivity present → stress-test debt service
   if (snap.sensitivity) {
     out.push({
-      lead: "Stress-test debt service under normalized earnings assumptions.",
-      why:  "Coverage durability — not just headline DSCR — drives both lender comfort and the buyer's downside protection in the first twenty-four months post-close.",
+      lead: "Stress-test coverage under normalized earnings assumptions, not just headline SDE.",
+      why:  "Lender comfort tracks coverage durability through the first twenty-four months — that is where buyer downside protection actually lives.",
     });
   }
 
   // Sources & uses imbalance
   if (snap.deal_structure && !snap.deal_structure.sources_uses.balanced) {
     out.push({
-      lead: "Reconcile sources & uses imbalance before lender submission.",
-      why:  "Lenders will not engage on a stack that does not balance; this is a gating item, not a diligence subtopic.",
+      lead: "Reconcile the sources-and-uses gap before lender submission.",
+      why:  "This is a gating item, not a diligence subtopic; no lender will engage on a stack that doesn't balance.",
     });
   }
 
   // Working capital not provided or zero → call out
   if (snap.deal_structure && (snap.deal_structure.sources_uses.working_capital_needed === 0)) {
     out.push({
-      lead: "Confirm working capital requirements at close.",
-      why:  "The current model assumes no working capital need; absent verification, this is the most common source of post-close cash crunch in lower-middle-market acquisitions.",
+      lead: "Confirm working capital required at close.",
+      why:  "The model currently assumes none; underestimated working capital is the most common source of post-close cash strain.",
     });
   }
 
@@ -2766,8 +2847,8 @@ function buildDiligencePriorities(
     const ltv = snap.deal_structure.metrics.find(m => m.key === "ltv");
     if (ltv && ltv.value !== null && ltv.value > 0.85) {
       out.push({
-        lead: "Review lender appetite for elevated LTV early in the process.",
-        why:  "An equity injection requirement at term-sheet stage is materially less disruptive than discovering one during final underwriting.",
+        lead: "Test lender appetite for the proposed LTV before term sheet.",
+        why:  "Discovering an equity injection requirement at term sheet is recoverable; discovering it at final underwriting is not.",
       });
     }
   }
@@ -2778,8 +2859,8 @@ function buildDiligencePriorities(
     const ratio = invTurnover.deal_value / invTurnover.industry_median;
     if (ratio > 5 || ratio < 0.2) {
       out.push({
-        lead: "Verify inventory accounting basis against peer norms.",
-        why:  "Reported turnover differs materially from industry medians; reconciliation determines whether this reflects operational distinction or accounting treatment.",
+        lead: "Verify the inventory accounting basis against peer norms.",
+        why:  "Turnover sits far enough off peer medians that it points to either an operational distinction or an accounting treatment difference; both have valuation consequences.",
       });
     }
   }
@@ -2790,8 +2871,8 @@ function buildDiligencePriorities(
     snap.risk_flags.some(f => f.severity === "high");
   if (hasMaterialRisk && out.length < 5) {
     out.push({
-      lead: "Confirm transferability of key customer contracts and supplier relationships.",
-      why:  "For deals carrying elevated risk markers, contract-by-contract review of post-close consent requirements becomes a standard committee expectation.",
+      lead: "Map the top-five customers and review post-close consent requirements.",
+      why:  "Concentration risk is the most common lever for negotiated structure (earn-out, holdback) — surface it early so it can be priced into terms.",
     });
   }
 
