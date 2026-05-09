@@ -568,7 +568,7 @@ function drawPage1(doc: jsPDF, data: DealReportData, decision: DecisionLayerResu
   setType(doc, "L5");
   setHex(doc, COLOR.textMuted, "text");
   doc.text(subtitleParts.join(" \u00B7 "), M, y);
-  y += SP.lg;
+  y += SP.xl;
 
   // ─── HERO BLOCK ──────────────────────────────────────────────────────
   // Two anchors: RECOMMENDATION (left, hero-primary 20pt) and
@@ -601,7 +601,7 @@ function drawPage1(doc: jsPDF, data: DealReportData, decision: DecisionLayerResu
   const targetRange = `${fmtUsd(decision.target_price_low)}–${fmtUsd(decision.target_price_high)}`;
   doc.text(targetRange, rightX, y + 22);
 
-  y += SP.lg + SP.sm;   // tighter than before — hero is restrained
+  y += SP.xl;
 
   // ─── HERO METADATA STRIP ─────────────────────────────────────────────
   // Score + Confidence + Leverage + Lender Ready as quiet inline metadata.
@@ -619,7 +619,7 @@ function drawPage1(doc: jsPDF, data: DealReportData, decision: DecisionLayerResu
     `Lender ${lenderReadyDisplay.toLowerCase()}`,
   ];
   doc.text(metaParts.join("   \u00B7   "), M, y);
-  y += SP.md;
+  y += SP.lg;
 
   // ─── VERDICT SUBLINE ─────────────────────────────────────────────────
   // Single line of supporting context. Italic charcoal — the thesis sentence.
@@ -627,13 +627,13 @@ function drawPage1(doc: jsPDF, data: DealReportData, decision: DecisionLayerResu
   doc.setFontSize(10);
   setHex(doc, COLOR.textBody, "text");
   doc.text(verdictSubline(decision), M, y);
-  y += SP.lg;
+  y += SP.xl;
 
   // ─── HAIRLINE DIVIDER ────────────────────────────────────────────────
   setHex(doc, COLOR.borderSoft, "draw");
   doc.setLineWidth(0.4);
   doc.line(M, y, M + CW, y);
-  y += SP.lg;
+  y += SP.xl;
 
   // ─── KEY METRICS ─────────────────────────────────────────────────────
   // Quiet 4-column grid, no cell borders or fills. Labels above values.
@@ -672,7 +672,7 @@ function drawPage1(doc: jsPDF, data: DealReportData, decision: DecisionLayerResu
     ["DSCR",          `${inputs.dscr.toFixed(2)}x`, inputs.dscr >= 1.5 ? COLOR.emerald : inputs.dscr >= 1.25 ? COLOR.amber : COLOR.red],
   ];
   renderMetricRow(row1, y);
-  y += SP.lg + SP.sm;   // 32pt — room for label + value + breathing space
+  y += SP.xl;
 
   const row2: [string, string, string][] = [
     ["Fair value",     fmtUsd(inputs.fair_value),                                           askGapPct < 0 ? COLOR.emerald : COLOR.textPrimary],
@@ -681,13 +681,13 @@ function drawPage1(doc: jsPDF, data: DealReportData, decision: DecisionLayerResu
     ["Risk level",     inputs.risk_level,                                                    riskLevelColor(inputs.risk_level)],
   ];
   renderMetricRow(row2, y);
-  y += SP.lg + SP.sm;
+  y += SP.xl;
 
   // ─── HAIRLINE DIVIDER ────────────────────────────────────────────────
   setHex(doc, COLOR.borderSoft, "draw");
   doc.setLineWidth(0.4);
   doc.line(M, y, M + CW, y);
-  y += SP.lg;
+  y += SP.xl;
 
   // ─── NEGOTIATION POSTURE ─────────────────────────────────────────────
   setType(doc, "eyebrow");
@@ -712,13 +712,13 @@ function drawPage1(doc: jsPDF, data: DealReportData, decision: DecisionLayerResu
   postureLines.forEach((line: string, i: number) => {
     doc.text(line, M + 12, y + 4 + i * postureLineHeight);
   });
-  y += postureBlockH + SP.md;
+  y += postureBlockH + SP.xl;
 
   // ─── INVESTMENT TAKE ─────────────────────────────────────────────────
   setType(doc, "eyebrow");
   setHex(doc, COLOR.indigo, "text");
   doc.text("INVESTMENT TAKE", M, y);
-  y += SP.md - 2;
+  y += SP.md;
 
   setType(doc, "L4");
   setHex(doc, COLOR.textBody, "text");
@@ -735,110 +735,132 @@ function drawPage2(doc: jsPDF, data: DealReportData, decision: DecisionLayerResu
   newPage(doc, 2, "Financial Underwriting");
   const { inputs } = data;
 
-  let y = 70;
+  let y = 78;
+
+  // ─── Eyebrow + page title (page-8 voice) ─────────────────────────────
+  setType(doc, "eyebrow");
+  setHex(doc, COLOR.indigo, "text");
+  doc.text("FINANCIAL UNDERWRITING", M, y);
+  y += 18;
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(15);
+  setHex(doc, COLOR.textPrimary, "text");
+  doc.text("Earnings normalization and debt structure", M, y);
+  y += 14;
+
+  setType(doc, "L4");
+  setHex(doc, COLOR.textMuted, "text");
+  doc.text(
+    "Reconstructs true earnings and tests debt capacity under realistic downside scenarios.",
+    M, y,
+  );
+  y += SP.xl;
+
+  // ───────────────────────────────────────────────────────────────────────
+  // SECTION 1 — SDE normalization
+  // When no normalization haircuts apply (the common case), collapse the
+  // table to a single italic prose line. When haircuts exist, render the
+  // table — but with restraint, no header rules, hairline-only dividers.
+  // ───────────────────────────────────────────────────────────────────────
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(8);
   setHex(doc, COLOR.indigo, "text");
-  doc.text("FINANCIAL UNDERWRITING", M, y);
-  y += 14;
-
-  doc.setFontSize(14);
-  setHex(doc, COLOR.textPrimary, "text");
-  doc.text("Earnings normalization & debt structure", M, y);
-  y += 13;
-
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8.5);
-  setHex(doc, COLOR.textDim, "text");
-  doc.text("Figures derived from buyer inputs and AcquiFlow normalization engine", M, y);
+  doc.text("SDE NORMALIZATION", M, y);
   y += 16;
 
-  // ─── CONTEXT LEAD ──────────────────────────────────────────────────────
-  setHex(doc, "#F8FAFC", "fill");
-  doc.rect(M, y - 3, CW, 22, "F");
-  setHex(doc, COLOR.indigo, "fill");
-  doc.rect(M, y - 3, 1.5, 22, "F");
-  drawWrappedText(
-    doc,
-    "This section reconstructs true earnings and tests debt capacity under realistic downside scenarios.",
-    M + 10, y + 9, CW - 20, 9, COLOR.textBody, 1.4, "italic"
-  );
-  y += 30;
-
-  // ─── SDE NORMALIZATION TABLE ──────────────────────────────────────────
-  drawSectionHeader(doc, M, y, "SDE normalization");
-  y += 12;
-
-  // Build rows from evidence_profile + reported/usable
   const reported = inputs.reported_sde ?? inputs.sde;
   const usable   = inputs.usable_sde   ?? inputs.sde;
   const totalAdj = reported - usable;
-  const normRows: [string, string, string, string][] = [
-    ["Seller-reported SDE", fmtUsd(reported), "-", "-"],
-  ];
-  if (totalAdj > 0) {
-    // We don't have line-item adjustments, so represent the haircut as a single "Normalization adjustments" row
-    const pctOfReported = (totalAdj / reported) * 100;
-    normRows.push(["Normalization adjustments", "-", `-${fmtUsd(totalAdj)}`, `${fmtPct(-pctOfReported)}`]);
-  }
-  normRows.push(["Adjusted SDE (used in analysis)", "", fmtUsd(usable), reported > 0 ? fmtPct(((usable - reported) / reported) * 100) : "-"]);
 
-  // Headers
-  const colX = [M, M + 230, M + 340, M + 460];
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(7);
-  setHex(doc, COLOR.textDim, "text");
-  doc.text("COMPONENT", colX[0], y);
-  doc.text("REPORTED",  colX[1], y);
-  doc.text("ADJUSTED",  colX[2], y);
-  doc.text("Delta",         colX[3], y);
-  setHex(doc, COLOR.borderSoft, "draw");
-  doc.setLineWidth(0.5);
-  doc.line(M, y + 3, PW - M, y + 3);
-  y += 10;
-
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8.5);
-  normRows.forEach((row, idx) => {
-    const isLast = idx === normRows.length - 1;
-    if (isLast) {
-      // Highlight the totals row
-      setHex(doc, "#F8FAFC", "fill");
-      doc.rect(M - 2, y - 9, CW + 4, 14, "F");
-      doc.setFont("helvetica", "bold");
-      setHex(doc, COLOR.textPrimary, "text");
-      doc.text(row[0], colX[0], y);
-      doc.setFont("helvetica", "bold");
-      setHex(doc, COLOR.indigo, "text");
-      doc.text(row[2], colX[2], y);
-      doc.text(row[3], colX[3], y);
-    } else {
-      doc.setFont("helvetica", "normal");
-      setHex(doc, COLOR.textBody, "text");
-      doc.text(row[0], colX[0], y);
-      doc.setFont("helvetica", "normal");
-      setHex(doc, COLOR.textBody, "text");
-      doc.text(row[1], colX[1], y);
-      const isAmberDelta = row[2].startsWith("-") || row[3].startsWith("-");
-      setHex(doc, isAmberDelta ? COLOR.amber : COLOR.textBody, "text");
-      doc.text(row[2], colX[2], y);
-      doc.text(row[3], colX[3], y);
-    }
-    y += 13;
-    setHex(doc, "#F8FAFC", "draw");
+  if (totalAdj <= 0) {
+    // No haircuts — render as inline prose, properly wrapped within CW.
+    // (Set the L4 font BEFORE splitTextToSize — same lesson learned from
+    // the Page 1 clipping bug.)
+    setType(doc, "L4");
+    setHex(doc, COLOR.textBody, "text");
+    const sdeProse = `Adjusted SDE matches the reported figure of ${fmtUsd(reported)}. No normalization haircuts applied — financials warrant validation through tax returns during diligence regardless.`;
+    const sdeLines = doc.splitTextToSize(sdeProse, CW);
+    sdeLines.slice(0, 3).forEach((line: string, i: number) => {
+      doc.text(line, M, y + i * 13);
+    });
+    y += Math.min(sdeLines.length, 3) * 13 + SP.xl;
+  } else {
+    // Haircuts present — render the comparison table
+    const colX = [M, M + 230, M + 340, M + 460];
+    setType(doc, "label");
+    setHex(doc, COLOR.textDim, "text");
+    doc.text("COMPONENT", colX[0], y);
+    doc.text("REPORTED",  colX[1], y);
+    doc.text("ADJUSTED",  colX[2], y);
+    doc.text("DELTA",     colX[3], y);
+    y += SP.sm + 4;
+    setHex(doc, COLOR.borderSoft, "draw");
     doc.setLineWidth(0.3);
-    doc.line(M, y - 4, PW - M, y - 4);
-  });
-  y += 4;
+    doc.line(M, y, M + CW, y);
+    y += SP.sm + 4;
 
-  // SDE Interpretation
-  drawInterpretBox(doc, M, y, CW, "Interpretation", decision.sde_interpretation);
-  y += interpretBoxHeight(doc, decision.sde_interpretation, CW) + 12;
+    setType(doc, "L4");
+    setHex(doc, COLOR.textBody, "text");
+    doc.text("Seller-reported SDE", colX[0], y);
+    doc.text(fmtUsd(reported), colX[1], y);
+    doc.text("—", colX[2], y);
+    doc.text("—", colX[3], y);
+    y += 18;
 
-  // ─── DEBT STRUCTURE ───────────────────────────────────────────────────
-  drawSectionHeader(doc, M, y, "Debt structure assumption");
-  y += 12;
+    const pctOfReported = (totalAdj / reported) * 100;
+    doc.text("Normalization adjustments", colX[0], y);
+    doc.text("—", colX[1], y);
+    setHex(doc, COLOR.amberText, "text");
+    doc.text(`-${fmtUsd(totalAdj)}`, colX[2], y);
+    doc.text(fmtPct(-pctOfReported), colX[3], y);
+    y += 18;
+
+    setHex(doc, COLOR.borderSoft, "draw");
+    doc.setLineWidth(0.3);
+    doc.line(M, y - 6, M + CW, y - 6);
+
+    doc.setFont("helvetica", "bold");
+    setHex(doc, COLOR.textPrimary, "text");
+    doc.text("Adjusted SDE (used in analysis)", colX[0], y);
+    setHex(doc, COLOR.indigo, "text");
+    doc.text(fmtUsd(usable), colX[2], y);
+    doc.text(fmtPct(((usable - reported) / reported) * 100), colX[3], y);
+    y += SP.lg;
+
+    // SDE interpretation in editorial style
+    if (decision.sde_interpretation) {
+      setType(doc, "label");
+      setHex(doc, COLOR.textDim, "text");
+      doc.text("INTERPRETATION", M, y);
+      y += SP.sm + 4;
+
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(10);
+      setHex(doc, COLOR.textBody, "text");
+      const lines = doc.splitTextToSize(decision.sde_interpretation, CW);
+      lines.slice(0, 3).forEach((line: string, i: number) => {
+        doc.text(line, M, y + i * 13);
+      });
+      y += Math.min(lines.length, 3) * 13 + SP.xl;
+    } else {
+      y += SP.md;
+    }
+  }
+
+  // ───────────────────────────────────────────────────────────────────────
+  // SECTION 2 — Debt structure assumption
+  // Asymmetric: Loan size + Annual debt are the primary anchors (larger).
+  // Down payment + Rate/Term are secondary (smaller, slate). No equal-weight
+  // 4-tile UI grid.
+  // ───────────────────────────────────────────────────────────────────────
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8);
+  setHex(doc, COLOR.indigo, "text");
+  doc.text("DEBT STRUCTURE ASSUMPTION", M, y);
+  y += 18;
 
   const debtPct  = inputs.debt_percent  ?? 90;
   const interest = inputs.interest_rate ?? 10.75;
@@ -848,60 +870,101 @@ function drawPage2(doc: jsPDF, data: DealReportData, decision: DecisionLayerResu
   const monthly  = inputs.monthly_payment ?? estimateMonthly(loanAmt, interest, term);
   const annual   = monthly * 12;
 
-  const debtCellW = (CW - 12) / 4;
-  const debtCells: [string, string][] = [
-    ["Loan size",     fmtUsd(loanAmt)],
-    ["Down payment",  `${fmtUsd(downAmt)} (${(100 - debtPct).toFixed(0)}%)`],
-    ["Rate / Term",   `${interest.toFixed(2)}% / ${term}y`],
-    ["Annual debt",   fmtUsd(annual)],
+  // Two primary anchors on the left half, two secondary on the right
+  const leftHalfX = M;
+  const rightHalfX = M + CW / 2 + SP.sm;
+
+  // Primary left: Loan size
+  setType(doc, "label");
+  setHex(doc, COLOR.textDim, "text");
+  doc.text("LOAN SIZE", leftHalfX, y);
+  setType(doc, "stat-medium");
+  setHex(doc, COLOR.textPrimary, "text");
+  doc.text(fmtUsd(loanAmt), leftHalfX, y + 18);
+
+  // Primary right: Annual debt service
+  setType(doc, "label");
+  setHex(doc, COLOR.textDim, "text");
+  doc.text("ANNUAL DEBT SERVICE", rightHalfX, y);
+  setType(doc, "stat-medium");
+  setHex(doc, COLOR.textPrimary, "text");
+  doc.text(fmtUsd(annual), rightHalfX, y + 18);
+
+  y += 36;
+
+  // Secondary metadata strip — slate, single line
+  setType(doc, "L5");
+  setHex(doc, COLOR.textMuted, "text");
+  const debtMetaParts = [
+    `Down payment ${fmtUsd(downAmt)} (${(100 - debtPct).toFixed(0)}%)`,
+    `Rate ${interest.toFixed(2)}%`,
+    `Term ${term}y`,
   ];
-  debtCells.forEach((c, i) => {
-    drawCell(doc, M + i * (debtCellW + 4), y, debtCellW, 30, c[0], c[1], COLOR.textPrimary, 9.5);
-  });
-  y += 30 + 14;
+  doc.text(debtMetaParts.join("   \u00B7   "), M, y);
+  y += SP.xl;
 
-  // ─── DSCR STRESS SCENARIOS ────────────────────────────────────────────
-  drawSectionHeader(doc, M, y, "DSCR stress scenarios");
-  y += 12;
+  // ───────────────────────────────────────────────────────────────────────
+  // SECTION 3 — DSCR stress scenarios
+  // Clean table with restrained dividers, generous spacing.
+  // ───────────────────────────────────────────────────────────────────────
 
-  // Headers
-  const sCols = [M, M + 250, M + 350, M + 440, M + 510];
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(7);
+  doc.setFontSize(8);
+  setHex(doc, COLOR.indigo, "text");
+  doc.text("DSCR STRESS SCENARIOS", M, y);
+  y += 16;
+
+  const sCols = [M, M + 250, M + 350, M + 440];
+  setType(doc, "label");
   setHex(doc, COLOR.textDim, "text");
   doc.text("SCENARIO", sCols[0], y);
   doc.text("SDE",      sCols[1], y);
   doc.text("DSCR",     sCols[2], y);
   doc.text("STATUS",   sCols[3], y);
+  y += SP.sm + 4;
   setHex(doc, COLOR.borderSoft, "draw");
-  doc.setLineWidth(0.5);
-  doc.line(M, y + 3, PW - M, y + 3);
-  y += 11;
+  doc.setLineWidth(0.3);
+  doc.line(M, y, M + CW, y);
+  y += SP.sm + 4;
 
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8.5);
-  decision.stress_scenarios.forEach((s, i) => {
-    const dscrColor   = s.comfortable ? COLOR.emerald : s.passed ? COLOR.amber : COLOR.red;
+  setType(doc, "L4");
+  decision.stress_scenarios.forEach((s) => {
+    const dscrColor = s.comfortable ? COLOR.emerald : s.passed ? COLOR.amber : COLOR.red;
     const statusLabel = s.passed ? "PASS" : "FAIL";
+
+    doc.setFont("helvetica", "normal");
     setHex(doc, COLOR.textBody, "text");
     doc.text(s.label, sCols[0], y);
-    doc.setFont("helvetica", "normal");
     doc.text(fmtUsd(s.sde), sCols[1], y);
+
     setHex(doc, dscrColor, "text");
     doc.text(`${s.dscr.toFixed(2)}x`, sCols[2], y);
+
     doc.setFont("helvetica", "bold");
     doc.text(statusLabel, sCols[3], y);
-    doc.setFont("helvetica", "normal");
-    setHex(doc, COLOR.textBody, "text");
-    y += 13;
-    setHex(doc, "#F8FAFC", "draw");
-    doc.setLineWidth(0.3);
-    doc.line(M, y - 4, PW - M, y - 4);
-  });
-  y += 4;
 
-  // DSCR Interpretation
-  drawInterpretBox(doc, M, y, CW, "Interpretation", decision.dscr_interpretation);
+    y += 18;
+    setHex(doc, COLOR.borderSoft, "draw");
+    doc.setLineWidth(0.3);
+    doc.line(M, y - 6, M + CW, y - 6);
+  });
+  y += SP.lg;
+
+  // DSCR interpretation in editorial style
+  if (decision.dscr_interpretation) {
+    setType(doc, "label");
+    setHex(doc, COLOR.textDim, "text");
+    doc.text("INTERPRETATION", M, y);
+    y += SP.sm + 4;
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    setHex(doc, COLOR.textBody, "text");
+    const lines = doc.splitTextToSize(decision.dscr_interpretation, CW);
+    lines.slice(0, 4).forEach((line: string, i: number) => {
+      doc.text(line, M, y + i * 13);
+    });
+  }
 }
 
 // ─── PAGE 3 — RISK ANALYSIS ─────────────────────────────────────────────
@@ -909,92 +972,93 @@ function drawPage2(doc: jsPDF, data: DealReportData, decision: DecisionLayerResu
 function drawPage3(doc: jsPDF, data: DealReportData, decision: DecisionLayerResult): void {
   newPage(doc, 3, "Risk Analysis");
 
-  let y = 70;
+  let y = 78;
+
+  // ─── Eyebrow + page title (page-8 voice) ─────────────────────────────
+  setType(doc, "eyebrow");
+  setHex(doc, COLOR.indigo, "text");
+  doc.text("RISK ANALYSIS", M, y);
+  y += 18;
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(15);
+  setHex(doc, COLOR.textPrimary, "text");
+  doc.text("Risk severity and deal trajectory", M, y);
+  y += 14;
+
+  setType(doc, "L4");
+  setHex(doc, COLOR.textMuted, "text");
+  doc.text("Risks ranked by impact severity — High, Medium, Low.", M, y);
+  y += SP.xl;
+
+  // ───────────────────────────────────────────────────────────────────────
+  // SECTION 1 — Risk flags by severity
+  // Stripe + headline + body. Generous inter-row spacing — each flag
+  // reads as its own observation rather than a row in a table.
+  // ───────────────────────────────────────────────────────────────────────
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(8);
   setHex(doc, COLOR.indigo, "text");
-  doc.text("RISK ANALYSIS", M, y);
-  y += 14;
-
-  doc.setFontSize(14);
-  setHex(doc, COLOR.textPrimary, "text");
-  doc.text("Risk severity & deal trajectory", M, y);
-  y += 13;
-
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8.5);
-  setHex(doc, COLOR.textDim, "text");
-  doc.text("Risks ranked by impact severity \u2014 High / Medium / Low", M, y);
+  doc.text("RISK FLAGS BY SEVERITY", M, y);
   y += 18;
 
-  // ─── RISK FLAGS ────────────────────────────────────────────────────────
-  drawSectionHeader(doc, M, y, "Risk flags by severity");
-  y += 12;
-
-  const flagsToShow = decision.risk_flags.slice(0, 6); // cap to avoid overflow
+  const flagsToShow = decision.risk_flags.slice(0, 6);
   flagsToShow.forEach((flag) => {
+    if (y > PH - 200) return;
     y = drawRiskFlag(doc, M, y, CW, flag);
-    y += 6;
-    if (y > PH - 200) return; // safety stop before trajectory section
+    y += SP.md;  // generous breathing between flags (was SP.xs+2)
   });
-  y += 6;
+  y += SP.md;
 
-  // ─── DEAL TRAJECTORY ──────────────────────────────────────────────────
-  drawSectionHeader(doc, M, y, "Deal trajectory");
-  y += 12;
-
-  const trajH = 80;
-  setHex(doc, "#F8FAFC", "fill");
-  doc.rect(M, y, CW, trajH, "F");
-  setHex(doc, COLOR.borderSoft, "draw");
-  doc.setLineWidth(0.5);
-  doc.rect(M, y, CW, trajH, "S");
-
-  // Top row: Trend + Confidence
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(7);
-  setHex(doc, COLOR.textDim, "text");
-  doc.text("TREND", M + 10, y + 14);
-  doc.text("CONFIDENCE", PW - M - 10, y + 14, { align: "right" });
+  // ───────────────────────────────────────────────────────────────────────
+  // SECTION 2 — Deal trajectory
+  // Editorial inline block — single declarative line + secondary metadata
+  // strip. Replaces the previous 2-row dashboard tile with header strip.
+  // ───────────────────────────────────────────────────────────────────────
 
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(13);
+  doc.setFontSize(8);
+  setHex(doc, COLOR.indigo, "text");
+  doc.text("DEAL TRAJECTORY", M, y);
+  y += 18;
+
   const trendColor = decision.trajectory_label === "Improving" ? COLOR.emerald :
                      decision.trajectory_label === "Declining" ? COLOR.red :
                      decision.trajectory_label === "Stable"    ? COLOR.emerald : COLOR.textMuted;
+  const trendLabel = (decision.trajectory_label ?? "Unknown").toLowerCase();
+  const confidenceLabel = (decision.trajectory_confidence ?? "Unknown").toLowerCase();
+
+  // Lead sentence — bold L3 with the trend label color-keyed.
+  // Build width-aware so the colored portion sits inline.
+  setType(doc, "L3");
+  setHex(doc, COLOR.textPrimary, "text");
+  const leadPart1 = "Trajectory reads as";
+  doc.text(leadPart1, M, y);
+  const part1W = doc.getTextWidth(leadPart1) + 4;  // explicit gap
+
   setHex(doc, trendColor, "text");
-  doc.text(decision.trajectory_label, M + 10, y + 30);
+  const trendLabelText = decision.trajectory_label ?? "Unknown";
+  doc.text(trendLabelText, M + part1W, y);
+  const trendW = doc.getTextWidth(trendLabelText) + 4;
 
-  doc.setFontSize(11);
-  const confColor = decision.trajectory_confidence === "High" ? COLOR.emerald :
-                    decision.trajectory_confidence === "Medium" ? COLOR.amber : COLOR.orange;
-  setHex(doc, confColor, "text");
-  doc.text(decision.trajectory_confidence, PW - M - 10, y + 30, { align: "right" });
+  setHex(doc, COLOR.textPrimary, "text");
+  doc.text(`with ${confidenceLabel} confidence.`, M + part1W + trendW, y);
+  y += SP.md;
 
-  // Divider
-  setHex(doc, "#E2E8F0", "draw");
-  doc.setLineWidth(0.4);
-  doc.line(M + 8, y + 42, PW - M - 8, y + 42);
-
-  // Bottom row: 3 indicators
-  const trajCells = [
-    ["Y/Y REVENUE",      "Stable",    COLOR.emerald],
-    ["SDE MARGIN",       data.inputs.revenue > 0 ? `${((data.inputs.sde / data.inputs.revenue) * 100).toFixed(0)}%` : "-", COLOR.textMuted],
-    ["CUSTOMER CHURN",   data.inputs.evidence_profile?.concentrationBand === "high" ? "Elevated" : "Typical", data.inputs.evidence_profile?.concentrationBand === "high" ? COLOR.amber : COLOR.textMuted],
+  // Secondary metadata strip — slate, single line
+  const sdeMargin = data.inputs.revenue > 0
+    ? `${((data.inputs.sde / data.inputs.revenue) * 100).toFixed(0)}%`
+    : "—";
+  const churn = data.inputs.evidence_profile?.concentrationBand === "high" ? "elevated" : "typical";
+  setType(doc, "L5");
+  setHex(doc, COLOR.textMuted, "text");
+  const trajParts = [
+    `Y/Y revenue stable`,
+    `SDE margin ${sdeMargin}`,
+    `Customer churn ${churn}`,
   ];
-  const trajColW = (CW - 16) / 3;
-  trajCells.forEach((c, i) => {
-    const cx = M + 10 + i * trajColW;
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(6.5);
-    setHex(doc, COLOR.textDim, "text");
-    doc.text(c[0], cx, y + 56);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(10);
-    setHex(doc, c[2], "text");
-    doc.text(c[1], cx, y + 70);
-  });
+  doc.text(trajParts.join("   \u00B7   "), M, y);
 }
 
 function drawRiskFlag(doc: jsPDF, x: number, y: number, w: number, flag: RiskFlag): number {
@@ -1051,179 +1115,179 @@ function drawPage4(doc: jsPDF, data: DealReportData, decision: DecisionLayerResu
   newPage(doc, 4, "Market Benchmarking");
   const { inputs, comparables } = data;
 
-  let y = 70;
+  let y = 78;
+
+  // ─── Eyebrow + page title (page-8 voice) ─────────────────────────────
+  setType(doc, "eyebrow");
+  setHex(doc, COLOR.indigo, "text");
+  doc.text("MARKET BENCHMARKING", M, y);
+  y += 18;
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(15);
+  setHex(doc, COLOR.textPrimary, "text");
+  doc.text("Comparable transactions and positioning", M, y);
+  y += 14;
+
+  setType(doc, "L4");
+  setHex(doc, COLOR.textMuted, "text");
+  const sampleSize = inputs.benchmark_sample_size ?? 312;
+  doc.text(
+    `${inputs.industry_label} benchmark — ${sampleSize.toLocaleString()} transactions, proprietary AcquiFlow database.`,
+    M, y,
+  );
+  y += SP.xl;
+
+  // ───────────────────────────────────────────────────────────────────────
+  // SECTION 1 — Asking multiple vs market range
+  // Bar sits openly on the page with labels above and a stat strip below.
+  // No surrounding container, no tinted fill behind it.
+  // ───────────────────────────────────────────────────────────────────────
 
   doc.setFont("helvetica", "bold");
   doc.setFontSize(8);
   setHex(doc, COLOR.indigo, "text");
-  doc.text("MARKET BENCHMARKING", M, y);
-  y += 14;
-
-  doc.setFontSize(14);
-  setHex(doc, COLOR.textPrimary, "text");
-  doc.text("Comparable transactions & positioning", M, y);
-  y += 13;
-
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8.5);
-  setHex(doc, COLOR.textDim, "text");
-  const sampleSize = inputs.benchmark_sample_size ?? 312;
-  doc.text(`${inputs.industry_label} benchmark \u00B7 ${sampleSize.toLocaleString()} transactions \u00B7 proprietary AcquiFlow database`, M, y);
+  doc.text("ASKING MULTIPLE VS MARKET RANGE", M, y);
   y += 18;
-
-  // ─── ASKING MULTIPLE VS RANGE ─────────────────────────────────────────
-  drawSectionHeader(doc, M, y, "Asking multiple vs market range");
-  y += 12;
 
   const benchMid  = decision.pricing_insight.median_multiple;
   const benchLow  = inputs.benchmark_low  ?? round(benchMid * 0.7, 2);
   const benchHigh = inputs.benchmark_high ?? round(benchMid * 1.4, 2);
 
-  // Container box
-  const barBoxH = 76;
-  setHex(doc, "#F8FAFC", "fill");
-  doc.rect(M, y, CW, barBoxH, "F");
-  setHex(doc, COLOR.borderSoft, "draw");
-  doc.setLineWidth(0.5);
-  doc.rect(M, y, CW, barBoxH, "S");
+  // Range labels — placed above the bar without a surrounding box
+  setType(doc, "L5");
+  setHex(doc, COLOR.textMuted, "text");
+  doc.text(`Low ${benchLow.toFixed(1)}x`,    M, y);
+  doc.text(`Median ${benchMid.toFixed(1)}x`, M + CW / 2, y, { align: "center" });
+  doc.text(`High ${benchHigh.toFixed(1)}x`,  M + CW, y, { align: "right" });
+  y += 14;
 
-  // Range labels (top of box)
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8);
-  setHex(doc, COLOR.textDim, "text");
-  doc.text(`Low: ${benchLow.toFixed(1)}x`,    M + 14, y + 14);
-  doc.text(`Median: ${benchMid.toFixed(1)}x`, M + CW / 2, y + 14, { align: "center" });
-  doc.text(`High: ${benchHigh.toFixed(1)}x`,  PW - M - 14, y + 14, { align: "right" });
-
-  // The bar (rendered in 3 segments: green, amber, red)
-  const barX = M + 14;
-  const barY = y + 22;
-  const barW = CW - 28;
+  // The bar — three quiet tinted segments
+  const barX = M;
+  const barY = y;
+  const barW = CW;
   const barH = 6;
   const seg = barW / 3;
   setHex(doc, "#ECFDF5", "fill"); doc.rect(barX,           barY, seg, barH, "F");
   setHex(doc, "#FFFBEB", "fill"); doc.rect(barX + seg,     barY, seg, barH, "F");
   setHex(doc, "#FEF2F2", "fill"); doc.rect(barX + seg * 2, barY, seg, barH, "F");
 
-  // Marker
+  // Marker — narrow navy rect spanning the bar
   const askMult     = inputs.valuation_multiple;
   const askPosRatio = clamp01((askMult - benchLow) / (benchHigh - benchLow));
   const markerX     = barX + askPosRatio * barW;
   setHex(doc, COLOR.indigo, "fill");
-  doc.rect(markerX - 4, barY - 4, 8, barH + 8, "F");
-  // Median tick
-  setHex(doc, COLOR.textPrimary, "draw");
+  doc.rect(markerX - 1.5, barY - 4, 3, barH + 8, "F");
+
+  // Median tick — thin slate
+  setHex(doc, COLOR.textMuted, "draw");
   doc.setLineWidth(0.5);
   doc.line(barX + barW / 2, barY - 2, barX + barW / 2, barY + barH + 2);
 
-  // Stats badge below
-  const statY = barY + barH + 22;
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(7);
+  y += barH + SP.lg;
+
+  // Stats strip below — three columns, slate labels + bold values
+  const positionText  = decision.pricing_insight.position === "below" ? "Below market"
+                      : decision.pricing_insight.position === "above" ? "Above market"
+                      : "At market";
+  const positionColor = decision.pricing_insight.position === "below" ? COLOR.emerald
+                      : decision.pricing_insight.position === "above" ? COLOR.red
+                      : COLOR.amber;
+
+  const colXs = [M, M + CW / 3, M + (2 * CW) / 3];
+
+  setType(doc, "label");
   setHex(doc, COLOR.textDim, "text");
-  doc.text("THIS DEAL",  M + CW / 4 - 50, statY);
-  doc.text("PERCENTILE", M + CW / 2 - 30, statY);
-  doc.text("POSITION",   M + (3 * CW) / 4 - 8, statY);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(11);
+  doc.text("THIS DEAL",   colXs[0], y);
+  doc.text("PERCENTILE",  colXs[1], y);
+  doc.text("POSITION",    colXs[2], y);
+  y += 16;
+
+  setType(doc, "stat-medium");
   setHex(doc, COLOR.indigo, "text");
-  doc.text(`${askMult.toFixed(2)}x`, M + CW / 4 - 50, statY + 12);
-  setHex(doc, COLOR.emerald, "text");
-  doc.text(decision.pricing_insight.percentile_ordinal, M + CW / 2 - 30, statY + 12);
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(9);
-  const positionText = decision.pricing_insight.position === "below" ? "Below market" : decision.pricing_insight.position === "above" ? "Above market" : "At market";
-  const positionColor = decision.pricing_insight.position === "below" ? COLOR.emerald : decision.pricing_insight.position === "above" ? COLOR.red : COLOR.amber;
-  setHex(doc, positionColor, "text");
-  doc.text(positionText, M + (3 * CW) / 4 - 8, statY + 12);
-
-  y += barBoxH + 14;
-
-  // ─── PRICING INSIGHT CALLOUT ───────────────────────────────────────────
-  const piColor = decision.pricing_insight.position === "below" ? COLOR.emerald :
-                  decision.pricing_insight.position === "above" ? COLOR.red    : COLOR.amber;
-  const piBg    = decision.pricing_insight.position === "below" ? "#ECFDF5"   :
-                  decision.pricing_insight.position === "above" ? "#FEF2F2"   : "#FFFBEB";
-
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8.5);
-  const proseLines = doc.splitTextToSize(decision.pricing_insight.prose, CW - 28);
-  const piH = 18 + proseLines.length * 11 + 10;
-
-  setHex(doc, piBg, "fill");
-  doc.rect(M, y, CW, piH, "F");
-  setHex(doc, piColor, "fill");
-  doc.rect(M, y, 3, piH, "F");
-
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(7);
-  setHex(doc, piColor, "text");
-  doc.text("PRICING INSIGHT", M + 14, y + 14);
-
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8.5);
+  doc.text(`${askMult.toFixed(2)}x`, colXs[0], y);
   setHex(doc, COLOR.textPrimary, "text");
-  proseLines.forEach((line: string, i: number) => {
-    doc.text(line, M + 14, y + 28 + i * 11);
+  doc.text(decision.pricing_insight.percentile_ordinal, colXs[1], y);
+  setHex(doc, positionColor, "text");
+  doc.text(positionText, colXs[2], y);
+
+  y += SP.xl;
+
+  // ───────────────────────────────────────────────────────────────────────
+  // SECTION 2 — Pricing insight (editorial)
+  // INTERPRETATION-eyebrow + flowing prose. No colored left edge, no fill.
+  // Matches Page 6's normalization-sensitivity treatment.
+  // ───────────────────────────────────────────────────────────────────────
+
+  setType(doc, "label");
+  setHex(doc, COLOR.textDim, "text");
+  doc.text("PRICING INSIGHT", M, y);
+  y += SP.sm + 4;
+
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(10);
+  setHex(doc, COLOR.textBody, "text");
+  const proseLines = doc.splitTextToSize(decision.pricing_insight.prose, CW);
+  proseLines.slice(0, 6).forEach((line: string, i: number) => {
+    doc.text(line, M, y + i * 13);
   });
-  y += piH + 14;
+  y += Math.min(proseLines.length, 6) * 13 + SP.xl;
 
-  // ─── REPRESENTATIVE COMPARABLES TABLE ─────────────────────────────────
-  drawSectionHeader(doc, M, y, "Representative comparable transactions");
-  y += 12;
+  // ───────────────────────────────────────────────────────────────────────
+  // SECTION 3 — Representative comparable transactions
+  // Restrained table — column labels without underline, hairline-only
+  // row dividers, generous row heights.
+  // ───────────────────────────────────────────────────────────────────────
 
-  // Headers
-  const cCols = [M, M + 240, M + 320, M + 400, M + 480];
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(7);
+  doc.setFontSize(8);
+  setHex(doc, COLOR.indigo, "text");
+  doc.text("REPRESENTATIVE COMPARABLE TRANSACTIONS", M, y);
+  y += 18;
+
+  const cCols = [M, M + 240, M + 320, M + 400, M + 480];
+  setType(doc, "label");
   setHex(doc, COLOR.textDim, "text");
   doc.text("INDUSTRY TRANSACTION", cCols[0], y);
   doc.text("REVENUE",  cCols[1], y);
   doc.text("SDE",      cCols[2], y);
   doc.text("MULTIPLE", cCols[3], y);
   doc.text("YEAR",     cCols[4], y);
+  y += SP.sm + 4;
   setHex(doc, COLOR.borderSoft, "draw");
-  doc.setLineWidth(0.5);
-  doc.line(M, y + 3, PW - M, y + 3);
-  y += 11;
+  doc.setLineWidth(0.3);
+  doc.line(M, y, M + CW, y);
+  y += SP.sm + 4;
 
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8.5);
-
+  setType(doc, "L4");
   const compsToShow = comparables.slice(0, 4);
   compsToShow.forEach((c) => {
+    doc.setFont("helvetica", "normal");
     setHex(doc, COLOR.textBody, "text");
     const stateSuffix = c.state ? ` (${c.state})` : "";
     doc.text(`${c.industry_label}${stateSuffix}`, cCols[0], y);
-    doc.setFont("helvetica", "normal");
     doc.text(fmtUsd(c.revenue), cCols[1], y);
     doc.text(fmtUsd(c.sde),     cCols[2], y);
     doc.text(`${c.multiple.toFixed(1)}x`, cCols[3], y);
     setHex(doc, COLOR.textDim, "text");
     doc.text(String(c.year), cCols[4], y);
-    doc.setFont("helvetica", "normal");
-    setHex(doc, COLOR.textBody, "text");
-    y += 13;
-    setHex(doc, "#F8FAFC", "draw");
+    y += 18;
+    setHex(doc, COLOR.borderSoft, "draw");
     doc.setLineWidth(0.3);
-    doc.line(M, y - 4, PW - M, y - 4);
+    doc.line(M, y - 6, M + CW, y - 6);
   });
 
-  // "This deal" highlight row
+  // "This deal" emphasis row — bold navy text, faint background
   setHex(doc, "#F8FAFC", "fill");
-  doc.rect(M - 2, y - 9, CW + 4, 14, "F");
+  doc.rect(M - 2, y - 4, CW + 4, 18, "F");
   doc.setFont("helvetica", "bold");
+  doc.setFontSize(10);
   setHex(doc, COLOR.indigo, "text");
-  // No decorative glyph — the navy text + bold weight + faint background
-  // fill is enough emphasis for the row. Earlier versions used U+25B6
-  // (BLACK RIGHT-POINTING TRIANGLE) which jsPDF's Helvetica subset cannot
-  // render and which displayed as "%¶" in production output.
-  doc.text("This deal", cCols[0], y);
-  doc.setFont("helvetica", "bold");
-  doc.text(fmtUsd(inputs.revenue),                          cCols[1], y);
-  doc.text(fmtUsd(inputs.usable_sde ?? inputs.sde),         cCols[2], y);
-  doc.text(`${inputs.valuation_multiple.toFixed(2)}x`,      cCols[3], y);
-  doc.text(String(data.generated_at.getFullYear()),         cCols[4], y);
+  doc.text("This deal", cCols[0], y + 6);
+  doc.text(fmtUsd(inputs.revenue),                          cCols[1], y + 6);
+  doc.text(fmtUsd(inputs.usable_sde ?? inputs.sde),         cCols[2], y + 6);
+  doc.text(`${inputs.valuation_multiple.toFixed(2)}x`,      cCols[3], y + 6);
+  doc.text(String(data.generated_at.getFullYear()),         cCols[4], y + 6);
 }
 
 // ─── PAGE 5 — RECOMMENDATION ────────────────────────────────────────────
@@ -1231,158 +1295,156 @@ function drawPage4(doc: jsPDF, data: DealReportData, decision: DecisionLayerResu
 function drawPage5(doc: jsPDF, data: DealReportData, decision: DecisionLayerResult): void {
   newPage(doc, 5, "Recommendation");
 
-  let y = 70;
+  let y = 78;
 
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(8);
+  // ─── Eyebrow + page title (page-8 voice) ─────────────────────────────
+  setType(doc, "eyebrow");
   setHex(doc, COLOR.indigo, "text");
   doc.text("RECOMMENDATION & NEXT STEPS", M, y);
-  y += 14;
+  y += 18;
 
-  doc.setFontSize(14);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(15);
   setHex(doc, COLOR.textPrimary, "text");
   doc.text("Path to LOI", M, y);
-  y += 13;
+  y += 14;
 
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(8.5);
-  setHex(doc, COLOR.textDim, "text");
-  doc.text("Sequenced actions, pricing guidance, and walk-away discipline", M, y);
-  y += 18;
+  setType(doc, "L4");
+  setHex(doc, COLOR.textMuted, "text");
+  doc.text("Sequenced actions, pricing guidance, and walk-away discipline.", M, y);
+  y += SP.xl;
 
   // ─── RECOMMENDATION ──────────────────────────────────────────────────
   // Editorial treatment, page-8 voice. Navy left edge anchors the finding;
   // the recommendation color appears only on the recommendation text
-  // itself, not as a frame around it. No fill, no rectangle, no icon.
-  // (Earlier versions used a colored fill + Unicode arrow which jsPDF's
-  // default Helvetica subset cannot render — see the strikethrough-mark
-  // artifact in pre-fix outputs.)
+  // itself, not as a frame around it.
   const recColor = decision.recommendation === "PURSUE"      ? COLOR.emerald :
                    decision.recommendation === "INVESTIGATE" ? COLOR.amber :
                    decision.recommendation === "RESTRUCTURE" ? COLOR.orange : COLOR.red;
 
   const recBlockH = 44;
-
-  // Navy left edge — single 1.5pt rule running the height of the block
   setHex(doc, COLOR.indigo, "fill");
   doc.rect(M, y, 1.5, recBlockH, "F");
 
-  // RECOMMENDATION eyebrow — slate small-caps
   setType(doc, "label");
   setHex(doc, COLOR.textDim, "text");
   doc.text("RECOMMENDATION", M + 12, y + 12);
 
-  // The recommendation itself — hero-secondary in the recommendation color
   setType(doc, "hero-secondary");
   setHex(doc, recColor, "text");
   doc.text(buildRecommendationLine(decision.recommendation), M + 12, y + 32);
 
-  y += recBlockH + SP.lg;
+  y += recBlockH + SP.xl;
 
   // ─── WALK-AWAY THRESHOLD ──────────────────────────────────────────────
-  // Hairline-only treatment: top rule, label + value, supporting line,
-  // bottom rule. No fill, no surrounding box, no icon.
-  setHex(doc, COLOR.red, "draw");
-  doc.setLineWidth(0.6);
-  doc.line(M, y, M + CW, y);
-  y += SP.md;
-
+  // Editorial inline. Eyebrow + value as a stat-medium inline, then a line
+  // of supporting prose. No dramatic red top rule, no right-aligned hero
+  // number. The threshold reads as an underwriting finding, not a UI alert.
   setType(doc, "label");
   setHex(doc, COLOR.red, "text");
   doc.text("WALK-AWAY THRESHOLD", M, y);
+  y += 16;
 
-  setType(doc, "hero-secondary");
+  // Value inline at hero-secondary (16pt), with brief framing on the same line
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(16);
   setHex(doc, COLOR.red, "text");
-  doc.text(fmtUsd(decision.walk_away_threshold), M + CW, y, { align: "right" });
+  const waValue = fmtUsd(decision.walk_away_threshold);
+  doc.text(waValue, M, y);
+  const waValueW = doc.getTextWidth(waValue);
+
+  setType(doc, "L4");
+  setHex(doc, COLOR.textMuted, "text");
+  doc.text("ceiling above which the deal does not underwrite cleanly.", M + waValueW + 8, y);
   y += SP.md;
 
-  setType(doc, "L5");
+  setType(doc, "L4");
   setHex(doc, COLOR.textBody, "text");
-  const waLine = `Above ${fmtUsd(decision.walk_away_threshold)}, expected return falls below acceptable risk threshold. Do not proceed without structural changes \u2014 seller note, earn-out, or revised debt terms.`;
+  const waLine = `Above ${waValue}, expected return falls below acceptable risk threshold. Do not proceed without structural changes — seller note, earn-out, or revised debt terms.`;
   const waLines = doc.splitTextToSize(waLine, CW);
-  waLines.forEach((line: string, i: number) => {
-    doc.text(line, M, y + i * 11);
+  waLines.slice(0, 2).forEach((line: string, i: number) => {
+    doc.text(line, M, y + i * 13);
   });
-  y += waLines.length * 11 + SP.sm;
-
-  setHex(doc, COLOR.borderSoft, "draw");
-  doc.setLineWidth(0.4);
-  doc.line(M, y, M + CW, y);
-  y += SP.lg;
+  y += Math.min(waLines.length, 2) * 13 + SP.xl;
 
   // ─── SUGGESTED ACTIONS ────────────────────────────────────────────────
-  drawSectionHeader(doc, M, y, "Suggested actions (sequenced)");
-  y += 12;
+  // Memo-style numbered. Each item: numbered marker, bold lead, italic
+  // muted detail. No tile chrome, no fill, no left-edge bar per item.
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8);
+  setHex(doc, COLOR.indigo, "text");
+  doc.text("SUGGESTED ACTIONS (SEQUENCED)", M, y);
+  y += 18;
 
   const actions = buildSuggestedActions(decision, data.inputs);
   actions.forEach((act, i) => {
-    const actH = 28;
-    setHex(doc, "#F8FAFC", "fill");
-    doc.rect(M, y, CW, actH, "F");
-    setHex(doc, COLOR.indigo, "fill");
-    doc.rect(M, y, 2, actH, "F");
-
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(8.5);
+    // Numbered marker — navy
+    setType(doc, "L3");
     setHex(doc, COLOR.indigo, "text");
-    doc.text(String(i + 1).padStart(2, "0"), M + 8, y + 13);
+    doc.text(String(i + 1).padStart(2, "0"), M, y + 10);
 
+    // Title — L4 bold
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(9);
+    doc.setFontSize(10);
     setHex(doc, COLOR.textPrimary, "text");
-    doc.text(act.title, M + 28, y + 12);
+    doc.text(act.title, M + 24, y + 10);
 
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(8);
-    setHex(doc, COLOR.textBody, "text");
-    const detailLines = doc.splitTextToSize(act.detail, CW - 38);
+    // Detail — italic muted, single line
+    doc.setFont("helvetica", "italic");
+    doc.setFontSize(9);
+    setHex(doc, COLOR.textMuted, "text");
+    const detailLines = doc.splitTextToSize(act.detail, CW - 24);
     detailLines.slice(0, 1).forEach((line: string) => {
-      doc.text(line, M + 28, y + 22);
+      doc.text(line, M + 24, y + 24);
     });
 
-    y += actH + 4;
+    y += 38;  // generous inter-item breathing
   });
-
-  y += 10;
+  y += SP.md;
 
   // ─── WALK-AWAY TRIGGERS ───────────────────────────────────────────────
-  drawSectionHeader(doc, M, y, "Walk-away triggers");
-  y += 12;
+  // 2 inline observations with red eyebrows. No card grid, no fill, no rect.
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(8);
+  setHex(doc, COLOR.indigo, "text");
+  doc.text("WALK-AWAY TRIGGERS", M, y);
+  y += 18;
 
   const triggers = buildWalkAwayTriggers(decision);
-  const triggerW = (CW - 8) / 2;
+  const triggerW = (CW - 24) / 2;
   triggers.slice(0, 2).forEach((t, i) => {
-    const tx = M + i * (triggerW + 8);
-    const tH = 44;
-    setHex(doc, "#FEF2F2", "fill");
-    doc.rect(tx, y, triggerW, tH, "F");
-    setHex(doc, COLOR.red, "draw");
-    doc.setLineWidth(0.4);
-    doc.rect(tx, y, triggerW, tH, "S");
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(7);
+    const tx = M + i * (triggerW + 24);
+
+    // Red eyebrow for category
+    setType(doc, "label");
     setHex(doc, COLOR.red, "text");
-    doc.text(t.category, tx + 8, y + 12);
+    doc.text(t.category, tx, y);
+
+    // Detail — body prose
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(8);
-    setHex(doc, COLOR.redText, "text");
-    const lines = doc.splitTextToSize(t.detail, triggerW - 16);
-    lines.slice(0, 3).forEach((line: string, li: number) => {
-      doc.text(line, tx + 8, y + 22 + li * 9);
+    doc.setFontSize(9);
+    setHex(doc, COLOR.textBody, "text");
+    const lines = doc.splitTextToSize(t.detail, triggerW);
+    lines.slice(0, 4).forEach((line: string, li: number) => {
+      doc.text(line, tx, y + 14 + li * 12);
     });
   });
-  y += 50;
+  y += 70;
 
   // ─── DISCLAIMER ───────────────────────────────────────────────────────
+  // Position toward the bottom of the page. If we still have space, we
+  // anchor it just above the page footer rather than letting it float
+  // mid-page.
+  const disclaimerY = Math.max(y, PH - 80);
   setHex(doc, COLOR.borderSoft, "draw");
   doc.setLineWidth(0.4);
-  doc.line(M, y, PW - M, y);
-  y += 10;
+  doc.line(M, disclaimerY, M + CW, disclaimerY);
+
   doc.setFont("helvetica", "normal");
   doc.setFontSize(7);
   setHex(doc, COLOR.textFaint, "text");
   const disclaimer = "This report is generated for informational purposes only. AcquiFlow is not a registered investment advisor, broker-dealer, or M&A advisor. All figures are estimates based on buyer-provided inputs and proprietary benchmark data. Independent verification of financials, legal review, and qualified professional advice are required before any acquisition decision.";
-  drawWrappedText(doc, disclaimer, M, y, CW, 7, COLOR.textFaint, 1.4, "normal");
+  drawWrappedText(doc, disclaimer, M, disclaimerY + 12, CW, 7, COLOR.textFaint, 1.4, "normal");
 }
 
 // ─── Helper: interpret box ──────────────────────────────────────────────
