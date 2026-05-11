@@ -522,6 +522,19 @@ EXAMPLES OF LEAD/BODY DONE RIGHT:
 - Lead: "Earnings quality is the dominant risk."
 - Body: "Add-back validation, not pricing, decides whether the deal clears underwriting." (extends with implication)
 
+CRITICAL — NATURAL CADENCE OVER MECHANICAL COMPRESSION
+Brevity is the goal, but not at the cost of natural sentence flow. Avoid stacking three clauses with semicolons just to fit a word target. A sentence with one comma and a connecting word is stronger than the same content jammed together with a semicolon.
+
+EXAMPLES OF MECHANICAL COMPRESSION (avoid):
+- "Buyer holds meaningful leverage; the ask sits below calculated fair value and seven medium risks carry no deal-breakers."
+- "Coverage holds; pricing is supportive; financing is supportable."
+
+EXAMPLES OF NATURAL FLOW (preferred):
+- "Buyer holds meaningful leverage because the ask sits below calculated fair value, while the identified risks are diligence issues rather than deal-breakers."
+- "Coverage holds and pricing is supportive, leaving financing dependent only on validation."
+
+If a sentence reads like it was written to hit a word count, rewrite it. Use "and," "but," "because," "while," and "with" to connect ideas naturally rather than compressing with semicolons or em-dashes.
+
 LENGTH DISCIPLINE
 - Lead: 12-18 words. Strong, declarative, no qualifiers.
 - Body: 15-25 words for one sentence; 30-40 words total if two sentences are genuinely needed.
