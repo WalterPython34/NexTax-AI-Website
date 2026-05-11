@@ -696,13 +696,16 @@ function drawPage1(doc: jsPDF, data: DealReportData, decision: DecisionLayerResu
   y += SP.md - 2;
 
   // Navy left edge, no fill, no surrounding box.
+  // Posture renders as a memo paragraph — narrower column than full-page
+  // width and slightly looser line spacing for readability rhythm.
   // CRITICAL: set the draw font BEFORE splitTextToSize, otherwise lines wrap
   // against the previously-set font (eyebrow bold 7.5pt) and overflow when
   // drawn at italic 10pt.
   doc.setFont("helvetica", "italic");
   doc.setFontSize(10);
-  const postureLines = doc.splitTextToSize(data.posture, CW - 16);
-  const postureLineHeight = 13;
+  const postureColW = CW - 100;  // ~80% of page width — paragraph, not banner
+  const postureLines = doc.splitTextToSize(data.posture, postureColW);
+  const postureLineHeight = 15;  // looser than 13 for readability rhythm
   const postureBlockH = postureLines.length * postureLineHeight + 4;
 
   setHex(doc, COLOR.indigo, "fill");
@@ -827,7 +830,7 @@ function drawPage2(doc: jsPDF, data: DealReportData, decision: DecisionLayerResu
     setHex(doc, COLOR.indigo, "text");
     doc.text(fmtUsd(usable), colX[2], y);
     doc.text(fmtPct(((usable - reported) / reported) * 100), colX[3], y);
-    y += SP.lg;
+    y += SP.xl;  // generous gap before interpretation — editorial pacing
 
     // SDE interpretation in editorial style
     if (decision.sde_interpretation) {
@@ -948,7 +951,7 @@ function drawPage2(doc: jsPDF, data: DealReportData, decision: DecisionLayerResu
     doc.setLineWidth(0.3);
     doc.line(M, y - 6, M + CW, y - 6);
   });
-  y += SP.lg;
+  y += SP.xl;  // generous gap before interpretation — editorial pacing
 
   // DSCR interpretation in editorial style
   if (decision.dscr_interpretation) {
@@ -1004,10 +1007,14 @@ function drawPage3(doc: jsPDF, data: DealReportData, decision: DecisionLayerResu
   y += 18;
 
   const flagsToShow = decision.risk_flags.slice(0, 6);
-  flagsToShow.forEach((flag) => {
+  flagsToShow.forEach((flag, idx) => {
     if (y > PH - 200) return;
-    y = drawRiskFlag(doc, M, y, CW, flag);
-    y += SP.md;  // generous breathing between flags (was SP.xs+2)
+    const isPriority = idx < 2;  // Top 2 flags: full weight + full breathing
+    y = drawRiskFlag(doc, M, y, CW, flag, isPriority);
+    // Priority flags get SP.md (16pt) of breathing room; secondary flags
+    // tighten to SP.sm + 2 (10pt). The loose-then-tight cadence is the
+    // hierarchy signal — no badges, no dividers, just spacing.
+    y += isPriority ? SP.md : SP.sm + 2;
   });
   y += SP.md;
 
@@ -1061,12 +1068,25 @@ function drawPage3(doc: jsPDF, data: DealReportData, decision: DecisionLayerResu
   doc.text(trajParts.join("   \u00B7   "), M, y);
 }
 
-function drawRiskFlag(doc: jsPDF, x: number, y: number, w: number, flag: RiskFlag): number {
+function drawRiskFlag(
+  doc: jsPDF,
+  x: number,
+  y: number,
+  w: number,
+  flag: RiskFlag,
+  isPriority: boolean = true,
+): number {
   // Severity-driven palette. Background fill REMOVED — only the left stripe
   // and badge text carry the semantic color. Cleaner, less dashboard-y.
   const palette = flag.severity === "HIGH"   ? { stripe: COLOR.red,    text: COLOR.redText,    badgeBg: COLOR.red,    badgeText: "#FFFFFF" } :
                   flag.severity === "MEDIUM" ? { stripe: COLOR.orange, text: COLOR.orangeText, badgeBg: COLOR.orange, badgeText: "#FFFFFF" } :
                                                 { stripe: COLOR.amber,  text: COLOR.amberText,  badgeBg: COLOR.amber,  badgeText: "#FFFFFF" };
+
+  // Priority gradation: priority flags get charcoal headline + body-toned
+  // detail. Secondary flags get slate headline + muted detail. Same layout,
+  // softer weight — implies hierarchy without aggressive styling.
+  const headlineColor = isPriority ? COLOR.textPrimary : COLOR.textBody;
+  const detailColor   = isPriority ? COLOR.textBody    : COLOR.textMuted;
 
   // Compute height based on detail wrapping
   setType(doc, "L4");
@@ -1090,7 +1110,7 @@ function drawRiskFlag(doc: jsPDF, x: number, y: number, w: number, flag: RiskFla
 
   // Headline
   setType(doc, "L3");
-  setHex(doc, COLOR.textPrimary, "text");
+  setHex(doc, headlineColor, "text");
   doc.text(flag.headline, bx, y + 14);
 
   // Category right-aligned
@@ -1101,7 +1121,7 @@ function drawRiskFlag(doc: jsPDF, x: number, y: number, w: number, flag: RiskFla
 
   // Detail
   setType(doc, "L4");
-  setHex(doc, COLOR.textBody, "text");
+  setHex(doc, detailColor, "text");
   detailLines.forEach((line: string, i: number) => {
     doc.text(line, x + 10, y + 26 + i * 12);
   });
@@ -1235,8 +1255,10 @@ function drawPage4(doc: jsPDF, data: DealReportData, decision: DecisionLayerResu
 
   // ───────────────────────────────────────────────────────────────────────
   // SECTION 3 — Representative comparable transactions
-  // Restrained table — column labels without underline, hairline-only
-  // row dividers, generous row heights.
+  // When comp count is low (≤2), render as a prose summary instead of a
+  // table — a single-row table feels mechanically generated, and the
+  // pricing prose above already carries the positioning.
+  // When 3+, render the restrained table.
   // ───────────────────────────────────────────────────────────────────────
 
   doc.setFont("helvetica", "bold");
@@ -1245,49 +1267,95 @@ function drawPage4(doc: jsPDF, data: DealReportData, decision: DecisionLayerResu
   doc.text("REPRESENTATIVE COMPARABLE TRANSACTIONS", M, y);
   y += 18;
 
-  const cCols = [M, M + 240, M + 320, M + 400, M + 480];
-  setType(doc, "label");
-  setHex(doc, COLOR.textDim, "text");
-  doc.text("INDUSTRY TRANSACTION", cCols[0], y);
-  doc.text("REVENUE",  cCols[1], y);
-  doc.text("SDE",      cCols[2], y);
-  doc.text("MULTIPLE", cCols[3], y);
-  doc.text("YEAR",     cCols[4], y);
-  y += SP.sm + 4;
-  setHex(doc, COLOR.borderSoft, "draw");
-  doc.setLineWidth(0.3);
-  doc.line(M, y, M + CW, y);
-  y += SP.sm + 4;
-
-  setType(doc, "L4");
   const compsToShow = comparables.slice(0, 4);
-  compsToShow.forEach((c) => {
-    doc.setFont("helvetica", "normal");
+
+  if (compsToShow.length <= 2) {
+    // Prose summary form — for low-comp decks
+    setType(doc, "L4");
     setHex(doc, COLOR.textBody, "text");
-    const stateSuffix = c.state ? ` (${c.state})` : "";
-    doc.text(`${c.industry_label}${stateSuffix}`, cCols[0], y);
-    doc.text(fmtUsd(c.revenue), cCols[1], y);
-    doc.text(fmtUsd(c.sde),     cCols[2], y);
-    doc.text(`${c.multiple.toFixed(1)}x`, cCols[3], y);
+    const compProse = buildCompsProse(compsToShow, inputs, decision);
+    const compLines = doc.splitTextToSize(compProse, CW);
+    compLines.slice(0, 4).forEach((line: string, i: number) => {
+      doc.text(line, M, y + i * 13);
+    });
+  } else {
+    // Table form — when there's enough population to warrant it
+    const cCols = [M, M + 240, M + 320, M + 400, M + 480];
+    setType(doc, "label");
     setHex(doc, COLOR.textDim, "text");
-    doc.text(String(c.year), cCols[4], y);
-    y += 18;
+    doc.text("INDUSTRY TRANSACTION", cCols[0], y);
+    doc.text("REVENUE",  cCols[1], y);
+    doc.text("SDE",      cCols[2], y);
+    doc.text("MULTIPLE", cCols[3], y);
+    doc.text("YEAR",     cCols[4], y);
+    y += SP.sm + 4;
     setHex(doc, COLOR.borderSoft, "draw");
     doc.setLineWidth(0.3);
-    doc.line(M, y - 6, M + CW, y - 6);
-  });
+    doc.line(M, y, M + CW, y);
+    y += SP.sm + 4;
 
-  // "This deal" emphasis row — bold navy text, faint background
-  setHex(doc, "#F8FAFC", "fill");
-  doc.rect(M - 2, y - 4, CW + 4, 18, "F");
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(10);
-  setHex(doc, COLOR.indigo, "text");
-  doc.text("This deal", cCols[0], y + 6);
-  doc.text(fmtUsd(inputs.revenue),                          cCols[1], y + 6);
-  doc.text(fmtUsd(inputs.usable_sde ?? inputs.sde),         cCols[2], y + 6);
-  doc.text(`${inputs.valuation_multiple.toFixed(2)}x`,      cCols[3], y + 6);
-  doc.text(String(data.generated_at.getFullYear()),         cCols[4], y + 6);
+    setType(doc, "L4");
+    compsToShow.forEach((c) => {
+      doc.setFont("helvetica", "normal");
+      setHex(doc, COLOR.textBody, "text");
+      const stateSuffix = c.state ? ` (${c.state})` : "";
+      doc.text(`${c.industry_label}${stateSuffix}`, cCols[0], y);
+      doc.text(fmtUsd(c.revenue), cCols[1], y);
+      doc.text(fmtUsd(c.sde),     cCols[2], y);
+      doc.text(`${c.multiple.toFixed(1)}x`, cCols[3], y);
+      setHex(doc, COLOR.textDim, "text");
+      doc.text(String(c.year), cCols[4], y);
+      y += 18;
+      setHex(doc, COLOR.borderSoft, "draw");
+      doc.setLineWidth(0.3);
+      doc.line(M, y - 6, M + CW, y - 6);
+    });
+
+    // "This deal" emphasis row — bold navy text, faint background
+    setHex(doc, "#F8FAFC", "fill");
+    doc.rect(M - 2, y - 4, CW + 4, 18, "F");
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(10);
+    setHex(doc, COLOR.indigo, "text");
+    doc.text("This deal", cCols[0], y + 6);
+    doc.text(fmtUsd(inputs.revenue),                          cCols[1], y + 6);
+    doc.text(fmtUsd(inputs.usable_sde ?? inputs.sde),         cCols[2], y + 6);
+    doc.text(`${inputs.valuation_multiple.toFixed(2)}x`,      cCols[3], y + 6);
+    doc.text(String(data.generated_at.getFullYear()),         cCols[4], y + 6);
+  }
+}
+
+/**
+ * Generate a prose summary for the comps section when the comp count is
+ * low. The pricing prose above already cites the percentile and median
+ * multiple; this complements with positioning context, not metric repeat.
+ */
+function buildCompsProse(
+  comps: ComparableDeal[],
+  inputs: DealReportInputs,
+  decision: DecisionLayerResult,
+): string {
+  const askMult    = inputs.valuation_multiple;
+  const medianMult = decision.pricing_insight.median_multiple;
+  const sampleSize = inputs.benchmark_sample_size ?? 312;
+  const industry   = inputs.industry_label || "the industry";
+
+  if (comps.length === 0) {
+    return `Direct transaction comparables for ${industry} were limited in the sample window. Positioning above is anchored to the broader benchmark population (${sampleSize.toLocaleString()} transactions); narrower industry-specific comps will surface during diligence as additional deals close.`;
+  }
+
+  const c = comps[0];
+  const compRange = comps.length === 1
+    ? `${c.multiple.toFixed(1)}x at ${fmtUsd(c.revenue)} revenue`
+    : `${comps[0].multiple.toFixed(1)}x and ${comps[1].multiple.toFixed(1)}x at comparable revenue scale`;
+
+  const askVsMedian = askMult < medianMult
+    ? `below the ${medianMult.toFixed(1)}x median`
+    : askMult > medianMult
+      ? `above the ${medianMult.toFixed(1)}x median`
+      : `in line with the ${medianMult.toFixed(1)}x median`;
+
+  return `Recent direct transactions in ${industry} cleared at ${compRange}. The asking ${askMult.toFixed(2)}x sits ${askVsMedian} for this revenue band. With limited recent comp coverage, the percentile read above is the more reliable positioning signal. The named transactions support, rather than independently establish, the pricing thesis.`;
 }
 
 // ─── PAGE 5 — RECOMMENDATION ────────────────────────────────────────────
@@ -1672,7 +1740,7 @@ function buildSuggestedActions(
   // Action 4 — structural protection
   actions.push({
     title:  "Build in a 90-day transition and a revenue-tied earn-out",
-    detail: "Aligns seller incentives through the period when post-close cash flow is most fragile.",
+    detail: "It aligns seller incentives through the period when post-close cash flow is most fragile.",
   });
 
   return actions;
@@ -1686,8 +1754,8 @@ function buildWalkAwayTriggers(d: DecisionLayerResult): { category: string; deta
   out.push({
     category: "EARNINGS",
     detail:   sdeRisk
-      ? "Verified SDE 15% or more below reported. The pricing thesis is built on the reported figure; a haircut of that size resets the deal."
-      : "Verified SDE materially below reported, or revenue concentration emerges that wasn't disclosed. Either resets the model.",
+      ? "If verified SDE comes in 15% or more below reported, the pricing thesis is built on a figure that no longer holds. A haircut of that size resets the deal."
+      : "If verified SDE comes in materially below reported, or undisclosed revenue concentration emerges in diligence, the model resets either way.",
   });
 
   // Second trigger — calibrated to the most material non-earnings risk
@@ -1793,27 +1861,29 @@ function drawPage6(
   setHex(doc, COLOR.textDim, "text");
   doc.text("COMPOSITE", M, y);
 
-  // Score number — bold 28pt. Measure its width WHILE this font is set,
-  // before switching to L5 for the suffix, so getTextWidth returns the
-  // actual rendered width.
+  // Score number — bold 22pt (reduced from 28pt). Quieter anchor; the
+  // interpretation prose carries the visual authority. Measure width WHILE
+  // this font is set, before switching to the suffix font, so getTextWidth
+  // returns the actual rendered width.
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(28);
+  doc.setFontSize(22);
   setHex(doc, scoreColor, "text");
   const scoreStr = snap.financial_score !== null ? String(snap.financial_score) : "\u2014";
-  const scoreNumWidth = snap.financial_score !== null ? doc.getTextWidth(scoreStr) : 24;
-  doc.text(scoreStr, M, y + 36);
+  const scoreNumWidth = snap.financial_score !== null ? doc.getTextWidth(scoreStr) : 20;
+  doc.text(scoreStr, M, y + 30);
 
-  // " of 100" suffix — measured AFTER the score width was captured at
-  // the right font; placed with a small visual gap.
-  setType(doc, "L5");
-  setHex(doc, COLOR.textMuted, "text");
-  doc.text("of 100", M + scoreNumWidth + 6, y + 36);
+  // " of 100" suffix — quieter still. 7pt and faint so it reads as caption,
+  // not as a metric label of equal weight.
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(7);
+  setHex(doc, COLOR.textFaint, "text");
+  doc.text("of 100", M + scoreNumWidth + 5, y + 30);
 
-  // Right side: structured prose reading of the score
-  // Start the prose just below the COMPOSITE label so the lead sentence
-  // visually anchors against the score number's top edge rather than
-  // floating above it.
-  let proseY = y + 14;
+  // Right side: structured prose reading of the score.
+  // Prose anchors tightly to the score — proseY = y + 8 puts the lead
+  // sentence's first line at roughly the score number's vertical midpoint,
+  // making the two columns feel integrated rather than adjacent.
+  let proseY = y + 8;
 
   // Lead sentence — the score interpreted, not announced
   const scoreReading = buildScoreReading(snap, scoreStr);
@@ -1852,7 +1922,7 @@ function drawPage6(
     proseY += Math.min(driverLines.length, 3) * 13;
   }
 
-  y = Math.max(sectionTopY + 64, proseY) + SP.md;
+  y = Math.max(sectionTopY + 60, proseY) + SP.lg;
 
   // Score caveats — italic muted, restrained, no decorative bar
   if (snap.score_risk_dependencies && snap.score_risk_dependencies.length > 0) {
@@ -2160,11 +2230,11 @@ function interactionImplication(rule: string): string {
   const map: Record<string, string> = {
     sde_validation_with_strong_dscr: "The deal is financeable on the headline figures but sensitive to even modest haircuts during diligence. Add-back integrity becomes the principal underwriting question.",
     high_leverage_strong_cashflow:   "Coverage holds today, but the structure compresses any tolerance for earnings volatility. The deal performs well in flat operating environments and poorly otherwise.",
-    weak_margin_strong_dscr:         "Coverage is real but narrow; the deal is more dependent on sustained operating performance than the leverage profile alone would suggest.",
-    multiple_validation_outliers:    "Each individual outlier may be defensible; together, they raise the question of whether the trailing period reflects steady-state operations.",
-    risk_outlier_with_strong_score:  "Composite scores can mask concentration risk. The strong number invites confidence; the outlier requires it be earned through diligence.",
+    weak_margin_strong_dscr:         "Coverage is real but narrow, and the deal is more dependent on sustained operating performance than the leverage profile alone would suggest.",
+    multiple_validation_outliers:    "Each individual outlier may be defensible. Together, they raise the question of whether the trailing period reflects steady-state operations.",
+    risk_outlier_with_strong_score:  "Composite scores can mask concentration risk. The strong number invites confidence, but the outlier requires that confidence be earned through diligence.",
     sde_outlier_dscr_dependency:     "The deal is financeable on the headline figures but sensitive to even modest haircuts during diligence. Add-back integrity becomes the principal underwriting question.",
-    high_ltv_with_context:           "Coverage is comfortable; the lender's concern shifts to collateral cushion and the recovery position if operations soften.",
+    high_ltv_with_context:           "Coverage is comfortable, so the lender's concern shifts to collateral cushion and the recovery position if operations soften.",
   };
   return map[rule] ?? "The interaction warrants a specific diligence step rather than treatment as a general concern.";
 }
@@ -2184,11 +2254,11 @@ function humanizeInteractionRule(rule: string): string {
     // Original rule names
     sde_validation_with_strong_dscr: "Reported coverage strength is contingent on the reported SDE figure holding up under validation.",
     high_leverage_strong_cashflow:   "Cash flow is strong, but the capital structure carries enough leverage to make the deal earnings-dependent.",
-    weak_margin_strong_dscr:         "Coverage holds despite operating margins below peer norms — earnings strength is concentrated, not broad-based.",
-    multiple_validation_outliers:    "More than one metric sits in validation-outlier territory; the deal's headline picture is built on stacked assumptions.",
-    risk_outlier_with_strong_score:  "A material risk outlier sits inside an otherwise strong profile — the score masks a real exposure.",
+    weak_margin_strong_dscr:         "Coverage holds despite operating margins below peer norms, which suggests earnings strength is concentrated rather than broad-based.",
+    multiple_validation_outliers:    "More than one metric sits in validation-outlier territory, and the deal's headline picture rests on stacked assumptions.",
+    risk_outlier_with_strong_score:  "A material risk outlier sits inside an otherwise strong profile, and the score masks a real exposure.",
     // Rules surfaced from the engine in production
-    sde_outlier_dscr_dependency:     "Reported coverage strength depends on the reported SDE figure; if add-backs compress, so does coverage.",
+    sde_outlier_dscr_dependency:     "Reported coverage strength depends on the reported SDE figure. If add-backs compress, so does coverage.",
     high_ltv_with_context:           "Cash flow is strong, but loan-to-value sits high enough that valuation drift, not coverage, becomes the lender's primary concern.",
   };
   if (map[rule]) return map[rule];
@@ -2701,7 +2771,7 @@ function groupCommitteeConcerns(
       push(
         "Structural Risk",
         "The capital stack does not currently balance.",
-        `Sources fall ${gap > 0 ? "short of" : "above"} uses by ${fmtUsd(Math.abs(gap))}. This is a gating item — no lender will engage on a stack that does not reconcile, and the gap typically resolves through equity contribution or revised debt sizing.`,
+        `Sources fall ${gap > 0 ? "short of" : "above"} uses by ${fmtUsd(Math.abs(gap))}. No lender will engage on a stack that doesn't reconcile, and the gap typically closes through revised equity contribution or debt sizing.`,
       );
     }
     for (const m of snap.deal_structure.metrics) {
@@ -2716,7 +2786,7 @@ function groupCommitteeConcerns(
         push(
           "Structural Risk",
           "Total leverage sits above standard SBA acquisition guidelines.",
-          "The stack is aggressive on reported earnings; the lender's first probe will be add-back integrity, with stress sensitivities close behind. A larger seller note often emerges as the practical resolution.",
+          "The stack is aggressive on reported earnings. Expect the lender's first probe to be add-back integrity, with stress sensitivities close behind. A larger seller note typically emerges as the practical resolution.",
         );
       }
     }
@@ -2830,7 +2900,7 @@ function buildDiligencePriorities(
   if (snap.deal_structure && !snap.deal_structure.sources_uses.balanced) {
     out.push({
       lead: "Reconcile the sources-and-uses gap before lender submission.",
-      why:  "This is a gating item, not a diligence subtopic; no lender will engage on a stack that doesn't balance.",
+      why:  "No lender will engage on a stack that doesn't balance. This closes before diligence opens, not during it.",
     });
   }
 
