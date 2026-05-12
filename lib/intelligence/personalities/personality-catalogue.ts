@@ -315,7 +315,7 @@ const CONVENTIONAL_BANK: LenderPersonality = {
 
   deal_breakers: [
     {
-      id: "bank.deal_breaker.catastrophic_coverage",
+      id: "conventional.deal_breaker.catastrophic_coverage",
       name: "Catastrophic coverage signal",
       trigger: { kind: "component_present", component_id: "component.financial.catastrophic_coverage" },
       why_disqualifying:
@@ -324,7 +324,7 @@ const CONVENTIONAL_BANK: LenderPersonality = {
         "reasonable model. This is structurally disqualifying regardless of collateral.",
     },
     {
-      id: "bank.deal_breaker.durability_concerning",
+      id: "conventional.deal_breaker.durability_concerning",
       name: "Durability in concerning band",
       trigger: { kind: "axis_band", axis: "durability_score", band: "concerning" },
       why_disqualifying:
@@ -336,7 +336,7 @@ const CONVENTIONAL_BANK: LenderPersonality = {
 
   discomfort_sources: [
     {
-      id: "bank.discomfort.collateral_insufficiency",
+      id: "conventional.discomfort.collateral_insufficiency",
       name: "Asset-light deal with thin coverage",
       trigger: { kind: "axis_score_below", axis: "financial_score", threshold: 50 },
       description: "Financial axis below moderate when the operating model is asset-light reduces fallback collateral support.",
@@ -349,7 +349,7 @@ const CONVENTIONAL_BANK: LenderPersonality = {
       asymmetry_profile: null,
     },
     {
-      id: "bank.discomfort.structural_cyclicality",
+      id: "conventional.discomfort.structural_cyclicality",
       name: "Cyclical revenue trajectory",
       trigger: { kind: "component_present", component_id: "component.durability.trajectory_durability" },
       description: "Revenue trajectory signals cyclicality or sustained decline.",
@@ -362,7 +362,7 @@ const CONVENTIONAL_BANK: LenderPersonality = {
       asymmetry_profile: null,
     },
     {
-      id: "bank.discomfort.working_capital_instability",
+      id: "conventional.discomfort.working_capital_instability",
       name: "Working capital pressure or absorption",
       trigger: { kind: "component_present", component_id: "component.durability.working_capital_durability" },
       description: "Working capital signals indicating compression, absorption, or instability.",
@@ -375,7 +375,7 @@ const CONVENTIONAL_BANK: LenderPersonality = {
       asymmetry_profile: null,
     },
     {
-      id: "bank.discomfort.lender_stress_failure",
+      id: "conventional.discomfort.lender_stress_failure",
       name: "Failure of lender_stress scenario",
       trigger: {
         kind: "scenario_clearance",
@@ -396,7 +396,7 @@ const CONVENTIONAL_BANK: LenderPersonality = {
 
   required_comfort_conditions: [
     {
-      id: "bank.comfort.coverage_cushion",
+      id: "conventional.comfort.coverage_cushion",
       name: "Coverage cushion above conservative threshold",
       satisfied_when: { kind: "axis_score_above", axis: "financial_score", threshold: 55 },
       description: "Financial axis above 55 indicates coverage holds with margin against scenario compression.",
@@ -406,7 +406,7 @@ const CONVENTIONAL_BANK: LenderPersonality = {
       required_for_interested: true,
     },
     {
-      id: "bank.comfort.working_capital_stability",
+      id: "conventional.comfort.working_capital_stability",
       name: "Working capital stability evidence",
       satisfied_when: { kind: "axis_score_above", axis: "durability_score", threshold: 55 },
       description: "Durability above 55 indicates working capital and operating structure are stable.",
@@ -419,7 +419,7 @@ const CONVENTIONAL_BANK: LenderPersonality = {
 
   information_needs: [
     {
-      id: "bank.info.balance_sheet_history",
+      id: "conventional.info.balance_sheet_history",
       name: "Multi-year balance sheet history",
       missing_when: { kind: "axis_score_above", axis: "underwriting_uncertainty", threshold: 50 },
       description: "Uncertainty above moderate band indicates missing balance-sheet history.",
