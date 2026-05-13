@@ -188,18 +188,18 @@ function assembleCoverageGapDecline(input: PersonalityNarrativeInput): string[] 
 
   // Sentence 1: Frame as model coverage limitation
   sentences.push(
-    `The ${input.personality_id} personality simulation declined in this evaluation due to a model coverage limitation rather than deal characteristics — the engine does not yet have an industry-specific operating-model fingerprint registered, which prevented this personality from forming a confident posture from the available data.`,
+    `The ${input.personality_id} lender-profile simulation declined in this evaluation due to a model coverage limitation rather than deal characteristics — the engine does not yet have an industry-specific operating-model fingerprint registered, which prevented this lender-profile reading from forming a confident posture from the available data.`,
   );
 
   // Sentence 2: Surface positive comfort conditions if any (institutional credibility)
   if (input.satisfied_comfort_condition_ids.length > 0) {
     const count = input.satisfied_comfort_condition_ids.length;
     sentences.push(
-      `Under the same simulation, ${count} required comfort condition${count === 1 ? "" : "s"} ${count === 1 ? "is" : "are"} already satisfied, indicating that the deal itself reads well against the personality's substantive criteria — the decline reflects registry coverage, not an institutional verdict on the business.`,
+      `Under the same lender-profile simulation, ${count} required comfort condition${count === 1 ? "" : "s"} ${count === 1 ? "is" : "are"} already satisfied, indicating that the deal itself reads well against this profile's substantive criteria — the decline reflects registry coverage, not an institutional verdict on the business.`,
     );
   } else {
     sentences.push(
-      `Once an industry-specific fingerprint is registered, this personality's posture would be re-evaluated against industry-specific operating expectations rather than fallback fingerprint signals.`,
+      `Once an industry-specific fingerprint is registered, this lender profile's posture would be re-evaluated against industry-specific operating expectations rather than fallback fingerprint signals.`,
     );
   }
 
@@ -216,17 +216,18 @@ function assembleDeclineFatalStructural(input: PersonalityNarrativeInput): strin
   // Sentence 1: Frame the simulated decline + identify primary axis reading
   const fatalCount = input.fatal_discomfort_ids.length;
   sentences.push(
-    `Under the ${input.personality_id} personality simulation, posture is decline — ${fatalCount} fatal discomfort${fatalCount === 1 ? "" : "s"} fired against the personality's primary axis reading on ${input.primary_axis} (${input.primary_axis_band} band).`,
+    `Under the ${input.personality_id} lender-profile simulation, posture is decline — ${fatalCount} fatal signal${fatalCount === 1 ? "" : "s"} fired against this profile's primary axis reading on ${input.primary_axis} (${input.primary_axis_band} band).`,
   );
 
   // Sentence 2: Repairable distinction + buyer action
   if (input.repairable_discomfort_ids.length > 0) {
+    const repCount = input.repairable_discomfort_ids.length;
     sentences.push(
-      `Alongside the fatal signal${fatalCount === 1 ? "" : "s"}, ${input.repairable_discomfort_ids.length} repairable discomfort${input.repairable_discomfort_ids.length === 1 ? "" : "s"} sits in the discomfort chain — diligence could close those, but the fatal classification means structural negotiation or alternative financing paths would be required to shift this personality's overall posture.`,
+      `Alongside the fatal signal${fatalCount === 1 ? "" : "s"}, ${repCount} repairable signal${repCount === 1 ? "" : "s"} ${repCount === 1 ? "sits" : "sit"} in the discomfort chain — diligence could close ${repCount === 1 ? "it" : "those"}, but the fatal classification means structural negotiation or alternative financing paths would be required to shift this lender profile's overall posture.`,
     );
   } else {
     sentences.push(
-      `No repairable discomforts were detected — recovery from this posture requires structural adjustment rather than diligence work alone, and different financing paths may produce different posture readings.`,
+      `No repairable signals were detected — recovery from this posture requires structural adjustment rather than diligence work alone, and different financing paths may produce different posture readings.`,
     );
   }
 
@@ -243,12 +244,12 @@ function assembleDeclineDealBreaker(input: PersonalityNarrativeInput): string[] 
   // Sentence 1: Frame deal-breaker trigger
   const dbCount = input.triggered_deal_breaker_ids.length;
   sentences.push(
-    `Under the ${input.personality_id} personality simulation, posture is decline — ${dbCount} deal-breaker condition${dbCount === 1 ? "" : "s"} triggered against the personality's primary axis reading on ${input.primary_axis} (${input.primary_axis_band} band).`,
+    `Under the ${input.personality_id} lender-profile simulation, posture is decline — ${dbCount} deal-breaker condition${dbCount === 1 ? "" : "s"} triggered against this profile's primary axis reading on ${input.primary_axis} (${input.primary_axis_band} band).`,
   );
 
   // Sentence 2: Surface the deal-breaker IDs + framing
   sentences.push(
-    `Deal-breaker conditions are strict structural disqualifications within this personality's institutional reasoning — they cannot be closed by buyer-side diligence, and recovery requires either changing the underlying axis position or pursuing alternative financing paths.`,
+    `Deal-breaker conditions are strict structural disqualifications within this lender profile's institutional reasoning — they cannot be closed by buyer-side diligence, and recovery requires either changing the underlying axis position or pursuing alternative financing paths.`,
   );
 
   return sentences;
@@ -263,7 +264,7 @@ function assembleCautious(input: PersonalityNarrativeInput): string[] {
 
   // Sentence 1: Frame cautious as solvable
   sentences.push(
-    `Under the ${input.personality_id} personality simulation, posture is cautious — the simulation surfaces solvable concerns rather than structural incompatibility, reading the primary axis (${input.primary_axis}) in the ${input.primary_axis_band} band.`,
+    `Under the ${input.personality_id} lender-profile simulation, posture is cautious — the simulation surfaces solvable concerns rather than structural incompatibility, reading the primary axis (${input.primary_axis}) in the ${input.primary_axis_band} band.`,
   );
 
   // Sentence 2: Identify the specific gap to interested
@@ -274,7 +275,7 @@ function assembleCautious(input: PersonalityNarrativeInput): string[] {
   }
   if (input.repairable_discomfort_ids.length > 0) {
     const count = input.repairable_discomfort_ids.length;
-    gaps.push(`${count} repairable discomfort${count === 1 ? "" : "s"}`);
+    gaps.push(`${count} repairable signal${count === 1 ? "" : "s"}`);
   }
   if (gaps.length > 0) {
     sentences.push(
@@ -298,7 +299,7 @@ function assembleInterestedClean(input: PersonalityNarrativeInput): string[] {
 
   // Sentence 1: Frame interested + primary axis
   sentences.push(
-    `Under the ${input.personality_id} personality simulation, posture is interested — the simulation reads the primary axis (${input.primary_axis}) in the ${input.primary_axis_band} band with no repairable discomforts remaining and ${input.satisfied_comfort_condition_ids.length} required comfort condition${input.satisfied_comfort_condition_ids.length === 1 ? "" : "s"} satisfied.`,
+    `Under the ${input.personality_id} lender-profile simulation, posture is interested — the simulation reads the primary axis (${input.primary_axis}) in the ${input.primary_axis_band} band with no repairable signals remaining and ${input.satisfied_comfort_condition_ids.length} required comfort condition${input.satisfied_comfort_condition_ids.length === 1 ? "" : "s"} satisfied.`,
   );
 
   // Sentence 2: Frame the clean surface
@@ -318,13 +319,13 @@ function assembleInterestedWithRepairables(input: PersonalityNarrativeInput): st
 
   // Sentence 1: Frame interested + primary axis
   sentences.push(
-    `Under the ${input.personality_id} personality simulation, posture is interested — the primary axis reading on ${input.primary_axis} sits in the ${input.primary_axis_band} band and ${input.satisfied_comfort_condition_ids.length} required comfort condition${input.satisfied_comfort_condition_ids.length === 1 ? "" : "s"} ${input.satisfied_comfort_condition_ids.length === 1 ? "is" : "are"} satisfied.`,
+    `Under the ${input.personality_id} lender-profile simulation, posture is interested — the primary axis reading on ${input.primary_axis} sits in the ${input.primary_axis_band} band and ${input.satisfied_comfort_condition_ids.length} required comfort condition${input.satisfied_comfort_condition_ids.length === 1 ? "" : "s"} ${input.satisfied_comfort_condition_ids.length === 1 ? "is" : "are"} satisfied.`,
   );
 
   // Sentence 2: Surface remaining repairables as secondary priorities
   const count = input.repairable_discomfort_ids.length;
   sentences.push(
-    `${count} repairable discomfort${count === 1 ? "" : "s"} remain${count === 1 ? "s" : ""} below the cautious threshold — addressing ${count === 1 ? "it" : "them"} through diligence would not shift the categorical posture but would strengthen the comfort path further within this lens.`,
+    `${count} repairable signal${count === 1 ? "" : "s"} remain${count === 1 ? "s" : ""} below the cautious threshold — addressing ${count === 1 ? "it" : "them"} through diligence would not shift the categorical posture but would strengthen the comfort path further within this lens.`,
   );
 
   return sentences;
