@@ -219,11 +219,11 @@ function assembleCoverageGapHeadline(
 
   // Sentence 2: Explain what the coverage gap means
   const affectedCount = inputs.coverage_gap.affected_personalities.length;
-  const personalityFraming = affectedCount === 1
-    ? "1 personality simulation"
-    : `${affectedCount} personality simulations`;
+  const profileFraming = affectedCount === 1
+    ? "1 lender-profile simulation"
+    : `${affectedCount} lender-profile simulations`;
   sentences.push(
-    `${capitalize(personalityFraming)} could not form confident posture because the engine does not yet have an industry-specific operating-model fingerprint registered for this business type; the resulting personality readings reflect registry coverage rather than institutional verdicts on the business.`,
+    `${capitalize(profileFraming)} could not form confident posture because the engine does not yet have an industry-specific operating-model fingerprint registered for this business type; the resulting readings reflect registry coverage rather than institutional verdicts on the business.`,
   );
 
   // Sentence 3: Surface the non-coverage-gap-driven posture readings if any
@@ -232,19 +232,19 @@ function assembleCoverageGapHeadline(
   if (nonGapInterested.length > 0) {
     const ids = nonGapInterested.map((p) => p.personality_id);
     sentences.push(
-      `Outside the coverage-gap-affected simulations, ${formatPersonalityList(ids)} reached interested posture, indicating the underlying axis truth is workable when read through personalities whose triggers do not require industry-specific fingerprint coverage.`,
+      `Outside the coverage-gap-affected readings, ${formatPersonalityList(ids)} reached interested posture, indicating the underlying axis truth is workable when read through lender profiles whose triggers do not require industry-specific fingerprint coverage.`,
     );
     keys.push("per_personality");
   } else {
     sentences.push(
-      `Outside the coverage-gap-affected simulations, posture readings reflect the deal's axis truth directly and can be read on their own merits independent of the registry limitation.`,
+      `Outside the coverage-gap-affected readings, posture results reflect the deal's axis truth directly and can be read on their own merits independent of the registry limitation.`,
     );
     keys.push("per_personality");
   }
 
   // Sentence 4: Recommendation framing
   sentences.push(
-    `Resolution path for the coverage-gap-affected personalities is registry expansion rather than buyer-side diligence; once an industry-specific fingerprint is registered, those personality postures would be re-evaluated against industry-specific operating expectations.`,
+    `Resolution path for the coverage-gap-affected lender profiles is registry expansion rather than buyer-side diligence; once an industry-specific fingerprint is registered, those readings would be re-evaluated against industry-specific operating expectations.`,
   );
 
   // Optional sentence 5: Top assumption concentration if it indicates a workable underwriting surface
@@ -275,22 +275,22 @@ function assembleCleanHeadline(
 
   // Sentence 1: Frame the deal as financeable
   sentences.push(
-    `The deal reads as financeable across the personality simulations: ${formatPersonalityList(interestedPersonalities)} reached interested posture, meaning at least one personality simulation sees a complete financeable comfort path under the current evidence and structure.`,
+    `The deal reads as financeable across the modeled lender profiles: ${formatPersonalityList(interestedPersonalities)} reached interested posture, meaning at least one lender-profile simulation sees a complete financeable comfort path under the current evidence and structure.`,
   );
 
   // Sentence 2: Identify the closest interested path detail (always emit; closest_path may be null)
   if (inputs.closest_path && inputs.closest_path.current_state === "interested") {
     sentences.push(
-      `Among the interested simulations, the ${inputs.closest_path.personality_id} personality reading has the cleanest remaining surface.`,
+      `Among the interested readings, the ${inputs.closest_path.personality_id} lender profile shows the cleanest remaining surface.`,
     );
     keys.push("closest_path");
   } else if (interestedPersonalities.length > 0) {
     sentences.push(
-      `Among the interested personality simulations, posture is clean across the modeled lenses with no fatal discomforts in any reading.`,
+      `Among the interested lender profiles, posture is clean across the modeled lenses with no fatal discomforts in any reading.`,
     );
   } else {
     sentences.push(
-      `Within the personality simulations evaluated, no structural incompatibilities surfaced in this batch.`,
+      `Within the modeled lender profiles evaluated, no structural incompatibilities surfaced in this evaluation.`,
     );
   }
 
@@ -301,12 +301,12 @@ function assembleCleanHeadline(
   );
   if (totalRepairables > 0) {
     sentences.push(
-      `Secondary diligence priorities exist across the personality simulations — ${totalRepairables} repairable discomfort signal${totalRepairables === 1 ? "" : "s"} remain below the cautious threshold but would strengthen the financeable comfort path further.`,
+      `Secondary diligence priorities exist across the modeled lender profiles — ${totalRepairables} repairable signal${totalRepairables === 1 ? "" : "s"} remain${totalRepairables === 1 ? "s" : ""} below the cautious threshold but would strengthen the financeable comfort path further.`,
     );
     keys.push("per_personality");
   } else {
     sentences.push(
-      `No repairable discomfort signals remain across the personality simulations; the financeable comfort path reads clean under the modeled lenses.`,
+      `No repairable signals remain across the modeled lender profiles; the financeable comfort path reads clean under the modeled lenses.`,
     );
   }
 
@@ -314,7 +314,7 @@ function assembleCleanHeadline(
   if (inputs.top_assumption_concentrations.length > 0) {
     const top = inputs.top_assumption_concentrations[0];
     sentences.push(
-      `Underwriting weight concentrates on the ${top.assumption_name} assumption; this assumption is well-positioned in the current deal structure but remains the natural focus of diligence prioritization across the personality simulations.`,
+      `Underwriting weight concentrates on the ${top.assumption_name} assumption; this assumption is well-positioned in the current deal structure but remains the natural focus of diligence prioritization across the modeled lender profiles.`,
     );
     keys.push("top_assumption_concentrations");
   } else {
@@ -325,7 +325,7 @@ function assembleCleanHeadline(
 
   // Sentence 5: Buyer-action framing (always emit for H2)
   sentences.push(
-    `The buyer's next step is not to address structural concerns but to confirm the underlying assumptions through standard diligence — the financeable comfort path is open across at least one personality simulation lens.`,
+    `The buyer's next step is not to address structural concerns but to confirm the underlying assumptions through standard diligence — the financeable comfort path is open under the modeled lender profiles in this evaluation.`,
   );
 
   return { sentences, synthesisKeysUsed: keys };
@@ -343,7 +343,7 @@ function assembleAllDeclineHeadline(
 
   // Sentence 1: Frame the institutional reality without drama
   sentences.push(
-    `No personality simulation in this batch currently reads a financeable comfort path; the deal does not yet present a workable institutional posture across the modeled lenses under the present evidence and structure.`,
+    `No modeled lender profile in this evaluation currently reads a financeable comfort path; the deal does not yet present a workable institutional posture across the modeled lenders under the present evidence and structure.`,
   );
 
   // Sentence 2: Identify the binding constraint
@@ -358,7 +358,7 @@ function assembleAllDeclineHeadline(
   // Sentence 3: Surface closest-to-recoverable path
   if (inputs.closest_path) {
     sentences.push(
-      `Among the four personality simulations, the ${inputs.closest_path.personality_id} reading is closest to recoverable, carrying ${inputs.closest_path.fatal_discomfort_count} fatal discomfort${inputs.closest_path.fatal_discomfort_count === 1 ? "" : "s"} and ${inputs.closest_path.repairable_discomfort_count} repairable signal${inputs.closest_path.repairable_discomfort_count === 1 ? "" : "s"} — a less concentrated structural drift than the other simulations.`,
+      `Among the four modeled lender profiles, the ${inputs.closest_path.personality_id} reading is closest to recoverable, carrying ${inputs.closest_path.fatal_discomfort_count} fatal signal${inputs.closest_path.fatal_discomfort_count === 1 ? "" : "s"} and ${inputs.closest_path.repairable_discomfort_count} repairable signal${inputs.closest_path.repairable_discomfort_count === 1 ? "" : "s"} — less concentrated structural friction than the other modeled lenders.`,
     );
     keys.push("closest_path");
   }
@@ -368,7 +368,7 @@ function assembleAllDeclineHeadline(
     const top = inputs.top_assumption_concentrations[0];
     if (top.unfavorable_count > 0 && top.favorable_count === 0) {
       sentences.push(
-        `The deal's underwriting weight concentrates on the ${top.assumption_name} assumption with predominantly unfavorable dependent conclusions; substantiation work on this single assumption would cascade favorable shifts across multiple personality simulations simultaneously.`,
+        `The deal's underwriting weight concentrates on the ${top.assumption_name} assumption with predominantly unfavorable underwriting signals; substantiation work on this single assumption would cascade favorable shifts across multiple modeled lender profiles at once.`,
       );
     } else {
       sentences.push(
@@ -382,7 +382,7 @@ function assembleAllDeclineHeadline(
   const fundamentalConcerns = inputs.structural_concerns.filter(isFundamentalConcern);
   if (fundamentalConcerns.length > 0) {
     sentences.push(
-      `The buyer should treat ${fundamentalConcerns.length} structural concern${fundamentalConcerns.length === 1 ? "" : "s"} as fundamental rather than negotiable: structure changes alone are unlikely to produce different posture readings within the affected personalities.`,
+      `The buyer should treat ${fundamentalConcerns.length} structural concern${fundamentalConcerns.length === 1 ? "" : "s"} as fundamental rather than negotiable: structure changes alone are unlikely to produce different posture readings within the affected lender profiles.`,
     );
     keys.push("structural_concerns");
   }
@@ -404,10 +404,10 @@ function assemblePartialDeclineHeadline(
   const cautiousIds = inputs.per_personality.filter((p) => p.state === "cautious").map((p) => p.personality_id);
   const declineIds = inputs.per_personality.filter((p) => p.state === "decline").map((p) => p.personality_id);
 
-  // Sentence 1: Frame the mixed-posture reality with explicit personality simulation framing
+  // Sentence 1: Frame the mixed-posture reality with explicit lender-profile framing
   const interestedClause = interestedIds.length > 0
     ? `${formatPersonalityList(interestedIds)} reached interested posture`
-    : "no personality simulation reached interested posture";
+    : "no lender-profile simulation reached interested posture";
   const cautiousClause = cautiousIds.length > 0
     ? `${formatPersonalityList(cautiousIds)} reached cautious posture`
     : null;
@@ -416,7 +416,7 @@ function assemblePartialDeclineHeadline(
   clauses.push(`${formatPersonalityList(declineIds)} declined`);
 
   sentences.push(
-    `Posture readings are mixed across the personality simulations: ${clauses.join(", ")} — meaning the deal's financeability depends materially on which institutional lens reads it.`,
+    `Posture readings are mixed across the modeled lender profiles: ${clauses.join(", ")} — meaning the deal's financeability depends materially on which institutional lens reads it.`,
   );
 
   // Sentence 2: Identify the closest path and framing
@@ -424,15 +424,15 @@ function assemblePartialDeclineHeadline(
     const cp = inputs.closest_path;
     if (cp.current_state === "interested") {
       sentences.push(
-        `The most plausible financing path is the ${cp.personality_id} reading, which sits cleanly at interested posture and represents an open financeable comfort path.`,
+        `The most plausible financing path is the ${cp.personality_id} lender-profile reading, which sits cleanly at interested posture and represents an open financeable comfort path.`,
       );
     } else if (cp.current_state === "cautious") {
       sentences.push(
-        `The most plausible financing path is the ${cp.personality_id} reading at cautious posture: ${cp.unsatisfied_required_count} unsatisfied comfort condition${cp.unsatisfied_required_count === 1 ? "" : "s"} and ${cp.repairable_discomfort_count} repairable discomfort${cp.repairable_discomfort_count === 1 ? "" : "s"} sit between the deal and interested.`,
+        `The most plausible financing path is the ${cp.personality_id} lender-profile reading at cautious posture: ${cp.unsatisfied_required_count} unsatisfied comfort condition${cp.unsatisfied_required_count === 1 ? "" : "s"} and ${cp.repairable_discomfort_count} repairable discomfort${cp.repairable_discomfort_count === 1 ? "" : "s"} sit between the deal and interested.`,
       );
     } else {
       sentences.push(
-        `Most plausible recovery path is the ${cp.personality_id} reading, currently at decline but closest to recoverable among the declining simulations.`,
+        `Most plausible recovery path is the ${cp.personality_id} lender-profile reading, currently at decline but closest to recoverable among the declining profiles.`,
       );
     }
     keys.push("closest_path");
@@ -442,7 +442,7 @@ function assemblePartialDeclineHeadline(
   if (inputs.binding_constraint) {
     const bc = inputs.binding_constraint;
     sentences.push(
-      `Among the declining simulations, the binding constraint is anchored on ${bc.axis} (${bc.band} band), classified as ${bc.repairability} — ${bc.repairability === "repairable" ? "buyer-side diligence may shift this reading" : "structural negotiation or alternative financing paths may be required"}.`,
+      `Among the declining lender profiles, the binding constraint is anchored on ${bc.axis} (${bc.band} band), classified as ${bc.repairability} — ${bc.repairability === "repairable" ? "buyer-side diligence may shift this reading" : "structural negotiation or alternative financing paths may be required"}.`,
     );
     keys.push("binding_constraint");
   }
@@ -451,7 +451,7 @@ function assemblePartialDeclineHeadline(
   if (inputs.top_assumption_concentrations.length > 0) {
     const top = inputs.top_assumption_concentrations[0];
     sentences.push(
-      `Underwriting weight concentrates on the ${top.assumption_name} assumption; diligence on this assumption is the highest-leverage action to expand the set of personalities reading the deal as financeable.`,
+      `Underwriting weight concentrates on the ${top.assumption_name} assumption; diligence on this assumption is the highest-leverage action to expand the set of lender profiles reading the deal as financeable.`,
     );
     keys.push("top_assumption_concentrations");
   }
@@ -471,14 +471,14 @@ function assembleAllCautiousHeadline(
 
   // Sentence 1: Frame the universal-solvability reality
   sentences.push(
-    `Every personality simulation in this batch reads the deal as cautious — solvable rather than structurally incompatible, but with no personality currently presenting an open financeable comfort path.`,
+    `Every modeled lender profile in this evaluation reads the deal as cautious — solvable rather than structurally incompatible, but with no profile currently presenting an open financeable comfort path.`,
   );
 
   // Sentence 2: Identify the closest path (the personality with shortest remaining gap)
   if (inputs.closest_path) {
     const cp = inputs.closest_path;
     sentences.push(
-      `The most plausible path forward is the ${cp.personality_id} reading: ${cp.unsatisfied_required_count} unsatisfied comfort condition${cp.unsatisfied_required_count === 1 ? "" : "s"} and ${cp.repairable_discomfort_count} repairable discomfort${cp.repairable_discomfort_count === 1 ? "" : "s"} sit between the deal and interested posture under this institutional lens.`,
+      `The most plausible path forward is the ${cp.personality_id} lender-profile reading: ${cp.unsatisfied_required_count} unsatisfied comfort condition${cp.unsatisfied_required_count === 1 ? "" : "s"} and ${cp.repairable_discomfort_count} repairable discomfort${cp.repairable_discomfort_count === 1 ? "" : "s"} sit between the deal and interested posture under this institutional lens.`,
     );
     keys.push("closest_path");
   }
@@ -496,7 +496,7 @@ function assembleAllCautiousHeadline(
   if (inputs.top_assumption_concentrations.length > 0) {
     const top = inputs.top_assumption_concentrations[0];
     sentences.push(
-      `Underwriting weight concentrates on the ${top.assumption_name} assumption; substantiation here is the highest-leverage action to convert cautious readings into interested ones across multiple personality simulations.`,
+      `Underwriting weight concentrates on the ${top.assumption_name} assumption; substantiation here is the highest-leverage action to convert cautious readings into interested ones across multiple modeled lender profiles.`,
     );
     keys.push("top_assumption_concentrations");
   }
