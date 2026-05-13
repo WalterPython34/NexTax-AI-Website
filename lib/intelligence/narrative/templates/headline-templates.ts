@@ -275,41 +275,57 @@ function assembleCleanHeadline(
 
   // Sentence 1: Frame the deal as financeable
   sentences.push(
-    `The deal reads as financeable: ${formatPersonalityList(interestedPersonalities)} reached interested posture, meaning at least one personality simulation sees a complete financeable comfort path under the current evidence and structure.`,
+    `The deal reads as financeable across the personality simulations: ${formatPersonalityList(interestedPersonalities)} reached interested posture, meaning at least one personality simulation sees a complete financeable comfort path under the current evidence and structure.`,
   );
 
-  // Sentence 2: Identify the closest interested path detail
+  // Sentence 2: Identify the closest interested path detail (always emit; closest_path may be null)
   if (inputs.closest_path && inputs.closest_path.current_state === "interested") {
     sentences.push(
-      `Among the interested simulations, the ${inputs.closest_path.personality_id} reading has the cleanest remaining surface.`,
+      `Among the interested simulations, the ${inputs.closest_path.personality_id} personality reading has the cleanest remaining surface.`,
     );
     keys.push("closest_path");
+  } else if (interestedPersonalities.length > 0) {
+    sentences.push(
+      `Among the interested personality simulations, posture is clean across the modeled lenses with no fatal discomforts in any reading.`,
+    );
+  } else {
+    sentences.push(
+      `Within the personality simulations evaluated, no structural incompatibilities surfaced in this batch.`,
+    );
   }
 
-  // Sentence 3: Surface secondary diligence priorities if any repairable concerns remain
+  // Sentence 3: Surface secondary diligence priorities if any repairable concerns remain (always emit)
   const totalRepairables = inputs.per_personality.reduce(
     (acc, p) => acc + p.repairable_discomfort_ids.length,
     0,
   );
   if (totalRepairables > 0) {
     sentences.push(
-      `Secondary diligence priorities exist across the batch — ${totalRepairables} repairable discomfort signal${totalRepairables === 1 ? "" : "s"} remain below the cautious threshold but would strengthen the financeable comfort path further.`,
+      `Secondary diligence priorities exist across the personality simulations — ${totalRepairables} repairable discomfort signal${totalRepairables === 1 ? "" : "s"} remain below the cautious threshold but would strengthen the financeable comfort path further.`,
     );
     keys.push("per_personality");
+  } else {
+    sentences.push(
+      `No repairable discomfort signals remain across the personality simulations; the financeable comfort path reads clean under the modeled lenses.`,
+    );
   }
 
   // Sentence 4: Top assumption concentration framing (institutional weight)
   if (inputs.top_assumption_concentrations.length > 0) {
     const top = inputs.top_assumption_concentrations[0];
     sentences.push(
-      `Underwriting weight concentrates on the ${top.assumption_name} assumption; this assumption is well-positioned in the current deal structure but remains the natural focus of diligence prioritization.`,
+      `Underwriting weight concentrates on the ${top.assumption_name} assumption; this assumption is well-positioned in the current deal structure but remains the natural focus of diligence prioritization across the personality simulations.`,
     );
     keys.push("top_assumption_concentrations");
+  } else {
+    sentences.push(
+      `Underwriting weight distributes across the assumption surface without single-assumption concentration; diligence prioritization can target the highest-impact items rather than defending a concentrated assumption set.`,
+    );
   }
 
-  // Sentence 5: Buyer-action framing
+  // Sentence 5: Buyer-action framing (always emit for H2)
   sentences.push(
-    `The buyer's next step is not to address structural concerns but to confirm the underlying assumptions through standard diligence — the financeable comfort path is open across at least one institutional lens.`,
+    `The buyer's next step is not to address structural concerns but to confirm the underlying assumptions through standard diligence — the financeable comfort path is open across at least one personality simulation lens.`,
   );
 
   return { sentences, synthesisKeysUsed: keys };
@@ -388,10 +404,10 @@ function assemblePartialDeclineHeadline(
   const cautiousIds = inputs.per_personality.filter((p) => p.state === "cautious").map((p) => p.personality_id);
   const declineIds = inputs.per_personality.filter((p) => p.state === "decline").map((p) => p.personality_id);
 
-  // Sentence 1: Frame the mixed-posture reality
+  // Sentence 1: Frame the mixed-posture reality with explicit personality simulation framing
   const interestedClause = interestedIds.length > 0
     ? `${formatPersonalityList(interestedIds)} reached interested posture`
-    : "no personality reached interested posture";
+    : "no personality simulation reached interested posture";
   const cautiousClause = cautiousIds.length > 0
     ? `${formatPersonalityList(cautiousIds)} reached cautious posture`
     : null;
@@ -400,7 +416,7 @@ function assemblePartialDeclineHeadline(
   clauses.push(`${formatPersonalityList(declineIds)} declined`);
 
   sentences.push(
-    `Posture readings are mixed across the batch: ${clauses.join(", ")} — meaning the deal's financeability depends materially on which institutional lens reads it.`,
+    `Posture readings are mixed across the personality simulations: ${clauses.join(", ")} — meaning the deal's financeability depends materially on which institutional lens reads it.`,
   );
 
   // Sentence 2: Identify the closest path and framing
