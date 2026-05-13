@@ -78,6 +78,7 @@ import type {
   AxisKey,
 } from "../types";
 import type {
+  ScenarioEvaluationResult,
   ScenarioId,
 } from "../scenarios/types";
 import type {
@@ -557,22 +558,36 @@ export interface LenderPosture {
  * The input carries:
  *   - personality declaration (the interpretive lens)
  *   - axis composition result (the canonical truth being interpreted)
+ *   - scenario evaluation result (read-only scenario evidence for
+ *     scenario_clearance pattern evaluation)
  *
  * It does NOT carry:
  *   - RuleEngineResult — personalities cannot read raw firings
- *   - ScenarioEvaluationResult — personalities read scenario clearances
- *     ONLY through the axis composition result's scenario-related
- *     components, or through ScenarioReadingDeclaration references
- *     that CP-7 resolves against the result
  *   - FingerprintResolution as a separate input — already present in
  *     axis_composition_result.fingerprint_resolution
  *
- * The simulator cannot reach into rule firings to "second-guess" axis
- * scores; the truth IS the axis output.
+ * Scenario evidence is included as read-only supporting input because
+ * scenario clearance is a first-class trigger for personality discomfort
+ * (e.g., "lender_stress scenario fails"). The simulator may ONLY read
+ * scenario IDs and clearance states from this input. It may NOT mutate,
+ * recompute, or reinterpret scenarios. The boundary:
+ *
+ *   - axis_composition_result is the canonical truth layer
+ *   - scenario_evaluation_result is supporting evidence for one specific
+ *     pattern kind (scenario_clearance triggers)
+ *   - Both are read-only inputs; the simulator produces its own typed
+ *     LenderPosture output without writing back
+ *
+ * The constitutional commitment still holds: the simulator cannot reach
+ * into rule firings to "second-guess" axis scores; the truth IS the axis
+ * output. Scenario clearances are not measurement re-runs — they are
+ * pre-computed results from CP-4 that the personality reads as supporting
+ * evidence for its declarative trigger conditions.
  */
 export interface PersonalitySimulationInput {
   readonly personality: LenderPersonality;
   readonly axis_composition_result: AxisCompositionResult;
+  readonly scenario_evaluation_result: ScenarioEvaluationResult;
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -659,3 +674,134 @@ export const DISCOMFORT_AS_INSTITUTIONAL_PSYCHOLOGY_PRINCIPLE = [
   "with concentrated fatal discomforts moves toward decline; the space ",
   "between is cautious.",
 ].join("");
+
+/**
+ * The architectural commitment about deterministic posture derivation.
+ * Read by CP-7 simulator; this principle is the explicit rejection of
+ * probabilistic posture modeling.
+ *
+ * Posture emerges DETERMINISTICALLY from:
+ *   - triggered discomforts (count, severity, repairability)
+ *   - unsatisfied comfort conditions (count, required_for_interested status)
+ *   - axis sequencing (priority order traversal)
+ *   - scenario survivability (clearance outcomes)
+ *
+ * Posture does NOT emerge from:
+ *   - probability distributions
+ *   - logistic regression
+ *   - "73% chance lender accepts" style fake precision
+ *   - learned scoring functions
+ *   - any pseudo-credit-modeling that simulates predictive certainty
+ *
+ * The strength of this architecture is institutional coherence and
+ * traceability. Each posture decision must be answerable through:
+ *   "Posture moved to cautious because:
+ *    - 3 of 4 repairable discomforts triggered
+ *    - 2 of 3 required_for_interested comfort conditions unsatisfied
+ *    - axis #2 in priority order (financial_score) reads in cautionary band"
+ *
+ * NOT through:
+ *   "The model assigns 67% likelihood of cautious posture."
+ *
+ * That distinction is non-negotiable. A simulator that wants to emit
+ * probabilities is structurally a different module that lives downstream
+ * (CP-11+ commercial likelihood modeling, separately governance-reviewed,
+ * NOT consuming the posture layer). The CP-7 simulator emits categorical
+ * posture states with deterministic explanations.
+ */
+export const DETERMINISTIC_POSTURE_PRINCIPLE = [
+  "Posture is derived deterministically from structured signals, not ",
+  "probabilistically from learned scoring. The simulator examines triggered ",
+  "discomforts, unsatisfied comfort conditions, axis sequencing, and ",
+  "scenario survivability — and produces a categorical state (interested / ",
+  "cautious / decline) with a traceable explanation. The simulator does ",
+  "not emit probabilities, confidence scores, or any other surface that ",
+  "implies predictive precision the engine cannot defend. The strength ",
+  "of this layer is institutional coherence, not fake forecasting accuracy. ",
+  "A posture decision must always be answerable in the form: 'Posture is X ",
+  "because these specific discomforts triggered, these specific comfort ",
+  "conditions are unsatisfied, this specific axis read in this specific ",
+  "band.' Probabilistic posture modeling is reserved for a separate ",
+  "downstream layer (CP-11+) with its own governance review — it is not ",
+  "permitted to drift into the personality-simulation layer.",
+].join("");
+
+/**
+ * RESERVED conceptual framework for CP-7+ posture progression and
+ * future recovery-feasibility analysis.
+ *
+ * Posture progression is the ordered sequence a personality moves through
+ * as discomforts accumulate, not a probability gradient:
+ *
+ *   interested → cautious → decline
+ *
+ * The progression is driven by countable conditions:
+ *   - 0 fatal discomforts + 0 unsatisfied required comfort conditions +
+ *     ≤1 repairable discomfort → interested
+ *   - 0 fatal discomforts + 1+ unsatisfied required comfort conditions or
+ *     2+ repairable discomforts → cautious
+ *   - 1+ fatal discomforts OR triggered deal-breaker → decline
+ *
+ * These thresholds are illustrative; CP-7 will declare the exact rules
+ * and they will be reviewed as constitutional decisions. The point here
+ * is the SHAPE of derivation — countable structured conditions, not
+ * trained classifiers.
+ */
+export const POSTURE_PROGRESSION_FRAMEWORK_NOTE = [
+  "Posture progression is an ordered sequence (interested → cautious → ",
+  "decline) driven by countable structural conditions: number of triggered ",
+  "discomforts by repairability class, number of unsatisfied comfort ",
+  "conditions by required_for_interested class, scenario clearance ",
+  "outcomes for personality-relevant scenarios, and deal-breaker triggers. ",
+  "Each transition between states must be explainable as a discrete ",
+  "structural condition crossing, not as a probability threshold.",
+].join("");
+
+// ─────────────────────────────────────────────────────────────────────────────
+// COMFORT CONCENTRATION — RESERVED for CP-10+
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * RESERVED. Future concept for measuring how many independent things must
+ * be true simultaneously for a deal to become financeable for a personality.
+ *
+ * Some deals require only one comfort condition to flip from cautious to
+ * interested ("we just need tax-return-anchored adjustments"). Others
+ * require six independent conditions satisfied simultaneously, each
+ * involving its own diligence stream.
+ *
+ * The distinction matters enormously for:
+ *   - buyer guidance (what's the shortest path to financeable?)
+ *   - recovery path intelligence (what's the highest-leverage repair?)
+ *   - lender matchmaking (which lender is closest to comfortable?)
+ *   - probability-of-close estimation (not probability of posture —
+ *     a separate downstream concept reserved for CP-11+)
+ *
+ * Comfort concentration is the count + dependency structure of
+ * unsatisfied comfort conditions, weighted by their independence:
+ *
+ *   - Low concentration: 1-2 conditions, addressable via single diligence
+ *     workstream (e.g., source upgrade resolves multiple conditions)
+ *   - Moderate concentration: 3-4 conditions across 2 workstreams
+ *   - High concentration: 5+ conditions across 3+ independent workstreams
+ *
+ * The future surface will likely live on a per-personality basis:
+ *
+ *   readonly comfort_concentration?: {
+ *     readonly unsatisfied_count: number;
+ *     readonly distinct_workstreams: number;
+ *     readonly concentration_band: "low" | "moderate" | "high";
+ *     readonly minimum_repair_path: ReadonlyArray<ComfortConditionId>;
+ *   };
+ *
+ * Reserved as a concept now so that LenderPosture's
+ * unsatisfied_comfort_conditions field carries the structured raw data
+ * future concentration analysis can read.
+ */
+export type ComfortConcentrationBand = "low" | "moderate" | "high";
+
+/**
+ * RESERVED reference type for future comfort concentration analysis.
+ * Reference format: "{personality_id}@{version}#concentration_id"
+ */
+export type ComfortConcentrationReference = string;
