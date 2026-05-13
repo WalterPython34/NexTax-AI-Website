@@ -447,8 +447,28 @@ export const FORBIDDEN_DRAMATIC_PHRASES: ReadonlyArray<string> = [
 /**
  * Required framing patterns when fragment references simulated posture.
  * At least one must appear in any fragment with references_simulated_posture=true.
+ *
+ * Two flavors of accepted framing:
+ *
+ *   Engine-internal (preserved for backward compatibility and for fragments
+ *   that explicitly discuss the simulation mechanic):
+ *     - "personality simulation" / "personality profile" / "interpretive lens"
+ *     - "simulation surfaces" / "simulation produces" / "simulation yields"
+ *     - "simulation withheld" / "simulation withholds"
+ *     - "Under the" / "Within the"
+ *
+ *   Buyer-facing (preferred for executive headlines and per-personality
+ *   fragments — reads more institutionally without losing the simulation
+ *   distinction):
+ *     - "lender-profile simulation" / "financing-path simulation"
+ *     - "modeled lender profile" / "modeled financing path"
+ *     - "modeled lenders" / "modeled financing"
+ *     - "simulated lender"
+ *
+ * Templates can mix both vocabularies. The validator accepts either.
  */
 export const REQUIRED_SIMULATION_FRAMING_PATTERNS: ReadonlyArray<string> = [
+  // Engine-internal framing
   "personality simulation",
   "personality profile",
   "interpretive lens",
@@ -462,6 +482,15 @@ export const REQUIRED_SIMULATION_FRAMING_PATTERNS: ReadonlyArray<string> = [
   "simulation withholds",
   "under the",                 // "Under the SBA-lender personality..."
   "within the",                // "Within the seller-note interpretive lens..."
+
+  // Buyer-facing framing (preferred for headlines + dashboard prose)
+  "lender-profile simulation",
+  "financing-path simulation",
+  "modeled lender profile",
+  "modeled financing path",
+  "modeled lender",            // catches "modeled lenders"
+  "modeled financing",
+  "simulated lender",
 ];
 
 // ─────────────────────────────────────────────────────────────────────────────
