@@ -149,7 +149,7 @@ export default function Navigation() {
           <div className="hidden md:flex items-center space-x-4">
             <Button
               className="bg-gradient-to-r from-emerald-500 to-cyan-500 hover:bg-emerald-500 hover:from-emerald-500 hover:to-emerald-500 text-white transition-all duration-200 border border-emerald-500"
-              onClick={() => window.open("https://nextax.ai/buyer-dashboard", "_blank")}
+              onClick={() => window.open("https://nextax.ai/acquiflow", "_blank")}
             >
               AcquiFlow
             </Button>
