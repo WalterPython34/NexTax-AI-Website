@@ -132,7 +132,7 @@ export default function HomePage() {
                 <Link href="/deal-reality-check">
                   <Button
                     size="lg"
-                    className="bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white font-semibold px-8 py-6 text-lg w-full sm:w-auto"
+                    className="bg-gradient-to-r from-emerals-500 to-cyan-500 hover:from-cyan-600 hover:to-blue-600 text-white font-semibold px-8 py-6 text-lg w-full sm:w-auto"
                   >
                     Analyze a Deal
                     <ArrowRight className="ml-2 w-5 h-5" />
