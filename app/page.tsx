@@ -110,7 +110,7 @@ export default function HomePage() {
               </Badge>
 
               <div className="space-y-6">
-                <h1 className="text-4xl lg:text-5xl font-bold text-white leading-tight">
+                <h1 className="text-5xl lg:text-5xl font-bold text-white leading-tight">
                   Know if a deal deserves an LOI 
                   <span className="block text-emerald-500 mt-2">before you commit capital.</span>
                 </h1>
