@@ -10,7 +10,6 @@ import { LenderReadinessTab } from "@/components/LenderReadinessTab";
 import { buildLenderReadiness } from "@/lib/lenderReadiness";
 import { DealMemoTab } from "@/components/DealMemoTab";
 import FinancialBenchmarksTab from "@/components/FinancialBenchmarksTab";
-import TabCompareNew from "@/components/TabCompare";
 import { buildRiskFlags, buildDiligenceQuestions, buildDecisionTriggers } from "@/lib/dealMemo";
 import { INDUSTRY_FIT } from "@/lib/lenderReadiness";
 import { LoiBuilderTab } from "@/components/LoiBuilderTab";
@@ -9345,7 +9344,7 @@ const dealHasFullAccess = (dealId: string): boolean => {
               />
             )}
             {activeTab === "compare" && (
-              <TabCompareNew
+              <TabCompare
                 deals={deals}
                 isPro={isPro}
                 userId={user?.id ?? null}
