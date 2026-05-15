@@ -4837,10 +4837,10 @@ function SignInRequired() {
           fontSize: 22, fontWeight: 700, color: "#F1F5F9", margin: "0 0 8px",
           fontFamily: "'Inter Tight',sans-serif", letterSpacing: "-0.02em",
         }}>
-          Continue your deal analysis
+          AcquiFlow Beta Access
         </h2>
         <p style={{ fontSize: 14, color: "#6B7280", margin: "0 0 28px", lineHeight: 1.6 }}>
-          Enter your email to pick up where you left off.
+          Enter your email address below to access the AcquiFlow beta platform and start analyzing live acquisition opportunities.
         </p>
 
         {!sent ? (
