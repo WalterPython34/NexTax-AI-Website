@@ -4834,7 +4834,7 @@ function SignInRequired() {
       <div style={{ maxWidth: 400, width: "100%", textAlign: "center" }}>
         <div style={{ marginBottom: 16, display: "flex", justifyContent: "center" }}>
              <img
-               src="/Acquiflow-login1.png"
+               src="/Acquiflow-login.jpg"
                alt="AcquiFlow"
                style={{ height: 180, width: "auto", borderRadius: 8 }}
              />
