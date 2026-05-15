@@ -4832,7 +4832,13 @@ function SignInRequired() {
   return (
     <div style={{ minHeight: "70vh", display: "flex", alignItems: "center", justifyContent: "center", padding: 40 }}>
       <div style={{ maxWidth: 400, width: "100%", textAlign: "center" }}>
-        <div style={{ fontSize: 40, marginBottom: 16 }}>📊</div>
+        <div style={{ marginBottom: 16, display: "flex", justifyContent: "center" }}>
+             <img
+               src="/Acquiflow-login.jpg"
+               alt="AcquiFlow"
+               style={{ height: 180, width: "auto", borderRadius: 8 }}
+             />
+        </div>
         <h2 style={{
           fontSize: 22, fontWeight: 700, color: "#F1F5F9", margin: "0 0 8px",
           fontFamily: "'Inter Tight',sans-serif", letterSpacing: "-0.02em",
