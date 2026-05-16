@@ -1,34 +1,28 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
+import { CLAUDE_MODELS, ANTHROPIC_API_VERSION } from "@/lib/claude-models";
 
 export const maxDuration = 60;
-
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
-
 const PAIN_CATEGORIES = [
   "valuation", "financial_modeling", "diligence", "seller_addbacks",
   "dscr", "market_saturation", "competitive", "deal_structure",
 ];
-
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
     const { content, url, platform, batchMode } = body;
-
     if (!content && !url) {
       return NextResponse.json({ error: "content or url is required" }, { status: 400 });
     }
-
     const inputText = content || url;
     const isBatch = batchMode === true;
-
     // Use Claude to classify the signal(s)
     const prompt = isBatch
       ? `Analyze the following collection of community posts/discussions about SMB acquisitions and business buying. Extract each distinct discussion or post as a separate signal.
-
 For EACH post/discussion found, return a JSON array. Each object:
 {
   "title": "post title or topic summary (max 100 chars)",
@@ -48,14 +42,11 @@ For EACH post/discussion found, return a JSON array. Each object:
   "ai_insight": "one sentence insight about what this signal means for the market",
   "content_opportunity": "suggested content topic NexTax could create to address this signal"
 }
-
 Content to analyze:
 ${inputText}
-
 ONLY return the JSON array. No other text.`
       : `Analyze this community post/discussion about SMB acquisitions or business buying. Classify it as a market signal.
-
-Return a single JSON object (no array, no markdown):
+                              Return a single JSON object (no array, no markdown):
 {
   "title": "post title or topic summary (max 100 chars)",
   "summary": "2-3 sentence summary of what's being discussed",
@@ -74,41 +65,34 @@ Return a single JSON object (no array, no markdown):
   "ai_insight": "one sentence insight about what this signal means for the market",
   "content_opportunity": "suggested content topic NexTax could create to address this signal"
 }
-
 Content to analyze:
 ${inputText}
-
 ONLY return the JSON object. No other text.`;
-
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "x-api-key": process.env.ANTHROPIC_API_KEY || "",
-        "anthropic-version": "2023-06-01",
+        "anthropic-version": ANTHROPIC_API_VERSION,
       },
       body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
+        model: CLAUDE_MODELS.SONNET,
         max_tokens: 4000,
         messages: [{ role: "user", content: prompt }],
       }),
     });
-
     if (!response.ok) {
       return NextResponse.json({ error: "AI classification failed" }, { status: 500 });
     }
-
     const data = await response.json();
     const textContent = data.content
       ?.filter((b: { type: string }) => b.type === "text")
       .map((b: { text: string }) => b.text)
       .join("\n")
       .trim();
-
-    if (!textContent) {
+  if (!textContent) {
       return NextResponse.json({ error: "No response from AI" }, { status: 500 });
     }
-
     // Parse response
     let signals: Record<string, unknown>[];
     try {
@@ -118,17 +102,14 @@ ONLY return the JSON object. No other text.`;
     } catch {
       return NextResponse.json({ error: "Failed to parse AI response", raw: textContent }, { status: 500 });
     }
-
     // Insert signals
     let inserted = 0;
     const results: { title: string; status: string }[] = [];
-
     for (const signal of signals) {
       if (!signal.title || !signal.summary) {
         results.push({ title: String(signal.title || "Unknown"), status: "skipped — missing title/summary" });
         continue;
       }
-
       // Dedup check
       const { data: existing } = await supabase
         .from("community_signals")
@@ -137,12 +118,10 @@ ONLY return the JSON object. No other text.`;
         .gte("ingested_at", new Date(Date.now() - 3 * 86400000).toISOString())
         .limit(1)
         .single();
-
       if (existing) {
         results.push({ title: String(signal.title), status: "skipped — duplicate" });
         continue;
       }
-
       const { error } = await supabase.from("community_signals").insert({
         title: String(signal.title).slice(0, 500),
         summary: String(signal.summary).slice(0, 1000),
@@ -163,15 +142,13 @@ ONLY return the JSON object. No other text.`;
         original_date: new Date().toISOString(),
         batch_id: `manual_${new Date().toISOString().split("T")[0]}`,
       });
-
-      if (error) {
+  if (error) {
         results.push({ title: String(signal.title), status: "error — " + error.message });
       } else {
         inserted++;
         results.push({ title: String(signal.title), status: "inserted" });
       }
     }
-
     return NextResponse.json({
       success: true,
       signals_found: signals.length,
