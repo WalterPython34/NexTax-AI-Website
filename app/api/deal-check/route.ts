@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { CLAUDE_MODELS, ANTHROPIC_API_VERSION } from "@/lib/claude-models";
 
 export const maxDuration = 30;
 
@@ -10,10 +11,10 @@ export async function POST(req: NextRequest) {
       headers: {
         "Content-Type": "application/json",
         "x-api-key": process.env.ANTHROPIC_API_KEY || "",
-        "anthropic-version": "2023-06-01",
+        "anthropic-version": ANTHROPIC_API_VERSION,
       },
       body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
+        model: CLAUDE_MODELS.SONNET,
         max_tokens: 2000,
         // Support both structured memo (system + messages) and legacy (messages only)
         ...(body.system ? { system: body.system } : {}),
