@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { CLAUDE_MODELS, ANTHROPIC_API_VERSION } from "@/lib/claude-models";
 
 export async function POST(req: NextRequest) {
   try {
@@ -7,14 +8,12 @@ export async function POST(req: NextRequest) {
     let listingUrl = "";
     let isPdf = false;
     let pdfBase64 = "";
-
     if (contentType.includes("multipart/form-data")) {
       // Handle file upload (CIM PDF)
       const formData = await req.formData();
       const file = formData.get("file") as File | null;
       const text = formData.get("text") as string | null;
       const url = formData.get("url") as string | null;
-
       if (file && file.type === "application/pdf") {
         isPdf = true;
         const buffer = await file.arrayBuffer();
@@ -29,7 +28,6 @@ export async function POST(req: NextRequest) {
       listingText = body.text || "";
       listingUrl = body.url || "";
     }
-
     // If URL provided, fetch the page content
     if (listingUrl && !listingText) {
       try {
@@ -50,16 +48,12 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "Could not fetch URL" }, { status: 400 });
       }
     }
-
     if (!listingText && !isPdf) {
       return NextResponse.json({ error: "No listing content provided" }, { status: 400 });
     }
-
     // Build the extraction prompt
     const extractionPrompt = `You are a deal data extraction system for small business acquisitions. Extract financial and business data from the following listing.
-
 Return ONLY valid JSON with no other text, no markdown, no backticks. Use this exact schema:
-
 {
   "revenue": number or null,
   "sde": number or null,
@@ -78,7 +72,6 @@ Return ONLY valid JSON with no other text, no markdown, no backticks. Use this e
   "summary": string,
   "confidence": "high" | "medium" | "low"
 }
-
 Rules:
 - All financial numbers should be raw integers (e.g. 500000 not "500k" or "$500,000")
 - For "industry_key" use one of: laundromat, hvac, landscaping, carwash, dental, gym, restaurant, autorepair, cleaning, ecommerce, saas, insurance, plumbing, roofing, petcare, pharmacy, daycare, medspa. Pick the closest match.
@@ -87,10 +80,8 @@ Rules:
 - "summary" should be a 1-sentence description of the business
 - "confidence" reflects how complete the extracted data is
 - If a field cannot be determined, use null`;
-
     // Build API call
     const messages: Array<{ role: string; content: unknown }> = [];
-
     if (isPdf) {
       messages.push({
         role: "user",
@@ -108,32 +99,28 @@ Rules:
         content: `${extractionPrompt}\n\nLISTING CONTENT:\n${listingText}`,
       });
     }
-
     const response = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "x-api-key": process.env.ANTHROPIC_API_KEY || "",
-        "anthropic-version": "2023-06-01",
+        "anthropic-version": ANTHROPIC_API_VERSION,
       },
       body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
+        model: CLAUDE_MODELS.SONNET,
         max_tokens: 1000,
         messages,
       }),
     });
-
     if (!response.ok) {
       const error = await response.text();
       return NextResponse.json({ error: "AI extraction failed", details: error }, { status: 500 });
     }
-
     const data = await response.json();
     const rawText = data.content
       ?.map((b: { type: string; text?: string }) => (b.type === "text" ? b.text : ""))
       .join("")
       .trim();
-
     // Parse JSON from response
     let extracted;
     try {
@@ -143,7 +130,6 @@ Rules:
     } catch {
       return NextResponse.json({ error: "Could not parse extraction results", raw: rawText }, { status: 500 });
     }
-
     return NextResponse.json({ success: true, extracted });
   } catch (error) {
     console.error("Listing extraction error:", error);
