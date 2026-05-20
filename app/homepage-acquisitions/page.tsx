@@ -774,7 +774,7 @@ export default function HomePage() {
               <ul className="space-y-4">
                 {[
                   { icon: Activity, title: "Live listings, refreshed continuously", body: "Track current SMB deals on the market across every major industry." },
-                  { icon: Database, title: "Closed transactions, 7,000+ deep", body: "Real sold prices, multiples, and structures — not asking-price averages." },
+                  { icon: Database, title: "Closed transactions, 15,000+ deep", body: "Real sold prices, multiples, and structures — not asking-price averages." },
                   { icon: BarChart3, title: "Blended industry benchmarks", body: "Proprietary intelligence layered on top of IBISWorld and DealStats foundations." },
                   { icon: Zap, title: "Community signal feed", body: "208+ live buyer signals surface what searchers and acquirers are actually saying." },
                 ].map((row, i) => {
