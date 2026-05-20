@@ -276,8 +276,8 @@ export const SCENARIO_CATALOGUE: ReadonlyArray<Scenario> = [
         reason_not_applied: null,
         adjustments: [marginResult.record!, ...(dscrResult.record ? [dscrResult.record] : [])],
         adjusted_inputs: {
-          ebitda_margin_pct: adjustedMarginPct ?? undefined,
-          dscr: dscrResult.value ?? undefined,
+          ...(adjustedMarginPct != null ? { ebitda_margin_pct: adjustedMarginPct } : {}),
+          ...(dscrResult.value != null ? { dscr: dscrResult.value } : {}),
         },
         clears,
         clearance_basis: this.clearance_basis,
@@ -362,8 +362,8 @@ export const SCENARIO_CATALOGUE: ReadonlyArray<Scenario> = [
         adjustments: [result.record!, ...(dscrResult.record ? [dscrResult.record] : [])],
         adjusted_inputs: {
           sde: result.value,
-          sde_margin_pct: adjustedMarginPct ?? undefined,
-          dscr: dscrResult.value ?? undefined,
+          ...(adjustedMarginPct != null ? { sde_margin_pct: adjustedMarginPct } : {}),
+          ...(dscrResult.value != null ? { dscr: dscrResult.value } : {}),
         },
         clears,
         clearance_basis: this.clearance_basis,
@@ -460,8 +460,8 @@ export const SCENARIO_CATALOGUE: ReadonlyArray<Scenario> = [
         adjustments: [result.record!, ...(dscrResult.record ? [dscrResult.record] : [])],
         adjusted_inputs: {
           ebitda: result.value,
-          ebitda_margin_pct: adjustedMarginPct ?? undefined,
-          dscr: dscrResult.value ?? undefined,
+          ...(adjustedMarginPct != null ? { ebitda_margin_pct: adjustedMarginPct } : {}),
+          ...(dscrResult.value != null ? { dscr: dscrResult.value } : {}),
         },
         clears,
         clearance_basis: this.clearance_basis,
@@ -542,8 +542,8 @@ export const SCENARIO_CATALOGUE: ReadonlyArray<Scenario> = [
         adjustments: [result.record!, ...(dscrResult.record ? [dscrResult.record] : [])],
         adjusted_inputs: {
           sde: result.value,
-          sde_margin_pct: adjustedMarginPct ?? undefined,
-          dscr: dscrResult.value ?? undefined,
+          ...(adjustedMarginPct != null ? { sde_margin_pct: adjustedMarginPct } : {}),
+          ...(dscrResult.value != null ? { dscr: dscrResult.value } : {}),
         },
         clears,
         clearance_basis: this.clearance_basis,
@@ -625,7 +625,7 @@ export const SCENARIO_CATALOGUE: ReadonlyArray<Scenario> = [
         adjustments: [result.record!, ...(dscrResult.record ? [dscrResult.record] : [])],
         adjusted_inputs: {
           revenue: result.value,
-          dscr: dscrResult.value ?? undefined,
+          ...(dscrResult.value != null ? { dscr: dscrResult.value } : {}),
         },
         clears,
         clearance_basis: this.clearance_basis,
@@ -731,8 +731,8 @@ export const SCENARIO_CATALOGUE: ReadonlyArray<Scenario> = [
         applied: true, reason_not_applied: null,
         adjustments: records,
         adjusted_inputs: {
-          dscr: dscrResult.value ?? undefined,
-          current_ratio: crResult.value ?? undefined,
+          ...(dscrResult.value != null ? { dscr: dscrResult.value } : {}),
+          ...(crResult.value != null ? { current_ratio: crResult.value } : {}),
           sde: earnings,
         },
         clears,
@@ -821,7 +821,7 @@ export const SCENARIO_CATALOGUE: ReadonlyArray<Scenario> = [
         adjusted_inputs: {
           revenue: revResult.value,
           sde: adjustedSde,
-          dscr: dscrResult.value ?? undefined,
+          ...(dscrResult.value != null ? { dscr: dscrResult.value } : {}),
         },
         clears,
         clearance_basis: this.clearance_basis,
@@ -897,7 +897,7 @@ export const SCENARIO_CATALOGUE: ReadonlyArray<Scenario> = [
         adjustments: [result.record!, ...(dscrResult.record ? [dscrResult.record] : [])],
         adjusted_inputs: {
           sde: result.value,
-          dscr: dscrResult.value ?? undefined,
+          ...(dscrResult.value != null ? { dscr: dscrResult.value } : {}),
         },
         clears,
         clearance_basis: this.clearance_basis,
@@ -977,7 +977,7 @@ export const SCENARIO_CATALOGUE: ReadonlyArray<Scenario> = [
         adjusted_inputs: {
           revenue: result.value,
           sde: adjustedSde,
-          dscr: dscrResult.value ?? undefined,
+          ...(dscrResult.value != null ? { dscr: dscrResult.value } : {}),
         },
         clears,
         clearance_basis: this.clearance_basis,
@@ -1117,7 +1117,7 @@ export const SCENARIO_CATALOGUE: ReadonlyArray<Scenario> = [
         adjusted_inputs: {
           revenue: result.value,
           sde: adjustedSde,
-          dscr: dscrResult.value ?? undefined,
+          ...(dscrResult.value != null ? { dscr: dscrResult.value } : {}),
         },
         clears,
         clearance_basis: this.clearance_basis,
