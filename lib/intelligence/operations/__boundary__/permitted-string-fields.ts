@@ -187,6 +187,16 @@ export const PERMITTED_STRING_FIELDS: ReadonlySet<string> = new Set([
   // ── Threshold names (string identifiers within threshold tracking) ──
   "threshold_kind",
   "threshold_name",
+  // ── Error-handling fields (OperationsError) ──
+  // Operator-facing error message. Mirrors CP-9's PersistenceError.message
+  // convention. NOT buyer-facing prose — short technical descriptions
+  // consumed by application error-handling code, never rendered to the
+  // buyer. Bounded by the 200-char runtime cap (not on the long-string
+  // carveout).
+  "message",
+  // Error code enum. String values come from the OperationsErrorCode union;
+  // mirrors CP-9's PersistenceError.code pattern.
+  "code",
 ]);
 
 /**
