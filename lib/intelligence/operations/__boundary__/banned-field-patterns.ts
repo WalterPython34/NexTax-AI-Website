@@ -202,12 +202,12 @@ export const BANNED_STRING_PATTERNS: ReadonlyArray<{
   },
   {
     // Catches "message_text", "body_html", "_message_", "_body_", but
-  // NOT bare "message" which is the operator-facing error field on
-  // OperationsError (mirrors CP-9 PersistenceError.message).
-  pattern: /_message_|_body_|message_text|body_text|body_html/i,
-  violated_invariant: "no_prose_artifacts",
-  explanation:
-    "Message/body fields with these suffixes suggest prose content; prohibited in CP-10.",
+    // NOT bare "message" which is the operator-facing error field on
+    // OperationsError (mirrors CP-9 PersistenceError.message).
+    pattern: /_message_|_body_|message_text|body_text|body_html/i,
+    violated_invariant: "no_prose_artifacts",
+    explanation:
+      "Message/body fields with these suffixes suggest prose content; prohibited in CP-10.",
   },
   {
     pattern: /^content$/i,
