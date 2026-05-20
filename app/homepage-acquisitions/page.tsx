@@ -146,19 +146,19 @@ const ENGINE_STEPS = [
     id: "collect",
     step: "01",
     title: "Collect",
-    label: "COLLECT",
-    description: "Pull live listings and 7,000+ closed transactions into a unified deal layer.",
+    label: "Collect",
+    description: "Pull live listings and 15,000+ closed transactions into a unified deal layer.",
     icon: Database,
     color: "#10b981",
     colorLight: "#34d399",
-    chip: "1,000+ live deals",
+    chip: "1,500+ live deals",
     angle: 0,
   },
   {
     id: "benchmark",
     step: "02",
     title: "Benchmark",
-    label: "BENCHMARK",
+    label: "Benchmark",
     description: "Compare against real transaction multiples and industry-specific operating metrics.",
     icon: BarChart3,
     color: "#06b6d4",
@@ -170,7 +170,7 @@ const ENGINE_STEPS = [
     id: "underwrite",
     step: "03",
     title: "Underwrite",
-    label: "UNDERWRITE",
+    label: "Underwrite",
     description: "Normalize earnings, stress-test DSCR, and score the deal under lender assumptions.",
     icon: Scale,
     color: "#3b82f6",
@@ -182,7 +182,7 @@ const ENGINE_STEPS = [
     id: "decide",
     step: "04",
     title: "Decide",
-    label: "DECIDE",
+    label: "Decide",
     description: "Output a lender-ready verdict — proceed, renegotiate, or walk away.",
     icon: Target,
     color: "#f59e0b",
@@ -754,11 +754,11 @@ export default function HomePage() {
             <div className="space-y-7">
               <div className="grid grid-cols-3 gap-3">
                 <div className="bg-slate-900/60 border border-slate-800 rounded-lg p-4">
-                  <div className="text-2xl font-bold font-mono text-emerald-400">1,000+</div>
+                  <div className="text-2xl font-bold font-mono text-emerald-400">1,500+</div>
                   <div className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold mt-1">Deals Analyzed</div>
                 </div>
                 <div className="bg-slate-900/60 border border-slate-800 rounded-lg p-4">
-                  <div className="text-2xl font-bold font-mono text-cyan-400">7,359</div>
+                  <div className="text-2xl font-bold font-mono text-cyan-400">15,750+</div>
                   <div className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold mt-1">Closed Comps</div>
                 </div>
                 <div className="bg-slate-900/60 border border-slate-800 rounded-lg p-4">
