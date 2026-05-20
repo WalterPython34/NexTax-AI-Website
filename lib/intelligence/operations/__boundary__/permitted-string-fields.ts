@@ -157,6 +157,7 @@ export const PERMITTED_STRING_FIELDS: ReadonlySet<string> = new Set([
   "until",
   "retrieved_at",
   "replayed_at",
+  "reference_at",
 
   // ── Category 4: Version strings ──
   // Semantic version identifiers.
@@ -187,14 +188,17 @@ export const PERMITTED_STRING_FIELDS: ReadonlySet<string> = new Set([
   // ── Threshold names (string identifiers within threshold tracking) ──
   "threshold_kind",
   "threshold_name",
-  // ── Error-handling fields (OperationsError) ──
+
+  // ── Error/diagnostic technical strings ──
   // Operator-facing error message. Mirrors CP-9's PersistenceError.message
-  // convention. NOT buyer-facing prose — short technical descriptions
-  // consumed by application error-handling code, never rendered to the
-  // buyer. Bounded by the 200-char runtime cap (not on the long-string
-  // carveout).
+  // convention. NOT buyer-facing prose — these are short technical
+  // descriptions consumed by application error-handling code, never
+  // rendered to the buyer directly. Bounded length verified at runtime
+  // by the 200-char default cap (message is NOT on the long-string
+  // carveout, so values exceeding 200 chars will fail runtime checks).
   "message",
-  // Error code enum. String values come from the OperationsErrorCode union;
+
+  // Error code enum. String values come from OperationsErrorCode union;
   // mirrors CP-9's PersistenceError.code pattern.
   "code",
 ]);
