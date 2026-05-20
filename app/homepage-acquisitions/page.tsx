@@ -632,17 +632,6 @@ export default function HomePage() {
                   aspectRatio="4/3"
                   priority
                 />
-                <div className="absolute -bottom-4 -right-4 lg:-bottom-6 lg:-right-6 z-10 rounded-lg border border-amber-500/40 bg-slate-900/95 px-4 py-3 shadow-xl shadow-black/40 backdrop-blur-sm">
-                  <div className="flex items-center gap-2.5">
-                    <AlertTriangle className="h-4 w-4 text-amber-400" />
-                    <div>
-                      <div className="text-[9px] uppercase tracking-wider text-amber-400 font-bold">
-                        IC Verdict
-                      </div>
-                      <div className="text-xs font-bold text-white">Investigate</div>
-                    </div>
-                  </div>
-                </div>
               </div>
             </div>
           </div>
