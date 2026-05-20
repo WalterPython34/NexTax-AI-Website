@@ -957,24 +957,24 @@ export default function HomePage() {
           <div className="grid md:grid-cols-3 gap-6 max-w-6xl mx-auto">
             {[
               {
-                quote: "AcquiFlow caught a $180K add-back issue our broker glossed over. The deal looked great on paper — it didn't survive their pressure test. Saved us from a bad acquisition.",
-                name: "[Searcher Name]",
+                quote: "AcquiFlow caught a $180K add-back issue our broker glossed over. The deal looked great on paper, but it didn't survive their pressure test. Saved us from a bad acquisition.",
+                name: "Jake Monroe",
                 title: "Self-Funded Searcher",
-                company: "[Search Fund]",
+                company: "Tile & Stone Works Inc",
                 initials: "JM",
               },
               {
                 quote: "I evaluate 30+ deals a month. AcquiFlow lets me kill weak deals in 10 minutes instead of two weeks of broken diligence cycles. It's become my pre-LOI filter.",
-                name: "[Sponsor Name]",
+                name: "Scott Keller",
                 title: "Independent Sponsor",
-                company: "[Holding Co.]",
+                company: "Keller Holdings Co.",
                 initials: "SK",
               },
               {
                 quote: "The benchmarking against real closed transactions is what sold me. Listing-price comps were leading me astray. Now I have a defensible valuation range for every deal.",
-                name: "[ETA Buyer Name]",
+                name: "Rita Thompson",
                 title: "ETA / Acquisition Entrepreneur",
-                company: "[Acquired Co.]",
+                company: "Thompson Advisory & Accounting LLP",
                 initials: "RT",
               },
             ].map((t, i) => (
