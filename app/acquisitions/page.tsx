@@ -441,7 +441,7 @@ export default function AcquisitionsPage() {
               </div>
               <CardContent className="p-8">
                 <p className="text-emerald-300 text-sm font-medium mb-2">Starting at</p>
-                <p className="text-4xl font-bold text-white mb-1">$4,500</p>
+                <p className="text-4xl font-bold text-white mb-1">$3,500</p>
                 <h3 className="text-xl font-semibold text-white mt-4 mb-2">Full Pre-LOI Underwriting & Structural Modeling</h3>
                 <p className="text-slate-800 text-sm mb-6">
                   Comprehensive financial modeling to support offer structure, pricing decisions, and negotiation.
@@ -472,7 +472,7 @@ export default function AcquisitionsPage() {
                   </Button>
                 </Link>
                 <a
-                  href="https://buy.stripe.com/4gMfZh1KO0Vm7oE9iAbMQ08"
+                  href="https://buy.stripe.com/8x2aEX1KO5bC9wMamEbMQ09"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="block mt-3"
