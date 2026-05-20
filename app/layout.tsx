@@ -6,7 +6,7 @@ import Navigation from "@/components/navigation"
 import { Footer } from "@/components/footer"
 import Script from "next/script"
 
-const inter = Inter({ subsets: ["latin"], variable: "--font-inter" })
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap", })
 
 const plusJakartaSans = Plus_Jakarta_Sans({
   subsets: ["latin"],
