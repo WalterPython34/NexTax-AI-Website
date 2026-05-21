@@ -3,16 +3,17 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { normalizeDealFinancials, getConvictionCap, buildNormalizationPayload } from "@/lib/normalizationIntegration";
 import { applyDealClassification } from "@/lib/dealClassifier";
+// ── CP Shadow Mode (Phase 0) — additive snapshot generation ──────────────────
+import { mapRecordDealBodyToRuleInputs, hasMinimumInputsForShadow } from "@/lib/intelligence/orchestrator/map-live-inputs";
+import { runCpPipelineAndPersist } from "@/lib/intelligence/orchestrator/run-cp-pipeline";
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
-
 function safe(n: unknown): number {
   return typeof n === "number" && isFinite(n) ? n : 0;
 }
-
 function generateFingerprint(
   industry: string,
   revenue: number,
@@ -22,7 +23,6 @@ function generateFingerprint(
 ): string {
   return `${industry}_${Math.round(revenue / 1000)}k_${Math.round(sde / 1000)}k_${Math.round(price / 1000)}k_${state || "us"}`.toLowerCase();
 }
-
 function isValidDeal(revenue: number, sde: number, price: number): boolean {
   return (
     revenue >= 200000 &&
@@ -33,11 +33,9 @@ function isValidDeal(revenue: number, sde: number, price: number): boolean {
     sde / revenue <= 0.9
   );
 }
-
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-
     const {
       tool_used,
       industry,
@@ -84,17 +82,13 @@ export async function POST(req: NextRequest) {
       // ── Evidence profile (optional — sent by modal for add-back + concentration basis)
       evidence_profile   = null,
     } = body;
-
     const revNum   = typeof revenue      === "string" ? parseFloat(revenue.replace(/,/g, ""))      : revenue;
     const sdeNum   = typeof sde          === "string" ? parseFloat(sde.replace(/,/g, ""))          : sde;
     const priceNum = typeof asking_price === "string" ? parseFloat(asking_price.replace(/,/g, "")) : asking_price;
-
     const fingerprint = generateFingerprint(industry, revNum, sdeNum, priceNum, state);
     const is_valid    = isValidDeal(revNum, sdeNum, priceNum);
-
     // ── Cluster logic (unchanged) ──────────────────────────────────────────────
     let cluster_id: string | null = null;
-
     if (is_valid) {
       const { data: existingCluster } = await supabaseAdmin
         .from("deal_clusters")
@@ -110,7 +104,6 @@ export async function POST(req: NextRequest) {
         .order("last_seen", { ascending: false })
         .limit(1)
         .single();
-
       if (existingCluster) {
         cluster_id = existingCluster.id;
         const newCount = existingCluster.runs_count + 1;
@@ -118,7 +111,6 @@ export async function POST(req: NextRequest) {
         const newMedianRevenue = (existingCluster.median_revenue * existingCluster.runs_count + revNum) / newCount;
         const newMedianSde     = (existingCluster.median_sde * existingCluster.runs_count + sdeNum) / newCount;
         const newMedianPrice   = (existingCluster.median_price * existingCluster.runs_count + priceNum) / newCount;
-
         await supabaseAdmin
           .from("deal_clusters")
           .update({
@@ -154,11 +146,9 @@ export async function POST(req: NextRequest) {
           })
           .select("id")
           .single();
-
         cluster_id = newCluster?.id || null;
       }
     }
-
     // ── Normalize financials before scoring ────────────────────────────────────
     // Runs normalizeDealFinancials() to compute usableSDE, trustScore, flags.
     // Falls back to stated SDE if normalization is unavailable.
@@ -178,7 +168,6 @@ export async function POST(req: NextRequest) {
         benchmark_source as "direct" | "proxy" | "fallback" | undefined ?? undefined,
       );
     } catch { /* normalization is additive — never block a save */ }
-
     // ── Insert deal run ────────────────────────────────────────────────────────
     const { error } = await supabaseAdmin.from("deal_runs").insert({
       tool_used,
@@ -224,12 +213,10 @@ export async function POST(req: NextRequest) {
       // Normalization fields (spread — empty object is a no-op if normalization failed)
       ...normPayload,
     });
-
     if (error) {
       console.error("Deal record error:", error);
       return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }
-
     // ── Classification — fire-and-forget after successful insert ───────────────
     // Runs async so it never blocks the response.
     // Writes to: model_type, sub_model, benchmark_family, classification_confidence
@@ -244,7 +231,6 @@ export async function POST(req: NextRequest) {
         );
       }
     }
-
     // Fetch the inserted row so callers get the full scored deal object back.
     // This powers the AnalyzeDealModal instant results display + dashboard state update.
     const { data: inserted } = await supabaseAdmin
@@ -262,7 +248,56 @@ export async function POST(req: NextRequest) {
       .order("created_at", { ascending: false })
       .limit(1)
       .single();
-
+    // ── CP SHADOW WRITE (Phase 0, shadow mode) ─────────────────────────────────
+    // Additive, isolated, AWAITED, never-throwing. Runs the CP-2→CP-9 pipeline
+    // server-side and persists a snapshot to evaluation_snapshots. Does NOT
+    // affect the user-facing save: computeModalScore stays canonical, the
+    // deal_runs insert above is authoritative, and any failure here is caught
+    // and logged without altering the response.
+    //
+    // v1 deliberately AWAITS (not fire-and-forget) so Vercel cannot kill the
+    // task when the response returns. Accepts small latency for reliability.
+    //
+    // Skips anonymous deals (no owner to gate reads against) and deals lacking
+    // the minimum inputs the pipeline needs. Omits ebitda_margin_pct because
+    // this route has no numeric RMA benchmark margin available; the adapter
+    // handles the omission and CP runs on partial inputs by design.
+    if (inserted?.id && user_id) {
+      try {
+        const ruleInputs = mapRecordDealBodyToRuleInputs(body, {});
+        if (hasMinimumInputsForShadow(ruleInputs)) {
+          const shadow = await runCpPipelineAndPersist(
+            {
+              deal_id: inserted.id,
+              user_id,
+              rule_inputs: ruleInputs,
+              raw_input_payload: body,
+              deal_source_type: ruleInputs.deal_source_type ?? null,
+              evaluation_id: inserted.id, // root evaluation for this fresh deal
+              triggered_by: user_id,
+            },
+            supabaseAdmin,
+          );
+          if (shadow.ok) {
+            console.log(
+              `[record-deal] CP shadow snapshot written: ${shadow.snapshot_id} (deal ${inserted.id})`,
+            );
+          } else {
+            console.error(
+              `[record-deal] CP shadow write failed at stage '${shadow.stage}' (${shadow.error_kind}): ${shadow.message}`,
+            );
+          }
+        } else {
+          console.log(
+            `[record-deal] CP shadow skipped — insufficient inputs (deal ${inserted.id})`,
+          );
+        }
+      } catch (shadowErr) {
+        // Catch even unexpected throws — the shadow write must NEVER affect
+        // the save response.
+        console.error("[record-deal] CP shadow write threw:", shadowErr);
+      }
+    }
     // Derive gap_pct and signal for immediate UI use
     const gap_pct = inserted?.fair_value && inserted.fair_value > 0
       ? Math.round(((inserted.asking_price - inserted.fair_value) / inserted.fair_value) * 100)
@@ -271,7 +306,6 @@ export async function POST(req: NextRequest) {
       gap_pct > 10  ? "overpriced" :
       gap_pct < -5  ? "opportunity" :
       "fair";
-
     return NextResponse.json({
       success: true,
       cluster_id,
