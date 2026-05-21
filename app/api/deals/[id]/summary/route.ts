@@ -7,26 +7,22 @@
 // THIN TRANSPORT WRAPPER around OperationsEngine.getOperationalSnapshot.
 //
 // Governed by API-CONTRACT-PRINCIPLES.md. In particular:
-//
-//   Principle 1 (Engine Purity) — this route instantiates the engine with a
-//     Supabase client; the engine has no HTTP knowledge.
-//   Principle 3 (No Semantic Reshaping) — `data` carries the engine output
-//     STRUCTURALLY UNCHANGED. No flattening, no renaming, no invented counts.
-//   Principle 4 (Payload Invariants) — { success, data, manifest_id, generated_at }.
-//   Principle 5 (Error Duality) — HTTP codes for transport; payload error_kind
-//     for operational state.
-//   Principle 8 (Manifest Propagation) — manifest_id is read from the engine's
-//     provenance, surfaced in the envelope, never re-derived from the request.
+//   Principle 1 (Engine Purity), 3 (No Semantic Reshaping),
+//   4 (Payload Invariants), 5 (Error Duality), 8 (Manifest Propagation).
 //
 // ── AUTH MODEL (operational-intelligence API tier) ──────────────────────────
 //
 //   Identity MUST come from a VERIFIED Supabase session token — never from a
-//   caller-supplied query param. The ?uid= pattern used by some older routes
-//   is NOT acceptable here: it lets any caller claim any user's identity by
-//   guessing a UUID, which would leak deal intelligence.
+//   caller-supplied query param. The ?uid= pattern is NOT acceptable here.
+//
+//   This app stores the Supabase session in localStorage (not cookies) and
+//   authenticates via Authorization: Bearer headers. So the PRIMARY token
+//   source is the Authorization header. A cookie fallback is retained for
+//   environments/clients that do send the sb-<ref>-auth-token cookie.
 //
 //   Flow:
-//     1. Read the Supabase auth token from the request cookie.
+//     1. Read the access token from `Authorization: Bearer <token>`
+//        (fallback: sb-<ref>-auth-token cookie, incl. base64/chunked forms).
 //     2. Verify it with supabaseAdmin.auth.getUser(token) → verified user.id.
 //     3. Ownership gate: confirm deal_runs.id === dealId AND
 //        deal_runs.user_id === user.id. If not owned → 403, engine NOT called.
@@ -34,8 +30,12 @@
 //        and call getOperationalSnapshot.
 //
 //   The ownership gate is LOAD-BEARING because supabaseAdmin bypasses RLS.
-//   It is the only thing standing between a user and another user's deal.
 //   It runs BEFORE the engine is ever constructed.
+//
+//   CLIENT REQUIREMENT: callers must attach the token explicitly, e.g.
+//     const t = JSON.parse(localStorage.getItem('sb-<ref>-auth-token')).access_token
+//     fetch(url, { headers: { Authorization: `Bearer ${t}` } })
+//   localStorage (unlike cookies) is NOT sent automatically.
 //
 // Query params:
 //   ?snapshot_id=           optional; default = latest snapshot for the deal
@@ -58,9 +58,8 @@ const supabaseAdmin = createClient(
   process.env.SUPABASE_SERVICE_ROLE_KEY!,
 );
 
-// The Supabase auth cookie name is project-specific:
-//   sb-<project-ref>-auth-token
-// For this project the ref is sgrosezedxunoicmglpj.
+// The Supabase auth cookie name (project-specific) — used only for the
+// cookie FALLBACK path. The app primarily authenticates via Bearer header.
 const PRIMARY_AUTH_COOKIE = "sb-sgrosezedxunoicmglpj-auth-token";
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -83,22 +82,28 @@ interface ErrorEnvelope {
 // ─────────────────────────────────────────────────────────────────────────────
 // AUTH TOKEN EXTRACTION
 //
-// Supabase stores the session as a cookie named sb-<ref>-auth-token. Depending
-// on supabase-js version the cookie value is either:
-//   (a) a raw JSON array/string containing the access_token, or
-//   (b) a base64-prefixed JSON blob ("base64-<...>"), or
-//   (c) chunked across sb-<ref>-auth-token.0, .1, ... for large sessions.
-// We extract the access_token defensively. If we cannot, the caller surfaces
-// the available cookie names (see handler) rather than falling back to ?uid=.
+// PRIMARY: Authorization: Bearer <token> (matches this app's localStorage +
+//   Bearer auth transport).
+// FALLBACK: sb-<ref>-auth-token cookie (raw JSON, base64-prefixed, or chunked).
 // ─────────────────────────────────────────────────────────────────────────────
 
 function extractAccessToken(req: NextRequest): string | null {
-  // Try the primary cookie, then chunked variants.
+  // ── PRIMARY: Authorization header ──
+  const authHeader =
+    req.headers.get("authorization") ?? req.headers.get("Authorization");
+  if (authHeader) {
+    const match = /^Bearer\s+(.+)$/i.exec(authHeader.trim());
+    if (match && match[1]) {
+      const token = match[1].trim();
+      if (token.length > 0) return token;
+    }
+  }
+
+  // ── FALLBACK: cookie (raw / base64 / chunked) ──
   const candidates: string[] = [];
   const primary = req.cookies.get(PRIMARY_AUTH_COOKIE)?.value;
   if (primary) candidates.push(primary);
 
-  // Chunked cookies: sb-<ref>-auth-token.0, .1, ...
   const chunks: string[] = [];
   for (let i = 0; i < 10; i += 1) {
     const c = req.cookies.get(`${PRIMARY_AUTH_COOKIE}.${i}`)?.value;
@@ -117,7 +122,6 @@ function extractAccessToken(req: NextRequest): string | null {
 function parseAccessTokenFromCookieValue(raw: string): string | null {
   let value = raw;
 
-  // Supabase may prefix the cookie with "base64-" then base64-encode the JSON.
   if (value.startsWith("base64-")) {
     try {
       const b64 = value.slice("base64-".length);
@@ -127,13 +131,11 @@ function parseAccessTokenFromCookieValue(raw: string): string | null {
     }
   }
 
-  // The decoded value is typically a JSON array whose first element is the
-  // session object, or a JSON object with access_token directly.
   try {
     const parsed = JSON.parse(value);
     if (Array.isArray(parsed)) {
       const first = parsed[0];
-      if (typeof first === "string") return first; // some versions store token directly
+      if (typeof first === "string") return first;
       if (first && typeof first.access_token === "string")
         return first.access_token;
     }
@@ -141,7 +143,6 @@ function parseAccessTokenFromCookieValue(raw: string): string | null {
       return parsed.access_token;
     }
   } catch {
-    // Not JSON — some setups store the bare access token string.
     if (value.split(".").length === 3) return value; // looks like a JWT
   }
   return null;
@@ -179,20 +180,24 @@ export async function GET(
   // ── 1+2. Extract and VERIFY the session token ──
   const accessToken = extractAccessToken(req);
   if (!accessToken) {
-    // Per instruction: do NOT fall back to ?uid=. Surface the cookie names
-    // actually present so we can correct the cookie name if needed.
-    const presentCookieNames = req.cookies.getAll().map((c) => c.name);
+    // Do NOT fall back to ?uid=. Surface what auth signals are present so the
+    // client integration can be corrected.
+    const hasAuthHeader = Boolean(
+      req.headers.get("authorization") ?? req.headers.get("Authorization"),
+    );
+    const cookieNames = req.cookies.getAll().map((c) => c.name);
     return NextResponse.json(
       {
         success: false as const,
         error_kind: "auth_token_missing",
         reason:
-          "No parseable Supabase auth token found. Expected cookie '" +
-          PRIMARY_AUTH_COOKIE +
-          "'. Cookies present: " +
-          (presentCookieNames.length > 0
-            ? presentCookieNames.join(", ")
-            : "(none)"),
+          "No bearer token or parseable Supabase auth cookie found. " +
+          "Send 'Authorization: Bearer <access_token>' (token from " +
+          "localStorage 'sb-sgrosezedxunoicmglpj-auth-token'.access_token). " +
+          "Authorization header present: " +
+          hasAuthHeader +
+          ". Cookies present: " +
+          (cookieNames.length > 0 ? cookieNames.join(", ") : "(none)"),
       },
       { status: 401 },
     );
@@ -215,7 +220,6 @@ export async function GET(
   }
 
   // ── 3+4+5. OWNERSHIP GATE (load-bearing — supabaseAdmin bypasses RLS) ──
-  // This MUST pass before the engine is constructed or called.
   const { data: dealRow, error: dealError } = await supabaseAdmin
     .from("deal_runs")
     .select("id, user_id")
@@ -254,12 +258,8 @@ export async function GET(
   }
 
   // ── 6. Ownership confirmed. Construct the engine and call it. ──
-  // Principle 1: the engine receives a Supabase client; it has no HTTP
-  // knowledge. supabaseAdmin is used because the ownership gate above —
-  // not RLS — is the authorization boundary for this tier.
   const engine = createOperationsEngine({ supabase: supabaseAdmin });
 
-  // Resolve snapshot_id: explicit param OR latest snapshot for the deal.
   let snapshotId: string;
   if (snapshotIdParam && snapshotIdParam.length > 0) {
     snapshotId = snapshotIdParam;
@@ -276,8 +276,6 @@ export async function GET(
           { status: 404 },
         );
       }
-      // Any other CP-9 read failure: transport succeeded, read could not
-      // complete (Principle 5: operational state → 200 + success:false).
       return NextResponse.json(
         {
           success: false as const,
@@ -290,14 +288,12 @@ export async function GET(
     snapshotId = latest.value.snapshot_id;
   }
 
-  // ── The single engine call (Principle 2: composite route wraps ONE method) ──
   const result = await engine.getOperationalSnapshot({
     deal_id: dealId,
     snapshot_id: snapshotId,
     threshold_manifest_id: manifestIdParam,
   });
 
-  // ── Error path (Principle 5: duality) ──
   if (!result.ok) {
     let status = 200;
     if (result.error.code === "snapshot_not_found") status = 404;
@@ -314,8 +310,6 @@ export async function GET(
   }
 
   // ── Success path (Principles 3, 4, 8) ──
-  // `data` is the engine output, STRUCTURALLY UNCHANGED. manifest_id and
-  // generated_at are read from the engine's provenance, not invented here.
   const report = result.value;
   const generatedAt =
     report.readiness.provenance.computed_at ??
@@ -329,8 +323,6 @@ export async function GET(
     generated_at: generatedAt,
   };
 
-  // Snapshot-bound read → short cache only (Principle 7). generated_at inside
-  // the payload always reflects compute time, never cache-hit time.
   return NextResponse.json(body, {
     status: 200,
     headers: {
