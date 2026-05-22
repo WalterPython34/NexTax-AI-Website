@@ -3,31 +3,24 @@
 // AcquiFlow Institutional Read — resilient READ-ONLY auth transport.
 //
 // The intel surface is a parallel layer; it must not import the operational
-// app's Supabase client. This helper independently and robustly:
+// app's Supabase client. But the operational app DOES run its own Supabase
+// (GoTrue) client on the page, and that client refreshes the session token in
+// the background automatically. So this helper does NOT perform its own token
+// refresh. Instead it:
 //   - extracts the access token from localStorage (raw JSON, base64- prefix,
 //     array or object shapes — matching the API route's tolerance);
-//   - detects an expired/expiring token and refreshes it via Supabase's token
-//     endpoint using the stored refresh_token;
-//   - on a 401 / unauthenticated response, refreshes once and retries.
+//   - on a 401 / unauthenticated response, waits briefly and RE-READS the token
+//     from localStorage (the app's own client may have just refreshed it), then
+//     retries — up to two short attempts.
 //
-// It performs NO writes. It only reads tokens and GETs data. If refresh fails,
-// it surfaces the original auth error so the page can prompt re-sign-in.
+// This avoids replicating Supabase's refresh protocol or depending on the anon
+// key being inlined here. It simply picks up the refresh the app already does.
+// Performs NO writes. Read-only.
 // ─────────────────────────────────────────────────────────────────────────────
 
 const SUPABASE_AUTH_KEY = "sb-sgrosezedxunoicmglpj-auth-token";
-const SUPABASE_URL = "https://sgrosezedxunoicmglpj.supabase.co";
-// Public anon key is safe to ship to the client (it is, by design, public).
-// Pulled from the standard NEXT_PUBLIC env at build; falls back to empty.
-const SUPABASE_ANON_KEY =
-  (typeof process !== "undefined" && process.env?.NEXT_PUBLIC_SUPABASE_ANON_KEY) || "";
 
-interface StoredSession {
-  access_token?: string;
-  refresh_token?: string;
-  expires_at?: number; // unix seconds
-}
-
-function readStoredSession(): StoredSession | null {
+function readAccessToken(): string | null {
   try {
     const raw = window.localStorage.getItem(SUPABASE_AUTH_KEY);
     if (!raw) return null;
@@ -38,84 +31,54 @@ function readStoredSession(): StoredSession | null {
     const parsed = JSON.parse(value);
     if (Array.isArray(parsed)) {
       const first = parsed[0];
-      if (first && typeof first === "object") return first as StoredSession;
-      if (typeof first === "string") return { access_token: first };
+      if (first && typeof first === "object" && typeof first.access_token === "string") return first.access_token;
+      if (typeof first === "string" && first.split(".").length === 3) return first;
       return null;
     }
-    if (parsed && typeof parsed === "object") return parsed as StoredSession;
-    return null;
-  } catch {
-    return null;
-  }
-}
-
-function tokenExpiringSoon(session: StoredSession | null): boolean {
-  if (!session?.expires_at) return false; // unknown → assume usable, let server decide
-  const nowSec = Math.floor(Date.now() / 1000);
-  return session.expires_at - nowSec < 60; // refresh if <60s remaining
-}
-
-async function refreshSession(session: StoredSession): Promise<StoredSession | null> {
-  if (!session.refresh_token || !SUPABASE_ANON_KEY) return null;
-  try {
-    const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=refresh_token`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", apikey: SUPABASE_ANON_KEY },
-      body: JSON.stringify({ refresh_token: session.refresh_token }),
-    });
-    if (!res.ok) return null;
-    const data = await res.json();
-    if (!data?.access_token) return null;
-    const next: StoredSession = {
-      access_token: data.access_token,
-      refresh_token: data.refresh_token ?? session.refresh_token,
-      expires_at: data.expires_at ?? (data.expires_in ? Math.floor(Date.now() / 1000) + data.expires_in : undefined),
-    };
-    // Persist the refreshed session so the operational app stays in sync.
-    try {
-      window.localStorage.setItem(SUPABASE_AUTH_KEY, JSON.stringify(next));
-    } catch {
-      /* storage write best-effort; not required for this request */
+    if (parsed && typeof parsed === "object" && typeof parsed.access_token === "string") {
+      return parsed.access_token;
     }
-    return next;
+    return null;
   } catch {
     return null;
   }
 }
+
+const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
 
 /**
- * GET a URL with the current Supabase access token. If the token is expiring or
- * the server returns 401/unauthenticated, refresh once and retry. Returns the
- * parsed JSON body (the route's success/error envelope). READ-ONLY.
+ * GET a URL with the current Supabase access token. On an auth failure, wait
+ * briefly and re-read the token (the app's own Supabase client refreshes it in
+ * the background), then retry — up to two short attempts. Returns the parsed
+ * JSON envelope. READ-ONLY.
  */
 export async function authedGet(url: string): Promise<any> {
-  let session = readStoredSession();
+  const attempt = async () => {
+    const token = readAccessToken();
+    const res = await fetch(url, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+    const json = await res
+      .json()
+      .catch(() => ({ success: false, error_kind: "bad_response", reason: "Unreadable response." }));
+    const authFail =
+      res.status === 401 ||
+      json?.error_kind === "unauthenticated" ||
+      json?.error_kind === "auth_token_missing";
+    return { json, authFail };
+  };
 
-  // Proactive refresh if we can see the token is about to expire.
-  if (session && tokenExpiringSoon(session)) {
-    const refreshed = await refreshSession(session);
-    if (refreshed) session = refreshed;
+  // First try.
+  let { json, authFail } = await attempt();
+  if (!authFail) return json;
+
+  // The app's GoTrue client may be mid-refresh. Give it a moment, re-read, retry.
+  for (const wait of [350, 900]) {
+    await sleep(wait);
+    const r = await attempt();
+    if (!r.authFail) return r.json;
+    json = r.json;
   }
 
-  const doFetch = async (token: string | undefined) =>
-    fetch(url, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
-
-  let res = await doFetch(session?.access_token);
-  let json = await res.json().catch(() => ({ success: false, error_kind: "bad_response", reason: "Unreadable response." }));
-
-  // Reactive refresh-and-retry on an auth failure.
-  const isAuthFail =
-    res.status === 401 ||
-    json?.error_kind === "unauthenticated" ||
-    json?.error_kind === "auth_token_missing";
-
-  if (isAuthFail && session) {
-    const refreshed = await refreshSession(session);
-    if (refreshed?.access_token) {
-      res = await doFetch(refreshed.access_token);
-      json = await res.json().catch(() => ({ success: false, error_kind: "bad_response", reason: "Unreadable response." }));
-    }
-  }
-
+  // Still failing after retries — surface the auth error so the page can prompt
+  // the user to refresh or re-sign-in.
   return json;
 }
