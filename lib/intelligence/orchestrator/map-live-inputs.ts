@@ -329,3 +329,70 @@ function toFiniteNumber(value: unknown): number | null {
   if (typeof value === "number" && Number.isFinite(value)) return value;
   return null;
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// BACKFILL ADAPTER — reconstruct base CP inputs from a stored deal_runs row
+//
+// The backfill path processes existing deals that were saved before the shadow
+// write existed (or before benchmark enrichment was possible). It has no
+// original POST body — instead it reads the deal_runs COLUMNS, which are what
+// that body originally contained. Same locked decisions as the body adapter:
+//   - CP derives its own DSCR (we map total_debt, not dscr)
+//   - Category 3 fields omitted
+//   - ebitda_margin_pct omitted (no benchmark margin here; enrichment adds margins)
+//   - no undefined-valued keys
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** The deal_runs columns the backfill reads. Loosely typed (DB row). */
+export interface DealRunRow {
+  readonly id?: string;
+  readonly industry?: string | null;
+  readonly revenue?: number | string | null;
+  readonly sde?: number | string | null;
+  readonly asking_price?: number | string | null;
+  readonly debt_percent?: number | string | null;
+  readonly interest_rate?: number | string | null;
+  readonly term_years?: number | string | null;
+  readonly customer_concentration?: number | string | null;
+  readonly user_id?: string | null;
+  readonly [key: string]: unknown;
+}
+
+/**
+ * Reconstruct base RuleEngineInputs from a deal_runs row (backfill path).
+ * Mirrors mapRecordDealBodyToRuleInputs but reads stored columns.
+ */
+export function mapDealRunRowToRuleInputs(row: DealRunRow): RuleEngineInputs {
+  const out: Record<string, unknown> = {};
+
+  const industry =
+    typeof row.industry === "string" ? row.industry.trim() : "";
+  if (industry.length > 0) out.industry_key = industry;
+
+  const revenue = parseLocaleNumber(row.revenue);
+  if (revenue != null) out.revenue = revenue;
+
+  const sde = parseLocaleNumber(row.sde);
+  if (sde != null) out.sde = sde;
+
+  const askingPrice = parseLocaleNumber(row.asking_price);
+  if (askingPrice != null) out.purchase_price = askingPrice;
+
+  // customer_concentration on deal_runs maps to top_customer_pct.
+  const concentration = parseLocaleNumber(row.customer_concentration);
+  if (concentration != null) out.top_customer_pct = concentration;
+
+  // total_debt = asking_price × debt_percent/100 (CP derives its own DSCR).
+  const debtPercent = parseLocaleNumber(row.debt_percent);
+  if (askingPrice != null && debtPercent != null) {
+    const totalDebt = askingPrice * (debtPercent / 100);
+    if (Number.isFinite(totalDebt)) out.total_debt = totalDebt;
+  }
+
+  // sde_margin_pct from the deal's own figures (direct ratio).
+  if (sde != null && revenue != null && revenue !== 0) {
+    out.sde_margin_pct = (sde / revenue) * 100;
+  }
+
+  return out as RuleEngineInputs;
+}
