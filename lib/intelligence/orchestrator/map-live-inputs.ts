@@ -222,3 +222,110 @@ export function hasMinimumInputsForShadow(inputs: RuleEngineInputs): boolean {
     typeof inputs.sde === "number"
   );
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PHASE 0.5a — BENCHMARK ENRICHMENT (raw/computed operational metrics only)
+//
+// Overlays operational context from a `benchmark_snapshots` row onto the base
+// (record-deal-derived) RuleEngineInputs. ADDITIVE and CONSTITUTIONALLY CLEAN:
+//
+//   - Reads ONLY raw/computed columns: `computed_ratios` and `financial_inputs`.
+//   - NEVER reads `analysis_outputs` or `benchmark_results` (those hold the
+//     legacy engine's CONCLUSIONS — financial_score, tension_indicator,
+//     risk_flags, percentiles, normalized_sde — which are firewalled from CP
+//     per the constitution and the two-systems reference doc).
+//   - record-deal remains CANONICAL for deal identity (industry, revenue, sde,
+//     purchase_price, debt terms). Benchmark enriches ONLY operational context
+//     (liquidity, efficiency, margin detail, working-capital metrics).
+//   - CP still derives its OWN dscr from raw debt terms — we do NOT map the
+//     benchmark engine's dscr conclusion (locked decision #1).
+//   - Omits absent values entirely (never undefined-valued keys), preserving
+//     the CP-9 canonical-hash discipline.
+//
+// Best-effort: if the row is missing or malformed, the base inputs pass through
+// unchanged (sparse fallback).
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * The subset of a `benchmark_snapshots` row this bridge is permitted to read.
+ * Deliberately omits `analysis_outputs` and `benchmark_results` — reading them
+ * is structurally impossible here, which is how the firewall is enforced.
+ */
+export interface BenchmarkSnapshotRawFields {
+  readonly snapshot_id?: string | null;
+  readonly computed_ratios?: Record<string, number | null> | null;
+  readonly financial_inputs?: Record<string, unknown> | null;
+}
+
+/**
+ * Overlay benchmark operational context onto base CP inputs.
+ *
+ * @param base       The record-deal-derived RuleEngineInputs (canonical identity).
+ * @param benchmark  The raw/computed fields from the latest benchmark_snapshots row.
+ * @returns A new RuleEngineInputs with operational enrichment overlaid. Pure.
+ */
+export function mergeBenchmarkEnrichment(
+  base: RuleEngineInputs,
+  benchmark: BenchmarkSnapshotRawFields | null | undefined,
+): RuleEngineInputs {
+  if (!benchmark) return base;
+
+  const cr = benchmark.computed_ratios ?? {};
+  const fi = benchmark.financial_inputs ?? {};
+
+  // Start from a shallow copy of the canonical base.
+  const out: Record<string, unknown> = { ...base };
+
+  // ── Operational ratios from computed_ratios (benchmark wins for these) ──
+  // Each only overlaid when present and finite. record-deal identity fields
+  // (industry_key, revenue, sde, purchase_price, total_debt) are NOT touched
+  // here — they remain whatever the base provided.
+  overlayNumber(out, "gross_margin_pct", cr.gross_margin_pct);
+  overlayNumber(out, "operating_margin_pct", cr.operating_margin_pct);
+  overlayNumber(out, "sde_margin_pct", cr.sde_margin_pct);
+  overlayNumber(out, "current_ratio", cr.current_ratio);
+  overlayNumber(out, "inventory_turnover", cr.inventory_turnover);
+
+  // NOTE: cr.dscr is deliberately NOT overlaid — CP derives its own DSCR from
+  // raw debt terms (locked decision #1). The benchmark engine's dscr is a
+  // conclusion we want CP to diverge from, not inherit.
+  // NOTE: cr.days_inventory_outstanding has no direct RuleEngineInputs field;
+  // it is intentionally not mapped.
+
+  // ── Derived operational primitive: ar_days ──
+  // ar_days = (accounts_receivable / revenue) * 365.
+  // Deterministic, transparent, purely mathematical from raw balance-sheet
+  // inputs — NOT a benchmark conclusion. Uses the benchmark row's raw revenue
+  // and AR (the figures the ratio was computed against). Omitted if either is
+  // missing or revenue is non-positive.
+  const arRaw = toFiniteNumber(fi.accounts_receivable);
+  const revForAr = toFiniteNumber(fi.revenue) ?? toFiniteNumber(base.revenue);
+  if (arRaw != null && revForAr != null && revForAr > 0) {
+    out.ar_days = (arRaw / revForAr) * 365;
+  }
+
+  // ── Raw balance-sheet / earnings inputs CP can consume directly ──
+  // total_debt: record-deal derives this from debt_percent already; only fill
+  // if the base lacks it (gap-fill, not overwrite of canonical debt terms).
+  if (out.total_debt == null) {
+    overlayNumber(out, "total_debt", toFiniteNumber(fi.total_debt));
+  }
+
+  return out as RuleEngineInputs;
+}
+
+/** Overlay a key with a value only if it is a finite number. Never sets undefined. */
+function overlayNumber(
+  target: Record<string, unknown>,
+  key: string,
+  value: unknown,
+): void {
+  const n = toFiniteNumber(value);
+  if (n != null) target[key] = n;
+}
+
+/** Coerce to a finite number, or null. */
+function toFiniteNumber(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  return null;
+}
