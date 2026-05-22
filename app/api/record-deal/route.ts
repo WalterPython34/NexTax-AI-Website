@@ -4,8 +4,9 @@ import { createClient } from "@supabase/supabase-js";
 import { normalizeDealFinancials, getConvictionCap, buildNormalizationPayload } from "@/lib/normalizationIntegration";
 import { applyDealClassification } from "@/lib/dealClassifier";
 // ── CP Shadow Mode (Phase 0) — additive snapshot generation ──────────────────
-import { mapRecordDealBodyToRuleInputs, hasMinimumInputsForShadow } from "@/lib/intelligence/orchestrator/map-live-inputs";
+import { mapRecordDealBodyToRuleInputs, hasMinimumInputsForShadow, mergeBenchmarkEnrichment } from "@/lib/intelligence/orchestrator/map-live-inputs";
 import { runCpPipelineAndPersist } from "@/lib/intelligence/orchestrator/run-cp-pipeline";
+import { fetchLatestBenchmarkEnrichment } from "@/lib/intelligence/orchestrator/fetch-benchmark-enrichment";
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -264,14 +265,32 @@ export async function POST(req: NextRequest) {
     // handles the omission and CP runs on partial inputs by design.
     if (inserted?.id && user_id) {
       try {
-        const ruleInputs = mapRecordDealBodyToRuleInputs(body, {});
+        const baseInputs = mapRecordDealBodyToRuleInputs(body, {});
+
+        // ── Phase 0.5a: opportunistic benchmark enrichment (best-effort) ──
+        // If a benchmark_snapshots row exists for this deal, overlay its
+        // raw/computed operational metrics (liquidity, efficiency, margins,
+        // ar_days). record-deal stays canonical for identity + debt terms; CP
+        // still derives its own DSCR. If none exists or the fetch fails, we
+        // fall back to the sparse base inputs. Benchmark CONCLUSIONS
+        // (financial_score, tension_indicator, percentiles, normalized_sde)
+        // are never read — the fetch selects only raw/computed columns.
+        const benchmark = await fetchLatestBenchmarkEnrichment(inserted.id, supabaseAdmin);
+        const ruleInputs = mergeBenchmarkEnrichment(baseInputs, benchmark);
+        const enrichmentSource = benchmark?.snapshot_id ?? null;
+
         if (hasMinimumInputsForShadow(ruleInputs)) {
           const shadow = await runCpPipelineAndPersist(
             {
               deal_id: inserted.id,
               user_id,
               rule_inputs: ruleInputs,
-              raw_input_payload: body,
+              raw_input_payload: {
+                ...body,
+                // Provenance: record which benchmark snapshot (if any) enriched
+                // this CP snapshot, for audit/divergence analysis.
+                _cp_enrichment_benchmark_snapshot_id: enrichmentSource,
+              },
               deal_source_type: ruleInputs.deal_source_type ?? null,
               evaluation_id: inserted.id, // root evaluation for this fresh deal
               triggered_by: user_id,
@@ -280,7 +299,10 @@ export async function POST(req: NextRequest) {
           );
           if (shadow.ok) {
             console.log(
-              `[record-deal] CP shadow snapshot written: ${shadow.snapshot_id} (deal ${inserted.id})`,
+              `[record-deal] CP shadow snapshot written: ${shadow.snapshot_id} (deal ${inserted.id})` +
+                (enrichmentSource
+                  ? ` [enriched from benchmark ${enrichmentSource}]`
+                  : ` [sparse — no benchmark snapshot]`),
             );
           } else {
             console.error(
