@@ -22,8 +22,8 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 import { useEffect, useState, type ReactNode } from "react";
+import { authedGet } from "../_lib/authedFetch";
 
-const SUPABASE_AUTH_KEY = "sb-sgrosezedxunoicmglpj-auth-token";
 
 // ── Design tokens (institutional editorial) ──────────────────────────────────
 const C = {
@@ -184,22 +184,8 @@ export default function IntelDealPage({ params }: { params: { dealId: string } }
     let cancelled = false;
     (async () => {
       try {
-        let token: string | null = null;
-        try {
-          const raw = window.localStorage.getItem(SUPABASE_AUTH_KEY);
-          if (raw) {
-            const parsed = JSON.parse(raw);
-            token = Array.isArray(parsed)
-              ? parsed[0]?.access_token ?? (typeof parsed[0] === "string" ? parsed[0] : null)
-              : parsed?.access_token ?? null;
-          }
-        } catch {
-          /* token unavailable → request will 401 */
-        }
-        const res = await fetch(`/api/deals/${dealId}/summary`, {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        });
-        const json = await res.json();
+        // Resilient read: handles token shape, expiry, and one refresh-retry.
+        const json = await authedGet(`/api/deals/${dealId}/summary`);
         if (cancelled) return;
         if (!json.success) {
           setState({ status: "error", kind: json.error_kind ?? "unknown", reason: json.reason ?? "Unable to load institutional read." });
