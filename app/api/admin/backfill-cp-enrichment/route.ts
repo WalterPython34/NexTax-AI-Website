@@ -179,7 +179,10 @@ export async function POST(req: NextRequest) {
             },
             deal_source_type: enrichedInputs.deal_source_type ?? null,
             evaluation_id: dealId,
-            triggered_by: "backfill",
+            // triggered_by is a UUID column — must be a valid UUID or null.
+            // Use the owner UUID (matches the live shadow write). The "this
+            // came from backfill" marker lives in raw_input_payload._source.
+            triggered_by: OWNER_USER_ID,
           },
           supabaseAdmin,
         );
