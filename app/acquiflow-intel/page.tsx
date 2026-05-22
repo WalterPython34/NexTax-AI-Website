@@ -11,8 +11,8 @@
 // ═══════════════════════════════════════════════════════════════════════════
 
 import { useEffect, useState } from "react";
+import { authedGet } from "./_lib/authedFetch";
 
-const SUPABASE_AUTH_KEY = "sb-sgrosezedxunoicmglpj-auth-token";
 
 const C = {
   ink: "#1a1d23", inkSoft: "#3d434e", faint: "#6b7280",
@@ -38,20 +38,7 @@ export default function IntelIndexPage() {
     let cancelled = false;
     (async () => {
       try {
-        let token: string | null = null;
-        try {
-          const raw = window.localStorage.getItem(SUPABASE_AUTH_KEY);
-          if (raw) {
-            const parsed = JSON.parse(raw);
-            token = Array.isArray(parsed)
-              ? parsed[0]?.access_token ?? (typeof parsed[0] === "string" ? parsed[0] : null)
-              : parsed?.access_token ?? null;
-          }
-        } catch { /* token unavailable */ }
-        const res = await fetch("/api/deals/with-reads", {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        });
-        const json = await res.json();
+        const json = await authedGet("/api/deals/with-reads");
         if (cancelled) return;
         if (!json.success) setState({ status: "error", reason: json.reason ?? "Unable to load." });
         else setState({ status: "ok", deals: json.deals ?? [] });
