@@ -5,7 +5,7 @@
 //
 // AcquiFlow — Institutional Read (parallel intelligence surface)
 //
-// READ-ONLY by design. This surface consumes /api/deals/[id]/summary and
+// READ-ONLY by design. This surface consumes /api/deals/[id]/committee and
 // renders CP's ACTUAL categorical output as an underwriting review. It performs
 // NO mutations: no forms, no save handlers, no writes, no uploads, no
 // onboarding, no imports from the operational /buyer-dashboard. It is
@@ -185,12 +185,13 @@ export default function IntelDealPage({ params }: { params: { dealId: string } }
     (async () => {
       try {
         // Resilient read: handles token shape, expiry, and one refresh-retry.
-        const json = await authedGet(`/api/deals/${dealId}/summary`);
+        // Reads the COMMITTEE envelope (CP reasoning + market facts + narrative).
+        const json = await authedGet(`/api/deals/${dealId}/committee`);
         if (cancelled) return;
         if (!json.success) {
           setState({ status: "error", kind: json.error_kind ?? "unknown", reason: json.reason ?? "Unable to load institutional read." });
         } else {
-          setState({ status: "ok", data: json.data, manifestId: json.manifest_id, generatedAt: json.generated_at });
+          setState({ status: "ok", data: json.data, manifestId: json.cp_manifest_id ?? "", generatedAt: json.generated_at });
         }
       } catch (e) {
         if (!cancelled) setState({ status: "error", kind: "network", reason: e instanceof Error ? e.message : String(e) });
@@ -258,8 +259,14 @@ function ErrorView({ kind, reason }: { kind: string; reason: string }) {
 
 // ── The review itself ─────────────────────────────────────────────────────────
 function Review({ data, manifestId, generatedAt }: { data: any; manifestId: string; generatedAt: string }) {
-  const readiness = data.readiness ?? {};
-  const impact = data.impact_ranking ?? {};
+  // Committee envelope: { deal_facts, cp, market_facts, narrative }
+  const cp = data.cp ?? {};
+  const marketFacts = data.market_facts ?? null;
+  const narrative = data.narrative ?? null;
+  const dealFacts = data.deal_facts ?? {};
+
+  const readiness = cp.readiness ?? {};
+  const impact = cp.impact_ranking ?? {};
   const factors = readiness.contributing_factors ?? [];
   const ranked = impact.ranked_items ?? [];
   const posture = synthesizePosture(readiness);
@@ -282,7 +289,7 @@ function Review({ data, manifestId, generatedAt }: { data: any; manifestId: stri
           <Why>
             Assembled deterministically from the engine's readiness classification, capital-structure
             posture counts, and the binding contributing factor. Fixed template — not generated prose.
-            Snapshot {data.snapshot_id}.
+            Snapshot {cp.snapshot_id}.
           </Why>
         </div>
       </div>
@@ -378,12 +385,172 @@ function Review({ data, manifestId, generatedAt }: { data: any; manifestId: stri
         </div>
       </div>
 
+      {/* ═══ MARKET INTELLIGENCE — factual context, distinct from CP reasoning ═══ */}
+      {marketFacts && (marketFacts.closed_comp_median != null || marketFacts.listing_multiple != null) && (
+        <div style={{ marginTop: 56 }}>
+          <div style={{ borderTop: `2px solid ${C.accent}`, paddingTop: 18, marginBottom: 24 }}>
+            <Header>Market position — proprietary closed-transaction benchmarks</Header>
+            <div style={{ fontFamily: serif, fontSize: 14, fontStyle: "italic", color: C.faint, marginTop: -6 }}>
+              Factual placement against comparable transactions. This is market context, reported separately
+              from the engine's structural reasoning above — it is not part of, and does not alter, that read.
+            </div>
+          </div>
+          <MarketPositionPanel mf={marketFacts} />
+        </div>
+      )}
+
+      {/* ═══ COMMITTEE NARRATIVE — presentation-layer synthesis ═══ */}
+      {narrative && (
+        <div style={{ marginTop: 48 }}>
+          <div style={{ borderTop: `2px solid ${C.accent}`, paddingTop: 18, marginBottom: 20 }}>
+            <Header>
+              Committee read
+              <Why>
+                A synthesized narrative reading of the structural reasoning and market context above,
+                prepared in the presentation layer. It introduces no findings of its own — every point
+                traces to the engine's output or the factual benchmarks. It does not feed back into the engine.
+              </Why>
+            </Header>
+          </div>
+          <NarrativeBlock narrative={narrative} />
+        </div>
+      )}
+
       {/* Provenance footer */}
       <div style={{ marginTop: 56, borderTop: `1px solid ${C.rule}`, paddingTop: 16, fontFamily: serif, fontSize: 12.5, fontStyle: "italic", color: C.faint, lineHeight: 1.6 }}>
         Deterministic engine · manifest {manifestId} · generated {new Date(generatedAt).toLocaleString()}.
-        Every element above derives from a rule, threshold, or evidence band. This surface is read-only;
-        it does not alter the deal.
+        The engine's reasoning derives from rules, thresholds, and evidence bands; market position reflects
+        proprietary closed-transaction benchmarks; the committee read is a presentation-layer synthesis.
+        This surface is read-only; it does not alter the deal.
+        {narrative?.model && (
+          <span> Narrative model: {narrative.model}.</span>
+        )}
       </div>
+    </div>
+  );
+}
+
+// ── Market position panel: percentile bar + facts (raw, no verdict) ──────────
+function MarketPositionPanel({ mf }: { mf: any }) {
+  const hasClosed = mf.closed_comp_median != null;
+  const fmtX = (n: any) => (typeof n === "number" && Number.isFinite(n) ? `${(+n).toFixed(2)}x` : "—");
+  const positionLabel: Record<string, string> = {
+    below_p25: "below the 25th percentile",
+    between_p25_median: "between the 25th percentile and the median",
+    between_median_p75: "between the median and the 75th percentile",
+    above_p75: "above the 75th percentile",
+  };
+  return (
+    <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: 44 }}>
+      {/* Left: percentile bar */}
+      <div>
+        {hasClosed ? (
+          <>
+            <PercentileBar
+              p25={mf.closed_comp_p25} median={mf.closed_comp_median} p75={mf.closed_comp_p75}
+              deal={mf.deal_multiple}
+            />
+            <div style={{ fontFamily: serif, fontSize: 14.5, lineHeight: 1.6, color: C.inkSoft, marginTop: 18 }}>
+              At an asking multiple of <strong>{fmtX(mf.deal_multiple)}</strong> (price ÷ SDE), this deal sits{" "}
+              <strong>{positionLabel[mf.deal_vs_closed_position] ?? "within the range"}</strong> of{" "}
+              {mf.closed_comp_sample_size} comparable closed transactions
+              (P25 {fmtX(mf.closed_comp_p25)} · median {fmtX(mf.closed_comp_median)} · P75 {fmtX(mf.closed_comp_p75)}).
+              <Why>
+                Position is a factual placement against the distribution of multiples at which comparable
+                businesses actually closed — not a judgment of price. Industry multiple bases differ; an
+                out-of-range position is a question to examine, not a verdict.
+              </Why>
+            </div>
+          </>
+        ) : (
+          <Empty>
+            Closed comparable transactions for this industry and size are not available at sufficient
+            depth to position this deal. Market context below reflects current listings only.
+          </Empty>
+        )}
+      </div>
+
+      {/* Right: market facts */}
+      <div style={{ fontFamily: sans, fontSize: 11.5, color: C.faint, lineHeight: 1.7 }}>
+        <Header sub>Market facts</Header>
+        {mf.listing_multiple != null && (
+          <DistRow label="Current listing multiple" value={fmtX(mf.listing_multiple)} />
+        )}
+        {mf.listing_vs_closed_gap_pct != null && (
+          <DistRow label="Listings vs. closed levels" value={`${mf.listing_vs_closed_gap_pct > 0 ? "+" : ""}${mf.listing_vs_closed_gap_pct}%`} />
+        )}
+        {mf.median_days_on_market != null && (
+          <DistRow label="Typical days on market" value={mf.median_days_on_market} />
+        )}
+        <div style={{ marginTop: 16 }}>
+          <Header sub>Evidence depth</Header>
+          <DistRow label="Closed transactions" value={mf.evidence_depth?.closed_comp_sample_size ?? "—"} />
+          <DistRow label="Active listings" value={mf.evidence_depth?.listing_sample_size ?? "—"} />
+        </div>
+        <div style={{ fontFamily: serif, fontSize: 12.5, fontStyle: "italic", color: C.faint, marginTop: 14, lineHeight: 1.5 }}>
+          Depth of the data behind these figures. A read backed by hundreds of closed transactions carries
+          different evidentiary weight than one backed by a handful.
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Percentile bar — P25/median/P75 ticks with the deal's position marked.
+function PercentileBar({ p25, median, p75, deal }: { p25: number; median: number; p75: number; deal: number }) {
+  // Scale spans a bit beyond P25..P75 so an out-of-range deal still shows.
+  const lo = Math.min(p25, deal) * 0.9;
+  const hi = Math.max(p75, deal) * 1.05;
+  const span = hi - lo || 1;
+  const pct = (v: number) => Math.max(0, Math.min(100, ((v - lo) / span) * 100));
+  const tick = (v: number, label: string, strong?: boolean) => (
+    <div style={{ position: "absolute", left: `${pct(v)}%`, top: 0, transform: "translateX(-50%)", textAlign: "center" }}>
+      <div style={{ width: 1, height: 14, background: strong ? C.accent : C.rule, margin: "0 auto" }} />
+      <div style={{ fontFamily: sans, fontSize: 9.5, color: C.faint, marginTop: 3, whiteSpace: "nowrap" }}>{label}</div>
+      <div style={{ fontFamily: serif, fontSize: 11, color: strong ? C.accent : C.faint }}>{(+v).toFixed(2)}x</div>
+    </div>
+  );
+  return (
+    <div style={{ padding: "8px 0 44px" }}>
+      <div style={{ position: "relative", height: 6, background: C.ruleSoft, borderRadius: 3 }}>
+        {/* IQR band */}
+        <div style={{ position: "absolute", left: `${pct(p25)}%`, width: `${pct(p75) - pct(p25)}%`, top: 0, bottom: 0, background: C.accentSoft, opacity: 0.28, borderRadius: 3 }} />
+        {/* Deal marker */}
+        <div style={{ position: "absolute", left: `${pct(deal)}%`, top: -7, transform: "translateX(-50%)" }}>
+          <div style={{ width: 13, height: 13, borderRadius: "50%", background: C.binding, border: `2px solid ${C.card}`, boxShadow: "0 1px 4px rgba(0,0,0,0.25)" }} />
+        </div>
+      </div>
+      <div style={{ position: "relative", height: 36, marginTop: 4 }}>
+        {tick(p25, "P25")}
+        {tick(median, "Median")}
+        {tick(p75, "P75")}
+      </div>
+      <div style={{ position: "absolute", left: `${pct(deal)}%`, transform: "translateX(-50%)", marginTop: -2 }}>
+        <div style={{ fontFamily: sans, fontSize: 9.5, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: C.binding, whiteSpace: "nowrap" }}>This deal</div>
+      </div>
+    </div>
+  );
+}
+
+// ── Narrative block: the three committee sections ────────────────────────────
+function NarrativeBlock({ narrative }: { narrative: any }) {
+  const sections = [
+    { key: "posture", label: "Posture" },
+    { key: "market_context", label: "Market context" },
+    { key: "evidence", label: "Evidence & diligence focus" },
+  ];
+  return (
+    <div style={{ borderLeft: `3px solid ${C.accent}`, paddingLeft: 24 }}>
+      {sections.map((s, idx) =>
+        narrative[s.key] ? (
+          <div key={s.key} style={{ marginBottom: idx === sections.length - 1 ? 0 : 22 }}>
+            <Header sub>{s.label}</Header>
+            <div style={{ fontFamily: serif, fontSize: 16, lineHeight: 1.62, color: C.ink }}>
+              {narrative[s.key]}
+            </div>
+          </div>
+        ) : null,
+      )}
     </div>
   );
 }
@@ -430,7 +597,7 @@ function DiligenceItem({ it, critical }: { it: any; critical?: boolean }) {
   );
 }
 
-function DistRow({ label, value }: { label: string; value: number }) {
+function DistRow({ label, value }: { label: string; value: number | string }) {
   return (
     <div style={{ display: "flex", justifyContent: "space-between", padding: "3px 0", borderBottom: `1px solid ${C.ruleSoft}` }}>
       <span>{label}</span>
