@@ -419,7 +419,7 @@ export default function AcquisitionsPage() {
                     Book Intro Call
                   </Button>
                 </Link>
-                
+                <a
                   href="https://buy.stripe.com/cNi7sLexAeMc24kgL2bMQ06"
                   target="_blank"
                   rel="noopener noreferrer"
@@ -470,7 +470,7 @@ export default function AcquisitionsPage() {
                     Book Intro Call
                   </Button>
                 </Link>
-                
+                <a
                   href="https://buy.stripe.com/8x2aEX1KO5bC9wMamEbMQ09"
                   target="_blank"
                   rel="noopener noreferrer"
@@ -521,7 +521,7 @@ export default function AcquisitionsPage() {
                   </Button>
                 </Link>
                 {/* TODO: Replace href="#" with the Stripe payment link for the $5,000 QoE-Lite product */}
-                
+                <a
                   href="#"
                   target="_blank"
                   rel="noopener noreferrer"
