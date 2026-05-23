@@ -258,6 +258,20 @@ function PrintStyles() {
         /* Hide all interactive / chrome elements */
         .no-print, .why-btn { display: none !important; }
 
+        /* Hide the site-wide chrome rendered by the root layout (Navigation +
+           Footer wrap every route). These live outside this page component, so
+           we target them globally — safe because this stylesheet only mounts on
+           the institutional-read page. Covers semantic tags and common wrappers. */
+        body > nav, body > header, body > footer,
+        nav[class*="nav" i], header[class*="nav" i], footer,
+        [class*="navigation" i], [class*="Navigation" i],
+        [class*="footer" i], [class*="Footer" i],
+        [class*="site-header" i], [class*="site-nav" i] {
+          display: none !important;
+        }
+        /* Neutralize any top padding the layout reserves for a fixed nav */
+        body > main, main { padding-top: 0 !important; margin-top: 0 !important; }
+
         /* Show print-only document header */
         .print-only { display: block !important; }
 
