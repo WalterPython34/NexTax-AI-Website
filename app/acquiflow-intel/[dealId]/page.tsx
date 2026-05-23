@@ -278,22 +278,39 @@ function PrintStyles() {
         /* Tighten the page container for print */
         .intel-body { max-width: 100% !important; padding: 0 !important; margin: 0 !important; }
 
-        /* Page-break discipline */
-        .print-block { break-inside: avoid; page-break-inside: avoid; }
-        .print-keep-with-next { break-after: avoid; page-break-after: avoid; }
-        .print-section { break-inside: auto; }           /* sections may break BETWEEN children */
-        h1, h2, h3, .section-header { break-after: avoid; page-break-after: avoid; }
+        /* ─── ATOMIC PRINT ARCHITECTURE ───────────────────────────────────────
+           Compose a paginated memo, not "print the webpage." Avoid-break is
+           applied ONLY to small atomic units (a header+its lead, a card row, a
+           chart, a single paragraph) — NEVER to section/container wrappers.
+           Container-level avoid-break is what forces whole-section pushes, huge
+           whitespace, and blank trailing pages. Sections flow; atoms stay whole. */
+        .print-block {
+          break-inside: avoid;
+          page-break-inside: avoid;
+          margin-bottom: 18px;
+        }
+        /* Headers must not orphan at the bottom of a page. */
+        h1, h2, h3, h4,
+        .print-keep-with-next {
+          break-after: avoid;
+          page-break-after: avoid;
+        }
+        /* Section + container wrappers MUST be allowed to break freely so their
+           atomic children flow across pages without dragging the whole block. */
+        .print-section,
+        .market-section,
+        .committee-section,
+        .methodology-section,
+        .print-stack {
+          break-inside: auto !important;
+          page-break-inside: auto !important;
+          break-before: auto;
+        }
 
-        /* In a portrait PDF, two narrow columns read poorly and cause uneven
-           page fills (a grid that won't fit jumps whole to the next page, leaving
-           blank space). Stack the two-column grids to full-width single column in
-           print only — screen layout is untouched. Content then flows and fills
-           pages naturally while protected blocks (paragraphs, panels) stay whole. */
+        /* In portrait, the two-column grids stack to single column so atoms flow
+           full-width and fill pages. Layout only — independent of break logic. */
         .print-stack { display: block !important; }
-        .print-stack > div { margin-bottom: 28px; }
-
-        /* Avoid blank-page artifacts from large top margins */
-        .print-section:first-of-type { margin-top: 0 !important; }
+        .print-stack > div { margin-bottom: 0; }
 
         /* Ensure backgrounds/colors render in print */
         * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
@@ -511,7 +528,7 @@ function Review({ data, manifestId, generatedAt }: { data: any; manifestId: stri
 
       {/* ═══ MARKET INTELLIGENCE — factual context, distinct from CP reasoning ═══ */}
       {marketFacts && (marketFacts.closed_comp_median != null || marketFacts.listing_multiple != null) && (
-        <div style={{ marginTop: 56 }}>
+        <div className="market-section" style={{ marginTop: 56 }}>
           <div className="print-keep-with-next" style={{ borderTop: `2px solid ${C.accent}`, paddingTop: 18, marginBottom: 18 }}>
             <Header>Market position — proprietary closed-transaction benchmarks</Header>
             <div style={{ fontFamily: serif, fontSize: 14, fontStyle: "italic", color: C.faint, marginTop: -6 }}>
@@ -526,7 +543,7 @@ function Review({ data, manifestId, generatedAt }: { data: any; manifestId: stri
 
       {/* ═══ COMMITTEE NARRATIVE — presentation-layer synthesis ═══ */}
       {narrative && (
-        <div style={{ marginTop: 48 }}>
+        <div className="committee-section" style={{ marginTop: 48 }}>
           <div className="print-keep-with-next" style={{ borderTop: `2px solid ${C.accent}`, paddingTop: 18, marginBottom: 20 }}>
             <Header>
               Committee read
@@ -542,20 +559,22 @@ function Review({ data, manifestId, generatedAt }: { data: any; manifestId: stri
       )}
 
       {/* ═══ EVIDENCE & METHODOLOGY — the trust block ═══ */}
-      <div className="print-block" style={{ marginTop: 64, borderTop: `2px solid ${C.accent}`, paddingTop: 20 }}>
-        <Header>Evidence &amp; methodology</Header>
-        <div style={{ fontFamily: serif, fontSize: 14.5, lineHeight: 1.65, color: C.inkSoft, maxWidth: 720 }}>
-          This institutional read combines deterministic underwriting reasoning, evidence-band analysis,
-          capital-structure posture evaluation, and positioning against proprietary closed-transaction
-          benchmarks. Each conclusion derives from a rule, threshold, or evidence band — not from a model's
-          judgment.
+      <div className="methodology-section" style={{ marginTop: 64, borderTop: `2px solid ${C.accent}`, paddingTop: 20 }}>
+        <div className="print-block">
+          <Header>Evidence &amp; methodology</Header>
+          <div style={{ fontFamily: serif, fontSize: 14.5, lineHeight: 1.65, color: C.inkSoft, maxWidth: 720 }}>
+            This institutional read combines deterministic underwriting reasoning, evidence-band analysis,
+            capital-structure posture evaluation, and positioning against proprietary closed-transaction
+            benchmarks. Each conclusion derives from a rule, threshold, or evidence band — not from a model's
+            judgment.
+          </div>
         </div>
-        <div style={{ fontFamily: serif, fontSize: 14.5, lineHeight: 1.65, color: C.inkSoft, maxWidth: 720, marginTop: 12 }}>
+        <div className="print-block" style={{ fontFamily: serif, fontSize: 14.5, lineHeight: 1.65, color: C.inkSoft, maxWidth: 720 }}>
           The narrative synthesis is presentation-layer only and <strong>cannot alter</strong> the
           engine's conclusions; it restates the structural findings and factual benchmarks in committee
           language and introduces no findings of its own.
         </div>
-        <div style={{ fontFamily: sans, fontSize: 11, color: C.faint, marginTop: 18, letterSpacing: "0.02em", lineHeight: 1.7 }}>
+        <div className="print-block" style={{ fontFamily: sans, fontSize: 11, color: C.faint, letterSpacing: "0.02em", lineHeight: 1.7 }}>
           Deterministic engine · manifest {manifestId || "—"} · generated {new Date(generatedAt).toLocaleString()}
           {narrative?.model && <> · narrative model {narrative.model}</>}<br />
           Read-only review surface — this document does not alter the underlying deal.
@@ -608,16 +627,20 @@ function MarketPositionPanel({ mf }: { mf: any }) {
     above_p75: "above the 75th percentile",
   };
   return (
-    <div className="print-block" style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: 44 }}>
-      {/* Left: percentile bar */}
+    // print-stack: NOT a monolithic block. Chart, sentence, and facts are
+    // independent atomic print-blocks that flow and stay individually whole.
+    <div className="print-stack" style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: 44 }}>
+      {/* Left: percentile chart + position sentence */}
       <div>
         {hasClosed ? (
           <>
-            <PercentileBar
-              p25={mf.closed_comp_p25} median={mf.closed_comp_median} p75={mf.closed_comp_p75}
-              deal={mf.deal_multiple}
-            />
-            <div style={{ fontFamily: serif, fontSize: 14.5, lineHeight: 1.6, color: C.inkSoft, marginTop: 18 }}>
+            <div className="print-block">
+              <PercentileBar
+                p25={mf.closed_comp_p25} median={mf.closed_comp_median} p75={mf.closed_comp_p75}
+                deal={mf.deal_multiple}
+              />
+            </div>
+            <div className="print-block" style={{ fontFamily: serif, fontSize: 14.5, lineHeight: 1.6, color: C.inkSoft, marginTop: 18 }}>
               At an asking multiple of <strong>{fmtX(mf.deal_multiple)}</strong> (price ÷ SDE), this deal sits{" "}
               <strong>{positionLabel[mf.deal_vs_closed_position] ?? "within the range"}</strong> of{" "}
               {mf.closed_comp_sample_size} comparable closed transactions
@@ -630,15 +653,17 @@ function MarketPositionPanel({ mf }: { mf: any }) {
             </div>
           </>
         ) : (
-          <Empty>
-            Closed comparable transactions for this industry and size are not available at sufficient
-            depth to position this deal. Market context below reflects current listings only.
-          </Empty>
+          <div className="print-block">
+            <Empty>
+              Closed comparable transactions for this industry and size are not available at sufficient
+              depth to position this deal. Market context below reflects current listings only.
+            </Empty>
+          </div>
         )}
       </div>
 
-      {/* Right: market facts */}
-      <div style={{ fontFamily: sans, fontSize: 11.5, color: C.faint, lineHeight: 1.7 }}>
+      {/* Right: market facts (own atomic block) */}
+      <div className="print-block" style={{ fontFamily: sans, fontSize: 11.5, color: C.faint, lineHeight: 1.7 }}>
         <Header sub>Market facts</Header>
         {mf.listing_multiple != null && (
           <DistRow label="Current listing multiple" value={fmtX(mf.listing_multiple)} />
