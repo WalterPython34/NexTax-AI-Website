@@ -414,13 +414,14 @@ function Review({ data, manifestId, generatedAt }: { data: any; manifestId: stri
       {/* ═══ MARKET INTELLIGENCE — factual context, distinct from CP reasoning ═══ */}
       {marketFacts && (marketFacts.closed_comp_median != null || marketFacts.listing_multiple != null) && (
         <div style={{ marginTop: 56 }}>
-          <div style={{ borderTop: `2px solid ${C.accent}`, paddingTop: 18, marginBottom: 24 }}>
+          <div style={{ borderTop: `2px solid ${C.accent}`, paddingTop: 18, marginBottom: 18 }}>
             <Header>Market position — proprietary closed-transaction benchmarks</Header>
             <div style={{ fontFamily: serif, fontSize: 14, fontStyle: "italic", color: C.faint, marginTop: -6 }}>
               Factual placement against comparable transactions. This is market context, reported separately
               from the engine's structural reasoning above — it is not part of, and does not alter, that read.
             </div>
           </div>
+          <BenchmarkDepthLine mf={marketFacts} />
           <MarketPositionPanel mf={marketFacts} />
         </div>
       )}
@@ -442,21 +443,63 @@ function Review({ data, manifestId, generatedAt }: { data: any; manifestId: stri
         </div>
       )}
 
-      {/* Provenance footer */}
-      <div style={{ marginTop: 56, borderTop: `1px solid ${C.rule}`, paddingTop: 16, fontFamily: serif, fontSize: 12.5, fontStyle: "italic", color: C.faint, lineHeight: 1.6 }}>
-        Deterministic engine · manifest {manifestId} · generated {new Date(generatedAt).toLocaleString()}.
-        The engine's reasoning derives from rules, thresholds, and evidence bands; market position reflects
-        proprietary closed-transaction benchmarks; the committee read is a presentation-layer synthesis.
-        This surface is read-only; it does not alter the deal.
-        {narrative?.model && (
-          <span> Narrative model: {narrative.model}.</span>
-        )}
+      {/* ═══ EVIDENCE & METHODOLOGY — the trust block ═══ */}
+      <div style={{ marginTop: 64, borderTop: `2px solid ${C.accent}`, paddingTop: 20 }}>
+        <Header>Evidence &amp; methodology</Header>
+        <div style={{ fontFamily: serif, fontSize: 14.5, lineHeight: 1.65, color: C.inkSoft, maxWidth: 720 }}>
+          This institutional read combines deterministic underwriting reasoning, evidence-band analysis,
+          capital-structure posture evaluation, and positioning against proprietary closed-transaction
+          benchmarks. Each conclusion derives from a rule, threshold, or evidence band — not from a model's
+          judgment.
+        </div>
+        <div style={{ fontFamily: serif, fontSize: 14.5, lineHeight: 1.65, color: C.inkSoft, maxWidth: 720, marginTop: 12 }}>
+          The narrative synthesis is presentation-layer only and <strong>cannot alter</strong> the
+          engine's conclusions; it restates the structural findings and factual benchmarks in committee
+          language and introduces no findings of its own.
+        </div>
+        <div style={{ fontFamily: sans, fontSize: 11, color: C.faint, marginTop: 18, letterSpacing: "0.02em", lineHeight: 1.7 }}>
+          Deterministic engine · manifest {manifestId || "—"} · generated {new Date(generatedAt).toLocaleString()}
+          {narrative?.model && <> · narrative model {narrative.model}</>}<br />
+          Read-only review surface — this document does not alter the underlying deal.
+        </div>
       </div>
     </div>
   );
 }
 
-// ── Market position panel: percentile bar + facts (raw, no verdict) ──────────
+// ── Benchmark depth — quiet "this is deeply evidenced" strip ─────────────────
+function BenchmarkDepthLine({ mf }: { mf: any }) {
+  const basisLabel: Record<string, string> = {
+    industry_size_matched: "Direct industry & size-band match",
+    industry_national: "Industry match (national)",
+    unavailable: "Insufficient closed-comp depth",
+  };
+  const closed = mf.evidence_depth?.closed_comp_sample_size ?? mf.closed_comp_sample_size ?? null;
+  const listings = mf.evidence_depth?.listing_sample_size ?? null;
+  const items: { label: string; value: string }[] = [];
+  if (closed != null) items.push({ label: "Comparable closed transactions", value: String(closed) });
+  if (listings != null) items.push({ label: "Active listings", value: String(listings) });
+  items.push({ label: "Benchmark basis", value: basisLabel[mf.closed_comp_basis] ?? "—" });
+
+  return (
+    <div style={{
+      display: "flex", gap: 0, marginBottom: 26, border: `1px solid ${C.ruleSoft}`,
+      background: C.card, borderRadius: 4, overflow: "hidden",
+    }}>
+      {items.map((it, idx) => (
+        <div key={idx} style={{
+          flex: 1, padding: "13px 18px",
+          borderLeft: idx === 0 ? "none" : `1px solid ${C.ruleSoft}`,
+        }}>
+          <div style={{ fontFamily: serif, fontSize: 19, color: C.accent, lineHeight: 1 }}>{it.value}</div>
+          <div style={{ fontFamily: sans, fontSize: 9.5, letterSpacing: "0.08em", textTransform: "uppercase", color: C.faint, marginTop: 6 }}>{it.label}</div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+
 function MarketPositionPanel({ mf }: { mf: any }) {
   const hasClosed = mf.closed_comp_median != null;
   const fmtX = (n: any) => (typeof n === "number" && Number.isFinite(n) ? `${(+n).toFixed(2)}x` : "—");
@@ -508,14 +551,9 @@ function MarketPositionPanel({ mf }: { mf: any }) {
         {mf.median_days_on_market != null && (
           <DistRow label="Typical days on market" value={mf.median_days_on_market} />
         )}
-        <div style={{ marginTop: 16 }}>
-          <Header sub>Evidence depth</Header>
-          <DistRow label="Closed transactions" value={mf.evidence_depth?.closed_comp_sample_size ?? "—"} />
-          <DistRow label="Active listings" value={mf.evidence_depth?.listing_sample_size ?? "—"} />
-        </div>
-        <div style={{ fontFamily: serif, fontSize: 12.5, fontStyle: "italic", color: C.faint, marginTop: 14, lineHeight: 1.5 }}>
-          Depth of the data behind these figures. A read backed by hundreds of closed transactions carries
-          different evidentiary weight than one backed by a handful.
+        <div style={{ fontFamily: serif, fontSize: 12.5, fontStyle: "italic", color: C.faint, marginTop: 16, lineHeight: 1.5 }}>
+          A read backed by hundreds of closed transactions carries different evidentiary weight than one
+          backed by a handful — depth is shown above.
         </div>
       </div>
     </div>
