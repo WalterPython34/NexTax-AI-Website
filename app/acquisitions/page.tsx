@@ -13,7 +13,6 @@ import {
   Target,
   AlertTriangle,
   DollarSign,
-  Building2,
   Users,
   Clock,
   ChevronRight,
@@ -132,8 +131,8 @@ export default function AcquisitionsPage() {
               Online listing calculators are helpful — but they rarely pressure-test the variables that determine whether a deal actually works.
             </p>
             <p className="text-lg text-slate-100 max-w-4xl mx-auto">
-            The difference between a “good deal” and a bad one is often hidden inside normalization and structure.
-             </p>
+              The difference between a &ldquo;good deal&rdquo; and a bad one is often hidden inside normalization and structure.
+            </p>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4 mb-10">
@@ -156,7 +155,7 @@ export default function AcquisitionsPage() {
 
           <div className="bg-orange-500/10 border border-amber-500/30 rounded-lg p-6 text-center">
             <p className="text-slate-200 text-lg">
-              By the time buyers discover the real risk, they've already submitted an LOI — or spent{" "}
+              By the time buyers discover the real risk, they&apos;ve already submitted an LOI — or spent{" "}
               <span className="text-amber-300 font-semibold">$15k-$25k</span> on a Quality of Earnings report.
             </p>
           </div>
@@ -289,7 +288,7 @@ export default function AcquisitionsPage() {
               Example Engagement: Retail Services Acquisition
             </h2>
             <p className="text-lg text-slate-300">
-            Enterprise Value: Sub-$1M SBA-backed transaction.
+              Enterprise Value: Sub-$1M SBA-backed transaction.
             </p>
           </div>
 
@@ -344,7 +343,7 @@ export default function AcquisitionsPage() {
           <div className="text-center mb-12">
             <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">Who This Is For</h2>
             <p className="text-lg text-slate-200">
-            Built for acquisition entrepreneurs and SBA buyers evaluating $300K–$3M businesses.
+              Built for acquisition entrepreneurs and SBA buyers evaluating $300K–$3M businesses.
             </p>
           </div>
 
@@ -386,12 +385,12 @@ export default function AcquisitionsPage() {
           <div className="text-center mb-12">
             <h2 className="text-3xl lg:text-4xl font-bold text-white mb-4">Engagement Options</h2>
             <p className="text-lg text-slate-400">
-            Pricing depends on deal size, financial complexity, and timeline.
+              Pricing depends on deal size, financial complexity, and timeline.
             </p>
           </div>
 
           <div className="grid lg:grid-cols-3 gap-6">
-            {/* Deal Snapshot */}
+            {/* Tier 1 — Deal Snapshot */}
             <Card className="bg-slate-800/30 border-slate-700/50">
               <CardContent className="p-8">
                 <p className="text-emerald-400 text-sm font-medium mb-2">Starting at</p>
@@ -420,7 +419,7 @@ export default function AcquisitionsPage() {
                     Book Intro Call
                   </Button>
                 </Link>
-                 <a
+                
                   href="https://buy.stripe.com/cNi7sLexAeMc24kgL2bMQ06"
                   target="_blank"
                   rel="noopener noreferrer"
@@ -434,7 +433,7 @@ export default function AcquisitionsPage() {
               </CardContent>
             </Card>
 
-            {/* Full Underwriting */}
+            {/* Tier 2 — Full Underwriting */}
             <Card className="bg-gradient-to-b from-emerald-600 to-emerald-400 border-emerald-500/30 relative">
               <div className="absolute -top-3 left-1/2 -translate-x-1/2">
                 <Badge className="bg-cyan-500 text-white border-0 px-4">Most Engaged Tier</Badge>
@@ -442,18 +441,18 @@ export default function AcquisitionsPage() {
               <CardContent className="p-8">
                 <p className="text-emerald-300 text-sm font-medium mb-2">Starting at</p>
                 <p className="text-4xl font-bold text-white mb-1">$3,500</p>
-                <h3 className="text-xl font-semibold text-white mt-4 mb-2">Full Pre-LOI Underwriting & Structural Modeling</h3>
+                <h3 className="text-xl font-semibold text-white mt-4 mb-2">Full Pre-LOI Underwriting &amp; Structural Modeling</h3>
                 <p className="text-slate-800 text-sm mb-6">
                   Comprehensive financial modeling to support offer structure, pricing decisions, and negotiation.
                 </p>
                 <div className="space-y-3 mb-8">
                   {[
-                    "Everything in Tier 1", 
+                    "Everything in Tier 1",
                     "Downside & scenario modeling",
                     "Deal structure sensitivity analysis",
                     "Working capital review",
                     "DCF valuation decision range",
-                    "Custom market saturation & heat map report",   
+                    "Custom market saturation & heat map report",
                     "Local Competitor List & AI market analysis",
                     "Tax structure comparison (Asset vs Stock)",
                     "Benchmark & deal comparison",
@@ -471,7 +470,7 @@ export default function AcquisitionsPage() {
                     Book Intro Call
                   </Button>
                 </Link>
-                <a
+                
                   href="https://buy.stripe.com/8x2aEX1KO5bC9wMamEbMQ09"
                   target="_blank"
                   rel="noopener noreferrer"
@@ -485,55 +484,56 @@ export default function AcquisitionsPage() {
               </CardContent>
             </Card>
 
-     {/* QoE-Lite Analysis */}
-     <Card className="bg-slate-800/30 border-cyan-500/30 relative">
-       <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-         <Badge className="bg-cyan-500 text-white border-0 px-4">Pre-QoE Diligence</Badge>
-       </div>
-       <CardContent className="p-8">
-         <p className="text-cyan-400 text-sm font-medium mb-2">Starting at</p>
-         <p className="text-4xl font-bold text-white mb-1">$5,000</p>
-         <h3 className="text-xl font-semibold text-white mt-4 mb-2">QoE-Lite Earnings Analysis</h3>
-         <p className="text-slate-400 text-sm mb-6">
-      A focused quality-of-earnings analysis for deals that need real earnings validation — without the $15K–$25K cost of a full QoE.
-         </p>
-         <div className="space-y-3 mb-8">
-           {[
-             "Everything in Tier 2",
-             "Adjusted EBITDA bridge (Reported → Mgmt → Normalized)",
-             "Add-back validation & quality scoring",
-             "Revenue trend, mix & customer concentration analysis",
-             "MRR / retention & customer LTV review",
-             "Net working capital peg calculation",
-             "Quality of debt schedule & covenant review",
-             "Proof-of-cash & bank reconciliation",
-             "Tax-return-to-book reconciliation",
-             "Flagged findings report (Red / Warning / Green) with buyer recommendations",
-                ].map((item, i) => (
-             <div key={i} className="flex items-center gap-3">
-               <CheckCircle className="w-4 h-4 text-cyan-400 flex-shrink-0" />
-               <span className="text-slate-300 text-sm">{item}</span>
-             </div>
-            ))}
-         </div>
-         <Link href="/contact">
-           <Button variant="outline" className="w-full border-slate-600 text-slate-200 hover:bg-slate-700 bg-transparent">
-             Book Intro Call
-           </Button>
-         </Link>
-    
-      href="#"
-      target="_blank"
-      rel="noopener noreferrer"
-      className="block mt-3"
-    >
-      <Button className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white">
-        Get Started
-        <ArrowRight className="ml-2 w-4 h-4" />
-      </Button>
-    </a>
-  </CardContent>
-</Card>
+            {/* Tier 3 — QoE-Lite Earnings Analysis */}
+            <Card className="bg-slate-800/30 border-cyan-500/30 relative">
+              <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                <Badge className="bg-cyan-500 text-white border-0 px-4">Pre-QoE Diligence</Badge>
+              </div>
+              <CardContent className="p-8">
+                <p className="text-cyan-400 text-sm font-medium mb-2">Starting at</p>
+                <p className="text-4xl font-bold text-white mb-1">$5,000</p>
+                <h3 className="text-xl font-semibold text-white mt-4 mb-2">QoE-Lite Earnings Analysis</h3>
+                <p className="text-slate-400 text-sm mb-6">
+                  A focused quality-of-earnings analysis for deals that need real earnings validation — without the $15K–$25K cost of a full QoE.
+                </p>
+                <div className="space-y-3 mb-8">
+                  {[
+                    "Everything in Tier 2",
+                    "Adjusted EBITDA bridge (Reported → Mgmt → Normalized)",
+                    "Add-back validation & quality scoring",
+                    "Revenue trend, mix & customer concentration analysis",
+                    "MRR / retention & customer LTV review",
+                    "Net working capital peg calculation",
+                    "Quality of debt schedule & covenant review",
+                    "Proof-of-cash & bank reconciliation",
+                    "Tax-return-to-book reconciliation",
+                    "Flagged findings report (Red / Warning / Green) with buyer recommendations",
+                  ].map((item, i) => (
+                    <div key={i} className="flex items-center gap-3">
+                      <CheckCircle className="w-4 h-4 text-cyan-400 flex-shrink-0" />
+                      <span className="text-slate-300 text-sm">{item}</span>
+                    </div>
+                  ))}
+                </div>
+                <Link href="/contact">
+                  <Button variant="outline" className="w-full border-slate-600 text-slate-200 hover:bg-slate-700 bg-transparent">
+                    Book Intro Call
+                  </Button>
+                </Link>
+                {/* TODO: Replace href="#" with the Stripe payment link for the $5,000 QoE-Lite product */}
+                
+                  href="#"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block mt-3"
+                >
+                  <Button className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white">
+                    Get Started
+                    <ArrowRight className="ml-2 w-4 h-4" />
+                  </Button>
+                </a>
+              </CardContent>
+            </Card>
           </div>
         </div>
       </section>
@@ -543,8 +543,8 @@ export default function AcquisitionsPage() {
         <div className="max-w-3xl mx-auto text-center">
           <h2 className="text-3xl font-bold text-white mb-6">Built by a Corporate Finance Operator</h2>
           <p className="text-lg text-slate-300 leading-relaxed mb-4">
-            Steve Morello is a finance and tax executive with experience supporting operating companies and transaction environments, 
-            including experience at EY (Big Four) and within Morgan Stanley’s Private Equity division.
+            Steve Morello is a finance and tax executive with experience supporting operating companies and transaction environments,
+            including experience at EY (Big Four) and within Morgan Stanley&rsquo;s Private Equity division.
           </p>
           <p className="text-lg text-slate-300 leading-relaxed mb-4">
             He built NexTax.AI to bring structured financial intelligence to entrepreneurs — from business formation to acquisition.
