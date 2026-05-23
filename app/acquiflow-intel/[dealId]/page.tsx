@@ -126,6 +126,19 @@ function synthesizePosture(readiness: any): string {
   return `This deal is ${cls}.${spread ? " " + spread : ""}${bindingClause}`.trim();
 }
 
+// ── Deal header helpers ──────────────────────────────────────────────────────
+function titleCaseIndustry(industry: string | null): string {
+  if (!industry) return "Acquisition Target";
+  return industry.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+function dealLocation(facts: any): string {
+  return [facts?.city, facts?.state].filter(Boolean).join(", ");
+}
+function moneyShort(n: any): string {
+  if (typeof n !== "number" || !Number.isFinite(n)) return "—";
+  return "$" + (n >= 1e6 ? (n / 1e6).toFixed(2) + "M" : (n / 1e3).toFixed(0) + "K");
+}
+
 // ── Provenance affordance ────────────────────────────────────────────────────
 function Why({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
@@ -281,6 +294,19 @@ function Review({ data, manifestId, generatedAt }: { data: any; manifestId: stri
 
   return (
     <div>
+      {/* Deal title + location */}
+      <div style={{ marginBottom: 28 }}>
+        <div style={{ fontFamily: serif, fontSize: 27, lineHeight: 1.2, color: C.ink }}>
+          {titleCaseIndustry(dealFacts.industry)}
+          {dealLocation(dealFacts) && (
+            <span style={{ color: C.faint, fontWeight: 400 }}> — {dealLocation(dealFacts)}</span>
+          )}
+        </div>
+        <div style={{ fontFamily: sans, fontSize: 12, color: C.faint, marginTop: 6, letterSpacing: "0.02em" }}>
+          Revenue {moneyShort(dealFacts.revenue)} · SDE {moneyShort(dealFacts.sde)} · Asking {moneyShort(dealFacts.asking_price)}
+        </div>
+      </div>
+
       {/* Move 1 — posture sentence */}
       <div style={{ borderLeft: `3px solid ${C.binding}`, paddingLeft: 22, marginBottom: 38 }}>
         <Header>Underwriting posture</Header>
@@ -510,13 +536,25 @@ function PercentileBar({ p25, median, p75, deal }: { p25: number; median: number
       <div style={{ fontFamily: serif, fontSize: 11, color: strong ? C.accent : C.faint }}>{(+v).toFixed(2)}x</div>
     </div>
   );
+  const dealPct = pct(deal);
+  // Edge-aware label alignment so "This deal" never clips off the chart edges.
+  const labelAlign: { left?: string; right?: string; transform: string; textAlign: "left" | "center" | "right" } =
+    dealPct < 14 ? { left: "0", transform: "none", textAlign: "left" }
+    : dealPct > 86 ? { right: "0", transform: "none", textAlign: "right" }
+    : { left: "50%", transform: "translateX(-50%)", textAlign: "center" };
   return (
-    <div style={{ padding: "8px 0 44px" }}>
+    <div style={{ padding: "34px 0 44px" }}>
       <div style={{ position: "relative", height: 6, background: C.ruleSoft, borderRadius: 3 }}>
         {/* IQR band */}
         <div style={{ position: "absolute", left: `${pct(p25)}%`, width: `${pct(p75) - pct(p25)}%`, top: 0, bottom: 0, background: C.accentSoft, opacity: 0.28, borderRadius: 3 }} />
-        {/* Deal marker */}
-        <div style={{ position: "absolute", left: `${pct(deal)}%`, top: -7, transform: "translateX(-50%)" }}>
+        {/* Deal label — positioned above the dot, edge-aware */}
+        <div style={{ position: "absolute", left: `${dealPct}%`, bottom: 17, transform: "translateX(-50%)", width: 0, overflow: "visible" }}>
+          <div style={{ position: "absolute", bottom: 0, ...labelAlign, fontFamily: sans, fontSize: 9.5, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: C.binding, whiteSpace: "nowrap" }}>
+            This deal · {(+deal).toFixed(2)}x
+          </div>
+        </div>
+        {/* Deal marker dot */}
+        <div style={{ position: "absolute", left: `${dealPct}%`, top: -7, transform: "translateX(-50%)" }}>
           <div style={{ width: 13, height: 13, borderRadius: "50%", background: C.binding, border: `2px solid ${C.card}`, boxShadow: "0 1px 4px rgba(0,0,0,0.25)" }} />
         </div>
       </div>
@@ -524,9 +562,6 @@ function PercentileBar({ p25, median, p75, deal }: { p25: number; median: number
         {tick(p25, "P25")}
         {tick(median, "Median")}
         {tick(p75, "P75")}
-      </div>
-      <div style={{ position: "absolute", left: `${pct(deal)}%`, transform: "translateX(-50%)", marginTop: -2 }}>
-        <div style={{ fontFamily: sans, fontSize: 9.5, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase", color: C.binding, whiteSpace: "nowrap" }}>This deal</div>
       </div>
     </div>
   );
