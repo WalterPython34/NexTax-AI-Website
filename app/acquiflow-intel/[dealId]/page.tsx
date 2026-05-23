@@ -143,7 +143,7 @@ function moneyShort(n: any): string {
 function Why({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
   return (
-    <span style={{ position: "relative", display: "inline-block" }}>
+    <span className="why-btn" style={{ position: "relative", display: "inline-block" }}>
       <button
         onClick={() => setOpen((o) => !o)}
         style={{
@@ -215,13 +215,70 @@ export default function IntelDealPage({ params }: { params: { dealId: string } }
 
   return (
     <div style={{ background: C.paper, minHeight: "100vh", paddingBottom: 80, color: C.ink }}>
-      <Masthead dealId={dealId} />
+      <PrintStyles />
+      <div className="no-print">
+        <Masthead dealId={dealId} />
+      </div>
       <div style={{ maxWidth: 1080, margin: "0 auto", padding: "40px 40px 0" }}>
         {state.status === "loading" && <Loading />}
         {state.status === "error" && <ErrorView kind={state.kind} reason={state.reason} />}
-        {state.status === "ok" && <Review data={state.data} manifestId={state.manifestId} generatedAt={state.generatedAt} />}
+        {state.status === "ok" && (
+          <>
+            <div className="no-print" style={{ display: "flex", justifyContent: "flex-end", marginBottom: 8 }}>
+              <button
+                onClick={() => window.print()}
+                style={{
+                  fontFamily: sans, fontSize: 12, letterSpacing: "0.04em", color: C.accent,
+                  background: C.card, border: `1px solid ${C.rule}`, borderRadius: 4,
+                  padding: "8px 16px", cursor: "pointer", display: "flex", alignItems: "center", gap: 7,
+                }}
+              >
+                <span style={{ fontSize: 13 }}>⎙</span> Download PDF
+              </button>
+            </div>
+            <Review data={state.data} manifestId={state.manifestId} generatedAt={state.generatedAt} />
+          </>
+        )}
       </div>
     </div>
+  );
+}
+
+// ── Print stylesheet: render the document surface as a clean PDF ─────────────
+// Goal is NOT "print the app" — it is "render the institutional document".
+// Hides chrome/interactive elements, swaps in a document header, US Letter,
+// and prevents bad page breaks (no split paragraphs/panels, no orphaned headers).
+function PrintStyles() {
+  return (
+    <style>{`
+      @media print {
+        @page { size: Letter; margin: 0.6in 0.65in; }
+        html, body { background: #ffffff !important; }
+
+        /* Hide all interactive / chrome elements */
+        .no-print, .why-btn { display: none !important; }
+
+        /* Show print-only document header */
+        .print-only { display: block !important; }
+
+        /* Tighten the page container for print */
+        .intel-body { max-width: 100% !important; padding: 0 !important; margin: 0 !important; }
+
+        /* Page-break discipline */
+        .print-block { break-inside: avoid; page-break-inside: avoid; }
+        .print-keep-with-next { break-after: avoid; page-break-after: avoid; }
+        .print-section { break-inside: auto; }           /* sections may break BETWEEN children */
+        h1, h2, h3, .section-header { break-after: avoid; page-break-after: avoid; }
+
+        /* Avoid blank-page artifacts from large top margins */
+        .print-section:first-of-type { margin-top: 0 !important; }
+
+        /* Ensure backgrounds/colors render in print */
+        * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+      }
+      /* print-only blocks are hidden on screen */
+      .print-only { display: none; }
+    `}</style>
   );
 }
 
@@ -293,9 +350,29 @@ function Review({ data, manifestId, generatedAt }: { data: any; manifestId: stri
   const d = readiness.declined_personality_count ?? 0;
 
   return (
-    <div>
+    <div className="intel-body">
+      {/* Print-only document header (web masthead is hidden in print) */}
+      <div className="print-only print-block" style={{ borderBottom: `2px solid ${C.accent}`, paddingBottom: 14, marginBottom: 24 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end" }}>
+          <div>
+            <div style={{ fontFamily: serif, fontSize: 22, color: C.ink }}>
+              AcquiFlow
+              <span style={{ fontFamily: sans, fontSize: 10, letterSpacing: "0.16em", textTransform: "uppercase", color: C.accentSoft, marginLeft: 12, fontWeight: 600 }}>
+                Institutional Read
+              </span>
+            </div>
+            <div style={{ fontFamily: serif, fontSize: 12, fontStyle: "italic", color: C.faint, marginTop: 3 }}>
+              Pre-LOI underwriting intelligence
+            </div>
+          </div>
+          <div style={{ fontFamily: sans, fontSize: 10, color: C.faint, textAlign: "right", letterSpacing: "0.03em" }}>
+            {new Date(generatedAt).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}
+          </div>
+        </div>
+      </div>
+
       {/* Deal title + location */}
-      <div style={{ marginBottom: 28 }}>
+      <div className="print-block" style={{ marginBottom: 28 }}>
         <div style={{ fontFamily: serif, fontSize: 27, lineHeight: 1.2, color: C.ink }}>
           {titleCaseIndustry(dealFacts.industry)}
           {dealLocation(dealFacts) && (
@@ -308,7 +385,7 @@ function Review({ data, manifestId, generatedAt }: { data: any; manifestId: stri
       </div>
 
       {/* Move 1 — posture sentence */}
-      <div style={{ borderLeft: `3px solid ${C.binding}`, paddingLeft: 22, marginBottom: 38 }}>
+      <div className="print-block" style={{ borderLeft: `3px solid ${C.binding}`, paddingLeft: 22, marginBottom: 38 }}>
         <Header>Underwriting posture</Header>
         <div style={{ fontFamily: serif, fontSize: 22, lineHeight: 1.5 }}>
           {posture}
@@ -322,7 +399,7 @@ function Review({ data, manifestId, generatedAt }: { data: any; manifestId: stri
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 44 }}>
         {/* Move 2 — constraint stack */}
-        <div>
+        <div className="print-block">
           <Header>Structure of the read</Header>
           {factors.length === 0 && <Empty>No contributing factors recorded for this snapshot.</Empty>}
           {factors.map((f: any, idx: number) => (
@@ -346,7 +423,7 @@ function Review({ data, manifestId, generatedAt }: { data: any; manifestId: stri
         </div>
 
         {/* Move 3 — capital-structure distribution (real counts, NOT named) */}
-        <div>
+        <div className="print-block">
           <Header>
             How capital structures see it
             <Why>
@@ -393,7 +470,7 @@ function Review({ data, manifestId, generatedAt }: { data: any; manifestId: stri
         </div>
 
         {/* What this is / is not */}
-        <div>
+        <div className="print-block">
           <Header>What this is — and is not</Header>
           <div style={{ fontFamily: serif, fontSize: 14.5, lineHeight: 1.65, color: C.inkSoft }}>
             This is a <strong>pre-LOI underwriting read</strong> — what a lender, investment committee, or
@@ -414,7 +491,7 @@ function Review({ data, manifestId, generatedAt }: { data: any; manifestId: stri
       {/* ═══ MARKET INTELLIGENCE — factual context, distinct from CP reasoning ═══ */}
       {marketFacts && (marketFacts.closed_comp_median != null || marketFacts.listing_multiple != null) && (
         <div style={{ marginTop: 56 }}>
-          <div style={{ borderTop: `2px solid ${C.accent}`, paddingTop: 18, marginBottom: 18 }}>
+          <div className="print-keep-with-next" style={{ borderTop: `2px solid ${C.accent}`, paddingTop: 18, marginBottom: 18 }}>
             <Header>Market position — proprietary closed-transaction benchmarks</Header>
             <div style={{ fontFamily: serif, fontSize: 14, fontStyle: "italic", color: C.faint, marginTop: -6 }}>
               Factual placement against comparable transactions. This is market context, reported separately
@@ -429,7 +506,7 @@ function Review({ data, manifestId, generatedAt }: { data: any; manifestId: stri
       {/* ═══ COMMITTEE NARRATIVE — presentation-layer synthesis ═══ */}
       {narrative && (
         <div style={{ marginTop: 48 }}>
-          <div style={{ borderTop: `2px solid ${C.accent}`, paddingTop: 18, marginBottom: 20 }}>
+          <div className="print-keep-with-next" style={{ borderTop: `2px solid ${C.accent}`, paddingTop: 18, marginBottom: 20 }}>
             <Header>
               Committee read
               <Why>
@@ -444,7 +521,7 @@ function Review({ data, manifestId, generatedAt }: { data: any; manifestId: stri
       )}
 
       {/* ═══ EVIDENCE & METHODOLOGY — the trust block ═══ */}
-      <div style={{ marginTop: 64, borderTop: `2px solid ${C.accent}`, paddingTop: 20 }}>
+      <div className="print-block" style={{ marginTop: 64, borderTop: `2px solid ${C.accent}`, paddingTop: 20 }}>
         <Header>Evidence &amp; methodology</Header>
         <div style={{ fontFamily: serif, fontSize: 14.5, lineHeight: 1.65, color: C.inkSoft, maxWidth: 720 }}>
           This institutional read combines deterministic underwriting reasoning, evidence-band analysis,
@@ -482,7 +559,7 @@ function BenchmarkDepthLine({ mf }: { mf: any }) {
   items.push({ label: "Benchmark basis", value: basisLabel[mf.closed_comp_basis] ?? "—" });
 
   return (
-    <div style={{
+    <div className="print-block" style={{
       display: "flex", gap: 0, marginBottom: 26, border: `1px solid ${C.ruleSoft}`,
       background: C.card, borderRadius: 4, overflow: "hidden",
     }}>
@@ -510,7 +587,7 @@ function MarketPositionPanel({ mf }: { mf: any }) {
     above_p75: "above the 75th percentile",
   };
   return (
-    <div style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: 44 }}>
+    <div className="print-block" style={{ display: "grid", gridTemplateColumns: "1.4fr 1fr", gap: 44 }}>
       {/* Left: percentile bar */}
       <div>
         {hasClosed ? (
@@ -613,10 +690,10 @@ function NarrativeBlock({ narrative }: { narrative: any }) {
     { key: "evidence", label: "Evidence & diligence focus" },
   ];
   return (
-    <div style={{ borderLeft: `3px solid ${C.accent}`, paddingLeft: 24 }}>
+    <div className="print-section" style={{ borderLeft: `3px solid ${C.accent}`, paddingLeft: 24 }}>
       {sections.map((s, idx) =>
         narrative[s.key] ? (
-          <div key={s.key} style={{ marginBottom: idx === sections.length - 1 ? 0 : 22 }}>
+          <div key={s.key} className="print-block" style={{ marginBottom: idx === sections.length - 1 ? 0 : 22 }}>
             <Header sub>{s.label}</Header>
             <div style={{ fontFamily: serif, fontSize: 16, lineHeight: 1.62, color: C.ink }}>
               {narrative[s.key]}
@@ -654,7 +731,7 @@ function DiligenceItem({ it, critical }: { it: any; critical?: boolean }) {
   const dims = it.impact_dimensions ?? {};
   const onNode = dims.is_on_critical_fragility_node;
   return (
-    <div style={{ display: "flex", gap: 12, padding: "11px 0", borderTop: `1px solid ${C.ruleSoft}` }}>
+    <div className="print-block" style={{ display: "flex", gap: 12, padding: "11px 0", borderTop: `1px solid ${C.ruleSoft}` }}>
       <div style={{ flexShrink: 0, marginTop: 4 }}>
         <div style={{ width: 7, height: 7, borderRadius: critical ? 0 : "50%", background: critical ? C.binding : C.accentSoft, transform: critical ? "rotate(45deg)" : "none" }} />
       </div>
