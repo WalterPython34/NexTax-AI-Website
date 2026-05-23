@@ -2832,6 +2832,14 @@ function DealDetailPanel({
                 </>
               )}
             </button>
+              <a
+              href={`/acquiflow-intel/${deal.id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ width: "100%", padding: "10px 14px", borderRadius: 9, border: "1px solid rgba(45,74,62,0.35)", background: "rgba(45,74,62,0.10)", color: "#5a7464", fontSize: 13, fontWeight: 600, cursor: "pointer", textAlign: "left" as any, display: "flex", alignItems: "center", gap: 8, textDecoration: "none", boxSizing: "border-box" }}
+            >
+              <span>⊞</span> Open Institutional Read →
+            </a>
           </div>
         </div>
       </div>
