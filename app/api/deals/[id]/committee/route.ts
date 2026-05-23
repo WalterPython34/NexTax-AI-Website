@@ -22,6 +22,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { readMarketFacts } from "@/app/acquiflow-intel/_lib/marketFacts";
+import { generateCommitteeNarrative } from "@/app/acquiflow-intel/_lib/committeeNarrative";
 
 export const runtime = "nodejs";
 
@@ -158,10 +159,23 @@ export async function GET(
     console.warn(`[committee] market facts failed for ${dealId}:`, e instanceof Error ? e.message : String(e));
   }
 
-  // ── Stream 3: narrative — INTENTIONALLY ABSENT in this sub-step ──
-  // The Sonnet committee narrative is added next. For now narrative is null so
-  // the assembly can be tested with structured data only.
-  const narrative: null = null;
+  // ── Stream 3: committee narrative — presentation-layer synthesis ──
+  // Best-effort: reads streams 1 + 2 to write institutional prose. Returns null
+  // on any failure (missing key, API error, guard rejection) so the committee
+  // read degrades gracefully to structured data. NEVER written back to CP /
+  // evaluation_snapshots — this is display-only.
+  let narrative: unknown = null;
+  try {
+    narrative = await generateCommitteeNarrative(cp, marketFacts, {
+      industry: deal.industry ?? null,
+      revenue: deal.revenue ?? null,
+      sde: deal.sde ?? null,
+      asking_price: deal.asking_price ?? null,
+    });
+  } catch (e) {
+    narrative = null;
+    console.warn(`[committee] narrative generation failed for ${dealId}:`, e instanceof Error ? e.message : String(e));
+  }
 
   return NextResponse.json({
     success: true,
