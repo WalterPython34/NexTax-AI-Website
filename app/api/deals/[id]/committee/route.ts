@@ -89,7 +89,7 @@ export async function GET(
   // the explicit ownership check is load-bearing.
   const { data: deal, error: dealErr } = await supabaseAdmin
     .from("deal_runs")
-    .select("id, user_id, industry, revenue, sde, asking_price, state")
+    .select("id, user_id, industry, revenue, sde, asking_price, city, state")
     .eq("id", dealId)
     .maybeSingle();
 
@@ -183,13 +183,15 @@ export async function GET(
       deal_id: dealId,
       deal_facts: {
         industry: deal.industry ?? null,
+        city: deal.city ?? null,
+        state: deal.state ?? null,
         revenue: deal.revenue ?? null,
         sde: deal.sde ?? null,
         asking_price: deal.asking_price ?? null,
       },
       cp,                 // stream 1 — engine reasoning (categorical)
       market_facts: marketFacts, // stream 2 — raw factual context
-      narrative,          // stream 3 — added next sub-step
+      narrative,          // stream 3 — committee narrative (presentation-only)
     },
     cp_manifest_id: cpManifest,
     cp_generated_at: cpGeneratedAt,
