@@ -485,35 +485,55 @@ export default function AcquisitionsPage() {
               </CardContent>
             </Card>
 
-            {/* LOI / Lender Support */}
-            <Card className="bg-slate-800/30 border-slate-700/50">
-              <CardContent className="p-8">
-                <p className="text-cyan-400 text-sm font-medium mb-2">Custom</p>
-                <p className="text-4xl font-bold text-white mb-1">Transaction Advisory & Lender Support</p>
-                <h3 className="text-xl font-semibold text-white mt-4 mb-2">LOI / Lender Support</h3>
-                <p className="text-slate-400 text-sm mb-6">
-                  For buyers moving forward who need structured financial support through LOI and financing.
-                </p>
-                <div className="space-y-3 mb-8">
-                  {[
-                    "LOI drafting support",
-                    "Lender package preparation",
-                    "Financial narrative development",
-                    "Ongoing deal advisory",
-                  ].map((item, i) => (
-                    <div key={i} className="flex items-center gap-3">
-                      <CheckCircle className="w-4 h-4 text-cyan-400 flex-shrink-0" />
-                      <span className="text-slate-300 text-sm">{item}</span>
-                    </div>
-                  ))}
-                </div>
-                <Link href="/contact">
-                  <Button variant="outline" className="w-full border-slate-600 text-slate-200 hover:bg-slate-700 bg-transparent">
-                    Discuss Your Deal
-                  </Button>
-                </Link>
-              </CardContent>
-            </Card>
+     {/* QoE-Lite Analysis */}
+     <Card className="bg-slate-800/30 border-cyan-500/30 relative">
+       <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+         <Badge className="bg-cyan-500 text-white border-0 px-4">Pre-QoE Diligence</Badge>
+       </div>
+       <CardContent className="p-8">
+         <p className="text-cyan-400 text-sm font-medium mb-2">Starting at</p>
+         <p className="text-4xl font-bold text-white mb-1">$5,000</p>
+         <h3 className="text-xl font-semibold text-white mt-4 mb-2">QoE-Lite Earnings Analysis</h3>
+         <p className="text-slate-400 text-sm mb-6">
+      A focused quality-of-earnings analysis for deals that need real earnings validation — without the $15K–$25K cost of a full QoE.
+         </p>
+         <div className="space-y-3 mb-8">
+           {[
+             "Everything in Tier 2",
+             "Adjusted EBITDA bridge (Reported → Mgmt → Normalized)",
+             "Add-back validation & quality scoring",
+             "Revenue trend, mix & customer concentration analysis",
+             "MRR / retention & customer LTV review",
+             "Net working capital peg calculation",
+             "Quality of debt schedule & covenant review",
+             "Proof-of-cash & bank reconciliation",
+             "Tax-return-to-book reconciliation",
+             "Flagged findings report (Red / Warning / Green) with buyer recommendations",
+                ].map((item, i) => (
+             <div key={i} className="flex items-center gap-3">
+               <CheckCircle className="w-4 h-4 text-cyan-400 flex-shrink-0" />
+               <span className="text-slate-300 text-sm">{item}</span>
+             </div>
+            ))}
+         </div>
+         <Link href="/contact">
+           <Button variant="outline" className="w-full border-slate-600 text-slate-200 hover:bg-slate-700 bg-transparent">
+             Book Intro Call
+           </Button>
+         </Link>
+    
+      href="#"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="block mt-3"
+    >
+      <Button className="w-full bg-gradient-to-r from-cyan-500 to-blue-500 hover:from-cyan-600 hover:to-blue-600 text-white">
+        Get Started
+        <ArrowRight className="ml-2 w-4 h-4" />
+      </Button>
+    </a>
+  </CardContent>
+</Card>
           </div>
         </div>
       </section>
