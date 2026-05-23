@@ -284,6 +284,14 @@ function PrintStyles() {
         .print-section { break-inside: auto; }           /* sections may break BETWEEN children */
         h1, h2, h3, .section-header { break-after: avoid; page-break-after: avoid; }
 
+        /* In a portrait PDF, two narrow columns read poorly and cause uneven
+           page fills (a grid that won't fit jumps whole to the next page, leaving
+           blank space). Stack the two-column grids to full-width single column in
+           print only — screen layout is untouched. Content then flows and fills
+           pages naturally while protected blocks (paragraphs, panels) stay whole. */
+        .print-stack { display: block !important; }
+        .print-stack > div { margin-bottom: 28px; }
+
         /* Avoid blank-page artifacts from large top margins */
         .print-section:first-of-type { margin-top: 0 !important; }
 
@@ -411,9 +419,9 @@ function Review({ data, manifestId, generatedAt }: { data: any; manifestId: stri
         </div>
       </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 44 }}>
+      <div className="print-stack" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 44 }}>
         {/* Move 2 — constraint stack */}
-        <div className="print-block">
+        <div>
           <Header>Structure of the read</Header>
           {factors.length === 0 && <Empty>No contributing factors recorded for this snapshot.</Empty>}
           {factors.map((f: any, idx: number) => (
@@ -439,8 +447,7 @@ function Review({ data, manifestId, generatedAt }: { data: any; manifestId: stri
         {/* Move 3 — capital-structure distribution (real counts, NOT named) */}
         <div className="print-block">
           <Header>
-            How capital structures see it
-            <Why>
+            How capital structures see it            <Why>
               The engine simulates each financing structure independently and reports a categorical
               stance — it never blends them into one verdict. This snapshot reports the distribution of
               stances; individual structure identities are part of the deeper read.
@@ -458,7 +465,7 @@ function Review({ data, manifestId, generatedAt }: { data: any; manifestId: stri
       </div>
 
       {/* Move 4 — diligence path */}
-      <div style={{ marginTop: 42, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 44 }}>
+      <div className="print-stack" style={{ marginTop: 42, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 44 }}>
         <div>
           <Header>
             Diligence path
