@@ -31,6 +31,10 @@ const C = {
   paper: "#f4f1ea", card: "#fdfcfa", rule: "#d8d3c7", ruleSoft: "#e8e3d8",
   accent: "#2d4a3e", accentSoft: "#5a7464",
   binding: "#8a4b2d", engaged: "#2d4a3e", blocking: "#6b3a4a", cautious: "#9c7c3a",
+  // Analytical panel surface — a very light warm stone tone. Reads as a lightly
+  // elevated section on white paper (PDF) and on the beige screen surface alike;
+  // NOT a SaaS card (no shadow). Subtle border gives separation without UI weight.
+  panel: "#f7f4ee", panelBorder: "rgba(40,40,40,0.08)",
 };
 const serif = "'Hoefler Text','Iowan Old Style','Palatino Linotype',Georgia,serif";
 const sans = "'Helvetica Neue','Inter',system-ui,sans-serif";
@@ -252,7 +256,13 @@ function PrintStyles() {
   return (
     <style>{`
       @media print {
-        @page { size: Letter; margin: 0.6in 0.65in; }
+        /* Institutional memo page rhythm — asymmetric margins, more bottom than
+           top so pages breathe before the break. Applies to EVERY page, giving
+           consistent top/bottom offset across pages 1..n. */
+        @page { size: Letter; margin: 0.7in 0.65in 0.85in 0.65in; }
+
+        /* Formal institutional memo = white paper. The warm/editorial background
+           is screen-only; the PDF is ink-on-white. */
         html, body { background: #ffffff !important; }
 
         /* Hide all interactive / chrome elements */
@@ -275,8 +285,8 @@ function PrintStyles() {
         /* Show print-only document header */
         .print-only { display: block !important; }
 
-        /* Tighten the page container for print */
-        .intel-body { max-width: 100% !important; padding: 0 !important; margin: 0 !important; }
+        /* Tighten the page container for print; a little top breathing room */
+        .intel-body { max-width: 100% !important; padding: 0.05in 0 0.1in !important; margin: 0 !important; }
 
         /* ─── ATOMIC PRINT ARCHITECTURE ───────────────────────────────────────
            Compose a paginated memo, not "print the webpage." Avoid-break is
@@ -305,6 +315,21 @@ function PrintStyles() {
           break-inside: auto !important;
           page-break-inside: auto !important;
           break-before: auto;
+        }
+
+        /* Consistent section rhythm — institutional spacing between major
+           sections (annual-report cadence, not tight webpage density). */
+        .market-section, .committee-section { margin-top: 40px !important; }
+        .methodology-section { margin-top: 44px !important; }
+
+        /* ATOMIC FOOTER FIX: keep the Evidence & Methodology block attached to the
+           preceding committee content — do NOT start a fresh page right before it.
+           This prevents the dangling metadata-only final page WITHOUT wrapping the
+           large committee region in a monolithic avoid-break (which would recreate
+           the whole-section-push bug). */
+        .methodology-section {
+          break-before: avoid;
+          page-break-before: avoid;
         }
 
         /* In portrait, the two-column grids stack to single column so atoms flow
@@ -600,13 +625,13 @@ function BenchmarkDepthLine({ mf }: { mf: any }) {
 
   return (
     <div className="print-block" style={{
-      display: "flex", gap: 0, marginBottom: 26, border: `1px solid ${C.ruleSoft}`,
-      background: C.card, borderRadius: 4, overflow: "hidden",
+      display: "flex", gap: 0, marginBottom: 26, border: `1px solid ${C.panelBorder}`,
+      background: C.panel, borderRadius: 4, overflow: "hidden",
     }}>
       {items.map((it, idx) => (
         <div key={idx} style={{
           flex: 1, padding: "13px 18px",
-          borderLeft: idx === 0 ? "none" : `1px solid ${C.ruleSoft}`,
+          borderLeft: idx === 0 ? "none" : `1px solid ${C.panelBorder}`,
         }}>
           <div style={{ fontFamily: serif, fontSize: 19, color: C.accent, lineHeight: 1 }}>{it.value}</div>
           <div style={{ fontFamily: sans, fontSize: 9.5, letterSpacing: "0.08em", textTransform: "uppercase", color: C.faint, marginTop: 6 }}>{it.label}</div>
@@ -759,12 +784,12 @@ function StanceDistribution({ interested, cautious, declined }: { interested: nu
   ];
   const total = interested + cautious + declined || 1;
   return (
-    <div style={{ border: `1px solid ${C.ruleSoft}`, background: C.card }}>
+    <div style={{ border: `1px solid ${C.panelBorder}`, background: C.panel }}>
       {rows.map((r, idx) => (
-        <div key={idx} style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 18px", borderTop: idx === 0 ? "none" : `1px solid ${C.ruleSoft}` }}>
+        <div key={idx} style={{ display: "flex", alignItems: "center", gap: 14, padding: "14px 18px", borderTop: idx === 0 ? "none" : `1px solid ${C.panelBorder}` }}>
           <div style={{ width: 96, fontFamily: sans, fontSize: 10.5, letterSpacing: "0.08em", textTransform: "uppercase", color: r.color, fontWeight: 600 }}>{r.label}</div>
-          <div style={{ flex: 1, height: 6, background: C.ruleSoft, position: "relative" }}>
-            <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: `${(r.n / total) * 100}%`, background: r.color, opacity: 0.85 }} />
+          <div style={{ flex: 1, height: 6, background: C.ruleSoft, position: "relative", borderRadius: 3 }}>
+            <div style={{ position: "absolute", left: 0, top: 0, bottom: 0, width: `${(r.n / total) * 100}%`, background: r.color, opacity: 0.85, borderRadius: 3 }} />
           </div>
           <div style={{ width: 18, textAlign: "right", fontFamily: serif, fontSize: 18 }}>{r.n}</div>
         </div>
