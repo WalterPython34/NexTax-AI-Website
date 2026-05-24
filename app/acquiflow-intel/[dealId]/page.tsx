@@ -316,29 +316,32 @@ function PrintStyles() {
         .market-section,
         .committee-section,
         .methodology-section,
+        .diligence-section,
+        .whatis-section,
         .print-stack {
           break-inside: auto !important;
           page-break-inside: auto !important;
-          break-before: auto;
         }
 
-        /* Consistent section rhythm — institutional spacing between major
-           sections (annual-report cadence, not tight webpage density). */
-        .market-section, .committee-section { margin-top: 40px !important; }
-        .methodology-section { margin-top: 44px !important; }
-
-        /* ATOMIC FOOTER FIX: keep the Evidence & Methodology block attached to the
-           preceding committee content — do NOT start a fresh page right before it.
-           This prevents the dangling metadata-only final page WITHOUT wrapping the
-           large committee region in a monolithic avoid-break (which would recreate
-           the whole-section-push bug). */
-        .methodology-section {
-          break-before: avoid;
-          page-break-before: avoid;
+        /* ─── CONTROLLED SECTION PAGINATION (authored memo composition) ───────
+           Each major section opens at the TOP of a fresh page with consistent
+           top breathing room (~0.6in ≈ 1.5cm) before its heading. Intentional
+           whitespace at page bottoms is ACCEPTED in exchange for deliberate,
+           predictable section anchoring — this is an authored committee memo,
+           not auto-flowed webpage pagination. Locked structure:
+           page 1: posture + structure of the read + capital structures
+           page 2: Diligence path
+           page 3: What this is — and is not  +  Market position (grouped)
+           page 4: Committee read
+           page 5: Evidence & methodology */
+        .page-start {
+          break-before: page;
+          page-break-before: always;
+          padding-top: 0.6in;
+          margin-top: 0 !important;
         }
 
-        /* In portrait, the two-column grids stack to single column so atoms flow
-           full-width and fill pages. Layout only — independent of break logic. */
+        /* In portrait, the two-column grids stack to single column. Layout only. */
         .print-stack { display: block !important; }
         .print-stack > div { margin-bottom: 0; }
 
@@ -511,33 +514,33 @@ function Review({ data, manifestId, generatedAt }: { data: any; manifestId: stri
         </div>
       </div>
 
-      {/* Move 4 — diligence path */}
-      <div className="print-stack" style={{ marginTop: 42, display: "grid", gridTemplateColumns: "1fr 1fr", gap: 44 }}>
-        <div>
-          <Header>
-            Diligence path
-            <Why>
-              The engine's impact ranking, ordered so that items on the binding constraint come first.
-              Resolving these is what moves the read — and what makes a later quality-of-earnings review
-              targeted rather than exploratory.
-            </Why>
-          </Header>
-          {bindingItems.length > 0 && (
-            <div style={{ marginBottom: 18 }}>
-              <Header sub>Resolve the binding constraint first</Header>
-              {bindingItems.map((it: any, idx: number) => <DiligenceItem key={idx} it={it} critical />)}
-            </div>
-          )}
-          {otherItems.length > 0 && (
-            <div>
-              <Header sub>Strengthen the evidence base</Header>
-              {otherItems.slice(0, 6).map((it: any, idx: number) => <DiligenceItem key={idx} it={it} />)}
-            </div>
-          )}
-          {ranked.length === 0 && <Empty>No ranked diligence items for this snapshot.</Empty>}
-        </div>
+      {/* Move 4 — diligence path (own page) */}
+      <div className="diligence-section page-start">
+        <Header>
+          Diligence path
+          <Why>
+            The engine's impact ranking, ordered so that items on the binding constraint come first.
+            Resolving these is what moves the read — and what makes a later quality-of-earnings review
+            targeted rather than exploratory.
+          </Why>
+        </Header>
+        {bindingItems.length > 0 && (
+          <div style={{ marginBottom: 18 }}>
+            <Header sub>Resolve the binding constraint first</Header>
+            {bindingItems.map((it: any, idx: number) => <DiligenceItem key={idx} it={it} critical />)}
+          </div>
+        )}
+        {otherItems.length > 0 && (
+          <div>
+            <Header sub>Strengthen the evidence base</Header>
+            {otherItems.slice(0, 6).map((it: any, idx: number) => <DiligenceItem key={idx} it={it} />)}
+          </div>
+        )}
+        {ranked.length === 0 && <Empty>No ranked diligence items for this snapshot.</Empty>}
+      </div>
 
-        {/* What this is / is not */}
+      {/* What this is / is not (own page) */}
+      <div className="whatis-section page-start">
         <div className="print-block">
           <Header>What this is — and is not</Header>
           <div style={{ fontFamily: serif, fontSize: 14.5, lineHeight: 1.65, color: C.inkSoft }}>
@@ -556,9 +559,10 @@ function Review({ data, manifestId, generatedAt }: { data: any; manifestId: stri
         </div>
       </div>
 
-      {/* ═══ MARKET INTELLIGENCE — factual context, distinct from CP reasoning ═══ */}
+      {/* ═══ MARKET INTELLIGENCE — grouped on page 3 with "What this is" (no
+           forced break — flows directly after it). ═══ */}
       {marketFacts && (marketFacts.closed_comp_median != null || marketFacts.listing_multiple != null) && (
-        <div className="market-section" style={{ marginTop: 56 }}>
+        <div className="market-section" style={{ marginTop: 40 }}>
           <div className="print-keep-with-next" style={{ borderTop: `2px solid ${C.accent}`, paddingTop: 18, marginBottom: 18 }}>
             <Header>Market position — proprietary closed-transaction benchmarks</Header>
             <div style={{ fontFamily: serif, fontSize: 14, fontStyle: "italic", color: C.faint, marginTop: -6 }}>
@@ -573,7 +577,7 @@ function Review({ data, manifestId, generatedAt }: { data: any; manifestId: stri
 
       {/* ═══ COMMITTEE NARRATIVE — presentation-layer synthesis ═══ */}
       {narrative && (
-        <div className="committee-section" style={{ marginTop: 48 }}>
+        <div className="committee-section page-start">
           <div className="print-keep-with-next" style={{ borderTop: `2px solid ${C.accent}`, paddingTop: 18, marginBottom: 20 }}>
             <Header>
               Committee read
@@ -589,7 +593,7 @@ function Review({ data, manifestId, generatedAt }: { data: any; manifestId: stri
       )}
 
       {/* ═══ EVIDENCE & METHODOLOGY — the trust block ═══ */}
-      <div className="methodology-section" style={{ marginTop: 64, borderTop: `2px solid ${C.accent}`, paddingTop: 20 }}>
+      <div className="methodology-section page-start" style={{ borderTop: `2px solid ${C.accent}`, paddingTop: 20 }}>
         <div className="print-block">
           <Header>Evidence &amp; methodology</Header>
           <div style={{ fontFamily: serif, fontSize: 14.5, lineHeight: 1.65, color: C.inkSoft, maxWidth: 720 }}>
