@@ -218,7 +218,7 @@ export default function IntelDealPage({ params }: { params: { dealId: string } }
   }, [dealId]);
 
   return (
-    <div style={{ background: C.paper, minHeight: "100vh", paddingBottom: 80, color: C.ink }}>
+    <div className="print-root" style={{ background: C.paper, minHeight: "100vh", paddingBottom: 80, color: C.ink }}>
       <PrintStyles />
       <div className="no-print">
         <Masthead dealId={dealId} />
@@ -262,8 +262,13 @@ function PrintStyles() {
         @page { size: Letter; margin: 0.7in 0.65in 0.85in 0.65in; }
 
         /* Formal institutional memo = white paper. The warm/editorial background
-           is screen-only; the PDF is ink-on-white. */
-        html, body { background: #ffffff !important; }
+           is screen-only; the PDF is ink-on-white. NOTE: the beige lives on the
+           page's own root div (.print-root), not just body — so we must whiten
+           BOTH, or the inner div keeps its beige fill in the PDF. */
+        html, body, .print-root {
+          background: #ffffff !important;
+          min-height: 0 !important;
+        }
 
         /* Hide all interactive / chrome elements */
         .no-print, .why-btn { display: none !important; }
