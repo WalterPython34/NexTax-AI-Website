@@ -7,6 +7,8 @@ import { applyDealClassification } from "@/lib/dealClassifier";
 import { mapRecordDealBodyToRuleInputs, hasMinimumInputsForShadow, mergeBenchmarkEnrichment } from "@/lib/intelligence/orchestrator/map-live-inputs";
 import { runCpPipelineAndPersist } from "@/lib/intelligence/orchestrator/run-cp-pipeline";
 import { fetchLatestBenchmarkEnrichment } from "@/lib/intelligence/orchestrator/fetch-benchmark-enrichment";
+// ── Phase D — canonical/scenario maintenance (additive, best-effort) ──────────
+import { maintainCanonicalAndBaseScenario } from "@/lib/intelligence/canonical/canonical-save-path";
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -320,6 +322,43 @@ export async function POST(req: NextRequest) {
         console.error("[record-deal] CP shadow write threw:", shadowErr);
       }
     }
+
+     // ── PHASE D: maintain canonical_deals + base scenario (ADDITIVE, best-effort) ──
+    // Closes the contamination path at the source: a duplicate fingerprint REUSES the
+    // canonical instead of minting a new one, so DRI/benchmarks (which read canonical)
+    // stay clean even though deal_runs may hold the dupe. The deal_runs insert above is
+    // unchanged and authoritative; this NEVER alters the response. fingerprint is the
+    // SAME value written to deal_runs (computed at line 89, in scope here).
+    if (inserted?.id) {
+      try {
+        const canonicalResult = await maintainCanonicalAndBaseScenario(supabaseAdmin, {
+          deal_run_id: inserted.id,
+          user_id: user_id ?? null,                 // local in scope (nullable)
+          fingerprint,                              // local in scope — same as deal_runs
+          industry: inserted.industry ?? null,
+          source_listing_price: inserted.asking_price ?? null,
+          original_seller_reported_revenue: inserted.revenue ?? null,
+          original_seller_reported_sde: inserted.sde ?? null,
+          location_state: inserted.state ?? null,
+        });
+        if (!canonicalResult.ok) {
+          console.error("[record-deal] PHASE_D_CANONICAL_FAILURE " + JSON.stringify({
+            deal_run_id: inserted.id, action: canonicalResult.action, detail: canonicalResult.detail,
+          }));
+        } else {
+          console.log("[record-deal] CANONICAL_SAVE " + JSON.stringify({
+            deal_run_id: inserted.id,
+            canonical_deal_id: canonicalResult.canonical_deal_id,
+            base_scenario_id: canonicalResult.base_scenario_id,
+            action: canonicalResult.action,         // 'created_canonical' | 'reused_canonical'
+          }));
+        }
+      } catch (canonErr) {
+        // Absolute backstop — canonical maintenance must NEVER break the save flow.
+        console.error("[record-deal] PHASE_D_CANONICAL_THREW:", canonErr);
+      }
+    }
+    
     // Derive gap_pct and signal for immediate UI use
     const gap_pct = inserted?.fair_value && inserted.fair_value > 0
       ? Math.round(((inserted.asking_price - inserted.fair_value) / inserted.fair_value) * 100)
