@@ -10,6 +10,7 @@ import { LenderReadinessTab } from "@/components/LenderReadinessTab";
 import { buildLenderReadiness } from "@/lib/lenderReadiness";
 import { DealMemoTab } from "@/components/DealMemoTab";
 import FinancialBenchmarksTab from "@/components/FinancialBenchmarksTab";
+import TaxAssumptionsTab from "@/components/TaxAssumptionsTab";
 import { buildRiskFlags, buildDiligenceQuestions, buildDecisionTriggers } from "@/lib/dealMemo";
 import { INDUSTRY_FIT } from "@/lib/lenderReadiness";
 import { LoiBuilderTab } from "@/components/LoiBuilderTab";
@@ -43,7 +44,7 @@ const supabase = createClient(
 
 // ─── TYPES ───────────────────────────────────────────────────────────────────
 
-type TabId = "home" | "dashboard" | "my-deals" | "compare" | "benchmarks" | "market-intel";
+type TabId = "home" | "dashboard" | "my-deals" | "compare" | "benchmarks" | "tax-assumptions" | "market-intel";
 type CompareMode = "my-deals" | "market" | "closed";
 type DealStatus  = "New" | "Reviewing" | "Under LOI" | "Paused" | "Passed";
 type SortKey     = "date" | "score" | "gap" | "asking";
@@ -2832,14 +2833,6 @@ function DealDetailPanel({
                 </>
               )}
             </button>
-              <a
-              href={`/acquiflow-intel/${deal.id}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{ width: "100%", padding: "10px 14px", borderRadius: 9, border: "1px solid rgba(45,74,62,0.35)", background: "rgba(45,74,62,0.10)", color: "#5a7464", fontSize: 13, fontWeight: 600, cursor: "pointer", textAlign: "left" as any, display: "flex", alignItems: "center", gap: 8, textDecoration: "none", boxSizing: "border-box" }}
-            >
-              <span>⊞</span> Open Institutional Read →
-            </a>
           </div>
         </div>
       </div>
@@ -8668,6 +8661,7 @@ export default function BuyerDashboard() {
   const [loadingUser, setLoadingUser] = useState(true);
   const [activeTab, setActiveTab]     = useState<TabId>("home");
   const [pendingBenchmarkDealId, setPendingBenchmarkDealId] = useState<string | null>(null);
+  const [pendingTaxDealId, setPendingTaxDealId] = useState<string | null>(null);
   const [deals, setDeals]             = useState<DealRun[]>([]);
   const [dri, setDri]                 = useState<DriSnapshot[]>([]);
   const [trending, setTrending]       = useState<TrendingMultiple[]>([]);
@@ -9030,6 +9024,7 @@ const dealHasFullAccess = (dealId: string): boolean => {
     { id: "my-deals",     label: "My Deals"    },
     { id: "compare",      label: "Compare"     },
     { id: "benchmarks",   label: "Financial Benchmarks" },
+    { id: "tax-assumptions", label: "Tax Assumptions" },
     { id: "market-intel", label: "Market Intel" },
   ];
 
@@ -9229,6 +9224,7 @@ const dealHasFullAccess = (dealId: string): boolean => {
                 {activeTab === "my-deals"     && "My Deals"}
                 {activeTab === "compare"      && "Compare Deals"}
                 {activeTab === "benchmarks"   && "Financial Benchmarks"}
+                {activeTab === "tax-assumptions" && "Tax Assumptions"}
                 {activeTab === "market-intel" && "Market Intelligence"}
               </h1>
             </div>
@@ -9381,6 +9377,16 @@ const dealHasFullAccess = (dealId: string): boolean => {
                 userId={user?.id ?? null}
                 pendingDealId={pendingBenchmarkDealId}
                 onPendingDealIdConsumed={() => setPendingBenchmarkDealId(null)}
+                onShowUpgrade={() => setShowUpgradeModal(true)}
+              />
+             )}
+            {activeTab === "tax-assumptions" && (
+              <TaxAssumptionsTab
+                deals={deals}
+                isPro={isPro}
+                userId={user?.id ?? null}
+                pendingDealId={pendingTaxDealId}
+                onPendingDealIdConsumed={() => setPendingTaxDealId(null)}
                 onShowUpgrade={() => setShowUpgradeModal(true)}
               />
              )}
