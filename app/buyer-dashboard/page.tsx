@@ -9132,6 +9132,21 @@ const dealHasFullAccess = (dealId: string): boolean => {
                 )}
               </button>
             ))}
+            {/* Investment Memo — navigation link to AcquiFlow-Intel (after Market Intel; not a content tab) */}
+            <a
+              href="https://www.nextax.ai/acquiflow-intel"
+              style={{
+                position: "relative", padding: "6px 14px", borderRadius: 8,
+                border: "1px solid rgba(99,102,241,0.3)",
+                background: "rgba(99,102,241,0.10)", color: "#C4B5FD",
+                fontSize: 13, fontWeight: 600, textDecoration: "none",
+                cursor: "pointer", transition: "all 0.15s", whiteSpace: "nowrap",
+                display: "inline-flex", alignItems: "center", gap: 5,
+              }}
+            >
+              Investment Memo
+              <span style={{ fontSize: 11, opacity: 0.8 }}>↗</span>
+            </a>
           </div>
 
           {/* Right side */}
@@ -9385,6 +9400,7 @@ const dealHasFullAccess = (dealId: string): boolean => {
                 deals={deals}
                 isPro={isPro}
                 userId={user?.id ?? null}
+                supabase={supabase}
                 pendingDealId={pendingTaxDealId}
                 onPendingDealIdConsumed={() => setPendingTaxDealId(null)}
                 onShowUpgrade={() => setShowUpgradeModal(true)}
