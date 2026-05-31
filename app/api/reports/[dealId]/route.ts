@@ -45,6 +45,8 @@ import {
   CommitteeMemoProse,
   generateDealReportPDF,
 } from "@/lib/acquiflow/deal-report-generator";
+import { buildTaxStructureSection } from "@/lib/acquiflow/tax-structure-section";
+import type { DealTaxAssumptionsRow } from "@/lib/intelligence/tax/tax-row-to-engine-input";
 
 // Service role client for cross-table reads after auth
 const supabaseAdmin = createClient(
@@ -103,6 +105,26 @@ export async function GET(
   // Optional: verify ownership
   if (deal.user_id && deal.user_id !== userId) {
     return NextResponse.json({ error: "Not authorized for this deal" }, { status: 403 });
+  }
+
+  // ─── 3b. Load tax assumptions (optional) → Structure section ──────────
+  // Service-role read of the INST-eligible row only. No row → honest absence.
+  // Best-effort: any failure leaves taxStructure undefined and the report
+  // generates exactly as before (Structure page simply skipped).
+  let taxStructure;
+  try {
+    const { data: taxRow } = await supabaseAdmin
+      .from("deal_tax_assumptions")
+      .select("*")
+      .eq("deal_id", dealId)
+      .maybeSingle();
+    taxStructure = buildTaxStructureSection(
+      (taxRow as DealTaxAssumptionsRow | null) ?? null,
+      { state_of_organization: deal.state ?? null },
+    );
+  } catch (err) {
+    console.warn("[reports] tax assumptions load failed (Structure page skipped):", err);
+    taxStructure = undefined;
   }
 
   // ─── 4. Fetch industry benchmarks ─────────────────────────────────────
@@ -317,6 +339,7 @@ export async function GET(
     benchmarkSnapshot,    // undefined when no snapshot exists → pages 6-8 skipped
     interpretation,       // undefined when interpret call fails → "What this means" skipped
     committeeProse,       // undefined when Sonnet call/validation fails → page 8 skipped
+    taxStructure,         // undefined/absent → Structure page skipped (honest absence)
   };
 
   let pdfBuffer: Buffer;
