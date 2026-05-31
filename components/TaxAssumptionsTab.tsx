@@ -140,6 +140,101 @@ const PREVIEW_ONLY_DEALS: DealRunLite[] = [
   },
 ];
 
+// ─────────────────────────────────────────────────────────────────────────────
+// PERSISTENCE BRIDGE — deal_tax_assumptions (one row per deal, upsertable)
+// Mirrors the dashboard's established pattern: client-side supabase (anon key +
+// user JWT), writes set user_id explicitly, RLS enforces ownership
+// (auth.uid() = user_id). Same shape as toggleFavorite / deal_notes in page.tsx.
+// ─────────────────────────────────────────────────────────────────────────────
+
+// minimal structural type for the injected supabase client (avoids a hard dep)
+interface SupabaseLike {
+  from: (table: string) => any;
+}
+
+// COMPUTED / OPS-only fields — must NEVER be written to the canonical table.
+// Defense-in-depth alongside the DB firewall guard (the table has no such columns).
+const FORBIDDEN_COMPUTED_FIELDS = ["ppa_shield_value", "ppa_after_tax_delta", "recapture_tax_dollar"] as const;
+
+// record (nested, UI shape) → row (flat, DB column shape per TAX-DATA-MODEL)
+function recordToRow(rec: TaxAssumptionRecord, userId: string): Record<string, unknown> {
+  const b = rec.existing_basis_by_class;
+  const row: Record<string, unknown> = {
+    deal_id: rec.deal_id,
+    user_id: userId,
+    ppa_structure: rec.ppa_structure,
+    entity_type: rec.entity_type,
+    seller_basis_disclosed: rec.seller_basis_disclosed,
+    existing_basis_goodwill: b.goodwill,
+    existing_basis_equipment: b.equipment,
+    existing_basis_real_property: b.real_property,
+    existing_basis_intangibles: b.intangibles,
+    existing_basis_working_capital: b.working_capital,
+    prior_depreciation_disclosed: rec.prior_depreciation_disclosed,
+    asset_accum_depreciation: rec.asset_accum_depreciation,
+    recapture_sensitive_present: rec.recapture_sensitive_present,
+    nols_disclosed: rec.nols_disclosed,
+    nol_amount: rec.nol_amount,
+    ppa_goodwill: rec.ppa_goodwill,
+    ppa_equipment: rec.ppa_equipment,
+    ppa_real_property: rec.ppa_real_property,
+    ppa_intangibles: rec.ppa_intangibles,
+    ppa_working_capital: rec.ppa_working_capital,
+    asset_equipment_class: rec.asset_equipment_class,
+    asset_real_property_class: rec.asset_real_property_class,
+    debt_seller_note_principal: rec.debt_seller_note_principal,
+    debt_seller_note_rate: rec.debt_seller_note_rate,
+    debt_seller_note_term: rec.debt_seller_note_term,
+    buyer_ordinary_rate: rec.buyer_ordinary_rate,
+    buyer_capital_rate: rec.buyer_capital_rate,
+    seller_ordinary_rate: rec.seller_ordinary_rate,
+    seller_capital_rate: rec.seller_capital_rate,
+    state_footprint: rec.state_footprint,
+    source_type: "entered",
+    evidence_quality: "assumed",
+  };
+  // hard strip: never let a computed/OPS-only field reach the write
+  for (const f of FORBIDDEN_COMPUTED_FIELDS) delete (row as Record<string, unknown>)[f];
+  return row;
+}
+
+// row (flat, from DB) → record (nested, UI shape)
+function rowToRecord(row: Record<string, any>): TaxAssumptionRecord {
+  return {
+    deal_id: row.deal_id ?? null,
+    ppa_structure: row.ppa_structure ?? "unspecified",
+    entity_type: row.entity_type ?? "unknown",
+    nols_disclosed: row.nols_disclosed ?? "unknown",
+    nol_amount: row.nol_amount ?? null,
+    seller_basis_disclosed: row.seller_basis_disclosed ?? "unknown",
+    existing_basis_by_class: {
+      goodwill: row.existing_basis_goodwill ?? null,
+      equipment: row.existing_basis_equipment ?? null,
+      real_property: row.existing_basis_real_property ?? null,
+      intangibles: row.existing_basis_intangibles ?? null,
+      working_capital: row.existing_basis_working_capital ?? null,
+    },
+    prior_depreciation_disclosed: row.prior_depreciation_disclosed ?? "unknown",
+    asset_accum_depreciation: row.asset_accum_depreciation ?? null,
+    recapture_sensitive_present: row.recapture_sensitive_present ?? "unknown",
+    ppa_goodwill: row.ppa_goodwill ?? null,
+    ppa_equipment: row.ppa_equipment ?? null,
+    ppa_real_property: row.ppa_real_property ?? null,
+    ppa_intangibles: row.ppa_intangibles ?? null,
+    ppa_working_capital: row.ppa_working_capital ?? null,
+    asset_equipment_class: row.asset_equipment_class ?? "unspecified",
+    asset_real_property_class: row.asset_real_property_class ?? "unspecified",
+    debt_seller_note_principal: row.debt_seller_note_principal ?? null,
+    debt_seller_note_rate: row.debt_seller_note_rate ?? null,
+    debt_seller_note_term: row.debt_seller_note_term ?? null,
+    buyer_ordinary_rate: row.buyer_ordinary_rate ?? null,
+    buyer_capital_rate: row.buyer_capital_rate ?? null,
+    seller_ordinary_rate: row.seller_ordinary_rate ?? null,
+    seller_capital_rate: row.seller_capital_rate ?? null,
+    state_footprint: Array.isArray(row.state_footprint) ? row.state_footprint : [],
+  };
+}
+
 // ── design tokens (match buyer-dashboard) ──
 const INK = "#E2E8F0", MUTE = "#7C8593", MUTE2 = "#94A3B8", FAINT = "#6B7280";
 const PANEL_BG = "rgba(255,255,255,0.02)", PANEL_BORDER = "1px solid rgba(255,255,255,0.06)";
@@ -150,9 +245,9 @@ const FONT = "'Inter',sans-serif";
 
 // seam badge colors
 const SEAM = {
-  FACT:       { label: "deal fact",  color: "#34D399", bg: "rgba(16,185,129,0.12)",  border: "rgba(16,185,129,0.3)" },
-  ASSUMPTION: { label: "assumption", color: "#FCD34D", bg: "rgba(245,158,11,0.12)",  border: "rgba(245,158,11,0.3)" },
-  COMPUTED:   { label: "preview · ops-only", color: "#A5B4FC", bg: "rgba(99,102,241,0.12)", border: "rgba(99,102,241,0.3)" },
+  FACT:       { label: "imported from deal",  color: "#34D399", bg: "rgba(16,185,129,0.12)",  border: "rgba(16,185,129,0.3)" },
+  ASSUMPTION: { label: "buyer input", color: "#FCD34D", bg: "rgba(245,158,11,0.12)",  border: "rgba(245,158,11,0.3)" },
+  COMPUTED:   { label: "analysis only", color: "#A5B4FC", bg: "rgba(99,102,241,0.12)", border: "rgba(99,102,241,0.3)" },
 };
 
 function SeamBadge({ kind }: { kind: keyof typeof SEAM }) {
@@ -283,6 +378,71 @@ function Panel({ title, subtitle, seamHint, children }: {
   );
 }
 
+// ── Acquisition Structure Snapshot — at-a-glance status mirror that becomes the
+//    executive summary feeding AcquiFlow-Intel. Reports INPUT COMPLETENESS, not
+//    deal quality: readiness is "how many structural reads have their inputs,"
+//    never a score and never a judgment that one structure is preferable.
+function StructureSnapshot({ rec, ready, total }: {
+  rec: TaxAssumptionRecord; ready: number; total: number;
+}) {
+  const structLabel: Record<PpaStructure, string> = {
+    unspecified: "Not specified", asset: "Asset purchase", stock: "Stock purchase",
+    stock_338_h_10: "Stock + §338(h)(10)", stock_336_e: "Stock + §336(e)",
+  };
+  const entityLabelMap: Record<EntityType, string> = {
+    unknown: "Not specified", c_corp: "C-Corporation", s_corp: "S-Corporation",
+    partnership: "LLC (partnership)", disregarded_llc: "Disregarded LLC", sole_prop: "Sole proprietorship",
+  };
+  const ppaCount = [rec.ppa_goodwill, rec.ppa_equipment, rec.ppa_real_property, rec.ppa_intangibles, rec.ppa_working_capital]
+    .filter((v) => typeof v === "number" && v > 0).length;
+  const ppaEntered = ppaCount === 0 ? "No" : ppaCount >= 3 ? "Yes" : "Partial";
+  const tri = (t: TriState) => (t === "yes" ? "Yes" : t === "no" ? "No" : "Unknown");
+
+  const rows: [string, string, boolean][] = [
+    // [label, value, isSpecified]
+    ["Transaction structure", structLabel[rec.ppa_structure], rec.ppa_structure !== "unspecified"],
+    ["Entity type", entityLabelMap[rec.entity_type], rec.entity_type !== "unknown"],
+    ["PPA entered", ppaEntered, ppaCount > 0],
+    ["NOL disclosure", tri(rec.nols_disclosed), rec.nols_disclosed !== "unknown"],
+    ["Basis disclosure", tri(rec.seller_basis_disclosed), rec.seller_basis_disclosed !== "unknown"],
+  ];
+
+  return (
+    <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, overflow: "hidden", marginBottom: 16 }}>
+      <div style={{ padding: "12px 16px", borderBottom: "1px solid rgba(255,255,255,0.05)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <span style={{ fontSize: 11, fontWeight: 700, color: INK, textTransform: "uppercase", letterSpacing: "0.08em" }}>Acquisition structure snapshot</span>
+        <span style={{ fontSize: 10, color: MUTE, fontStyle: "italic" }}>input status — not a deal score</span>
+      </div>
+      <div style={{ padding: "14px 16px", display: "flex", flexWrap: "wrap", gap: "10px 28px", alignItems: "center" }}>
+        {rows.map(([label, value, set]) => (
+          <div key={label} style={{ minWidth: 150 }}>
+            <div style={{ fontSize: 9, color: FAINT, textTransform: "uppercase", letterSpacing: "0.06em" }}>{label}</div>
+            <div style={{ fontSize: 13.5, color: set ? INK : MUTE, marginTop: 3, fontWeight: set ? 600 : 400 }}>
+              {!set && <span style={{ display: "inline-block", width: 6, height: 6, borderRadius: 3, background: "rgba(255,255,255,0.18)", marginRight: 6, verticalAlign: "middle" }} />}
+              {value}
+            </div>
+          </div>
+        ))}
+        {/* readiness pill */}
+        <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 10 }}>
+          <div style={{ textAlign: "right" }}>
+            <div style={{ fontSize: 9, color: FAINT, textTransform: "uppercase", letterSpacing: "0.06em" }}>Structure readiness</div>
+            <div style={{ fontSize: 18, color: VIOLET, fontWeight: 700, fontFamily: "ui-monospace, monospace", marginTop: 1 }}>{ready} / {total}</div>
+          </div>
+          <div style={{ width: 56, height: 56, position: "relative", flexShrink: 0 }}>
+            <svg width="56" height="56" viewBox="0 0 56 56">
+              <circle cx="28" cy="28" r="24" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="5" />
+              <circle cx="28" cy="28" r="24" fill="none" stroke="#6366F1" strokeWidth="5" strokeLinecap="round"
+                strokeDasharray={`${(total ? ready / total : 0) * 2 * Math.PI * 24} ${2 * Math.PI * 24}`}
+                transform="rotate(-90 28 28)" />
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // MAIN COMPONENT
 // ─────────────────────────────────────────────────────────────────────────────
@@ -290,6 +450,7 @@ export default function TaxAssumptionsTab({
   deals = [],
   isPro = true,
   userId = null,
+  supabase = null,
   pendingDealId = null,
   onPendingDealIdConsumed,
   onShowUpgrade,
@@ -297,6 +458,7 @@ export default function TaxAssumptionsTab({
   deals?: DealRunLite[];
   isPro?: boolean;
   userId?: string | null;
+  supabase?: SupabaseLike | null;
   pendingDealId?: string | null;
   onPendingDealIdConsumed?: () => void;
   onShowUpgrade?: () => void;
@@ -306,9 +468,20 @@ export default function TaxAssumptionsTab({
   const usingPreview = deals.length === 0;
   const effectiveDeals: DealRunLite[] = usingPreview ? PREVIEW_ONLY_DEALS : deals;
 
+  // persistence is active only with a real supabase client + userId + real deals.
+  // In preview (no deals) we stay local-state-only exactly as before.
+  const persistenceEnabled = !!supabase && !!userId && !usingPreview;
+
   const [selectedDealId, setSelectedDealId] = useState<string | null>(null);
-  // assumption records keyed by deal id (local-state only; no persistence)
+  // assumption records keyed by deal id (local cache; durable via supabase when enabled)
   const [records, setRecords] = useState<Record<string, TaxAssumptionRecord>>({});
+
+  // per-deal load/save status for visible success/error states
+  type SaveState = "idle" | "loading" | "loaded" | "saving" | "saved" | "error";
+  const [status, setStatus] = useState<SaveState>("idle");
+  const [statusMsg, setStatusMsg] = useState<string>("");
+  const [dirty, setDirty] = useState<boolean>(false);
+  const [loadedDealIds, setLoadedDealIds] = useState<Set<string>>(new Set());
 
   const selectedDeal = useMemo(
     () => effectiveDeals.find((d) => d.id === selectedDealId) ?? null,
@@ -323,27 +496,94 @@ export default function TaxAssumptionsTab({
     }
   }, [pendingDealId, onPendingDealIdConsumed]);
 
-  // ensure a record exists for the selected deal, seeded with deal facts
+  // on deal select: load from deal_tax_assumptions (if enabled), else seed blank.
   useEffect(() => {
     if (!selectedDealId) return;
-    setRecords((prev) => {
-      if (prev[selectedDealId]) return prev;
+    let cancelled = false;
+
+    // already have it cached this session → don't reload (preserves unsaved edits)
+    if (records[selectedDealId]) { setStatus("loaded"); setStatusMsg(""); return; }
+
+    const seedBlank = () => {
       const seed = blankRecord(selectedDealId);
       const d = effectiveDeals.find((x) => x.id === selectedDealId);
       if (d?.state) seed.state_footprint = [d.state];
-      return { ...prev, [selectedDealId]: seed };
-    });
-  }, [selectedDealId, effectiveDeals]);
+      return seed;
+    };
+
+    if (!persistenceEnabled || !supabase) {
+      // local-state-only path (preview / no client): seed blank, exactly as before
+      setRecords((prev) => (prev[selectedDealId] ? prev : { ...prev, [selectedDealId]: seedBlank() }));
+      return;
+    }
+
+    // durable path: SELECT the row; hydrate if present, else seed blank.
+    setStatus("loading"); setStatusMsg("Loading saved assumptions…");
+    (async () => {
+      try {
+        const { data, error } = await supabase
+          .from("deal_tax_assumptions")
+          .select("*")
+          .eq("deal_id", selectedDealId)
+          .maybeSingle();
+        if (cancelled) return;
+        if (error) throw error;
+        const rec = data ? rowToRecord(data) : seedBlank();
+        setRecords((prev) => ({ ...prev, [selectedDealId]: rec }));
+        setLoadedDealIds((prev) => new Set(prev).add(selectedDealId));
+        setDirty(false);
+        setStatus("loaded");
+        setStatusMsg(data ? "Loaded saved assumptions." : "No saved assumptions yet — start entering.");
+      } catch (e: any) {
+        if (cancelled) return;
+        // graceful fallback: still let the user work locally even if load failed
+        setRecords((prev) => (prev[selectedDealId!] ? prev : { ...prev, [selectedDealId!]: seedBlank() }));
+        setStatus("error");
+        setStatusMsg("Couldn’t load saved assumptions — you can still enter them; saving will retry.");
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [selectedDealId, persistenceEnabled, supabase, effectiveDeals]);
 
   const rec = selectedDealId ? records[selectedDealId] ?? blankRecord(selectedDealId) : null;
   const patch = useCallback((p: Partial<TaxAssumptionRecord>) => {
     if (!selectedDealId) return;
     setRecords((prev) => ({ ...prev, [selectedDealId]: { ...(prev[selectedDealId] ?? blankRecord(selectedDealId)), ...p } }));
+    setDirty(true);
+    setStatus((st) => (st === "saved" || st === "loaded" ? "idle" : st));
   }, [selectedDealId]);
   const patchBasis = useCallback((cls: keyof BasisByClass, v: number | null) => {
     if (!selectedDealId || !rec) return;
     patch({ existing_basis_by_class: { ...rec.existing_basis_by_class, [cls]: v } });
   }, [selectedDealId, rec, patch]);
+
+  // ── SAVE: upsert the current record into deal_tax_assumptions ──
+  const handleSave = useCallback(async () => {
+    if (!selectedDealId || !rec) return;
+    if (!persistenceEnabled || !supabase || !userId) {
+      // preview / no client: keep prior local-only behavior, but tell the user plainly
+      setStatus("saved");
+      setStatusMsg("Saved in this session (preview mode — not yet persisted to the database).");
+      setDirty(false);
+      return;
+    }
+    setStatus("saving"); setStatusMsg("Saving…");
+    try {
+      const row = recordToRow(rec, userId); // recordToRow strips COMPUTED/OPS-only fields
+      const { error } = await supabase
+        .from("deal_tax_assumptions")
+        .upsert(row, { onConflict: "deal_id" });
+      if (error) throw error;
+      setLoadedDealIds((prev) => new Set(prev).add(selectedDealId));
+      setDirty(false);
+      setStatus("saved");
+      setStatusMsg("Saved.");
+    } catch (e: any) {
+      setStatus("error");
+      setStatusMsg("Save failed: " + (e?.message ?? "unknown error") + ". Your entries are kept locally — try again.");
+    }
+  }, [selectedDealId, rec, persistenceEnabled, supabase, userId]);
 
   // ── PPA running total (OPS preview only) ──
   const ppaTotal: number = rec
@@ -405,9 +645,9 @@ export default function TaxAssumptionsTab({
       {/* ── seam legend ── */}
       <div style={{ display: "flex", gap: 16, flexWrap: "wrap", alignItems: "center", marginBottom: 16, padding: "10px 14px", background: PANEL_BG, border: PANEL_BORDER, borderRadius: 10 }}>
         <span style={{ fontSize: 10.5, color: MUTE, fontWeight: 600 }}>How values are classified:</span>
-        <span style={{ display: "flex", gap: 7, alignItems: "center" }}><SeamBadge kind="FACT" /><span style={{ fontSize: 11, color: MUTE2 }}>from the saved deal or a disclosed source</span></span>
-        <span style={{ display: "flex", gap: 7, alignItems: "center" }}><SeamBadge kind="ASSUMPTION" /><span style={{ fontSize: 11, color: MUTE2 }}>buyer-entered; travels labeled</span></span>
-        <span style={{ display: "flex", gap: 7, alignItems: "center" }}><SeamBadge kind="COMPUTED" /><span style={{ fontSize: 11, color: MUTE2 }}>preview math; never enters the report</span></span>
+        <span style={{ display: "flex", gap: 7, alignItems: "center" }}><SeamBadge kind="FACT" /><span style={{ fontSize: 11, color: MUTE2 }}>pulled from the saved deal or a disclosed source</span></span>
+        <span style={{ display: "flex", gap: 7, alignItems: "center" }}><SeamBadge kind="ASSUMPTION" /><span style={{ fontSize: 11, color: MUTE2 }}>entered by you; travels labeled</span></span>
+        <span style={{ display: "flex", gap: 7, alignItems: "center" }}><SeamBadge kind="COMPUTED" /><span style={{ fontSize: 11, color: MUTE2 }}>preview math; never enters the report as a fact</span></span>
       </div>
 
       {/* ── deal selector ── */}
@@ -453,7 +693,10 @@ export default function TaxAssumptionsTab({
         </div>
       ) : (
         <>
-          {/* ── readiness readout ── */}
+          {/* ── acquisition structure snapshot (executive status mirror) ── */}
+          <StructureSnapshot rec={rec} ready={readiness.ready} total={readiness.total} />
+
+          {/* ── readiness readout (narrative) ── */}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, background: "rgba(99,102,241,0.06)", border: "1px solid rgba(99,102,241,0.2)", borderRadius: 12, padding: "13px 16px", marginBottom: 16 }}>
             <div>
               <div style={{ fontSize: 13, color: INK }}>
@@ -568,18 +811,38 @@ export default function TaxAssumptionsTab({
                 </div>
               </Panel>
 
-              {/* save (local only) */}
-              <div style={{ display: "flex", gap: 10, alignItems: "center", justifyContent: "flex-end", marginTop: 4 }}>
-                <span style={{ fontSize: 11, color: FAINT, fontStyle: "italic" }}>Held in this session only — not yet persisted.</span>
+              {/* save + live status */}
+              <div style={{ display: "flex", gap: 12, alignItems: "center", justifyContent: "flex-end", marginTop: 4 }}>
+                {(() => {
+                  const tone =
+                    status === "error" ? { c: "#FCA5A5", dot: "#EF4444" }
+                    : status === "saved" ? { c: "#6EE7B7", dot: GREEN }
+                    : status === "saving" || status === "loading" ? { c: VIOLET_DIM, dot: INDIGO }
+                    : dirty ? { c: "#FCD34D", dot: AMBER }
+                    : { c: FAINT, dot: "transparent" };
+                  const text =
+                    statusMsg ? statusMsg
+                    : dirty ? "Unsaved changes."
+                    : persistenceEnabled ? "Saved to your account." : "Held in this session only.";
+                  return (
+                    <span style={{ display: "flex", alignItems: "center", gap: 7, fontSize: 11.5, color: tone.c, fontStyle: "italic" }}>
+                      {tone.dot !== "transparent" && <span style={{ width: 7, height: 7, borderRadius: 4, background: tone.dot, display: "inline-block" }} />}
+                      {text}
+                    </span>
+                  );
+                })()}
                 <button
-                  onClick={() => { /* local-state only; persistence wired later */ }}
+                  onClick={handleSave}
+                  disabled={status === "saving" || status === "loading"}
                   style={{
                     padding: "9px 18px", borderRadius: 8, border: "none",
-                    background: "linear-gradient(135deg,#3B82F6,#6366F1)", color: "#fff",
-                    fontSize: 12.5, fontWeight: 600, fontFamily: FONT, cursor: "pointer",
+                    background: (status === "saving" || status === "loading")
+                      ? "rgba(99,102,241,0.4)" : "linear-gradient(135deg,#3B82F6,#6366F1)",
+                    color: "#fff", fontSize: 12.5, fontWeight: 600, fontFamily: FONT,
+                    cursor: (status === "saving" || status === "loading") ? "default" : "pointer",
                   }}
                 >
-                  Save assumptions
+                  {status === "saving" ? "Saving…" : "Save assumptions"}
                 </button>
               </div>
             </div>
