@@ -35,6 +35,7 @@
 // =====================================================================
 
 import { jsPDF } from "jspdf";
+import type { TaxStructureSection } from "@/lib/acquiflow/tax-structure-section";
 import {
   DealReportInputs,
   DecisionLayerResult,
@@ -190,6 +191,9 @@ export interface DealReportData {
   // Optional pre-fetched committee prose from Sonnet 4.6 — gates page 8
   // and supplies the normalization interpretation on page 6
   committeeProse?: CommitteeMemoProse;
+  // Optional tax/structure section data (buyer-entered assumptions → engine).
+  // When present AND .present===true a Structure page renders after Page 5.
+  taxStructure?: TaxStructureSection;
 }
 
 // ─── Color palette (canonical, used throughout) ─────────────────────────
@@ -3130,6 +3134,129 @@ function drawCommitteeMemoSection(
 
 // ─── Main entry: generatePDF() ──────────────────────────────────────────
 
+// ─── STRUCTURE (COMPACT ABSENCE) — inline band when no assumptions exist ─
+// Renders a few lines wherever it fits (no newPage), returning the new y.
+// Used when taxStructure.present === false so the report signals the section
+// exists and how to populate it, without spending a full page on absence.
+function drawTaxStructureCompact(doc: jsPDF, y: number): number {
+  drawSectionHeader(doc, M, y, "Transaction Structure & Tax — Not yet evaluated");
+  y += SP.md;
+  y = drawWrappedText(
+    doc,
+    "No structure assumptions have been entered for this deal. Complete the Tax Assumptions tab to include basis treatment, allocation-driven recovery schedules, election considerations, and structural reads in this report.",
+    M, y, CW, 9, COLOR.textMuted, 1.4,
+  );
+  return y + SP.md;
+}
+
+// ─── STRUCTURE PAGE — tax/structure section (buyer assumptions → engine) ─
+// Renders in the same institutional idiom as the other pages. All allocation
+// amounts are labeled assumptions; schedules are facts; OPS-only shields never
+// reach this data. When the section is absent, an honest "not yet specified"
+// note renders instead of fabricated content.
+function drawTaxStructurePage(doc: jsPDF, sec: TaxStructureSection): void {
+  newPage(doc, 0, "Structure & Tax");
+  let y = 78;
+
+  setType(doc, "eyebrow");
+  setHex(doc, COLOR.indigo, "text");
+  doc.text("TRANSACTION STRUCTURE & TAX", M, y);
+  y += 18;
+
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(15);
+  setHex(doc, COLOR.textPrimary, "text");
+  doc.text("Structure & Tax Treatment", M, y);
+  y += 14;
+
+  setType(doc, "L4");
+  setHex(doc, COLOR.textMuted, "text");
+  doc.text("Structural reads from the buyer's entered assumptions. Amounts are labeled assumptions, not advice.", M, y);
+  y += SP.lg;
+
+  // headline status cells
+  drawCell(doc, M, y, (CW - SP.md) / 2, 34, "Acquisition structure", sec.structure_label, COLOR.textPrimary, 11);
+  drawCell(doc, M + (CW - SP.md) / 2 + SP.md, y, (CW - SP.md) / 2, 34, "Target entity", sec.entity_label, COLOR.textPrimary, 11);
+  y += 34 + SP.lg;
+
+  if (!sec.present) {
+    drawSectionHeader(doc, M, y, "Not yet specified");
+    y += SP.md;
+    sec.absent_notes.forEach((note) => {
+      y = drawWrappedText(doc, note, M, y, CW, 9, COLOR.textMuted, 1.4) + SP.xs;
+    });
+    drawProvenanceFooter(doc, sec.provenance);
+    return;
+  }
+
+  // categorical statements
+  if (sec.statements.length > 0) {
+    drawSectionHeader(doc, M, y, "Structural reads");
+    y += SP.md;
+    for (const st of sec.statements) {
+      if (y > PH - 90) { newPage(doc, 0, "Structure & Tax"); y = 78; }
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9.5);
+      setHex(doc, COLOR.textPrimary, "text");
+      doc.text(st.heading, M, y);
+      const tag = st.seam === "fact" ? "DEAL RECORD" : "BUYER ASSUMPTION";
+      const tagColor = st.seam === "fact" ? COLOR.emerald : COLOR.amber;
+      drawBadge(doc, M + doc.getTextWidth(st.heading) + 8, y, tag, tagColor, tagColor, 6, true, true);
+      y += 12;
+      y = drawWrappedText(doc, st.body, M, y, CW, 9, COLOR.textBody, 1.4) + SP.md;
+    }
+  }
+
+  // schedules (facts)
+  for (const sch of sec.schedules) {
+    if (y > PH - 140) { newPage(doc, 0, "Structure & Tax"); y = 78; }
+    drawSectionHeader(doc, M, y, sch.heading);
+    y += SP.md;
+    if (sch.basis_note) {
+      y = drawWrappedText(doc, sch.basis_note, M, y, CW, 8, COLOR.textDim, 1.3, "italic") + SP.sm;
+    }
+    // compact schedule rows (year : amount)
+    setType(doc, "L5");
+    const colW = 110;
+    let cx = M, rowY = y;
+    sch.rows.forEach((r, i) => {
+      if (cx + colW > M + CW) { cx = M; rowY += 16; }
+      setHex(doc, COLOR.textDim, "text");
+      doc.text(r.label, cx, rowY);
+      setHex(doc, COLOR.textBody, "text");
+      doc.text(r.amount === null ? "—" : fmtUsd(r.amount), cx + 44, rowY);
+      cx += colW;
+    });
+    y = rowY + 16;
+    if (sch.total !== null) {
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9);
+      setHex(doc, COLOR.textPrimary, "text");
+      doc.text(`Total: ${fmtUsd(sch.total)}`, M, y);
+      y += SP.md;
+    }
+    y += SP.sm;
+  }
+
+  // absence notes (what could not be read)
+  if (sec.absent_notes.length > 0) {
+    if (y > PH - 110) { newPage(doc, 0, "Structure & Tax"); y = 78; }
+    drawSectionHeader(doc, M, y, "Not yet specified");
+    y += SP.md;
+    sec.absent_notes.forEach((note) => {
+      y = drawWrappedText(doc, note, M, y, CW, 8.5, COLOR.textMuted, 1.35) + SP.xs;
+    });
+  }
+
+  drawProvenanceFooter(doc, sec.provenance);
+}
+
+function drawProvenanceFooter(doc: jsPDF, provenance: string): void {
+  setType(doc, "L5");
+  setHex(doc, COLOR.textFaint, "text");
+  doc.text(provenance, M, PH - 50, { maxWidth: CW });
+}
+
 export async function generateDealReportPDF(data: DealReportData): Promise<Buffer> {
   const decision = data.decision ?? computeDecisionLayer(data.inputs);
 
@@ -3144,6 +3271,15 @@ export async function generateDealReportPDF(data: DealReportData): Promise<Buffe
   drawPage3(doc, data, decision);
   drawPage4(doc, data, decision);
   drawPage5(doc, data, decision);
+
+  // Structure & Tax: full page when assumptions exist; otherwise a compact
+  // "Not yet evaluated" band placed low on the current page (no standalone page).
+  if (data.taxStructure && data.taxStructure.present) {
+    drawTaxStructurePage(doc, data.taxStructure);
+  } else if (data.taxStructure) {
+    // compact band sits in the lower region of the Page 5 sheet
+    drawTaxStructureCompact(doc, PH - 150);
+  }
 
   // Pages 6-7 render only when caller supplied a benchmark snapshot
   if (data.benchmarkSnapshot) {
@@ -3178,6 +3314,15 @@ export async function downloadDealReportPDF(data: DealReportData, filename?: str
   drawPage3(doc, data, decision);
   drawPage4(doc, data, decision);
   drawPage5(doc, data, decision);
+
+  // Structure & Tax: full page when assumptions exist; otherwise a compact
+  // "Not yet evaluated" band placed low on the current page (no standalone page).
+  if (data.taxStructure && data.taxStructure.present) {
+    drawTaxStructurePage(doc, data.taxStructure);
+  } else if (data.taxStructure) {
+    // compact band sits in the lower region of the Page 5 sheet
+    drawTaxStructureCompact(doc, PH - 150);
+  }
 
   // Pages 6-7 render only when caller supplied a benchmark snapshot
   if (data.benchmarkSnapshot) {
