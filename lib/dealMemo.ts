@@ -1,6 +1,9 @@
 // lib/dealMemo.ts
 // Deal Memo data layer — generates red flags and diligence questions
 // from live deal signals. Pure functions, deterministic, export-ready.
+//
+// V2.1: Added investigation-required flag for circuit breaker cases,
+//        positive signals, neutral diligence items, industry-specific flags.
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -22,7 +25,7 @@ export type QuestionCategory =
 
 export interface DiligenceQuestion {
   text:     string;
-  priority: boolean;   // true if flagged as high-priority by deal signals
+  priority: boolean;
 }
 
 export interface QuestionGroup {
@@ -63,7 +66,7 @@ export function buildRiskFlags(d: DealMemoInput): RiskFlag[] {
     flags.push({ level: "high", text: `DSCR of ${d.dscr.toFixed(2)}x cannot service standard debt — financing is not viable at current terms.` });
   }
   if (d.stressDscr15 < 1.0) {
-    flags.push({ level: "high", text: `Stress DSCR at −15% revenue drops below 1.0x — deal breaks under modest downside.` });
+    flags.push({ level: "high", text: `Stress DSCR at -15% revenue drops below 1.0x — deal breaks under modest downside.` });
   }
   if (d.asking_price > 5_000_000) {
     flags.push({ level: "high", text: `Asking price exceeds $5M SBA 7(a) cap — standard SBA financing is closed.` });
@@ -83,27 +86,22 @@ export function buildRiskFlags(d: DealMemoInput): RiskFlag[] {
     flags.push({ level: "medium", text: `DSCR of ${d.dscr.toFixed(2)}x sits below the 1.25x SBA minimum — financing is at risk without equity injection.` });
   }
   if (d.stressDscr15 >= 1.0 && d.stressDscr15 < 1.15) {
-    flags.push({ level: "medium", text: `Stressed DSCR of ${d.stressDscr15.toFixed(2)}x is thin under modest downside — margin for error is low.` });
-  }
-  if (d.earningsSource === "benchmark_implied") {
-    flags.push({ level: "medium", text: `Underwriting uses benchmark-implied earnings — reported SDE was unreliable.` });
-  } else if (d.earningsSource === "blended") {
-    flags.push({ level: "medium", text: `Adjusted earnings in use — reported SDE appeared elevated vs industry norms.` });
-  }
-  if (d.trustScore >= 45 && d.trustScore < 70) {
-    flags.push({ level: "medium", text: `Data confidence of ${d.trustScore}/100 — tax return verification needed before LOI.` });
+    flags.push({ level: "medium", text: `Stressed DSCR of ${d.stressDscr15.toFixed(2)}x at -15% revenue leaves minimal headroom above the 1.0x floor.` });
   }
   if (d.gap_pct != null && d.gap_pct > 15 && d.gap_pct <= 50) {
-    flags.push({ level: "medium", text: `Asking price is ${d.gap_pct}% above fair value — expect meaningful price negotiation.` });
+    flags.push({ level: "medium", text: `Asking price is ${d.gap_pct}% above NexTax fair value — meaningful negotiation margin exists.` });
   }
-  if (d.customer_concentration === "high") {
-    flags.push({ level: "medium", text: `High customer concentration — revenue may not transfer cleanly to a new owner.` });
-  }
-  if (d.owner_operated) {
-    flags.push({ level: "medium", text: `Owner-operated — revenue may depend on personal relationships and seller's daily involvement.` });
+  if (d.earningsSource === "benchmark_implied") {
+    flags.push({ level: "medium", text: `SDE used for scoring was derived from benchmark-implied margins, not reported SDE. Reported SDE may be understated or requires validation.` });
   }
   if (d.industryFit === "higher_scrutiny") {
-    flags.push({ level: "medium", text: `Industry receives closer lender review — margins, concentration, or key-person risk will be probed.` });
+    flags.push({ level: "medium", text: `Industry attracts higher scrutiny from SBA lenders — prepare additional narrative and documentation.` });
+  }
+  if (d.owner_operated === true) {
+    flags.push({ level: "medium", text: `Owner-operated — business value is heavily tied to the current owner. Transition plan and non-compete are critical.` });
+  }
+  if (d.customer_concentration === "high") {
+    flags.push({ level: "medium", text: `Customer concentration flagged as high — loss of a single customer could materially impact revenue.` });
   }
 
   // ── LOW RISK ───────────────────────────────────────────────────────────────
@@ -123,7 +121,15 @@ export function buildRiskFlags(d: DealMemoInput): RiskFlag[] {
     flags.push({ level: "low", text: `Data confidence of ${d.trustScore}/100 — standard verification procedures apply.` });
   }
 
-  // ── POSITIVE SIGNALS (green) — fire when deal is clean ────────────────
+  // ── INVESTIGATION REQUIRED (circuit breaker) ──────────────────────────────
+  if (d.manual_review_required && d.trustScore < 40 && d.usableSDE >= d.reportedSDE * 0.95) {
+    flags.push({
+      level: "high",
+      text: `Reported SDE margin materially exceeds industry benchmarks. Earnings verification is required before relying on reported figures. This may reflect a legitimate owner-operated model, aggressive add-backs, or industry misclassification. Obtain 3 years of tax returns and a detailed add-back schedule before advancing.`,
+    });
+  }
+
+  // ── POSITIVE SIGNALS (green) — fire when deal is clean ────────────────────
   if (d.dscr >= 1.5) {
     const headroom = Math.round(((d.dscr - 1.25) / 1.25) * 100);
     flags.push({
@@ -191,7 +197,7 @@ export function buildRiskFlags(d: DealMemoInput): RiskFlag[] {
     text: `Request aged accounts receivable report. AR beyond 90 days signals collection risk and may require a working capital adjustment at close.`,
   });
 
-  // ── INDUSTRY-SPECIFIC CONTEXT — fires based on industry key ──────────
+  // ── INDUSTRY-SPECIFIC CONTEXT — fires based on industry key ──────────────
   const industryFlags: Record<string, string> = {
     dental:          "Verify provider retention plan — patient base typically follows the dentist, not the practice. Transition period and non-compete are critical.",
     hvac:            "Confirm all trade licenses transfer with the acquisition. HVAC licensing is state-specific and may require the buyer to be independently licensed.",
@@ -252,7 +258,6 @@ export function buildRiskFlags(d: DealMemoInput): RiskFlag[] {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export function buildDiligenceQuestions(d: DealMemoInput): QuestionGroup[] {
-  // Deal signals that raise priority on specific questions
   const lowTrust    = d.trustScore < 70 || d.earningsSource !== "reported";
   const thinDscr    = d.dscr < 1.25 || d.stressDscr15 < 1.15;
   const pricingGap  = (d.gap_pct ?? 0) > 15;
@@ -260,46 +265,39 @@ export function buildDiligenceQuestions(d: DealMemoInput): QuestionGroup[] {
   const custRisk    = d.customer_concentration === "high" || d.customer_concentration === "moderate";
 
   return [
-    // ── 1. FINANCIALS ─────────────────────────────────────────────────────────
     {
       category: "financials",
-      title:    "Financials",
+      title:    "Financial Verification",
       items: [
-        { text: "Can you provide 3 years of federal business tax returns and matching P&L statements?", priority: lowTrust },
-        { text: "What does the itemized add-back schedule look like, and is there documentation for each adjustment?", priority: lowTrust },
-        { text: "What owner compensation and benefits are included in the add-backs?", priority: true },
-        { text: "How do last-twelve-months results compare to the same period a year ago?", priority: false },
-        { text: "Have there been any one-time revenue events or non-recurring costs in the trailing financials?", priority: lowTrust },
+        { text: "Can you provide 3 years of tax returns (business and personal)?", priority: true },
+        { text: "What is the detailed add-back schedule? Specifically: owner salary, personal expenses, one-time costs, and discretionary items.", priority: lowTrust },
+        { text: "What were the actual cash distributions to the owner in the last 3 years?", priority: true },
+        { text: "Are there any outstanding debts, liens, or guarantees not on the balance sheet?", priority: false },
+        { text: "What is the current AR aging schedule? Any balances over 90 days?", priority: false },
       ],
     },
-
-    // ── 2. CUSTOMERS & REVENUE ────────────────────────────────────────────────
     {
       category: "customers",
-      title:    "Customers & Revenue",
+      title:    "Customer & Revenue Quality",
       items: [
-        { text: "What percentage of revenue comes from the top 5 customers, and how long have those relationships existed?", priority: custRisk },
-        { text: "Are customer contracts in place, and are they transferable to a new owner?", priority: custRisk },
-        { text: "What is the customer retention rate over the past 3 years?", priority: false },
-        { text: "How are new customers acquired, and what role does the owner play in sales?", priority: ownerRisk },
-        { text: "Have any major customers left in the past 12 months, and why?", priority: false },
+        { text: "What percentage of revenue comes from the top 5 customers?", priority: true },
+        { text: "Are customer relationships contractual or month-to-month?", priority: custRisk },
+        { text: "Has any customer representing more than 10% of revenue been lost in the past 24 months?", priority: custRisk },
+        { text: "What is the customer acquisition cost and typical lifetime value?", priority: false },
+        { text: "Is revenue seasonal? What does the monthly P&L look like?", priority: false },
       ],
     },
-
-    // ── 3. OPERATIONS ─────────────────────────────────────────────────────────
     {
       category: "operations",
-      title:    "Operations",
+      title:    "Operational & Staffing",
       items: [
-        { text: "Which employees are critical to operations, and what is their tenure?", priority: ownerRisk },
-        { text: "What does a typical week look like for the current owner?", priority: ownerRisk },
-        { text: "Are there documented SOPs, training materials, or operating manuals?", priority: ownerRisk },
-        { text: "What software systems run the business, and are any licenses tied to the current owner?", priority: false },
-        { text: "What capital expenditures are expected in the next 12–24 months?", priority: false },
+        { text: "How many hours per week does the owner work? What are their primary responsibilities?", priority: ownerRisk },
+        { text: "Which employees are critical to operations, and are there retention agreements in place?", priority: true },
+        { text: "What systems, tools, or software does the business rely on? Are all licenses transferable?", priority: false },
+        { text: "Are there any upcoming capital expenditure needs (equipment, vehicles, technology)?", priority: false },
+        { text: "What is the current employee turnover rate?", priority: false },
       ],
     },
-
-    // ── 4. LEGAL & RISK ───────────────────────────────────────────────────────
     {
       category: "legal",
       title:    "Legal & Risk",
@@ -311,8 +309,6 @@ export function buildDiligenceQuestions(d: DealMemoInput): QuestionGroup[] {
         { text: "Are there any UCC liens, tax liens, or judgments against the business?", priority: false },
       ],
     },
-
-    // ── 5. TRANSITION ─────────────────────────────────────────────────────────
     {
       category: "transition",
       title:    "Transition",
@@ -341,7 +337,6 @@ export function summarizeRiskFlags(flags: RiskFlag[]): { high: number; medium: n
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // DECISION TRIGGERS — proceed / reevaluate / walk-away criteria
-// Tunes to the specific deal so triggers feel earned, not generic.
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export interface DecisionTriggers {
@@ -358,7 +353,6 @@ export function buildDecisionTriggers(d: DealMemoInput): DecisionTriggers {
   const custRisk    = d.customer_concentration === "high" || d.customer_concentration === "moderate";
   const industryRisk = d.industryFit === "higher_scrutiny" || d.industryFit === "sba_ineligible";
 
-  // ── PROCEED IF — the conditions that would confirm the decision ────────────
   const proceedIf: string[] = [
     "3 years of tax returns validate reported SDE within 5%",
     "No single customer represents more than 25% of revenue",
@@ -368,10 +362,9 @@ export function buildDecisionTriggers(d: DealMemoInput): DecisionTriggers {
     proceedIf.push("Add-backs are supported by itemized documentation or CPA review");
   }
   if (ownerRisk) {
-    proceedIf.push("Seller commits to a 60–90 day transition and customer introductions");
+    proceedIf.push("Seller commits to a 60-90 day transition and customer introductions");
   }
 
-  // ── RE-EVALUATE IF — yellow signals that warrant a pause ───────────────────
   const reevaluateIf: string[] = [
     "Add-backs are not supported by source documentation",
     "Revenue declines more than 10% in the trailing 12 months",
@@ -387,7 +380,6 @@ export function buildDecisionTriggers(d: DealMemoInput): DecisionTriggers {
     reevaluateIf.push("SBA lender declines the industry or applies restrictive overlays");
   }
 
-  // ── WALK AWAY IF — red-line conditions ─────────────────────────────────────
   const walkAwayIf: string[] = [
     "Earnings quality materially deteriorates — tax returns contradict stated SDE",
     "Legal, regulatory, or liability issues are uncovered in diligence",
