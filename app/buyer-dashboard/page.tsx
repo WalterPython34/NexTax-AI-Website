@@ -1364,6 +1364,12 @@ interface ModalScore {
   debtScore: number;
   marketScore: number;
   industryScore: number;
+   normalizationMode: "reported" | "adjusted" | "stress_case";
+  underwrittenSde: number | null;
+  sdeConfidence: number | null;
+  investigationRequired: boolean;
+   investigationReasons: string[];
+   investigationQuestions: string[];
   /** Evidence profile — separates HARD (data-backed) from SOFT (inferred) flags. */
   evidenceProfile?: DealEvidenceProfile;
 }
@@ -1489,6 +1495,11 @@ function computeModalScore(
   let sde = sdeRaw;
   let normalizationTrustScore: number | null = null;
   let normalizationBullets: string[] = [];
+   let normalizationMode: "reported" | "adjusted" | "stress_case" = "adjusted";  
+  let underwrittenSde: number | null = null;  let sdeConfidence: number | null = null;  
+  let investigationRequired = false;  
+  let investigationReasons: string[] = [];  
+  let investigationQuestions: string[] = [];
   let rmaBenchmarksForNorm: { ebitdaMarginPct: number } | null = null;
   try {
     // Pass ebitda = sdeRaw (not *0.9) so allIdentical fires when revenue=sde=ebitda.
@@ -1522,6 +1533,15 @@ function computeModalScore(
     normalizationBullets = normalized.flags
       .filter((f: any) => f.deduction > 0)
       .map((f: any) => f.message);
+    
+    // Circuit breaker fields    
+    normalizationMode = normalized.normalization_mode ?? "adjusted";    
+    underwrittenSde = normalized.underwritten_sde ?? null;    
+    sdeConfidence = normalized.sde_confidence ?? null;    
+    investigationRequired = normalized.investigation_required ?? false;    
+    investigationReasons = normalized.investigation_reasons ?? [];    
+    investigationQuestions = normalized.investigation_questions ?? [];
+    
   } catch { /* normalization is additive — never block scoring */ }
   const debtPct = parseFloat(inputs.debtPercent) / 100;
   const rate    = parseFloat(inputs.interestRate) / 100;
@@ -1625,6 +1645,12 @@ function computeModalScore(
     benchmarkBasis:    resolvedBenchmark?.basis ?? "fallback",
     resolvedMarginMid: rmaBenchmarksForNorm?.ebitdaMarginPct ?? null,
     evidenceProfile,
+    normalizationMode,
+    underwrittenSde,
+    sdeConfidence,
+    investigationRequired,
+    investigationReasons,
+    investigationQuestions,
   };
 }
 
@@ -2156,12 +2182,12 @@ function AnalyzeDealModal({
                 {/* Key metrics */}
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(100px, 1fr))", gap: 10 }}>
                   {[
-                    { label: "Fair Value",    value: fmt(score.fairValue),           color: "#10B981" },
+                    { label: score.normalizationMode === "stress_case" ? "Reported-Case Value" : "Fair Value", value: fmt(score.fairValue), color: score.normalizationMode === "stress_case" ? "#60A5FA" : "#10B981" },
                     { label: "Multiple",      value: score.multiple.toFixed(2) + "x", color: "#E2E8F0" },
                     { label: "DSCR",          value: score.dscr.toFixed(2) + "x",   color: score.dscr >= 1.25 ? "#10B981" : "#F97316" },
                     { label: "Gap vs Market", value: (score.gap_pct > 0 ? "+" : "") + score.gap_pct + "%", color: score.gap_pct > 0 ? "#D85A30" : "#10B981" },
-                    { label: "Offer Low",     value: fmt(score.recommendedOfferLow), color: "#818CF8" },
-                    { label: "Offer High",    value: fmt(score.recommendedOfferHigh),color: "#818CF8" },
+                   { label: score.normalizationMode === "stress_case" ? "Reported-Case Offer Low" : "Offer Low", value: fmt(score.recommendedOfferLow), color: "#818CF8" },
+{                   { label: score.normalizationMode === "stress_case" ? "Reported-Case Offer High" : "Offer High", value: fmt(score.recommendedOfferHigh), color: "#818CF8" },
                   ].map(m => (
                     <div key={m.label} style={{ textAlign: "center", padding: "8px 6px", borderRadius: 8, background: "rgba(255,255,255,0.02)" }}>
                       <div style={{ fontSize: 9, color: "#7C8593", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 3 }}>{m.label}</div>
@@ -2388,6 +2414,120 @@ function AnalyzeDealModal({
                   </>
                 );
               })()}
+
+               {/* Dual-scenario: Seller Case vs Underwritten Stress Case */}
+              {score.normalizationMode === "stress_case" && score.underwrittenSde != null && (
+                <div style={{
+                  padding: "16px 18px", borderRadius: 12, marginBottom: 14,
+                  background: "rgba(239,68,68,0.04)",
+                  border: "1px solid rgba(239,68,68,0.2)",
+                }}>
+                  <div style={{
+                    fontSize: 10, fontWeight: 700, color: "#EF4444",
+                    textTransform: "uppercase" as any, letterSpacing: "0.08em", marginBottom: 12,
+                  }}>
+                    Earnings Verification Required
+                  </div>
+
+                  {/* Two-column scenario comparison */}
+                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
+                    {/* Seller Case */}
+                    <div style={{
+                      padding: "12px 14px", borderRadius: 10,
+                      background: "rgba(59,130,246,0.06)",
+                      border: "1px solid rgba(59,130,246,0.2)",
+                    }}>
+                      <div style={{ fontSize: 10, fontWeight: 700, color: "#60A5FA", textTransform: "uppercase" as any, letterSpacing: "0.07em", marginBottom: 8 }}>
+                        Seller-Reported Case
+                      </div>
+                      <div style={{ display: "flex", flexDirection: "column" as any, gap: 6 }}>
+
+                        <div>
+                          <div style={{ fontSize: 9, color: "#7C8593" }}>Reported SDE</div>
+                          <div style={{ fontSize: 15, fontWeight: 700, color: "#60A5FA", fontFamily: "'JetBrains Mono',monospace" }}>
+                            ${parseFloat(inputs.sde.replace(/,/g, "")).toLocaleString()}
+                          </div>
+                        </div>
+                        <div>
+                          <div style={{ fontSize: 9, color: "#7C8593" }}>Reported-Case Value</div>
+                          <div style={{ fontSize: 15, fontWeight: 700, color: "#60A5FA", fontFamily: "'JetBrains Mono',monospace" }}>
+                            {fmt(score.fairValue)}
+                          </div>
+                        </div>
+                        <div>
+                          <div style={{ fontSize: 9, color: "#7C8593" }}>Reported-Case DSCR</div>
+                          <div style={{ fontSize: 15, fontWeight: 700, color: score.dscr >= 1.25 ? "#60A5FA" : "#F59E0B", fontFamily: "'JetBrains Mono',monospace" }}>
+                            {score.dscr.toFixed(2)}x
+                          </div>
+                        </div>
+                      </div>
+                      <div style={{ fontSize: 10, color: "#7C8593", marginTop: 8, fontStyle: "italic" }}>
+                        Requires verification
+                      </div>
+                    </div>
+
+                    {/* Stress Case */}
+                    <div style={{
+                      padding: "12px 14px", borderRadius: 10,
+                      background: "rgba(239,68,68,0.04)",
+                      border: "1px solid rgba(239,68,68,0.15)",
+                    }}>
+                      <div style={{ fontSize: 10, fontWeight: 700, color: "#EF4444", textTransform: "uppercase" as any, letterSpacing: "0.07em", marginBottom: 8 }}>
+                        Underwritten Stress Case
+                      </div>
+                      <div style={{ display: "flex", flexDirection: "column" as any, gap: 6 }}>
+                        <div>
+                          <div style={{ fontSize: 9, color: "#7C8593" }}>Benchmark-Implied SDE</div>
+                          <div style={{ fontSize: 15, fontWeight: 700, color: "#EF4444", fontFamily: "'JetBrains Mono',monospace" }}>
+                            ${Math.round(score.underwrittenSde!).toLocaleString()}
+                          </div>
+                        </div>
+                        <div>
+                          <div style={{ fontSize: 9, color: "#7C8593" }}>Stress-Case Value</div>
+                          <div style={{ fontSize: 15, fontWeight: 700, color: "#EF4444", fontFamily: "'JetBrains Mono',monospace" }}>
+                            {fmt(Math.round(score.underwrittenSde! * ((SCORE_INDUSTRIES[inputs.industry]?.benchmarkMid) ?? 2.75)))}
+                          </div>
+                        </div>
+                        <div>
+                          <div style={{ fontSize: 9, color: "#7C8593" }}>Stress-Case Financeable?</div>
+                          <div style={{ fontSize: 15, fontWeight: 700, color: "#EF4444", fontFamily: "'JetBrains Mono',monospace" }}>
+                            Not at current terms
+                          </div>
+                        </div>
+                      </div>
+                      <div style={{ fontSize: 10, color: "#7C8593", marginTop: 8, fontStyle: "italic" }}>
+                        If earnings revert to industry norms
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Explanation */}
+                  <div style={{ fontSize: 12, color: "#94A3B8", lineHeight: 1.65, marginBottom: 12 }}>
+                    {score.investigationReasons[0] ?? "Reported SDE margin materially exceeds industry benchmarks."}{" "}
+                    This does not necessarily indicate error. Small owner-operated businesses in this industry
+                    frequently report margins above industry aggregates. However, the magnitude of deviation
+                    requires independent verification before relying on these figures for any investment decision.
+                  </div>
+
+                  {/* Investigation questions */}
+                  <div style={{
+                    padding: "12px 14px", borderRadius: 10,
+                    background: "rgba(255,255,255,0.02)",
+                    border: "1px solid rgba(255,255,255,0.06)",
+                  }}>
+                    <div style={{ fontSize: 10, fontWeight: 700, color: "#F59E0B", textTransform: "uppercase" as any, letterSpacing: "0.07em", marginBottom: 8 }}>
+                      Required Evidence Before Advancing
+                    </div>
+                    {score.investigationQuestions.map((q: string, i: number) => (
+                      <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: 5 }}>
+                        <span style={{ color: "#F59E0B", fontSize: 10, flexShrink: 0, marginTop: 2, fontWeight: 700 }}>{i + 1}.</span>
+                        <span style={{ fontSize: 11, color: "#94A3B8", lineHeight: 1.5 }}>{q}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
 
               {/* Flags */}
               {(score.redFlags.length > 0 || score.greenFlags.length > 0) && (
