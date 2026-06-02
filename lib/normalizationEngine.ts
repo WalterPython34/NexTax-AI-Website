@@ -1,5 +1,5 @@
 // lib/normalizationEngine.ts
-// NexTax Normalization Layer — V2
+// NexTax Normalization Layer — V2 + Circuit Breaker (Phase 1)
 //
 // Pipeline position:
 //   Raw listing data
@@ -18,6 +18,14 @@
 //   - Trust vs Attractiveness separation — documented and enforced in output shape
 //   - Source quality flags with trust adjustments
 //   - Structured NormalizationFlag with code/severity/title/message/deduction/field
+//
+// V2.1 — Circuit Breaker (Phase 1):
+//   - When normalization would reduce SDE by >40%, circuit breaker fires
+//   - usableSDE preserved as reportedSDE (backward compatible)
+//   - underwritten_sde stores the benchmark-implied figure (stress case)
+//   - investigation_required = true, investigation questions generated
+//   - normalization_mode = "stress_case"
+//   - Verdict locked to Manual Review via trustScore <= 35
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // INTERFACES
@@ -55,14 +63,6 @@ export interface RawDealFinancials {
   } | null;
 }
 
-/**
- * The source of the raw data. Affects trust score.
- * "manual_entry"     = user typed into NexTax analyzer
- * "marketplace"      = scraped from BizBuySell, Flippa, etc.
- * "broker_teaser"    = one-page summary from broker
- * "cim"              = full Confidential Information Memorandum uploaded
- * "user_validated"   = user confirmed and adjusted fields after review
- */
 export type DataSourceType =
   | "manual_entry"
   | "marketplace"
@@ -70,91 +70,56 @@ export type DataSourceType =
   | "cim"
   | "user_validated";
 
-/**
- * A detected anomaly — fully structured for UI rendering.
- * Every flag carries its own deduction so the UI can show precise attribution.
- */
 export interface NormalizationFlag {
-  code:      string;                                       // machine key: "TRIPLE_DUPLICATE_FINANCIALS"
+  code:      string;
   severity:  "info" | "caution" | "warning" | "critical";
-  title:     string;                                       // short label for card/badge
-  message:   string;                                       // professional explanation for UI
-  deduction: number;                                       // trust points removed (0 for info/caution)
+  title:     string;
+  message:   string;
+  deduction: number;
   field:     "earnings" | "margins" | "price" | "revenue" | "classification" | "benchmark" | "source";
 }
 
-/** A trust score deduction with its reason — kept separate for detailed breakdown display. */
 export interface NormalizationAdjustment {
   reason:    string;
   deduction: number;
   source:    "input_anomaly" | "margin_plausibility" | "benchmark" | "classification" | "data_source";
 }
 
-/**
- * Normalized earnings — the core of V2.
- *
- * reportedSDE      = raw SDE as stated by broker/seller
- * benchmarkSDE     = revenue × benchmark ebitda_margin_pct (RMA-implied earnings)
- * usableSDE        = trust-adjusted SDE used for downstream scoring
- * valuationSDE     = SDE to use for fair value calculation
- * debtServiceSDE   = SDE to use for DSCR calculation (most conservative)
- *
- * Trust gating rules:
- *   trustScore >= 80  → usableSDE = reportedSDE  (trust the numbers)
- *   trustScore >= 60  → usableSDE = min(reported, benchmark)  (take the lower)
- *   trustScore < 60   → usableSDE = benchmarkSDE  (ignore stated, use implied)
- *
- * Separation: low trust ≠ bad business. A low-margin restaurant has high trust
- * (data is believable) but poor attractiveness. These must never be conflated.
- */
 export interface NormalizedEarnings {
-  reportedSDE:    number;         // verbatim from input
-  benchmarkSDE:   number | null;  // null if no benchmark available
-  usableSDE:      number;         // trust-gated; drives scoring
-  valuationSDE:   number;         // = usableSDE (alias for clarity in valuation context)
-  debtServiceSDE: number;         // = usableSDE (alias for clarity in DSCR context)
+  reportedSDE:    number;
+  benchmarkSDE:   number | null;
+  usableSDE:      number;
+  valuationSDE:   number;
+  debtServiceSDE: number;
   earningsSource: "reported" | "blended" | "benchmark_implied";
 }
 
 /** Full normalized output. */
 export interface NormalizedDealFinancials {
-  // ── Raw inputs ─────────────────────────────────────────────────────────────
   raw: RawDealFinancials;
-
-  // ── Derived margin ratios ──────────────────────────────────────────────────
-  statedSdeMargin:       number | null;  // sde / revenue (decimal)
-  statedEbitdaMargin:    number | null;  // ebitda / revenue (decimal)
-  impliedMultiple:       number | null;  // price / sde
-  benchmarkEbitdaMargin: number | null;  // from RMA (decimal)
-
-  // ── Normalized earnings (the usable layer for scoring) ────────────────────
+  statedSdeMargin:       number | null;
+  statedEbitdaMargin:    number | null;
+  impliedMultiple:       number | null;
+  benchmarkEbitdaMargin: number | null;
   earnings: NormalizedEarnings;
-
-  // ── Trust (data quality) — separate from business attractiveness ───────────
-  // Trust answers: "Can I rely on these numbers?"
-  // Attractiveness (deal score) answers: "Do I want this business?"
-  // These must NEVER be blended into one vague number.
-  trustScore:      number;                    // 0–100, clamped 5–100
+  trustScore:      number;
   confidenceLevel: "high" | "medium" | "low";
-
-  // ── Structured output ──────────────────────────────────────────────────────
   flags:       NormalizationFlag[];
   adjustments: NormalizationAdjustment[];
   notes:       string[];
+  // Circuit breaker / hybrid model fields (Phase 1)
+  normalization_mode:       "reported" | "adjusted" | "stress_case";
+  underwritten_sde:         number;
+  sde_confidence:           number;
+  investigation_required:   boolean;
+  investigation_reasons:    string[];
+  investigation_questions:  string[];
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // INTERNAL CONSTANTS
 // ═══════════════════════════════════════════════════════════════════════════════
 
-/**
- * Benchmark-family-specific SDE margin warning ceilings.
- * Above warnAbove → caution flag (no deduction).
- * Above hardCeiling → warning/critical flag + deduction.
- * Universal absurdity ceiling (95%) is always applied regardless of family.
- *
- * Values are decimals (0.25 = 25%).
- */
 const FAMILY_MARGIN_CEILINGS: Record<string, { warnAbove: number; hardCeiling: number; label: string }> = {
   food_beverage:        { warnAbove: 0.20, hardCeiling: 0.35, label: "restaurant / food service"         },
   field_services:       { warnAbove: 0.30, hardCeiling: 0.45, label: "field service"                     },
@@ -173,21 +138,18 @@ const FAMILY_MARGIN_CEILINGS: Record<string, { warnAbove: number; hardCeiling: n
   wholesale:            { warnAbove: 0.15, hardCeiling: 0.28, label: "wholesale / distribution"          },
 };
 
-// Universal fallback when family is unknown
 const DEFAULT_CEILING = { warnAbove: 0.45, hardCeiling: 0.70, label: "business" };
 
-/** Benchmark families that use a proxy RMA source. */
 const PROXY_FAMILIES = new Set([
   "med_spa", "behavioral_health", "manufacturing", "retail", "wholesale",
 ]);
 
-/** Source quality deductions. Positive = deduction from trust. */
 const SOURCE_QUALITY_DEDUCTIONS: Record<DataSourceType, number> = {
-  cim:            0,   // full financials — no penalty
-  user_validated: 0,   // user confirmed — no penalty
-  manual_entry:   0,   // direct input — no penalty (user is responsible)
-  marketplace:    5,   // scraped listing — light penalty
-  broker_teaser:  5,   // summary only — light penalty
+  cim:            0,
+  user_validated: 0,
+  manual_entry:   0,
+  marketplace:    5,
+  broker_teaser:  5,
 };
 
 const SOURCE_QUALITY_LABELS: Record<DataSourceType, string> = {
@@ -232,25 +194,6 @@ function bmLabel(isProxy: boolean): string {
 // MAIN FUNCTION
 // ═══════════════════════════════════════════════════════════════════════════════
 
-/**
- * Normalizes raw deal financials, computes trust score, surfaces flags,
- * and produces usable earnings for downstream scoring.
- *
- * Key design principles:
- *  1. Anomaly grouping — one underlying defect → one flag family
- *  2. Industry-aware ceilings — not just a universal 95% fraud check
- *  3. usableSDE — trust-gated earnings that actually flow into valuation + DSCR
- *  4. Trust ≠ Attractiveness — low-margin restaurant has HIGH trust, LOW attractiveness
- *
- * @example
- * const n = normalizeDealFinancials({
- *   revenue: 800_000, sde: 180_000, ebitda: 160_000, price: 650_000,
- *   benchmarkFamily: "field_services", classificationConfidence: 92,
- *   benchmarkIsProxy: false, rmaBenchmarks: { ebitdaMarginPct: 0.121 },
- * });
- * // → n.earnings.usableSDE = 180_000 (trust >= 80, reported SDE used)
- * // → n.trustScore = 100, n.confidenceLevel = "high"
- */
 export function normalizeDealFinancials(
   input: RawDealFinancials,
 ): NormalizedDealFinancials {
@@ -268,7 +211,6 @@ export function normalizeDealFinancials(
   const ebitV  = safe(ebitda);
   const priceV = safe(price);
 
-  // ── Derived ratios ─────────────────────────────────────────────────────────
   const statedSdeMargin    = rev > 0 ? sdeV  / rev : null;
   const statedEbitdaMargin = rev > 0 ? ebitV / rev : null;
   const impliedMultiple    = sdeV > 0 ? priceV / sdeV : null;
@@ -282,7 +224,6 @@ export function normalizeDealFinancials(
   const notes:       string[]                 = [];
   let   trustScore = 100;
 
-  // Helper: add a flag and matching adjustment together (keeps code DRY)
   function addFlag(flag: NormalizationFlag) {
     flags.push(flag);
     if (flag.deduction > 0) {
@@ -305,17 +246,6 @@ export function normalizeDealFinancials(
 
   // ═══════════════════════════════════════════════════════════════════════════
   // RULE A — Anomaly grouping: duplicate / identical financial fields
-  //
-  // Design: treat as a family, not individual pairwise checks.
-  //   Triple-identical (all 3) → one critical event (-40), skip all pairwise checks.
-  //   Pairwise (only 2 match) → individual warnings, do NOT double-count.
-  //   SDE = EBITDA only → info (benign in simple owner-operator structures).
-  //
-  // Margin plausibility checks (Rule C) are then applied SEPARATELY to the
-  // underlying stated margins — not skipped — since a 100% margin is a real
-  // margin problem even if it was caused by a duplicate input.
-  // However we skip margin ceiling checks when allIdentical = true to avoid
-  // re-flagging the same root cause five different ways.
   // ═══════════════════════════════════════════════════════════════════════════
 
   const revEqSde    = rev > 0 && rev === sdeV;
@@ -324,7 +254,6 @@ export function normalizeDealFinancials(
   const allIdentical = revEqSde && revEqEbit && sdeV > 0;
 
   if (allIdentical) {
-    // One critical event — do NOT also fire revEqSde and revEqEbit separately
     addFlag({
       code:      "TRIPLE_DUPLICATE_FINANCIALS",
       severity:  "critical",
@@ -334,7 +263,6 @@ export function normalizeDealFinancials(
       field:     "earnings",
     });
   } else {
-    // Only fire pairwise checks when NOT all-identical
     if (revEqSde) {
       addFlag({
         code:      "REVENUE_EQUALS_SDE",
@@ -356,7 +284,6 @@ export function normalizeDealFinancials(
       });
     }
     if (sdeEqEbit && !revEqSde && !revEqEbit) {
-      // Benign in owner-operator businesses — info only, no deduction
       addFlag({
         code:      "SDE_EQUALS_EBITDA",
         severity:  "info",
@@ -418,23 +345,9 @@ export function normalizeDealFinancials(
 
   // ═══════════════════════════════════════════════════════════════════════════
   // RULE C — Margin plausibility
-  //
-  // Three layers:
-  //   C1. Universal absurdity ceiling (>= 95%) — always applies
-  //   C2. Industry-specific ceiling — family-aware, more nuanced
-  //   C3. Benchmark comparison — requires RMA data
-  //
-  // Skip C2 and C3 when allIdentical = true (root cause already captured in Rule A).
-  // C1 still runs on allIdentical cases because 100% margin is independently flaggable.
-  //
-  // Trust vs Attractiveness separation:
-  //   C1 (impossible margin) → trust deduction
-  //   C2 hard ceiling breach → trust deduction
-  //   C2 warn ceiling breach → caution flag, NO deduction (attractiveness signal)
-  //   C3 benchmark comparison → deduction only above 2× benchmark
   // ═══════════════════════════════════════════════════════════════════════════
 
-  // C1. Universal ceiling — applies always, even when allIdentical
+  // C1. Universal ceiling
   if (statedSdeMargin !== null && statedSdeMargin >= 0.95 && !revEqSde) {
     addFlag({
       code:      "SDE_MARGIN_IMPLAUSIBLE",
@@ -457,12 +370,11 @@ export function normalizeDealFinancials(
     });
   }
 
-  // C2. Industry-specific ceiling — skip if allIdentical (root cause already logged)
+  // C2. Industry-specific ceiling
   if (!allIdentical && statedSdeMargin !== null && rev > 0) {
     const { warnAbove, hardCeiling, label } = familyCeiling;
 
     if (statedSdeMargin > hardCeiling && statedSdeMargin < 0.95) {
-      // Hard ceiling breach — deduction, not just warning
       addFlag({
         code:      "SDE_MARGIN_ABOVE_INDUSTRY_CEILING",
         severity:  "warning",
@@ -472,8 +384,6 @@ export function normalizeDealFinancials(
         field:     "margins",
       });
     } else if (statedSdeMargin > warnAbove && statedSdeMargin <= hardCeiling) {
-      // Warn ceiling — informational only, no deduction (could be a strong business)
-      // This is an ATTRACTIVENESS signal, not a TRUST signal.
       addFlag({
         code:      "SDE_MARGIN_ABOVE_INDUSTRY_NORM",
         severity:  "caution",
@@ -485,7 +395,7 @@ export function normalizeDealFinancials(
     }
   }
 
-  // C3. Benchmark comparison — skip if allIdentical
+  // C3. Benchmark comparison
   if (!allIdentical && hasBenchmark && statedSdeMargin !== null && rev > 0) {
     const ratio   = statedSdeMargin / benchmarkEbitdaMargin!;
     const dealPct = pct(statedSdeMargin);
@@ -504,7 +414,6 @@ export function normalizeDealFinancials(
         field:     "margins",
       });
     } else if (ratio > 1.4) {
-      // Above benchmark but not extreme — attractiveness signal, no trust deduction
       addFlag({
         code:      "SDE_MARGIN_ABOVE_BENCHMARK",
         severity:  "caution",
@@ -514,18 +423,15 @@ export function normalizeDealFinancials(
         field:     "margins",
       });
     } else if (ratio < 0.6) {
-      // Below benchmark — ATTRACTIVENESS flag, not a trust problem
-      // Low-margin restaurant → high trust, low attractiveness. Do NOT deduct trust.
       addFlag({
         code:      "SDE_MARGIN_BELOW_BENCHMARK",
         severity:  "caution",
         title:     "Below Industry Benchmark",
         message:   `SDE margin (${dealPct}) is materially below the ${bm} (${bmPct}). This may indicate above-market owner compensation, excess overhead, or genuine underperformance. Investigate operating cost structure before advancing.`,
-        deduction: 0,   // ← trust NOT deducted; this is an attractiveness signal
+        deduction: 0,
         field:     "margins",
       });
     } else {
-      // In-line — positive signal
       notes.push(`SDE margin (${dealPct}) is consistent with the ${bm} (${bmPct}).`);
     }
   }
@@ -596,14 +502,6 @@ export function normalizeDealFinancials(
 
   // ═══════════════════════════════════════════════════════════════════════════
   // NORMALIZED EARNINGS (usable SDE for downstream scoring)
-  //
-  // Trust gating:
-  //   >= 80  → reportedSDE   (trust the numbers)
-  //   >= 60  → min(reported, benchmark)  (conservative blend)
-  //   <  60  → benchmarkSDE  (discard stated, use RMA-implied)
-  //
-  // benchmarkSDE = revenue × benchmarkEbitdaMargin
-  // null benchmarkSDE (no RMA) → always use reportedSDE regardless of trust
   // ═══════════════════════════════════════════════════════════════════════════
 
   const benchmarkSDE = hasBenchmark ? Math.round(rev * benchmarkEbitdaMargin!) : null;
@@ -622,11 +520,93 @@ export function normalizeDealFinancials(
     earningsSource = "benchmark_implied";
   }
 
-  if (earningsSource !== "reported") {
+  // ═══════════════════════════════════════════════════════════════════════════
+  // CIRCUIT BREAKER — Phase 1 hybrid model
+  //
+  // When normalization would reduce SDE by more than 40%, the adjustment is
+  // too extreme to present as the sole valuation basis. Instead:
+  //   1. Preserve reported SDE as usableSDE (backward compat for all consumers)
+  //   2. Store the benchmark-implied figure as underwritten_sde (stress case)
+  //   3. Lock to Manual Review
+  //   4. Generate investigation questions
+  // ═══════════════════════════════════════════════════════════════════════════
+
+  const adjustmentPct = sdeV > 0
+    ? Math.abs(sdeV - usableSDE) / sdeV
+    : 0;
+
+  const CIRCUIT_BREAKER_THRESHOLD = 0.40;
+
+  let normalization_mode: NormalizedDealFinancials["normalization_mode"] = "adjusted";
+  let underwritten_sde = usableSDE;
+  let investigation_required = false;
+  let investigation_reasons: string[] = [];
+  let investigation_questions: string[] = [];
+  let sde_confidence = trustScore;
+
+  if (adjustmentPct > CIRCUIT_BREAKER_THRESHOLD && earningsSource !== "reported") {
+    // Circuit breaker fires
+    normalization_mode = "stress_case";
+    underwritten_sde = usableSDE;       // preserve the benchmark-implied figure
+    usableSDE = sdeV;                   // restore reported SDE as primary
+    earningsSource = "reported";         // downstream sees reported basis
+
+    trustScore = Math.min(trustScore, 35);
+    sde_confidence = Math.max(10, Math.round(25 - (adjustmentPct - 0.40) * 30));
+    investigation_required = true;
+
+    const reportedMarginStr = statedSdeMargin !== null
+      ? `${Math.round(statedSdeMargin * 100)}%`
+      : "N/A";
+    const benchmarkMarginStr = benchmarkEbitdaMargin !== null
+      ? `${Math.round(benchmarkEbitdaMargin * 100)}%`
+      : "unknown";
+    const industryLabel = benchmarkFamily ?? "this industry";
+
+    investigation_reasons = [
+      `Reported SDE margin of ${reportedMarginStr} materially exceeds the ${benchmarkMarginStr} industry benchmark for ${industryLabel}.`,
+      `Normalization would reduce SDE by ${Math.round(adjustmentPct * 100)}%, exceeding the 40% circuit breaker threshold.`,
+      `This may reflect a legitimate owner-operated model, aggressive add-backs, industry misclassification, or data entry error.`,
+    ];
+
+    investigation_questions = [
+      "Provide 3 years of business tax returns (Form 1120-S or Schedule C).",
+      "Provide a detailed SDE add-back schedule with documentation for each adjustment.",
+      "What is the current owner's total compensation (salary + distributions + benefits + perks)?",
+      "What would it cost to hire a replacement manager for the owner's role?",
+      "How many employees or contractors currently generate revenue?",
+      "What percentage of revenue comes from the top customer? Top 3 customers?",
+      "Is the owner personally responsible for client delivery, or does the team operate independently?",
+      "Could the business maintain current revenue if the owner stepped back to management only?",
+    ];
+
+    addFlag({
+      code:      "CIRCUIT_BREAKER_ENGAGED",
+      severity:  "critical",
+      title:     "Earnings verification required",
+      message:   `Reported SDE margin of ${reportedMarginStr} exceeds industry benchmark of ${benchmarkMarginStr} by more than 40%. Reported SDE preserved as primary basis. Benchmark-implied stress case: ${fmt(underwritten_sde)}. Manual review required before relying on earnings figures.`,
+      deduction: 0,
+      field:     "earnings",
+    });
+  } else if (adjustmentPct <= 0.05) {
+    normalization_mode = "reported";
+    underwritten_sde = sdeV;
+  } else {
+    normalization_mode = "adjusted";
+    underwritten_sde = usableSDE;
+  }
+
+  if (earningsSource !== "reported" && normalization_mode !== "stress_case") {
     notes.push(
       earningsSource === "blended"
         ? `Usable SDE (${fmt(usableSDE)}) reflects the lower of stated SDE and benchmark-implied SDE due to moderate trust score.`
         : `Usable SDE (${fmt(usableSDE)}) is derived from the benchmark-implied margin due to low trust score. Stated SDE (${fmt(sdeV)}) has been set aside pending manual review.`
+    );
+  }
+
+  if (normalization_mode === "stress_case") {
+    notes.push(
+      `Circuit breaker engaged: reported SDE preserved as primary basis. Benchmark-implied stress case (${fmt(underwritten_sde)}) stored separately. Investigation required.`
     );
   }
 
@@ -639,7 +619,6 @@ export function normalizeDealFinancials(
     earningsSource,
   };
 
-  // ── Summary note ───────────────────────────────────────────────────────────
   if (notes.length === 0 && flags.every(f => f.severity === "info")) {
     notes.push("Financials passed all normalization checks. No material anomalies detected.");
   }
@@ -656,6 +635,12 @@ export function normalizeDealFinancials(
     flags,
     adjustments,
     notes,
+    normalization_mode,
+    underwritten_sde,
+    sde_confidence,
+    investigation_required,
+    investigation_reasons,
+    investigation_questions,
   };
 }
 
@@ -665,17 +650,14 @@ export function normalizeDealFinancials(
 
 export interface NormalizationSummary {
   trustLabel:          string;
-  topFlags:            NormalizationFlag[];        // up to 3, sorted by severity
-  topAdjustments:      NormalizationAdjustment[];  // up to 2, sorted by deduction
+  topFlags:            NormalizationFlag[];
+  topAdjustments:      NormalizationAdjustment[];
   blockHighConviction: boolean;
-  earningsSummary:     string;  // one-line for the underwriting panel header
+  earningsSummary:     string;
 }
 
 const SEVERITY_ORDER = { critical: 0, warning: 1, caution: 2, info: 3 };
 
-/**
- * Returns a UI-ready summary for DealDetailPanel / UnderwritingPanel.
- */
 export function getNormalizationSummaryForUI(
   n: NormalizedDealFinancials,
 ): NormalizationSummary {
@@ -716,10 +698,6 @@ export type ConvictionCap =
   | { capped: false }
   | { capped: true; maxVerdict: "Investigate" | "Pass / Needs Manual Review"; reason: string };
 
-/**
- * Returns a verdict ceiling when data quality is too low for strong conviction.
- * Wire into dealVerdict() in buyer-dashboard.tsx after normalization.
- */
 export function getConvictionCap(n: NormalizedDealFinancials): ConvictionCap {
   const { trustScore, flags } = n;
 
@@ -751,10 +729,6 @@ export function getConvictionCap(n: NormalizedDealFinancials): ConvictionCap {
 
 export const NORMALIZATION_TEST_CASES = {
 
-  // ── Test 1: Clean landscaping ──────────────────────────────────────────────
-  // SDE 18% vs RMA 12.1% → ratio 1.49 → SDE_MARGIN_ABOVE_BENCHMARK (caution, 0 deduction)
-  // Also: 18% > warnAbove 30%? No. So no industry ceiling flag either.
-  // Expected: trustScore 100 | high | usableSDE = 117_000 (reported)
   cleanLandscaping: normalizeDealFinancials({
     revenue: 650_000, sde: 117_000, ebitda: 105_000, price: 320_000,
     benchmarkFamily: "field_services", classificationConfidence: 92,
@@ -762,81 +736,52 @@ export const NORMALIZATION_TEST_CASES = {
     rmaBenchmarks: { ebitdaMarginPct: 0.121 },
   }),
 
-  // ── Test 2: Med spa — revenue = sde = ebitda ──────────────────────────────
-  // TRIPLE_DUPLICATE_FINANCIALS (-40) + PROXY_BENCHMARK_USED (-8)
-  // Benchmark comparison skipped (allIdentical = true)
-  // Expected: trustScore 52 | low | usableSDE = benchmark-implied (trust < 60)
   medSpaDuplicateValues: normalizeDealFinancials({
     revenue: 480_000, sde: 480_000, ebitda: 480_000, price: 1_200_000,
     benchmarkFamily: "med_spa", classificationConfidence: 92,
     benchmarkIsProxy: true, dataSource: "marketplace",
     rmaBenchmarks: { ebitdaMarginPct: 0.184 },
   }),
-  // ✓ trustScore: 47 (100 - 40 - 8 - 5) | low
-  // ✓ flags: [TRIPLE_DUPLICATE_FINANCIALS(crit), PROXY_BENCHMARK_USED(info), SOURCE_QUALITY_REDUCED(info)]
-  // ✓ usableSDE: 480_000 × 0.184 = ~88_320 (benchmark-implied, trust < 60)
-  // ✓ getConvictionCap → "Pass / Needs Manual Review"
 
-  // ── Test 3: Restaurant low margin ─────────────────────────────────────────
-  // SDE 4% vs RMA 8.2% → ratio 0.49 → SDE_MARGIN_BELOW_BENCHMARK (caution, 0 deduction)
-  // Low-performing business ≠ bad data. Trust stays high.
-  // Expected: trustScore 100 | high | usableSDE = 48_000 (reported)
   restaurantLowMargin: normalizeDealFinancials({
     revenue: 1_200_000, sde: 48_000, ebitda: 36_000, price: 95_000,
     benchmarkFamily: "food_beverage", classificationConfidence: 92,
     benchmarkIsProxy: false, dataSource: "broker_teaser",
     rmaBenchmarks: { ebitdaMarginPct: 0.082 },
   }),
-  // ✓ trustScore: 95 (100 - 5 broker_teaser) | high
-  // ✓ flags: [SDE_MARGIN_BELOW_BENCHMARK(caution, 0 deduction), SOURCE_QUALITY_REDUCED(info)]
-  // ✓ usableSDE: 48_000 (reported — trust >= 80)
-  // ✓ No conviction cap. Data is clean. Business attractiveness is separate.
 
-  // ── Test 4: SaaS — no benchmark ───────────────────────────────────────────
-  // 60% margin is plausible for SaaS but unverifiable.
-  // SaaS hard ceiling is 85% — 60% is below warnAbove (60%) boundary: exactly at.
-  // Actually: warnAbove for saas = 0.60 → 60% is AT the warn threshold → no family flag.
-  // Expected: trustScore 88 | high | usableSDE = 252_000 (reported)
   saasNoBenchmark: normalizeDealFinancials({
     revenue: 420_000, sde: 252_000, ebitda: 231_000, price: 1_500_000,
     benchmarkFamily: "saas", classificationConfidence: 92,
     benchmarkIsProxy: false, dataSource: "cim",
     rmaBenchmarks: null,
   }),
-  // ✓ trustScore: 88 (100 - 12 no benchmark) | high
-  // ✓ flags: [BENCHMARK_UNAVAILABLE(info, -12)]
-  // ✓ usableSDE: 252_000 (reported — trust >= 80)
 
-  // ── Test 5: Retail plausible proxy ────────────────────────────────────────
-  // SDE 14% vs proxy RMA 11% → ratio 1.27 → in-line → note only
-  // Proxy deduction -8. Classification 85 = above 80 threshold.
-  // Expected: trustScore 92 | high | usableSDE = 126_000 (reported)
   retailPlausibleMargins: normalizeDealFinancials({
     revenue: 900_000, sde: 126_000, ebitda: 108_000, price: 340_000, inventory: 85_000,
     benchmarkFamily: "retail", classificationConfidence: 85,
     benchmarkIsProxy: true, dataSource: "manual_entry",
     rmaBenchmarks: { ebitdaMarginPct: 0.11 },
   }),
-  // ✓ trustScore: 92 (100 - 8 proxy) | high
-  // ✓ flags: [PROXY_BENCHMARK_USED(info, -8)]
-  // ✓ usableSDE: 126_000 (reported — trust >= 80)
 
-  // ── Test 6: Mixed business — proxy + low confidence + inflated margins ─────
-  // SDE 50% vs proxy 14% → ratio 3.57× → SDE_MARGIN_2X_ABOVE_BENCHMARK (-20)
-  // Also: 50% > warnAbove(30%) and > hardCeiling(50%)? 50% == hardCeiling exactly → no hard ceiling flag.
-  // Deductions: -20 (2× benchmark) + -8 (proxy) + -10 (low conf) = -38
-  // Expected: trustScore 62 | low | usableSDE blended (trust 60-80: min(reported, benchmark))
   mixedBusinessWeakConfidence: normalizeDealFinancials({
     revenue: 550_000, sde: 275_000, ebitda: 220_000, price: 750_000,
     benchmarkFamily: "personal_services", classificationConfidence: 60,
     benchmarkIsProxy: true, dataSource: "broker_teaser",
     rmaBenchmarks: { ebitdaMarginPct: 0.14 },
   }),
-  // ✓ trustScore: 57 (100 - 20 - 8 - 10 - 5 broker_teaser) | low
-  // ✓ flags: [SDE_MARGIN_2X_ABOVE_BENCHMARK(warn,-20), PROXY_BENCHMARK_USED(info,-8),
-  //           LOW_CLASSIFICATION_CONFIDENCE(caution,-10), SOURCE_QUALITY_REDUCED(info,-5)]
-  // ✓ benchmarkSDE = 550_000 × 0.14 = 77_000
-  // ✓ usableSDE = 77_000 (benchmark-implied, trust < 60)
-  // ✓ getConvictionCap → "Pass / Needs Manual Review"
+
+  // Circuit breaker test: marketing deal that triggered the beta failure
+  marketingCircuitBreaker: normalizeDealFinancials({
+    revenue: 1_102_000, sde: 792_000, ebitda: 792_000, price: 3_300_000,
+    benchmarkFamily: "professional_services", classificationConfidence: 85,
+    benchmarkIsProxy: false, dataSource: "manual_entry",
+    rmaBenchmarks: { ebitdaMarginPct: 0.06 },
+  }),
+  // Expected: normalization_mode = "stress_case"
+  // usableSDE = 792_000 (reported, preserved by breaker)
+  // underwritten_sde = ~66_120 (benchmark-implied)
+  // investigation_required = true
+  // trustScore <= 35
 
 } as const;
