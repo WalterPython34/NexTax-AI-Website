@@ -363,6 +363,19 @@ function detectRiskFlags(d: DealReportInputs, scenarios: StressScenario[]): Risk
     });
   }
 
+   // ── Earnings investigation required (circuit breaker) ─────────────────
+  const dealMargin = d.revenue > 0 ? d.sde / d.revenue : 0;
+  if (reported > 0 && usable >= reported * 0.95 && dealMargin > 0.40) {
+    // Looks like circuit breaker case: usable SDE preserved, but margin is extreme
+    flags.push({
+      severity:      "HIGH",
+      category:      "FINANCIAL",
+      headline:      "Earnings verification required",
+      detail:        `Reported SDE margin of ${Math.round(dealMargin * 100)}% materially exceeds industry benchmarks. All report metrics are based on seller-reported figures. Independent verification through tax returns and quality of earnings review is required before relying on these figures.`,
+      isDealBreaker: false,
+    });
+  }
+
   // ─── Above-market pricing ─────────────────────────────────────────────
   const benchHigh = d.benchmark_high ?? null;
   if (benchHigh !== null && d.valuation_multiple > benchHigh * 1.15) {
