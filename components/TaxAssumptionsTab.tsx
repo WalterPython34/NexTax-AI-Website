@@ -1,6 +1,25 @@
 "use client";
 
 import React, { useState, useEffect, useMemo, useCallback } from "react";
+import {
+  buildTaxSnapshot,
+  buildTaxFactsView,
+  buildTaxImplicationsView,
+  buildTaxComparisonRows,
+  type TaxSnapshot,
+  type TaxFactsView,
+  type TaxImplicationsView,
+  type BasisRecoveryLabel,
+  type RecaptureExposureLabel,
+  type NolPositionLabel,
+  type EvaluatedLabel,
+} from "@/lib/acquiflow/tax-snapshot-derivations";
+import {
+  buildStructuralComparisonPanel,
+  type StructuralComparisonPanelPlan,
+} from "@/lib/acquiflow/structural-comparison";
+import { buildTaxStructureSection } from "@/lib/acquiflow/tax-structure-section";
+import type { DealTaxAssumptionsRow } from "@/lib/intelligence/tax/tax-row-to-engine-input";
 
 // ═════════════════════════════════════════════════════════════════════════════
 // TaxAssumptionsTab — AcquiFlow buyer-dashboard input surface
@@ -444,6 +463,338 @@ function StructureSnapshot({ rec, ready, total }: {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// LIVE-PREVIEW VIEW MODELS — translate component-local enum values into the
+// engine-canonical names the helpers/builder expect. This is the boundary the
+// view-model layer requires (Invariant 1: React consumes helper output only).
+// ─────────────────────────────────────────────────────────────────────────────
+
+type EnginePpaStructure = "unspecified" | "asset" | "stock" | "stock_with_338_h_10" | "stock_with_336_e";
+type EngineEntityType =
+  | "unknown" | "c_corp" | "s_corp" | "llc_partnership" | "llc_disregarded" | "sole_prop";
+
+interface EngineRec extends Omit<TaxAssumptionRecord, "ppa_structure" | "entity_type"> {
+  ppa_structure: EnginePpaStructure;
+  entity_type: EngineEntityType;
+}
+
+/**
+ * Translate the component-local record (DB-enum values) into the engine-naming
+ * record the helpers and the builder consume. Concentrated in one place so
+ * the helpers stay clean and the live component can keep its DB-enum types.
+ */
+function recToEngineRec(rec: TaxAssumptionRecord): EngineRec {
+  const structureMap: Record<PpaStructure, EnginePpaStructure> = {
+    unspecified: "unspecified", asset: "asset", stock: "stock",
+    stock_338_h_10: "stock_with_338_h_10", stock_336_e: "stock_with_336_e",
+  };
+  const entityMap: Record<EntityType, EngineEntityType> = {
+    unknown: "unknown", c_corp: "c_corp", s_corp: "s_corp",
+    partnership: "llc_partnership", disregarded_llc: "llc_disregarded", sole_prop: "sole_prop",
+  };
+  return { ...rec, ppa_structure: structureMap[rec.ppa_structure], entity_type: entityMap[rec.entity_type] };
+}
+
+/**
+ * Translate a record into the DealTaxAssumptionsRow shape the builder consumes.
+ * Mirrors recordToRow but uses engine-enum values, and applies the mechanical
+ * recapture derivation from Decision #1.
+ */
+function recToBuilderRow(rec: TaxAssumptionRecord): DealTaxAssumptionsRow {
+  const er = recToEngineRec(rec);
+  const eqRecaptureSensitive = (rec.ppa_equipment ?? 0) > 0 || (rec.ppa_real_property ?? 0) > 0;
+  return {
+    deal_id: rec.deal_id ?? "preview",
+    ppa_structure: er.ppa_structure as DealTaxAssumptionsRow["ppa_structure"],
+    entity_type: er.entity_type as DealTaxAssumptionsRow["entity_type"],
+    seller_basis_disclosed: rec.seller_basis_disclosed,
+    existing_basis_goodwill: rec.existing_basis_by_class.goodwill,
+    existing_basis_equipment: rec.existing_basis_by_class.equipment,
+    existing_basis_real_property: rec.existing_basis_by_class.real_property,
+    existing_basis_intangibles: rec.existing_basis_by_class.intangibles,
+    existing_basis_working_capital: rec.existing_basis_by_class.working_capital,
+    prior_depreciation_disclosed: rec.prior_depreciation_disclosed,
+    asset_accum_depreciation: rec.asset_accum_depreciation,
+    recapture_sensitive_present: eqRecaptureSensitive ? "yes" : "no",
+    nols_disclosed: rec.nols_disclosed,
+    nol_amount: rec.nol_amount,
+    ppa_goodwill: rec.ppa_goodwill,
+    ppa_equipment: rec.ppa_equipment,
+    ppa_real_property: rec.ppa_real_property,
+    ppa_intangibles: rec.ppa_intangibles,
+    ppa_working_capital: rec.ppa_working_capital,
+    asset_equipment_class: rec.asset_equipment_class,
+    asset_real_property_class: rec.asset_real_property_class,
+    debt_seller_note_principal: rec.debt_seller_note_principal,
+    debt_seller_note_rate: rec.debt_seller_note_rate,
+    debt_seller_note_term: rec.debt_seller_note_term,
+    buyer_ordinary_rate: rec.buyer_ordinary_rate,
+    buyer_capital_rate: rec.buyer_capital_rate,
+    seller_ordinary_rate: rec.seller_ordinary_rate,
+    seller_capital_rate: rec.seller_capital_rate,
+    state_footprint: rec.state_footprint,
+  };
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PRESENTATION HELPERS — pure UI components consuming the verified view models
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Label color for the qualitative-state pills; each label maps to one tone.
+function snapshotPillStyle(text: string): { bg: string; fg: string; border: string } {
+  // Complete / Identified / Disclosed / Fully Evaluated → settled green-ish
+  if (/^(Complete|Identified|Disclosed|Fully Evaluated)$/.test(text)) {
+    return { bg: "rgba(16,185,129,0.10)", fg: "#34D399", border: "rgba(16,185,129,0.3)" };
+  }
+  // Partial / Flagged, undisclosed / Substantially Evaluated → in-progress amber
+  if (/^(Partial|Flagged, undisclosed|Substantially Evaluated)$/.test(text)) {
+    return { bg: "rgba(245,158,11,0.10)", fg: "#FBBF24", border: "rgba(245,158,11,0.3)" };
+  }
+  // Inputs Started / Preliminary / Not disclosed → cool neutral
+  if (/^(Inputs Started|Preliminary|Not disclosed|Not identified)$/.test(text)) {
+    return { bg: "rgba(99,102,241,0.10)", fg: "#A5B4FC", border: "rgba(99,102,241,0.3)" };
+  }
+  // Not yet computable / Not yet evaluated / Not Started → faint
+  return { bg: "rgba(255,255,255,0.04)", fg: "#9CA3AF", border: "rgba(255,255,255,0.10)" };
+}
+
+function SnapshotRow({ label, value }: { label: string; value: string }) {
+  const s = snapshotPillStyle(value);
+  return (
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "9px 0", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+      <span style={{ fontSize: 11.5, color: MUTE, letterSpacing: "0.02em" }}>{label}</span>
+      <span style={{
+        display: "inline-block", padding: "3px 9px", borderRadius: 4,
+        background: s.bg, color: s.fg, border: `1px solid ${s.border}`,
+        fontSize: 11.5, fontWeight: 600,
+      }}>{value}</span>
+    </div>
+  );
+}
+
+/**
+ * The Tax Snapshot card — the canonical summary layer. Consumes a TaxSnapshot
+ * view model (no business logic embedded here).
+ *
+ * Per Step 6 refinement: when readiness is 5/6 and the *only* missing
+ * applicable category is recovery classes, AND no equipment/RP is allocated,
+ * the UI shows "Not applicable" inline so 5/6 isn't read as an error.
+ * NOTE: the helpers already omit "classes" from `unmet` when not applicable —
+ * this UI hint exists purely to *explain* the 5/6 to the user.
+ */
+function TaxSnapshotCard({ snap, rec }: { snap: TaxSnapshot; rec: TaxAssumptionRecord }) {
+  const noRecoveryAllocation = !(rec.ppa_equipment ?? 0) && !(rec.ppa_real_property ?? 0);
+  const showNotApplicableHint =
+    snap.readiness.ready === 5 && snap.readiness.total === 6 && noRecoveryAllocation
+    && rec.ppa_structure !== "unspecified" && rec.entity_type !== "unknown"
+    && rec.seller_basis_disclosed !== "unknown" && rec.nols_disclosed !== "unknown"
+    && ((rec.ppa_goodwill ?? 0) > 0 || (rec.ppa_intangibles ?? 0) > 0 || (rec.ppa_working_capital ?? 0) > 0);
+
+  return (
+    <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, overflow: "hidden", marginBottom: 16 }}>
+      <div style={{ padding: "12px 16px", borderBottom: "1px solid rgba(255,255,255,0.05)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <span style={{ fontSize: 11, fontWeight: 700, color: INK, textTransform: "uppercase", letterSpacing: "0.08em" }}>Tax Snapshot</span>
+        <span style={{ fontSize: 10, color: MUTE, fontStyle: "italic" }}>evidence-status — not a deal score</span>
+      </div>
+      <div style={{ padding: "8px 16px 14px" }}>
+        <SnapshotRow label="Structure"             value={snap.structure_label} />
+        <SnapshotRow label="Entity"                value={snap.entity_label} />
+        <SnapshotRow label="Basis Recovery"        value={snap.basis_recovery} />
+        <SnapshotRow label="Recapture Exposure"    value={snap.recapture_exposure} />
+        <SnapshotRow label="NOL Position"          value={snap.nol_position} />
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "9px 0", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+          <span style={{ fontSize: 11.5, color: MUTE, letterSpacing: "0.02em" }}>Structure Readiness</span>
+          <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
+            <span style={{ fontSize: 13, fontWeight: 700, color: VIOLET, fontFamily: "ui-monospace, monospace" }}>
+              {snap.readiness.ready} / {snap.readiness.total}
+            </span>
+            {showNotApplicableHint && (
+              <span style={{ fontSize: 10, color: MUTE, fontStyle: "italic" }}>
+                · recovery classes: not applicable
+              </span>
+            )}
+          </span>
+        </div>
+        <SnapshotRow label="Tax Structure Evaluated" value={snap.evaluated} />
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "9px 0", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+          <span style={{ fontSize: 11.5, color: MUTE, letterSpacing: "0.02em" }}>Key Missing Input</span>
+          <span style={{ fontSize: 11.5, color: snap.key_missing_input === "—" ? "#34D399" : "#FBBF24", textAlign: "right", maxWidth: "65%" }}>
+            {snap.key_missing_input}
+          </span>
+        </div>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "9px 0" }}>
+          <span style={{ fontSize: 11.5, color: MUTE, letterSpacing: "0.02em" }}>Evidence Gap</span>
+          <span style={{ fontSize: 11.5, color: snap.evidence_gap === "—" ? "#34D399" : "#A5B4FC", textAlign: "right", maxWidth: "65%" }}>
+            {snap.evidence_gap}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Tax Facts section — what the buyer has entered, seam-tagged.
+ */
+function TaxFactsSection({ view }: { view: TaxFactsView }) {
+  if (view.lines.length === 0) {
+    return (
+      <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, padding: 20, marginBottom: 16 }}>
+        <div style={{ fontSize: 11, fontWeight: 700, color: INK, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: 6 }}>Tax Facts</div>
+        <div style={{ fontSize: 11.5, color: MUTE, fontStyle: "italic" }}>No tax assumptions entered yet.</div>
+      </div>
+    );
+  }
+  return (
+    <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, overflow: "hidden", marginBottom: 16 }}>
+      <div style={{ padding: "12px 16px", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+        <span style={{ fontSize: 11, fontWeight: 700, color: INK, textTransform: "uppercase", letterSpacing: "0.08em" }}>Tax Facts</span>
+        <span style={{ fontSize: 10, color: MUTE, fontStyle: "italic", marginLeft: 10 }}>what you've entered</span>
+      </div>
+      <div style={{ padding: "10px 16px 14px" }}>
+        {view.lines.map((ln, i) => (
+          <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "7px 0", borderBottom: i < view.lines.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none" }}>
+            <span style={{ fontSize: 11.5, color: MUTE }}>
+              {ln.label}
+              <span style={{
+                marginLeft: 8, padding: "1px 6px", borderRadius: 3, fontSize: 8.5, fontWeight: 700,
+                letterSpacing: "0.04em", textTransform: "uppercase",
+                background: ln.seam === "fact" ? "rgba(16,185,129,0.12)" : "rgba(245,158,11,0.12)",
+                color: ln.seam === "fact" ? "#34D399" : "#FBBF24",
+              }}>{ln.seam === "fact" ? "imported from deal" : "buyer input"}</span>
+            </span>
+            <span style={{ fontSize: 12, color: INK, fontWeight: 600 }}>{ln.value}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Tax Implications section — categorical reads + schedules + honest absence.
+ */
+function TaxImplicationsSection({ view }: { view: TaxImplicationsView }) {
+  const empty = view.statements.length === 0 && view.schedules.length === 0 && view.absent.length === 0;
+  return (
+    <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, overflow: "hidden", marginBottom: 16 }}>
+      <div style={{ padding: "12px 16px", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+        <span style={{ fontSize: 11, fontWeight: 700, color: INK, textTransform: "uppercase", letterSpacing: "0.08em" }}>Tax Implications</span>
+        <span style={{ fontSize: 10, color: MUTE, fontStyle: "italic", marginLeft: 10 }}>what those facts mean</span>
+      </div>
+      <div style={{ padding: "14px 16px" }}>
+        {empty && <div style={{ fontSize: 11.5, color: MUTE, fontStyle: "italic" }}>Nothing computable yet from current inputs.</div>}
+
+        {view.statements.map((st, i) => (
+          <div key={`s${i}`} style={{ marginBottom: 14 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: INK, marginBottom: 4 }}>
+              {st.heading}
+              <span style={{
+                marginLeft: 8, padding: "1px 6px", borderRadius: 3, fontSize: 8.5, fontWeight: 700,
+                letterSpacing: "0.04em", textTransform: "uppercase",
+                background: st.seam === "fact" ? "rgba(16,185,129,0.12)" : "rgba(245,158,11,0.12)",
+                color: st.seam === "fact" ? "#34D399" : "#FBBF24",
+              }}>{st.seam === "fact" ? "imported from deal" : "buyer input"}</span>
+            </div>
+            <div style={{ fontSize: 11.5, color: MUTE, lineHeight: 1.45 }}>{st.body}</div>
+          </div>
+        ))}
+
+        {view.schedules.map((sch, i) => (
+          <div key={`sch${i}`} style={{ marginTop: 16, marginBottom: 8, paddingTop: 12, borderTop: "1px solid rgba(255,255,255,0.05)" }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: INK, marginBottom: 3 }}>{sch.heading}</div>
+            {sch.basis_note && <div style={{ fontSize: 10.5, color: FAINT, fontStyle: "italic", marginBottom: 8 }}>{sch.basis_note}</div>}
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(110px, 1fr))", gap: "4px 12px", marginBottom: 6 }}>
+              {sch.rows.map((r, j) => (
+                <div key={j} style={{ fontSize: 11, color: MUTE, fontFamily: "ui-monospace, monospace" }}>
+                  <span style={{ color: FAINT }}>{r.label}:</span>{" "}
+                  <span style={{ color: INK }}>{r.amount === null ? "—" : "$" + Math.round(r.amount).toLocaleString()}</span>
+                </div>
+              ))}
+            </div>
+            {sch.total !== null && (
+              <div style={{ fontSize: 11.5, fontWeight: 700, color: VIOLET, fontFamily: "ui-monospace, monospace" }}>
+                Total: ${Math.round(sch.total).toLocaleString()}
+              </div>
+            )}
+          </div>
+        ))}
+
+        {view.absent.length > 0 && (
+          <div style={{ marginTop: 14, paddingTop: 12, borderTop: "1px solid rgba(255,255,255,0.05)" }}>
+            <div style={{ fontSize: 10.5, fontWeight: 700, color: MUTE, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>Not yet specified</div>
+            {view.absent.map((n, i) => (
+              <div key={i} style={{ fontSize: 11, color: FAINT, lineHeight: 1.5, marginBottom: 3 }}>· {n}</div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Structural Comparison panel — shared presentation, v1 receives Tax rows only.
+ */
+function StructuralComparisonPanel({ plan }: { plan: StructuralComparisonPanelPlan }) {
+  if (!plan.visible) return null;
+  const visibleRows = plan.comparison_rows.filter(r => r.visible);
+  const cols = plan.columns;
+
+  const structLabel: Record<string, string> = {
+    asset: "Asset purchase", stock: "Stock purchase",
+    stock_with_338_h_10: "Stock + §338(h)(10)", stock_with_336_e: "Stock + §336(e)",
+  };
+  const emphasisColor = (e: string) =>
+    e === "primary" ? VIOLET : e === "secondary" ? "#A5B4FC" : e === "muted" ? FAINT : MUTE;
+
+  return (
+    <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, overflow: "hidden", marginBottom: 16 }}>
+      <div style={{ padding: "12px 16px", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
+        <span style={{ fontSize: 11, fontWeight: 700, color: INK, textTransform: "uppercase", letterSpacing: "0.08em" }}>Structural Comparison</span>
+        <span style={{ fontSize: 10, color: MUTE, fontStyle: "italic", marginLeft: 10 }}>
+          structural differences between transaction structures
+        </span>
+      </div>
+      <div style={{ padding: "14px 16px", overflowX: "auto" }}>
+        <table style={{ width: "100%", borderCollapse: "collapse", fontSize: 11.5 }}>
+          <thead>
+            <tr>
+              <th style={{ textAlign: "left", padding: "8px 10px 8px 0", color: FAINT, fontWeight: 600, fontSize: 10, textTransform: "uppercase", letterSpacing: "0.06em", width: 180, verticalAlign: "bottom" }}>Dimension</th>
+              {cols.map(col => (
+                <th key={col.structure} style={{ textAlign: "left", padding: "8px 10px", color: emphasisColor(col.emphasis), fontWeight: 700, fontSize: 11, verticalAlign: "bottom" }}>
+                  {structLabel[col.structure] ?? col.structure}
+                  {col.emphasis === "primary" && (
+                    <span style={{ display: "block", marginTop: 2, fontSize: 8.5, color: VIOLET, fontStyle: "italic", fontWeight: 400 }}>selected</span>
+                  )}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {visibleRows.map((row, ri) => (
+              <tr key={row.dimension} style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}>
+                <td style={{ padding: "10px 10px 10px 0", color: MUTE, fontWeight: 600, verticalAlign: "top" }}>{row.dimension_label}</td>
+                {cols.map(col => {
+                  const v = row.by_structure[col.structure];
+                  return (
+                    <td key={col.structure} style={{ padding: "10px", color: col.emphasis === "muted" ? FAINT : INK, lineHeight: 1.5, verticalAlign: "top" }}>
+                      {v === null || v === undefined || v === "" ? <span style={{ color: FAINT }}>—</span> : v}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <div style={{ marginTop: 14, padding: "10px 12px", background: "rgba(99,102,241,0.05)", border: "1px solid rgba(99,102,241,0.18)", borderRadius: 8, fontSize: 11.5, color: MUTE, lineHeight: 1.55 }}>
+          {plan.bottom_line}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // MAIN COMPONENT
 // ─────────────────────────────────────────────────────────────────────────────
 export default function TaxAssumptionsTab({
@@ -605,6 +956,22 @@ export default function TaxAssumptionsTab({
     return { ready, total, notes };
   }, [rec]);
 
+  // ── LIVE PREVIEW VIEW MODELS (Step 6) ──
+  // The Tax workspace is a working analytical tool: as inputs change, the preview
+  // recomputes via pure helpers (no IO, no engine changes). The four view models
+  // below are the ONLY thing the React UI consumes — Invariant 1.
+  const livePreview = useMemo(() => {
+    if (!rec) return null;
+    const engineRec = recToEngineRec(rec);
+    const section = buildTaxStructureSection(recToBuilderRow(rec));
+    const snap = buildTaxSnapshot(engineRec, section);
+    const facts = buildTaxFactsView(engineRec);
+    const implications = buildTaxImplicationsView(section);
+    const comparisonRows = buildTaxComparisonRows(engineRec, section);
+    const comparisonPlan = buildStructuralComparisonPanel(engineRec, comparisonRows);
+    return { snap, facts, implications, comparisonPlan };
+  }, [rec]);
+
   const moneyFmt = (n: number) => "$" + Math.round(n).toLocaleString("en-US");
 
   const ENTITY_OPTS: [string, string][] = [
@@ -693,8 +1060,8 @@ export default function TaxAssumptionsTab({
         </div>
       ) : (
         <>
-          {/* ── acquisition structure snapshot (executive status mirror) ── */}
-          <StructureSnapshot rec={rec} ready={readiness.ready} total={readiness.total} />
+          {/* ── Tax Snapshot card (Step 6 — canonical summary layer) ── */}
+          {livePreview && <TaxSnapshotCard snap={livePreview.snap} rec={rec} />}
 
           {/* ── readiness readout (narrative) ── */}
           <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, background: "rgba(99,102,241,0.06)", border: "1px solid rgba(99,102,241,0.2)", borderRadius: 12, padding: "13px 16px", marginBottom: 16 }}>
@@ -847,6 +1214,18 @@ export default function TaxAssumptionsTab({
               </div>
             </div>
           </div>
+
+          {/* ── LIVE PREVIEW: Facts → Implications → Structural Comparison ── */}
+          {/* Per the live-preview architecture, what the user enters above */}
+          {/* flows into these sections immediately. Same builder output the */}
+          {/* Executive Snapshot report will consume — Invariant 1. */}
+          {livePreview && (
+            <>
+              <TaxFactsSection view={livePreview.facts} />
+              <TaxImplicationsSection view={livePreview.implications} />
+              <StructuralComparisonPanel plan={livePreview.comparisonPlan} />
+            </>
+          )}
         </>
       )}
     </div>
