@@ -435,7 +435,14 @@ function verdictExplanation(d: DealRun): string {
     return `${bizQuality} business quality (DSCR ${dscr.toFixed(2)}x). Pricing is ${gp > 0 ? `${gp}% above` : `${Math.abs(gp)}% below`} fair value — viable but needs validation before advancing.`;
   }
   if (v === "manual_review") {
-    return `Data quality flags prevent a reliable verdict. Verify financials independently before drawing conclusions.`;
+     if (d.valuation_multiple !== undefined && d.industry) {
+      const margin = d.sde && d.revenue ? Math.round(((d.sde ?? 0) / (d.revenue ?? 1)) * 100) : null;
+      const ind = IL[d.industry] || d.industry;
+      if (margin && margin > 40) {
+        return `Reported SDE margin of ${margin}% is significantly above the industry benchmark for ${ind}. This does not necessarily indicate error. Small owner-operated businesses in this industry frequently report margins above industry aggregates. However, the magnitude of deviation requires independent verification through tax returns and a quality of earnings review. The deal may be accurately represented or materially overstated. The answer is in the documentation.`;
+      }
+    }
+    return `Data quality flags require independent verification before a reliable verdict can be issued. Review financials and complete the investigation checklist below.`;
   }
 
   // PASS — this is where the magic happens
@@ -2268,7 +2275,7 @@ function AnalyzeDealModal({
                     </div>
                     {nts !== null && (
                       <div style={{ fontSize: 10, color: "#94A3B8", flexShrink: 0 }}>
-                        Data Confidence:{" "}
+                        Earnings Confidence:{" "}
                         <span style={{ color: tColor, fontFamily: "'JetBrains Mono',monospace", fontWeight: 700 }}>
                           {nts}/100
                         </span>
@@ -2339,7 +2346,7 @@ function AnalyzeDealModal({
               {(() => {
                 const nts = score.normalizationTrustScore;
                 const trustNote = (nts !== null && nts !== undefined && nts < 85)
-                  ? `Data confidence: ${nts}/100 — ${nts < 60 ? "manual review required" : "moderate — verify inputs"}`
+                  ? `Earnings confidence: ${nts}/100 — ${nts < 60 ? "manual review required" : "moderate — verify inputs"}`
                   : null;
                 const dForV = { gap_pct: score.gap_pct, dscr: score.dscr, overall_score: score.overall, risk_level: score.riskLevel, normalization_trust_score: nts, valuation_multiple: score.multiple, industry: inputs.industry } as DealRun;
                 const vdm = verdictCfg(dealVerdict(dForV));
@@ -2415,7 +2422,7 @@ function AnalyzeDealModal({
                 );
               })()}
 
-               {/* Dual-scenario: Seller Case vs Underwritten Stress Case */}
+               {/* Dual-scenario: Seller Case vs Conservative Benchmark Scenario */}
               {score.normalizationMode === "stress_case" && score.underwrittenSde != null && (
                 <div style={{
                   padding: "16px 18px", borderRadius: 12, marginBottom: 14,
@@ -2427,6 +2434,15 @@ function AnalyzeDealModal({
                     textTransform: "uppercase" as any, letterSpacing: "0.08em", marginBottom: 12,
                   }}>
                     Earnings Verification Required
+                  </div>
+
+                   <div style={{
+                    display: "inline-flex", alignItems: "center", gap: 6,
+                    padding: "3px 10px", borderRadius: 6, marginBottom: 10,
+                    background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)",
+                  }}>
+                    <span style={{ fontSize: 9, color: "#9CA3AF", textTransform: "uppercase" as any, letterSpacing: "0.06em" }}>Status:</span>
+                    <span style={{ fontSize: 11, fontWeight: 700, color: "#EF4444" }}>Unverified</span>
                   </div>
 
                   {/* Two-column scenario comparison */}
@@ -2473,7 +2489,7 @@ function AnalyzeDealModal({
                       border: "1px solid rgba(239,68,68,0.15)",
                     }}>
                       <div style={{ fontSize: 10, fontWeight: 700, color: "#EF4444", textTransform: "uppercase" as any, letterSpacing: "0.07em", marginBottom: 8 }}>
-                        Underwritten Stress Case
+                        Conservative Benchmark Scenario
                       </div>
                       <div style={{ display: "flex", flexDirection: "column" as any, gap: 6 }}>
                         <div>
@@ -2496,7 +2512,7 @@ function AnalyzeDealModal({
                         </div>
                       </div>
                       <div style={{ fontSize: 10, color: "#7C8593", marginTop: 8, fontStyle: "italic" }}>
-                        If earnings revert to industry norms
+                        This is an illustrative downside case, not an adjusted valuation.
                       </div>
                     </div>
                   </div>
@@ -2505,8 +2521,10 @@ function AnalyzeDealModal({
                   <div style={{ fontSize: 12, color: "#94A3B8", lineHeight: 1.65, marginBottom: 12 }}>
                     {score.investigationReasons[0] ?? "Reported SDE margin materially exceeds industry benchmarks."}{" "}
                     This does not necessarily indicate error. Small owner-operated businesses in this industry
-                    frequently report margins above industry aggregates. However, the magnitude of deviation
-                    requires independent verification before relying on these figures for any investment decision.
+                    frequently report margins above industry aggregates. The conservative benchmark scenario
+                    above illustrates what valuation looks like if earnings revert toward industry norms. It is
+                    not a prediction or adjusted valuation. The actual SDE will be determined by verified
+                    documentation. Complete the investigation checklist to improve earnings confidence.
                   </div>
 
                   {/* Investigation questions */}
@@ -2908,7 +2926,7 @@ function DealDetailPanel({
               <div style={{ fontSize: 10, fontWeight: 700, color: deal.manual_review_required ? "#EF4444" : "#F59E0B",
                 textTransform: "uppercase" as any, letterSpacing: "0.07em", marginBottom: 3,
                 display: "inline-flex", alignItems: "center", gap: 5 }}>
-                <span>{deal.manual_review_required ? "Manual Review Required" : `Data Confidence: ${deal.normalization_trust_score}/100`}</span>
+                <span>{deal.manual_review_required ? "Manual Review Required" : `Earnings Confidence: ${deal.normalization_trust_score}/100`}</span>
                 <InfoTooltip term="trustScore" size="sm" />
               </div>
               <div style={{ fontSize: 11, color: "#6B7280", lineHeight: 1.5 }}>
@@ -5212,9 +5230,9 @@ function UnderwritingPanel({
 
                   // Normalization signal
                   if (trust < 60) {
-                    bullets.push(`Data confidence score of ${trust}/100 indicates reported financials appear unreliable. Use adjusted SDE — not broker-stated SDE — in your offer logic.`);
+                    bullets.push(`Earnigs confidence score of ${trust}/100 indicates reported financials appear unreliable. Use adjusted SDE — not broker-stated SDE — in your offer logic.`);
                   } else if (trust < 80) {
-                    bullets.push(`Data confidence score of ${trust}/100 — request verified financials before relying on current earnings figures.`);
+                    bullets.push(`Earnings confidence score of ${trust}/100 — request verified financials before relying on current earnings figures.`);
                   }
 
                   // Proxy note
@@ -5785,7 +5803,7 @@ function TabHome({
       if (trust < 60) {
         items.push({
           kind: "low_trust", deal: d, severity: "red",
-          text: <><strong style={{ color: "#F87171", fontWeight: 600 }}>{label}</strong> data confidence {trust}/100 — independently verify financials before proceeding</>,
+          text: <><strong style={{ color: "#F87171", fontWeight: 600 }}>{label}</strong> earnings confidence {trust}/100 — independently verify financials before proceeding</>,
           timestamp: createdMs + 2,
         });
       }
