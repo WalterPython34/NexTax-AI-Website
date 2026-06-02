@@ -2187,7 +2187,7 @@ function AnalyzeDealModal({
                     { label: "DSCR",          value: score.dscr.toFixed(2) + "x",   color: score.dscr >= 1.25 ? "#10B981" : "#F97316" },
                     { label: "Gap vs Market", value: (score.gap_pct > 0 ? "+" : "") + score.gap_pct + "%", color: score.gap_pct > 0 ? "#D85A30" : "#10B981" },
                    { label: score.normalizationMode === "stress_case" ? "Reported-Case Offer Low" : "Offer Low", value: fmt(score.recommendedOfferLow), color: "#818CF8" },
-{                   { label: score.normalizationMode === "stress_case" ? "Reported-Case Offer High" : "Offer High", value: fmt(score.recommendedOfferHigh), color: "#818CF8" },
+                   { label: score.normalizationMode === "stress_case" ? "Reported-Case Offer High" : "Offer High", value: fmt(score.recommendedOfferHigh), color: "#818CF8" },
                   ].map(m => (
                     <div key={m.label} style={{ textAlign: "center", padding: "8px 6px", borderRadius: 8, background: "rgba(255,255,255,0.02)" }}>
                       <div style={{ fontSize: 9, color: "#7C8593", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 3 }}>{m.label}</div>
