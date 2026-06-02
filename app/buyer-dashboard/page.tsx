@@ -3882,8 +3882,8 @@ function UnderwritingPanel({
           </div>
 
             {/* Investigation checklist for Manual Review / stress_case deals */}
-            {deal.manual_review_required && (
-              <InvestigationChecklist
+            {(deal.manual_review_required || (deal.normalization_trust_score != null && deal.normalization_trust_score <= 35)) && (
+            <InvestigationChecklist
                 dealId={deal.id}
                 userId={deal.user_id ?? "anon"}
                 investigationQuestions={deal.investigation_questions ?? []}
