@@ -3143,6 +3143,276 @@ function buildDecisionContext(deal: DealRun): DecisionContext {
   return { verdict: v, summary, actions };
 }
 
+// ─── INVESTIGATION CHECKLIST ───────────────────────────────────────────────────
+function InvestigationChecklist({
+  dealId,
+  userId,
+  investigationQuestions,
+  investigationReasons,
+  onRerunAnalysis,
+}: {
+  dealId: string;
+  userId: string;
+  investigationQuestions: string[];
+  investigationReasons: string[];
+  onRerunAnalysis: () => void;
+}) {
+  const storageKey = `nxtax_investigation_${userId}_${dealId}`;
+
+  const defaultItems = [
+    { key: "tax_returns",     label: "3 years of business tax returns",                  why: "Tax returns are the single most authoritative source of earnings verification. An SBA lender will not proceed without them.", lookFor: "Schedule C or Form 1120-S net income, compare stated SDE to taxable income plus documented add-backs." },
+    { key: "addback_schedule", label: "Detailed SDE add-back schedule with documentation", why: "Add-backs are where earnings inflation hides. A lump-sum add-back number is not sufficient. Each item needs documentation.", lookFor: "Itemized list with dollar amounts. Owner salary, personal expenses, one-time costs, depreciation, rent adjustments. Each should have a receipt, invoice, or tax return line item." },
+    { key: "owner_comp",      label: "Owner compensation breakdown and replacement cost",  why: "In owner-operated businesses, owner comp is the largest variable in SDE. The gap between actual comp and market replacement cost directly impacts underwritten earnings.", lookFor: "Total W-2 or K-1 income, health insurance, auto, phone, travel charged to business, retirement contributions. Compare total package to market rate for a hired GM (typically $80K-$150K)." },
+    { key: "customer_conc",   label: "Top 5 customer revenue breakdown",                   why: "Even if earnings are real, concentration risk changes the entire risk profile. A business where 60% comes from one client is structurally fragile.", lookFor: "Revenue by customer for trailing 12 months. Flag any single customer above 20%. Check contract terms and renewal dates for top 3." },
+    { key: "revenue_model",   label: "Revenue type confirmation",                          why: "A 72% margin on contractual recurring revenue is far more defensible than 72% on one-time project revenue. The model determines sustainability.", lookFor: "Contractual vs recurring vs project-based split. Average client tenure. Monthly revenue variance over 24 months." },
+    { key: "replacement_mgmt", label: "Post-acquisition management plan and cost",          why: "If the owner IS the business, you need to know what it costs to replace them. This directly impacts post-close SDE and real DSCR.", lookFor: "Owner's weekly hours and responsibilities. Which tasks require their specific expertise vs general management. Cost to hire equivalent talent in this market." },
+  ];
+
+  const [items, setItems] = useState<Record<string, { status: string; notes: string }>>(() => {
+    if (typeof window === "undefined") return {};
+    try {
+      const raw = localStorage.getItem(storageKey);
+      return raw ? JSON.parse(raw) : {};
+    } catch { return {}; }
+  });
+
+  const [expandedItem, setExpandedItem] = useState<string | null>(null);
+
+  const save = (updated: Record<string, { status: string; notes: string }>) => {
+    setItems(updated);
+    try { localStorage.setItem(storageKey, JSON.stringify(updated)); } catch {}
+  };
+
+  const updateStatus = (key: string, status: string) => {
+    const updated = { ...items, [key]: { ...items[key], status, notes: items[key]?.notes ?? "" } };
+    save(updated);
+  };
+
+  const updateNotes = (key: string, notes: string) => {
+    const updated = { ...items, [key]: { ...items[key], notes, status: items[key]?.status ?? "not_started" } };
+    save(updated);
+  };
+
+  const completedCount = defaultItems.filter(i => {
+    const s = items[i.key]?.status;
+    return s === "received" || s === "verified";
+  }).length;
+
+  const progressPct = Math.round((completedCount / defaultItems.length) * 100);
+  const canRerun = completedCount >= 2;
+
+  const statusOptions = [
+    { value: "not_started", label: "Not started", color: "#6B7280" },
+    { value: "requested",   label: "Requested from seller", color: "#F59E0B" },
+    { value: "received",    label: "Received", color: "#60A5FA" },
+    { value: "verified",    label: "Reviewed and verified", color: "#10B981" },
+  ];
+
+  return (
+    <div style={{
+      padding: "18px 20px", borderRadius: 14, marginBottom: 16,
+      background: "rgba(239,68,68,0.03)",
+      border: "1px solid rgba(239,68,68,0.15)",
+    }}>
+      {/* Header */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 14 }}>
+        <div>
+          <div style={{
+            fontSize: 11, fontWeight: 700, color: "#EF4444",
+            textTransform: "uppercase" as any, letterSpacing: "0.08em", marginBottom: 4,
+          }}>
+            Earnings Verification Required
+          </div>
+          <div style={{ fontSize: 12, color: "#94A3B8" }}>
+            Investigation Progress: {completedCount} / {defaultItems.length} complete
+          </div>
+        </div>
+        {canRerun && (
+          <button
+            onClick={onRerunAnalysis}
+            style={{
+              padding: "8px 16px", borderRadius: 8, border: "none",
+              background: "linear-gradient(135deg,#6366F1,#8B5CF6)",
+              color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer",
+              whiteSpace: "nowrap" as any,
+            }}
+          >
+            Re-run Analysis →
+          </button>
+        )}
+      </div>
+
+      {/* Progress bar */}
+      <div style={{
+        height: 6, borderRadius: 3, background: "rgba(255,255,255,0.06)",
+        marginBottom: 16, overflow: "hidden",
+      }}>
+        <div style={{
+          height: "100%", borderRadius: 3,
+          width: `${progressPct}%`,
+          background: completedCount >= 4 ? "#10B981" : completedCount >= 2 ? "#6366F1" : "#EF4444",
+          transition: "width 0.4s ease, background 0.4s ease",
+        }} />
+      </div>
+
+      {/* Reason summary */}
+      {investigationReasons.length > 0 && (
+        <div style={{
+          padding: "10px 14px", borderRadius: 10, marginBottom: 14,
+          background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
+          fontSize: 12, color: "#94A3B8", lineHeight: 1.6,
+        }}>
+          {investigationReasons[0]} The deal may be accurately represented or materially overstated. The answer is in the documentation.
+        </div>
+      )}
+
+      {/* Checklist items */}
+      {defaultItems.map((item, idx) => {
+        const state = items[item.key] ?? { status: "not_started", notes: "" };
+        const isExpanded = expandedItem === item.key;
+        const statusCfg = statusOptions.find(o => o.value === state.status) ?? statusOptions[0];
+        const isDone = state.status === "received" || state.status === "verified";
+
+        return (
+          <div key={item.key} style={{
+            padding: "12px 14px", borderRadius: 10, marginBottom: 8,
+            background: isDone ? "rgba(16,185,129,0.04)" : "rgba(255,255,255,0.015)",
+            border: `1px solid ${isDone ? "rgba(16,185,129,0.15)" : "rgba(255,255,255,0.06)"}`,
+            transition: "all 0.2s ease",
+          }}>
+            {/* Item header row */}
+            <div
+              onClick={() => setExpandedItem(isExpanded ? null : item.key)}
+              style={{ display: "flex", alignItems: "center", gap: 10, cursor: "pointer" }}
+            >
+              {/* Checkbox */}
+              <div style={{
+                width: 20, height: 20, borderRadius: 6, flexShrink: 0,
+                display: "flex", alignItems: "center", justifyContent: "center",
+                background: isDone ? "#10B981" : "rgba(255,255,255,0.06)",
+                border: isDone ? "none" : "1px solid rgba(255,255,255,0.15)",
+                fontSize: 12, color: "#fff", fontWeight: 700,
+                transition: "all 0.2s ease",
+              }}>
+                {isDone ? "✓" : idx + 1}
+              </div>
+
+              {/* Label */}
+              <div style={{ flex: 1, fontSize: 13, color: isDone ? "#10B981" : "#E2E8F0", fontWeight: 500 }}>
+                {item.label}
+              </div>
+
+              {/* Status chip */}
+              <div style={{
+                padding: "2px 8px", borderRadius: 6,
+                fontSize: 10, fontWeight: 600, color: statusCfg.color,
+                background: `${statusCfg.color}14`, border: `1px solid ${statusCfg.color}33`,
+                whiteSpace: "nowrap" as any,
+              }}>
+                {statusCfg.label}
+              </div>
+
+              {/* Expand arrow */}
+              <span style={{ fontSize: 10, color: "#6B7280", transition: "transform 0.2s", transform: isExpanded ? "rotate(180deg)" : "none" }}>
+                ▼
+              </span>
+            </div>
+
+            {/* Expanded detail */}
+            {isExpanded && (
+              <div style={{ marginTop: 12, paddingTop: 12, borderTop: "1px solid rgba(255,255,255,0.06)" }}>
+                {/* Why this matters */}
+                <div style={{ marginBottom: 10 }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: "#7C8593", textTransform: "uppercase" as any, letterSpacing: "0.07em", marginBottom: 4 }}>
+                    Why this matters
+                  </div>
+                  <div style={{ fontSize: 12, color: "#94A3B8", lineHeight: 1.55 }}>
+                    {item.why}
+                  </div>
+                </div>
+
+                {/* What to look for */}
+                <div style={{ marginBottom: 10 }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: "#7C8593", textTransform: "uppercase" as any, letterSpacing: "0.07em", marginBottom: 4 }}>
+                    What to look for
+                  </div>
+                  <div style={{ fontSize: 12, color: "#94A3B8", lineHeight: 1.55 }}>
+                    {item.lookFor}
+                  </div>
+                </div>
+
+                {/* Status selector */}
+                <div style={{ marginBottom: 10 }}>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: "#7C8593", textTransform: "uppercase" as any, letterSpacing: "0.07em", marginBottom: 4 }}>
+                    Status
+                  </div>
+                  <select
+                    value={state.status}
+                    onChange={e => updateStatus(item.key, e.target.value)}
+                    style={{
+                      width: "100%", padding: "8px 12px", borderRadius: 8,
+                      border: "1px solid rgba(255,255,255,0.1)",
+                      background: "#1E293B", color: "#F1F5F9",
+                      fontSize: 13, outline: "none", cursor: "pointer",
+                    }}
+                  >
+                    {statusOptions.map(o => (
+                      <option key={o.value} value={o.value}>{o.label}</option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Notes */}
+                <div>
+                  <div style={{ fontSize: 10, fontWeight: 700, color: "#7C8593", textTransform: "uppercase" as any, letterSpacing: "0.07em", marginBottom: 4 }}>
+                    Notes
+                  </div>
+                  <textarea
+                    value={state.notes}
+                    onChange={e => updateNotes(item.key, e.target.value)}
+                    placeholder="Record what you found..."
+                    style={{
+                      width: "100%", padding: "8px 12px", borderRadius: 8,
+                      border: "1px solid rgba(255,255,255,0.1)",
+                      background: "rgba(255,255,255,0.03)", color: "#E2E8F0",
+                      fontSize: 12, outline: "none", resize: "vertical" as any,
+                      minHeight: 60, lineHeight: 1.5,
+                      fontFamily: "inherit",
+                    }}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+        );
+      })}
+
+      {/* Bottom: re-run prompt when threshold met */}
+      {canRerun && (
+        <div style={{
+          marginTop: 12, padding: "12px 14px", borderRadius: 10,
+          background: "rgba(99,102,241,0.06)", border: "1px solid rgba(99,102,241,0.2)",
+          display: "flex", alignItems: "center", gap: 10,
+        }}>
+          <span style={{ fontSize: 16 }}>📋</span>
+          <div style={{ flex: 1, fontSize: 12, color: "#A5B4FC", lineHeight: 1.5 }}>
+            You've completed {completedCount} verification items. Re-run the analysis to see how your findings affect the underwriting.
+          </div>
+        </div>
+      )}
+
+      {!canRerun && completedCount > 0 && (
+        <div style={{
+          marginTop: 12, fontSize: 11, color: "#6B7280", textAlign: "center" as any,
+        }}>
+          Complete at least 2 items to unlock re-analysis
+        </div>
+      )}
+    </div>
+  );
+}
+
+
 // ─── UNDERWRITING PANEL ───────────────────────────────────────────────────────
 
 type UwTab = "stress" | "lender" | "sba" | "negotiation" | "loi" | "memo" | "comps";
@@ -3592,6 +3862,21 @@ function UnderwritingPanel({
               <div style={{ fontSize: 10, color: "#64748B", fontStyle: "italic", marginTop: 6 }}>{vd.disclaimer}</div>
             </div>
           </div>
+
+            {/* Investigation checklist for Manual Review / stress_case deals */}
+            {deal.manual_review_required && (
+              <InvestigationChecklist
+                dealId={deal.id}
+                userId={deal.user_id ?? "anon"}
+                investigationQuestions={deal.investigation_questions ?? []}
+                investigationReasons={deal.investigation_reasons ?? []}
+                onRerunAnalysis={() => {
+                  // Re-open the analyze modal pre-filled with this deal's data
+                  // For now, just alert — full re-run integration comes later
+                  alert("Re-run analysis will re-score this deal with your updated findings. This feature is being finalized.");
+                }}
+              />
+            )}
 
           {/* Business vs Price classification */}
 {(() => {
