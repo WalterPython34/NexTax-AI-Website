@@ -154,7 +154,12 @@ export function rowToEngineInput(
     // tri-state gates whether the amount is meaningful. If disclosed 'no' or 'unknown', null.
     accelerated_depreciation_present:
       row.prior_depreciation_disclosed === "yes" ? num(row.asset_accum_depreciation) : null,
-    recapture_sensitive_classes_present: triToBool(row.recapture_sensitive_present),
+    // Decision #1: recapture_sensitive_classes_present is now mechanically derived
+    // from PPA allocations (equipment > 0 OR real_property > 0). The DB column
+    // persists for legacy data but is no longer the source of truth. Buyer-facing
+    // field removed from the UI.
+    recapture_sensitive_classes_present:
+      (num(row.ppa_equipment) ?? 0) > 0 || (num(row.ppa_real_property) ?? 0) > 0,
     existing_tax_basis_disclosed: basisDisclosed,
     // only attach the nested basis when disclosed AND at least one class present
     existing_tax_basis_by_class:
