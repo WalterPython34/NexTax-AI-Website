@@ -687,6 +687,33 @@ function drawPage1(doc: jsPDF, data: DealReportData, decision: DecisionLayerResu
   renderMetricRow(row2, y);
   y += SP.xl;
 
+  // ── Earnings verification callout (circuit breaker) ──────────────────
+  const reportedMarginForCallout = data.revenue > 0 ? data.sde / data.revenue : 0;
+  const isStressCaseForCallout = reportedMarginForCallout > 0.40 && data.sde > 0;
+
+  if (isStressCaseForCallout) {
+    const calloutY = y + 4;
+    doc.setFillColor(254, 243, 199);
+    doc.roundedRect(marginLeft, calloutY, contentWidth, 38, 3, 3, "F");
+    doc.setDrawColor(245, 158, 11);
+    doc.setLineWidth(0.5);
+    doc.roundedRect(marginLeft, calloutY, contentWidth, 38, 3, 3, "S");
+
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(146, 64, 14);
+    doc.text("EARNINGS VERIFICATION REQUIRED", marginLeft + 10, calloutY + 10);
+
+    doc.setFontSize(7);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(120, 53, 15);
+    const calloutMsg = `Reported SDE margin of ${Math.round(reportedMarginForCallout * 100)}% materially exceeds industry benchmarks. All metrics in this report are computed from seller-reported figures and should not be relied upon until independently verified through tax returns and quality of earnings review.`;
+    const calloutLines = doc.splitTextToSize(calloutMsg, contentWidth - 20);
+    doc.text(calloutLines, marginLeft + 10, calloutY + 18);
+
+    y = calloutY + 42;
+  }
+
   // ─── HAIRLINE DIVIDER ────────────────────────────────────────────────
   setHex(doc, COLOR.borderSoft, "draw");
   doc.setLineWidth(0.4);
