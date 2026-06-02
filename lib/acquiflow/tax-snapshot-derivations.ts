@@ -340,9 +340,13 @@ export function deriveTaxStructureEvaluated(
     rec.prior_depreciation_disclosed !== "unknown";
   if (!anyMeaningful) return "Not Started";
 
-  // "Fully Evaluated": readiness 6/6 + KMI "—" + EG "—" + schedules >= 1.
+  // "Fully Evaluated": all APPLICABLE readiness categories met + no gaps + schedules ≥ 1.
+  // We check `unmet.length === 0` rather than `ready === 6` so a goodwill-only deal
+  // (where the "classes" category is not-applicable and thus not counted toward
+  // `ready`) can still reach Fully Evaluated when everything else is substantiated.
+  // Readiness itself continues to display as e.g. 5/6 with a "not applicable" UI hint.
   if (
-    readiness.ready === 6 &&
+    readiness.unmet.length === 0 &&
     keyMissing === "—" &&
     evidenceGap === "—" &&
     section.schedules.length >= 1
