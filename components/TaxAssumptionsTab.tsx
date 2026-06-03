@@ -6,9 +6,12 @@ import {
   buildTaxFactsView,
   buildTaxImplicationsView,
   buildTaxComparisonRows,
+  buildStructureSections,
+  buildBasisDeltaView,
   type TaxSnapshot,
   type TaxFactsView,
   type TaxImplicationsView,
+  type BasisDeltaView,
   type BasisRecoveryLabel,
   type RecaptureExposureLabel,
   type NolPositionLabel,
@@ -795,6 +798,120 @@ function StructuralComparisonPanel({ plan }: { plan: StructuralComparisonPanelPl
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// PATCH B — Calculated Difference card (Quantitative basis delta + tax shield)
+// ─────────────────────────────────────────────────────────────────────────────
+// Workspace-only view of the structural implications of current assumptions.
+// All three sections render data the engine already produced; nothing here
+// recalculates schedules. The tax shield section is ANALYSIS ONLY and never
+// enters institutional output (Executive Snapshot or AcquiFlow-Intel memo).
+// ─────────────────────────────────────────────────────────────────────────────
+function CalculatedDifferenceCard({ view }: { view: BasisDeltaView }) {
+  const fmt = (n: number | null): string => n === null ? "—" : "$" + Math.round(n).toLocaleString("en-US");
+  const fmtDiff = (n: number | null): string => n === null ? "—" : (n >= 0 ? "+" : "") + "$" + Math.round(Math.abs(n)).toLocaleString("en-US");
+
+  return (
+    <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, overflow: "hidden", marginBottom: 16 }}>
+      <div style={{ padding: "12px 16px", borderBottom: "1px solid rgba(255,255,255,0.05)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <span style={{ fontSize: 11, fontWeight: 700, color: INK, textTransform: "uppercase", letterSpacing: "0.08em" }}>Calculated Difference</span>
+        <span style={{
+          padding: "2px 8px", borderRadius: 3, fontSize: 9, fontWeight: 700,
+          letterSpacing: "0.04em", textTransform: "uppercase",
+          background: "rgba(245,158,11,0.10)", color: "#FBBF24",
+          border: "1px solid rgba(245,158,11,0.3)",
+        }}>Analysis only</span>
+      </div>
+      <div style={{ padding: "14px 16px" }}>
+        {!view.computable && (
+          <div style={{ fontSize: 12, color: MUTE, fontStyle: "italic" }}>
+            {view.absent_reason ?? "Not yet computable from current inputs."}
+          </div>
+        )}
+
+        {view.computable && (
+          <>
+            {/* Section 1 — Basis Delta */}
+            <div style={{ marginBottom: 16 }}>
+              <div style={{ fontSize: 10.5, fontWeight: 700, color: FAINT, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>New recoverable tax basis</div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
+                <div>
+                  <div style={{ fontSize: 10.5, color: FAINT, marginBottom: 3 }}>Asset purchase</div>
+                  <div style={{ fontSize: 17, fontWeight: 700, color: INK, fontFamily: "ui-monospace, monospace" }}>{fmt(view.asset_recoverable_basis)}</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: 10.5, color: FAINT, marginBottom: 3 }}>Stock purchase</div>
+                  <div style={{ fontSize: 17, fontWeight: 700, color: MUTE, fontFamily: "ui-monospace, monospace" }}>{fmt(view.stock_recoverable_basis)}</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: 10.5, color: FAINT, marginBottom: 3 }}>Difference</div>
+                  <div style={{ fontSize: 17, fontWeight: 700, color: VIOLET, fontFamily: "ui-monospace, monospace" }}>{fmtDiff(view.basis_difference)}</div>
+                </div>
+              </div>
+              {view.partial_gap_note && (
+                <div style={{ marginTop: 8, fontSize: 11, color: "#FBBF24", fontStyle: "italic" }}>
+                  {view.partial_gap_note}
+                </div>
+              )}
+            </div>
+
+            {/* Section 2 — Year 1 Recovery Delta */}
+            <div style={{ marginBottom: 16, paddingTop: 14, borderTop: "1px solid rgba(255,255,255,0.05)" }}>
+              <div style={{ fontSize: 10.5, fontWeight: 700, color: FAINT, textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>Year 1 basis recovery</div>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
+                <div>
+                  <div style={{ fontSize: 10.5, color: FAINT, marginBottom: 3 }}>Asset purchase</div>
+                  <div style={{ fontSize: 15, fontWeight: 600, color: INK, fontFamily: "ui-monospace, monospace" }}>{fmt(view.asset_year1_recovery)}</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: 10.5, color: FAINT, marginBottom: 3 }}>Stock purchase</div>
+                  <div style={{ fontSize: 15, fontWeight: 600, color: MUTE, fontFamily: "ui-monospace, monospace" }}>{fmt(view.stock_year1_recovery)}</div>
+                </div>
+                <div>
+                  <div style={{ fontSize: 10.5, color: FAINT, marginBottom: 3 }}>Difference</div>
+                  <div style={{ fontSize: 15, fontWeight: 600, color: VIOLET, fontFamily: "ui-monospace, monospace" }}>{fmtDiff(view.year1_recovery_difference)}</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Section 3 — Optional Tax Shield Preview */}
+            <div style={{ paddingTop: 14, borderTop: "1px solid rgba(255,255,255,0.05)" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                <span style={{ fontSize: 10.5, fontWeight: 700, color: FAINT, textTransform: "uppercase", letterSpacing: "0.06em" }}>Estimated Year 1 tax shield</span>
+                {view.tax_shield_year1 !== null && (
+                  <span style={{
+                    padding: "1px 6px", borderRadius: 3, fontSize: 8.5, fontWeight: 700,
+                    letterSpacing: "0.04em", textTransform: "uppercase",
+                    background: "rgba(245,158,11,0.10)", color: "#FBBF24",
+                  }}>Analysis only</span>
+                )}
+              </div>
+              {view.tax_shield_year1 !== null ? (
+                <div style={{ fontSize: 17, fontWeight: 700, color: "#FBBF24", fontFamily: "ui-monospace, monospace" }}>
+                  {fmt(view.tax_shield_year1)}
+                  <span style={{ marginLeft: 10, fontSize: 11, color: MUTE, fontWeight: 400, fontFamily: FONT }}>
+                    ({fmt(view.asset_year1_recovery)} × {Math.round((view.buyer_ordinary_rate ?? 0) * 100)}%)
+                  </span>
+                </div>
+              ) : (
+                <div style={{ fontSize: 12, color: MUTE, fontStyle: "italic" }}>
+                  {view.tax_shield_message}
+                </div>
+              )}
+            </div>
+
+            {/* Election note (only for 338/336 selections) */}
+            {view.election_note && (
+              <div style={{ marginTop: 14, padding: "10px 12px", background: "rgba(99,102,241,0.05)", border: "1px solid rgba(99,102,241,0.18)", borderRadius: 8, fontSize: 11.5, color: MUTE, lineHeight: 1.5 }}>
+                {view.election_note}
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // MAIN COMPONENT
 // ─────────────────────────────────────────────────────────────────────────────
 export default function TaxAssumptionsTab({
@@ -964,12 +1081,17 @@ export default function TaxAssumptionsTab({
     if (!rec) return null;
     const engineRec = recToEngineRec(rec);
     const section = buildTaxStructureSection(recToBuilderRow(rec));
+    // Patch B: compute all four structure-variant sections once. Both the
+    // Structural Comparison and the Calculated Difference card consume them.
+    // This is the Invariant 1 discipline: one set of engine runs per render.
+    const sections = buildStructureSections(engineRec);
     const snap = buildTaxSnapshot(engineRec, section);
     const facts = buildTaxFactsView(engineRec);
     const implications = buildTaxImplicationsView(section);
-    const comparisonRows = buildTaxComparisonRows(engineRec, section);
+    const comparisonRows = buildTaxComparisonRows(engineRec, sections);
     const comparisonPlan = buildStructuralComparisonPanel(engineRec, comparisonRows);
-    return { snap, facts, implications, comparisonPlan };
+    const basisDelta = buildBasisDeltaView(engineRec, sections.asset, sections.stock);
+    return { snap, facts, implications, comparisonPlan, basisDelta };
   }, [rec]);
 
   const moneyFmt = (n: number) => "$" + Math.round(n).toLocaleString("en-US");
@@ -1220,6 +1342,7 @@ export default function TaxAssumptionsTab({
             <>
               <TaxFactsSection view={livePreview.facts} />
               <TaxImplicationsSection view={livePreview.implications} />
+              <CalculatedDifferenceCard view={livePreview.basisDelta} />
               <StructuralComparisonPanel plan={livePreview.comparisonPlan} />
             </>
           )}
