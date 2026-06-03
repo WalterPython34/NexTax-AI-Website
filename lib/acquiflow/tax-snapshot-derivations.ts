@@ -236,14 +236,32 @@ const KEY_MISSING_PRIORITY: ReadinessCategoryId[] = [
   "nol_disclosure",    // 6: gates NOL statement
 ];
 
-export function deriveKeyMissingInput(readiness: StructureReadiness): string {
+/**
+ * Resolve which recovery-class line to surface based on which allocations
+ * lack a class. Pure; reads the record only.
+ */
+function recoveryClassMissingLine(rec: TaxAssumptionRecord): string {
+  const equipMissing = (rec.ppa_equipment ?? 0) > 0 && rec.asset_equipment_class === "unspecified";
+  const rpMissing = (rec.ppa_real_property ?? 0) > 0 && rec.asset_real_property_class === "unspecified";
+  if (equipMissing && rpMissing) return "Recovery class missing for equipment and real property.";
+  if (equipMissing) return "Recovery class missing for equipment.";
+  if (rpMissing) return "Recovery class missing for real property.";
+  // Defensive fallback — shouldn't reach here when "classes" is in unmet, but
+  // returns a sensible generic message rather than literal brackets.
+  return "Recovery class missing.";
+}
+
+export function deriveKeyMissingInput(
+  readiness: StructureReadiness,
+  rec?: TaxAssumptionRecord,
+): string {
   // Find the highest-priority unmet category (by KEY_MISSING_PRIORITY order, not unmet order).
   const first = KEY_MISSING_PRIORITY.find(id => readiness.unmet.includes(id));
   if (!first) return "—";
   switch (first) {
     case "structure":         return "Transaction structure not specified.";
     case "ppa":               return "Purchase-price allocation not entered.";
-    case "classes":           return "Recovery class missing for [equipment / real property].";
+    case "classes":           return rec ? recoveryClassMissingLine(rec) : "Recovery class missing.";
     case "entity":            return "Target entity type not specified.";
     case "basis_disclosure":  return "Seller basis disclosure not provided.";
     case "nol_disclosure":    return "NOL disclosure not provided.";
@@ -540,7 +558,7 @@ export function buildTaxSnapshot(
   section: TaxStructureSection,
 ): TaxSnapshot {
   const readiness = deriveReadiness(rec);
-  const keyMissing = deriveKeyMissingInput(readiness);
+  const keyMissing = deriveKeyMissingInput(readiness, rec);
   const evidenceGap = deriveEvidenceGap(rec, readiness);
   return {
     structure_label: STRUCTURE_LABEL[rec.ppa_structure] ?? "Not yet specified",
@@ -580,15 +598,15 @@ export function buildTaxFactsView(rec: TaxAssumptionRecord): TaxFactsView {
     lines.push({ label: "Real-property recovery class", value: rec.asset_real_property_class, seam: "assumption" });
   }
   if (rec.seller_basis_disclosed === "yes") {
-    lines.push({ label: "Seller basis disclosure", value: "Disclosed", seam: "fact" });
+    lines.push({ label: "Seller basis disclosure", value: "Disclosed", seam: "assumption" });
   } else if (rec.seller_basis_disclosed === "no") {
-    lines.push({ label: "Seller basis disclosure", value: "Not disclosed", seam: "fact" });
+    lines.push({ label: "Seller basis disclosure", value: "Not disclosed", seam: "assumption" });
   }
   if (rec.nols_disclosed === "yes") {
     const v = rec.nol_amount !== null ? `Yes ($${(rec.nol_amount / 1_000_000).toFixed(2)}M)` : "Yes (amount pending)";
-    lines.push({ label: "NOLs disclosed", value: v, seam: "fact" });
+    lines.push({ label: "NOLs disclosed", value: v, seam: "assumption" });
   } else if (rec.nols_disclosed === "no") {
-    lines.push({ label: "NOLs disclosed", value: "No", seam: "fact" });
+    lines.push({ label: "NOLs disclosed", value: "No", seam: "assumption" });
   }
   if ((rec.debt_seller_note_principal ?? 0) > 0) {
     lines.push({ label: "Seller note", value: fmt(rec.debt_seller_note_principal!), seam: "fact" });
