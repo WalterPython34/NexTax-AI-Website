@@ -87,17 +87,17 @@ export interface RiskFlag {
 
 export interface PricingInsight {
   percentile:           number;
-  percentile_ordinal:   string;       // "22nd"
-  position:             "below" | "at" | "above";
+  percentile_ordinal:   string;       // "22nd"; "—" when position === "unavailable"
+  position:             "below" | "at" | "above" | "unavailable"; // Patch C: "unavailable" when no closed-comp benchmark
   asking_multiple:      number;
-  median_multiple:      number;
-  delta_multiple:       number;       // |asking - median|
-  fair_value_gap:       number;       // theoretical anchor
-  multiple_based_gap:   number;       // cross-check
-  realistic_savings:    number;       // capped capture
-  headline_value:       number;       // displayed dollar value
+  median_multiple:      number | null; // Patch C: null when no closed-comp benchmark (no fabrication)
+  delta_multiple:       number;       // |asking - median|; 0 when unavailable
+  fair_value_gap:       number;       // theoretical anchor; 0 when unavailable
+  multiple_based_gap:   number;       // cross-check; 0 when unavailable
+  realistic_savings:    number;       // capped capture; 0 when unavailable
+  headline_value:       number;       // displayed dollar value; 0 when unavailable
   was_capped:           boolean;
-  prose:                string;       // 4-sentence rule-based prose
+  prose:                string;       // 4-sentence rule-based prose; honest-absence string when unavailable
 }
 
 export interface DecisionLayerResult {
@@ -363,19 +363,6 @@ function detectRiskFlags(d: DealReportInputs, scenarios: StressScenario[]): Risk
     });
   }
 
-   // ── Earnings investigation required (circuit breaker) ─────────────────
-  const dealMargin = d.revenue > 0 ? d.sde / d.revenue : 0;
-  if (reported > 0 && usable >= reported * 0.95 && dealMargin > 0.40) {
-    // Looks like circuit breaker case: usable SDE preserved, but margin is extreme
-    flags.push({
-      severity:      "HIGH",
-      category:      "FINANCIAL",
-      headline:      "Earnings verification required",
-      detail:        `Reported SDE margin of ${Math.round(dealMargin * 100)}% materially exceeds industry benchmarks. All report metrics are based on seller-reported figures. Independent verification through tax returns and quality of earnings review is required before relying on these figures.`,
-      isDealBreaker: false,
-    });
-  }
-
   // ─── Above-market pricing ─────────────────────────────────────────────
   const benchHigh = d.benchmark_high ?? null;
   if (benchHigh !== null && d.valuation_multiple > benchHigh * 1.15) {
@@ -572,9 +559,31 @@ function detectRiskFlags(d: DealReportInputs, scenarios: StressScenario[]): Risk
 function computePricingInsight(
   d:               DealReportInputs,
   percentile:      number,
-  benchMid:        number
+  benchMid:        number | null
 ): PricingInsight {
-  const askingMult   = d.valuation_multiple;
+  const askingMult = d.valuation_multiple;
+
+  // Patch C — honest absence: no closed-comp benchmark, no positioning verdict,
+  // no synthetic median. Returns a clearly-marked unavailable shape that
+  // downstream consumers (generator pages 1, 4, 5) must gate on before
+  // rendering quantitative pricing language.
+  if (benchMid === null) {
+    return {
+      percentile:          0,
+      percentile_ordinal:  "—",
+      position:            "unavailable",
+      asking_multiple:     askingMult,
+      median_multiple:     null,
+      delta_multiple:      0,
+      fair_value_gap:      0,
+      multiple_based_gap:  0,
+      realistic_savings:   0,
+      headline_value:      0,
+      was_capped:          false,
+      prose:               "Closed-comp benchmark data is not available for this industry in our current dataset. Market positioning cannot be evaluated from current inputs.",
+    };
+  }
+
   const deltaMult    = round(Math.abs(askingMult - benchMid), 2);
   const position: "below" | "at" | "above" =
     askingMult < benchMid * 0.95 ? "below" :
@@ -795,10 +804,16 @@ function deriveTrajectory(d: DealReportInputs): { label: "Stable" | "Improving" 
 // ─── Main Entry Point ───────────────────────────────────────────────────
 
 export function computeDecisionLayer(d: DealReportInputs): DecisionLayerResult {
-  // Ensure we have a benchmark mid; if not, derive from valuation_multiple as a fallback
-  const benchMid  = d.benchmark_mid  ?? round(d.valuation_multiple * 1.15, 2);
-  const benchLow  = d.benchmark_low  ?? round(benchMid * 0.7, 2);
-  const benchHigh = d.benchmark_high ?? round(benchMid * 1.4, 2);
+  // Patch C: benchmark values pass through honestly. When no closed-comp data
+  // is available, benchMid is null and downstream pricing-insight computation
+  // returns position="unavailable" rather than fabricating synthetic values.
+  // The prior fallback (`?? round(d.valuation_multiple * 1.15, 2)`) was
+  // structurally guaranteeing every benchmark-less deal would be reported as
+  // "Below market" with a 4.80x fake median for a 4.17x asking — see the
+  // benchmark-consistency trace for the marketing_services finding.
+  const benchMid: number | null = d.benchmark_mid ?? null;
+  const benchLow: number | null = d.benchmark_low ?? null;
+  const benchHigh: number | null = d.benchmark_high ?? null;
 
   // Compute stress scenarios
   const monthlyPayment = d.monthly_payment
@@ -809,8 +824,12 @@ export function computeDecisionLayer(d: DealReportInputs): DecisionLayerResult {
   const riskFlags = detectRiskFlags(d, scenarios);
   const highRisks = riskFlags.filter(f => f.severity === "HIGH").length;
 
-  // Percentile
-  const percentile = computePercentile(d.valuation_multiple, benchLow, benchMid, benchHigh);
+  // Percentile — only computable when full benchmark triple is present.
+  // When unavailable, percentile is 0 (sentinel) and consumers must gate on
+  // pricingInsight.position === "unavailable" before rendering quantitatively.
+  const percentile = (benchLow !== null && benchMid !== null && benchHigh !== null)
+    ? computePercentile(d.valuation_multiple, benchLow, benchMid, benchHigh)
+    : 0;
 
   // Lender readiness
   const lenderReadiness = computeLenderReadiness(d.dscr, scenarios);
@@ -818,7 +837,7 @@ export function computeDecisionLayer(d: DealReportInputs): DecisionLayerResult {
   // Leverage
   const leverage = computeLeverage(percentile, d.dscr, highRisks);
 
-  // Pricing insight
+  // Pricing insight — honest absence when benchMid is null (no fabrication).
   const pricingInsight = computePricingInsight(d, percentile, benchMid);
 
   // Walk-away
