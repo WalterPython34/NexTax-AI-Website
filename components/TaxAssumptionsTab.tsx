@@ -1063,19 +1063,11 @@ export default function TaxAssumptionsTab({
           {/* ── Tax Snapshot card (Step 6 — canonical summary layer) ── */}
           {livePreview && <TaxSnapshotCard snap={livePreview.snap} rec={rec} />}
 
-          {/* ── readiness readout (narrative) ── */}
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16, background: "rgba(99,102,241,0.06)", border: "1px solid rgba(99,102,241,0.2)", borderRadius: 12, padding: "13px 16px", marginBottom: 16 }}>
-            <div>
-              <div style={{ fontSize: 13, color: INK }}>
-                The report’s Structure section can ground <b style={{ color: VIOLET }}>{readiness.ready}</b> of {readiness.total} structural reads from the current inputs.
-              </div>
-              <div style={{ fontSize: 11, color: MUTE, marginTop: 3 }}>
-                {readiness.notes.length
-                  ? `Still open: ${readiness.notes.join(", ")} — these stay “not yet specified,” not errors.`
-                  : "All structural reads have the inputs they need."}
-              </div>
-            </div>
-          </div>
+          {/* (The old "readiness narrative" block was removed in Patch Batch A. */}
+          {/*  Its content duplicated — and conflicted with — the Snapshot card */}
+          {/*  above, which now surfaces readiness, Key Missing Input, and        */}
+          {/*  Evidence Gap with mechanically-derived precision. The Snapshot is */}
+          {/*  the canonical summary layer per Invariant 1.)                     */}
 
           {/* two-column layout */}
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, alignItems: "start" }}>
@@ -1108,7 +1100,12 @@ export default function TaxAssumptionsTab({
                 {rec.prior_depreciation_disclosed === "yes" && (
                   <MoneyField label="Accumulated / accelerated depreciation" value={rec.asset_accum_depreciation} onChange={(v) => patch({ asset_accum_depreciation: v })} seam="FACT" />
                 )}
-                <TriField label="Recapture-sensitive classes present?" value={rec.recapture_sensitive_present} onChange={(v) => patch({ recapture_sensitive_present: v })} />
+                {/* Fix #3 (Patch Batch A): the "Recapture-sensitive classes */}
+                {/* present?" TriField was removed here per Decision #1. The */}
+                {/* value is now mechanically derived in the adapter from PPA */}
+                {/* allocations (equipment > 0 || real_property > 0). The DB */}
+                {/* column persists for legacy data but is no longer source  */}
+                {/* of truth and is not displayed to buyers.                  */}
               </Panel>
 
               <Panel title="NOLs" subtitle="Disclosed net operating losses">
