@@ -12,9 +12,10 @@
 
 import type { TaxAssumptionRecord } from "@/components/TaxAssumptionsTab";
 
-// ── dimension catalog (six slots, five visible in v1) ──
+// ── dimension catalog (seven slots, six visible in v1) ──
 export type ComparisonDimensionId =
   | "basis_treatment"
+  | "calculated_difference"  // Patch B — quantitative basis delta row
   | "tax_attributes"
   | "seller_recognition"
   | "election_prereqs"
