@@ -164,8 +164,32 @@ T("PPA missing overrides entity/basis/NOL gaps", () => {
 T("Recovery class missing overrides entity/basis/NOL gaps", () => {
   // PPA equipment entered, no class → category 3 (classes) unmet
   const r = { ...empty, ppa_structure: "asset" as const, ppa_equipment: 600_000 };
-  const msg = deriveKeyMissingInput(deriveReadiness(r));
+  const msg = deriveKeyMissingInput(deriveReadiness(r), r);
   A(msg.startsWith("Recovery class missing"), `expected "Recovery class missing…", got: ${msg}`);
+  // Fix #1: literal placeholder brackets must not appear in user-facing text
+  A(!msg.includes("[") && !msg.includes("]"), `KMI must not contain literal brackets, got: ${msg}`);
+  // and must name the specific class (equipment here)
+  A(msg.includes("equipment"), `expected "equipment" in class-specific line, got: ${msg}`);
+});
+T("Recovery class missing names BOTH when equipment AND real property both lack classes", () => {
+  const r: TaxAssumptionRecord = {
+    ...empty, ppa_structure: "asset",
+    ppa_equipment: 600_000, ppa_real_property: 400_000,
+    // both class fields stay "unspecified"
+  };
+  const msg = deriveKeyMissingInput(deriveReadiness(r), r);
+  A(msg.includes("equipment") && msg.includes("real property"),
+    `expected both classes named, got: ${msg}`);
+});
+T("Recovery class missing names ONLY real property when equipment has class", () => {
+  const r: TaxAssumptionRecord = {
+    ...empty, ppa_structure: "asset",
+    ppa_equipment: 600_000, asset_equipment_class: "7yr",
+    ppa_real_property: 400_000, // RP class left unspecified
+  };
+  const msg = deriveKeyMissingInput(deriveReadiness(r), r);
+  A(msg.includes("real property") && !msg.includes("equipment"),
+    `expected only "real property", got: ${msg}`);
 });
 T("Entity missing overrides basis/NOL gaps", () => {
   // structure + PPA + classes met; entity unset → entity wins (priority 4)
@@ -433,6 +457,17 @@ T("buildTaxFactsView smoke: returns one line per entered fact, with seam tags", 
   // structure choice surfaces as one of the lines (sanity check)
   const hasStructure = view.lines.some(ln => ln.value === "Asset purchase");
   A(hasStructure, "structure choice surfaces in Facts");
+});
+
+T("Fix #4: buyer-toggleable disclosures tagged as ASSUMPTION, not FACT", () => {
+  // fullySubstantiated has seller_basis_disclosed: "yes" and nols_disclosed: "no"
+  const view = buildTaxFactsView(fullySubstantiated);
+  const basisLine = view.lines.find(ln => ln.label === "Seller basis disclosure");
+  const nolLine = view.lines.find(ln => ln.label === "NOLs disclosed");
+  A(!!basisLine, "Seller basis disclosure line present");
+  A(!!nolLine, "NOLs disclosed line present");
+  AE(basisLine!.seam, "assumption", "Seller basis disclosure seam");
+  AE(nolLine!.seam, "assumption", "NOLs disclosed seam");
 });
 
 T("buildTaxImplicationsView: schedules present when goodwill is allocated", () => {
