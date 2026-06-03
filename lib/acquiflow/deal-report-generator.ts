@@ -932,7 +932,7 @@ doc.text("EARNINGS VERIFICATION REQUIRED", marginLeft + 10, calloutY + 10);
 doc.setFontSize(7);
 doc.setFont("helvetica", "normal");
 doc.setTextColor(120, 53, 15);
-const calloutMsg = `Reported SDE margin of ${Math.round(reportedMarginForCallout * 100)}% const calloutLines = doc.splitTextToSize(calloutMsg, contentWidth - 20);
+const calloutMsg = `Reported SDE margin of ${Math.round(reportedMarginForCallout * 100)}% materially exceeds industry benchmarks. All metrics in this report are computed from seller-reported figures and should not be relied upon until independently verified through tax returns and quality of earnings review.`;
 doc.text(calloutLines, marginLeft + 10, calloutY + 18);
 y = calloutY + 42;
 }
