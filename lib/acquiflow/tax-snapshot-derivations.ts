@@ -101,6 +101,63 @@ export interface TaxImplicationsView {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// PATCH B — Quantitative Basis Delta + Tax Shield Preview (workspace-only)
+// ─────────────────────────────────────────────────────────────────────────────
+
+/**
+ * The four structure-specific section runs. Computed once per record, consumed
+ * by both buildTaxComparisonRows and buildBasisDeltaView. Lifting this here
+ * avoids duplicate engine runs (Invariant 1).
+ */
+export interface StructureSections {
+  asset: TaxStructureSection;
+  stock: TaxStructureSection;
+  stock_with_338_h_10: TaxStructureSection;
+  stock_with_336_e: TaxStructureSection;
+}
+
+/**
+ * The Calculated Difference view model.
+ *
+ * Reads existing engine output (the Total basis recovery schedule from the
+ * asset-counterfactual section) — does not recalculate anything.
+ *
+ * The tax shield section is ANALYSIS ONLY and never enters institutional
+ * output. The basis and Year-1 numbers are derived from the same engine
+ * output the Implications section renders (Invariant 1).
+ */
+export interface BasisDeltaView {
+  computable: boolean;            // false → render absent_reason; do not estimate
+
+  // Section 1 — Basis delta
+  asset_recoverable_basis: number | null;
+  stock_recoverable_basis: number;   // always 0 for pure stock
+  basis_difference: number | null;
+
+  // Section 2 — Year 1 recovery delta
+  asset_year1_recovery: number | null;
+  stock_year1_recovery: number;      // always 0 for pure stock
+  year1_recovery_difference: number | null;
+
+  // Section 3 — Optional tax shield (ANALYSIS ONLY)
+  buyer_ordinary_rate: number | null;
+  tax_shield_year1: number | null;
+  /** Either "ANALYSIS ONLY" (rate present) or the "Enter buyer ordinary…" prompt (rate missing). */
+  tax_shield_message: string;
+
+  /** Populated only when ppa_structure is stock_with_338_h_10 or stock_with_336_e. */
+  election_note: string | null;
+
+  /** Populated when computable=false — explains the blocker. */
+  absent_reason: string | null;
+
+  /** Populated when computable=true but one or more allocated classes
+   *  did not yet produce a schedule. Example:
+   *  "Equipment not yet included pending recovery class." */
+  partial_gap_note: string | null;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
 // PURE DERIVATION HELPERS — bodies stubbed; tests fail with explicit error
 // ─────────────────────────────────────────────────────────────────────────────
 
@@ -395,6 +452,10 @@ export function deriveTaxStructureEvaluated(
  * Returns the five v1-visible Tax dimension rows plus the type-reserved
  * transferability_considerations row (with visible:false).
  */
+// ─────────────────────────────────────────────────────────────────────────────
+// STRUCTURE SECTIONS — multi-structure section runner (Patch B refactor)
+// ─────────────────────────────────────────────────────────────────────────────
+
 // Helper: run the builder for a counterfactual structure to get "what this
 // structure would look like" without changing the buyer's actual selection.
 function sectionForStructure(
@@ -404,9 +465,6 @@ function sectionForStructure(
   // The builder consumes a DealTaxAssumptionsRow shape; build one inline that
   // mirrors recordToRow with mechanical recapture derivation.
   const eqRecaptureSensitive = (rec.ppa_equipment ?? 0) > 0 || (rec.ppa_real_property ?? 0) > 0;
-  // Defer the import to avoid a cycle at module-load time.
-  // (At runtime this is a no-op; the imports above already resolved.)
-  // We deliberately use `as any` only for the cross-module row shape construction.
   const row = {
     deal_id: rec.deal_id ?? "test",
     ppa_structure: structure,
@@ -445,21 +503,185 @@ function sectionForStructure(
   return build(row);
 }
 
+/**
+ * Run the engine against all four structure variants. Patch B refactor —
+ * consumers (buildTaxComparisonRows, buildBasisDeltaView) share the result so
+ * the engine runs once per record per render, not multiple times.
+ */
+export function buildStructureSections(rec: TaxAssumptionRecord): StructureSections {
+  return {
+    asset:               sectionForStructure(rec, "asset"),
+    stock:               sectionForStructure(rec, "stock"),
+    stock_with_338_h_10: sectionForStructure(rec, "stock_with_338_h_10"),
+    stock_with_336_e:    sectionForStructure(rec, "stock_with_336_e"),
+  };
+}
+
 // Extract a categorical statement's body by heading substring.
 function findStatement(section: TaxStructureSection, headingFragment: string): string | null {
   const found = section.statements.find(s => s.heading.includes(headingFragment));
   return found ? found.body : null;
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// PATCH B HELPERS — basis delta + per-structure cell text
+// ─────────────────────────────────────────────────────────────────────────────
+
+/** Abbreviated currency for narrative cells (Structural Comparison): $1.5M / $933K / $25 */
+function fmtCurrencyAbbrev(n: number): string {
+  if (n >= 1_000_000) {
+    const millions = n / 1_000_000;
+    // Use 1 decimal place when needed, but trim trailing zero (e.g. "1.5M" not "1.50M",
+    // "1M" not "1.0M"). Whole-millions display as "$1M".
+    const fixed = millions.toFixed(1);
+    const trimmed = fixed.endsWith(".0") ? fixed.slice(0, -2) : fixed;
+    return `$${trimmed}M`;
+  }
+  if (n >= 1_000) return `$${Math.round(n / 1_000)}K`;
+  return `$${Math.round(n)}`;
+}
+
+/** Detect partial-state and produce a human gap-note, or return null when complete. */
+function detectPartialState(rec: TaxAssumptionRecord, sectionAsset: TaxStructureSection): string | null {
+  const has197Sched = sectionAsset.schedules.some(s => s.heading.includes("197"));
+  const hasEquipSched = sectionAsset.schedules.some(s => s.heading.includes("Equipment cost recovery"));
+  const hasRpSched = sectionAsset.schedules.some(s => s.heading.includes("Real-property cost recovery"));
+
+  const hasGoodwillOrIntangibles = (rec.ppa_goodwill ?? 0) > 0 || (rec.ppa_intangibles ?? 0) > 0;
+  const hasEquipment = (rec.ppa_equipment ?? 0) > 0;
+  const hasRealProp = (rec.ppa_real_property ?? 0) > 0;
+
+  const missing: string[] = [];
+  if (hasGoodwillOrIntangibles && !has197Sched) missing.push("intangibles");
+  if (hasEquipment && !hasEquipSched) missing.push("equipment");
+  if (hasRealProp && !hasRpSched) missing.push("real property");
+
+  if (missing.length === 0) return null;
+  const list =
+    missing.length === 1 ? missing[0] :
+    missing.length === 2 ? `${missing[0]} and ${missing[1]}` :
+    `${missing.slice(0, -1).join(", ")}, and ${missing[missing.length - 1]}`;
+  const cap = list.charAt(0).toUpperCase() + list.slice(1);
+  return `${cap} not yet included pending recovery class.`;
+}
+
+/** Read "new recoverable basis" + "Year 1 recovery" from a structure's section.
+ *  Returns nulls when the section did not produce a Total basis recovery schedule. */
+function readBasisAndYear1(section: TaxStructureSection): { basis: number | null; year1: number | null } {
+  const total = section.schedules.find(s => s.heading.includes("Total basis recovery"));
+  if (!total) return { basis: null, year1: null };
+  return {
+    basis: total.total,
+    // First schedule row is always Year 1 (schedule rows are emitted in year order by the builder).
+    year1: total.rows[0]?.amount ?? null,
+  };
+}
+
+/**
+ * Build the Calculated Difference view model. Reads existing engine output;
+ * never recalculates schedules. The tax shield section is ANALYSIS ONLY and
+ * is gated on the buyer's planning rate being present.
+ */
+export function buildBasisDeltaView(
+  rec: TaxAssumptionRecord,
+  sectionAsset: TaxStructureSection,
+  sectionStock: TaxStructureSection,
+): BasisDeltaView {
+  const rate = rec.buyer_ordinary_rate;
+  const shieldPromptIfMissing = "Enter buyer ordinary tax rate to preview estimated tax shield.";
+
+  const { basis: assetBasis, year1: assetYear1 } = readBasisAndYear1(sectionAsset);
+
+  // Not-computable branch: no Total basis recovery schedule at all.
+  if (assetBasis === null || assetYear1 === null) {
+    return {
+      computable: false,
+      asset_recoverable_basis: null,
+      stock_recoverable_basis: 0,
+      basis_difference: null,
+      asset_year1_recovery: null,
+      stock_year1_recovery: 0,
+      year1_recovery_difference: null,
+      buyer_ordinary_rate: rate,
+      tax_shield_year1: null,
+      tax_shield_message: shieldPromptIfMissing,
+      election_note: null,
+      absent_reason: "Not yet computable from current inputs.",
+      partial_gap_note: null,
+    };
+  }
+
+  // Stock counterfactual is always 0 for the buyer's *new* recoverable basis.
+  // Note: the engine still emits §197 / MACRS schedules for "stock" because it
+  // computes schedules mechanically from PPA inputs regardless of structure.
+  // But under stock acquisition the buyer's basis CARRIES OVER from the target —
+  // no new recoverable basis is created. Patch B reflects the correct semantic
+  // (not what the engine happens to compute) by fixing stock = 0.
+  const stockBasis = 0;
+  const stockYear1 = 0;
+
+  const partialGapNote = detectPartialState(rec, sectionAsset);
+
+  // Tax shield — only when buyer rate is present and positive.
+  const taxShield = (rate !== null && rate > 0) ? assetYear1 * rate : null;
+  const shieldMessage = (rate === null || rate <= 0) ? shieldPromptIfMissing : "ANALYSIS ONLY";
+
+  // Election note — when selected structure is a deemed-asset election variant.
+  let electionNote: string | null = null;
+  if (rec.ppa_structure === "stock_with_338_h_10") {
+    electionNote = "Selected structure (Stock + \u00A7338(h)(10)) creates recoverable tax basis through deemed-asset treatment.";
+  } else if (rec.ppa_structure === "stock_with_336_e") {
+    electionNote = "Selected structure (Stock + \u00A7336(e)) creates recoverable tax basis through deemed-asset treatment.";
+  }
+
+  return {
+    computable: true,
+    asset_recoverable_basis: assetBasis,
+    stock_recoverable_basis: stockBasis,
+    basis_difference: assetBasis - stockBasis,
+    asset_year1_recovery: assetYear1,
+    stock_year1_recovery: stockYear1,
+    year1_recovery_difference: assetYear1 - stockYear1,
+    buyer_ordinary_rate: rate,
+    tax_shield_year1: taxShield,
+    tax_shield_message: shieldMessage,
+    election_note: electionNote,
+    absent_reason: null,
+    partial_gap_note: partialGapNote,
+  };
+}
+
+/** Generate the calculated_difference cell text for one structure column. */
+function calculatedDifferenceCellFor(
+  structureId: "asset" | "stock" | "stock_with_338_h_10" | "stock_with_336_e",
+  section: TaxStructureSection,
+): string {
+  const { basis } = readBasisAndYear1(section);
+  if (structureId === "stock") {
+    // Pure stock never creates new recoverable basis.
+    return "Does not create new recoverable asset basis unless an election applies.";
+  }
+  if (basis === null) {
+    return "Not yet computable from current inputs.";
+  }
+  const amount = fmtCurrencyAbbrev(basis);
+  if (structureId === "asset") {
+    return `Creates ${amount} of new recoverable tax basis.`;
+  }
+  // 338 or 336
+  return `Creates ${amount} of new recoverable tax basis through deemed-asset treatment.`;
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 export function buildTaxComparisonRows(
   rec: TaxAssumptionRecord,
-  _section: TaxStructureSection,
+  sections: StructureSections,
 ): StructuralComparisonRow[] {
-  // Build sections for the four structure variants. Pure, no IO.
-  const secAsset = sectionForStructure(rec, "asset");
-  const secStock = sectionForStructure(rec, "stock");
-  const sec338 = sectionForStructure(rec, "stock_with_338_h_10");
-  const sec336 = sectionForStructure(rec, "stock_with_336_e");
+  const secAsset = sections.asset;
+  const secStock = sections.stock;
+  const sec338   = sections.stock_with_338_h_10;
+  const sec336   = sections.stock_with_336_e;
 
   // For each dimension, pull the engine's own statement for the matching structure.
   const rows: StructuralComparisonRow[] = [
@@ -472,6 +694,19 @@ export function buildTaxComparisonRows(
         stock: findStatement(secStock, "Remaining tax basis") ?? findStatement(secStock, "Basis step-up"),
         stock_with_338_h_10: findStatement(sec338, "Basis step-up"),
         stock_with_336_e: findStatement(sec336, "Basis step-up"),
+      },
+    },
+    // Patch B — quantitative basis delta row, sourced from the same engine output
+    // the workspace's Calculated Difference card consumes (Invariant 1).
+    {
+      dimension: "calculated_difference",
+      dimension_label: "Calculated difference",
+      visible: true,
+      by_structure: {
+        asset:               calculatedDifferenceCellFor("asset", secAsset),
+        stock:               calculatedDifferenceCellFor("stock", secStock),
+        stock_with_338_h_10: calculatedDifferenceCellFor("stock_with_338_h_10", sec338),
+        stock_with_336_e:    calculatedDifferenceCellFor("stock_with_336_e", sec336),
       },
     },
     {
