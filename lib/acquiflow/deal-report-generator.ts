@@ -36,6 +36,7 @@
 
 import { jsPDF } from "jspdf";
 import type { TaxStructureSection } from "@/lib/acquiflow/tax-structure-section";
+import type { MarketFacts } from "@/lib/acquiflow/marketFacts";
 import {
   DealReportInputs,
   DecisionLayerResult,
@@ -194,6 +195,10 @@ export interface DealReportData {
   // Optional tax/structure section data (buyer-entered assumptions → engine).
   // When present AND .present===true a Structure page renders after Page 5.
   taxStructure?: TaxStructureSection;
+  // Patch C: closed-comp benchmark from readMarketFacts (Invariant 1 — same
+  // source the Investment Memo's market-position panel consumes). null when
+  // no benchmark data exists; generator renders honest absence in that case.
+  marketFacts?: MarketFacts | null;
 }
 
 // ─── Color palette (canonical, used throughout) ─────────────────────────
@@ -687,33 +692,6 @@ function drawPage1(doc: jsPDF, data: DealReportData, decision: DecisionLayerResu
   renderMetricRow(row2, y);
   y += SP.xl;
 
-  // ── Earnings verification callout (circuit breaker) ──────────────────
-  const reportedMarginForCallout = data.revenue > 0 ? data.sde / data.revenue : 0;
-  const isStressCaseForCallout = reportedMarginForCallout > 0.40 && data.sde > 0;
-
-  if (isStressCaseForCallout) {
-    const calloutY = y + 4;
-    doc.setFillColor(254, 243, 199);
-    doc.roundedRect(marginLeft, calloutY, contentWidth, 38, 3, 3, "F");
-    doc.setDrawColor(245, 158, 11);
-    doc.setLineWidth(0.5);
-    doc.roundedRect(marginLeft, calloutY, contentWidth, 38, 3, 3, "S");
-
-    doc.setFontSize(8);
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(146, 64, 14);
-    doc.text("EARNINGS VERIFICATION REQUIRED", marginLeft + 10, calloutY + 10);
-
-    doc.setFontSize(7);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(120, 53, 15);
-    const calloutMsg = `Reported SDE margin of ${Math.round(reportedMarginForCallout * 100)}% materially exceeds industry benchmarks. All metrics in this report are computed from seller-reported figures and should not be relied upon until independently verified through tax returns and quality of earnings review.`;
-    const calloutLines = doc.splitTextToSize(calloutMsg, contentWidth - 20);
-    doc.text(calloutLines, marginLeft + 10, calloutY + 18);
-
-    y = calloutY + 42;
-  }
-
   // ─── HAIRLINE DIVIDER ────────────────────────────────────────────────
   setHex(doc, COLOR.borderSoft, "draw");
   doc.setLineWidth(0.4);
@@ -936,6 +914,28 @@ function drawPage2(doc: jsPDF, data: DealReportData, decision: DecisionLayerResu
   ];
   doc.text(debtMetaParts.join("   \u00B7   "), M, y);
   y += SP.xl;
+
+  // ── Earnings verification callout (circuit breaker) ──────────────────
+const reportedMarginForCallout = data.revenue > 0 ? data.sde / data.revenue : 0;
+const isStressCaseForCallout = reportedMarginForCallout > 0.40 && data.sde > 0;
+if (isStressCaseForCallout) {
+const calloutY = y + 4;
+doc.setFillColor(254, 243, 199);
+doc.roundedRect(marginLeft, calloutY, contentWidth, 38, 3, 3, "F");
+doc.setDrawColor(245, 158, 11);
+doc.setLineWidth(0.5);
+doc.roundedRect(marginLeft, calloutY, contentWidth, 38, 3, 3, "S");
+doc.setFontSize(8);
+doc.setFont("helvetica", "bold");
+doc.setTextColor(146, 64, 14);
+doc.text("EARNINGS VERIFICATION REQUIRED", marginLeft + 10, calloutY + 10);
+doc.setFontSize(7);
+doc.setFont("helvetica", "normal");
+doc.setTextColor(120, 53, 15);
+const calloutMsg = `Reported SDE margin of ${Math.round(reportedMarginForCallout * 100)}% const calloutLines = doc.splitTextToSize(calloutMsg, contentWidth - 20);
+doc.text(calloutLines, marginLeft + 10, calloutY + 18);
+y = calloutY + 42;
+}
 
   // ───────────────────────────────────────────────────────────────────────
   // SECTION 3 — DSCR stress scenarios
@@ -1180,13 +1180,63 @@ function drawPage4(doc: jsPDF, data: DealReportData, decision: DecisionLayerResu
   doc.text("Comparable transactions and positioning", M, y);
   y += 14;
 
+  // Patch C — honest-absence gate. When no closed-comp benchmark exists for
+  // this industry, the percentile bar / pricing insight / comparables are all
+  // unsubstantiated; render an honest absence paragraph and return. PRIOR
+  // STATE fabricated a median (asking × 1.15), low (median × 0.7), high
+  // (median × 1.4), and a hardcoded "312 transactions" label — producing a
+  // structurally-guaranteed "Below market" verdict for every benchmark-less
+  // deal. Removed in Patch C.
+  if (decision.pricing_insight.position === "unavailable") {
+    setType(doc, "L4");
+    setHex(doc, COLOR.textMuted, "text");
+    doc.text(`${inputs.industry_label} — closed-comp benchmark not available.`, M, y);
+    y += SP.xl;
+
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(8);
+    setHex(doc, COLOR.indigo, "text");
+    doc.text("BENCHMARK STATUS", M, y);
+    y += 18;
+
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    setHex(doc, COLOR.textBody, "text");
+    const absencePara =
+      "Closed-comp benchmark data is not available for this industry in our current dataset. Market positioning cannot be evaluated from current inputs.";
+    const lines = doc.splitTextToSize(absencePara, CW);
+    lines.forEach((line: string, i: number) => doc.text(line, M, y + i * 13));
+    y += lines.length * 13 + SP.lg;
+
+    // Optional: surface the asking multiple as a standalone factual stat
+    // (still a fact about the deal, not a positioning claim).
+    setType(doc, "label");
+    setHex(doc, COLOR.textDim, "text");
+    doc.text("ASKING MULTIPLE", M, y);
+    y += 16;
+    setType(doc, "stat-medium");
+    setHex(doc, COLOR.indigo, "text");
+    doc.text(`${inputs.valuation_multiple.toFixed(2)}x`, M, y);
+
+    return;
+  }
+
+  // ─── Benchmark IS available — render existing positioning block ──────
+  // Patch C: source the basis label + sample size from marketFacts (canonical),
+  // not from the hardcoded `?? 312` fallback the prior code used.
+  const mf = data.marketFacts ?? null;
+  const sampleSize = mf?.closed_comp_sample_size ?? inputs.benchmark_sample_size ?? null;
+  const basisLabel =
+    mf?.closed_comp_basis === "industry_size_matched" ? "Industry, size-matched closed comps" :
+    mf?.closed_comp_basis === "industry_national"     ? "Industry-wide closed comps" :
+    "Industry benchmark";
+
   setType(doc, "L4");
   setHex(doc, COLOR.textMuted, "text");
-  const sampleSize = inputs.benchmark_sample_size ?? 312;
-  doc.text(
-    `${inputs.industry_label} benchmark — ${sampleSize.toLocaleString()} transactions, proprietary AcquiFlow database.`,
-    M, y,
-  );
+  const sourceCopy = sampleSize !== null
+    ? `${inputs.industry_label} — ${basisLabel} (${sampleSize.toLocaleString()} closed transactions).`
+    : `${inputs.industry_label} — ${basisLabel}.`;
+  doc.text(sourceCopy, M, y);
   y += SP.xl;
 
   // ───────────────────────────────────────────────────────────────────────
@@ -1201,9 +1251,13 @@ function drawPage4(doc: jsPDF, data: DealReportData, decision: DecisionLayerResu
   doc.text("ASKING MULTIPLE VS MARKET RANGE", M, y);
   y += 18;
 
-  const benchMid  = decision.pricing_insight.median_multiple;
-  const benchLow  = inputs.benchmark_low  ?? round(benchMid * 0.7, 2);
-  const benchHigh = inputs.benchmark_high ?? round(benchMid * 1.4, 2);
+  // Patch C: read benchmark range from marketFacts (canonical) when present;
+  // fall back to inputs (which are also populated from marketFacts upstream).
+  // The previous `?? round(benchMid * 0.7/1.4, 2)` fabrications are removed.
+  // We know benchMid is non-null here because position !== "unavailable".
+  const benchMid  = decision.pricing_insight.median_multiple as number;
+  const benchLow  = mf?.closed_comp_p25 ?? inputs.benchmark_low  ?? benchMid;
+  const benchHigh = mf?.closed_comp_p75 ?? inputs.benchmark_high ?? benchMid;
 
   // Range labels — placed above the bar without a surrounding box
   setType(doc, "L5");
@@ -1368,11 +1422,23 @@ function buildCompsProse(
 ): string {
   const askMult    = inputs.valuation_multiple;
   const medianMult = decision.pricing_insight.median_multiple;
-  const sampleSize = inputs.benchmark_sample_size ?? 312;
+  const sampleSize = inputs.benchmark_sample_size; // Patch C: no `?? 312` fabrication
   const industry   = inputs.industry_label || "the industry";
 
+  // Patch C — defensive honest absence. drawPage4 early-returns when
+  // position === "unavailable", so this function should only be reached with
+  // medianMult non-null. Keep a null guard for safety; rewrite the prior
+  // "broader benchmark population (312 transactions)" fallback that depended
+  // on the synthetic sample size.
+  if (medianMult === null) {
+    return `Direct transaction comparables for ${industry} were limited in the sample window. Without closed-comp benchmark data for this industry, positioning cannot be evaluated from current inputs; narrower industry-specific comps will surface during diligence as additional deals close.`;
+  }
+
   if (comps.length === 0) {
-    return `Direct transaction comparables for ${industry} were limited in the sample window. Positioning above is anchored to the broader benchmark population (${sampleSize.toLocaleString()} transactions); narrower industry-specific comps will surface during diligence as additional deals close.`;
+    const popPhrase = sampleSize !== null
+      ? `the broader benchmark population (${sampleSize.toLocaleString()} transactions)`
+      : `the broader benchmark population`;
+    return `Direct transaction comparables for ${industry} were limited in the sample window. Positioning above is anchored to ${popPhrase}; narrower industry-specific comps will surface during diligence as additional deals close.`;
   }
 
   const c = comps[0];
