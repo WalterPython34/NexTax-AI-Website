@@ -714,7 +714,7 @@ function deriveRecommendation(
   leverage:     LeverageTier,
   lenderTier:   LenderTier,
   riskFlags:    RiskFlag[],
-  position:     "below" | "at" | "above"
+  position:     "below" | "at" | "above" | "unavailable" // Patch C: accept honest-absence position
 ): { rec: Recommendation; confidence: "High" | "Medium" | "Low" } {
   const highRisks    = riskFlags.filter(f => f.severity === "HIGH").length;
   const dealBreakers = riskFlags.filter(f => f.isDealBreaker).length;
