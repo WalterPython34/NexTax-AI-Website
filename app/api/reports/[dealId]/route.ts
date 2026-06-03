@@ -45,7 +45,8 @@ import {
   CommitteeMemoProse,
   generateDealReportPDF,
 } from "@/lib/acquiflow/deal-report-generator";
-import { readMarketFacts, type MarketFacts } from "@/lib/acquiflow/marketFacts";
+import { buildTaxStructureSection } from "@/lib/acquiflow/tax-structure-section";
+import type { DealTaxAssumptionsRow } from "@/lib/intelligence/tax/tax-row-to-engine-input";
 
 // Service role client for cross-table reads after auth
 const supabaseAdmin = createClient(
@@ -106,43 +107,56 @@ export async function GET(
     return NextResponse.json({ error: "Not authorized for this deal" }, { status: 403 });
   }
 
-  // ─── 4. Fetch industry benchmarks via canonical readMarketFacts ──────────
-  // Patch C: workspace PDF and Investment Memo now share ONE benchmark source.
-  // readMarketFacts queries dealstats_benchmarks with correct column names
-  // (median_mvic_to_sde / p25_mvic_to_sde / p75_mvic_to_sde) and tier-selects
-  // size-matched ≥5 over national ≥10. Returns honest "unavailable" when
-  // nothing matches — no synthetic fallbacks. This is Invariant 1 applied to
-  // the benchmark layer: same function, two consumers.
-  //
-  // PRIOR STATE (replaced by this block):
-  //   - SELECTed nonexistent columns multiple_low/median/high from
-  //     dealstats_benchmarks → query failed silently, always returned null
-  //   - Fell through to industry_listing_benchmarks (asking prices, not closed
-  //     comps), which silently changed the data universe shown to the user
-  //   - Generator + decision layer fabricated synthetic median/low/high/312
-  //     when both queries returned null, producing structurally-guaranteed
-  //     "Below market" verdicts for every industry without benchmark data.
-  let marketFacts: MarketFacts | null = null;
+  // ─── 3b. Load tax assumptions (optional) → Structure section ──────────
+  // Service-role read of the INST-eligible row only. No row → honest absence.
+  // Best-effort: any failure leaves taxStructure undefined and the report
+  // generates exactly as before (Structure page simply skipped).
+  let taxStructure;
   try {
-    marketFacts = await readMarketFacts(supabaseAdmin, {
-      industry:     deal.industry ?? null,
-      revenue:      deal.revenue ?? null,
-      sde:          deal.sde ?? null,
-      asking_price: deal.asking_price ?? null,
-      state:        deal.state ?? null,
-    });
+    const { data: taxRow } = await supabaseAdmin
+      .from("deal_tax_assumptions")
+      .select("*")
+      .eq("deal_id", dealId)
+      .maybeSingle();
+    taxStructure = buildTaxStructureSection(
+      (taxRow as DealTaxAssumptionsRow | null) ?? null,
+      { state_of_organization: deal.state ?? null },
+    );
   } catch (err) {
-    console.warn("[reports] readMarketFacts failed:", err);
-    marketFacts = null;
+    console.warn("[reports] tax assumptions load failed (Structure page skipped):", err);
+    taxStructure = undefined;
   }
 
-  // Populate existing scalar benchmark fields from marketFacts (or null when
-  // unavailable). Downstream decision layer and generator gate on null/
-  // pricing_insight.position === "unavailable" — no fabrication anywhere.
-  const benchLow:    number | null = marketFacts?.closed_comp_p25         ?? null;
-  const benchMid:    number | null = marketFacts?.closed_comp_median      ?? null;
-  const benchHigh:   number | null = marketFacts?.closed_comp_p75         ?? null;
-  const sampleSize:  number | null = marketFacts?.closed_comp_sample_size ?? null;
+  // ─── 4. Fetch industry benchmarks ─────────────────────────────────────
+  const { data: benchmark } = await supabaseAdmin
+    .from("dealstats_benchmarks")
+    .select("multiple_low, multiple_median, multiple_high, sample_size")
+    .eq("industry_key", deal.industry)
+    .is("size_band",  null)
+    .is("state",      null)
+    .maybeSingle();
+
+  // Fallback to listing benchmarks if DealStats absent
+  let benchLow:    number | null = benchmark?.multiple_low    ?? null;
+  let benchMid:    number | null = benchmark?.multiple_median ?? null;
+  let benchHigh:   number | null = benchmark?.multiple_high   ?? null;
+  let sampleSize:  number | null = benchmark?.sample_size     ?? null;
+
+  if (benchMid === null) {
+    const { data: listingBench } = await supabaseAdmin
+      .from("industry_listing_benchmarks")
+      .select("median_multiple, p25_multiple, p75_multiple, sample_size")
+      .eq("industry_key", deal.industry)
+      .is("size_band", null)
+      .is("state",     null)
+      .maybeSingle();
+    if (listingBench) {
+      benchLow   = listingBench.p25_multiple    ?? null;
+      benchMid   = listingBench.median_multiple ?? null;
+      benchHigh  = listingBench.p75_multiple    ?? null;
+      sampleSize = listingBench.sample_size     ?? null;
+    }
+  }
 
   // ─── 5. Fetch representative comparables (anonymized) ─────────────────
   const { data: comparablesRaw } = await supabaseAdmin
@@ -325,7 +339,7 @@ export async function GET(
     benchmarkSnapshot,    // undefined when no snapshot exists → pages 6-8 skipped
     interpretation,       // undefined when interpret call fails → "What this means" skipped
     committeeProse,       // undefined when Sonnet call/validation fails → page 8 skipped
-    marketFacts,          // Patch C: closed-comp benchmark from readMarketFacts (null → honest absence)
+    taxStructure,         // undefined/absent → Structure page skipped (honest absence)
   };
 
   let pdfBuffer: Buffer;
