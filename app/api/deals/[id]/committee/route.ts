@@ -23,6 +23,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { readMarketFacts } from "@/app/acquiflow-intel/_lib/marketFacts";
 import { generateCommitteeNarrative } from "@/app/acquiflow-intel/_lib/committeeNarrative";
+import { buildTaxStructureSection } from "@/lib/acquiflow/tax-structure-section";
+import { deriveStructureReadinessFactor } from "@/lib/acquiflow/structure-readiness-factor";
+import type { DealTaxAssumptionsRow } from "@/lib/intelligence/tax/tax-row-to-engine-input";
 
 export const runtime = "nodejs";
 
@@ -159,6 +162,36 @@ export async function GET(
     console.warn(`[committee] market facts failed for ${dealId}:`, e instanceof Error ? e.message : String(e));
   }
 
+  // ── Stream 4: tax structure — third surface of the three-surface architecture ──
+  // Stage 3: same buildTaxStructureSection consumed by the Tax Assumptions tab
+  // and the workspace PDF. The Intel memo reads the builder-declared
+  // readiness_signal via deriveStructureReadinessFactor and renders it as a
+  // peer in the contributing_factors list. The full section is also returned
+  // (raw) so future surfaces can reference it without a second builder call.
+  //
+  // Best-effort: same firewall pattern as marketFacts. Any failure leaves
+  // both fields null and the memo renders without the tax factor (honest
+  // absence — no factor row, no UI noise).
+  let taxStructureSection: unknown = null;
+  let structureReadinessFactor: unknown = null;
+  try {
+    const { data: taxRow } = await supabaseAdmin
+      .from("deal_tax_assumptions")
+      .select("*")
+      .eq("deal_id", dealId)
+      .maybeSingle();
+    const section = buildTaxStructureSection(
+      (taxRow as DealTaxAssumptionsRow | null) ?? null,
+      { state_of_organization: deal.state ?? null },
+    );
+    taxStructureSection = section;
+    structureReadinessFactor = deriveStructureReadinessFactor(section);
+  } catch (e) {
+    taxStructureSection = null;
+    structureReadinessFactor = null;
+    console.warn(`[committee] tax structure section failed for ${dealId}:`, e instanceof Error ? e.message : String(e));
+  }
+
   // ── Stream 3: committee narrative — presentation-layer synthesis ──
   // Best-effort: reads streams 1 + 2 to write institutional prose. Returns null
   // on any failure (missing key, API error, guard rejection) so the committee
@@ -191,6 +224,8 @@ export async function GET(
       },
       cp,                 // stream 1 — engine reasoning (categorical)
       market_facts: marketFacts, // stream 2 — raw factual context
+      tax_structure_section: taxStructureSection,           // stream 4 — full section (raw)
+      structure_readiness_factor: structureReadinessFactor, // stream 4 — derived factor for memo render
       narrative,          // stream 3 — committee narrative (presentation-only)
     },
     cp_manifest_id: cpManifest,
