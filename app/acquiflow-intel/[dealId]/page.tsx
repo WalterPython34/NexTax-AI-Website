@@ -68,6 +68,10 @@ function humanizeState(state: string): string {
     blocking: "Blocking",
     cautious: "Cautious",
     declined: "Declined",
+    // Stage 3: factor in a state of pending input, distinct from cautious.
+    // Absence of evidence is not evidence of risk — a buyer who hasn't filled
+    // out the tax tab should NOT see a caution signal here.
+    pending_input: "Pending input",
   };
   return map[state] ?? humanizeToken(state);
 }
@@ -100,6 +104,11 @@ const toneForState = (state: string) =>
     ? C.blocking
     : state === "interested"
     ? C.engaged
+    // Stage 3: pending_input gets a neutral muted tone (faint slate), NOT
+    // the cautious amber. Constitutional: absence of evidence is not evidence
+    // of risk; the underwriter sees "we need more input here," not "concern."
+    : state === "pending_input"
+    ? C.faint
     : C.cautious;
 
 // ── Deterministic posture synthesis (template — NOT an LLM) ──────────────────
@@ -401,15 +410,25 @@ function ErrorView({ kind, reason }: { kind: string; reason: string }) {
 
 // ── The review itself ─────────────────────────────────────────────────────────
 function Review({ data, manifestId, generatedAt }: { data: any; manifestId: string; generatedAt: string }) {
-  // Committee envelope: { deal_facts, cp, market_facts, narrative }
+  // Committee envelope: { deal_facts, cp, market_facts, tax_structure_section, structure_readiness_factor, narrative }
   const cp = data.cp ?? {};
   const marketFacts = data.market_facts ?? null;
   const narrative = data.narrative ?? null;
   const dealFacts = data.deal_facts ?? {};
+  // Stage 3: structure-readiness factor — peer of CP's contributing_factors,
+  // derived independently from the tax structure section. NEVER injected into
+  // cp.readiness (CP firewall). When null, no factor row renders (honest
+  // absence: no record, nothing to surface).
+  const structureReadinessFactor = data.structure_readiness_factor ?? null;
 
   const readiness = cp.readiness ?? {};
   const impact = cp.impact_ranking ?? {};
-  const factors = readiness.contributing_factors ?? [];
+  // Merge: tax factor first (when present) as a peer, then CP's factors. The
+  // tax factor is presentation-layer; CP remains frozen and unmodified.
+  const cpFactors = readiness.contributing_factors ?? [];
+  const factors = structureReadinessFactor
+    ? [structureReadinessFactor, ...cpFactors]
+    : cpFactors;
   const ranked = impact.ranked_items ?? [];
   const posture = synthesizePosture(readiness);
 
@@ -486,9 +505,18 @@ function Review({ data, manifestId, generatedAt }: { data: any; manifestId: stri
                   <span style={{ fontFamily: serif, fontSize: 16.5 }}>{humanizeToken(f.axis_or_dimension)}</span>
                   {f.band && <span style={{ fontFamily: sans, fontSize: 11, color: C.faint }}>{f.band} band</span>}
                 </div>
+                {/* Stage 3 — muted reason line, always visible when factor carries a reason.
+                    Committee readers scan signal → reason → implication; hiding the reason
+                    behind a click reduces the value of the factor. Sized smaller than the
+                    factor name so the row stays compact at scan distance. */}
+                {f.reason && (
+                  <div style={{ fontFamily: serif, fontSize: 13, lineHeight: 1.55, color: C.inkSoft, marginTop: 6 }}>
+                    {f.reason}
+                  </div>
+                )}
               </div>
               <div style={{ flexShrink: 0, width: 12, paddingTop: 5 }}>
-                <div style={{ width: 9, height: 9, borderRadius: "50%", background: toneForState(f.state), opacity: f.state === "interested" ? 0.5 : 1 }} />
+                <div style={{ width: 9, height: 9, borderRadius: "50%", background: toneForState(f.state), opacity: (f.state === "interested" || f.state === "pending_input") ? 0.5 : 1 }} />
               </div>
             </div>
           ))}
