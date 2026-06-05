@@ -171,6 +171,7 @@ export async function POST(req: NextRequest) {
     // circuit. Do not confuse the two.
     let canonicalBenchmarkSource: "industry_size_matched" | "industry_national" | "fallback" = "fallback";
     let canonicalMarketMultiple: number | null = null;
+    console.error("[p2b-diag] inputs:", JSON.stringify({ industry, revNum, sdeNum, priceNum, state }));
     try {
       const facts = await readMarketFacts(supabaseAdmin, {
         industry:     industry ?? null,
@@ -179,16 +180,21 @@ export async function POST(req: NextRequest) {
         asking_price: priceNum,
         state:        state ?? null,
       });
+      console.error("[p2b-diag] readMarketFacts returned:", JSON.stringify({
+        closed_comp_basis: facts?.closed_comp_basis,
+        closed_comp_median: facts?.closed_comp_median,
+        closed_comp_sample_size: facts?.closed_comp_sample_size,
+      }));
       if (facts.closed_comp_median !== null && facts.closed_comp_basis !== "unavailable") {
         canonicalBenchmarkSource = facts.closed_comp_basis as typeof canonicalBenchmarkSource;
         canonicalMarketMultiple  = facts.closed_comp_median;
       }
-      // else: canonical data unavailable for this industry → "fallback" / null retained
     } catch (e) {
-      console.warn(`[record-deal] readMarketFacts failed for fingerprint ${fingerprint}:`,
-        e instanceof Error ? e.message : String(e));
-      // Read failure → "fallback" / null retained. Never blocks the save.
+      console.error(`[p2b-diag] readMarketFacts THREW for fingerprint ${fingerprint}:`,
+        e instanceof Error ? e.message : String(e),
+        e instanceof Error && e.stack ? e.stack.split("\n").slice(0, 4).join(" | ") : "");
     }
+    console.error("[p2b-diag] after-block:", JSON.stringify({ canonicalBenchmarkSource, canonicalMarketMultiple }));
     const serverBenchmarkSource:  "industry_size_matched" | "industry_national" | "fallback" =
       canonicalBenchmarkSource;
     const serverBenchmarkIsProxy: boolean = canonicalBenchmarkSource === "fallback";
