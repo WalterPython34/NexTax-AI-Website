@@ -3050,6 +3050,104 @@ function buildBenchmarkContext(deal: DealRun): BenchmarkContext {
   };
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Patch D Phase 3A — Market facts hook
+//
+// Live-fetches canonical market_facts for one deal from /api/deals/[id]/market-facts
+// (server-side endpoint that delegates to readMarketFacts → dealstats_benchmarks).
+// This is the same data source the workspace PDF and Intel memo consume —
+// guaranteeing consistency across all institutional surfaces.
+//
+// CLOSED-COMP side (closed_comp_basis, closed_comp_p25/median/p75,
+// deal_vs_closed_position) comes from the licensed DealStats dataset.
+// LISTING side (listing_basis, listing_multiple) is platform-aggregated from
+// deal_runs entered by other users.
+//
+// Phase 3B/C/D consume this hook to replace SCORE_INDUSTRIES.benchmark* reads
+// in the Underwriting Range band, Compare → Market Comps panel, and Compare →
+// Closed Comps panel respectively. The dashboard's existing benchmarkIqr state
+// (a parallel client-side dealstats_transactions query for percentile
+// positioning) is OUT OF SCOPE for this patch — different signal, untouched.
+// ─────────────────────────────────────────────────────────────────────────────
+type MarketFactsClosedBasis = "industry_size_matched" | "industry_national" | "unavailable";
+
+interface MarketFacts {
+  deal_multiple:             number | null;
+  closed_comp_median:        number | null;
+  closed_comp_p25:           number | null;
+  closed_comp_p75:           number | null;
+  closed_comp_sample_size:   number | null;
+  closed_comp_basis:         MarketFactsClosedBasis;
+  deal_vs_closed_position:   "below_p25" | "between_p25_median" | "between_median_p75" | "above_p75" | null;
+  listing_multiple:          number | null;
+  listing_basis:             string;
+  listing_vs_closed_gap_pct: number | null;
+  median_days_on_market:     number | null;
+  evidence_depth:            { closed_comp_sample_size: number | null; listing_sample_size: number | null };
+}
+
+function useMarketFacts(dealId: string | null | undefined): {
+  facts:   MarketFacts | null;
+  loading: boolean;
+  error:   string | null;
+} {
+  const [facts,   setFacts]   = useState<MarketFacts | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error,   setError]   = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!dealId) {
+      setFacts(null);
+      setError(null);
+      setLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+
+    (async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        const token = session?.access_token;
+        if (!token) {
+          if (!cancelled) {
+            setFacts(null);
+            setError("not_authenticated");
+            setLoading(false);
+          }
+          return;
+        }
+
+        const res  = await fetch(`/api/deals/${dealId}/market-facts`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const json = await res.json();
+        if (cancelled) return;
+
+        if (json.success && json.data?.market_facts) {
+          setFacts(json.data.market_facts as MarketFacts);
+          setError(null);
+        } else {
+          setFacts(null);
+          setError(typeof json.error_kind === "string" ? json.error_kind : "fetch_failed");
+        }
+      } catch (e) {
+        if (cancelled) return;
+        setFacts(null);
+        setError(e instanceof Error ? e.message : String(e));
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+
+    return () => { cancelled = true; };
+  }, [dealId]);
+
+  return { facts, loading, error };
+}
+
 function buildMarketPosition(deal: DealRun): MarketPosition {
   const multiple = deal.valuation_multiple ?? 0;
   const ind      = SCORE_INDUSTRIES[deal.industry];
