@@ -3,7 +3,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { normalizeDealFinancials, getConvictionCap, buildNormalizationPayload } from "@/lib/normalizationIntegration";
 import { applyDealClassification } from "@/lib/dealClassifier";
-import { readMarketFacts } from "@/app/acquiflow-intel/_lib/marketFacts";
 // ── CP Shadow Mode (Phase 0) — additive snapshot generation ──────────────────
 import { mapRecordDealBodyToRuleInputs, hasMinimumInputsForShadow, mergeBenchmarkEnrichment } from "@/lib/intelligence/orchestrator/map-live-inputs";
 import { runCpPipelineAndPersist } from "@/lib/intelligence/orchestrator/run-cp-pipeline";
@@ -154,55 +153,9 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // ── Patch D Phase 2B: Canonical valuation basis (server-authoritative) ─────
-    // Override the client-sent benchmark_source / benchmark_is_proxy with values
-    // derived from readMarketFacts (canonical closed-comp benchmarks). The client
-    // currently computes these from SCORE_INDUSTRIES (which is non-canonical);
-    // making them server-authoritative aligns creation-time scoring with the
-    // canonical data path consumed by the workspace PDF, Intel memo, and the
-    // Phase 3 dashboard surfaces. Also captures the canonical median for the
-    // dedicated canonical_market_multiple column.
-    //
-    // NAMING DISCIPLINE: this overrides VALUATION-side fields only
-    // (benchmark_source, benchmark_is_proxy, canonical_market_multiple).
-    // EARNINGS-side fields (usable_sde, benchmark_implied_sde,
-    // normalization_trust_score) remain driven by normalizeDealFinancials's
-    // null-benchmark path until Patch E activates the SDE-margin-haircut
-    // circuit. Do not confuse the two.
-    let canonicalBenchmarkSource: "industry_size_matched" | "industry_national" | "fallback" = "fallback";
-    let canonicalMarketMultiple: number | null = null;
-    console.error("[p2b-diag] inputs:", JSON.stringify({ industry, revNum, sdeNum, priceNum, state }));
-    try {
-      const facts = await readMarketFacts(supabaseAdmin, {
-        industry:     industry ?? null,
-        revenue:      revNum,
-        sde:          sdeNum,
-        asking_price: priceNum,
-        state:        state ?? null,
-      });
-      console.error("[p2b-diag] readMarketFacts returned:", JSON.stringify({
-        closed_comp_basis: facts?.closed_comp_basis,
-        closed_comp_median: facts?.closed_comp_median,
-        closed_comp_sample_size: facts?.closed_comp_sample_size,
-      }));
-      if (facts.closed_comp_median !== null && facts.closed_comp_basis !== "unavailable") {
-        canonicalBenchmarkSource = facts.closed_comp_basis as typeof canonicalBenchmarkSource;
-        canonicalMarketMultiple  = facts.closed_comp_median;
-      }
-    } catch (e) {
-      console.error(`[p2b-diag] readMarketFacts THREW for fingerprint ${fingerprint}:`,
-        e instanceof Error ? e.message : String(e),
-        e instanceof Error && e.stack ? e.stack.split("\n").slice(0, 4).join(" | ") : "");
-    }
-    console.error("[p2b-diag] after-block:", JSON.stringify({ canonicalBenchmarkSource, canonicalMarketMultiple }));
-    const serverBenchmarkSource:  "industry_size_matched" | "industry_national" | "fallback" =
-      canonicalBenchmarkSource;
-    const serverBenchmarkIsProxy: boolean = canonicalBenchmarkSource === "fallback";
-
     // ── Normalize financials before scoring ────────────────────────────────────
     // Runs normalizeDealFinancials() to compute usableSDE, trustScore, flags.
     // Falls back to stated SDE if normalization is unavailable.
-    // NOTE: rmaBenchmarks stays null — Patch E will feed canonical margins here.
     let normPayload = {};
     try {
       const normalized = normalizeDealFinancials({
@@ -210,13 +163,13 @@ export async function POST(req: NextRequest) {
         price: priceNum,
         benchmarkFamily:          benchmark_family,
         classificationConfidence: classification_confidence,
-        benchmarkIsProxy:         serverBenchmarkIsProxy,  // ← was: benchmark_is_proxy (client-sent)
+        benchmarkIsProxy:         benchmark_is_proxy,
         dataSource:               data_source as any,
-        rmaBenchmarks:            null, // benchmarks not fed to normalization in Phase 2B (Patch E)
+        rmaBenchmarks:            null, // benchmarks not fetched in this route
       });
       normPayload = buildNormalizationPayload(
         normalized,
-        serverBenchmarkSource,  // ← was: benchmark_source as ... (client-sent)
+        benchmark_source as "direct" | "proxy" | "fallback" | undefined ?? undefined,
       );
     } catch { /* normalization is additive — never block a save */ }
     
@@ -240,7 +193,6 @@ export async function POST(req: NextRequest) {
       owner_operated:  owner_operated  ?? null,
       has_real_estate: has_real_estate ?? null,
       valuation_multiple,
-      canonical_market_multiple: canonicalMarketMultiple,   // ← Phase 2B-i: NEW
       dscr,
       monthly_payment,
       fair_value,
