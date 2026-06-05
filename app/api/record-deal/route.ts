@@ -154,36 +154,6 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // ── Patch D Phase 2B: Canonical valuation reference ──
-// Server-authoritative: override any client-sent benchmark_source /
-// benchmark_is_proxy. Read canonical market multiple from dealstats_benchmarks
-// for persistence. This is the VALUATION-side anchor — distinct from the
-// EARNINGS-side fields (usable_sde, benchmark_implied_sde) which remain
-// driven by normalizeDealFinancials's null-benchmark path until Patch E.
-let canonicalMarketMultiple: number | null = null;
-let canonicalBenchmarkSource: "industry_size_matched" | "industry_national" | "fallback" = "fallback";
-try {
-  const facts = await readMarketFacts(supabaseAdmin, {
-    industry: industry ?? null,
-    revenue: revNum,
-    sde: sdeNum,
-    asking_price: priceNum,
-    state: state ?? null,
-  });
-  if (facts.closed_comp_median !== null && facts.closed_comp_basis !== "unavailable") {
-    canonicalMarketMultiple = facts.closed_comp_median;
-    canonicalBenchmarkSource = facts.closed_comp_basis as typeof canonicalBenchmarkSource;
-  }
-  // else: canonical data unavailable for this industry — fallback values retained
-} catch (e) {
-  // Read failure → fallback. Logged but never blocks save.
-  console.warn(`[record-deal] readMarketFacts failed for fingerprint ${fingerprint}:`, e instanceof Error ? e.message : String(e));
-}
-
-// These override the client-sent values for these two specific fields:
-const serverBenchmarkSource = canonicalBenchmarkSource;
-const serverBenchmarkIsProxy = canonicalBenchmarkSource === "fallback";
-   
     // ── Patch D Phase 2B: Canonical valuation basis (server-authoritative) ─────
     // Override the client-sent benchmark_source / benchmark_is_proxy with values
     // derived from readMarketFacts (canonical closed-comp benchmarks). The client
