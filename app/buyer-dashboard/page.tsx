@@ -5102,6 +5102,7 @@ function UnderwritingPanel({
             // Migrated from SCORE_INDUSTRIES.benchmarkLow/High (non-canonical, hardcoded)
             // to canonical closed_comp_p25/p75 from /api/deals/[id]/market-facts.
             // Per Decision 3b: underwriting range is closed-comp anchored.
+            const compsMarketPosition = buildMarketPosition(deal); // ← restore: still referenced by downstream Pro sections
             const mult        = deal.valuation_multiple ?? 0;
             const ccBasis     = marketFacts?.closed_comp_basis ?? "unavailable";
             const ccP25       = marketFacts?.closed_comp_p25;
