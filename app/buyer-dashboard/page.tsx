@@ -7246,6 +7246,8 @@ function TabCompare({ deals, isPro, onAnalyzeNew, comparisonsRemaining, hitCompa
   const [mode, setMode] = useState<CompareMode>("my-deals");
   const [ai, setAi]     = useState(0);
   const [bi, setBi]     = useState(Math.min(1, deals.length - 1));
+    // Patch D Phase 3C/D — canonical market facts for Deal A (the focus deal in Market/Closed Comps panels)
+  const { facts: marketFactsA } = useMarketFacts(deals[ai]?.id ?? null);
 
   // ── Swap handler ────────────────────────────────────────────────────────────
   const handleSwap = () => {
@@ -7786,27 +7788,55 @@ function TabCompare({ deals, isPro, onAnalyzeNew, comparisonsRemaining, hitCompa
       {mode === "closed" && isPro && (
         <div style={{ animation: "fadeUp 0.2s ease-out" }}>
           {isPro ? (
-            // ── PRO: Closed Comps ──────────────────────────────────────────────
+            // ── PRO: Closed Comps (Patch D Phase 3C — canonical) ─────────────
+            // Migrated from the × 0.82 / × 0.84 / × 0.86 haircut formula on
+            // SCORE_INDUSTRIES.benchmark* (fabrication) to canonical
+            // closed_comp_p25/p75/median from dealstats_benchmarks via the
+            // useMarketFacts hook.
             (() => {
-              const mult     = a?.valuation_multiple ?? 0;
-              const ind      = SCORE_INDUSTRIES[a?.industry ?? ""];
-              // Closed deal ranges trend ~15–20% below asking multiples
-              const clLow    = ind ? ind.benchmarkLow  * 0.82 : 1.7;
-              const clMed    = ind ? ind.benchmarkMid  * 0.84 : 2.3;
-              const clHigh   = ind ? ind.benchmarkHigh * 0.86 : 2.9;
-              const isAbove  = mult > clHigh;
-              const isBelow  = mult < clLow;
-              const pctVsMed = ((mult - clMed) / clMed * 100).toFixed(0);
+              const mult       = a?.valuation_multiple ?? 0;
+              const ccBasis    = marketFactsA?.closed_comp_basis ?? "unavailable";
+              const ccP25      = marketFactsA?.closed_comp_p25;
+              const ccP75      = marketFactsA?.closed_comp_p75;
+              const ccMedian   = marketFactsA?.closed_comp_median;
+              const ccPosition = marketFactsA?.deal_vs_closed_position ?? null;
+              const ccSampleN  = marketFactsA?.closed_comp_sample_size ?? null;
+              const hasRange   = ccBasis !== "unavailable"
+                              && ccP25 != null && ccP75 != null && ccMedian != null;
 
-              const implication = mult > clHigh * 1.4
-                ? `This deal is priced well above where similar businesses have actually closed. Closed transaction data suggests meaningful repricing may be required before a buyer will commit.`
-                : mult > clHigh
-                ? `Your deal is priced above where similar deals have actually closed. Expect negotiation pressure — buyers using closed comps will anchor below the current ask.`
-                : mult > clMed
-                ? `Current pricing is above the median closing multiple for this industry. Workable, but expect buyers to push for a discount at LOI.`
-                : mult < clLow
-                ? `Current pricing is below the typical closed range — if earnings are credible, this is a strong entry point supported by historical transaction data.`
-                : `This deal sits within historical closing norms. Pricing is defensible at LOI based on closed transaction benchmarks.`;
+              const isAbove    = hasRange && (ccPosition === "above_p75");
+              const isBelow    = hasRange && (ccPosition === "below_p25");
+              const pctVsMed   = hasRange ? ((mult - ccMedian!) / ccMedian! * 100).toFixed(0) : null;
+
+              const positionLabel =
+                !hasRange                              ? "—"
+                : ccPosition === "below_p25"           ? "Below Range"
+                : ccPosition === "between_p25_median"  ? "Within Range"
+                : ccPosition === "between_median_p75"  ? "Within Range"
+                : ccPosition === "above_p75"           ? "Above Range"
+                :                                        "—";
+
+              const positionColor =
+                !hasRange    ? "#7C8593"
+                : isBelow    ? "#2DD4BF"
+                : isAbove    ? "#EF4444"
+                :              "#10B981";
+
+              const implication =
+                !hasRange
+                  ? `Closed-comp data is unavailable for this industry in our current dataset. Pricing position cannot be evaluated from canonical transaction evidence.`
+                : ccPosition === "above_p75"
+                  ? `This deal is priced above where similar businesses have actually closed (${ccP25!.toFixed(2)}x – ${ccP75!.toFixed(2)}x). Closed comps suggest buyers will anchor below current ask — expect negotiation pressure or repricing at LOI.`
+                : ccPosition === "between_median_p75"
+                  ? `Current pricing is above the median closed multiple (${ccMedian!.toFixed(2)}x) for this industry but within the typical range. Workable, but expect buyers to push for a discount at LOI.`
+                : ccPosition === "below_p25"
+                  ? `Current pricing is below the typical closed range (${ccP25!.toFixed(2)}x – ${ccP75!.toFixed(2)}x) — if earnings are credible, this is a strong entry point supported by historical transaction data.`
+                :   `This deal sits within the closed-transaction range (${ccP25!.toFixed(2)}x – ${ccP75!.toFixed(2)}x) for this industry. Pricing is defensible at LOI.`;
+
+              const basisLabel =
+                ccBasis === "industry_size_matched" ? `Closed comps · ${ccSampleN ?? "?"} transactions · industry + size matched`
+                : ccBasis === "industry_national"   ? `Closed comps · ${ccSampleN ?? "?"} transactions · industry-national (broader sample)`
+                :                                     "Closed-comp benchmark unavailable for this industry";
 
               return (
                 <div>
@@ -7820,29 +7850,38 @@ function TabCompare({ deals, isPro, onAnalyzeNew, comparisonsRemaining, hitCompa
                     </div>
                   </div>
 
-                  {/* Hero: Range track — green accent, feels more decisive */}
+                  {/* Hero: Range track — canonical p25/p75 */}
                   <div style={{ padding: "16px 20px", borderRadius: 12, marginBottom: 14, background: "rgba(16,185,129,0.04)", border: "1px solid rgba(16,185,129,0.2)" }}>
                     <div style={{ fontSize: 10, color: "#10B981", textTransform: "uppercase" as const, letterSpacing: "0.09em", fontWeight: 700, marginBottom: 14 }}>
                       Pricing Position vs Closed Transactions
                     </div>
-                    <CompareRangeTrack
-                      currentValue={mult}
-                      low={clLow} median={clMed} high={clHigh}
-                      label="Deal A"
-                      accentColor={isBelow ? "#2DD4BF" : isAbove ? "#EF4444" : "#10B981"}
-                      emptyText="Closed comp range unavailable for this industry"
-                    />
+                    {hasRange ? (
+                      <CompareRangeTrack
+                        currentValue={mult}
+                        low={ccP25!} median={ccMedian!} high={ccP75!}
+                        label="Deal A"
+                        accentColor={positionColor}
+                        emptyText="Closed comp range unavailable for this industry"
+                      />
+                    ) : (
+                      <div style={{ padding: "20px 16px", textAlign: "center", color: "#7C8593", fontSize: 13, lineHeight: 1.5 }}>
+                        Closed-comp range unavailable for this industry.
+                        <div style={{ fontSize: 11, color: "#5B6470", marginTop: 4 }}>
+                          Our dataset doesn&apos;t have enough closed transactions in this category.
+                        </div>
+                      </div>
+                    )}
                   </div>
 
-                  {/* KPI cards */}
+                  {/* KPI cards — canonical values, drops the fabricated "Sold vs Ask (est.) -14% avg" */}
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 10, marginBottom: 14 }}>
                     {[
-                      { label: "Your Multiple",      value: `${mult.toFixed(2)}x`,                 color: "#60A5FA"  },
-                      { label: "Closed Median",       value: `${clMed.toFixed(2)}x`,                color: "#10B981"  },
-                      { label: "Closed Range",        value: `${clLow.toFixed(2)}x–${clHigh.toFixed(2)}x`, color: "#94A3B8" },
-                      { label: "Position",            value: isBelow ? "Below Range" : isAbove ? "Above Range" : "Within Range", color: isAbove ? "#EF4444" : isBelow ? "#2DD4BF" : "#10B981" },
-                      { label: "vs Closed Median",    value: `${Number(pctVsMed) > 0 ? "+" : ""}${pctVsMed}%`, color: Number(pctVsMed) > 15 ? "#F97316" : Number(pctVsMed) < -5 ? "#10B981" : "#94A3B8" },
-                      { label: "Sold vs Ask (est.)",  value: "−14% avg",  color: "#F59E0B"  },
+                      { label: "Your Multiple",          value: `${mult.toFixed(2)}x`,                                                                                                                                color: "#60A5FA"  },
+                      { label: "Closed Median",           value: hasRange ? `${ccMedian!.toFixed(2)}x` : "—",                                                                                                          color: hasRange ? "#10B981" : "#7C8593" },
+                      { label: "Closed Range (P25–P75)",  value: hasRange ? `${ccP25!.toFixed(2)}x–${ccP75!.toFixed(2)}x` : "—",                                                                                       color: "#94A3B8"  },
+                      { label: "Position",                value: positionLabel,                                                                                                                                        color: positionColor },
+                      { label: "vs Closed Median",        value: hasRange ? `${Number(pctVsMed) > 0 ? "+" : ""}${pctVsMed}%` : "—",                                                                                    color: hasRange ? (Number(pctVsMed) > 15 ? "#F97316" : Number(pctVsMed) < -5 ? "#10B981" : "#94A3B8") : "#7C8593" },
+                      { label: "Sample Size",             value: hasRange ? `${ccSampleN ?? "?"} txns` : "—",                                                                                                          color: "#94A3B8"  },
                     ].map(m => (
                       <div key={m.label} style={{ padding: "10px 12px", borderRadius: 9, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
                         <div style={{ fontSize: 9, color: "#7C8593", textTransform: "uppercase" as const, letterSpacing: "0.07em", marginBottom: 5 }}>{m.label}</div>
@@ -7851,16 +7890,26 @@ function TabCompare({ deals, isPro, onAnalyzeNew, comparisonsRemaining, hitCompa
                     ))}
                   </div>
 
-                  {/* Implication — stronger, more decisive than Market Comps */}
-                  <div style={{ padding: "12px 16px", borderRadius: 10, background: isAbove ? "rgba(239,68,68,0.05)" : "rgba(16,185,129,0.05)", border: `1px solid ${isAbove ? "rgba(239,68,68,0.2)" : "rgba(16,185,129,0.2)"}` }}>
+                  {/* Implication */}
+                  <div style={{ padding: "12px 16px", borderRadius: 10, background: isAbove ? "rgba(239,68,68,0.05)" : !hasRange ? "rgba(124,133,147,0.05)" : "rgba(16,185,129,0.05)", border: `1px solid ${isAbove ? "rgba(239,68,68,0.2)" : !hasRange ? "rgba(124,133,147,0.18)" : "rgba(16,185,129,0.2)"}` }}>
                     <div style={{ fontSize: 10, color: "#7C8593", textTransform: "uppercase" as const, letterSpacing: "0.08em", fontWeight: 600, marginBottom: 6 }}>LOI Anchor Signal</div>
                     <div style={{ fontSize: 13, color: "#94A3B8", lineHeight: 1.7 }}>{implication}</div>
+                  </div>
+
+                  {/* Basis label — fallback transparency per Patch D principle */}
+                  <div style={{
+                    marginTop: 10, fontSize: 10, color: "#7C8593",
+                    textTransform: "uppercase" as const, letterSpacing: "0.07em",
+                    fontStyle: ccBasis === "unavailable" ? "italic" : "normal",
+                  }}>
+                    {basisLabel}
                   </div>
                 </div>
               );
             })()
           ) : (
-            // ── LOCKED: Closed Comps ────────────────────────────────────────────
+           
+          // ── LOCKED: Closed Comps ────────────────────────────────────────────
             <div style={{ borderRadius: 14, overflow: "hidden", border: "1px solid rgba(99,102,241,0.2)" }}>
               <div style={{ padding: "24px 28px", background: "linear-gradient(135deg,rgba(16,185,129,0.06),rgba(6,95,70,0.03))" }}>
                 <div style={{ fontSize: 10, color: "#10B981", textTransform: "uppercase", letterSpacing: "0.1em", fontWeight: 700, marginBottom: 10 }}>⚡ Pro Feature</div>
