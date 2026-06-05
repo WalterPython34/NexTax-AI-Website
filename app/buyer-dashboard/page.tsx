@@ -3545,6 +3545,8 @@ function UnderwritingPanel({
   const [activeTab, setActiveTab]    = useState<UwTab>("stress");
   const [compsData, setCompsData]    = useState<CompsData>({ comps: [], currentDealOutsideRange: false });
   const [downloadingReport, setDownloadingReport] = useState(false);
+  // Patch D Phase 3B — canonical market facts (closed-comp basis, per Decision 3b)
+  const { facts: marketFacts } = useMarketFacts(deal.id);
 
   async function handleDownloadReport(dealId: string) {
     if (!isPro) { onShowDownloadUpgrade?.(); return; }
@@ -5093,72 +5095,123 @@ function UnderwritingPanel({
                 </>
                 );
               })()}
+          
 
-          {activeTab === "comps" && (() => {
-            const compsMarketPosition = buildMarketPosition(deal);
-            const indTeaser = SCORE_INDUSTRIES[deal.industry];
-            const lowTeaser   = indTeaser?.benchmarkLow  ?? 2.0;
-            const highTeaser  = indTeaser?.benchmarkHigh ?? 3.5;
-            const multTeaser  = deal.valuation_multiple ?? 0;
-            const pricingColor = compsMarketPosition.pricingLabel === "Well Below Market"          ? "#2DD4BF"
-                               : compsMarketPosition.pricingLabel === "Below Market"               ? "#10B981"
-                               : compsMarketPosition.pricingLabel === "At Market"                  ? "#F59E0B"
-                               : compsMarketPosition.pricingLabel === "Above Market"               ? "#F97316"
-                               :                                                                     "#EF4444";
-            const teaserImplication =
-              multTeaser > highTeaser * 1.5 ? `At ${multTeaser.toFixed(2)}x, this deal is priced far outside the ${lowTeaser.toFixed(2)}x–${highTeaser.toFixed(2)}x benchmark range for this industry.`
-              : multTeaser > highTeaser    ? `At ${multTeaser.toFixed(2)}x, this deal is priced above the ${lowTeaser.toFixed(2)}x–${highTeaser.toFixed(2)}x benchmark range.`
-              : multTeaser < lowTeaser * 0.75 ? `At ${multTeaser.toFixed(2)}x, this deal is priced well below the ${lowTeaser.toFixed(2)}x–${highTeaser.toFixed(2)}x benchmark range.`
-              : multTeaser < lowTeaser     ? `At ${multTeaser.toFixed(2)}x, this deal is priced below the ${lowTeaser.toFixed(2)}x–${highTeaser.toFixed(2)}x benchmark range.`
-              :                              `At ${multTeaser.toFixed(2)}x, this deal sits within the ${lowTeaser.toFixed(2)}x–${highTeaser.toFixed(2)}x benchmark range.`;
+         {activeTab === "comps" && (() => {
+            // Patch D Phase 3B — closed-comp anchored Market Position
+            // Migrated from SCORE_INDUSTRIES.benchmarkLow/High (non-canonical, hardcoded)
+            // to canonical closed_comp_p25/p75 from /api/deals/[id]/market-facts.
+            // Per Decision 3b: underwriting range is closed-comp anchored.
+            const mult        = deal.valuation_multiple ?? 0;
+            const ccBasis     = marketFacts?.closed_comp_basis ?? "unavailable";
+            const ccP25       = marketFacts?.closed_comp_p25;
+            const ccP75       = marketFacts?.closed_comp_p75;
+            const ccMedian    = marketFacts?.closed_comp_median;
+            const ccPosition  = marketFacts?.deal_vs_closed_position ?? null;
+            const ccSampleN   = marketFacts?.closed_comp_sample_size ?? null;
+            const hasRange    = ccBasis !== "unavailable" && ccP25 != null && ccP75 != null;
+
+            // Position label and color — derived from canonical deal_vs_closed_position
+            // when available; otherwise neutral. Per Decision 4a, no ad-hoc gap math.
+            const positionLabel =
+              !hasRange                              ? "—"
+              : ccPosition === "below_p25"           ? "Below Range"
+              : ccPosition === "between_p25_median"  ? "Within Range (Below Median)"
+              : ccPosition === "between_median_p75"  ? "Within Range (Above Median)"
+              : ccPosition === "above_p75"           ? "Above Range"
+              :                                        "—";
+
+            const positionColor =
+              !hasRange                              ? "#7C8593"
+              : ccPosition === "below_p25"           ? "#2DD4BF"
+              : ccPosition === "between_p25_median"  ? "#10B981"
+              : ccPosition === "between_median_p75"  ? "#F59E0B"
+              : ccPosition === "above_p75"           ? "#EF4444"
+              :                                        "#7C8593";
+
+            const implication =
+              !hasRange
+                ? `Closed-comp data unavailable for this industry in our current dataset. Pricing position cannot be evaluated from canonical transaction evidence.`
+              : ccPosition === "above_p75"
+                ? `At ${mult.toFixed(2)}x, this deal is priced above the closed-transaction range (${ccP25!.toFixed(2)}x – ${ccP75!.toFixed(2)}x) for this industry. Closed comps suggest buyers will anchor below current ask.`
+              : ccPosition === "between_median_p75"
+                ? `At ${mult.toFixed(2)}x, this deal sits above the median closed-transaction multiple (${ccMedian!.toFixed(2)}x) but within the typical range. Workable, but expect negotiation pressure at LOI.`
+              : ccPosition === "between_p25_median"
+                ? `At ${mult.toFixed(2)}x, this deal sits within the closed-transaction range and below the median. Pricing is defensible based on historical closes.`
+              : ccPosition === "below_p25"
+                ? `At ${mult.toFixed(2)}x, this deal is priced below the closed-transaction range — if earnings are credible, this is a strong entry point supported by historical transaction data.`
+              :   `At ${mult.toFixed(2)}x, this deal sits within the closed-transaction range (${ccP25!.toFixed(2)}x – ${ccP75!.toFixed(2)}x) for this industry.`;
+
+            // Basis label (fallback transparency)
+            const basisLabel =
+              ccBasis === "industry_size_matched" ? `Closed comps · ${ccSampleN ?? "?"} transactions · industry + size matched`
+              : ccBasis === "industry_national"   ? `Closed comps · ${ccSampleN ?? "?"} transactions · industry-national (broader sample)`
+              :                                     `Closed-comp benchmark unavailable for this industry`;
+
             return (
             <>
-              {/* ── FREE (always visible): range + outlier label + simple comparison ── */}
+              {/* ── FREE (always visible): canonical closed-comp range + position ── */}
               <div style={{ marginBottom: 12, padding: "14px 16px", borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
                 <div style={{ fontSize: 10, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 700, marginBottom: 10 }}>Market Position</div>
 
-                {/* Range — large display */}
+                {/* Range — large display, closed-comp anchored */}
                 <div style={{ marginBottom: 10 }}>
                   <div style={{ fontSize: 9, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4, display: "inline-flex", alignItems: "center", gap: 4 }}>
-                    <span>Typical Market Range</span>
+                    <span>Closed-Transaction Range (P25–P75)</span>
                     <InfoTooltip term="marketMultiple" size="sm" />
                   </div>
-                  <div style={{ fontSize: 20, fontWeight: 800, color: "#E2E8F0", fontFamily: "'JetBrains Mono',monospace", letterSpacing: "-0.01em" }}>
-                    {lowTeaser.toFixed(2)}x – {highTeaser.toFixed(2)}x
+                  <div style={{ fontSize: 20, fontWeight: 800, color: hasRange ? "#E2E8F0" : "#7C8593", fontFamily: "'JetBrains Mono',monospace", letterSpacing: "-0.01em" }}>
+                    {hasRange
+                      ? `${ccP25!.toFixed(2)}x – ${ccP75!.toFixed(2)}x`
+                      : "Unavailable"}
                   </div>
+                  {hasRange && ccMedian != null && (
+                    <div style={{ fontSize: 11, color: "#7C8593", marginTop: 2, fontFamily: "'JetBrains Mono',monospace" }}>
+                      Median {ccMedian.toFixed(2)}x
+                    </div>
+                  )}
                 </div>
 
                 {/* This deal position */}
                 <div style={{ marginBottom: 12 }}>
                   <div style={{ fontSize: 9, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.07em", marginBottom: 4 }}>This Deal</div>
                   <div style={{ display: "flex", alignItems: "baseline", gap: 10, flexWrap: "wrap" }}>
-                    <span style={{ fontSize: 20, fontWeight: 800, color: pricingColor, fontFamily: "'JetBrains Mono',monospace", letterSpacing: "-0.01em" }}>
-                      {multTeaser.toFixed(2)}x
+                    <span style={{ fontSize: 20, fontWeight: 800, color: positionColor, fontFamily: "'JetBrains Mono',monospace", letterSpacing: "-0.01em" }}>
+                      {mult.toFixed(2)}x
                     </span>
-                    <span style={{
-                      padding: "3px 10px", borderRadius: 20,
-                      background: `${pricingColor}18`, border: `1px solid ${pricingColor}55`,
-                      fontSize: 11, fontWeight: 700, color: pricingColor,
-                      fontFamily: "'Inter Tight',sans-serif",
-                    }}>
-                      {multTeaser > highTeaser * 1.5 ? "Extreme Outlier" : compsMarketPosition.pricingLabel}
-                    </span>
+                    {hasRange && (
+                      <span style={{
+                        padding: "3px 10px", borderRadius: 20,
+                        background: `${positionColor}18`, border: `1px solid ${positionColor}55`,
+                        fontSize: 11, fontWeight: 700, color: positionColor,
+                        fontFamily: "'Inter Tight',sans-serif",
+                      }}>
+                        {positionLabel}
+                      </span>
+                    )}
                   </div>
                 </div>
 
                 {/* Simple comparison sentence */}
                 <div style={{
                   padding: "9px 12px", borderRadius: 7,
-                  background: `${pricingColor}10`, border: `1px solid ${pricingColor}33`,
-                  fontSize: 12, color: "#B8C1CC", lineHeight: 1.55,
+                  background: hasRange ? `${positionColor}10` : "rgba(124,133,147,0.08)",
+                  border:     hasRange ? `1px solid ${positionColor}33` : "1px solid rgba(124,133,147,0.18)",
+                  fontSize:   12, color: "#B8C1CC", lineHeight: 1.55,
                 }}>
-                  {multTeaser > highTeaser * 1.5 ? "Priced far above typical market range for this industry."
-                   : multTeaser > highTeaser     ? "Priced above typical market range for this industry."
-                   : multTeaser < lowTeaser * 0.75 ? "Priced far below typical market range — investigate why."
-                   : multTeaser < lowTeaser     ? "Priced below typical market range — investigate seller motivation."
-                   :                              "Priced within typical market range for this industry."}
+                  {implication}
+                </div>
+
+                {/* Basis label — fallback transparency per Patch D principle */}
+                <div style={{
+                  marginTop: 8, fontSize: 10, color: "#7C8593",
+                  textTransform: "uppercase" as const, letterSpacing: "0.07em",
+                  fontStyle: ccBasis === "unavailable" ? "italic" : "normal",
+                }}>
+                  {basisLabel}
                 </div>
               </div>
+              
 
             <BlurGateSection
               isUnlocked={tabUnlocked("comps")}
