@@ -7660,25 +7660,50 @@ function TabCompare({ deals, isPro, onAnalyzeNew, comparisonsRemaining, hitCompa
 
       {mode === "market" && isPro && (
         <div style={{ animation: "fadeUp 0.2s ease-out" }}>
-          {isPro ? (
-            // ── PRO: Live Market Comps ────────────────────────────────────────
+          {isPro ? (           
+            // ── PRO: Live Market Comps (Patch D Phase 3D — canonical) ────────
+            // Migrated from SCORE_INDUSTRIES.benchmarkLow/Mid/High (fabricated
+            // low/median/high band) to canonical listing fields from the
+            // useMarketFacts hook. The canonical listing contract is POINT-ONLY
+            // (listing_multiple, listing_basis, listing_vs_closed_gap_pct,
+            // median_days_on_market, listing_sample_size) — there is no
+            // listing_p25/median/p75, so this panel is a point comparison, not a
+            // range track. Synthesizing a live low/median/high range is
+            // prohibited (fake precision). Closed Comps keeps its range track
+            // because closed_comp_p25/median/p75 exist; listings do not.
             (() => {
-              const mult     = a?.valuation_multiple ?? 0;
-              const ind      = SCORE_INDUSTRIES[a?.industry ?? ""];
-              const mktLow   = ind?.benchmarkLow    ?? 2.1;
-              const mktMed   = ind?.benchmarkMid    ?? 3.1;
-              const mktHigh  = ind?.benchmarkHigh   ?? 4.0;
-              const isAbove  = mult > mktMed;
+              const mult        = a?.valuation_multiple ?? 0;
+              const listingMult = marketFactsA?.listing_multiple ?? null;
+              const listingBasis = marketFactsA?.listing_basis ?? "unavailable";
+              const gapVsClosed = marketFactsA?.listing_vs_closed_gap_pct ?? null;
+              const daysOnMkt   = marketFactsA?.median_days_on_market ?? null;
+              const listingN    = marketFactsA?.evidence_depth?.listing_sample_size ?? null;
 
-              const implication = mult > mktHigh * 1.3
-                ? "Current ask is stretched well above where sellers are successfully marketing this type of business. Expect strong resistance from buyers comparing active listings."
-                : mult > mktHigh
-                ? "Your deal is priced above most current market asks. This pricing may face resistance from buyers who can compare active listings."
-                : mult > mktMed
-                ? "Deal A sits above the median active-listing multiple. Negotiation room likely exists — sellers in this range typically close below ask."
-                : mult < mktLow * 0.8
-                ? "Current pricing is below what most sellers are asking. Investigate whether the discount is structural or an opportunity."
-                : "Current pricing appears broadly aligned with the live market. Focus negotiation on terms and structure rather than price alone.";
+              // Graceful degradation: a real median asking multiple must exist,
+              // and the basis must not be flagged unavailable.
+              const hasListing  = listingMult != null && listingBasis !== "unavailable";
+
+              // Point comparison: deal's own multiple vs the median active asking
+              // multiple. This is a delta between two canonical point values —
+              // NOT a synthesized range.
+              const dealVsListingPct = hasListing ? ((mult - listingMult!) / listingMult! * 100) : null;
+              const isAbove   = dealVsListingPct != null && dealVsListingPct > 10;
+              const isBelow   = dealVsListingPct != null && dealVsListingPct < -10;
+              const deltaColor = !hasListing ? "#7C8593" : isAbove ? "#F59E0B" : isBelow ? "#2DD4BF" : "#60A5FA";
+
+              const implication =
+                !hasListing
+                  ? `Active-listing data is unavailable for this industry in our current dataset. Live market positioning cannot be evaluated from canonical listing evidence.`
+                : isAbove
+                  ? `Your deal is asking ${dealVsListingPct!.toFixed(0)}% above the median active listing (${listingMult!.toFixed(2)}x). Buyers comparing live listings will see this as priced above current market asks${gapVsClosed != null ? `, and active asks already run ${gapVsClosed > 0 ? `${gapVsClosed}% above` : `${Math.abs(gapVsClosed)}% below`} closed levels` : ""}. Expect negotiation framing to anchor below your ask.`
+                : isBelow
+                  ? `Your deal is asking ${Math.abs(dealVsListingPct!).toFixed(0)}% below the median active listing (${listingMult!.toFixed(2)}x). If earnings are credible this may screen as attractively priced against what sellers are currently testing the market with.`
+                  : `Your deal is broadly aligned with the median active asking multiple (${listingMult!.toFixed(2)}x). Active listings are asking prices, not closing prices — focus negotiation on terms and structure rather than headline multiple.`;
+
+              const basisLabel =
+                hasListing
+                  ? `Active listings · ${listingN ?? "?"} listings · platform-aggregated asking multiples`
+                  : "Active-listing data unavailable for this industry";
 
               return (
                 <div>
@@ -7692,29 +7717,52 @@ function TabCompare({ deals, isPro, onAnalyzeNew, comparisonsRemaining, hitCompa
                     </div>
                   </div>
 
-                  {/* Hero: Range track */}
+                  {/* Hero: point comparison — deal multiple vs median active asking */}
                   <div style={{ padding: "16px 20px", borderRadius: 12, marginBottom: 14, background: "rgba(59,130,246,0.04)", border: "1px solid rgba(59,130,246,0.18)" }}>
                     <div style={{ fontSize: 10, color: "#60A5FA", textTransform: "uppercase" as const, letterSpacing: "0.09em", fontWeight: 700, marginBottom: 14 }}>
-                      Pricing Position vs Live Market
+                      Deal vs Median Active Asking
                     </div>
-                    <CompareRangeTrack
-                      currentValue={mult}
-                      low={mktLow} median={mktMed} high={mktHigh}
-                      label="Deal A"
-                      accentColor={mult <= mktMed ? "#60A5FA" : mult <= mktHigh ? "#F59E0B" : "#EF4444"}
-                      emptyText="Benchmark range unavailable for this industry"
-                    />
+                    {hasListing ? (
+                      <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 16 }}>
+                        <div style={{ flex: 1, textAlign: "center" as const }}>
+                          <div style={{ fontSize: 9, color: "#7C8593", textTransform: "uppercase" as const, letterSpacing: "0.08em", marginBottom: 6 }}>Median Active Asking</div>
+                          <div style={{ fontSize: 26, fontWeight: 700, color: "#E2E8F0", fontFamily: "'JetBrains Mono',monospace" }}>{listingMult!.toFixed(2)}x</div>
+                        </div>
+                        <div style={{ flex: "0 0 auto", textAlign: "center" as const }}>
+                          <div style={{
+                            display: "inline-block", padding: "5px 12px", borderRadius: 999,
+                            fontSize: 13, fontWeight: 700, fontFamily: "'JetBrains Mono',monospace",
+                            color: deltaColor, background: `${deltaColor}1A`, border: `1px solid ${deltaColor}40`,
+                          }}>
+                            {dealVsListingPct! > 0 ? "+" : ""}{dealVsListingPct!.toFixed(0)}%
+                          </div>
+                          <div style={{ fontSize: 9, color: "#5B6470", marginTop: 6 }}>
+                            {isAbove ? "above ask" : isBelow ? "below ask" : "in line"}
+                          </div>
+                        </div>
+                        <div style={{ flex: 1, textAlign: "center" as const }}>
+                          <div style={{ fontSize: 9, color: "#7C8593", textTransform: "uppercase" as const, letterSpacing: "0.08em", marginBottom: 6 }}>Your Multiple</div>
+                          <div style={{ fontSize: 26, fontWeight: 700, color: "#60A5FA", fontFamily: "'JetBrains Mono',monospace" }}>{mult.toFixed(2)}x</div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div style={{ padding: "20px 16px", textAlign: "center" as const, color: "#7C8593", fontSize: 13, lineHeight: 1.5 }}>
+                        Active-listing data unavailable for this industry.
+                        <div style={{ fontSize: 11, color: "#5B6470", marginTop: 4 }}>
+                          Our dataset doesn&apos;t have enough active listings in this category to compute a median asking multiple.
+                        </div>
+                      </div>
+                    )}
                   </div>
 
-                  {/* KPI cards */}
+                  {/* KPI cards — canonical listing fields only (no synthesized range) */}
                   <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 10, marginBottom: 14 }}>
                     {[
-                      { label: "Your Multiple",      value: `${mult.toFixed(2)}x`,           color: "#60A5FA" },
-                      { label: "Market Median",       value: `${mktMed.toFixed(2)}x`,          color: "#E2E8F0" },
-                      { label: "Market Range",        value: `${mktLow.toFixed(2)}x–${mktHigh.toFixed(2)}x`, color: "#94A3B8" },
-                      { label: "Position",            value: mult < mktLow ? "Below Range" : mult > mktHigh ? "Above Range" : mult <= mktMed ? "Below Median" : "Above Median", color: mult > mktHigh ? "#EF4444" : mult < mktLow ? "#2DD4BF" : "#60A5FA" },
-                      { label: "Gap vs Median",       value: `${mult > mktMed ? "+" : ""}${((mult - mktMed) / mktMed * 100).toFixed(0)}%`, color: mult > mktMed ? "#F97316" : "#10B981" },
-                      { label: "Market Positioning",   value: mult > mktHigh ? "Above Range" : mult < mktLow ? "Below Range" : mult > mktMed ? "Above Median" : "Below Median", color: mult > mktHigh ? "#EF4444" : mult < mktLow ? "#2DD4BF" : mult > mktMed ? "#F59E0B" : "#10B981" },
+                      { label: "Your Multiple",                value: `${mult.toFixed(2)}x`,                                                          color: "#60A5FA" },
+                      { label: "Median Active Asking",         value: hasListing ? `${listingMult!.toFixed(2)}x` : "—",                              color: hasListing ? "#E2E8F0" : "#7C8593" },
+                      { label: "Listings vs Closed Gap",       value: gapVsClosed != null ? `${gapVsClosed > 0 ? "+" : ""}${gapVsClosed}%` : "—",     color: gapVsClosed == null ? "#7C8593" : gapVsClosed > 0 ? "#F59E0B" : "#10B981" },
+                      { label: "Median Days on Market",        value: daysOnMkt != null ? `${daysOnMkt} days` : "—",                                 color: daysOnMkt == null ? "#7C8593" : "#94A3B8" },
+                      { label: "Active Listing Sample Size",   value: listingN != null ? `${listingN} listings` : "—",                               color: listingN == null ? "#7C8593" : "#94A3B8" },
                     ].map(m => (
                       <div key={m.label} style={{ padding: "10px 12px", borderRadius: 9, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
                         <div style={{ fontSize: 9, color: "#7C8593", textTransform: "uppercase" as const, letterSpacing: "0.07em", marginBottom: 5 }}>{m.label}</div>
@@ -7724,9 +7772,18 @@ function TabCompare({ deals, isPro, onAnalyzeNew, comparisonsRemaining, hitCompa
                   </div>
 
                   {/* Implication */}
-                  <div style={{ padding: "12px 16px", borderRadius: 10, background: isAbove ? "rgba(249,115,22,0.05)" : "rgba(59,130,246,0.05)", border: `1px solid ${isAbove ? "rgba(249,115,22,0.18)" : "rgba(59,130,246,0.15)"}` }}>
+                  <div style={{ padding: "12px 16px", borderRadius: 10, background: isAbove ? "rgba(249,115,22,0.05)" : !hasListing ? "rgba(124,133,147,0.05)" : "rgba(59,130,246,0.05)", border: `1px solid ${isAbove ? "rgba(249,115,22,0.18)" : !hasListing ? "rgba(124,133,147,0.18)" : "rgba(59,130,246,0.15)"}` }}>
                     <div style={{ fontSize: 10, color: "#7C8593", textTransform: "uppercase" as const, letterSpacing: "0.08em", fontWeight: 600, marginBottom: 6 }}>Pricing Takeaway</div>
                     <div style={{ fontSize: 13, color: "#94A3B8", lineHeight: 1.7 }}>{implication}</div>
+                  </div>
+
+                  {/* Basis label — fallback transparency per Patch D principle */}
+                  <div style={{
+                    marginTop: 10, fontSize: 10, color: "#7C8593",
+                    textTransform: "uppercase" as const, letterSpacing: "0.07em",
+                    fontStyle: hasListing ? "normal" : "italic",
+                  }}>
+                    {basisLabel}
                   </div>
                 </div>
               );
