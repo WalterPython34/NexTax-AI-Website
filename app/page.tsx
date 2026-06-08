@@ -629,7 +629,7 @@ export default function HomePage() {
                 <TabletFrame
                   src="/AcquiFlow-3.png"
                   alt="AcquiFlow buyer dashboard showing deal analysis"
-                  aspectRatio="6/3"
+                  aspectRatio="5/3"
                   priority
                 />
               </div>
