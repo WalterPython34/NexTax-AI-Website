@@ -1,9 +1,12 @@
 "use client"
 
+import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Card, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import Image from "next/image"
+import { SampleMemoPreviewModal } from "@/components/SampleMemoPreviewModal"
 import {
   DollarSign,
   TrendingUp,
@@ -26,8 +29,12 @@ import {
 } from "lucide-react"
 import Link from "next/link"
 
-export default function FeaturesPage() {
+export default function HomePage() {
+  const router = useRouter()
+  const [showSampleModal, setShowSampleModal] = useState(false)
+
   return (
+    <>
     <div className="min-h-screen bg-gradient-to-br from-black via-gray-900 to-black pt-16">
       {/* SECTION 1 — HERO */}
       <section className="py-20">
@@ -64,8 +71,7 @@ export default function FeaturesPage() {
                     <ArrowRight className="ml-2 w-5 h-5" />
                   </Button>
                 </Link>
-                <Link href="/sample-deal">
-                  <Button
+                <Button
                   size="lg"
                   variant="outline"
                   onClick={() => setShowSampleModal(true)}
@@ -73,7 +79,6 @@ export default function FeaturesPage() {
                 >
                   See Sample Analysis
                 </Button>
-                </Link>
               </div>
 
               {/* Pricing anchor below buttons */}
@@ -620,19 +625,32 @@ export default function FeaturesPage() {
                 <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
             </Link>
-            <Link href="/sample-deal">
-              <Button
-                  size="lg"
-                  variant="outline"
-                  onClick={() => setShowSampleModal(true)}
-                  className="border-slate-600 text-slate-300 hover:bg-slate-800 hover:text-white px-8 py-6 text-lg w-full sm:w-auto bg-transparent"
-                >
-                  See Sample Analysis
-                </Button>
-            </Link>
+            <Button
+                size="lg"
+                variant="outline"
+                onClick={() => setShowSampleModal(true)}
+                className="border-slate-600 text-slate-300 hover:bg-slate-800 hover:text-white px-8 py-6 text-lg w-full sm:w-auto bg-transparent"
+              >
+                See Sample Analysis
+              </Button>
           </div>
         </div>
       </section>
     </div>
+
+      {showSampleModal && (
+        <SampleMemoPreviewModal
+          onClose={() => setShowSampleModal(false)}
+          onAnalyzeDeal={() => {
+            setShowSampleModal(false)
+            router.push("/buyer-dashboard")
+          }}
+          onUpgrade={() => {
+            setShowSampleModal(false)
+            router.push("/pricing")
+          }}
+        />
+      )}
+    </>
   )
 }
