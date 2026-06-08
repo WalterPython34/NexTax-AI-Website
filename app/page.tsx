@@ -627,7 +627,7 @@ export default function HomePage() {
               />
               <div className="relative w-full max-w-[600px]">
                 <TabletFrame
-                  src="/AcquiFlow-3.png"
+                  src="/AcquiFlow-4.png"
                   alt="AcquiFlow buyer dashboard showing deal analysis"
                   aspectRatio="4/3"
                   priority
