@@ -884,9 +884,9 @@ export default function HomePage() {
               </p>
               <ul className="space-y-3.5 mb-6 flex-1">
                 {[
-                  "Adjusted SDE drops from $340K \u2192 $285K",
-                  "DSCR falls below lender threshold (1.18x)",
-                  "Valuation misaligned (\u22C522% overpriced vs comps)",
+                  "Adjusted SDE drops from $780K \u2192 $640K",
+                  "DSCR just above lender threshold (1.28x)",
+                  "Valuation misaligned (overpriced vs comps)",
                   "Deal fails under conservative stress scenarios",
                   "Requires renegotiation before LOI",
                 ].map((item, i) => (
