@@ -66,12 +66,13 @@ export default function FeaturesPage() {
                 </Link>
                 <Link href="/sample-deal">
                   <Button
-                    size="lg"
-                    variant="outline"
-                    className="border-slate-600 text-slate-300 hover:bg-slate-800 hover:text-white px-8 py-6 text-lg w-full sm:w-auto bg-transparent"
-                  >
-                    See Sample Analysis
-                  </Button>
+                  size="lg"
+                  variant="outline"
+                  onClick={() => setShowSampleModal(true)}
+                  className="border-slate-600 text-slate-300 hover:bg-slate-800 hover:text-white px-8 py-6 text-lg w-full sm:w-auto bg-transparent"
+                >
+                  See Sample Analysis
+                </Button>
                 </Link>
               </div>
 
@@ -621,12 +622,13 @@ export default function FeaturesPage() {
             </Link>
             <Link href="/sample-deal">
               <Button
-                size="lg"
-                variant="outline"
-                className="border-slate-600 text-slate-300 hover:bg-slate-800 hover:text-white px-10 py-6 text-lg bg-transparent"
-              >
-                See Sample Analysis
-              </Button>
+                  size="lg"
+                  variant="outline"
+                  onClick={() => setShowSampleModal(true)}
+                  className="border-slate-600 text-slate-300 hover:bg-slate-800 hover:text-white px-8 py-6 text-lg w-full sm:w-auto bg-transparent"
+                >
+                  See Sample Analysis
+                </Button>
             </Link>
           </div>
         </div>
