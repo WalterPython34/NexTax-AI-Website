@@ -625,7 +625,7 @@ export default function HomePage() {
                 variant="hero"
                 className="left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2"
               />
-              <div className="relative w-full max-w-[600px]">
+              <div className="relative w-full max-w-[700px]">
                 <TabletFrame
                   src="/AcquiFlow-3.png"
                   alt="AcquiFlow buyer dashboard showing deal analysis"
