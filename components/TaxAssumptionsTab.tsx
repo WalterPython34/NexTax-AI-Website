@@ -24,6 +24,21 @@ import {
 import { buildTaxStructureSection } from "@/lib/acquiflow/tax-structure-section";
 import type { DealTaxAssumptionsRow } from "@/lib/intelligence/tax/tax-row-to-engine-input";
 
+// ── Tax Fact Drilldown (shared seam badge + drawer + adapter) ──
+import { SeamBadge, SEAM } from "@/components/tax/SeamBadge";
+import { TaxDrilldownDrawer } from "@/components/tax/TaxDrilldownDrawer";
+import {
+  buildSnapshotDrilldown,
+  buildTaxFactDrilldown,
+  buildImplicationStatementDrilldown,
+  buildImplicationScheduleDrilldown,
+  buildCalcDiffDrilldown,
+  buildComparisonDrilldown,
+  type DrilldownViewModel,
+  type SnapshotRowId,
+  type CalcDiffValueId,
+} from "@/lib/acquiflow/tax-drilldown-adapter";
+
 // ═════════════════════════════════════════════════════════════════════════════
 // TaxAssumptionsTab — AcquiFlow buyer-dashboard input surface
 //
@@ -265,23 +280,9 @@ const INDIGO = "#6366F1", VIOLET = "#C4B5FD", VIOLET_DIM = "#A5B4FC";
 const GREEN = "#10B981", AMBER = "#F59E0B";
 const FONT = "'Inter',sans-serif";
 
-// seam badge colors
-const SEAM = {
-  FACT:       { label: "imported from deal",  color: "#34D399", bg: "rgba(16,185,129,0.12)",  border: "rgba(16,185,129,0.3)" },
-  ASSUMPTION: { label: "buyer input", color: "#FCD34D", bg: "rgba(245,158,11,0.12)",  border: "rgba(245,158,11,0.3)" },
-  COMPUTED:   { label: "analysis only", color: "#A5B4FC", bg: "rgba(99,102,241,0.12)", border: "rgba(99,102,241,0.3)" },
-};
-
-function SeamBadge({ kind }: { kind: keyof typeof SEAM }) {
-  const s = SEAM[kind];
-  return (
-    <span style={{
-      fontSize: 8.5, fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase",
-      padding: "2px 6px", borderRadius: 20, color: s.color, background: s.bg,
-      border: `1px solid ${s.border}`, whiteSpace: "nowrap",
-    }}>{s.label}</span>
-  );
-}
+// NOTE: SEAM + SeamBadge moved to components/tax/SeamBadge.tsx (shared with the
+// drilldown drawer; importing it back from this file would be circular). DERIVED
+// was added there. `keyof typeof SEAM` references below resolve to the import.
 
 const inputStyle: React.CSSProperties = {
   width: "100%", padding: "8px 11px", borderRadius: 8, border: INPUT_BORDER,
@@ -560,10 +561,10 @@ function snapshotPillStyle(text: string): { bg: string; fg: string; border: stri
   return { bg: "rgba(255,255,255,0.04)", fg: "#9CA3AF", border: "rgba(255,255,255,0.10)" };
 }
 
-function SnapshotRow({ label, value }: { label: string; value: string }) {
+function SnapshotRow({ label, value, onClick }: { label: string; value: string; onClick?: () => void }) {
   const s = snapshotPillStyle(value);
   return (
-    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "9px 0", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+    <div onClick={onClick} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "9px 0", borderBottom: "1px solid rgba(255,255,255,0.04)", cursor: onClick ? "pointer" : "default" }}>
       <span style={{ fontSize: 11.5, color: MUTE, letterSpacing: "0.02em" }}>{label}</span>
       <span style={{
         display: "inline-block", padding: "3px 9px", borderRadius: 4,
@@ -584,7 +585,7 @@ function SnapshotRow({ label, value }: { label: string; value: string }) {
  * NOTE: the helpers already omit "classes" from `unmet` when not applicable —
  * this UI hint exists purely to *explain* the 5/6 to the user.
  */
-function TaxSnapshotCard({ snap, rec }: { snap: TaxSnapshot; rec: TaxAssumptionRecord }) {
+function TaxSnapshotCard({ snap, rec, onInspect }: { snap: TaxSnapshot; rec: TaxAssumptionRecord; onInspect?: (rowId: SnapshotRowId) => void }) {
   const noRecoveryAllocation = !(rec.ppa_equipment ?? 0) && !(rec.ppa_real_property ?? 0);
   const showNotApplicableHint =
     snap.readiness.ready === 5 && snap.readiness.total === 6 && noRecoveryAllocation
@@ -592,19 +593,22 @@ function TaxSnapshotCard({ snap, rec }: { snap: TaxSnapshot; rec: TaxAssumptionR
     && rec.seller_basis_disclosed !== "unknown" && rec.nols_disclosed !== "unknown"
     && ((rec.ppa_goodwill ?? 0) > 0 || (rec.ppa_intangibles ?? 0) > 0 || (rec.ppa_working_capital ?? 0) > 0);
 
+  const go = (id: SnapshotRowId) => onInspect ? () => onInspect(id) : undefined;
+  const cursor = onInspect ? "pointer" : "default";
+
   return (
     <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, overflow: "hidden", marginBottom: 16 }}>
       <div style={{ padding: "12px 16px", borderBottom: "1px solid rgba(255,255,255,0.05)", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
         <span style={{ fontSize: 11, fontWeight: 700, color: INK, textTransform: "uppercase", letterSpacing: "0.08em" }}>Tax Snapshot</span>
-        <span style={{ fontSize: 10, color: MUTE, fontStyle: "italic" }}>evidence-status — not a deal score</span>
+        <span style={{ fontSize: 10, color: MUTE, fontStyle: "italic" }}>evidence-status — not a deal score · click a row to inspect</span>
       </div>
       <div style={{ padding: "8px 16px 14px" }}>
-        <SnapshotRow label="Structure"             value={snap.structure_label} />
-        <SnapshotRow label="Entity"                value={snap.entity_label} />
-        <SnapshotRow label="Basis Recovery"        value={snap.basis_recovery} />
-        <SnapshotRow label="Recapture Exposure"    value={snap.recapture_exposure} />
-        <SnapshotRow label="NOL Position"          value={snap.nol_position} />
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "9px 0", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+        <SnapshotRow label="Structure"             value={snap.structure_label}    onClick={go("structure")} />
+        <SnapshotRow label="Entity"                value={snap.entity_label}       onClick={go("entity")} />
+        <SnapshotRow label="Basis Recovery"        value={snap.basis_recovery}     onClick={go("basis_recovery")} />
+        <SnapshotRow label="Recapture Exposure"    value={snap.recapture_exposure} onClick={go("recapture_exposure")} />
+        <SnapshotRow label="NOL Position"          value={snap.nol_position}       onClick={go("nol_position")} />
+        <div onClick={go("readiness")} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "9px 0", borderBottom: "1px solid rgba(255,255,255,0.04)", cursor }}>
           <span style={{ fontSize: 11.5, color: MUTE, letterSpacing: "0.02em" }}>Structure Readiness</span>
           <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}>
             <span style={{ fontSize: 13, fontWeight: 700, color: VIOLET, fontFamily: "ui-monospace, monospace" }}>
@@ -617,14 +621,14 @@ function TaxSnapshotCard({ snap, rec }: { snap: TaxSnapshot; rec: TaxAssumptionR
             )}
           </span>
         </div>
-        <SnapshotRow label="Tax Structure Evaluated" value={snap.evaluated} />
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "9px 0", borderBottom: "1px solid rgba(255,255,255,0.04)" }}>
+        <SnapshotRow label="Tax Structure Evaluated" value={snap.evaluated} onClick={go("evaluated")} />
+        <div onClick={go("key_missing_input")} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "9px 0", borderBottom: "1px solid rgba(255,255,255,0.04)", cursor }}>
           <span style={{ fontSize: 11.5, color: MUTE, letterSpacing: "0.02em" }}>Key Missing Input</span>
           <span style={{ fontSize: 11.5, color: snap.key_missing_input === "—" ? "#34D399" : "#FBBF24", textAlign: "right", maxWidth: "65%" }}>
             {snap.key_missing_input}
           </span>
         </div>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "9px 0" }}>
+        <div onClick={go("evidence_gap")} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "9px 0", cursor }}>
           <span style={{ fontSize: 11.5, color: MUTE, letterSpacing: "0.02em" }}>Evidence Gap</span>
           <span style={{ fontSize: 11.5, color: snap.evidence_gap === "—" ? "#34D399" : "#A5B4FC", textAlign: "right", maxWidth: "65%" }}>
             {snap.evidence_gap}
@@ -638,7 +642,7 @@ function TaxSnapshotCard({ snap, rec }: { snap: TaxSnapshot; rec: TaxAssumptionR
 /**
  * Tax Facts section — what the buyer has entered, seam-tagged.
  */
-function TaxFactsSection({ view }: { view: TaxFactsView }) {
+function TaxFactsSection({ view, onInspect }: { view: TaxFactsView; onInspect?: (line: TaxFactsView["lines"][number]) => void }) {
   if (view.lines.length === 0) {
     return (
       <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, padding: 20, marginBottom: 16 }}>
@@ -655,7 +659,7 @@ function TaxFactsSection({ view }: { view: TaxFactsView }) {
       </div>
       <div style={{ padding: "10px 16px 14px" }}>
         {view.lines.map((ln, i) => (
-          <div key={i} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "7px 0", borderBottom: i < view.lines.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none" }}>
+          <div key={i} onClick={onInspect ? () => onInspect(ln) : undefined} style={{ display: "flex", justifyContent: "space-between", alignItems: "center", padding: "7px 0", borderBottom: i < view.lines.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none", cursor: onInspect ? "pointer" : "default" }}>
             <span style={{ fontSize: 11.5, color: MUTE }}>
               {ln.label}
               <span style={{
@@ -676,7 +680,11 @@ function TaxFactsSection({ view }: { view: TaxFactsView }) {
 /**
  * Tax Implications section — categorical reads + schedules + honest absence.
  */
-function TaxImplicationsSection({ view }: { view: TaxImplicationsView }) {
+function TaxImplicationsSection({ view, onInspectStatement, onInspectSchedule }: {
+  view: TaxImplicationsView;
+  onInspectStatement?: (st: TaxImplicationsView["statements"][number]) => void;
+  onInspectSchedule?: (sch: TaxImplicationsView["schedules"][number]) => void;
+}) {
   const empty = view.statements.length === 0 && view.schedules.length === 0 && view.absent.length === 0;
   return (
     <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, overflow: "hidden", marginBottom: 16 }}>
@@ -688,7 +696,7 @@ function TaxImplicationsSection({ view }: { view: TaxImplicationsView }) {
         {empty && <div style={{ fontSize: 11.5, color: MUTE, fontStyle: "italic" }}>Nothing computable yet from current inputs.</div>}
 
         {view.statements.map((st, i) => (
-          <div key={`s${i}`} style={{ marginBottom: 14 }}>
+          <div key={`s${i}`} onClick={onInspectStatement ? () => onInspectStatement(st) : undefined} style={{ marginBottom: 14, cursor: onInspectStatement ? "pointer" : "default" }}>
             <div style={{ fontSize: 12, fontWeight: 700, color: INK, marginBottom: 4 }}>
               {st.heading}
               <span style={{
@@ -703,7 +711,7 @@ function TaxImplicationsSection({ view }: { view: TaxImplicationsView }) {
         ))}
 
         {view.schedules.map((sch, i) => (
-          <div key={`sch${i}`} style={{ marginTop: 16, marginBottom: 8, paddingTop: 12, borderTop: "1px solid rgba(255,255,255,0.05)" }}>
+          <div key={`sch${i}`} onClick={onInspectSchedule ? () => onInspectSchedule(sch) : undefined} style={{ marginTop: 16, marginBottom: 8, paddingTop: 12, borderTop: "1px solid rgba(255,255,255,0.05)", cursor: onInspectSchedule ? "pointer" : "default" }}>
             <div style={{ fontSize: 12, fontWeight: 700, color: INK, marginBottom: 3 }}>{sch.heading}</div>
             {sch.basis_note && <div style={{ fontSize: 10.5, color: FAINT, fontStyle: "italic", marginBottom: 8 }}>{sch.basis_note}</div>}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(110px, 1fr))", gap: "4px 12px", marginBottom: 6 }}>
@@ -738,7 +746,7 @@ function TaxImplicationsSection({ view }: { view: TaxImplicationsView }) {
 /**
  * Structural Comparison panel — shared presentation, v1 receives Tax rows only.
  */
-function StructuralComparisonPanel({ plan }: { plan: StructuralComparisonPanelPlan }) {
+function StructuralComparisonPanel({ plan, onInspect }: { plan: StructuralComparisonPanelPlan; onInspect?: (dimensionId: string) => void }) {
   if (!plan.visible) return null;
   const visibleRows = plan.comparison_rows.filter(r => r.visible);
   const cols = plan.columns;
@@ -774,8 +782,8 @@ function StructuralComparisonPanel({ plan }: { plan: StructuralComparisonPanelPl
             </tr>
           </thead>
           <tbody>
-            {visibleRows.map((row, ri) => (
-              <tr key={row.dimension} style={{ borderTop: "1px solid rgba(255,255,255,0.04)" }}>
+            {visibleRows.map((row) => (
+              <tr key={row.dimension} onClick={onInspect ? () => onInspect(row.dimension) : undefined} style={{ borderTop: "1px solid rgba(255,255,255,0.04)", cursor: onInspect ? "pointer" : "default" }}>
                 <td style={{ padding: "10px 10px 10px 0", color: MUTE, fontWeight: 600, verticalAlign: "top" }}>{row.dimension_label}</td>
                 {cols.map(col => {
                   const v = row.by_structure[col.structure];
@@ -805,9 +813,11 @@ function StructuralComparisonPanel({ plan }: { plan: StructuralComparisonPanelPl
 // recalculates schedules. The tax shield section is ANALYSIS ONLY and never
 // enters institutional output (Executive Snapshot or AcquiFlow-Intel memo).
 // ─────────────────────────────────────────────────────────────────────────────
-function CalculatedDifferenceCard({ view }: { view: BasisDeltaView }) {
+function CalculatedDifferenceCard({ view, onInspect }: { view: BasisDeltaView; onInspect?: (valueId: CalcDiffValueId) => void }) {
   const fmt = (n: number | null): string => n === null ? "—" : "$" + Math.round(n).toLocaleString("en-US");
   const fmtDiff = (n: number | null): string => n === null ? "—" : (n >= 0 ? "+" : "") + "$" + Math.round(Math.abs(n)).toLocaleString("en-US");
+  const go = (id: CalcDiffValueId) => onInspect ? () => onInspect(id) : undefined;
+  const cursor = onInspect ? "pointer" : "default";
 
   return (
     <div style={{ background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.07)", borderRadius: 14, overflow: "hidden", marginBottom: 16 }}>
@@ -835,15 +845,15 @@ function CalculatedDifferenceCard({ view }: { view: BasisDeltaView }) {
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
                 <div>
                   <div style={{ fontSize: 10.5, color: FAINT, marginBottom: 3 }}>Asset purchase</div>
-                  <div style={{ fontSize: 17, fontWeight: 700, color: INK, fontFamily: "ui-monospace, monospace" }}>{fmt(view.asset_recoverable_basis)}</div>
+                  <div onClick={go("asset_recoverable_basis")} style={{ fontSize: 17, fontWeight: 700, color: INK, fontFamily: "ui-monospace, monospace", cursor }}>{fmt(view.asset_recoverable_basis)}</div>
                 </div>
                 <div>
                   <div style={{ fontSize: 10.5, color: FAINT, marginBottom: 3 }}>Stock purchase</div>
-                  <div style={{ fontSize: 17, fontWeight: 700, color: MUTE, fontFamily: "ui-monospace, monospace" }}>{fmt(view.stock_recoverable_basis)}</div>
+                  <div onClick={go("stock_recoverable_basis")} style={{ fontSize: 17, fontWeight: 700, color: MUTE, fontFamily: "ui-monospace, monospace", cursor }}>{fmt(view.stock_recoverable_basis)}</div>
                 </div>
                 <div>
                   <div style={{ fontSize: 10.5, color: FAINT, marginBottom: 3 }}>Difference</div>
-                  <div style={{ fontSize: 17, fontWeight: 700, color: VIOLET, fontFamily: "ui-monospace, monospace" }}>{fmtDiff(view.basis_difference)}</div>
+                  <div onClick={go("basis_difference")} style={{ fontSize: 17, fontWeight: 700, color: VIOLET, fontFamily: "ui-monospace, monospace", cursor }}>{fmtDiff(view.basis_difference)}</div>
                 </div>
               </div>
               {view.partial_gap_note && (
@@ -859,15 +869,15 @@ function CalculatedDifferenceCard({ view }: { view: BasisDeltaView }) {
               <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12 }}>
                 <div>
                   <div style={{ fontSize: 10.5, color: FAINT, marginBottom: 3 }}>Asset purchase</div>
-                  <div style={{ fontSize: 15, fontWeight: 600, color: INK, fontFamily: "ui-monospace, monospace" }}>{fmt(view.asset_year1_recovery)}</div>
+                  <div onClick={go("asset_year1_recovery")} style={{ fontSize: 15, fontWeight: 600, color: INK, fontFamily: "ui-monospace, monospace", cursor }}>{fmt(view.asset_year1_recovery)}</div>
                 </div>
                 <div>
                   <div style={{ fontSize: 10.5, color: FAINT, marginBottom: 3 }}>Stock purchase</div>
-                  <div style={{ fontSize: 15, fontWeight: 600, color: MUTE, fontFamily: "ui-monospace, monospace" }}>{fmt(view.stock_year1_recovery)}</div>
+                  <div onClick={go("stock_year1_recovery")} style={{ fontSize: 15, fontWeight: 600, color: MUTE, fontFamily: "ui-monospace, monospace", cursor }}>{fmt(view.stock_year1_recovery)}</div>
                 </div>
                 <div>
                   <div style={{ fontSize: 10.5, color: FAINT, marginBottom: 3 }}>Difference</div>
-                  <div style={{ fontSize: 15, fontWeight: 600, color: VIOLET, fontFamily: "ui-monospace, monospace" }}>{fmtDiff(view.year1_recovery_difference)}</div>
+                  <div onClick={go("year1_recovery_difference")} style={{ fontSize: 15, fontWeight: 600, color: VIOLET, fontFamily: "ui-monospace, monospace", cursor }}>{fmtDiff(view.year1_recovery_difference)}</div>
                 </div>
               </div>
             </div>
@@ -885,14 +895,14 @@ function CalculatedDifferenceCard({ view }: { view: BasisDeltaView }) {
                 )}
               </div>
               {view.tax_shield_year1 !== null ? (
-                <div style={{ fontSize: 17, fontWeight: 700, color: "#FBBF24", fontFamily: "ui-monospace, monospace" }}>
+                <div onClick={go("tax_shield_year1")} style={{ fontSize: 17, fontWeight: 700, color: "#FBBF24", fontFamily: "ui-monospace, monospace", cursor }}>
                   {fmt(view.tax_shield_year1)}
                   <span style={{ marginLeft: 10, fontSize: 11, color: MUTE, fontWeight: 400, fontFamily: FONT }}>
                     ({fmt(view.asset_year1_recovery)} × {Math.round((view.buyer_ordinary_rate ?? 0) * 100)}%)
                   </span>
                 </div>
               ) : (
-                <div style={{ fontSize: 12, color: MUTE, fontStyle: "italic" }}>
+                <div onClick={go("tax_shield_year1")} style={{ fontSize: 12, color: MUTE, fontStyle: "italic", cursor }}>
                   {view.tax_shield_message}
                 </div>
               )}
@@ -943,6 +953,9 @@ export default function TaxAssumptionsTab({
   const [selectedDealId, setSelectedDealId] = useState<string | null>(null);
   // assumption records keyed by deal id (local cache; durable via supabase when enabled)
   const [records, setRecords] = useState<Record<string, TaxAssumptionRecord>>({});
+
+  // Tax Fact Drilldown — the drawer's view model (null = closed).
+  const [drilldown, setDrilldown] = useState<DrilldownViewModel | null>(null);
 
   // per-deal load/save status for visible success/error states
   type SaveState = "idle" | "loading" | "loaded" | "saving" | "saved" | "error";
@@ -1183,7 +1196,7 @@ export default function TaxAssumptionsTab({
       ) : (
         <>
           {/* ── Tax Snapshot card (Step 6 — canonical summary layer) ── */}
-          {livePreview && <TaxSnapshotCard snap={livePreview.snap} rec={rec} />}
+          {livePreview && <TaxSnapshotCard snap={livePreview.snap} rec={rec} onInspect={(rowId) => setDrilldown(buildSnapshotDrilldown(livePreview.snap, rowId))} />}
 
           {/* (The old "readiness narrative" block was removed in Patch Batch A. */}
           {/*  Its content duplicated — and conflicted with — the Snapshot card */}
@@ -1340,14 +1353,30 @@ export default function TaxAssumptionsTab({
           {/* Executive Snapshot report will consume — Invariant 1. */}
           {livePreview && (
             <>
-              <TaxFactsSection view={livePreview.facts} />
-              <TaxImplicationsSection view={livePreview.implications} />
-              <CalculatedDifferenceCard view={livePreview.basisDelta} />
-              <StructuralComparisonPanel plan={livePreview.comparisonPlan} />
+              <TaxFactsSection
+                view={livePreview.facts}
+                onInspect={(line) => setDrilldown(buildTaxFactDrilldown(line))}
+              />
+              <TaxImplicationsSection
+                view={livePreview.implications}
+                onInspectStatement={(st) => setDrilldown(buildImplicationStatementDrilldown(st))}
+                onInspectSchedule={(sch) => setDrilldown(buildImplicationScheduleDrilldown(sch))}
+              />
+              <CalculatedDifferenceCard
+                view={livePreview.basisDelta}
+                onInspect={(id) => setDrilldown(buildCalcDiffDrilldown(livePreview.basisDelta, id))}
+              />
+              <StructuralComparisonPanel
+                plan={livePreview.comparisonPlan}
+                onInspect={(dim) => setDrilldown(buildComparisonDrilldown(livePreview.comparisonPlan, dim))}
+              />
             </>
           )}
         </>
       )}
+
+      {/* ── Tax Fact Drilldown drawer (position: fixed; renders above everything) ── */}
+      <TaxDrilldownDrawer vm={drilldown} onClose={() => setDrilldown(null)} />
     </div>
   );
 }
