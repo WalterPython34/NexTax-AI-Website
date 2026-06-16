@@ -12,13 +12,20 @@
       "path": "/api/cron/snapshot-deals",
       "schedule": "0 9 * * *"
     },
-     {
+    {
       "path": "/api/cron/collect",
       "schedule": "0 */4 * * *"
     },
     {
       "path": "/api/cron/digest",
       "schedule": "0 12 * * *"
+    }
+  ],
+  "redirects": [
+    {
+      "source": "/gumroad",
+      "destination": "https://nextaxai.gumroad.com/l/rxnafb",
+      "permanent": false
     }
   ]
 }
