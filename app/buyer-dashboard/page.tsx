@@ -199,6 +199,7 @@ const IL: Record<string, string> = {
   gasstation:      "Gas Station",
   signmaking:      "Sign Mfg.",
   staffing:        "Staffing",
+  manufacturing:   "Manufacturing (Other)",
   veterinary:      "Veterinary",
 };
 
@@ -1332,6 +1333,7 @@ const SCORE_INDUSTRIES: Record<string, {
   physicaltherapy:{ label:"Physical Therapy",     benchmarkLow:1.60, benchmarkMid:2.16, benchmarkHigh:2.90,  marginRange:[15,30], growth:"Stable",   riskFactor:0.70, demandScore:74, buyerInterestRank:6,  competitionLevel:"Low-Moderate"  },
   gasstation:     { label:"Gas Station / C-Store", benchmarkLow:2.5, benchmarkMid:3.20, benchmarkHigh:4.5,  marginRange:[3,8],   growth:"Stable",   riskFactor:0.85, demandScore:58, buyerInterestRank:13, competitionLevel:"Moderate"      },
   signmaking:     { label:"Sign Mfg.",            benchmarkLow:1.94, benchmarkMid:2.45, benchmarkHigh:3.27,  marginRange:[15,30], growth:"Stable",   riskFactor:0.85, demandScore:60, buyerInterestRank:12, competitionLevel:"Moderate"      },
+  manufacturing:  { label:"Manufacturing (Other)", benchmarkLow:2.05, benchmarkMid:2.82, benchmarkHigh:4.45, marginRange:[9,18], growth:"Stable", riskFactor:0.78, demandScore:62, buyerInterestRank:9, competitionLevel:"Moderate" },
   hairsalon:      { label:"Hair Salon",           benchmarkLow:1.11, benchmarkMid:1.61, benchmarkHigh:2.33,  marginRange:[15,35], growth:"Stable",   riskFactor:0.90, demandScore:65, buyerInterestRank:10, competitionLevel:"High"          },
 };
 
