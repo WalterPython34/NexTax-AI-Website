@@ -1,11 +1,13 @@
 import { runSbaCheck, type SbaCheckRequest } from "@/lib/sba/run-sba-check";
-import { fixtureOwnerCompProvider } from "@/lib/sba/providers/fixture-owner-comp-provider";
+import { blsOewsProvider } from "@/lib/sba/providers/bls-oews-provider";
 import type { OwnerRole } from "@/lib/sba/owner-comp-provider";
+import { signReplayToken } from "@/lib/sba/replay-token";
+import { CURRENT_BENCHMARK_VERSION } from "@/lib/sba/ownerCompBenchmarks/index";
 import type { InputProvenance, InputSource } from "@/lib/sba/sba-engine";
 
 const OWNER_COMP_LABEL = "benchmark owner replacement cost";
 const DISCLAIMER =
-  "This is an underwriting screen, not a lender credit decision. The owner-comp benchmark is a market replacement-cost estimate; an SBA lender may adjust owner compensation differently.";
+  "This is an underwriting screen, not a lender credit decision. The owner-comp benchmark is a market replacement-cost estimate; lenders may treat owner comp and add-backs differently.";
 const API_VERSION = "sba-check.v1";
 
 const OWNER_ROLES: OwnerRole[] = ["operator", "operator_technical", "passive"];
@@ -137,17 +139,35 @@ export async function POST(request: Request): Promise<Response> {
     return Response.json({ ok: false, reason: parsed.reason }, { status: 400 });
   }
 
-  const provider = fixtureOwnerCompProvider();
+  const provider = blsOewsProvider;
 
   try {
     const result = await runSbaCheck(parsed.request, provider);
     if (!result.ok) {
       return Response.json({ ok: false, reason: result.reason }, { status: 200 });
     }
+    const replayToken = signReplayToken({
+      reportedSde: parsed.request.reportedSde,
+      annualRevenue: parsed.request.annualRevenue,
+      askingPrice: parsed.request.askingPrice,
+      debtPercent: parsed.request.debtPercent,
+      ratePercent: parsed.request.ratePercent,
+      termYears: parsed.request.termYears,
+      industryKey: parsed.request.industryKey,
+      role: parsed.request.role,
+      medianMargin: parsed.request.medianMargin,
+      ownerCompOverride: parsed.request.ownerCompOverride,
+      provenance: parsed.request.provenance,
+      benchmarkVersion: CURRENT_BENCHMARK_VERSION,
+      zone: result.verdict.zone,
+      iat: Math.floor(Date.now() / 1000),
+    });
+
     return Response.json(
       {
         ok: true,
         verdict: result.verdict,
+        replayToken,
         meta: {
           provider: provider.id,
           providerLabel: provider.label,
