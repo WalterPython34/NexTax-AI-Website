@@ -13,6 +13,13 @@ import {
   ownerCompForBand,
 } from "../owner-comp-families";
 
+/** "p25" -> 25, "p15 (interpolated)" -> 15. */
+function parsePercentile(label: string): number | undefined {
+  const digits = label.replace(/[^0-9]/g, "");
+  const n = parseInt(digits, 10);
+  return Number.isFinite(n) && n > 0 ? n : undefined;
+}
+
 const FALLBACK_NOTE =
   "National owner-comp benchmark used because industry-specific data is not yet available.";
 
@@ -48,7 +55,7 @@ export function createBlsOewsProvider(
           soc: familyRecord.soc,
           occupationLabel: familyRecord.occupationTitle,
           band,
-          percentile: parseInt(familySelection.percentileLabel, 10) || undefined,
+          percentile: parsePercentile(familySelection.percentileLabel),
           role,
         };
       }
@@ -77,7 +84,7 @@ export function createBlsOewsProvider(
         soc: defaultRecord.soc,
         occupationLabel: defaultRecord.occupationTitle,
         band,
-        percentile: parseInt(defaultSelection.percentileLabel, 10) || undefined,
+        percentile: parsePercentile(defaultSelection.percentileLabel),
         role,
       };
     },
