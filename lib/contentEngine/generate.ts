@@ -34,7 +34,7 @@ export const DEFAULT_SUBREDDIT = "buyingabusiness";
 function factList(sheet: FactSheet): string {
   return sheet.entries
     .map((e) => {
-      const q = e.qualifier ? ` [must be accompanied in prose by: "${e.qualifier}"]` : "";
+      const q = e.qualifier ? ` [context: ${e.qualifier}]` : "";
       return `- ${e.key}: ${e.display}${q}`;
     })
     .join("\n");
@@ -76,6 +76,9 @@ export function buildDraftPrompt(args: {
     DO_NOT_RULES.map((r) => `- ${r}`).join("\n"),
     ``,
     `## ${modeDirective}`,
+    ``,
+    `## Coverage figures (DSCR) — state the assumptions ONCE`,
+    `If the post uses any DSCR figure, state the financing assumptions ONCE, early in the coverage discussion, using the phrase "standard SBA terms" (e.g. "at standard SBA terms (80% financed / 10.5% / 10yr) — actual terms may differ"; spelling the terms out in words is also fine). Do NOT repeat the assumptions with every figure. After that single statement, let scenario figures flow naturally in the sentence, e.g. "coverage drops to [the haircut figure] on a ten percent haircut, and [the deeper figure] if the earnings drop twenty percent". Never re-attach the full assumptions string to each number.`,
     ``,
     `## THE COMPLETE SET OF NUMBERS YOU MAY USE`,
     `Every number in your draft must come from this list (you may re-express $1,200,000 as $1.2M and similar unit changes, but never alter a value). Numbers marked with a required accompaniment must appear with that accompaniment in prose. If a point needs a number not on this list, make the point without a number.`,

@@ -77,7 +77,10 @@ export function deriveDscrAtHaircut(
     key: `dscr_at_${haircutPct}pct_haircut`,
     value,
     display: `${value.toFixed(2)}x`,
-    qualifier: `if SDE comes in ${haircutPct}% lower; at standard SBA terms (80% financed / 10.5% / 10yr)`,
+    // Scenario framing only. The standard-terms assumption is stated ONCE
+    // per post (prompt instructs it; verify.ts enforces its presence), not
+    // repeated on every coverage figure.
+    qualifier: `if SDE comes in ${haircutPct}% lower`,
     formula: "(usable_sde * (1 - haircut_pct/100)) / (monthly_payment * 12)",
     inputs: { usable_sde: usableSde, monthly_payment: monthlyPayment, haircut_pct: haircutPct },
   };

@@ -60,6 +60,9 @@ console.log("buildDraftPrompt — containment");
 
   check("contains fact displays", prompt.includes("$1.2M") && prompt.includes("1.44x"));
   check("contains dscr qualifier as required accompaniment", prompt.includes("standard SBA terms"));
+  check("assumptions stated once, not per figure",
+    prompt.includes("state the assumptions ONCE") && prompt.includes("Never re-attach the full assumptions string"));
+  check("no per-entry 'must be accompanied' boilerplate", !prompt.includes("must be accompanied in prose by"));
   check("contains anatomy", prompt.includes("worked numeric example"));
   check("contains do-not on fabrication", prompt.includes("NO NUMBER"));
   check("contains incidental-numeral rule", prompt.includes("incidental numerals"));
