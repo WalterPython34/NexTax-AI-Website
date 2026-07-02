@@ -10,6 +10,7 @@ import {
   detectTopicTriggers,
   applyEligibilityFilters,
   ELIGIBILITY_COLUMNS,
+  OWNER_USER_ID,
 } from "./eligibility";
 
 let failures = 0;
@@ -49,9 +50,14 @@ const clientRow = () => ({
 console.log("evaluateEligibility — positive path");
 {
   const r = evaluateEligibility(marketplaceRow());
-  check("marketplace row is eligible", r.eligible, r.reasons.join("; "));
+  check("marketplace row (user_id null) is eligible", r.eligible, r.reasons.join("; "));
   check("no failure reasons", r.reasons.length === 0);
   check("all checks recorded", r.checks.length === 6);
+
+  // Verified distribution 2026-07-02: 1,115 marketplace rows are backfilled
+  // with the owner's user_id — these are the public pool, eligible.
+  const owned = evaluateEligibility({ ...marketplaceRow(), user_id: OWNER_USER_ID });
+  check("marketplace row (owner user_id) is eligible", owned.eligible, owned.reasons.join("; "));
 }
 
 console.log("evaluateEligibility — every single-field mutation fails");
@@ -64,7 +70,7 @@ console.log("evaluateEligibility — every single-field mutation fails");
     ["data_source_type user_submitted", { data_source_type: "user_submitted" }],
     ["source_platform null", { source_platform: null }],
     ["source_platform empty string", { source_platform: "  " }],
-    ["user_id present", { user_id: "cccccccc-0000-0000-0000-000000000003" }],
+    ["user_id of a NON-owner user", { user_id: "cccccccc-0000-0000-0000-000000000003" }],
     ["pending_email present", { pending_email: "someone@example.com" }],
     ["is_valid false", { is_valid: false }],
     ["is_valid null", { is_valid: null }],
@@ -101,12 +107,13 @@ console.log("applyEligibilityFilters — applies every predicate condition");
     eq: (c: string, v: unknown) => (calls.push(`eq:${c}=${v}`), fake),
     is: (c: string, v: unknown) => (calls.push(`is:${c}=${v}`), fake),
     not: (c: string, op: string, v: unknown) => (calls.push(`not:${c} ${op} ${v}`), fake),
+    or: (f: string) => (calls.push(`or:${f}`), fake),
   };
   applyEligibilityFilters(fake);
   check("filters tool_used", calls.includes("eq:tool_used=marketplace_import"));
   check("filters data_source_type", calls.includes("eq:data_source_type=marketplace_supply"));
   check("filters source_platform not null", calls.includes("not:source_platform is null"));
-  check("filters user_id null", calls.includes("is:user_id=null"));
+  check("filters user_id null-or-owner", calls.includes(`or:user_id.is.null,user_id.eq.${OWNER_USER_ID}`));
   check("filters pending_email null", calls.includes("is:pending_email=null"));
   check("filters is_valid", calls.includes("eq:is_valid=true"));
 }

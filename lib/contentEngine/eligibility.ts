@@ -23,7 +23,15 @@ import type {
   TopicTrigger,
 } from "./types";
 
-export const PREDICATE_VERSION = "2026-07-02.1";
+export const PREDICATE_VERSION = "2026-07-02.2";
+
+/**
+ * Platform owner. Verified against production 2026-07-02: 1,115 of 1,327
+ * marketplace rows carry this user_id (dashboard backfill); the remaining
+ * 212 have user_id NULL (current bulk-import behavior). Marketplace rows
+ * with any OTHER user_id do not exist and would be ineligible.
+ */
+export const OWNER_USER_ID = "fd51b1c2-d682-4278-8b58-6abad29a2a07";
 
 /**
  * Columns a caller MUST select for evaluateEligibility to run. Absence of
@@ -91,8 +99,14 @@ const CHECKS: Check[] = [
         : `source_platform is ${JSON.stringify(r.source_platform)}, expected non-empty string`,
   },
   {
-    check: "user_id_is_null",
-    run: (r) => (r.user_id === null ? null : `user_id is ${JSON.stringify(r.user_id)}, expected null`),
+    // Amended at Stage 2 (verified distribution 2026-07-02): marketplace rows
+    // are either unowned (NULL) or dashboard-backfilled with the OWNER's id.
+    // Any other user_id means a client/prospect touched the row → ineligible.
+    check: "user_id_null_or_owner",
+    run: (r) =>
+      r.user_id === null || r.user_id === OWNER_USER_ID
+        ? null
+        : `user_id is ${JSON.stringify(r.user_id)}, expected null or owner`,
   },
   {
     check: "pending_email_is_null",
@@ -152,13 +166,14 @@ export function applyEligibilityFilters<
     eq: (col: string, val: unknown) => Q;
     is: (col: string, val: null) => Q;
     not: (col: string, op: string, val: null) => Q;
+    or: (filters: string) => Q;
   },
 >(query: Q): Q {
   return query
     .eq("tool_used", "marketplace_import")
     .eq("data_source_type", "marketplace_supply")
     .not("source_platform", "is", null)
-    .is("user_id", null)
+    .or(`user_id.is.null,user_id.eq.${OWNER_USER_ID}`)
     .is("pending_email", null)
     .eq("is_valid", true);
 }

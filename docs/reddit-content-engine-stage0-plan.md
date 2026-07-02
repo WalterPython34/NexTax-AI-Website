@@ -3,6 +3,10 @@
 **Status:** Stage 0 approved by Steve 2026-07-02; Stage 1 built (see amendment in §2.2 and answers in §7). No SQL executed, no templates generated.
 
 > **Stage 1 amendment (Steve, 2026-07-02):** k-anonymity is *necessary but not sufficient* — the k computed over our eligible pool is only a proxy for the true re-identification universe (all public listings), so it may only FORBID single-deal mode, never unlock disclosure. The real protections are suppression and composite mode. Accordingly, §2.2 below is amended: **geography (state, city, zip) is suppressed in EVERY mode**, not gated on k. Implemented in `lib/contentEngine/` (Stage 1).
+
+> **Stage 1 gate closed (2026-07-02).** Steve ran the migration and the verify SQL. The distribution confirmed: `('marketplace_import','marketplace_supply')` always appear together with a named platform (1,327 rows across BizBuySell / BusinessBroker.net / BizScout / Empire Flippers / Flippa / Other); record-deal rows all show `('reality_check'|'risk_analyzer', 'user_submitted', null)`; no ambiguous shape exists. One predicate amendment resulted: 1,115 marketplace rows carry the OWNER's user_id (dashboard backfill; verified — no other user_id appears on any marketplace row), so the `user_id IS NULL` belt became **`user_id IS NULL OR user_id = OWNER_USER_ID`** (predicate v2026-07-02.2). Any other user_id remains ineligible.
+
+> **Stage 2 delivered (2026-07-02):** `templates.ts` (seeded verbatim from the voice corpus, weighted by the metrics prior), `generate.ts` (claude-sonnet-4-6; prompt receives ONLY fact-sheet displays + qualifiers), `verify.ts` (deterministic no-fabrication check; strict — incidental numerals fail; composite-label + DSCR-label enforcement), and `scripts/content-engine-dry-run.ts` (end-to-end against real eligible deals; insert-only). Gate: Steve runs the dry run and reviews sample drafts + numeric-check audit trails.
 **Companion migration file (for Steve to review and run manually):** `scripts/migrations/2026-07-02_content_drafts.sql`
 **Date:** 2026-07-02
 
