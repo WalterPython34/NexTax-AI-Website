@@ -26,10 +26,13 @@ export type PersistResult =
 // Best-effort lead capture. A DB/config failure is logged but never blocks the
 // user's breakdown — they gave an email and should get the value regardless.
 export async function persistLead(lead: SbaLead): Promise<PersistResult> {
-  const url = process.env.SUPABASE_URL;
+  // Matches the repo convention used by every other server route
+  // (record-deal, bulk-import, benchmark-lookup): NEXT_PUBLIC_SUPABASE_URL +
+  // SUPABASE_SERVICE_ROLE_KEY. SUPABASE_URL is accepted as a fallback.
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL ?? process.env.SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) {
-    console.warn("[sba-leads] persistence skipped: SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY not set");
+    console.warn("[sba-leads] persistence skipped: NEXT_PUBLIC_SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY not set");
     return { ok: false, reason: "not_configured" };
   }
   try {
