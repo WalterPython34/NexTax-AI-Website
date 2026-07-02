@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { SBA_INDUSTRIES, SBA_INDUSTRY_BY_KEY } from "@/lib/sba/industries";
 import type { SbaVerdict } from "@/lib/sba/sba-engine";
 import type { OwnerRole } from "@/lib/sba/owner-comp-provider";
@@ -54,7 +54,7 @@ const ZONE_META: Record<SbaVerdict["zone"], { color: string; headline: string; t
   FAIL: { color: "#EF4444", headline: "Likely fails the 1.25\u00d7 lender screen", tag: "FAIL" },
 };
 
-const ACQUIFLOW_URL = "/";
+const ACQUIFLOW_URL = "/acquiflow";
 
 const SAMPLE_RESULT: Extract<ApiResponse, { ok: true }> = {
   ok: true,
@@ -166,6 +166,14 @@ export default function SbaCheckerPage() {
     () => [...SBA_INDUSTRIES].sort((a, b) => a.label.localeCompare(b.label)),
     [],
   );
+
+  // On mobile the verdict renders below the fold; bring it into view on a live run.
+  const resultRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (view.kind === "verdict") {
+      resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [view.kind]);
 
   async function runCheck() {
     const revenueN = parseMoney(revenue);
@@ -305,7 +313,11 @@ export default function SbaCheckerPage() {
         )}
 
         {view.kind === "sample" && <ResultBlock data={SAMPLE_RESULT} sample />}
-        {view.kind === "verdict" && <ResultBlock data={view.data} />}
+        {view.kind === "verdict" && (
+          <div ref={resultRef} style={{ scrollMarginTop: 90 }}>
+            <ResultBlock data={view.data} />
+          </div>
+        )}
       </div>
     </div>
   );
@@ -405,7 +417,7 @@ function ResultBlock({ data, sample }: { data: Extract<ApiResponse, { ok: true }
     <>
       <VerdictCard data={data} sample={sample} />
       <BreakdownGate token={data.replayToken} sample={sample} />
-      <ResultCta />
+      <ResultCta zone={data.verdict.zone} />
     </>
   );
 }
@@ -441,6 +453,28 @@ function formatLineValue(li: BreakdownLineItem): string {
   }
 }
 
+function buildLeadSource(): string {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const utmSource = params.get("utm_source");
+    const utmMedium = params.get("utm_medium");
+    const utmCampaign = params.get("utm_campaign");
+    if (utmSource) {
+      const utm = [utmSource, utmMedium, utmCampaign].filter(Boolean).join("/");
+      return `sba-checker utm:${utm}`.slice(0, 120);
+    }
+    if (document.referrer) {
+      const host = new URL(document.referrer).hostname;
+      if (host && host !== window.location.hostname) {
+        return `sba-checker ref:${host}`.slice(0, 120);
+      }
+    }
+  } catch {
+    /* fall through to default */
+  }
+  return "sba-checker";
+}
+
 function BreakdownGate({ token, sample }: { token: string | null; sample?: boolean }) {
   const [gate, setGate] = useState<GateState>({ kind: "locked" });
   const [email, setEmail] = useState("");
@@ -457,7 +491,7 @@ function BreakdownGate({ token, sample }: { token: string | null; sample?: boole
       const res = await fetch("/api/sba-check/breakdown", {
         method: "POST",
         headers: { "content-type": "application/json" },
-        body: JSON.stringify({ email: trimmed, replayToken: token, source: "sba-checker" }),
+        body: JSON.stringify({ email: trimmed, replayToken: token, source: buildLeadSource() }),
       });
       const data: BreakdownResponse = await res.json();
       if (!data.ok) {
@@ -559,11 +593,27 @@ function BreakdownCard({ breakdown }: { breakdown: SbaBreakdown }) {
   );
 }
 
-function ResultCta() {
+const CTA_COPY: Record<SbaVerdict["zone"], { lead: string; link: string }> = {
+  PASS: {
+    lead: "Clears the screen \u2014 the next question is whether the price is right.",
+    link: "AcquiFlow runs that analysis.",
+  },
+  BUBBLE: {
+    lead: "This screen turns on add-back documentation.",
+    link: "AcquiFlow shows the full lender-view case.",
+  },
+  FAIL: {
+    lead: "The deal can\u2019t carry this structure.",
+    link: "AcquiFlow shows what price it could.",
+  },
+};
+
+function ResultCta({ zone }: { zone: SbaVerdict["zone"] }) {
+  const copy = CTA_COPY[zone];
   return (
     <a href={ACQUIFLOW_URL} style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginTop: 14, padding: "16px 20px", borderRadius: 14, background: "rgba(245,158,11,0.07)", border: "1px solid rgba(245,158,11,0.22)", textDecoration: "none" }}>
       <span style={{ fontSize: 14, color: "#F1F5F9", lineHeight: 1.5 }}>
-        Want the full lender-view report? <span style={{ color: COLORS.amber, fontWeight: 600 }}>Run this deal in AcquiFlow.</span>
+        {copy.lead} <span style={{ color: COLORS.amber, fontWeight: 600 }}>{copy.link}</span>
       </span>
       <span style={{ color: COLORS.amber, fontSize: 18, fontWeight: 600 }}>&rarr;</span>
     </a>
