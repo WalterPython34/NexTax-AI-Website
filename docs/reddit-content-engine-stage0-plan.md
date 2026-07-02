@@ -1,6 +1,8 @@
 # Reddit Content Engine — Stage 0: Audit + Plan
 
-**Status:** Awaiting Steve's approval. No implementation code, no SQL executed, no templates generated.
+**Status:** Stage 0 approved by Steve 2026-07-02; Stage 1 built (see amendment in §2.2 and answers in §7). No SQL executed, no templates generated.
+
+> **Stage 1 amendment (Steve, 2026-07-02):** k-anonymity is *necessary but not sufficient* — the k computed over our eligible pool is only a proxy for the true re-identification universe (all public listings), so it may only FORBID single-deal mode, never unlock disclosure. The real protections are suppression and composite mode. Accordingly, §2.2 below is amended: **geography (state, city, zip) is suppressed in EVERY mode**, not gated on k. Implemented in `lib/contentEngine/` (Stage 1).
 **Companion migration file (for Steve to review and run manually):** `scripts/migrations/2026-07-02_content_drafts.sql`
 **Date:** 2026-07-02
 
@@ -223,8 +225,8 @@ Tax framing per corpus §4: drafts speak in Steve's confident editorial tax voic
 
 No Reddit posting or scheduling integration. No scraping. No OAuth flows. No SQL execution by Claude Code. No template generation before plan approval. No changes to scoring engines, snapshot tables, record-deal (Patch E stays deferred), or the ingest-signals cron. No exposure to product users. No engine-reconciliation work.
 
-## 7. Open questions for Steve (none block Stage 1)
+## 7. Open questions — ANSWERED (Steve, 2026-07-02)
 
-1. Should the ungated existing `/admin` pages + `/api/intelligence` + `/api/bulk-import` (§1.3) get the owner gate retrofitted? Separate task if yes.
-2. k-anonymity threshold is proposed at k=5 for state-level mention; comfortable, or raise it?
-3. Is `app/admin/content-engine/` the right home for the surface, or do you want it on a non-guessable path as well as gated?
+1. **Admin gate retrofit: YES, as a separate task.** The ungated `/admin` pages and `/api/bulk-import` (service-role client behind unauthenticated routes) are a real exposure, but the retrofit is scoped out of this build so it doesn't bloat it.
+2. **k-threshold question is moot** — approach fixed instead of the number: k only forbids (see the Stage 1 amendment at the top); geography is suppressed in every mode, so there is no k-gated disclosure to tune.
+3. **Non-guessable path: YES.** Server-side owner gating is the real control; the Stage 3 surface additionally lives on a non-guessable path as free defense-in-depth.
