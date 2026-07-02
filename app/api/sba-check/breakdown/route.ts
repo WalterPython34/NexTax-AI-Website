@@ -2,6 +2,8 @@ import { runSbaCheck, type SbaCheckRequest } from "@/lib/sba/run-sba-check";
 import { createBlsOewsProvider } from "@/lib/sba/providers/bls-oews-provider";
 import { verifyReplayToken } from "@/lib/sba/replay-token";
 import { buildBreakdown } from "@/lib/sba/breakdown";
+import { generateKillLine } from "@/lib/sba/kill-line";
+import { buildInterpretationPayload } from "@/lib/sba/sba-engine";
 import { persistLead, type SbaLead } from "@/lib/sba/leads-store";
 
 // Mirror the verdict route's copy so both surfaces stay identical.
@@ -77,8 +79,14 @@ export async function POST(request: Request): Promise<Response> {
     console.warn(`[sba-breakdown] zone drift: token=${p.zone} recomputed=${verdict.zone}`);
   }
 
-  // Stage 2: interpretation stays on the deterministic template (LLM added in Stage 4).
-  const breakdown = buildBreakdown(verdict, { disclaimer: DISCLAIMER, version: API_VERSION });
+  // LLM interprets only; deterministic numbers. Any validation/API failure
+  // inside generateKillLine falls back to the per-zone template (never throws).
+  const interpretation = await generateKillLine(verdict, buildInterpretationPayload(verdict));
+  const breakdown = buildBreakdown(verdict, {
+    disclaimer: DISCLAIMER,
+    version: API_VERSION,
+    interpretation,
+  });
 
   const lead: SbaLead = {
     email: (email as string).trim(),
