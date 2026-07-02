@@ -51,9 +51,53 @@ export async function persistLead(lead: SbaLead): Promise<PersistResult> {
       console.error("[sba-leads] insert failed:", error.message);
       return { ok: false, reason: "insert_failed" };
     }
+    // Best-effort founder alert; never blocks or fails the lead capture.
+    await sendLeadAlert(lead);
     return { ok: true };
   } catch (e) {
     console.error("[sba-leads] insert threw:", e instanceof Error ? e.message : String(e));
     return { ok: false, reason: "exception" };
+  }
+}
+
+// ─── Email alert (Resend) ────────────────────────────────────────────────────
+// Fires after a successful insert. Requires RESEND_API_KEY and
+// SBA_LEAD_ALERT_TO in env; silently skips if unset. Never throws.
+
+const money = (n: number): string => "$" + Math.round(n).toLocaleString("en-US");
+
+async function sendLeadAlert(lead: SbaLead): Promise<void> {
+  const apiKey = process.env.RESEND_API_KEY;
+  const to = process.env.SBA_LEAD_ALERT_TO;
+  if (!apiKey || !to) return;
+  const from = process.env.SBA_LEAD_ALERT_FROM ?? "AcquiFlow SBA Check <onboarding@resend.dev>";
+
+  const d = lead.deal;
+  const text = [
+    `New SBA Deal Check lead`,
+    ``,
+    `Email:      ${lead.email}`,
+    `Industry:   ${lead.industryKey}`,
+    `Zone:       ${lead.zone}  (verdict ${lead.verdictConfidence} / inputs ${lead.inputConfidence})`,
+    `Deal:       revenue ${money(d.annualRevenue)} \u00b7 SDE ${money(d.reportedSde)} \u00b7 price ${money(d.askingPrice)}`,
+    `Financing:  ${d.debtPercent}% debt \u00b7 ${d.ratePercent}% \u00b7 ${d.termYears}yr`,
+    `Source:     ${lead.source ?? "(none)"}`,
+    `Captured:   ${lead.createdAt}`,
+  ].join("\n");
+
+  try {
+    const res = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { "content-type": "application/json", authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify({
+        from,
+        to: [to],
+        subject: `SBA lead: ${lead.email} \u2014 ${lead.zone} ${lead.industryKey}`,
+        text,
+      }),
+    });
+    if (!res.ok) console.warn(`[sba-leads] alert email failed: ${res.status}`);
+  } catch (e) {
+    console.warn("[sba-leads] alert email threw:", e instanceof Error ? e.message : String(e));
   }
 }
