@@ -37,7 +37,9 @@ function nearlyEqual(a: number, b: number): boolean {
 /** Pulls every numeric token out of a text (display/qualifier strings). */
 function numbersInText(text: string): number[] {
   const out: number[] = [];
-  const re = /\$?(\d[\d,]*\.?\d*)\s*([KkMm])?/g;
+  // K/M suffix must be attached (no whitespace) and not the start of a word
+  // ("1.25 most" is the number 1.25, not 1.25M).
+  const re = /\$?(\d[\d,]*\.?\d*)([KkMm](?![A-Za-z]))?/g;
   let m: RegExpExecArray | null;
   while ((m = re.exec(text)) !== null) {
     const base = parseFloat(m[1].replace(/,/g, ""));
@@ -91,7 +93,9 @@ export function extractNumericTokens(body: string): Array<{ token: string; norma
   for (const line of lines) {
     // Strip a leading list ordinal (optionally after markdown header/bold markers).
     const stripped = line.replace(/^\s*(?:#{1,6}\s*)?(?:\*\*)?\d{1,2}[.)](?:\*\*)?\s+/, "");
-    const re = /\$?\d[\d,]*\.?\d*\s*[KkMm]?x?%?/g;
+    // Suffixes must be attached to the number and not bleed into a following
+    // word ("1.25 most" ≠ "1.25M"; "1.5x coverage" keeps its x).
+    const re = /\$?\d[\d,]*\.?\d*(?:[KkMmx](?![A-Za-z]))?%?/g;
     let m: RegExpExecArray | null;
     while ((m = re.exec(stripped)) !== null) {
       const raw = m[0].trim();

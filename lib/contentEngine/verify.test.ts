@@ -55,6 +55,16 @@ console.log("extractNumericTokens");
     JSON.stringify(ordinals));
 
   check("comma thousands parsed", extractNumericTokens("$1,200,000 exactly")[0].normalized === 1_200_000);
+
+  // Regression (found in Stage 2 fixture run): a suffix letter must be
+  // attached to the number, not the first letter of the next word.
+  const words = extractNumericTokens("above the 1.25 most lenders target, in 10 minutes, a 1.5 multiple");
+  check("'1.25 most' is 1.25, not 1.25M",
+    words.some((t) => t.normalized === 1.25) && !words.some((t) => t.normalized === 1_250_000),
+    JSON.stringify(words));
+  check("'10 minutes' is 10, not 10M", words.some((t) => t.normalized === 10) && !words.some((t) => t.normalized === 10_000_000));
+  check("attached suffix still scales", extractNumericTokens("$1.2M ask")[0].normalized === 1_200_000);
+  check("attached x still stripped", extractNumericTokens("1.44x coverage")[0].normalized === 1.44);
 }
 
 console.log("verifyDraft — clean draft passes");
