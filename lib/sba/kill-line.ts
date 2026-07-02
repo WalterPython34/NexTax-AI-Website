@@ -117,6 +117,7 @@ const SYSTEM_RULES = [
   "You write exactly ONE sentence interpreting an SBA underwriting screen result for a business buyer.",
   "Use ONLY numbers that appear verbatim in the JSON payload. Never compute, estimate, or introduce any other number.",
   "Speak in DSCR terms (e.g. \"1.22\\u20131.28\\u00d7 against the 1.25\\u00d7 line\"). Do not restate margins as percentages.",
+  "Format dollar amounts with a $ sign and thousands separators (e.g. $9,323, never 9323).",
   "Never use financing-commitment language: no forms of \"approve\", \"guarantee\", or \"qualify\", never \"lender will\", never \"financing commitment\". This is a screen, not a credit decision.",
   "Plain, direct, institutional tone. No hedging filler, no exclamation marks, no advice to \"consult professionals\".",
   "Output the sentence only \\u2014 no preamble, no quotes, no markdown.",
