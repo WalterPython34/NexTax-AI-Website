@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import "./acquiflow.css";
+import { AcquiflowVideo } from "@/components/acquiflow-video";
 import { StripeCheckoutButton } from "@/components/stripe-checkout-button"
 
 const PRO_PRICE_ID = "price_1TPbTTGA3ir6ndSx14wKWA27"
@@ -225,71 +226,20 @@ export default function AcquiFlowPage() {
         </div>
       </section>
 
-      {/* ============= VIDEO WALKTHROUGH ============= */}
-      <section className="video-section" id="video">
-        <div className="container">
-          <div className="video-header">
-            <div className="section-eyebrow">Product Walkthrough</div>
-            <h2 className="section-headline">See AcquiFlow run a <span className="accent">live deal</span>.</h2>
-            <p className="section-sub">
-              Watch a complete underwriting cycle — from raw seller financials to verdict, lender check,
-              and LOI-ready negotiation anchor. Ninety seconds.
-            </p>
-          </div>
-
-          {/*
-            VIDEO INTEGRATION OPTIONS:
-            — Replace the div below with an <iframe> for YouTube/Vimeo, OR
-            — Replace with a <video> tag pointing at your hosted asset, OR
-            — Keep the styled placeholder and wire the play button to a modal.
-          */}
-          <div className="video-frame">
-            <div className="video-bg-grid"></div>
-            <div className="video-corner-tl"></div>
-            <div className="video-corner-br"></div>
-
-            <svg
-              style={{ position: "absolute", inset: 0, width: "100%", height: "100%", zIndex: 1, opacity: 0.35 }}
-              viewBox="0 0 1080 608"
-              preserveAspectRatio="xMidYMid slice"
-            >
-              <defs>
-                <linearGradient id="vidGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#10D597" stopOpacity="0.8" />
-                  <stop offset="100%" stopColor="#22D3EE" stopOpacity="0.8" />
-                </linearGradient>
-              </defs>
-              <circle cx="200" cy="200" r="80" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="4" />
-              <circle
-                cx="200" cy="200" r="80"
-                fill="none"
-                stroke="url(#vidGrad)"
-                strokeWidth="4"
-                strokeDasharray="502.65"
-                strokeDashoffset="55"
-                strokeLinecap="round"
-                transform="rotate(-90 200 200)"
-              />
-              <g transform="translate(820, 140)" opacity="0.8">
-                <rect x="0" y="60" width="14" height="80" fill="rgba(34,211,238,0.3)" rx="2" />
-                <rect x="22" y="40" width="14" height="100" fill="rgba(34,211,238,0.5)" rx="2" />
-                <rect x="44" y="20" width="14" height="120" fill="rgba(16,213,151,0.6)" rx="2" />
-                <rect x="66" y="0" width="14" height="140" fill="rgba(16,213,151,0.8)" rx="2" />
-                <rect x="88" y="30" width="14" height="110" fill="rgba(34,211,238,0.4)" rx="2" />
-              </g>
-              <path d="M 280 200 Q 500 150 800 220" stroke="rgba(34,211,238,0.3)" strokeWidth="1" fill="none" strokeDasharray="4,4" />
-            </svg>
-
-            <button className="play-btn" aria-label="Play product walkthrough"></button>
-
-            <div className="video-meta">
-              <div className="label">Walkthrough</div>
-              <div className="title">From seller financials to LOI-ready</div>
-              <div className="duration">01:34 · 4K</div>
-            </div>
-          </div>
-        </div>
-      </section>
+     {/* ============= VIDEO WALKTHROUGH ============= */}
+<section className="video-section" id="video">
+  <div className="container">
+    <div className="video-header">
+      <div className="section-eyebrow">Product Walkthrough</div>
+      <h2 className="section-headline">See AcquiFlow run a <span className="accent">live deal</span>.</h2>
+      <p className="section-sub">
+        Watch a complete pre-LOI cycle — from raw listing to score, verdict,
+        and lender-aware structure. Thirty-nine seconds.
+      </p>
+    </div>
+    <AcquiflowVideo />
+  </div>
+</section>
 
       {/* ============= LIVE DEAL EXAMPLE ============= */}
       <section className="deal-example" id="example">
