@@ -10085,7 +10085,7 @@ const dealHasFullAccess = (dealId: string): boolean => {
                 dri={dri}
                 trending={trending}
                 loading={loadingDeals}
-                loadingMkt={loading}
+                loadingMkt={loadingMkt}
                 isPro={isPro}
                 favorites={favorites}
                 outcomesMap={outcomesMap}
