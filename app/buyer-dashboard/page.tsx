@@ -5956,12 +5956,13 @@ function TabHome({
     const byGapDesc = [...usable].sort((a, b) => (b.gap_pct ?? 0) - (a.gap_pct ?? 0));
     const over = byGapDesc[0];
     const fav  = byGapDesc[byGapDesc.length - 1];
-    const cards: { label: string; value: string; sub: string }[] = [];
+    const cards: { label: string; value: string; sub: string; mono: boolean }[] = [];
     if ((over.gap_pct ?? 0) >= 1) {
       cards.push({
         label: "Most overpriced sector",
         value: IL[over.industry_key] ?? over.industry_key,
         sub:   `asking ${Math.round(over.gap_pct)}% above closed-deal levels`,
+        mono:  false,
       });
     }
     if (usable.length >= 2 && fav.industry_key !== over.industry_key) {
@@ -5972,6 +5973,7 @@ function TabHome({
         sub:   g <= -1 ? `listings ${Math.abs(g)}% below closed-deal levels`
              : g <= 1  ? "listings in line with closed-deal levels"
              :           `narrowest gap — asking ${g}% above closed`,
+        mono:  false,
       });
     }
     if (usable.length >= 3) {
@@ -5982,6 +5984,7 @@ function TabHome({
         label: "Median pricing gap",
         value: `${median > 0 ? "+" : ""}${Math.round(median)}%`,
         sub:   "ask vs where deals close",
+        mono:  true,
       });
     }
     if (cards.length === 0) return null;
@@ -6162,6 +6165,26 @@ function TabHome({
   // Sample-modal state for "View sample" button (future: replace with real sample deal)
   const [showSampleModal, setShowSampleModal] = useState(false);
 
+  // ─── SCORE POPOVER — demystifies the ring on click ─────────────────────────
+  // Content priority: stored scoreExplanation, else deterministic lines from
+  // real fields only (gap, DSCR, risk, earnings confidence). Max 4 lines.
+  const [openScoreId, setOpenScoreId] = useState<string | null>(null);
+  const scoreLines = (d: DealRun): string[] => {
+    if (d.scoreExplanation && d.scoreExplanation.length > 0) return d.scoreExplanation.slice(0, 4);
+    const lines: string[] = [];
+    if (d.gap_pct != null) {
+      const gp = Math.round(d.gap_pct);
+      lines.push(gp > 0 ? `Priced ${gp}% above modeled fair value` : gp < 0 ? `Priced ${Math.abs(gp)}% below modeled fair value` : "Priced at modeled fair value");
+    }
+    if (d.dscr != null) {
+      lines.push(`DSCR ${d.dscr.toFixed(2)}x ${d.dscr >= 1.5 ? "— strong debt coverage" : d.dscr >= 1.25 ? "— meets lender minimums" : "— below financeable threshold"}`);
+    }
+    if (d.risk_level) lines.push(`Risk level: ${d.risk_level}`);
+    const trust = d.normalization_trust_score;
+    if (trust != null && trust < 100) lines.push(`Earnings confidence ${trust}/100`);
+    return lines.slice(0, 4);
+  };
+
   // ─── ATTENTION QUEUE — severity-ranked inbox from existing signals only ───
   // Verdict-driven (7.3.26 scoring) first, then decision debt, then fresh
   // verdicts. One item per deal; most severe wins. No signal → no item.
@@ -6273,15 +6296,18 @@ function TabHome({
           background: "rgba(255,255,255,0.025)",
           border: "1px solid rgba(255,255,255,0.09)",
         }}>
-          <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 6 }}>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}>
             <span style={{ fontSize: 19, fontWeight: 800, color: "#F1F5F9", fontFamily: "'Inter Tight',sans-serif", letterSpacing: "-0.01em" }}>
-              {attention.length} {attention.length === 1 ? "deal needs" : "deals need"} attention
+              Today's Priorities
             </span>
             {attention.length > 3 && (
               <button onClick={() => onTabChange("my-deals")} style={{ marginLeft: "auto", background: "none", border: "none", color: "#818CF8", fontSize: 12, cursor: "pointer", fontFamily: "inherit", padding: 0 }}>
                 +{attention.length - 3} more →
               </button>
             )}
+          </div>
+          <div style={{ fontSize: 12, color: "#94A3B8", marginBottom: 6 }}>
+            {Math.min(attention.length, 3)} high-priority {Math.min(attention.length, 3) === 1 ? "item" : "items"}
           </div>
           {attention.slice(0, 3).map(it => (
             <div
@@ -6385,7 +6411,7 @@ function TabHome({
                 border: "1px solid rgba(255,255,255,0.05)",
               }}>
                 <div style={{ fontSize: 10, color: "#94A3B8", marginBottom: 3, textTransform: "uppercase" as const, letterSpacing: "0.06em" }}>{c.label}</div>
-                <div style={{ fontSize: 16, fontWeight: 700, color: "#F1F5F9", fontFamily: "'JetBrains Mono',monospace" }}>{c.value}</div>
+                <div style={{ fontSize: 16, fontWeight: 700, color: "#F1F5F9", fontFamily: c.mono ? "'JetBrains Mono',monospace" : "inherit" }}>{c.value}</div>
                 <div style={{ fontSize: 10, color: "#7C8593", marginTop: 2 }}>{c.sub}</div>
               </div>
             ))}
@@ -6420,13 +6446,44 @@ function TabHome({
                   borderTop: "1px solid rgba(255,255,255,0.05)",
                 }}
               >
-                <div style={{
-                  width: 38, height: 38, borderRadius: "50%", flexShrink: 0,
-                  border: `2.5px solid ${scoreCol(d.overall_score ?? 0, v)}`,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  fontFamily: "'JetBrains Mono',monospace", fontSize: 13, fontWeight: 700, color: "#F1F5F9",
-                }}>
-                  {Math.round(d.overall_score ?? 0)}
+                <div style={{ position: "relative" as const, flexShrink: 0 }}>
+                  <div
+                    onClick={e => { e.stopPropagation(); setOpenScoreId(openScoreId === d.id ? null : d.id); }}
+                    title="What's behind this score?"
+                    style={{
+                      width: 38, height: 38, borderRadius: "50%",
+                      border: `2.5px solid ${scoreCol(d.overall_score ?? 0, v)}`,
+                      display: "flex", alignItems: "center", justifyContent: "center",
+                      fontFamily: "'JetBrains Mono',monospace", fontSize: 13, fontWeight: 700, color: "#F1F5F9",
+                      cursor: "help",
+                    }}
+                  >
+                    {Math.round(d.overall_score ?? 0)}
+                  </div>
+                  {openScoreId === d.id && (
+                    <div
+                      onClick={e => e.stopPropagation()}
+                      style={{
+                        position: "absolute" as const, top: 44, left: 0, zIndex: 60,
+                        width: 270, padding: "12px 14px", borderRadius: 10,
+                        background: "#0B1220", border: "1px solid rgba(255,255,255,0.12)",
+                        boxShadow: "0 8px 24px rgba(0,0,0,0.5)",
+                      }}
+                    >
+                      <div style={{ fontSize: 11, fontWeight: 700, color: "#F1F5F9", marginBottom: 6 }}>
+                        Opportunity Score <span style={{ fontFamily: "'JetBrains Mono',monospace" }}>{Math.round(d.overall_score ?? 0)}</span> — <span style={{ color: cfg.color }}>{cfg.label}</span>
+                      </div>
+                      {scoreLines(d).map((ln, li) => (
+                        <div key={li} style={{ fontSize: 11, color: "#CBD5E1", lineHeight: 1.5, padding: "2px 0" }}>· {ln}</div>
+                      ))}
+                      <button
+                        onClick={e => { e.stopPropagation(); setOpenScoreId(null); onOpenDetail(d); }}
+                        style={{ marginTop: 8, background: "none", border: "none", color: "#818CF8", fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: "inherit", padding: 0 }}
+                      >
+                        Full breakdown →
+                      </button>
+                    </div>
+                  )}
                 </div>
                 <div style={{ flex: 1, minWidth: 200 }}>
                   <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" as const }}>
@@ -6461,7 +6518,7 @@ function TabHome({
           <div style={{ fontSize: 13, fontWeight: 700, color: "#F1F5F9", marginBottom: 6 }}>Intelligence</div>
           {marketIntel.map(m => (
             <div key={m.key} style={{ padding: "8px 4px", borderTop: "1px solid rgba(255,255,255,0.05)", fontSize: 13, color: "#CBD5E1", lineHeight: 1.5 }}>
-              {m.text}
+              <span style={{ marginRight: 8 }}>📈</span>{m.text}
             </div>
           ))}
           {feedItems.slice(0, Math.max(0, 6 - marketIntel.length)).map((f, i) => (
@@ -6470,7 +6527,7 @@ function TabHome({
               onClick={() => onOpenDetail(f.deal)}
               style={{ padding: "8px 4px", borderTop: "1px solid rgba(255,255,255,0.05)", fontSize: 13, color: "#CBD5E1", lineHeight: 1.5, cursor: "pointer" }}
             >
-              {f.text}
+              <span style={{ marginRight: 8 }}>{["needs_review", "low_trust", "declining", "dscr_drop"].includes(f.kind) ? "⚠" : "📍"}</span>{f.text}
             </div>
           ))}
         </div>
@@ -6485,14 +6542,16 @@ function TabHome({
           display: "flex", alignItems: "center", gap: 14, flexWrap: "wrap" as const,
         }}>
           <span style={{ fontSize: 11, fontWeight: 700, color: "#94A3B8", textTransform: "uppercase" as const, letterSpacing: "0.06em" }}>Portfolio</span>
-          <span style={{ fontSize: 12, color: "#E2E8F0", fontFamily: "'JetBrains Mono',monospace" }}>{portfolio.total} tracked</span>
+          <span style={{ fontSize: 12, color: "#E2E8F0" }}>
+            <span style={{ fontFamily: "'JetBrains Mono',monospace" }}>{portfolio.total}</span> tracked
+          </span>
           {portfolio.rows.map(r => (
-            <span key={r.v} style={{ fontSize: 12, color: r.cfg.color, fontFamily: "'JetBrains Mono',monospace" }}>
-              {r.n} {r.cfg.label}
+            <span key={r.v} style={{ fontSize: 12, color: r.cfg.color }}>
+              <span style={{ fontFamily: "'JetBrains Mono',monospace" }}>{r.n}</span> {r.cfg.label}
             </span>
           ))}
-          <span style={{ fontSize: 12, color: "#818CF8", fontFamily: "'JetBrains Mono',monospace", marginLeft: "auto" }}>
-            Avg opportunity score {portfolio.avg}
+          <span style={{ fontSize: 12, color: "#818CF8", marginLeft: "auto" }}>
+            Avg opportunity score <span style={{ fontFamily: "'JetBrains Mono',monospace" }}>{portfolio.avg}</span>
           </span>
         </div>
       )}
