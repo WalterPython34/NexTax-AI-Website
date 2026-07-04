@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { createClient } from "@supabase/supabase-js";
 import { CATEGORIES } from "@/lib/marketview/categories";
 import { normalizeDealFinancials } from "@/lib/normalizationEngine";
@@ -1683,12 +1683,13 @@ function computeModalScore(
 // ─── ANALYZE DEAL MODAL ───────────────────────────────────────────────────────
 
 function AnalyzeDealModal({
-  userId, isPro, onClose, onDealSaved,
+  userId, isPro, onClose, onDealSaved, initialInputs,
 }: {
   userId: string;
   isPro: boolean;
   onClose: () => void;
   onDealSaved: (deal: DealRun) => void;
+  initialInputs?: Partial<ModalDealInputs>;   // Home quick-start pre-fill (Phase 1)
 }) {
   const [step, setStep] = useState<"input" | "results">("input");
   const [inputs, setInputs] = useState<ModalDealInputs>({
@@ -1696,6 +1697,7 @@ function AnalyzeDealModal({
     city: "", state: "",
     debtPercent: "80", interestRate: "10.5", termYears: "10",
     topCustomerPct: "",
+    ...(initialInputs ?? {}),   // Pre-filled fields arrive editable; user reviews before scoring
   });
   const [score, setScore]     = useState<ModalScore | null>(null);
   const [saving, setSaving]   = useState(false);
@@ -5921,11 +5923,76 @@ function TabHome({
   onOpenDetail: (deal: DealRun) => void;
   onOpenUnderwriting: (deal: DealRun) => void;
   onOpenOutcome: (deal: DealRun) => void;
-  onAnalyzeNew: () => void;
+  onAnalyzeNew: (prefill?: Partial<ModalDealInputs>) => void;
 }) {
   // ─── STATE GATE ──────────────────────────────────────────────────────────
   // Rule: deals.length === 0 → State A (empty hero).  deals.length > 0 → State B (momentum hero).
   const isEmpty = deals.length === 0 && !loading;
+
+  // ─── MARKET PULSE (State A) — zero-input value from live dri snapshots ────
+  // D4: deal_count >= 3 per snapshot. Fewer usable snapshots → fewer cards;
+  // none → strip hidden entirely. No placeholder numbers, ever.
+  const pulse = useMemo(() => {
+    const usable = dri.filter(s =>
+      (s.deal_count ?? 0) >= 3 && typeof s.gap_pct === "number" && !!s.industry_key
+    );
+    if (usable.length === 0) return null;
+    const byGapDesc = [...usable].sort((a, b) => (b.gap_pct ?? 0) - (a.gap_pct ?? 0));
+    const over = byGapDesc[0];
+    const fav  = byGapDesc[byGapDesc.length - 1];
+    const cards: { label: string; value: string; sub: string }[] = [];
+    if ((over.gap_pct ?? 0) >= 1) {
+      cards.push({
+        label: "Most overpriced sector",
+        value: IL[over.industry_key] ?? over.industry_key,
+        sub:   `asking ${Math.round(over.gap_pct)}% above closed-deal levels`,
+      });
+    }
+    if (usable.length >= 2 && fav.industry_key !== over.industry_key) {
+      const g = Math.round(fav.gap_pct ?? 0);
+      cards.push({
+        label: "Most buyer-favorable",
+        value: IL[fav.industry_key] ?? fav.industry_key,
+        sub:   g <= -1 ? `listings ${Math.abs(g)}% below closed-deal levels`
+             : g <= 1  ? "listings in line with closed-deal levels"
+             :           `narrowest gap — asking ${g}% above closed`,
+      });
+    }
+    if (usable.length >= 3) {
+      const sorted = usable.map(s => s.gap_pct ?? 0).sort((a, b) => a - b);
+      const mid = Math.floor(sorted.length / 2);
+      const median = sorted.length % 2 ? sorted[mid] : (sorted[mid - 1] + sorted[mid]) / 2;
+      cards.push({
+        label: "Median pricing gap",
+        value: `${median > 0 ? "+" : ""}${Math.round(median)}%`,
+        sub:   "ask vs where deals close",
+      });
+    }
+    if (cards.length === 0) return null;
+    const latest = usable.reduce((m, s) => (s.snapshot_date > m ? s.snapshot_date : m), usable[0].snapshot_date);
+    const asOf = new Date(latest).toLocaleDateString("en-US", { month: "short", day: "numeric" });
+    return { cards, asOf };
+  }, [dri]);
+
+  // ─── QUICK-START (State A) — structured mini-intake, pre-fills the modal ──
+  // Option A (locked): no freeform paste/LLM. Debt terms + top-customer %
+  // stay on modal defaults; all validation remains in AnalyzeDealModal.
+  const [qs, setQs] = useState({ industry: "", revenue: "", sde: "", askingPrice: "", city: "", state: "" });
+  const setQsField = (k: keyof typeof qs, v: string) => setQs(p => ({ ...p, [k]: v }));
+  const launchQuickStart = () => {
+    onAnalyzeNew({
+      industry: qs.industry, revenue: qs.revenue, sde: qs.sde,
+      askingPrice: qs.askingPrice, city: qs.city, state: qs.state,
+    });
+  };
+  const qsInput: React.CSSProperties = {
+    width: "100%", padding: "9px 11px", borderRadius: 8, boxSizing: "border-box",
+    border: "1px solid rgba(255,255,255,0.1)", background: "#0F172A",
+    color: "#F1F5F9", fontSize: 12, fontFamily: "inherit", outline: "none",
+  };
+
+  // ─── VIDEO WALKTHROUGH (State A) — modal player; <video> mounts on open ───
+  const [showVideoModal, setShowVideoModal] = useState(false);
 
   // ─── DECISION FEED — deterministic signals from existing data ────────────
   // Builds a list of short, action-oriented insights. Only signals where
@@ -6085,20 +6152,205 @@ function TabHome({
     <div>
 
       {/* ══ STATE A ═══════════════════════════════════════════════════════════
-           First-time user (no deals yet). Aspirational hero + simple flow + quick actions. */}
-      {/* ══ ASPIRATIONAL HERO — always visible at top of Home tab ════════════
-           Product identity + primary CTA. Renders for empty AND returning users.
-           The 1-2-3 onboarding flow below is gated to empty state only. */}
+           First-time user (no deals yet). Phase 1 Home rework:
+           market pulse strip → hero + structured quick-start → evidence row
+           (sample deal + video walkthrough) → one-line flow strip.
+           Returning users (State B) keep the aspirational hero below, untouched. */}
+      {isEmpty && (
+        <>
+          {/* ── MARKET PULSE STRIP — live dri snapshots, deal_count >= 3 ── */}
+          {!loadingMkt && pulse && (
+            <div style={{
+              padding: "14px 18px", borderRadius: 12, marginBottom: 12,
+              background: "rgba(255,255,255,0.02)",
+              border: "1px solid rgba(255,255,255,0.06)",
+            }}>
+              <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 10, flexWrap: "wrap" as const }}>
+                <span style={{ fontSize: 12, fontWeight: 600, color: "#F1F5F9" }}>What the market looks like today</span>
+                <span style={{ fontSize: 10, color: "#7C8593", marginLeft: "auto" }}>
+                  NexTax Intelligence · as of {pulse.asOf}
+                </span>
+              </div>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))", gap: 10 }}>
+                {pulse.cards.map((c, i) => (
+                  <div key={i} style={{
+                    padding: "11px 13px", borderRadius: 9,
+                    background: "rgba(15,23,42,0.55)",
+                    border: "1px solid rgba(255,255,255,0.05)",
+                  }}>
+                    <div style={{ fontSize: 10, color: "#94A3B8", marginBottom: 3, textTransform: "uppercase" as const, letterSpacing: "0.06em" }}>{c.label}</div>
+                    <div style={{ fontSize: 16, fontWeight: 700, color: "#F1F5F9", fontFamily: "'JetBrains Mono',monospace" }}>{c.value}</div>
+                    <div style={{ fontSize: 10, color: "#7C8593", marginTop: 2 }}>{c.sub}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ── HERO + QUICK-START ── */}
+          <div style={{
+            background: "linear-gradient(135deg, rgba(99,102,241,0.06), rgba(16,185,129,0.03))",
+            borderRadius: 14,
+            padding: "26px 28px",
+            marginBottom: 12,
+            border: "1px solid rgba(99,102,241,0.15)",
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))",
+            gap: 26,
+            alignItems: "center",
+          }}>
+            <div>
+              <div style={{ fontSize: 10, color: "#A5B4FC", textTransform: "uppercase", letterSpacing: "0.12em", fontWeight: 500, marginBottom: 10 }}>
+                NexTax Intelligence
+              </div>
+              <h1 style={{ fontSize: 24, fontWeight: 800, color: "#F1F5F9", margin: "0 0 10px", lineHeight: 1.15, letterSpacing: "-0.02em", fontFamily: "'Inter Tight',sans-serif" }}>
+                Stack deals. Benchmark them. Choose the winner.
+              </h1>
+              <p style={{ fontSize: 13, color: "#94A3B8", lineHeight: 1.6, margin: 0 }}>
+                Analyze, compare, and pressure-test opportunities with lender-ready underwriting, real comps, and LOI guidance — all in one workflow.
+              </p>
+            </div>
+
+            {/* Structured quick-start — fastest path to a first scored deal */}
+            <div style={{
+              background: "rgba(15,23,42,0.55)",
+              border: "1px solid rgba(99,102,241,0.35)",
+              borderRadius: 12,
+              padding: "16px 16px 13px",
+            }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "#F1F5F9", marginBottom: 2 }}>Analyze your first deal</div>
+              <div style={{ fontSize: 11, color: "#94A3B8", marginBottom: 12 }}>
+                Four basics to start — review and refine everything on the next step.
+              </div>
+              <div style={{ display: "grid", gap: 8 }}>
+                <select
+                  value={qs.industry}
+                  onChange={e => setQsField("industry", e.target.value)}
+                  style={{ ...qsInput, appearance: "none" as any, cursor: "pointer" }}
+                >
+                  <option value="">Select industry...</option>
+                  {Object.entries(SCORE_INDUSTRIES).map(([k, v]) => (
+                    <option key={k} value={k}>{v.label}</option>
+                  ))}
+                </select>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(3, minmax(0, 1fr))", gap: 8 }}>
+                  <input placeholder="Revenue ($)" value={qs.revenue}     onChange={e => setQsField("revenue", e.target.value)}     style={qsInput} inputMode="numeric" />
+                  <input placeholder="SDE ($)"     value={qs.sde}         onChange={e => setQsField("sde", e.target.value)}         style={qsInput} inputMode="numeric" />
+                  <input placeholder="Asking ($)"  value={qs.askingPrice} onChange={e => setQsField("askingPrice", e.target.value)} style={qsInput} inputMode="numeric" />
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1.4fr 0.7fr auto", gap: 8 }}>
+                  <input placeholder="City (optional)" value={qs.city}  onChange={e => setQsField("city", e.target.value)}  style={qsInput} />
+                  <input placeholder="ST"              value={qs.state} onChange={e => setQsField("state", e.target.value)} style={qsInput} maxLength={2} />
+                  <button
+                    onClick={launchQuickStart}
+                    style={{
+                      padding: "9px 18px", borderRadius: 8, border: "none",
+                      background: "linear-gradient(135deg,#6366F1,#8B5CF6)",
+                      color: "#fff", fontSize: 12, fontWeight: 600, cursor: "pointer", fontFamily: "inherit",
+                      whiteSpace: "nowrap" as const,
+                    }}
+                  >
+                    Analyze →
+                  </button>
+                </div>
+              </div>
+              <div style={{ fontSize: 10, color: "#7C8593", marginTop: 10 }}>
+                Debt terms use standard defaults — adjustable on the next step.
+              </div>
+            </div>
+          </div>
+
+          {/* ── EVIDENCE ROW — sample deal + video walkthrough ── */}
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 12, marginBottom: 12 }}>
+
+            {/* Sample deal — opens the existing IC memo preview. No hardcoded
+                numbers here: the modal is the single source of sample figures. */}
+            <div style={{
+              padding: "16px 18px", borderRadius: 12,
+              background: "rgba(255,255,255,0.02)",
+              border: "1px solid rgba(255,255,255,0.06)",
+              display: "flex", flexDirection: "column" as const,
+            }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "#F1F5F9", marginBottom: 4 }}>See a finished analysis</div>
+              <p style={{ fontSize: 11, color: "#94A3B8", lineHeight: 1.6, margin: "0 0 12px", flex: 1 }}>
+                A fully scored sample deal — verdict, fair value, and the investment-committee memo — so you know exactly what you get before running your own.
+              </p>
+              <button
+                onClick={() => setShowSampleModal(true)}
+                style={{
+                  padding: "9px 16px", borderRadius: 8,
+                  border: "1px solid rgba(255,255,255,0.1)",
+                  background: "rgba(255,255,255,0.03)",
+                  color: "#E2E8F0", fontSize: 12, fontWeight: 500, cursor: "pointer", fontFamily: "inherit",
+                  alignSelf: "flex-start",
+                }}
+              >
+                View sample deal ↗
+              </button>
+            </div>
+
+            {/* Video walkthrough — poster card only; <video> mounts in the modal
+                on click (strongest form of preload="none" for the 24MB asset). */}
+            <div
+              role="button"
+              tabIndex={0}
+              onClick={() => setShowVideoModal(true)}
+              onKeyDown={e => { if (e.key === "Enter" || e.key === " ") setShowVideoModal(true); }}
+              style={{
+                padding: "14px 16px", borderRadius: 12, cursor: "pointer",
+                background: "rgba(255,255,255,0.02)",
+                border: "1px solid rgba(255,255,255,0.06)",
+              }}
+            >
+              <div style={{
+                borderRadius: 9, height: 108, position: "relative" as const,
+                background: "url('/video/mastering-acquiflow-poster.jpg') center / cover, linear-gradient(135deg, rgba(99,102,241,0.25), rgba(16,185,129,0.12))",
+                display: "flex", alignItems: "center", justifyContent: "center",
+                marginBottom: 10,
+              }}>
+                <div style={{
+                  width: 42, height: 42, borderRadius: "50%",
+                  background: "rgba(99,102,241,0.92)",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                  color: "#fff", fontSize: 15, paddingLeft: 3,
+                }}>
+                  ▶
+                </div>
+                <span style={{
+                  position: "absolute" as const, bottom: 7, right: 9,
+                  fontSize: 10, fontFamily: "'JetBrains Mono',monospace",
+                  background: "rgba(2,6,23,0.75)", color: "#CBD5E1",
+                  padding: "2px 6px", borderRadius: 4,
+                }}>
+                  6:17
+                </span>
+              </div>
+              <div style={{ fontSize: 13, fontWeight: 700, color: "#F1F5F9", marginBottom: 2 }}>Mastering AcquiFlow</div>
+              <div style={{ fontSize: 11, color: "#7C8593" }}>Full walkthrough — underwriting, benchmarks, and the verdict engine.</div>
+            </div>
+          </div>
+
+          {/* ── ONE-LINE FLOW STRIP — replaces the 1-2-3 cards ── */}
+          <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" as const, padding: "6px 4px", marginBottom: 8 }}>
+            <span style={{ fontSize: 11, color: "#7C8593" }}>How it works:</span>
+            <span style={{ fontSize: 11, color: "#C4C8D1" }}>1 · Enter the deal basics</span>
+            <span style={{ fontSize: 11, color: "#7C8593" }}>→</span>
+            <span style={{ fontSize: 11, color: "#C4C8D1" }}>2 · We underwrite it against closed deals + benchmarks</span>
+            <span style={{ fontSize: 11, color: "#7C8593" }}>→</span>
+            <span style={{ fontSize: 11, color: "#C4C8D1" }}>3 · Get your verdict — <span style={{ color: "#10B981", fontWeight: 500 }}>Proceed · Investigate · Pass</span></span>
+          </div>
+        </>
+      )}
+
+      {/* ══ ASPIRATIONAL HERO — State B (returning users) only ════════════════
+           Unchanged in Phase 1; the returning-user Home rework is Phase 3. */}
+      {!isEmpty && (
       <div style={{
         background: "linear-gradient(135deg, rgba(99,102,241,0.06), rgba(16,185,129,0.03))",
         borderRadius: 14,
         padding: "32px 28px",
         marginBottom: 16,
         border: "1px solid rgba(99,102,241,0.15)",
-        display: "grid",
-        gridTemplateColumns: isEmpty ? "minmax(0, 1.3fr) minmax(0, 1fr)" : "1fr",
-        gap: 28,
-        alignItems: "center",
       }}>
         <div>
           <div style={{ fontSize: 10, color: "#A5B4FC", textTransform: "uppercase", letterSpacing: "0.12em", fontWeight: 500, marginBottom: 10 }}>
@@ -6112,7 +6364,7 @@ function TabHome({
           </p>
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" as const }}>
             <button
-              onClick={onAnalyzeNew}
+              onClick={() => onAnalyzeNew()}
               style={{
                 padding: "11px 22px", borderRadius: 9, border: "none",
                 background: "linear-gradient(135deg,#6366F1,#8B5CF6)",
@@ -6135,75 +6387,7 @@ function TabHome({
             <HowItWorksButton onAnalyzeDeal={onAnalyzeNew} />
           </div>
         </div>
-        {/* 1-2-3 onboarding flow — only for empty-state users */}
-        {isEmpty && (
-        <div style={{ display: "flex", flexDirection: "column" as const, gap: 10 }}>
-              {[
-                { n: "1", title: "Paste listing details", sub: "Asking price, SDE, industry — that's it", good: false },
-                { n: "2", title: "We analyze it",          sub: "Against 1,500+ closed deals + industry benchmarks", good: false },
-                { n: "3", title: "Get your verdict",       sub: "Proceed · Investigate · Pass", good: true },
-              ].map(step => (
-                <div key={step.n} style={{
-                  padding: "11px 14px", borderRadius: 9,
-                  background: step.good ? "rgba(16,185,129,0.04)" : "rgba(255,255,255,0.02)",
-                  border:     step.good ? "1px solid rgba(16,185,129,0.2)" : "1px solid rgba(255,255,255,0.05)",
-                  display: "flex", alignItems: "center", gap: 11,
-                }}>
-                  <div style={{
-                    width: 24, height: 24, borderRadius: "50%",
-                    background: step.good ? "rgba(16,185,129,0.15)" : "rgba(99,102,241,0.15)",
-                    color:      step.good ? "#10B981" : "#A5B4FC",
-                    fontSize: 11, fontWeight: 700,
-                    display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-                  }}>
-                    {step.n}
-                  </div>
-                  <div style={{ minWidth: 0 }}>
-                    <div style={{ fontSize: 12, color: "#F1F5F9", fontWeight: 600 }}>{step.title}</div>
-                    <div style={{ fontSize: 10, color: step.good ? "#10B981" : "#7C8593", fontWeight: step.good ? 500 : 400 }}>{step.sub}</div>
-                  </div>
-                </div>
-              ))}
-            </div>
-        )}
       </div>
-
-      {/* Quick Actions — empty state only (onboarding aid) */}
-      {isEmpty && (
-      <div style={{
-            padding: "16px 18px", borderRadius: 10,
-            background: "rgba(255,255,255,0.02)",
-            border: "1px solid rgba(255,255,255,0.06)",
-          }}>
-            <div style={{ fontSize: 10, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600, marginBottom: 12 }}>
-              Quick actions
-            </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 10 }}>
-              {[
-                { icon: "+", label: "Analyze deal",   primary: true,  onClick: onAnalyzeNew },
-                { icon: "↑", label: "Import listing", primary: false, onClick: onAnalyzeNew },  // same flow for now
-                { icon: "◎", label: "Sample deal",    primary: false, onClick: () => setShowSampleModal(true) },
-                { icon: "?", label: "How it works",   primary: false, onClick: () => onTabChange("market-intel") },
-              ].map((a, i) => (
-                <div
-                  key={i}
-                  onClick={a.onClick}
-                  style={{
-                    padding: "14px 10px", borderRadius: 9,
-                    background: a.primary ? "rgba(99,102,241,0.07)" : "rgba(255,255,255,0.02)",
-                    border:     a.primary ? "1px solid rgba(99,102,241,0.25)" : "1px solid rgba(255,255,255,0.06)",
-                    cursor: "pointer", textAlign: "center" as const,
-                    transition: "background 140ms ease",
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.background = a.primary ? "rgba(99,102,241,0.12)" : "rgba(255,255,255,0.04)"; }}
-                  onMouseLeave={(e) => { e.currentTarget.style.background = a.primary ? "rgba(99,102,241,0.07)" : "rgba(255,255,255,0.02)"; }}
-                >
-                  <div style={{ fontSize: 18, marginBottom: 6, color: a.primary ? "#A5B4FC" : "#7C8593" }}>{a.icon}</div>
-                  <div style={{ fontSize: 11, fontWeight: a.primary ? 600 : 500, color: a.primary ? "#A5B4FC" : "#C4C8D1" }}>{a.label}</div>
-                </div>
-              ))}
-            </div>
-          </div>
       )}
 
       {/* ══ STATE B ═══════════════════════════════════════════════════════════
@@ -6470,75 +6654,51 @@ function TabHome({
       {/* ── Subtle divider before trust-frame section ────────────────────────── */}
       <div className="max-w-5xl mx-auto mt-12 mb-2 border-t border-slate-800" />
 
-      {/* ── How Buyers Use AcquiFlow — 3-step workflow (shows for all users) ── */}
-      <section className="mt-8 mb-12 max-w-5xl mx-auto">
-        <div className="text-center mb-8">
-          <h3 className="text-lg sm:text-xl font-bold text-white tracking-tight">
-            How Buyers Use <span className="text-emerald-400">AcquiFlow</span>
-          </h3>
-          <p className="text-xs sm:text-sm text-slate-400 mt-1.5">
-            From raw deal → decision-ready in minutes.
-          </p>
-        </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Card 1 — Input */}
-          <div className="p-5 rounded-xl bg-slate-800/40 border border-slate-700/60 hover:border-emerald-500/40 transition-colors">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-9 h-9 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 flex items-center justify-center font-bold text-sm">1</div>
-              <svg className="w-4 h-4 text-emerald-400/70" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" aria-hidden="true">
-                <rect x="8" y="3" width="8" height="4" rx="1" />
-                <path d="M16 4h2a2 2 0 012 2v13a2 2 0 01-2 2H6a2 2 0 01-2-2V6a2 2 0 012-2h2" />
-              </svg>
+      {/* ── VIDEO WALKTHROUGH MODAL — Mastering AcquiFlow (6:17) ──
+           <video> only mounts here, so nothing downloads until the user opens it. */}
+      {showVideoModal && (
+        <div
+          onClick={() => setShowVideoModal(false)}
+          style={{
+            position: "fixed", inset: 0, zIndex: 200,
+            background: "rgba(2,6,23,0.85)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            padding: 24,
+          }}
+        >
+          <div
+            onClick={e => e.stopPropagation()}
+            style={{
+              width: "min(920px, 100%)",
+              background: "#0B1220", borderRadius: 14,
+              border: "1px solid rgba(255,255,255,0.08)",
+              overflow: "hidden",
+            }}
+          >
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "11px 16px" }}>
+              <div style={{ fontSize: 13, fontWeight: 600, color: "#F1F5F9" }}>Mastering AcquiFlow</div>
+              <button
+                onClick={() => setShowVideoModal(false)}
+                aria-label="Close video"
+                style={{ background: "none", border: "none", color: "#94A3B8", fontSize: 20, cursor: "pointer", lineHeight: 1, padding: 2 }}
+              >
+                ×
+              </button>
             </div>
-            <h4 className="text-sm font-bold text-white mb-1.5">Input the Deal</h4>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Paste price, revenue, and cash flow to instantly structure the deal.
-            </p>
-          </div>
-
-          {/* Card 2 — Underwrite */}
-          <div className="p-5 rounded-xl bg-slate-800/40 border border-slate-700/60 hover:border-emerald-500/40 transition-colors">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-9 h-9 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 flex items-center justify-center font-bold text-sm">2</div>
-              <svg className="w-4 h-4 text-emerald-400/70" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" aria-hidden="true">
-                <rect x="4" y="2" width="16" height="20" rx="2" />
-                <line x1="8" y1="6" x2="16" y2="6" />
-                <line x1="8" y1="11" x2="8" y2="11" />
-                <line x1="12" y1="11" x2="12" y2="11" />
-                <line x1="16" y1="11" x2="16" y2="11" />
-                <line x1="8" y1="15" x2="8" y2="15" />
-                <line x1="12" y1="15" x2="12" y2="15" />
-                <line x1="16" y1="15" x2="16" y2="15" />
-                <line x1="8" y1="19" x2="16" y2="19" />
-              </svg>
-            </div>
-            <h4 className="text-sm font-bold text-white mb-1.5">Underwrite It</h4>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Normalize earnings, stress test financing, and benchmark against real transactions.
-            </p>
-          </div>
-
-          {/* Card 3 — Decide */}
-          <div className="p-5 rounded-xl bg-slate-800/40 border border-slate-700/60 hover:border-emerald-500/40 transition-colors">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-9 h-9 rounded-full bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 flex items-center justify-center font-bold text-sm">3</div>
-              <svg className="w-4 h-4 text-emerald-400/70" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24" aria-hidden="true">
-                <circle cx="12" cy="12" r="10" />
-                <path d="M9 12l2 2 4-4" />
-              </svg>
-            </div>
-            <h4 className="text-sm font-bold text-white mb-1.5">Make the Decision</h4>
-            <p className="text-xs text-slate-400 leading-relaxed">
-              Identify risks, validate pricing, and decide whether to proceed, renegotiate, or walk.
-            </p>
+            <video
+              controls
+              autoPlay
+              playsInline
+              poster="/video/mastering-acquiflow-poster.jpg"
+              style={{ width: "100%", display: "block", aspectRatio: "16 / 9", background: "#000" }}
+            >
+              <source src="/video/mastering-acquiflow.mp4" type="video/mp4" />
+              Your browser does not support embedded video.
+            </video>
           </div>
         </div>
-
-        <p className="text-center text-xs sm:text-sm text-slate-400 italic mt-6 max-w-2xl mx-auto">
-          Most deals don&rsquo;t fail because they&rsquo;re bad — they fail because they weren&rsquo;t properly underwritten.
-        </p>
-      </section>
+      )}
 
       {/* ── SAMPLE MEMO PREVIEW MODAL — Pro-quality IC memo demo for free users ── */}
       {showSampleModal && (
@@ -6604,7 +6764,7 @@ function TabDashboard({
             sub={loading ? "Loading…" : deals.length === 0 ? "No deals yet" : `${deals.length} saved`}
             action={
               <button
-                onClick={onAnalyzeNew}
+                onClick={() => onAnalyzeNew()}
                 style={{
                   padding: "7px 12px", borderRadius: 8, border: "1px solid rgba(99,102,241,0.3)",
                   background: "rgba(99,102,241,0.08)", color: "#A5B4FC",
@@ -9411,6 +9571,7 @@ export default function BuyerDashboard() {
   const [dealIntel, setDealIntel]       = useState<Record<string, DealIntel>>({});
   // ── New modal/panel state ─────────────────────────────────────────────────
   const [analyzeModal, setAnalyzeModal]         = useState(false);
+  const [analyzePrefill, setAnalyzePrefill]     = useState<Partial<ModalDealInputs> | null>(null);
   const [detailDeal, setDetailDeal]             = useState<DealRun | null>(null);
   const [underwritingDeal, setUnderwritingDeal] = useState<DealRun | null>(null);
   const [showUpgradeModal, setShowUpgradeModal]   = useState(false);
@@ -9731,16 +9892,34 @@ const dealHasFullAccess = (dealId: string): boolean => {
     const enriched = { ...deal, verdict: dealVerdict(deal), oppScore: oppScore(deal) };
     setDeals(prev => [enriched, ...prev]);
     setAnalyzeModal(false);
+    setAnalyzePrefill(null);
     // Increment the free-plan monthly counter (no-op for Pro)
     incrementDealAnalyses();
   };
 
   // ── Gate the "Analyze New Deal" entry point based on the monthly cap ──────
-  const handleAnalyzeNewClick = () => {
+  // Accepts an optional structured pre-fill from the Home quick-start box.
+  // Defensive key whitelist: if a call site ever passes this directly to
+  // onClick, React delivers a MouseEvent as the first argument — only known
+  // ModalDealInputs string fields survive the pick, so garbage can't reach
+  // the modal state.
+  const handleAnalyzeNewClick = (prefill?: Partial<ModalDealInputs>) => {
     if (hitDealCap) {
       setShowUpgradeModal(true);
       return;
     }
+    const PREFILL_KEYS: (keyof ModalDealInputs)[] = [
+      "industry", "revenue", "sde", "askingPrice", "city", "state",
+      "debtPercent", "interestRate", "termYears", "topCustomerPct",
+    ];
+    const clean: Partial<ModalDealInputs> = {};
+    if (prefill && typeof prefill === "object") {
+      for (const k of PREFILL_KEYS) {
+        const v = (prefill as Record<string, unknown>)[k];
+        if (typeof v === "string" && v.trim() !== "") clean[k] = v;
+      }
+    }
+    setAnalyzePrefill(Object.keys(clean).length > 0 ? clean : null);
     setAnalyzeModal(true);
   };
 
@@ -9980,7 +10159,7 @@ const dealHasFullAccess = (dealId: string): boolean => {
               </h1>
             </div>
             <button
-              onClick={handleAnalyzeNewClick}
+              onClick={() => handleAnalyzeNewClick()}
               className="btn-action"
               style={{
                 display: "inline-flex", alignItems: "center", gap: 6,
@@ -10171,7 +10350,8 @@ const dealHasFullAccess = (dealId: string): boolean => {
         <AnalyzeDealModal
           userId={user.id}
           isPro={isPro}
-          onClose={() => setAnalyzeModal(false)}
+          initialInputs={analyzePrefill ?? undefined}
+          onClose={() => { setAnalyzeModal(false); setAnalyzePrefill(null); }}
           onDealSaved={handleDealSaved}
         />
       )}
