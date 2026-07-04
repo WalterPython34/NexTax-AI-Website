@@ -113,7 +113,7 @@ interface DealRun {
 }
 
 /** Deal Verdict — the single opinionated label shown throughout the UI */
-type DealVerdict = "high_conviction" | "pursue" | "investigate" | "pass" | "manual_review";
+type DealVerdict = "high_conviction" | "pursue" | "investigate" | "reprice_required" | "outside_range" | "manual_review";
 
 interface DealNote {
   id: string;
@@ -244,7 +244,14 @@ function sigCfg(s: string) {
   return                          { color: "#3B82F6", bg: "rgba(59,130,246,0.08)", border: "rgba(59,130,246,0.18)", label: "Fair Market",  dot: "#3B82F6" };
 }
 
-function scoreCol(s: number) {
+function scoreCol(s: number, verdict?: DealVerdict) {
+  if (verdict) {
+    if (verdict === "high_conviction") return "#F97316";
+    if (verdict === "pursue") return "#10B981";
+    if (verdict === "investigate") return "#F59E0B";
+    if (verdict === "reprice_required" || verdict === "outside_range") return "#EF4444";
+    if (verdict === "manual_review") return "#F97316";
+  }
   return s >= 70 ? "#10B981" : s >= 50 ? "#F59E0B" : "#EF4444";
 }
 
@@ -345,27 +352,29 @@ function dealVerdict(d: DealRun): DealVerdict {
   const isHighRisk = rl === "high" || rl === "critical";
 
   // ── Conviction cap — normalization trust gate ─────────────────────────────
-  // Low-trust verdicts are review-oriented, not investment-oriented.
-  // "manual_review" = data quality is the blocker (not deal quality)
-  // "investigate"   = trust partially low but deal still worth validating
   const trustScore    = d.normalization_trust_score ?? 100;
   const manualReview  = d.manual_review_required    ?? false;
   if (manualReview || trustScore < 45) {
-    // Critical trust failure — always show as manual review needed
     return "manual_review";
   }
   if (trustScore < 60) {
-    // Low trust — cap at investigate (never show pursue or high_conviction)
     if (gp >= 15 || d.dscr < 1.25 || isHighRisk) return "investigate";
     return "investigate";
   }
 
-  // 🔥 High Conviction
-  if (gp <= -30 && d.dscr >= 2.5 && d.overall_score >= 85 && rl === "low") {
+  // 🔥 High Conviction — gate at ≥82 (recalibrated from ≥85)
+  if (gp <= -30 && d.dscr >= 2.5 && d.overall_score >= 82 && rl === "low") {
     return "high_conviction";
   }
-  // 🔴 Pass
-  if (gp >= 15 || d.dscr < 1.25 || isHighRisk) return "pass";
+  // 🔴 Split Pass — gap-driven vs structural
+  if (gp >= 15 && d.dscr >= 1.25 && !isHighRisk) {
+    // Gap is the only problem — deal is otherwise financeable and not high risk
+    return "reprice_required";
+  }
+  if (d.dscr < 1.25 || isHighRisk) {
+    // Structural problem — DSCR or risk level makes this unfundable regardless of price
+    return "outside_range";
+  }
   // 🟢 Pursue
   if ((gp <= -20 && d.dscr >= 1.75) || (d.overall_score >= 80 && gp <= -10)) return "pursue";
   // 🟡 Investigate
@@ -394,12 +403,19 @@ function verdictCfg(v: DealVerdict) {
       subtext: "Viable deal — not obviously mispriced. Needs diligence before advancing.",
       disclaimer,
     };
-    case "pass": return {
-      emoji: "🔴", label: "Pass",
+    case "reprice_required": return {
+      emoji: "🔴", label: "Reprice Required",
       color: "#EF4444", bg: "rgba(239,68,68,0.1)", border: "rgba(239,68,68,0.25)",
-      subtext: "Does not meet investment criteria at current terms. See details below.",
+      subtext: "Business fundamentals are sound, but asking price exceeds market benchmarks. Repricing or structural concession needed to advance.",
       disclaimer,
     };
+    case "outside_range": return {
+      emoji: "🔴", label: "Outside Investment Range",
+      color: "#EF4444", bg: "rgba(239,68,68,0.1)", border: "rgba(239,68,68,0.25)",
+      subtext: "Debt coverage or risk profile falls outside financeable thresholds. Repricing alone is unlikely to resolve.",
+      disclaimer,
+    };
+    
     case "manual_review": return {
       emoji: "⚠️", label: "Needs Manual Review",
       color: "#F97316", bg: "rgba(249,115,22,0.08)", border: "rgba(249,115,22,0.28)",
@@ -446,39 +462,40 @@ function verdictExplanation(d: DealRun): string {
     return `Data quality flags require independent verification before a reliable verdict can be issued. Review financials and complete the investigation checklist below.`;
   }
 
-  // PASS — this is where the magic happens
-  // Case 1: Strong business, bad price
-  if (dscr >= 1.5 && gp > 15) {
-    return `This is a strong cash-flowing business (DSCR ${dscr.toFixed(2)}x) — but it is materially overpriced. The ${(d.valuation_multiple ?? 0).toFixed(2)}x multiple exceeds the typical range for ${ind} transactions. At the current ask, you are paying ~${gp}% above modeled fair value. This is not a structural failure — it is a pricing problem. Reprice into the fair value range or move on.`;
-  }
-  // Case 2: Decent business, moderate overpricing
-  if (dscr >= 1.25 && gp > 15) {
+ // REPRICE REQUIRED — business is sound, price is the problem
+  if (v === "reprice_required") {
+    if (dscr >= 1.5) {
+      return `This is a strong cash-flowing business (DSCR ${dscr.toFixed(2)}x) — but it is materially overpriced. The ${(d.valuation_multiple ?? 0).toFixed(2)}x multiple exceeds the typical range for ${ind} transactions. At the current ask, you are paying ~${gp}% above modeled fair value. This is not a structural failure — it is a pricing problem. Reprice into the fair value range or move on.`;
+    }
     return `Financeable business (DSCR ${dscr.toFixed(2)}x meets lender minimums), but priced ${gp}% above fair value. The cash flow supports debt service — the issue is what you're paying for it. Negotiate toward fair value or pass.`;
   }
-  // Case 3: Weak DSCR is the problem
-  if (dscr < 1.25 && gp <= 15) {
-    return `Pricing is ${gp > 5 ? "slightly above" : "near"} market, but DSCR of ${dscr.toFixed(2)}x falls below the 1.25x lender minimum. This deal cannot support standard financing at current terms. Requires repricing, higher equity injection, or structural changes.`;
+
+  // OUTSIDE INVESTMENT RANGE — structural problem, not just pricing
+  if (v === "outside_range") {
+    if (dscr < 1.25 && gp > 15) {
+      return `Overpriced (${gp}% above fair value) and underfinanceable (DSCR ${dscr.toFixed(2)}x below 1.25x minimum). Both pricing and debt coverage fail. Significant restructuring required.`;
+    }
+    if (dscr < 1.25) {
+      return `Pricing is ${gp > 5 ? "slightly above" : "near"} market, but DSCR of ${dscr.toFixed(2)}x falls below the 1.25x lender minimum. This deal cannot support standard financing at current terms. Requires repricing, higher equity injection, or structural changes.`;
+    }
+    if (isHighRisk) {
+      return `Pricing is ${gp > 5 ? "moderately above" : "near"} market, but risk profile is ${rl}. Operational or structural concerns outweigh the pricing position. Resolve risk factors before advancing.`;
+    }
+    return `Does not meet investment criteria at current terms. ${gp > 15 ? `Priced ${gp}% above fair value.` : ""} ${dscr < 1.25 ? `DSCR of ${dscr.toFixed(2)}x below financing threshold.` : ""} ${isHighRisk ? `Risk level: ${d.risk_level}.` : ""}`.trim();
   }
-  // Case 4: Both overpriced AND weak DSCR
-  if (dscr < 1.25 && gp > 15) {
-    return `Overpriced (${gp}% above fair value) and underfinanceable (DSCR ${dscr.toFixed(2)}x below 1.25x minimum). Both pricing and debt coverage fail. Significant restructuring required.`;
-  }
-  // Case 5: High risk level is the driver
-  if (isHighRisk && gp <= 15) {
-    return `Pricing is ${gp > 5 ? "moderately above" : "near"} market, but risk profile is ${rl}. Operational or structural concerns outweigh the pricing position. Resolve risk factors before advancing.`;
-  }
-  // Default
-  return `Does not meet investment criteria at current terms. ${gp > 15 ? `Priced ${gp}% above fair value.` : ""} ${dscr < 1.25 ? `DSCR of ${dscr.toFixed(2)}x below financing threshold.` : ""} ${isHighRisk ? `Risk level: ${d.risk_level}.` : ""}`.trim();
+
+  // Fallback — should never reach here with the new verdict routing
+  return `Does not meet investment criteria at current terms.`;
 }
 
 // ─── UI ATOMS ─────────────────────────────────────────────────────────────────
 
-function Ring({ score, size = 36 }: { score: number; size?: number }) {
+function Ring({ score, size = 36, verdict }: { score: number; size?: number; verdict?: DealVerdict }) {
   const sw  = 3;
   const r   = (size - sw) / 2;
   const c   = r * 2 * Math.PI;
   const o   = c - (score / 100) * c;
-  const col = scoreCol(score);
+  const col = scoreCol(score, verdict);
   return (
     <div style={{ position: "relative", width: size, height: size, flexShrink: 0 }}>
       <svg width={size} height={size} style={{ transform: "rotate(-90deg)" }}>
@@ -1131,7 +1148,7 @@ function TopOpportunities({
                 {i + 1}
               </div>
 
-              <Ring score={deal.overall_score} size={32} />
+              <Ring score={deal.overall_score} verdict={dealVerdict(deal)} size={32} />
 
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 13, fontWeight: 600, color: "#F1F5F9" }}>
@@ -1222,7 +1239,7 @@ function PriorityDeals({
               }}
             >
               <span style={{ fontSize: 14, color: "#F59E0B" }}>★</span>
-              <Ring score={deal.overall_score} size={30} />
+              <Ring score={deal.overall_score} verdict={dealVerdict(deal)} size={30} />
               <div style={{ flex: 1, minWidth: 0 }}>
                 <div style={{ fontSize: 13, fontWeight: 600, color: "#E2E8F0" }}>
                   {IL[deal.industry] || deal.industry}
@@ -1625,7 +1642,7 @@ function computeModalScore(
   industryScore = Math.round(Math.max(10, Math.min(95, industryScore)));
 
   const overall = Math.round(Math.max(5, Math.min(98,
-    valuationScore * 0.30 + debtScore * 0.30 + marketScore * 0.20 + industryScore * 0.20
+    valuationScore * 0.50 + debtScore * 0.25 + marketScore * 0.15 + industryScore * 0.10
   )));
   const riskLevel = overall >= 70 ? "Low" : overall >= 50 ? "Moderate" : overall >= 30 ? "High" : "Critical";
 
@@ -1920,6 +1937,9 @@ function AnalyzeDealModal({
     fontWeight: 600, marginBottom: 5,
   };
 
+  const resultVerdict = score ? dealVerdict({ overall_score: score.overall, dscr: score.dscr, gap_pct: score.gap_pct, risk_level: score.riskLevel, normalization_trust_score: score.normalizationTrustScore } as any) : undefined;
+  const ringCol = score && resultVerdict ? scoreCol(score.overall, resultVerdict) : "#6B7280";
+
   return (
     <>
       {/* Backdrop */}
@@ -2152,7 +2172,6 @@ function AnalyzeDealModal({
           {/* ── STEP 2: RESULTS ── */}
           {step === "results" && score && (
             <div style={{ padding: "20px 24px" }}>
-
               {/* Hero row */}
               <div style={{
                 display: "grid", gridTemplateColumns: "auto minmax(0, 1fr)", gap: 20,
@@ -2166,7 +2185,7 @@ function AnalyzeDealModal({
                     <svg width="80" height="80" style={{ transform: "rotate(-90deg)" }}>
                       <circle cx="40" cy="40" r="34" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="6" />
                       <circle cx="40" cy="40" r="34" fill="none"
-                        stroke={scoreColor(score.overall)} strokeWidth="6"
+                        stroke={ringCol} strokeWidth="6"
                         strokeDasharray={`${2 * Math.PI * 34}`}
                         strokeDashoffset={`${2 * Math.PI * 34 * (1 - score.overall / 100)}`}
                         strokeLinecap="round"
@@ -2176,12 +2195,12 @@ function AnalyzeDealModal({
                       position: "absolute", inset: 0, display: "flex", flexDirection: "column",
                       alignItems: "center", justifyContent: "center",
                     }}>
-                      <span style={{ fontSize: 22, fontWeight: 800, color: scoreColor(score.overall), fontFamily: "'JetBrains Mono',monospace", lineHeight: 1 }}>{score.overall}</span>
+                      <span style={{ fontSize: 22, fontWeight: 800, color: ringCol, fontFamily: "'JetBrains Mono',monospace", lineHeight: 1 }}>{score.overall}</span>
                       <span style={{ fontSize: 9, color: "#7C8593", marginTop: 1 }}>/ 100</span>
                     </div>
                   </div>
                   <div style={{
-                    marginTop: 6, fontSize: 10, fontWeight: 700, color: scoreColor(score.overall),
+                    marginTop: 6, fontSize: 10, fontWeight: 700, color: ringCol,
                     textTransform: "uppercase", letterSpacing: "0.06em",
                   }}>
                     Deal Score
@@ -2859,7 +2878,7 @@ function DealDetailPanel({
           {/* Score + metrics */}
           <div style={{ display: "grid", gridTemplateColumns: "auto 1fr", gap: 16, alignItems: "center", marginBottom: 16, padding: "14px 16px", borderRadius: 12, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 4 }}>
-              <Ring score={deal.overall_score} size={64} />
+              <Ring score={deal.overall_score} verdict={dealVerdict(deal)} size={64} />
               <div style={{ fontSize: 9, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.07em", fontWeight: 600, display: "inline-flex", alignItems: "center", gap: 4 }}>
                 <span>Overall Score</span>
                 <InfoTooltip term="overallScore" size="sm" />
@@ -3220,7 +3239,7 @@ function buildDecisionContext(deal: DealRun): DecisionContext {
   const fv      = deal.fair_value ?? 0;
   const usable  = deal.usable_sde ?? deal.sde ?? 0;
 
-  const summary =
+ const summary =
     v === "high_conviction"
       ? `Deal is materially underpriced at ${Math.abs(gp)}% below market fair value with strong debt coverage. Priority candidate — advance to LOI after confirming add-backs.`
       : v === "pursue"
@@ -3229,7 +3248,11 @@ function buildDecisionContext(deal: DealRun): DecisionContext {
       ? `Deal is in the investable zone but requires validation. Key unknowns should be resolved before committing. ${deal.manual_review_required ? "Data quality flags present — verify financials independently." : ""}`
       : v === "manual_review"
       ? `Normalization flags indicate data quality concerns that prevent a reliable verdict. Independently verify all financial inputs before drawing conclusions.`
-      : `Deal does not meet investment criteria at current terms. Significant repricing or structural changes would be required to advance.`;
+      : v === "reprice_required"
+      ? `Business fundamentals are sound (DSCR ${(deal.dscr ?? 0).toFixed(2)}x) but asking price is ${gp}% above market fair value. Repricing or structural concession needed to advance.`
+      : v === "outside_range"
+      ? `Deal falls outside financeable thresholds. ${(deal.dscr ?? 0) < 1.25 ? "Debt coverage does not meet SBA minimums." : "Risk profile is too elevated for standard underwriting."} Material restructuring required.`
+      : `Deal does not meet investment criteria at current terms.`;
 
   const actions: string[] =
     v === "high_conviction" ? [
@@ -3252,10 +3275,18 @@ function buildDecisionContext(deal: DealRun): DecisionContext {
       "Engage CPA to certify SDE and all add-back items",
       "Request full 3-year P&L and tax return package from broker",
     ]
+    : v === "reprice_required" ? [
+      `Anchor offer at fair value of ${fv > 0 ? "$" + Math.round(fv).toLocaleString() : "TBD"} — currently ${gp}% below ask`,
+      "Propose seller note or earnout to bridge the pricing gap",
+      "Request 3 years of financials to confirm fundamentals before negotiating",
+    ]
+    : v === "outside_range" ? [
+      "Do not advance without material restructuring",
+      `${(deal.dscr ?? 0) < 1.25 ? "Explore larger equity injection or seller financing to restore DSCR" : "Address operational risk factors before re-evaluating"}`,
+      "Re-engage only if seller offers significant structural concessions",
+    ]
     : [
-      "Do not advance at current asking price",
-      "Re-engage if seller reduces price to fair value range",
-      `Fair value estimate: ${fv > 0 ? "$" + Math.round(fv).toLocaleString() : "unavailable at current data quality"}`,
+      "Do not advance at current terms",
     ];
 
   return { verdict: v, summary, actions };
@@ -4925,11 +4956,13 @@ function UnderwritingPanel({
                 // High-level recommendation — Proceed / Caution / Pass
                 const verdictKey = deal.verdict ?? dealVerdict(deal);
                 const highLevelRec: { label: string; color: string; icon: string } =
-                  verdictKey === "high_conviction" ? { label: "Proceed",   color: "#10B981", icon: "→" }
+                 verdictKey === "high_conviction" ? { label: "Proceed",   color: "#10B981", icon: "→" }
                   : verdictKey === "pursue"        ? { label: "Proceed",   color: "#10B981", icon: "→" }
                   : verdictKey === "investigate"   ? { label: "Caution",   color: "#F59E0B", icon: "⚠" }
                   : verdictKey === "manual_review" ? { label: "Caution",   color: "#F59E0B", icon: "⚠" }
-                  :                                  { label: "Pass",      color: "#EF4444", icon: "✗" };
+                  : verdictKey === "reprice_required" ? { label: "Reprice",       color: "#EF4444", icon: "✗" }
+                  : verdictKey === "outside_range"    ? { label: "Outside Range", color: "#EF4444", icon: "✗" }
+                  :                                     { label: "Review",        color: "#F59E0B", icon: "⚠" };
 
                 return (
                 <>
@@ -6616,7 +6649,7 @@ function TabDashboard({
                     onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.02)"; }}
                     onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
                   >
-                    <Ring score={deal.overall_score} size={32} />
+                    <Ring score={deal.overall_score} verdict={dealVerdict(deal)} size={32} />
                     <div style={{ minWidth: 0 }}>
                       <div style={{ fontSize: 12, fontWeight: 500, color: "#F1F5F9", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const }}>
                         {IL[deal.industry] || deal.industry}
@@ -7035,7 +7068,7 @@ function TabMyDeals({
 
               {/* Score ring */}
               <div style={{ display: "flex", justifyContent: "center" }}>
-                <Ring score={deal.overall_score} size={32} />
+                <Ring score={deal.overall_score} verdict={dealVerdict(deal)} size={32} />
               </div>
 
               {/* Verdict badge */}
@@ -9206,7 +9239,7 @@ function TabMarketIntel({
                         display: "flex", alignItems: "center", gap: 14, padding: "12px 18px",
                         borderBottom: i < arr.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none",
                       }}>
-                        <Ring score={deal.overall_score} size={36} />
+                        <Ring score={deal.overall_score} verdict={dealVerdict(deal)} size={36} />
                         <div style={{ flex: 1, minWidth: 0 }}>
                           <div style={{ fontSize: 13, fontWeight: 600, color: "#E2E8F0", marginBottom: 2 }}>
                             {IL[deal.industry] || deal.industry}
