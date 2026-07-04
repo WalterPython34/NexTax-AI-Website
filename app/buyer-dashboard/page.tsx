@@ -410,7 +410,7 @@ function verdictCfg(v: DealVerdict) {
       disclaimer,
     };
     case "outside_range": return {
-      emoji: "🔴", label: "Outside Investment Range",
+      emoji: "🔴", label: "Outside Price Range",
       color: "#EF4444", bg: "rgba(239,68,68,0.1)", border: "rgba(239,68,68,0.25)",
       subtext: "Debt coverage or risk profile falls outside financeable thresholds. Repricing alone is unlikely to resolve.",
       disclaimer,
