@@ -3585,14 +3585,21 @@ type UwTab = "stress" | "lender" | "sba" | "negotiation" | "loi" | "memo" | "com
 
 function UnderwritingPanel({
   deal, isPro, onClose, onShowUpgrade, onShowDownloadUpgrade,
+  initialTab, soloMode,
 }: {
   deal: DealRun;
   isPro: boolean;
   onClose: () => void;
   onShowUpgrade?: () => void;
   onShowDownloadUpgrade?: () => void;
+  initialTab?: UwTab;
+  soloMode?: boolean;
 }) {
-  const [activeTab, setActiveTab]    = useState<UwTab>("stress");
+  // Solo mode: opened from a workbench artifact tile. Shows only the requested
+  // tab; "Show all tabs" expands to the full panel in place. The panel mounts
+  // fresh per open, so seeding state from props is safe.
+  const [activeTab, setActiveTab]    = useState<UwTab>(initialTab ?? "stress");
+  const [solo, setSolo]              = useState<boolean>(soloMode ?? false);
   const [compsData, setCompsData]    = useState<CompsData>({ comps: [], currentDealOutsideRange: false });
   const [downloadingReport, setDownloadingReport] = useState(false);
   // Patch D Phase 3B — canonical market facts (closed-comp basis, per Decision 3b)
@@ -3972,9 +3979,9 @@ function UnderwritingPanel({
             </div>
           </div>
 
-          {/* Tab bar */}
-          <div style={{ display: "flex", gap: 2, marginTop: 12 }}>
-            {UW_TABS.map(t => (
+          {/* Tab bar — solo mode shows only the requested tab plus an expand link */}
+          <div style={{ display: "flex", gap: 2, marginTop: 12, alignItems: "center" }}>
+            {(solo ? UW_TABS.filter(t => t.id === activeTab) : UW_TABS).map(t => (
               <button
                 key={t.id}
                 onClick={() => {
@@ -3982,7 +3989,7 @@ function UnderwritingPanel({
                   setActiveTab(t.id);
                 }}
                 style={{
-                  flex: 1, padding: "6px 4px", borderRadius: 7, border: "none",
+                  flex: solo ? "0 0 auto" : 1, padding: solo ? "6px 14px" : "6px 4px", borderRadius: 7, border: "none",
                   background: activeTab === t.id ? "rgba(99,102,241,0.15)" : "transparent",
                   color: activeTab === t.id ? "#C4B5FD" : "#7C8593",
                   fontSize: 11, fontWeight: activeTab === t.id ? 600 : 400,
@@ -3992,6 +3999,18 @@ function UnderwritingPanel({
                 {t.icon} {t.label}
               </button>
             ))}
+            {solo && (
+              <button
+                onClick={() => setSolo(false)}
+                style={{
+                  marginLeft: "auto", background: "none", border: "none",
+                  color: "#818CF8", fontSize: 11, fontWeight: 600,
+                  cursor: "pointer", fontFamily: "inherit", padding: "6px 4px",
+                }}
+              >
+                Show all tabs →
+              </button>
+            )}
           </div>
         </div>
 
@@ -5643,7 +5662,7 @@ function StatCards({ deals, loading }: { deals: DealRun[]; loading: boolean }) {
 
 function ProCommandModule({
   deals, onOpenUnderwriting, isPro, downloadingDealId, onDownloadReport,
-  selectedDeal, onSelectDeal,
+  selectedDeal, onSelectDeal, onOpenUnderwritingTab,
 }: {
   deals: DealRun[];
   onOpenUnderwriting: (deal: DealRun) => void;
@@ -5652,6 +5671,7 @@ function ProCommandModule({
   onDownloadReport: (dealId: string) => void;
   selectedDeal?: DealRun | null;
   onSelectDeal?: (id: string) => void;
+  onOpenUnderwritingTab?: (deal: DealRun, tab: UwTab) => void;
 }) {
   // Workbench selection: metrics below derive from this row in memory, so a
   // selection change re-renders the strip instantly with no fetch required.
@@ -5772,10 +5792,14 @@ function ProCommandModule({
           { icon: "🤝", label: "Negotiation Strategy", sub: "Anchor, walk-away, structure", tab: "negotiation" },
           { icon: "🏦", label: "SBA Finance Snapshot", sub: "Loan sizing & eligibility",    tab: "sba"         },
           { icon: "📄", label: "Deal Memo",            sub: "Summary, diligence, next step",tab: "memo"        },
-        ] as { icon: string; label: string; sub: string; tab: string }[]).map(a => (
+        ] as { icon: string; label: string; sub: string; tab: UwTab }[]).map(a => (
           <button
             key={a.label}
-            onClick={() => { if (lastAnalysis) onOpenUnderwriting(lastAnalysis); }}
+            onClick={() => {
+              if (!lastAnalysis) return;
+              if (onOpenUnderwritingTab) onOpenUnderwritingTab(lastAnalysis, a.tab);
+              else onOpenUnderwriting(lastAnalysis);
+            }}
             style={{
               display: "flex", alignItems: "center", gap: 10,
               padding: "12px 14px", borderRadius: 10,
@@ -6597,7 +6621,7 @@ function TabHome({
 function TabDashboard({
   deals, dri, trending, loading, loadingMkt, isPro, favorites, outcomesMap,
   onTabChange, onToggleFav, onOpenNotes, onOpenDetail, onOpenUnderwriting, onOpenOutcome, onAnalyzeNew,
-  downloadingDealId, onDownloadReport,
+  downloadingDealId, onDownloadReport, onOpenUnderwritingTab,
 }: {
   deals: DealRun[];
   dri: DriSnapshot[];
@@ -6616,6 +6640,7 @@ function TabDashboard({
   onAnalyzeNew: () => void;
   downloadingDealId: string | null;
   onDownloadReport: (dealId: string) => void;
+  onOpenUnderwritingTab: (deal: DealRun, tab: UwTab) => void;
 }) {
   // ─── WORKBENCH STATE — which deal is loaded ───────────────────────────────
   // The four summary metrics derive from the deal row already in memory, so
@@ -6657,6 +6682,7 @@ function TabDashboard({
           selectedDeal={workbenchDeal}
           onSelectDeal={setWorkbenchDealId}
           onOpenUnderwriting={onOpenUnderwriting}
+          onOpenUnderwritingTab={onOpenUnderwritingTab}
           isPro={isPro}
           downloadingDealId={downloadingDealId}
           onDownloadReport={onDownloadReport}
@@ -9316,6 +9342,7 @@ export default function BuyerDashboard() {
   const [showLearnSample, setShowLearnSample]   = useState(false);
   const [detailDeal, setDetailDeal]             = useState<DealRun | null>(null);
   const [underwritingDeal, setUnderwritingDeal] = useState<DealRun | null>(null);
+  const [underwritingOpts, setUnderwritingOpts] = useState<{ tab: UwTab; solo: boolean } | null>(null);
   const [showUpgradeModal, setShowUpgradeModal]   = useState(false);
   const [downloadingDealId, setDownloadingDealId] = useState<string | null>(null);
 
@@ -9691,8 +9718,16 @@ const dealHasFullAccess = (dealId: string): boolean => {
 
   // ── Open underwriting panel ───────────────────────────────────────────────
   const openUnderwriting = (deal: DealRun) => {
+    setUnderwritingOpts(null);                  // full panel, default tab
     setUnderwritingDeal(deal);
     // Persist last-viewed deal so returning users re-open it automatically
+    try { localStorage.setItem("nxtax_last_deal_id", deal.id); } catch {}
+  };
+
+  // ── Open underwriting focused on one section (workbench artifact tiles) ───
+  const openUnderwritingTab = (deal: DealRun, tab: UwTab) => {
+    setUnderwritingOpts({ tab, solo: true });
+    setUnderwritingDeal(deal);
     try { localStorage.setItem("nxtax_last_deal_id", deal.id); } catch {}
   };
 
@@ -10039,6 +10074,7 @@ const dealHasFullAccess = (dealId: string): boolean => {
                 onAnalyzeNew={handleAnalyzeNewClick}
                 downloadingDealId={downloadingDealId}
                 onDownloadReport={handleDashboardDownloadReport}
+                onOpenUnderwritingTab={openUnderwritingTab}
               />
             )}
             {activeTab === "my-deals" && (
@@ -10256,7 +10292,7 @@ const dealHasFullAccess = (dealId: string): boolean => {
           onClose={() => setDetailDeal(null)}
           onToggleFav={toggleFavorite}
           onOpenNotes={(deal) => { openNotes(deal); setDetailDeal(null); }}
-         onOpenUnderwriting={(deal) => { setUnderwritingDeal(deal); setDetailDeal(null); }}
+         onOpenUnderwriting={(deal) => { setUnderwritingOpts(null); setUnderwritingDeal(deal); setDetailDeal(null); }}
           onShowUpgrade={() => { setDetailDeal(null); setShowUpgradeModal(true); }}
           onStatusChange={handleStatusChange}
         />
@@ -10299,7 +10335,9 @@ const dealHasFullAccess = (dealId: string): boolean => {
         <UnderwritingPanel
           deal={underwritingDeal}
            isPro={isPro || dealHasFullAccess(underwritingDeal.id)}
-          onClose={() => setUnderwritingDeal(null)}
+          initialTab={underwritingOpts?.tab}
+          soloMode={underwritingOpts?.solo ?? false}
+          onClose={() => { setUnderwritingDeal(null); setUnderwritingOpts(null); }}
           onShowUpgrade={() => setShowUpgradeModal(true)}
           onShowDownloadUpgrade={() => setShowUpgradeModal(true)}
         />
