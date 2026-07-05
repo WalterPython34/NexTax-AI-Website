@@ -5643,14 +5643,19 @@ function StatCards({ deals, loading }: { deals: DealRun[]; loading: boolean }) {
 
 function ProCommandModule({
   deals, onOpenUnderwriting, isPro, downloadingDealId, onDownloadReport,
+  selectedDeal, onSelectDeal,
 }: {
   deals: DealRun[];
   onOpenUnderwriting: (deal: DealRun) => void;
   isPro: boolean;
   downloadingDealId: string | null;
   onDownloadReport: (dealId: string) => void;
+  selectedDeal?: DealRun | null;
+  onSelectDeal?: (id: string) => void;
 }) {
-  const lastAnalysis = deals.find(d => d.tool_used === "risk_analyzer") ?? deals[0];
+  // Workbench selection: metrics below derive from this row in memory, so a
+  // selection change re-renders the strip instantly with no fetch required.
+  const lastAnalysis = selectedDeal ?? deals.find(d => d.tool_used === "risk_analyzer") ?? deals[0];
 
   return (
     <Card style={{
@@ -5664,7 +5669,7 @@ function ProCommandModule({
         background: "linear-gradient(90deg,transparent,rgba(99,102,241,0.6),rgba(139,92,246,0.6),transparent)",
       }} />
 
-      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16 }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16, flexWrap: "wrap" as const }}>
         <ProBadge />
         <span style={{
           fontSize: 15, fontWeight: 700, color: "#F1F5F9",
@@ -5672,6 +5677,24 @@ function ProCommandModule({
         }}>
           Full Underwriting Center
         </span>
+        {onSelectDeal && deals.length > 1 && (
+          <select
+            value={lastAnalysis?.id ?? ""}
+            onChange={e => onSelectDeal(e.target.value)}
+            style={{
+              marginLeft: "auto", padding: "7px 10px", borderRadius: 8,
+              border: "1px solid rgba(255,255,255,0.12)", background: "#0F172A",
+              color: "#E2E8F0", fontSize: 12, fontFamily: "inherit",
+              maxWidth: 260, cursor: "pointer",
+            }}
+          >
+            {deals.slice(0, 50).map(d => (
+              <option key={d.id} value={d.id}>
+                {(IL[d.industry] || d.industry) + (d.city ? " · " + d.city : "") + " · $" + (d.asking_price ?? 0).toLocaleString()}
+              </option>
+            ))}
+          </select>
+        )}
       </div>
 
       {/* Summary strip */}
@@ -6594,249 +6617,108 @@ function TabDashboard({
   downloadingDealId: string | null;
   onDownloadReport: (dealId: string) => void;
 }) {
-  const recent  = deals.slice(0, 3);
-  const opps    = deals.filter(d => (d.gap_pct ?? 0) < -5).slice(0, 3);
-  const overDri = [...dri].sort((a, b) => (b.gap_pct ?? 0) - (a.gap_pct ?? 0)).slice(0, 4);
+  // ─── WORKBENCH STATE — which deal is loaded ───────────────────────────────
+  // The four summary metrics derive from the deal row already in memory, so
+  // switching deals re-renders the strip instantly. No fetch, no page refresh.
+  const [workbenchDealId, setWorkbenchDealId] = useState<string | null>(null);
+  const workbenchDeal =
+    deals.find(d => d.id === workbenchDealId) ??
+    deals.find(d => d.tool_used === "risk_analyzer") ??
+    deals[0] ?? null;
+  const loadIntoWorkbench = (id: string) => {
+    setWorkbenchDealId(id);
+    if (typeof window !== "undefined") window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  // ─── PURSUE QUEUE — below fair value, ranked by gap x score ───────────────
+  const pursueQueue = deals
+    .filter(d => (d.gap_pct ?? 0) < -5 && d.id !== workbenchDeal?.id)
+    .sort((a, b) =>
+      Math.abs(b.gap_pct ?? 0) * (b.overall_score ?? 0) -
+      Math.abs(a.gap_pct ?? 0) * (a.overall_score ?? 0)
+    )
+    .slice(0, 5);
+
+  // ─── WATCHLIST — starred deals ─────────────────────────────────────────────
+  const watchlist = deals.filter(d => favorites.has(d.id) && d.id !== workbenchDeal?.id).slice(0, 6);
+
+  const wbRow: React.CSSProperties = {
+    display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap",
+    padding: "10px 4px", cursor: "pointer",
+    borderTop: "1px solid rgba(255,255,255,0.05)",
+  };
 
   return (
     <div>
-      {/* Priority Deals (starred watchlist) — only shows if user has favorites */}
-      <PriorityDeals
-        deals={deals}
-        favorites={favorites}
-        onOpenNotes={onOpenNotes}
-        onOpenDetail={onOpenDetail}
-        isPro={isPro}
-        downloadingDealId={downloadingDealId}
-        onDownloadReport={onDownloadReport}
-      />
-
-      {/* Recent Activity + Top Opportunities side-by-side */}
-      <div style={{ display: "grid", gridTemplateColumns: "1.3fr 1fr", gap: 16, marginBottom: 28 }}>
-        {/* Recent deals */}
-        <div>
-          <SectionHeader
-            title="Recent Deals"
-            sub={loading ? "Loading…" : deals.length === 0 ? "No deals yet" : `${deals.length} saved`}
-            action={
-              <button
-                onClick={() => onAnalyzeNew()}
-                style={{
-                  padding: "7px 12px", borderRadius: 8, border: "1px solid rgba(99,102,241,0.3)",
-                  background: "rgba(99,102,241,0.08)", color: "#A5B4FC",
-                  fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: "inherit",
-                }}
-              >
-                + Analyze
-              </button>
-            }
-          />
-          {loading ? (
-            <Card>
-              <div style={{ display: "flex", flexDirection: "column" as const, gap: 10 }}>
-                {[0,1,2].map(i => <Skel key={i} h={56} />)}
-              </div>
-            </Card>
-          ) : recent.length === 0 ? (
-            <Card>
-              <div style={{ fontSize: 13, color: "#7C8593", textAlign: "center" as const, padding: "20px 0" }}>
-                Analyze your first deal to see it here.
-              </div>
-            </Card>
-          ) : (
-            <Card style={{ padding: 0, overflow: "hidden" }}>
-              {recent.map((deal, i) => {
-                const gp = deal.gap_pct ?? 0;
-                const vd = verdictCfg(deal.verdict ?? dealVerdict(deal));
-                return (
-                  <div
-                    key={deal.id}
-                    onClick={() => onOpenDetail(deal)}
-                    style={{
-                      padding: "12px 16px",
-                      display: "grid",
-                      gridTemplateColumns: "auto 1fr auto auto auto",
-                      gap: 12,
-                      alignItems: "center",
-                      cursor: "pointer",
-                      borderBottom: i < recent.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none",
-                      transition: "background 140ms ease",
-                    }}
-                    onMouseEnter={(e) => { e.currentTarget.style.background = "rgba(255,255,255,0.02)"; }}
-                    onMouseLeave={(e) => { e.currentTarget.style.background = "transparent"; }}
-                  >
-                    <Ring score={deal.overall_score} verdict={dealVerdict(deal)} size={32} />
-                    <div style={{ minWidth: 0 }}>
-                      <div style={{ fontSize: 12, fontWeight: 500, color: "#F1F5F9", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const }}>
-                        {IL[deal.industry] || deal.industry}
-                      </div>
-                      <div style={{ fontSize: 10, color: "#7C8593", fontFamily: "'JetBrains Mono',monospace", marginTop: 1 }}>
-                        {fmt(deal.asking_price)} · {deal.valuation_multiple.toFixed(2)}x
-                      </div>
-                    </div>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: gp > 0 ? "#D85A30" : "#10B981", fontFamily: "'JetBrains Mono',monospace" }}>
-                      {gp > 0 ? "+" : ""}{gp}%
-                    </div>
-                    <span style={{
-                      display: "inline-flex", alignItems: "center", gap: 4,
-                      padding: "3px 8px", borderRadius: 6,
-                      fontSize: 10, fontWeight: 700,
-                      background: vd.bg, color: vd.color, border: `1px solid ${vd.border}`,
-                      whiteSpace: "nowrap" as const,
-                    }}>
-                      {vd.emoji} {vd.label}
-                    </span>
-                    <DownloadReportIconButton
-                      dealId={deal.id}
-                      isPro={isPro}
-                      downloading={downloadingDealId === deal.id}
-                      onDownload={onDownloadReport}
-                    />
-                  </div>
-                );
-              })}
-            </Card>
-          )}
-        </div>
-
-        {/* Top Opportunities */}
-        <div>
-          <SectionHeader title="Best Opportunities" sub="Deals priced below fair value" />
-          {loading ? (
-            <Card>
-              <div style={{ display: "flex", flexDirection: "column" as const, gap: 10 }}>
-                {[0,1].map(i => <Skel key={i} h={44} />)}
-              </div>
-            </Card>
-          ) : opps.length === 0 ? (
-            <Card>
-              <div style={{ fontSize: 12, color: "#7C8593", textAlign: "center" as const, padding: "14px 0" }}>
-                No opportunities in your current deals yet.
-              </div>
-            </Card>
-          ) : (
-            <Card style={{ padding: 0, overflow: "hidden" }}>
-              {opps.map((deal, i) => {
-                const gp = deal.gap_pct ?? 0;
-                return (
-                  <div
-                    key={deal.id}
-                    onClick={() => onOpenDetail(deal)}
-                    style={{
-                      padding: "10px 14px",
-                      display: "grid",
-                      gridTemplateColumns: "1fr auto auto",
-                      gap: 10,
-                      alignItems: "center",
-                      cursor: "pointer",
-                      borderBottom: i < opps.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none",
-                    }}
-                  >
-                    <div style={{ minWidth: 0 }}>
-                      <div style={{ fontSize: 12, fontWeight: 500, color: "#F1F5F9", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" as const }}>
-                        {IL[deal.industry] || deal.industry}
-                      </div>
-                      <div style={{ fontSize: 10, color: "#7C8593", fontFamily: "'JetBrains Mono',monospace", marginTop: 1 }}>
-                        {fmt(deal.asking_price)}
-                      </div>
-                    </div>
-                    <div style={{ fontSize: 11, fontWeight: 700, color: "#10B981", fontFamily: "'JetBrains Mono',monospace" }}>
-                      {gp}%
-                    </div>
-                    <DownloadReportIconButton
-                      dealId={deal.id}
-                      isPro={isPro}
-                      downloading={downloadingDealId === deal.id}
-                      onDownload={onDownloadReport}
-                    />
-                  </div>
-                );
-              })}
-            </Card>
-          )}
-        </div>
-      </div>
-
-      {/* Market Signals — overpriced industries from DRI */}
-      {overDri.length > 0 && (
-        <div style={{ marginBottom: 28 }}>
-          <SectionHeader title="Market Signals" sub="Where buyers are currently overpaying" />
-          <Card style={{ padding: 0, overflow: "hidden" }}>
-            {loadingMkt ? (
-              <div style={{ padding: 16, display: "flex", flexDirection: "column" as const, gap: 8 }}>
-                {[0,1,2].map(i => <Skel key={i} h={36} />)}
-              </div>
-            ) : (
-              overDri.map((s, i) => (
-                <div
-                  key={s.industry_key}
-                  style={{
-                    padding: "10px 16px",
-                    display: "grid",
-                    gridTemplateColumns: "1fr auto auto",
-                    gap: 12,
-                    alignItems: "center",
-                    borderBottom: i < overDri.length - 1 ? "1px solid rgba(255,255,255,0.04)" : "none",
-                  }}
-                >
-                  <div style={{ fontSize: 12, color: "#E2E8F0", fontWeight: 500 }}>
-                    {IL[s.industry_key] || s.industry_key}
-                  </div>
-                  <div style={{ fontSize: 11, color: "#D85A30", fontFamily: "'JetBrains Mono',monospace", fontWeight: 700 }}>
-                    +{(s.gap_pct ?? 0).toFixed(0)}%
-                  </div>
-                  <div style={{ fontSize: 10, color: "#7C8593" }}>
-                    above market
-                  </div>
-                </div>
-              ))
-            )}
-          </Card>
-        </div>
-      )}
-
-      {/* Compare Deals teaser */}
-      {deals.length >= 2 && (
-        <div style={{ marginBottom: 28 }}>
-          <SectionHeader title="Compare Deals" sub="Side-by-side deal intelligence" />
-          <Card style={{ position: "relative" as const }}>
-            <div
-              onClick={() => onTabChange("compare")}
-              style={{
-                display: "flex", alignItems: "center", justifyContent: "space-between",
-                gap: 14, cursor: "pointer",
-              }}
-            >
-              <div style={{ fontSize: 13, color: "#94A3B8", lineHeight: 1.5 }}>
-                Compare {deals.length} deals across pricing, coverage, risk, and quality.
-              </div>
-              <button
-                style={{
-                  padding: "7px 14px", borderRadius: 7, border: "none",
-                  background: "rgba(99,102,241,0.12)", color: "#A5B4FC",
-                  fontSize: 11, fontWeight: 600, cursor: "pointer", fontFamily: "inherit",
-                  whiteSpace: "nowrap" as const,
-                }}
-              >
-                Open Compare →
-              </button>
-            </div>
-          </Card>
-        </div>
-      )}
-
-      {/* Pro Command Module — for Pro users only */}
+      {/* ── ZONE 1: DEAL WORKBENCH — the page's purpose ── */}
       {isPro ? (
-  <ProCommandModule
-    deals={deals}
-    onOpenUnderwriting={onOpenUnderwriting}
-    isPro={isPro}
-    downloadingDealId={downloadingDealId}
-    onDownloadReport={onDownloadReport}
-  />
-) : (
-  <ProUpsellCard deals={deals} onOpenUnderwriting={onOpenUnderwriting} />
-)}
+        <ProCommandModule
+          deals={deals}
+          selectedDeal={workbenchDeal}
+          onSelectDeal={setWorkbenchDealId}
+          onOpenUnderwriting={onOpenUnderwriting}
+          isPro={isPro}
+          downloadingDealId={downloadingDealId}
+          onDownloadReport={onDownloadReport}
+        />
+      ) : (
+        <ProUpsellCard deals={deals} onOpenUnderwriting={onOpenUnderwriting} />
+      )}
+
+      {/* ── ZONE 2: PURSUE QUEUE — feeder for the workbench ── */}
+      {pursueQueue.length > 0 && (
+        <div style={{ marginTop: 14, padding: "14px 18px", borderRadius: 12, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 4 }}>
+            <span style={{ fontSize: 13, fontWeight: 700, color: "#F1F5F9" }}>Pursue queue</span>
+            <span style={{ fontSize: 11, color: "#7C8593" }}>priced below fair value, ranked by gap and score</span>
+          </div>
+          {pursueQueue.map(d => {
+            const gp = Math.round(d.gap_pct ?? 0);
+            return (
+              <div key={d.id} style={wbRow} onClick={() => loadIntoWorkbench(d.id)}>
+                <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 12, fontWeight: 700, color: "#10B981", width: 44 }}>{gp}%</span>
+                <span style={{ fontSize: 13, color: "#E2E8F0", flex: 1, minWidth: 160 }}>
+                  {IL[d.industry] || d.industry}{d.city ? ` · ${d.city}` : ""}{" "}
+                  <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: "#7C8593" }}>
+                    ${(d.asking_price ?? 0).toLocaleString()} · score {Math.round(d.overall_score ?? 0)}
+                  </span>
+                </span>
+                <span style={{ fontSize: 12, fontWeight: 600, color: "#818CF8", whiteSpace: "nowrap" as const }}>Load into workbench →</span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* ── ZONE 3: WATCHLIST — starred deals ── */}
+      {watchlist.length > 0 && (
+        <div style={{ marginTop: 14, padding: "14px 18px", borderRadius: 12, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)" }}>
+          <div style={{ display: "flex", alignItems: "baseline", gap: 8, marginBottom: 4 }}>
+            <span style={{ fontSize: 13, fontWeight: 700, color: "#F1F5F9" }}>Watchlist</span>
+            <span style={{ fontSize: 11, color: "#7C8593" }}>your starred deals</span>
+          </div>
+          {watchlist.map(d => (
+            <div key={d.id} style={wbRow} onClick={() => loadIntoWorkbench(d.id)}>
+              <span style={{ color: "#F59E0B", fontSize: 13 }}>★</span>
+              <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 12, fontWeight: 700, color: "#F1F5F9", width: 24 }}>{Math.round(d.overall_score ?? 0)}</span>
+              <span style={{ fontSize: 13, color: "#E2E8F0", flex: 1, minWidth: 160 }}>
+                {IL[d.industry] || d.industry}{d.city ? ` · ${d.city}` : ""}{" "}
+                <span style={{ fontFamily: "'JetBrains Mono',monospace", fontSize: 11, color: "#7C8593" }}>
+                  ${(d.asking_price ?? 0).toLocaleString()} · {(d.valuation_multiple ?? 0).toFixed(2)}x
+                </span>
+              </span>
+              <span style={{ fontSize: 12, fontWeight: 600, color: "#818CF8", whiteSpace: "nowrap" as const }}>Load →</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Empty state */}
+      {deals.length === 0 && !loading && (
+        <div style={{ marginTop: 14, padding: "16px 18px", borderRadius: 12, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", fontSize: 13, color: "#94A3B8" }}>
+          No deals yet. Analyze your first deal from the Home tab and it will load here automatically.
+        </div>
+      )}
     </div>
   );
 }
@@ -10034,7 +9916,7 @@ const dealHasFullAccess = (dealId: string): boolean => {
                 fontFamily: "'Inter Tight',sans-serif", letterSpacing: "-0.02em", color: "#F1F5F9",
               }}>
                 {activeTab === "home"         && timeGreeting()}
-                {activeTab === "dashboard"    && "Deal Command Center"}
+                {activeTab === "dashboard"    && "Deal Workbench"}
                 {activeTab === "my-deals"     && "My Deals"}
                 {activeTab === "compare"      && "Compare Deals"}
                 {activeTab === "benchmarks"   && "Financial Benchmarks"}
@@ -10111,8 +9993,8 @@ const dealHasFullAccess = (dealId: string): boolean => {
             </div>
           )}
 
-          {/* Stat cards — dashboard + my-deals (home has its own hero) */}
-          {(activeTab === "dashboard" || activeTab === "my-deals") && (
+          {/* Stat cards — my-deals only (Home has the portfolio strip; Dashboard is the workbench) */}
+          {activeTab === "my-deals" && (
             <StatCards deals={deals} loading={loadingDeals} />
           )}
 
