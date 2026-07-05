@@ -4074,7 +4074,7 @@ function UnderwritingPanel({
   const priceQ = gp > 20 ? "Expensive" : gp > 5 ? "Above Market" : gp < -5 ? "Cheap" : "Fair";
   const priceC = priceQ === "Cheap" ? "#10B981" : priceQ === "Fair" ? "#3B82F6" : priceQ === "Above Market" ? "#F59E0B" : "#EF4444";
   return (
-    <div style={{ display: "flex", gap: 8, marginTop: 8 }}>
+    <div style={{ display: "flex", gap: 8, marginTop: 8, marginBottom: 12 }}>
       <div style={{ display: "inline-flex", alignItems: "center", gap: 5, padding: "3px 10px", borderRadius: 6, background: `${bizC}14`, border: `1px solid ${bizC}33` }}>
         <span style={{ fontSize: 9, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.06em" }}>Business:</span>
         <span style={{ fontSize: 11, fontWeight: 700, color: bizC }}>{bizQ}</span>
@@ -4534,9 +4534,16 @@ function UnderwritingPanel({
 
 
               <div style={{ padding: "12px 14px", borderRadius: 10, background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)", marginBottom: 16 }}>
-                <div style={{ fontSize: 11, color: "#7C8593", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600, marginBottom: 10 }}>Debt Service Detail</div>
-                <MetricRow label="Est. Monthly Payment"  value={fmt(sbaMonthly)} sub="10yr @ 10.75% (SBA prime+2.75)" />
-                <MetricRow label="Annual Debt Service"   value={fmt(sbaMonthly * 12)} />
+                <div style={{ fontSize: 11, color: "#7C8593", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600, marginBottom: 10 }}>SBA Stress Check</div>
+                <MetricRow label="DSCR at SBA Terms (−15% revenue)" value={(sbaDscr * 0.85).toFixed(2) + "x"} color={col(+(sbaDscr * 0.85).toFixed(2))} />
+                <MetricRow label="DSCR at SBA Terms (−25% revenue)" value={(sbaDscr * 0.75).toFixed(2) + "x"} color={col(+(sbaDscr * 0.75).toFixed(2))} />
+                <div style={{ marginTop: 8, fontSize: 11, color: "#94A3B8", lineHeight: 1.5 }}>
+                  {sbaDscr * 0.85 >= 1.25
+                    ? "Deal still services SBA debt under a 15% revenue decline."
+                    : sbaDscr * 0.85 >= 1.0
+                    ? "Coverage thins under a 15% revenue decline. Expect lender scrutiny on downside assumptions."
+                    : "Deal cannot service SBA debt under a 15% revenue decline. Financing is at risk without repricing."}
+                </div>
               </div>
 
               {/* ── EQUITY RECOVERY ── */}
