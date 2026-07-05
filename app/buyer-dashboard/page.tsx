@@ -4314,7 +4314,7 @@ function UnderwritingPanel({
                 <MetricRow label="Monthly Payment"        value={fmt(deal.monthly_payment ?? usableSDE / deal.dscr / 12)} />
               </div>
               <div style={{ marginBottom: 16, padding: "12px 14px", borderRadius: 10, background: "rgba(239,68,68,0.04)", border: "1px solid rgba(239,68,68,0.12)" }}>
-                <div style={{ fontSize: 11, color: "#F97316", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600, marginBottom: 10 }}>Downside Scenarios</div>
+                <div style={{ fontSize: 11, color: "#F97316", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 600, marginBottom: 10 }}>Downside Scenarios (at your modeled terms)</div>
                 <MetricRow label="−15% Revenue Stress"   value={stressDscr15 + "x DSCR"}  color={col(stressDscr15)} sub={`Usable SDE drops to ~${fmt(usableSDE * 0.85)}`} />
                 <MetricRow label="−25% Revenue Stress"   value={stressDscr25 + "x DSCR"}  color={col(stressDscr25)} sub={`Usable SDE drops to ~${fmt(usableSDE * 0.75)}`} />
                 <MetricRow label="Break-Even SDE"        value={fmt(usableSDE / deal.dscr)}  sub="Minimum usable SDE to cover debt service" color="#F59E0B" />
