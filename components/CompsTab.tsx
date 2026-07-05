@@ -9,6 +9,12 @@
 //   - Never show raw/broker SDE — always usableSDE
 //   - Percentile shown only when available; falls back to "Percentile pending"
 //   - Benchmark ranges labeled "typical market range" or "current benchmark range"
+//
+// 7.5.26 verdict-compatibility fix:
+//   - VerdictLabel extended with reprice_required and outside_range (7.3.26 scoring)
+//   - VERDICT_CFG gains entries for both; legacy "pass" retained for old records
+//   - DecisionSummarySection falls back to a neutral config for unknown verdicts
+//     so a future verdict rename degrades gracefully instead of crashing the tab
 
 "use client";
 
@@ -114,6 +120,8 @@ export type VerdictLabel =
   | "high_conviction"
   | "pursue"
   | "investigate"
+  | "reprice_required"
+  | "outside_range"
   | "pass"
   | "manual_review";
 
@@ -281,13 +289,21 @@ function pricingBg(label: PricingLabel): string {
   }
 }
 
+// Verdict config — keys aligned with the 7.3.26 scoring verdicts.
+// "pass" retained for legacy deal records saved before the verdict overhaul.
 const VERDICT_CFG: Record<VerdictLabel, { emoji: string; label: string; color: string; bg: string; bd: string }> = {
-  high_conviction: { emoji: "🔥", label: "High Conviction",      color: T.orange, bg: T.orangeBg, bd: T.orangeBd },
-  pursue:          { emoji: "🟢", label: "Pursue",               color: T.green,  bg: T.greenBg,  bd: T.greenBd  },
-  investigate:     { emoji: "🟡", label: "Investigate",          color: T.amber,  bg: T.amberBg,  bd: T.amberBd  },
-  pass:            { emoji: "🔴", label: "Pass",                 color: T.red,    bg: T.redBg,    bd: T.redBd    },
-  manual_review:   { emoji: "⚠️", label: "Needs Manual Review", color: T.orange, bg: T.orangeBg, bd: T.orangeBd },
+  high_conviction:  { emoji: "🔥", label: "High Conviction",      color: T.orange, bg: T.orangeBg, bd: T.orangeBd },
+  pursue:           { emoji: "🟢", label: "Pursue",               color: T.green,  bg: T.greenBg,  bd: T.greenBd  },
+  investigate:      { emoji: "🟡", label: "Investigate",          color: T.amber,  bg: T.amberBg,  bd: T.amberBd  },
+  reprice_required: { emoji: "🔴", label: "Reprice Required",     color: T.red,    bg: T.redBg,    bd: T.redBd    },
+  outside_range:    { emoji: "🔴", label: "Outside Price Range",  color: T.red,    bg: T.redBg,    bd: T.redBd    },
+  pass:             { emoji: "🔴", label: "Pass",                 color: T.red,    bg: T.redBg,    bd: T.redBd    },
+  manual_review:    { emoji: "⚠️", label: "Needs Manual Review", color: T.orange, bg: T.orangeBg, bd: T.orangeBd },
 };
+
+// Neutral fallback — renders for any verdict value not in VERDICT_CFG so an
+// unknown or future verdict never crashes the tab.
+const VERDICT_CFG_FALLBACK = { emoji: "•", label: "Review", color: T.slate, bg: T.slateBg, bd: T.slateBd };
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // PART 2 — OUTLIER BANNER (new)
@@ -678,7 +694,8 @@ export function MarketInsightsSection({ insights }: MarketInsightsSectionProps) 
 // ═══════════════════════════════════════════════════════════════════════════════
 
 export function DecisionSummarySection({ verdict, summary, actions }: DecisionSummarySectionProps) {
-  const cfg = VERDICT_CFG[verdict];
+  // Fallback guarantees an unknown verdict renders neutrally instead of crashing
+  const cfg = VERDICT_CFG[verdict] ?? VERDICT_CFG_FALLBACK;
   return (
     <SectionCard>
       <SectionLabel>Decision Summary</SectionLabel>
