@@ -1,9 +1,21 @@
+// app/api/sba-check/route.ts
+// SBA Deal Check verdict route.
+//
+// 7.6.26 addition: every successful run is persisted to sba_check_runs
+// (fire-and-forget, never blocks or fails the response). Attribution is
+// derived server-side from the same-origin Referer path: runs from
+// /smbdealhunter carry partner_ref, everything else records as sba-checker.
+// Referer note: same-origin fetches send the full URL under the default
+// Referrer-Policy, so this is reliable for our own pages; if the header is
+// ever absent the run persists with source "sba-checker" and no partner_ref.
+
 import { runSbaCheck, type SbaCheckRequest } from "@/lib/sba/run-sba-check";
 import { blsOewsProvider } from "@/lib/sba/providers/bls-oews-provider";
 import type { OwnerRole } from "@/lib/sba/owner-comp-provider";
 import { signReplayToken } from "@/lib/sba/replay-token";
 import { CURRENT_BENCHMARK_VERSION } from "@/lib/sba/ownerCompBenchmarks/index";
 import type { InputProvenance, InputSource } from "@/lib/sba/sba-engine";
+import { persistCheckRun } from "@/lib/sba/check-runs-store";
 
 const OWNER_COMP_LABEL = "benchmark owner replacement cost";
 const DISCLAIMER =
@@ -12,6 +24,11 @@ const API_VERSION = "sba-check.v1";
 
 const OWNER_ROLES: OwnerRole[] = ["operator", "operator_technical", "passive"];
 const INPUT_SOURCES: InputSource[] = ["stated", "extracted", "estimated", "inferred"];
+
+// Partner routes whose runs carry attribution (path segment -> partner_ref)
+const PARTNER_PATHS: Record<string, string> = {
+  "/smbdealhunter": "smbdealhunter",
+};
 
 type ParseResult =
   | { ok: true; request: SbaCheckRequest }
@@ -123,6 +140,27 @@ function parseRequest(body: unknown): ParseResult {
   };
 }
 
+function attributionFromReferer(request: Request): { source: string; partnerRef: string | null } {
+  try {
+    const referer = request.headers.get("referer");
+    if (referer) {
+      const path = new URL(referer).pathname;
+      for (const [prefix, slug] of Object.entries(PARTNER_PATHS)) {
+        if (path === prefix || path.startsWith(prefix + "/")) {
+          return { source: `partner:${slug}`, partnerRef: slug };
+        }
+      }
+    }
+  } catch { /* fall through */ }
+  return { source: "sba-checker", partnerRef: null };
+}
+
+function clientIp(request: Request): string | null {
+  const fwd = request.headers.get("x-forwarded-for");
+  if (fwd) return fwd.split(",")[0].trim();
+  return request.headers.get("x-real-ip");
+}
+
 export async function POST(request: Request): Promise<Response> {
   let body: unknown;
   try {
@@ -161,6 +199,25 @@ export async function POST(request: Request): Promise<Response> {
       benchmarkVersion: CURRENT_BENCHMARK_VERSION,
       zone: result.verdict.zone,
       iat: Math.floor(Date.now() / 1000),
+    });
+
+    // Top-of-funnel record — separate table from deal_runs by design.
+    // Fire-and-forget: persistence failures never affect the response.
+    const attribution = attributionFromReferer(request);
+    void persistCheckRun({
+      industryKey: parsed.request.industryKey,
+      annualRevenue: parsed.request.annualRevenue,
+      reportedSde: parsed.request.reportedSde,
+      askingPrice: parsed.request.askingPrice,
+      debtPercent: parsed.request.debtPercent,
+      ratePercent: parsed.request.ratePercent,
+      termYears: parsed.request.termYears,
+      role: parsed.request.role,
+      verdict: result.verdict,
+      benchmarkVersion: CURRENT_BENCHMARK_VERSION,
+      source: attribution.source,
+      partnerRef: attribution.partnerRef,
+      ip: clientIp(request),
     });
 
     return Response.json(
