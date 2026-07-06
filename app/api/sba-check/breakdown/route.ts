@@ -1,3 +1,19 @@
+// app/api/sba-check/breakdown/route.ts
+// Gated add-back breakdown.
+//
+// Two access modes:
+//   1. Email gate (default): valid email required; lead persisted. Unchanged
+//      from the original Reddit-facing behavior.
+//   2. Partner bypass: whitelisted partner slug (e.g. smbdealhunter) in the
+//      body; email optional. No lead is persisted in this mode (no email
+//      means no lead row; nothing is fabricated). A best-effort per-IP rate
+//      limit protects the LLM-backed kill-line from ungated abuse.
+//
+// Rate limit honesty: the limiter is in-memory per serverless instance, so it
+// is soft protection (each warm instance keeps its own counters, cold starts
+// reset them). Adequate at beta scale; move to durable storage (e.g. Upstash)
+// if partner traffic grows.
+
 import { runSbaCheck, type SbaCheckRequest } from "@/lib/sba/run-sba-check";
 import { createBlsOewsProvider } from "@/lib/sba/providers/bls-oews-provider";
 import { verifyReplayToken } from "@/lib/sba/replay-token";
@@ -13,6 +29,38 @@ const API_VERSION = "sba-check.v1";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+// ─── Partner bypass whitelist ────────────────────────────────────────────────
+const PARTNER_SLUGS = new Set(["smbdealhunter"]);
+
+// ─── Best-effort per-IP rate limit for partner (ungated) traffic ─────────────
+const RATE_WINDOW_MS = 60 * 60 * 1000; // 1 hour
+const RATE_MAX = 20;                   // runs per IP per window per instance
+const rateBuckets = new Map<string, number[]>();
+
+function partnerRateLimited(ip: string): boolean {
+  const now = Date.now();
+  const hits = (rateBuckets.get(ip) ?? []).filter((t) => now - t < RATE_WINDOW_MS);
+  if (hits.length >= RATE_MAX) {
+    rateBuckets.set(ip, hits);
+    return true;
+  }
+  hits.push(now);
+  rateBuckets.set(ip, hits);
+  // Opportunistic cleanup so the map cannot grow without bound
+  if (rateBuckets.size > 5000) {
+    for (const [k, v] of rateBuckets) {
+      if (v.every((t) => now - t >= RATE_WINDOW_MS)) rateBuckets.delete(k);
+    }
+  }
+  return false;
+}
+
+function clientIp(request: Request): string {
+  const fwd = request.headers.get("x-forwarded-for");
+  if (fwd) return fwd.split(",")[0].trim();
+  return request.headers.get("x-real-ip") ?? "unknown";
+}
+
 function validEmail(v: unknown): v is string {
   return typeof v === "string" && v.length <= 254 && EMAIL_RE.test(v.trim());
 }
@@ -25,15 +73,26 @@ export async function POST(request: Request): Promise<Response> {
     return Response.json({ ok: false, reason: "Request body must be valid JSON." }, { status: 400 });
   }
 
-  const { email, replayToken, source } = (body ?? {}) as {
+  const { email, replayToken, source, partner } = (body ?? {}) as {
     email?: unknown;
     replayToken?: unknown;
     source?: unknown;
+    partner?: unknown;
   };
 
-  if (!validEmail(email)) {
+  const partnerMode = typeof partner === "string" && PARTNER_SLUGS.has(partner);
+
+  if (partnerMode) {
+    if (partnerRateLimited(clientIp(request))) {
+      return Response.json(
+        { ok: false, reason: "Too many runs from this connection. Try again in a bit." },
+        { status: 429 },
+      );
+    }
+  } else if (!validEmail(email)) {
     return Response.json({ ok: false, reason: "Enter a valid email to view the breakdown." }, { status: 400 });
   }
+
   if (typeof replayToken !== "string" || replayToken.length === 0) {
     return Response.json({ ok: false, reason: "Missing replay token." }, { status: 400 });
   }
@@ -88,25 +147,30 @@ export async function POST(request: Request): Promise<Response> {
     interpretation,
   });
 
-  const lead: SbaLead = {
-    email: (email as string).trim(),
-    industryKey: p.industryKey,
-    zone: verdict.zone,
-    verdictConfidence: verdict.verdictConfidence.level,
-    inputConfidence: verdict.inputConfidence.level,
-    deal: {
-      reportedSde: p.reportedSde,
-      annualRevenue: p.annualRevenue,
-      askingPrice: p.askingPrice,
-      debtPercent: p.debtPercent,
-      ratePercent: p.ratePercent,
-      termYears: p.termYears,
-    },
-    source: typeof source === "string" && source.trim() ? source.trim().slice(0, 120) : undefined,
-    createdAt: new Date().toISOString(),
-  };
-  // Best-effort: never blocks the response.
-  await persistLead(lead);
+  // Lead persistence only in email-gate mode. Partner mode has no email and
+  // nothing is fabricated; partner attribution happens at signup instead
+  // (partner_attributions table via the buyer dashboard).
+  if (!partnerMode) {
+    const lead: SbaLead = {
+      email: (email as string).trim(),
+      industryKey: p.industryKey,
+      zone: verdict.zone,
+      verdictConfidence: verdict.verdictConfidence.level,
+      inputConfidence: verdict.inputConfidence.level,
+      deal: {
+        reportedSde: p.reportedSde,
+        annualRevenue: p.annualRevenue,
+        askingPrice: p.askingPrice,
+        debtPercent: p.debtPercent,
+        ratePercent: p.ratePercent,
+        termYears: p.termYears,
+      },
+      source: typeof source === "string" && source.trim() ? source.trim().slice(0, 120) : undefined,
+      createdAt: new Date().toISOString(),
+    };
+    // Best-effort: never blocks the response.
+    await persistLead(lead);
+  }
 
   return Response.json({ ok: true, breakdown }, { status: 200 });
 }
