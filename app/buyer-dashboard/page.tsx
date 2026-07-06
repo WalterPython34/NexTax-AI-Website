@@ -9663,6 +9663,65 @@ const dealHasFullAccess = (dealId: string): boolean => {
     else setLoadingDeals(false);
   }, [user, fetchDeals, fetchFavorites]);
 
+  // ── SBA Checker handoff: pending deal pickup ───────────────────────────────
+  // The checker CTA stashes the typed inputs in localStorage before the
+  // magic-link round trip. On the first authenticated load we pick the stash
+  // up, open the analyze modal pre-filled, and clear it. Same-device flows get
+  // seamless prefill; cross-device flows lose the stash and degrade to normal
+  // signup (accepted limitation, D3).
+  const pendingPickedRef = React.useRef(false);
+  useEffect(() => {
+    if (pendingPickedRef.current || !user) return;
+    pendingPickedRef.current = true;
+    try {
+      const raw = localStorage.getItem("nxtax_pending_deal");
+      if (!raw) return;
+      localStorage.removeItem("nxtax_pending_deal");
+      const parsed = JSON.parse(raw) as Record<string, unknown>;
+      const clean: Partial<ModalDealInputs> = {};
+      for (const k of ["industry", "revenue", "sde", "askingPrice", "city", "state"] as (keyof ModalDealInputs)[]) {
+        const v = parsed[k];
+        if (typeof v === "string" && v.trim() !== "") clean[k] = v;
+      }
+      // Industry must be a known scoring key; unknown values drop to blank
+      if (clean.industry && !SCORE_INDUSTRIES[clean.industry]) delete clean.industry;
+      if (Object.keys(clean).length > 0) handleAnalyzeNewClick(clean);
+    } catch {
+      // Malformed stash: ignore, never block load
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
+
+  // ── Partner attribution capture (e.g. /smbdealhunter) ─────────────────────
+  // Partner pages stamp nxtax_partner_ref before signup. On first
+  // authenticated load we persist it to partner_attributions once, then clear.
+  // Insert failures are non-fatal and logged for the diagnostic surface.
+  const partnerRefSavedRef = React.useRef(false);
+  useEffect(() => {
+    if (partnerRefSavedRef.current || !user) return;
+    partnerRefSavedRef.current = true;
+    (async () => {
+      try {
+        const ref = localStorage.getItem("nxtax_partner_ref");
+        if (!ref) return;
+        const { error } = await supabase
+          .from("partner_attributions")
+          .upsert(
+            { user_id: user.id, partner_ref: ref, source: "partner_page" },
+            { onConflict: "user_id", ignoreDuplicates: true }
+          );
+        if (error) {
+          console.error("[committee-diag] partner_attribution upsert failed:", error.message);
+          return; // keep the flag so a later session can retry
+        }
+        localStorage.removeItem("nxtax_partner_ref");
+      } catch (e) {
+        console.error("[committee-diag] partner_attribution capture error:", e);
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
+
   // ── Auto-open underwriting on first login if deals exist ──────────────────
   // Fires once after deals load — opens the most recent deal so the user
   // immediately sees the decision engine, not an empty dashboard.
