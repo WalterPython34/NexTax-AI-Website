@@ -8,7 +8,12 @@
 // Everything else is unchanged from the deployed route.
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
-import { normalizeDealFinancials, getConvictionCap, buildNormalizationPayload } from "@/lib/normalizationIntegration";
+// [E2 ROOT-CAUSE FIX] normalizeDealFinancials lives in normalizationEngine and was
+// never re-exported by normalizationIntegration — importing it from the integration
+// module yielded undefined at runtime (TypeError captured by pipeline_events).
+// getConvictionCap was imported but unused in this route; dropped.
+import { normalizeDealFinancials } from "@/lib/normalizationEngine";
+import { buildNormalizationPayload } from "@/lib/normalizationIntegration";
 import { applyDealClassification } from "@/lib/dealClassifier";
 import { logPipelineEvent } from "@/lib/pipelineLogger"; // [E1]
 // ── CP Shadow Mode (Phase 0) — additive snapshot generation ──────────────────
