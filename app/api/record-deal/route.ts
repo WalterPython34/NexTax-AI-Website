@@ -1,8 +1,16 @@
 // app/api/record-deal/route.ts
+// PATCH E1/E2 — instrumented version. Base: b6be2c2 (deployed 2026-06-05).
+// Changes vs deployed:
+//   [E1] import logPipelineEvent; structured events for normalization,
+//        insert failure, classification failure, CP shadow failure, Phase D failure.
+//   [E1] normalization catch is no longer empty — error captured and logged.
+//   [E2] normalization_status ('succeeded'|'failed'|'skipped') written on every insert.
+// Everything else is unchanged from the deployed route.
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { normalizeDealFinancials, getConvictionCap, buildNormalizationPayload } from "@/lib/normalizationIntegration";
 import { applyDealClassification } from "@/lib/dealClassifier";
+import { logPipelineEvent } from "@/lib/pipelineLogger"; // [E1]
 // ── CP Shadow Mode (Phase 0) — additive snapshot generation ──────────────────
 import { mapRecordDealBodyToRuleInputs, hasMinimumInputsForShadow, mergeBenchmarkEnrichment } from "@/lib/intelligence/orchestrator/map-live-inputs";
 import { runCpPipelineAndPersist } from "@/lib/intelligence/orchestrator/run-cp-pipeline";
@@ -154,25 +162,53 @@ export async function POST(req: NextRequest) {
     }
 
     // ── Normalize financials before scoring ────────────────────────────────────
-    // Runs normalizeDealFinancials() to compute usableSDE, trustScore, flags.
-    // Falls back to stated SDE if normalization is unavailable.
-    let normPayload = {};
-    try {
-      const normalized = normalizeDealFinancials({
-        revenue: revNum, sde: sdeNum, ebitda: safe(ebitda),
-        price: priceNum,
-        benchmarkFamily:          benchmark_family,
-        classificationConfidence: classification_confidence,
-        benchmarkIsProxy:         benchmark_is_proxy,
-        dataSource:               data_source as any,
-        rmaBenchmarks:            null, // benchmarks not fetched in this route
-      });
-      normPayload = buildNormalizationPayload(
-        normalized,
-        benchmark_source as "direct" | "proxy" | "fallback" | undefined ?? undefined,
-      );
-    } catch { /* normalization is additive — never block a save */ }
-    
+    // [E1/E2] Runs normalizeDealFinancials() to compute usableSDE, trustScore,
+    // flags. Falls back to stated SDE if normalization is unavailable.
+    // The save is STILL never blocked — but failure is now captured, logged to
+    // pipeline_events, and recorded on the row via normalization_status.
+    let normPayload: Record<string, unknown> = {};
+    let normalizationStatus: "succeeded" | "failed" | "skipped" = "skipped";
+    let normalizationError: unknown = undefined;
+
+    const normInputsPresent =
+      typeof revNum   === "number" && isFinite(revNum)   &&
+      typeof sdeNum   === "number" && isFinite(sdeNum)   &&
+      typeof priceNum === "number" && isFinite(priceNum);
+
+    if (normInputsPresent) {
+      try {
+        const normalized = normalizeDealFinancials({
+          revenue: revNum, sde: sdeNum, ebitda: safe(ebitda),
+          price: priceNum,
+          benchmarkFamily:          benchmark_family,
+          classificationConfidence: classification_confidence,
+          benchmarkIsProxy:         benchmark_is_proxy,
+          dataSource:               data_source as any,
+          rmaBenchmarks:            null, // benchmarks not fetched in this route (E3 — paused)
+        });
+        normPayload = buildNormalizationPayload(
+          normalized,
+          benchmark_source as "direct" | "proxy" | "fallback" | undefined ?? undefined,
+        );
+        normalizationStatus = "succeeded";
+      } catch (e) {
+        // [E1] No longer silent. Save proceeds; failure is recorded below.
+        normalizationStatus = "failed";
+        normalizationError  = e;
+      }
+    }
+    // [E1] One structured event per save, regardless of outcome. Awaited so
+    // Vercel cannot kill it; logPipelineEvent itself never throws.
+    await logPipelineEvent(supabaseAdmin, {
+      stage:  "normalization",
+      status: normalizationStatus === "succeeded" ? "ok" : normalizationStatus,
+      fingerprint,
+      error:  normalizationError,
+      detail: normalizationStatus === "succeeded"
+        ? { keys_emitted: Object.keys(normPayload) }
+        : { inputs_present: normInputsPresent, data_source, benchmark_family },
+    });
+
     // ── Insert deal run ────────────────────────────────────────────────────────
     const { error } = await supabaseAdmin.from("deal_runs").insert({
       tool_used,
@@ -215,11 +251,19 @@ export async function POST(req: NextRequest) {
       user_id,
       pending_email:  user_id ? null : pending_email,
       is_anonymous:   !user_id,
+      // [E2] Row-level status — makes normalization nulls explainable.
+      // NULL = pre-Patch-E historical row; see pipeline_events for failures.
+      normalization_status: normalizationStatus,
       // Normalization fields (spread — empty object is a no-op if normalization failed)
       ...normPayload,
     });
     if (error) {
       console.error("Deal record error:", error);
+      // [E1] Insert failures were console-only; now queryable.
+      await logPipelineEvent(supabaseAdmin, {
+        stage: "insert", status: "failed", fingerprint, error,
+        detail: { normalization_status: normalizationStatus },
+      });
       return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }
     // ── Classification — fire-and-forget after successful insert ───────────────
@@ -231,9 +275,14 @@ export async function POST(req: NextRequest) {
         .from("deal_runs").select("id").eq("fingerprint", fingerprint)
         .order("created_at", { ascending: false }).limit(1).single();
       if (justInserted?.id) {
-        applyDealClassification(justInserted.id).catch(err =>
-          console.error("[record-deal] classification error:", err)
-        );
+        applyDealClassification(justInserted.id).catch(err => {
+          console.error("[record-deal] classification error:", err);
+          // [E1] Best-effort event — fire-and-forget context, not awaited by design.
+          void logPipelineEvent(supabaseAdmin, {
+            stage: "classification", status: "failed", fingerprint,
+            dealRunId: justInserted.id, error: err,
+          });
+        });
       }
     }
     // Fetch the inserted row so callers get the full scored deal object back.
@@ -312,16 +361,29 @@ export async function POST(req: NextRequest) {
             console.error(
               `[record-deal] CP shadow write failed at stage '${shadow.stage}' (${shadow.error_kind}): ${shadow.message}`,
             );
+            // [E1] Structured record of shadow failures (awaited context).
+            await logPipelineEvent(supabaseAdmin, {
+              stage: "cp_shadow", status: "failed", fingerprint,
+              dealRunId: inserted.id,
+              detail: { cp_stage: shadow.stage, error_kind: shadow.error_kind, message: shadow.message },
+            });
           }
         } else {
           console.log(
             `[record-deal] CP shadow skipped — insufficient inputs (deal ${inserted.id})`,
           );
+          await logPipelineEvent(supabaseAdmin, {
+            stage: "cp_shadow", status: "skipped", fingerprint, dealRunId: inserted.id,
+          });
         }
       } catch (shadowErr) {
         // Catch even unexpected throws — the shadow write must NEVER affect
         // the save response.
         console.error("[record-deal] CP shadow write threw:", shadowErr);
+        await logPipelineEvent(supabaseAdmin, {
+          stage: "cp_shadow", status: "failed", fingerprint,
+          dealRunId: inserted?.id ?? null, error: shadowErr,
+        });
       }
     }
 
@@ -347,6 +409,12 @@ export async function POST(req: NextRequest) {
           console.error("[record-deal] PHASE_D_CANONICAL_FAILURE " + JSON.stringify({
             deal_run_id: inserted.id, action: canonicalResult.action, detail: canonicalResult.detail,
           }));
+          // [E1] Structured record (awaited context).
+          await logPipelineEvent(supabaseAdmin, {
+            stage: "canonical", status: "failed", fingerprint,
+            dealRunId: inserted.id,
+            detail: { action: canonicalResult.action, canonical_detail: canonicalResult.detail },
+          });
         } else {
           console.log("[record-deal] CANONICAL_SAVE " + JSON.stringify({
             deal_run_id: inserted.id,
@@ -358,6 +426,10 @@ export async function POST(req: NextRequest) {
       } catch (canonErr) {
         // Absolute backstop — canonical maintenance must NEVER break the save flow.
         console.error("[record-deal] PHASE_D_CANONICAL_THREW:", canonErr);
+        await logPipelineEvent(supabaseAdmin, {
+          stage: "canonical", status: "failed", fingerprint,
+          dealRunId: inserted?.id ?? null, error: canonErr,
+        });
       }
     }
     
