@@ -35,7 +35,7 @@ const analyzeGrid = [
   "EBITDA / SDE bridges (reported → normalized)",
   "Owner compensation benchmarking (BLS wage data)",
   "Market multiple analysis with comparable transactions",
-  "DCF-based value range with sourced discount rate build-up",
+  "Forward cash flow stress-test with sourced discount rate build-up",
   "Working capital analysis & peg positioning",
   "Financeability check: would this price survive an SBA lender?",
   "Value driver roadmap: improvement → value impact",
