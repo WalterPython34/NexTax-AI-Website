@@ -16,6 +16,8 @@ import { normalizeDealFinancials } from "@/lib/normalizationEngine";
 import { buildNormalizationPayload } from "@/lib/normalizationIntegration";
 import { applyDealClassification } from "@/lib/dealClassifier";
 import { logPipelineEvent } from "@/lib/pipelineLogger"; // [E1]
+// [E3] Divergence observations — computed and persisted, consumed by nothing until E4.
+import { loadMarginReferences, computeDivergenceObservation } from "@/lib/divergenceObservation";
 // ── CP Shadow Mode (Phase 0) — additive snapshot generation ──────────────────
 import { mapRecordDealBodyToRuleInputs, hasMinimumInputsForShadow, mergeBenchmarkEnrichment } from "@/lib/intelligence/orchestrator/map-live-inputs";
 import { runCpPipelineAndPersist } from "@/lib/intelligence/orchestrator/run-cp-pipeline";
@@ -214,6 +216,45 @@ export async function POST(req: NextRequest) {
         : { inputs_present: normInputsPresent, data_source, benchmark_family },
     });
 
+    // ── [E3] Divergence observation (ingestion-only) ────────────────────────
+    // Observations, never adjustments: reads industry_margin_reference,
+    // computes band/percentile/reference figures, persists them on the row.
+    // NOTHING consumes these columns until E4 (single-channel rule).
+    // Non-blocking and fail-visible, same contract as normalization above.
+    let divergencePayload: Record<string, unknown> = {};
+    let divergenceStatus: "ok" | "failed" | "skipped" = "skipped";
+    let divergenceError: unknown = undefined;
+    if (normInputsPresent && industry) {
+      try {
+        const marginRefs = await loadMarginReferences(supabaseAdmin, industry);
+        const observation = computeDivergenceObservation(
+          { revenue: revNum, sde: sdeNum, industry },
+          marginRefs
+        );
+        if (observation) {
+          divergencePayload = { ...observation };
+          divergenceStatus = "ok";
+        }
+        // observation === null → stays 'skipped' (plausibility window or empty reference)
+      } catch (e) {
+        divergenceStatus = "failed";
+        divergenceError  = e;
+      }
+    }
+    await logPipelineEvent(supabaseAdmin, {
+      stage:  "divergence",
+      status: divergenceStatus,
+      fingerprint,
+      error:  divergenceError,
+      detail: divergenceStatus === "ok"
+        ? {
+            band:    (divergencePayload as { divergence_band?: string }).divergence_band,
+            quality: (divergencePayload as { reference_source_quality?: string }).reference_source_quality,
+            ref_n:   (divergencePayload as { reference_n?: number }).reference_n,
+          }
+        : { industry, inputs_present: normInputsPresent },
+    });
+
     // ── Insert deal run ────────────────────────────────────────────────────────
     const { error } = await supabaseAdmin.from("deal_runs").insert({
       tool_used,
@@ -259,8 +300,16 @@ export async function POST(req: NextRequest) {
       // [E2] Row-level status — makes normalization nulls explainable.
       // NULL = pre-Patch-E historical row; see pipeline_events for failures.
       normalization_status: normalizationStatus,
+      // [E3] Methodology version: 'v2' on every new row, even when the
+      // divergence observation itself was skipped (columns stay null and the
+      // pipeline event says why). Historical rows remain null = v1 era.
+      normalization_version: "v2",
       // Normalization fields (spread — empty object is a no-op if normalization failed)
       ...normPayload,
+      // [E3] Divergence observation fields (spread — empty object is a no-op
+      // if skipped/failed; includes normalization_version 'v2' redundantly,
+      // matching the explicit value above)
+      ...divergencePayload,
     });
     if (error) {
       console.error("Deal record error:", error);
