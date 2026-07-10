@@ -101,6 +101,12 @@ const INDUSTRY_MAP: Record<string, string> = {
   "beverage distribution": "restaurant", beverage: "restaurant",
   franchise: "restaurant", vending: "restaurant",
 
+  // ── Clothing Retail
+  clothing: "clothing", apparel: "clothing", boutique: "clothing",
+  "retail clothing": "clothing", "clothing store": "clothing",
+  "women's apparel": "clothing", "menswear": "clothing",
+  sneaker: "clothing", "shoe store": "clothing", fashion: "clothing",
+
   // ── Auto Repair
   "auto repair": "autorepair", "auto body": "autorepair", automotive: "autorepair",
   mechanic: "autorepair", "tire shop": "autorepair", transmission: "autorepair",
