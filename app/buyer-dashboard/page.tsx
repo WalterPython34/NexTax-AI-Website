@@ -2015,7 +2015,7 @@ function AnalyzeDealModal({
                   style={{ ...inputStyle, appearance: "none" as any, cursor: "pointer", background: "#1E293B", color: "#F1F5F9" }}
                 >
                   <option value="">Select industry...</option>
-                  {Object.entries(SCORE_INDUSTRIES).map(([k, v]) => (
+                  {Object.entries(SCORE_INDUSTRIES).sort(([, a], [, b]) => a.label.localeCompare(b.label)).map(([k, v]) => (
                     <option key={k} value={k}>{v.label}</option>
                   ))}
                 </select>
@@ -8298,11 +8298,11 @@ function LocalMarketRealityCheck({
                 onChange={(e) => { setSelectedDealId(e.target.value); setResult(null); setAiInsight(""); }}
                 style={selStyle}
               >
-                <option value="">Choose a deal...</option>
+                <option value="" style={{ background: "#0D1117", color: "#E2E8F0" }}>Choose a deal...</option>
                 {deals
                   .filter(d => d.city || d.state)
                   .map(d => (
-                    <option key={d.id} value={d.id}>
+                    <option key={d.id} value={d.id} style={{ background: "#0D1117", color: "#E2E8F0" }}>
                       {IL[d.industry] || d.industry}
                       {d.city ? ` — ${d.city}` : ""}
                       {d.state ? `, ${d.state}` : ""}
