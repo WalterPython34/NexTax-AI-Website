@@ -500,25 +500,36 @@ export function normalizeDealFinancials(
     trustScore >= 85 ? "high"   :
     trustScore >= 65 ? "medium" : "low";
 
-  // ═══════════════════════════════════════════════════════════════════════════
-  // NORMALIZED EARNINGS (usable SDE for downstream scoring)
+ // ═══════════════════════════════════════════════════════════════════════════
+  // NORMALIZED EARNINGS — v2 STRUCTURAL NO-REPLACEMENT (E4 Phase 1, score v2.0)
+  //
+  // Locked principle: reported financials are facts. AcquiFlow never silently
+  // overwrites user-entered earnings. Divergence informs the confidence grade
+  // and conviction cap (lib/investigationEngine.ts) — the single permitted
+  // channel — and NEVER the earnings basis.
+  //
+  // usableSDE = reportedSDE, unconditionally. benchmarkSDE remains computed
+  // as an observation value only (superseded for display by
+  // industry_reference_sde from the E3 observation layer).
+  //
+  // The trust gate that previously lived here (>=80 reported / 60–79 blend /
+  // <60 replace) is retired PERMANENTLY. The circuit breaker below only
+  // reversed replacements above 40%; replacements of 1–40% flowed through
+  // silently — that hole is what this patch closes. With earningsSource
+  // fixed at "reported", the breaker condition can never be true; the
+  // breaker block is dead code, scheduled for deletion in E4 Phase 4.
+  // History: the trust gate, fed by a definitionally mismatched EBITDA-margin
+  // basis, destroyed a legitimate deal for a SearchFunder user. Do not
+  // reintroduce under any threshold.
+  //
+  // `let` (not const) is retained ONLY because the unreachable breaker block
+  // below still contains assignments; const-ify when Phase 4 deletes it.
   // ═══════════════════════════════════════════════════════════════════════════
 
   const benchmarkSDE = hasBenchmark ? Math.round(rev * benchmarkEbitdaMargin!) : null;
 
-  let usableSDE: number;
-  let earningsSource: NormalizedEarnings["earningsSource"];
-
-  if (!hasBenchmark || trustScore >= 80) {
-    usableSDE     = sdeV;
-    earningsSource = "reported";
-  } else if (trustScore >= 60) {
-    usableSDE     = Math.min(sdeV, benchmarkSDE!);
-    earningsSource = sdeV <= benchmarkSDE! ? "reported" : "blended";
-  } else {
-    usableSDE     = benchmarkSDE!;
-    earningsSource = "benchmark_implied";
-  }
+  let usableSDE: number = sdeV;
+  let earningsSource: NormalizedEarnings["earningsSource"] = "reported";
 
   // ═══════════════════════════════════════════════════════════════════════════
   // CIRCUIT BREAKER — Phase 1 hybrid model
