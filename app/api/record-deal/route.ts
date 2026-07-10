@@ -18,6 +18,10 @@ import { applyDealClassification } from "@/lib/dealClassifier";
 import { logPipelineEvent } from "@/lib/pipelineLogger"; // [E1]
 // [E3] Divergence observations — computed and persisted, consumed by nothing until E4.
 import { loadMarginReferences, computeDivergenceObservation } from "@/lib/divergenceObservation";
+// [E4 P1] The single channel: divergence → confidence grade → conviction cap (v2.0)
+import { deriveConfidenceGrade, applyConvictionCap } from "@/lib/investigationEngine";
+import type { DivergenceBand, ReferenceQuality, ConfidenceGrade } from "@/lib/investigationEngine";
+import { deriveVerdict } from "@/lib/dealVerdict";
 // ── CP Shadow Mode (Phase 0) — additive snapshot generation ──────────────────
 import { mapRecordDealBodyToRuleInputs, hasMinimumInputsForShadow, mergeBenchmarkEnrichment } from "@/lib/intelligence/orchestrator/map-live-inputs";
 import { runCpPipelineAndPersist } from "@/lib/intelligence/orchestrator/run-cp-pipeline";
@@ -255,6 +259,80 @@ export async function POST(req: NextRequest) {
         : { industry, inputs_present: normInputsPresent },
     });
 
+    // ── [E4 P1] Server benchmark resolution (D8) ────────────────────────────
+    // The server-resolved source GOVERNS; the client value is diagnostic.
+    // Deterministic rule: dealstats_benchmarks national row (size_band null)
+    // with sample_size >= 5 exists for this industry → 'direct'; else 'fallback'.
+    let serverBenchmarkSource: "direct" | "fallback" = "fallback";
+    try {
+      const { data: dsRow } = await supabaseAdmin
+        .from("dealstats_benchmarks")
+        .select("sample_size")
+        .eq("industry_key", industry)
+        .is("size_band", null)
+        .gte("sample_size", 5)
+        .limit(1)
+        .maybeSingle();
+      if (dsRow) serverBenchmarkSource = "direct";
+    } catch { /* resolution failure → 'fallback'; surfaced via the event below */ }
+
+    const clientBenchmarkSource: string | null = benchmark_source ?? null;
+    const benchmarkSourceMatch: boolean | null =
+      clientBenchmarkSource !== null ? clientBenchmarkSource === serverBenchmarkSource : null;
+
+    if (clientBenchmarkSource !== null && benchmarkSourceMatch === false) {
+      await logPipelineEvent(supabaseAdmin, {
+        stage: "benchmark_source_mismatch", status: "ok", fingerprint,
+        detail: { client: clientBenchmarkSource, server: serverBenchmarkSource, industry },
+      });
+    }
+    if (serverBenchmarkSource === "fallback") {
+      // Weekly-reviewable early warning (the pharmacy lesson).
+      await logPipelineEvent(supabaseAdmin, {
+        stage: "benchmark_fallback", status: "ok", fingerprint, detail: { industry },
+      });
+    }
+
+    // ── [E4 P1] Confidence grade → conviction cap → server verdict (D1/D2) ──
+    // THE single channel. The cap consumes only the grade; the grade consumes
+    // only divergence observations. verdict_pre_cap persists for audit recovery.
+    const obs = divergencePayload as {
+      divergence_band?: DivergenceBand;
+      reference_source_quality?: ReferenceQuality;
+      closed_lens_band?: DivergenceBand | null;
+    };
+    const confidenceGrade: ConfidenceGrade | null = deriveConfidenceGrade({
+      divergenceBand:   obs.divergence_band ?? null,
+      referenceQuality: obs.reference_source_quality ?? null,
+      closedLensBand:   obs.closed_lens_band ?? null,
+    });
+
+    const manualReviewRequired =
+      Boolean((normPayload as { manual_review_required?: boolean }).manual_review_required);
+    const fairValueNum = typeof fair_value === "number" && isFinite(fair_value) ? fair_value : 0;
+    const gapPctPre = fairValueNum > 0 ? ((priceNum - fairValueNum) / fairValueNum) * 100 : 0;
+
+    const preCapVerdict = deriveVerdict({
+      gap_pct:                gapPctPre,
+      dscr:                   safe(dscr),
+      overall_score:          safe(overall_score),
+      risk_level:             risk_level ?? null,
+      manual_review_required: manualReviewRequired,
+    });
+    const cap = applyConvictionCap(preCapVerdict, confidenceGrade);
+
+    if (cap.capApplied) {
+      await logPipelineEvent(supabaseAdmin, {
+        stage: "verdict_cap", status: "ok", fingerprint,
+        detail: {
+          grade: confidenceGrade,
+          pre_cap: preCapVerdict,
+          post_cap: cap.finalVerdict,
+          ceiling: cap.ceiling,
+        },
+      });
+    }
+
     // ── Insert deal run ────────────────────────────────────────────────────────
     const { error } = await supabaseAdmin.from("deal_runs").insert({
       tool_used,
@@ -304,6 +382,16 @@ export async function POST(req: NextRequest) {
       // divergence observation itself was skipped (columns stay null and the
       // pipeline event says why). Historical rows remain null = v1 era.
       normalization_version: "v2",
+      // [E4 P1] v2.0: server-authoritative verdict + single-channel grade.
+      // Null grade (observation skipped) persists as null; verdict still
+      // derives and persists (uncapped) so v2 rows are self-describing.
+      score_version:           "v2.0",
+      verdict:                 cap.finalVerdict,
+      verdict_pre_cap:         preCapVerdict,
+      confidence_grade:        confidenceGrade,
+      client_benchmark_source: clientBenchmarkSource,
+      server_benchmark_source: serverBenchmarkSource,
+      benchmark_source_match:  benchmarkSourceMatch,
       // Normalization fields (spread — empty object is a no-op if normalization failed)
       ...normPayload,
       // [E3] Divergence observation fields (spread — empty object is a no-op
@@ -500,6 +588,16 @@ export async function POST(req: NextRequest) {
       cluster_id,
       fingerprint,
       is_valid,
+      // [E4 P1 / D9] Server-authoritative verdict — the modal renders THIS,
+      // never its own uncapped derivation.
+      verdict:          cap.finalVerdict,
+      verdict_pre_cap:  preCapVerdict,
+      confidence_grade: confidenceGrade,
+      verdict_meta: {
+        capApplied:           cap.capApplied,
+        ceiling:              cap.ceiling,
+        verificationRequired: cap.verificationRequired,
+      },
       deal: inserted ? { ...inserted, gap_pct, signal } : null,
     });
   } catch (error) {
