@@ -33,6 +33,10 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 export type PipelineStage =
   | "normalization"
+  | "divergence"
+  | "verdict_cap"
+  | "benchmark_source_mismatch"
+  | "benchmark_fallback"
   | "read_market_facts"
   | "classification"
   | "cp_shadow"
