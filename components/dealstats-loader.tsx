@@ -45,7 +45,7 @@ const INDUSTRIES: Record<string, string> = {
   seniorcare:      "Senior Care / Home Health",
   physicaltherapy: "Physical Therapy / Chiropractic",
   remodeling:      "Home Remodeling & Restoration",
-  retail:          "Clothing retailers"
+  retail:          "Clothing retailers",
   manufacturing:   "Manufacturing (Other)",
   staffing:        "Staffing / Recruiting",
 };
