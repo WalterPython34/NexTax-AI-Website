@@ -96,6 +96,13 @@ console.log("generateDraft — parse robustness (mocked fetch)");
     const r2 = await generateDraft({ template, sheet, mode: "single_deal", apiKey: "k", fetchImpl: mkFetch({}, false, 529) });
     check("HTTP error → null draft with reason", r2.draft === null && /529/.test(r2.error ?? ""));
 
+    const r2b = await generateDraft({
+      template, sheet, mode: "single_deal", apiKey: "k",
+      fetchImpl: mkFetch({ type: "error", error: { type: "invalid_request_error", message: "max_tokens is too large" } }, false, 400),
+    });
+    check("API error body message surfaced",
+      r2b.draft === null && /invalid_request_error: max_tokens is too large/.test(r2b.error ?? ""), r2b.error ?? "");
+
     const r3 = await generateDraft({
       template, sheet, mode: "single_deal", apiKey: "k",
       fetchImpl: mkFetch({ content: [{ type: "text", text: "not json at all" }] }),
