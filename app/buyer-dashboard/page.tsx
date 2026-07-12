@@ -381,15 +381,14 @@ function dealVerdict(d: DealRun): DealVerdict {
   const rl = (d.risk_level || "").toLowerCase();
   const isHighRisk = rl === "high" || rl === "critical";
 
-  // ── Conviction cap — normalization trust gate ─────────────────────────────
-  const trustScore    = d.normalization_trust_score ?? 100;
+  // ── Data-integrity gate ────────────────────────────────────────────────────
+  // [E4 P4] The numeric trust gates (<45 manual_review, <60 investigate) were
+  // removed: they consumed a margin-entangled trust score, and the v2
+  // replacement is the server confidence-grade conviction cap. The boolean
+  // manual_review_required flag stays — it is a data-integrity signal.
   const manualReview  = d.manual_review_required    ?? false;
-  if (manualReview || trustScore < 45) {
+  if (manualReview) {
     return "manual_review";
-  }
-  if (trustScore < 60) {
-    if (gp >= 15 || d.dscr < 1.25 || isHighRisk) return "investigate";
-    return "investigate";
   }
 
   // 🔥 High Conviction — gate at ≥82 (recalibrated from ≥85)
@@ -2681,7 +2680,7 @@ function AnalyzeDealModal({
                       </div>
                       <div style={{ display: "flex", flexDirection: "column" as any, gap: 6 }}>
                         <div>
-                          <div style={{ fontSize: 9, color: "#7C8593" }}>Benchmark-Implied SDE</div>
+                          <div style={{ fontSize: 9, color: "#7C8593" }}>Industry reference SDE (legacy basis)</div>
                           <div style={{ fontSize: 15, fontWeight: 700, color: "#EF4444", fontFamily: "'JetBrains Mono',monospace" }}>
                             ${Math.round(score.underwrittenSde!).toLocaleString()}
                           </div>

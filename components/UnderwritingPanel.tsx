@@ -36,6 +36,7 @@ export interface UnderwritingDeal {
   reported_sde?:                  number | null;
   usable_sde?:                    number | null;
   benchmark_implied_sde?:         number | null;
+  industry_reference_sde?:        number | null;  // [E4 P4] v2 reference basis (display preferred)
   earnings_source?:               "reported" | "blended" | "benchmark_implied" | null;
   normalization_trust_score?:     number | null;
   normalization_confidence_level?: "high" | "medium" | "low" | null;
@@ -453,6 +454,9 @@ function TrustSection({ deal }: { deal: UnderwritingDeal }) {
 function EarningsSection({ deal }: { deal: UnderwritingDeal }) {
   const reported  = safe(deal.reported_sde ?? deal.sde);
   const usable    = safe(deal.usable_sde    ?? deal.sde);
+  // [E4 P4] Display prefers the v2 reference basis; legacy rows fall back to
+  // the legacy column (read-only — v2 never writes benchmark_implied_sde).
+  const referenceSde = deal.industry_reference_sde ?? null;
   const implied   = deal.benchmark_implied_sde ?? null;
   const src       = deal.earnings_source ?? "reported";
   const isAdjusted = src !== "reported";
@@ -502,11 +506,11 @@ function EarningsSection({ deal }: { deal: UnderwritingDeal }) {
             rightBadge={<Pill label="Active" color={T.indigo} bg={T.indigoBg} bd={T.indigoBd} />}
           />
         )}
-        {implied !== null && (
+        {(referenceSde !== null || implied !== null) && (
           <DataRow
-            label="Benchmark-Implied SDE"
-            value={fmt(implied)}
-            sub="Revenue × RMA EBITDA margin"
+            label={referenceSde !== null ? "Industry reference SDE" : "Industry reference SDE (legacy basis)"}
+            value={fmt(referenceSde ?? implied!)}
+            sub={referenceSde !== null ? "Reference basis from the peer margin observation" : "Revenue × RMA EBITDA margin"}
             valueColor={T.textSub}
           />
         )}

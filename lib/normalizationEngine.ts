@@ -19,13 +19,10 @@
 //   - Source quality flags with trust adjustments
 //   - Structured NormalizationFlag with code/severity/title/message/deduction/field
 //
-// V2.1 — Circuit Breaker (Phase 1):
-//   - When normalization would reduce SDE by >40%, circuit breaker fires
-//   - usableSDE preserved as reportedSDE (backward compatible)
-//   - underwritten_sde stores the benchmark-implied figure (stress case)
-//   - investigation_required = true, investigation questions generated
-//   - normalization_mode = "stress_case"
-//   - Verdict locked to Manual Review via trustScore <= 35
+// V2.1 circuit breaker: DELETED in E4 Phase 4. With earningsSource fixed at
+// "reported" (v2 structural no-replacement) the breaker was unreachable.
+// normalization_mode is "reported" by construction; the "stress_case" member
+// of the type union is retained ONLY because legacy persisted rows carry it.
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // INTERFACES
@@ -513,113 +510,28 @@ export function normalizeDealFinancials(
   // industry_reference_sde from the E3 observation layer).
   //
   // The trust gate that previously lived here (>=80 reported / 60–79 blend /
-  // <60 replace) is retired PERMANENTLY. The circuit breaker below only
-  // reversed replacements above 40%; replacements of 1–40% flowed through
-  // silently — that hole is what this patch closes. With earningsSource
-  // fixed at "reported", the breaker condition can never be true; the
-  // breaker block is dead code, scheduled for deletion in E4 Phase 4.
+  // <60 replace) is retired PERMANENTLY. The circuit breaker that followed it
+  // was deleted in E4 Phase 4: with earningsSource fixed at "reported" its
+  // condition could never be true, and usableSDE always equals reported SDE.
   // History: the trust gate, fed by a definitionally mismatched EBITDA-margin
   // basis, destroyed a legitimate deal for a SearchFunder user. Do not
   // reintroduce under any threshold.
-  //
-  // `let` (not const) is retained ONLY because the unreachable breaker block
-  // below still contains assignments; const-ify when Phase 4 deletes it.
   // ═══════════════════════════════════════════════════════════════════════════
 
   const benchmarkSDE = hasBenchmark ? Math.round(rev * benchmarkEbitdaMargin!) : null;
 
-  let usableSDE: number = sdeV;
-  let earningsSource: NormalizedEarnings["earningsSource"] = "reported";
+  const usableSDE: number = sdeV;
+  const earningsSource: NormalizedEarnings["earningsSource"] = "reported";
 
-  // ═══════════════════════════════════════════════════════════════════════════
-  // CIRCUIT BREAKER — Phase 1 hybrid model
-  //
-  // When normalization would reduce SDE by more than 40%, the adjustment is
-  // too extreme to present as the sole valuation basis. Instead:
-  //   1. Preserve reported SDE as usableSDE (backward compat for all consumers)
-  //   2. Store the benchmark-implied figure as underwritten_sde (stress case)
-  //   3. Lock to Manual Review
-  //   4. Generate investigation questions
-  // ═══════════════════════════════════════════════════════════════════════════
-
-  const adjustmentPct = sdeV > 0
-    ? Math.abs(sdeV - usableSDE) / sdeV
-    : 0;
-
-  const CIRCUIT_BREAKER_THRESHOLD = 0.40;
-
-  let normalization_mode: NormalizedDealFinancials["normalization_mode"] = "adjusted";
-  let underwritten_sde = usableSDE;
-  let investigation_required = false;
-  let investigation_reasons: string[] = [];
-  let investigation_questions: string[] = [];
-  let sde_confidence = trustScore;
-
-  if (adjustmentPct > CIRCUIT_BREAKER_THRESHOLD && earningsSource !== "reported") {
-    // Circuit breaker fires
-    normalization_mode = "stress_case";
-    underwritten_sde = usableSDE;       // preserve the benchmark-implied figure
-    usableSDE = sdeV;                   // restore reported SDE as primary
-    earningsSource = "reported";         // downstream sees reported basis
-
-    trustScore = Math.min(trustScore, 35);
-    sde_confidence = Math.max(10, Math.round(25 - (adjustmentPct - 0.40) * 30));
-    investigation_required = true;
-
-    const reportedMarginStr = statedSdeMargin !== null
-      ? `${Math.round(statedSdeMargin * 100)}%`
-      : "N/A";
-    const benchmarkMarginStr = benchmarkEbitdaMargin !== null
-      ? `${Math.round(benchmarkEbitdaMargin * 100)}%`
-      : "unknown";
-    const industryLabel = benchmarkFamily ?? "this industry";
-
-    investigation_reasons = [
-      `Reported SDE margin of ${reportedMarginStr} materially exceeds the ${benchmarkMarginStr} industry benchmark for ${industryLabel}.`,
-      `Normalization would reduce SDE by ${Math.round(adjustmentPct * 100)}%, exceeding the 40% circuit breaker threshold.`,
-      `This may reflect a legitimate owner-operated model, aggressive add-backs, industry misclassification, or data entry error.`,
-    ];
-
-    investigation_questions = [
-      "Provide 3 years of business tax returns (Form 1120-S or Schedule C).",
-      "Provide a detailed SDE add-back schedule with documentation for each adjustment.",
-      "What is the current owner's total compensation (salary + distributions + benefits + perks)?",
-      "What would it cost to hire a replacement manager for the owner's role?",
-      "How many employees or contractors currently generate revenue?",
-      "What percentage of revenue comes from the top customer? Top 3 customers?",
-      "Is the owner personally responsible for client delivery, or does the team operate independently?",
-      "Could the business maintain current revenue if the owner stepped back to management only?",
-    ];
-
-    addFlag({
-      code:      "CIRCUIT_BREAKER_ENGAGED",
-      severity:  "critical",
-      title:     "Earnings verification required",
-      message:   `Reported SDE margin of ${reportedMarginStr} exceeds industry benchmark of ${benchmarkMarginStr} by more than 40%. Reported SDE preserved as primary basis. Benchmark-implied stress case: ${fmt(underwritten_sde)}. Manual review required before relying on earnings figures.`,
-      deduction: 0,
-      field:     "earnings",
-    });
-  } else if (adjustmentPct <= 0.05) {
-    normalization_mode = "reported";
-    underwritten_sde = sdeV;
-  } else {
-    normalization_mode = "adjusted";
-    underwritten_sde = usableSDE;
-  }
-
-  if (earningsSource !== "reported" && normalization_mode !== "stress_case") {
-    notes.push(
-      earningsSource === "blended"
-        ? `Usable SDE (${fmt(usableSDE)}) reflects the lower of stated SDE and benchmark-implied SDE due to moderate trust score.`
-        : `Usable SDE (${fmt(usableSDE)}) is derived from the benchmark-implied margin due to low trust score. Stated SDE (${fmt(sdeV)}) has been set aside pending manual review.`
-    );
-  }
-
-  if (normalization_mode === "stress_case") {
-    notes.push(
-      `Circuit breaker engaged: reported SDE preserved as primary basis. Benchmark-implied stress case (${fmt(underwritten_sde)}) stored separately. Investigation required.`
-    );
-  }
+  // [E4 P4] With usableSDE === reported SDE by construction, the mode is
+  // always "reported" and the investigation fields are empty defaults. They
+  // stay in the return object so the type and every consumer are unchanged.
+  const normalization_mode: NormalizedDealFinancials["normalization_mode"] = "reported";
+  const underwritten_sde = sdeV;
+  const investigation_required = false;
+  const investigation_reasons: string[] = [];
+  const investigation_questions: string[] = [];
+  const sde_confidence = trustScore;
 
   const earnings: NormalizedEarnings = {
     reportedSDE:    sdeV,
@@ -782,17 +694,15 @@ export const NORMALIZATION_TEST_CASES = {
     rmaBenchmarks: { ebitdaMarginPct: 0.14 },
   }),
 
-  // Circuit breaker test: marketing deal that triggered the beta failure
+  // Extreme-margin test: marketing deal that triggered the beta failure.
+  // [E4 P4] Post-v2 expectations: usableSDE = 792_000 (reported, always),
+  // normalization_mode = "reported", investigation fields empty. Divergence
+  // is surfaced through the confidence grade / observation layer instead.
   marketingCircuitBreaker: normalizeDealFinancials({
     revenue: 1_102_000, sde: 792_000, ebitda: 792_000, price: 3_300_000,
     benchmarkFamily: "professional_services", classificationConfidence: 85,
     benchmarkIsProxy: false, dataSource: "manual_entry",
     rmaBenchmarks: { ebitdaMarginPct: 0.06 },
   }),
-  // Expected: normalization_mode = "stress_case"
-  // usableSDE = 792_000 (reported, preserved by breaker)
-  // underwritten_sde = ~66_120 (benchmark-implied)
-  // investigation_required = true
-  // trustScore <= 35
 
 } as const;
