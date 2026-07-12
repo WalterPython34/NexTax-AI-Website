@@ -2471,7 +2471,7 @@ function AnalyzeDealModal({
                         }}>
                           <div>
                             <div style={{ fontSize: 12, fontWeight: 700, color: "#9CA3AF", textTransform: "uppercase" as any, letterSpacing: "0.06em" }}>
-                              {verdictStatus === "error" ? "Verdict unavailable — retry save" : "Finalizing analysis…"}
+                              {verdictStatus === "error" ? "Verdict unavailable — retry save" : "Verdict finalizes on save"}
                             </div>
                             <div style={{ fontSize: 10, color: "#7C8593", marginTop: 3 }}>
                               FV Range: {fmt(score.fairValueLow)} – {fmt(score.fairValueHigh)}
