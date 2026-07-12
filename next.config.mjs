@@ -1,6 +1,7 @@
 /** @type {import('next').NextConfig} */
 // v2
 const nextConfig = {
+  serverExternalPackages: ["@react-pdf/renderer"],
   eslint: {
     ignoreDuringBuilds: true,
   },

@@ -1723,6 +1723,21 @@ function AnalyzeDealModal({
   const [loading, setLoading] = useState(false);
   const [showBreakdown, setShowBreakdown] = useState(false);
 
+  // ── D9: server-authoritative verdict state (record-deal response) ─────────
+  const [serverVerdict, setServerVerdict] = useState<{
+    verdict: string;
+    confidence_grade: string | null;
+    verificationRequired: boolean;
+  } | null>(null);
+  const [verdictStatus, setVerdictStatus] = useState<"pending" | "ready" | "error">("pending");
+  const [divergence, setDivergence] = useState<null | {
+    band: string | null; quality: string | null; closed_lens_band: string | null;
+    peer_margin_percentile: number | null; low_margin_flag: boolean;
+    reference_n: number | null; industry_reference_sde: number | null;
+    closed_reference_sde: number | null;
+  }>(null);
+  const [showRefSensitivity, setShowRefSensitivity] = useState(false);
+
   // ── Input validation — prevents nonsense verdicts from garbage input ──────
   // Parse a locale-formatted currency string ("1,500,000") back to a number
   const parseNum = (s: string): number => {
@@ -1868,6 +1883,11 @@ function AnalyzeDealModal({
 
     // ── Step 2: Compute score using resolved benchmark ───────────────────────
     const result = computeModalScore(inputs, resolvedBenchmark);
+    // D9: fresh scoring run — clear any prior server verdict before showing results
+    setServerVerdict(null);
+    setVerdictStatus("pending");
+    setDivergence(null);
+    setShowRefSensitivity(false);
     setTimeout(() => { setScore(result); setStep("results"); setLoading(false); }, 300);
   }
 
@@ -1876,6 +1896,8 @@ function AnalyzeDealModal({
     setSaving(true);
     setSaveError("");
     try {
+      // E4 fixture-10 fault switch — verifies the verdict slot's error path end-to-end
+      if (process.env.NEXT_PUBLIC_E4_FAULT_INJECT === "1") throw new Error("fixture-10");
       const rev   = parseFloat(inputs.revenue.replace(/,/g, ""));
       const sde   = parseFloat(inputs.sde.replace(/,/g, ""));
       const price = parseFloat(inputs.askingPrice.replace(/,/g, ""));
@@ -1924,7 +1946,19 @@ function AnalyzeDealModal({
           user_id:              userId,
         }),
       });
-      const json = await res.json();      
+      const json = await res.json();
+      // D9: capture the server-authoritative verdict for the results display
+      if (res.ok && json?.verdict) {
+        setServerVerdict({
+          verdict: json.verdict,
+          confidence_grade: json.confidence_grade ?? null,
+          verificationRequired: Boolean(json.verdict_meta?.verificationRequired),
+        });
+        setDivergence(json.divergence ?? null);
+        setVerdictStatus("ready");
+      } else {
+        setVerdictStatus("error");
+      }
       if (!json.success) throw new Error(json.error || "Save failed");
       if (json.deal) {
         onDealSaved(json.deal as DealRun);
@@ -1932,6 +1966,7 @@ function AnalyzeDealModal({
       }
       } catch (err) {
       setSaveError((err as Error).message);
+      setVerdictStatus("error");
     }
     setSaving(false);
   }
@@ -2312,6 +2347,18 @@ function AnalyzeDealModal({
                           ) : null;
                         })()}
                       </span>
+                      {divergence && divergence.quality != null && (
+                        <>
+                          <span style={{ color: "#7C8593", margin: "0 6px" }}>·</span>
+                          <span>
+                            Reference:{" "}
+                            <span style={{ color: "#E2E8F0", fontFamily: "'JetBrains Mono',monospace", fontWeight: 700 }}>
+                              {divergence.quality}
+                            </span>
+                            <span style={{ color: "#7C8593" }}> ({divergence.reference_n} peers)</span>
+                          </span>
+                        </>
+                      )}
                     </div>
                     {nts !== null && (
                       <div style={{ fontSize: 10, color: "#94A3B8", flexShrink: 0 }}>
@@ -2391,25 +2438,47 @@ function AnalyzeDealModal({
                 const dForV = { gap_pct: score.gap_pct, dscr: score.dscr, overall_score: score.overall, risk_level: score.riskLevel, normalization_trust_score: nts, valuation_multiple: score.multiple, industry: inputs.industry } as DealRun;
                 const vdm = verdictCfg(dealVerdict(dForV));
                 const vdExplain = verdictExplanation(dForV);
+                // D9: the banner renders the SERVER verdict only — never the client-derived
+                // verdict. Pending/error states show a neutral shell instead.
+                const svdm = verdictStatus === "ready" && serverVerdict
+                  ? verdictCfg(serverVerdict.verdict as DealVerdict)
+                  : null;
                 return (
                   <>
                     {/* Row 1: Verdict box + Sub-score pills update*/}
                     <div style={{ display: "flex", gap: 10, marginBottom: 10 }}>
-                      <div style={{
-                        flex: 1, padding: "10px 14px", borderRadius: 10,
-                        background: vdm.bg, border: `1px solid ${vdm.border}`,
-                        display: "flex", alignItems: "center", gap: 8,
-                      }}>
-                        <span style={{ fontSize: 20 }}>{vdm.emoji}</span>
-                        <div>
-                          <div style={{ fontSize: 12, fontWeight: 700, color: vdm.color, textTransform: "uppercase" as any, letterSpacing: "0.06em" }}>
-                            Verdict: {vdm.label}
-                          </div>
-                          <div style={{ fontSize: 10, color: "#7C8593", marginTop: 3 }}>
-                            FV Range: {fmt(score.fairValueLow)} – {fmt(score.fairValueHigh)}
+                      {svdm && serverVerdict ? (
+                        <div style={{
+                          flex: 1, padding: "10px 14px", borderRadius: 10,
+                          background: svdm.bg, border: `1px solid ${svdm.border}`,
+                          display: "flex", alignItems: "center", gap: 8,
+                        }}>
+                          <span style={{ fontSize: 20 }}>{svdm.emoji}</span>
+                          <div>
+                            <div style={{ fontSize: 12, fontWeight: 700, color: svdm.color, textTransform: "uppercase" as any, letterSpacing: "0.06em" }}>
+                              Verdict: {svdm.label}{serverVerdict.verificationRequired ? " — Verify Earnings" : ""}
+                            </div>
+                            <div style={{ fontSize: 10, color: "#7C8593", marginTop: 3 }}>
+                              FV Range: {fmt(score.fairValueLow)} – {fmt(score.fairValueHigh)}
+                            </div>
                           </div>
                         </div>
-                      </div>
+                      ) : (
+                        <div style={{
+                          flex: 1, padding: "10px 14px", borderRadius: 10,
+                          background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.09)",
+                          display: "flex", alignItems: "center", gap: 8,
+                        }}>
+                          <div>
+                            <div style={{ fontSize: 12, fontWeight: 700, color: "#9CA3AF", textTransform: "uppercase" as any, letterSpacing: "0.06em" }}>
+                              {verdictStatus === "error" ? "Verdict unavailable — retry save" : "Finalizing analysis…"}
+                            </div>
+                            <div style={{ fontSize: 10, color: "#7C8593", marginTop: 3 }}>
+                              FV Range: {fmt(score.fairValueLow)} – {fmt(score.fairValueHigh)}
+                            </div>
+                          </div>
+                        </div>
+                      )}
                       {/* Sub-score pills */}
                       <div style={{ display: "flex", gap: 6, alignItems: "center" }}>
                         {[
@@ -2425,6 +2494,27 @@ function AnalyzeDealModal({
                         ))}
                       </div>
                     </div>
+
+                    {/* Divergence chip — E4 Phase 2 */}
+                    {verdictStatus === "ready" && serverVerdict && divergence && divergence.band && (() => {
+                      const bandCol: Record<string, string> = { LOW: "#10B981", MODERATE: "#F59E0B", HIGH: "#F97316", EXTREME: "#EF4444" };
+                      const bandBg:  Record<string, string> = { LOW: "rgba(16,185,129,0.12)", MODERATE: "rgba(245,158,11,0.12)", HIGH: "rgba(249,115,22,0.12)", EXTREME: "rgba(239,68,68,0.12)" };
+                      const col = bandCol[divergence.band] ?? "#94A3B8";
+                      const bg  = bandBg[divergence.band]  ?? "rgba(148,163,184,0.12)";
+                      const grade = serverVerdict.confidence_grade === "UNVERIFIED"
+                        ? "EARNINGS VERIFICATION REQUIRED"
+                        : serverVerdict.confidence_grade ?? "—";
+                      return (
+                        <div style={{ marginBottom: 10 }}>
+                          <span style={{
+                            display: "inline-flex", alignItems: "center", padding: "4px 10px", borderRadius: 999,
+                            background: bg, fontSize: 10, fontWeight: 700, color: col, letterSpacing: "0.06em",
+                          }}>
+                            DIVERGENCE: {divergence.band} · GRADE {grade}
+                          </span>
+                        </div>
+                      );
+                    })()}
 
                     {/* Row 2: Business vs Pricing chips */}
                     {(() => {
@@ -2459,6 +2549,50 @@ function AnalyzeDealModal({
                       </div>
                     </div>
                   </>
+                );
+              })()}
+
+              {/* Verification Case — reference sensitivity (E4 Phase 2) */}
+              {verdictStatus === "ready" && serverVerdict && divergence && divergence.industry_reference_sde != null &&
+                (serverVerdict.verificationRequired === true || serverVerdict.confidence_grade === "LOW") && (() => {
+                const usedSde = Math.round(score.fairValue / ((SCORE_INDUSTRIES[inputs.industry]?.benchmarkMid) ?? 2.75));
+                if (!(usedSde > 0)) return null;
+                const refSde = divergence.industry_reference_sde;
+                const ratio   = refSde / usedSde;
+                const refFV   = Math.round(score.fairValue * ratio);
+                const refDSCR = +(score.dscr * ratio).toFixed(2);
+                const ORDER: Record<string, number> = { LOW: 0, MODERATE: 1, HIGH: 2, EXTREME: 3 };
+                const useRange =
+                  divergence.closed_lens_band != null &&
+                  divergence.band != null &&
+                  divergence.closed_reference_sde != null &&
+                  Math.abs(ORDER[divergence.closed_lens_band] - ORDER[divergence.band]) > 1;
+                const closedSde = divergence.closed_reference_sde ?? 0;
+                const body = useRange
+                  ? `Verification Case: The available reference lenses disagree materially for this category. Listing-market reference: $${refSde.toLocaleString()}. Closed-transaction reference: $${closedSde.toLocaleString()}. Reference range: $${Math.min(refSde, closedSde).toLocaleString()} to $${Math.max(refSde, closedSde).toLocaleString()}. No single industry-reference scenario is presented until the reference basis is resolved.`
+                  : `Verification Case: If earnings verify near the industry reference of approximately $${refSde.toLocaleString()}, the corresponding value is $${refFV.toLocaleString()} and DSCR is ${refDSCR.toFixed(2)}x. This is a reference sensitivity, not an estimate of verified earnings.`;
+                const expanded = serverVerdict.verificationRequired === true || showRefSensitivity;
+                return (
+                  <div style={{ marginBottom: 14 }}>
+                    {!serverVerdict.verificationRequired && (
+                      <div
+                        onClick={() => setShowRefSensitivity(!showRefSensitivity)}
+                        style={{ display: "inline-flex", alignItems: "center", gap: 6, fontSize: 11, color: "#7C8593", cursor: "pointer", userSelect: "none" }}
+                      >
+                        Reference sensitivity {showRefSensitivity ? "▲" : "▼"}
+                      </div>
+                    )}
+                    {expanded && (
+                      <div style={{
+                        padding: "10px 14px", borderRadius: 10,
+                        background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
+                        fontSize: 11, color: "#94A3B8", lineHeight: 1.6,
+                        marginTop: serverVerdict.verificationRequired ? 0 : 6,
+                      }}>
+                        {body}
+                      </div>
+                    )}
+                  </div>
                 );
               })()}
 
@@ -2600,6 +2734,13 @@ function AnalyzeDealModal({
                       <span style={{ flexShrink: 0, color: "#10B981" }}>✓</span>{f}
                     </div>
                   ))}
+                </div>
+              )}
+
+              {/* Low-margin notice — E4 Phase 2 */}
+              {divergence?.low_margin_flag === true && (
+                <div style={{ fontSize: 11, color: "#64748B", lineHeight: 1.55, marginBottom: 16 }}>
+                  Margin unusually low for this category. Verify expense load, owner compensation treatment, and any non-recurring costs. This does not affect the confidence grade.
                 </div>
               )}
 
