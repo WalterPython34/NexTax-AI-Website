@@ -22,6 +22,8 @@ import { loadMarginReferences, computeDivergenceObservation } from "@/lib/diverg
 import { deriveConfidenceGrade, applyConvictionCap } from "@/lib/investigationEngine";
 import type { DivergenceBand, ReferenceQuality, ConfidenceGrade } from "@/lib/investigationEngine";
 import { deriveVerdict } from "@/lib/dealVerdict";
+// [E4 P3] Deterministic investigation checklist (D4) — snapshot persisted per save.
+import { generateInvestigationItems } from "@/lib/investigationChecklist";
 // ── CP Shadow Mode (Phase 0) — additive snapshot generation ──────────────────
 import { mapRecordDealBodyToRuleInputs, hasMinimumInputsForShadow, mergeBenchmarkEnrichment } from "@/lib/intelligence/orchestrator/map-live-inputs";
 import { runCpPipelineAndPersist } from "@/lib/intelligence/orchestrator/run-cp-pipeline";
@@ -335,6 +337,15 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    // ── [E4 P3] Investigation checklist (deterministic snapshot, D4) ────────
+    const investigationItems = generateInvestigationItems({
+      divergenceBand:   obs.divergence_band ?? null,
+      referenceQuality: obs.reference_source_quality ?? null,
+      closedLensBand:   obs.closed_lens_band ?? null,
+      lowMarginFlag:    Boolean((divergencePayload as { low_margin_flag?: boolean }).low_margin_flag),
+      referenceN:       (divergencePayload as { reference_n?: number }).reference_n ?? null,
+    });
+
     // ── Insert deal run ────────────────────────────────────────────────────────
     const { error } = await supabaseAdmin.from("deal_runs").insert({
       tool_used,
@@ -394,6 +405,9 @@ export async function POST(req: NextRequest) {
       client_benchmark_source: clientBenchmarkSource,
       server_benchmark_source: serverBenchmarkSource,
       benchmark_source_match:  benchmarkSourceMatch,
+      // [E4 P3] Immutable checklist snapshot (null when nothing triggered)
+      generated_investigation_items_json:
+        investigationItems.length > 0 ? investigationItems : null,
       // Normalization fields (spread — empty object is a no-op if normalization failed)
       ...normPayload,
       // [E3] Divergence observation fields (spread — empty object is a no-op
@@ -623,6 +637,8 @@ export async function POST(req: NextRequest) {
       },
       // [E4 P2] Divergence display payload (null when observation skipped/failed)
       divergence: divergenceDisplay,
+      // [E4 P3] Checklist snapshot (empty array when nothing triggered)
+      investigation_items: investigationItems,
       deal: inserted ? { ...inserted, gap_pct, signal } : null,
     });
   } catch (error) {
