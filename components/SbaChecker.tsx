@@ -1,12 +1,17 @@
 // components/SbaChecker.tsx
-// Shared SBA Deal Check component.
+// Shared SBA Deal Check component with per-partner theming.
 //
-// Rendered by two routes with different configs:
-//   /sba-checker     -> no partner. Email gate on. Reddit/UTM lead capture
-//                       preserved exactly as before.
-//   /smbdealhunter   -> partner config. Email gate bypassed (server-verified),
-//                       partner_ref stamped for signup attribution, co-brand
-//                       strip in the hero.
+// Routes:
+//   /sba-checker     -> no partner. DARK theme. Email gate on. Reddit/UTM lead
+//                       capture preserved exactly as before.
+//   /smbdealhunter   -> partner config. LIGHT theme (matches the partner
+//                       ecosystem), email gate bypassed (server-verified),
+//                       partner_ref stamped, co-brand strip with a reserved
+//                       logo slot in the hero.
+//
+// Theming: every color routes through an SbaTheme object provided via context.
+// Zone colors (PASS/BUBBLE/FAIL) are shared constants that hold contrast on
+// both backgrounds. Adding a future partner theme means adding one object.
 //
 // Both routes stash the typed deal into localStorage on the AcquiFlow CTA so
 // the buyer dashboard can pre-fill the analyze modal after signup
@@ -14,11 +19,111 @@
 
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { SBA_INDUSTRIES, SBA_INDUSTRY_BY_KEY } from "@/lib/sba/industries";
 import type { SbaVerdict } from "@/lib/sba/sba-engine";
 import type { OwnerRole } from "@/lib/sba/owner-comp-provider";
 import type { SbaBreakdown, BreakdownLineItem } from "@/lib/sba/breakdown";
+
+// ─── Theme ────────────────────────────────────────────────────────────────────
+
+interface SbaTheme {
+  mode: "dark" | "light";
+  bg: string;
+  heroGlow: string;
+  panel: string;
+  panelBorder: string;
+  inputBg: string;
+  inputBorder: string;
+  heading: string;
+  text: string;
+  textDim: string;
+  textMute: string;
+  amber: string;
+  amberText: string;
+  onAmber: string;
+  buyer: string;
+  gaugeText: string;
+  gaugeTrack: string;
+  gaugeTick: string;
+  rowBorder: string;
+  insetBg: string;
+  chipBg: string;
+  successText: string;
+  warnText: string;
+  dangerText: string;
+  confLow: string;
+  basisInput: string;
+  basisBenchmark: string;
+  basisPolicy: string;
+}
+
+const DARK_THEME: SbaTheme = {
+  mode: "dark",
+  bg: "#0B0F17",
+  heroGlow: "rgba(245,158,11,0.06)",
+  panel: "rgba(255,255,255,0.025)",
+  panelBorder: "rgba(255,255,255,0.06)",
+  inputBg: "rgba(255,255,255,0.04)",
+  inputBorder: "rgba(255,255,255,0.1)",
+  heading: "#F1F5F9",
+  text: "#E2E8F0",
+  textDim: "#8896A6",
+  textMute: "#6B7280",
+  amber: "#F59E0B",
+  amberText: "#F59E0B",
+  onAmber: "#1A1206",
+  buyer: "#94A3B8",
+  gaugeText: "#E2E8F0",
+  gaugeTrack: "rgba(255,255,255,0.12)",
+  gaugeTick: "rgba(255,255,255,0.25)",
+  rowBorder: "rgba(255,255,255,0.05)",
+  insetBg: "rgba(255,255,255,0.015)",
+  chipBg: "rgba(255,255,255,0.06)",
+  successText: "#34D399",
+  warnText: "#FBBF77",
+  dangerText: "#FCA5A5",
+  confLow: "#94A3B8",
+  basisInput: "#94A3B8",
+  basisBenchmark: "#38BDF8",
+  basisPolicy: "#A78BFA",
+};
+
+const LIGHT_THEME: SbaTheme = {
+  mode: "light",
+  bg: "#FFFFFF",
+  heroGlow: "rgba(245,158,11,0.05)",
+  panel: "#FBFBFC",
+  panelBorder: "#E9EBEF",
+  inputBg: "#FFFFFF",
+  inputBorder: "#DCDFE5",
+  heading: "#141A22",
+  text: "#1F2733",
+  textDim: "#5C6470",
+  textMute: "#8A909B",
+  amber: "#F59E0B",
+  amberText: "#854F0B",
+  onAmber: "#1A1206",
+  buyer: "#64748B",
+  gaugeText: "#334155",
+  gaugeTrack: "rgba(15,23,42,0.10)",
+  gaugeTick: "rgba(15,23,42,0.28)",
+  rowBorder: "rgba(15,23,42,0.06)",
+  insetBg: "rgba(15,23,42,0.02)",
+  chipBg: "rgba(15,23,42,0.04)",
+  successText: "#0F6E56",
+  warnText: "#854F0B",
+  dangerText: "#A32D2D",
+  confLow: "#64748B",
+  basisInput: "#64748B",
+  basisBenchmark: "#0369A1",
+  basisPolicy: "#7C3AED",
+};
+
+const ThemeContext = createContext<SbaTheme>(DARK_THEME);
+function useT(): SbaTheme {
+  return useContext(ThemeContext);
+}
 
 // ─── Partner configuration ────────────────────────────────────────────────────
 
@@ -26,6 +131,7 @@ export interface SbaPartnerConfig {
   slug: string;         // stable id, also the whitelist key server-side
   displayName: string;  // shown in the co-brand strip
   gateBypass: boolean;  // breakdown renders without the email gate
+  theme: "dark" | "light";
 }
 
 export const SBA_PARTNERS: Record<string, SbaPartnerConfig> = {
@@ -33,6 +139,7 @@ export const SBA_PARTNERS: Record<string, SbaPartnerConfig> = {
     slug: "smbdealhunter",
     displayName: "SMB Deal Hunter",
     gateBypass: true,
+    theme: "light",
   },
 };
 
@@ -67,23 +174,10 @@ type ViewState =
   | { kind: "unrunnable"; reason: string }
   | { kind: "verdict"; data: Extract<ApiResponse, { ok: true }> };
 
-const COLORS = {
-  bg: "#0B0F17",
-  panel: "rgba(255,255,255,0.025)",
-  panelBorder: "rgba(255,255,255,0.06)",
-  inputBg: "rgba(255,255,255,0.04)",
-  inputBorder: "rgba(255,255,255,0.1)",
-  text: "#E2E8F0",
-  textDim: "#8896A6",
-  textMute: "#6B7280",
-  amber: "#F59E0B",
-  buyer: "#94A3B8",
-};
-
+// Zone and confidence colors hold contrast on both themes.
 const CONF_COLORS: Record<string, string> = {
   High: "#10B981",
   Medium: "#F59E0B",
-  Low: "#94A3B8",
 };
 
 const ZONE_META: Record<SbaVerdict["zone"], { color: string; headline: string; tag: string }> = {
@@ -166,29 +260,35 @@ const ROLE_OPTIONS: { value: OwnerRole; label: string }[] = [
   { value: "passive", label: "Largely passive" },
 ];
 
-const labelStyle: React.CSSProperties = {
-  display: "block",
-  fontSize: 11,
-  color: COLORS.textDim,
-  marginBottom: 5,
-  fontWeight: 500,
-  textTransform: "uppercase",
-  letterSpacing: "0.05em",
-};
+function labelStyle(T: SbaTheme): React.CSSProperties {
+  return {
+    display: "block",
+    fontSize: 11,
+    color: T.textDim,
+    marginBottom: 5,
+    fontWeight: 500,
+    textTransform: "uppercase",
+    letterSpacing: "0.05em",
+  };
+}
 
-const inputStyle: React.CSSProperties = {
-  width: "100%",
-  padding: "11px 14px",
-  borderRadius: 8,
-  border: `1px solid ${COLORS.inputBorder}`,
-  background: COLORS.inputBg,
-  color: COLORS.text,
-  fontSize: 14,
-  outline: "none",
-  fontFamily: "'Inter', sans-serif",
-};
+function inputStyle(T: SbaTheme): React.CSSProperties {
+  return {
+    width: "100%",
+    padding: "11px 14px",
+    borderRadius: 8,
+    border: `1px solid ${T.inputBorder}`,
+    background: T.inputBg,
+    color: T.text,
+    fontSize: 14,
+    outline: "none",
+    fontFamily: "'Inter', sans-serif",
+  };
+}
 
 export default function SbaChecker({ partner }: { partner?: SbaPartnerConfig }) {
+  const T = partner?.theme === "light" ? LIGHT_THEME : DARK_THEME;
+
   const [industryKey, setIndustryKey] = useState("hvac");
   const [role, setRole] = useState<OwnerRole>("operator");
   const [revenue, setRevenue] = useState("$1,400,000");
@@ -295,76 +395,86 @@ export default function SbaChecker({ partner }: { partner?: SbaPartnerConfig }) 
   }
 
   return (
-    <div style={{ minHeight: "100vh", background: COLORS.bg, color: COLORS.text, fontFamily: "'Inter', sans-serif" }}>
-      <div style={{ padding: "44px 24px 28px", textAlign: "center", background: "radial-gradient(ellipse at center top, rgba(245,158,11,0.06) 0%, transparent 60%)" }}>
-        <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "5px 14px", borderRadius: 20, background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.18)", fontSize: 11, color: COLORS.amber, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 18 }}>
+    <ThemeContext.Provider value={T}>
+    <div style={{ minHeight: "100vh", background: T.bg, color: T.text, fontFamily: "'Inter', sans-serif" }}>
+      <div style={{ padding: "44px 24px 28px", textAlign: "center", background: `radial-gradient(ellipse at center top, ${T.heroGlow} 0%, transparent 60%)` }}>
+        {partner && (
+          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, marginBottom: 16 }}>
+            <span style={{ fontSize: 14, fontWeight: 700, color: T.heading, fontFamily: "'Inter Tight', sans-serif" }}>AcquiFlow</span>
+            <span style={{ color: T.textMute, fontSize: 13 }}>&times;</span>
+            <span style={{ display: "inline-flex", alignItems: "center", padding: "5px 16px", border: `1.5px dashed ${T.inputBorder}`, borderRadius: 8, fontSize: 11, color: T.textMute }}>
+              partner logo slot
+            </span>
+          </div>
+        )}
+        <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "5px 14px", borderRadius: 20, background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.22)", fontSize: 11, color: T.amberText, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 18 }}>
           SBA Deal Check
         </div>
         {partner && (
           <div style={{ marginBottom: 14 }}>
-            <span style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "5px 14px", borderRadius: 20, background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.22)", fontSize: 11.5, color: "#34D399", fontWeight: 600 }}>
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "5px 14px", borderRadius: 20, background: "rgba(16,185,129,0.09)", border: "1px solid rgba(16,185,129,0.25)", fontSize: 11.5, color: T.successText, fontWeight: 600 }}>
               For {partner.displayName} members · full breakdown unlocked · member pricing at signup
             </span>
           </div>
         )}
-        <h1 style={{ fontSize: "clamp(28px, 5vw, 42px)", fontWeight: 600, margin: "0 0 10px", fontFamily: "'Inter Tight', sans-serif", letterSpacing: "-0.02em", color: "#F1F5F9", lineHeight: 1.1 }}>
+        <h1 style={{ fontSize: "clamp(28px, 5vw, 42px)", fontWeight: 600, margin: "0 0 10px", fontFamily: "'Inter Tight', sans-serif", letterSpacing: "-0.02em", color: T.heading, lineHeight: 1.1 }}>
           Will your deal survive SBA underwriting?
         </h1>
-        <p style={{ fontSize: 15, color: COLORS.textDim, maxWidth: 540, margin: "0 auto", lineHeight: 1.65 }}>
+        <p style={{ fontSize: 15, color: T.textDim, maxWidth: 540, margin: "0 auto", lineHeight: 1.65 }}>
           A 60-second screen against the 1.25&times; debt-service coverage a lender looks for &mdash; after a benchmark owner replacement cost and a conservative add-back haircut.
         </p>
       </div>
 
       <div style={{ maxWidth: 680, margin: "0 auto", padding: "0 24px 56px" }}>
-        <div style={{ background: COLORS.panel, border: `1px solid ${COLORS.panelBorder}`, borderRadius: 16, padding: "22px 22px 18px" }}>
+        <div style={{ background: T.panel, border: `1px solid ${T.panelBorder}`, borderRadius: 16, padding: "22px 22px 18px" }}>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
             <div style={{ gridColumn: "1 / -1" }}>
-              <label style={labelStyle}>Industry</label>
-              <select value={industryKey} onChange={(e) => setIndustryKey(e.target.value)} style={inputStyle}>
+              <label style={labelStyle(T)}>Industry</label>
+              <select value={industryKey} onChange={(e) => setIndustryKey(e.target.value)} style={inputStyle(T)}>
                 {industries.map((i) => (
-                  <option key={i.key} value={i.key} style={{ background: COLORS.bg }}>{i.label}</option>
+                  <option key={i.key} value={i.key} style={{ background: T.bg }}>{i.label}</option>
                 ))}
               </select>
             </div>
             <div>
-              <label style={labelStyle}>Annual revenue</label>
-              <input value={revenue} onChange={(e) => setRevenue(e.target.value)} placeholder="$2,400,000" inputMode="numeric" style={inputStyle} />
+              <label style={labelStyle(T)}>Annual revenue</label>
+              <input value={revenue} onChange={(e) => setRevenue(e.target.value)} placeholder="$2,400,000" inputMode="numeric" style={inputStyle(T)} />
             </div>
             <div>
-              <label style={labelStyle}>Seller-reported SDE</label>
-              <input value={sde} onChange={(e) => setSde(e.target.value)} placeholder="$600,000" inputMode="numeric" style={inputStyle} />
+              <label style={labelStyle(T)}>Seller-reported SDE</label>
+              <input value={sde} onChange={(e) => setSde(e.target.value)} placeholder="$600,000" inputMode="numeric" style={inputStyle(T)} />
             </div>
             <div>
-              <label style={labelStyle}>Asking price</label>
-              <input value={askingPrice} onChange={(e) => setAskingPrice(e.target.value)} placeholder="$1,200,000" inputMode="numeric" style={inputStyle} />
+              <label style={labelStyle(T)}>Asking price</label>
+              <input value={askingPrice} onChange={(e) => setAskingPrice(e.target.value)} placeholder="$1,200,000" inputMode="numeric" style={inputStyle(T)} />
             </div>
             <div>
-              <label style={labelStyle}>Owner&rsquo;s role</label>
-              <select value={role} onChange={(e) => setRole(e.target.value as OwnerRole)} style={inputStyle}>
+              <label style={labelStyle(T)}>Owner&rsquo;s role</label>
+              <select value={role} onChange={(e) => setRole(e.target.value as OwnerRole)} style={inputStyle(T)}>
                 {ROLE_OPTIONS.map((r) => (
-                  <option key={r.value} value={r.value} style={{ background: COLORS.bg }}>{r.label}</option>
+                  <option key={r.value} value={r.value} style={{ background: T.bg }}>{r.label}</option>
                 ))}
               </select>
             </div>
           </div>
 
-          <button onClick={() => setShowFinancing((s) => !s)} style={{ marginTop: 16, background: "none", border: "none", color: COLORS.textDim, fontSize: 12, cursor: "pointer", padding: 0, fontFamily: "'Inter', sans-serif" }}>
+          <button onClick={() => setShowFinancing((s) => !s)} style={{ marginTop: 16, background: "none", border: "none", color: T.textDim, fontSize: 12, cursor: "pointer", padding: 0, fontFamily: "'Inter', sans-serif" }}>
             {showFinancing ? "Hide" : "Adjust"} financing assumptions ({downPayment}% down &middot; {rate}% &middot; {term}yr)
           </button>
 
           {showFinancing && (
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 14, marginTop: 12 }}>
               <div>
-                <label style={labelStyle}>Down payment %</label>
-                <input value={downPayment} onChange={(e) => setDownPayment(e.target.value)} inputMode="decimal" style={inputStyle} />
+                <label style={labelStyle(T)}>Down payment %</label>
+                <input value={downPayment} onChange={(e) => setDownPayment(e.target.value)} inputMode="decimal" style={inputStyle(T)} />
               </div>
               <div>
-                <label style={labelStyle}>Interest rate %</label>
-                <input value={rate} onChange={(e) => setRate(e.target.value)} inputMode="decimal" style={inputStyle} />
+                <label style={labelStyle(T)}>Interest rate %</label>
+                <input value={rate} onChange={(e) => setRate(e.target.value)} inputMode="decimal" style={inputStyle(T)} />
               </div>
               <div>
-                <label style={labelStyle}>Term (years)</label>
-                <input value={term} onChange={(e) => setTerm(e.target.value)} inputMode="decimal" style={inputStyle} />
+                <label style={labelStyle(T)}>Term (years)</label>
+                <input value={term} onChange={(e) => setTerm(e.target.value)} inputMode="decimal" style={inputStyle(T)} />
               </div>
             </div>
           )}
@@ -372,20 +482,20 @@ export default function SbaChecker({ partner }: { partner?: SbaPartnerConfig }) 
           <button
             onClick={runCheck}
             disabled={view.kind === "loading"}
-            style={{ width: "100%", marginTop: 18, padding: "13px 16px", borderRadius: 10, border: "none", background: COLORS.amber, color: "#1A1206", fontSize: 15, fontWeight: 600, cursor: view.kind === "loading" ? "default" : "pointer", opacity: view.kind === "loading" ? 0.7 : 1, fontFamily: "'Inter', sans-serif" }}
+            style={{ width: "100%", marginTop: 18, padding: "13px 16px", borderRadius: 10, border: "none", background: T.amber, color: T.onAmber, fontSize: 15, fontWeight: 600, cursor: view.kind === "loading" ? "default" : "pointer", opacity: view.kind === "loading" ? 0.7 : 1, fontFamily: "'Inter', sans-serif" }}
           >
             {view.kind === "loading" ? "Running the screen\u2026" : "Check SBA financeability"}
           </button>
         </div>
 
         {view.kind === "unrunnable" && (
-          <div style={{ marginTop: 18, padding: "16px 18px", borderRadius: 12, background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.2)", color: "#FBBF77", fontSize: 14, lineHeight: 1.55 }}>
+          <div style={{ marginTop: 18, padding: "16px 18px", borderRadius: 12, background: "rgba(245,158,11,0.06)", border: "1px solid rgba(245,158,11,0.2)", color: T.warnText, fontSize: 14, lineHeight: 1.55 }}>
             {view.reason}
           </div>
         )}
 
         {view.kind === "error" && (
-          <div style={{ marginTop: 18, padding: "16px 18px", borderRadius: 12, background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.2)", color: "#FCA5A5", fontSize: 14, lineHeight: 1.55 }}>
+          <div style={{ marginTop: 18, padding: "16px 18px", borderRadius: 12, background: "rgba(239,68,68,0.06)", border: "1px solid rgba(239,68,68,0.2)", color: T.dangerText, fontSize: 14, lineHeight: 1.55 }}>
             {view.message}
           </div>
         )}
@@ -398,11 +508,13 @@ export default function SbaChecker({ partner }: { partner?: SbaPartnerConfig }) 
         )}
       </div>
     </div>
+    </ThemeContext.Provider>
   );
 }
 
 function Badge({ label, level }: { label: string; level: string }) {
-  const c = CONF_COLORS[level] ?? COLORS.textDim;
+  const T = useT();
+  const c = CONF_COLORS[level] ?? T.confLow;
   return (
     <span style={{ display: "inline-flex", gap: 6, alignItems: "center", padding: "4px 10px", borderRadius: 8, background: `${c}1A`, border: `1px solid ${c}44`, fontSize: 11.5, fontWeight: 600, color: c, whiteSpace: "nowrap" }}>
       <span style={{ width: 6, height: 6, borderRadius: "50%", background: c }} />
@@ -412,6 +524,7 @@ function Badge({ label, level }: { label: string; level: string }) {
 }
 
 function ThresholdGauge({ verdict, zoneColor }: { verdict: SbaVerdict; zoneColor: string }) {
+  const T = useT();
   const lo = verdict.lenderDscrLow;
   const hi = verdict.lenderDscrHigh;
   const buyer = verdict.buyerCaseDscr;
@@ -443,19 +556,19 @@ function ThresholdGauge({ verdict, zoneColor }: { verdict: SbaVerdict; zoneColor
 
   return (
     <svg viewBox="0 0 640 150" style={{ width: "100%", height: "auto", display: "block" }} xmlns="http://www.w3.org/2000/svg">
-      <text x={clampLabel(x125)} y={22} textAnchor="middle" fill="#E2E8F0" fontSize={11} fontWeight={600} fontFamily="'Inter', sans-serif">1.25&#215; lender min</text>
-      <line x1={x125} y1={30} x2={x125} y2={104} stroke="#E2E8F0" strokeOpacity={0.45} strokeWidth={1.5} strokeDasharray="3 3" />
+      <text x={clampLabel(x125)} y={22} textAnchor="middle" fill={T.gaugeText} fontSize={11} fontWeight={600} fontFamily="'Inter', sans-serif">1.25&#215; lender min</text>
+      <line x1={x125} y1={30} x2={x125} y2={104} stroke={T.gaugeText} strokeOpacity={0.45} strokeWidth={1.5} strokeDasharray="3 3" />
 
-      <text x={clampLabel(bx)} y={52} textAnchor="middle" fill={COLORS.buyer} fontSize={11.5} fontWeight={600} fontFamily="'Inter', sans-serif">Buyer-case {buyer.toFixed(2)}&#215;</text>
-      <path d={`M ${bx - 5} 60 L ${bx + 5} 60 L ${bx} 67 Z`} fill={COLORS.buyer} />
-      <line x1={bx} y1={67} x2={bx} y2={84} stroke={COLORS.buyer} strokeWidth={1.5} />
+      <text x={clampLabel(bx)} y={52} textAnchor="middle" fill={T.buyer} fontSize={11.5} fontWeight={600} fontFamily="'Inter', sans-serif">Buyer-case {buyer.toFixed(2)}&#215;</text>
+      <path d={`M ${bx - 5} 60 L ${bx + 5} 60 L ${bx} 67 Z`} fill={T.buyer} />
+      <line x1={bx} y1={67} x2={bx} y2={84} stroke={T.buyer} strokeWidth={1.5} />
 
-      <line x1={X0} y1={92} x2={X1} y2={92} stroke="rgba(255,255,255,0.12)" strokeWidth={2} strokeLinecap="round" />
+      <line x1={X0} y1={92} x2={X1} y2={92} stroke={T.gaugeTrack} strokeWidth={2} strokeLinecap="round" />
 
       {refTicks.map((t) => (
         <g key={t}>
-          <line x1={xOf(t)} y1={87} x2={xOf(t)} y2={97} stroke="rgba(255,255,255,0.25)" strokeWidth={1.5} />
-          <text x={clampLabel(xOf(t))} y={112} textAnchor="middle" fill={COLORS.textMute} fontSize={10.5} fontFamily="'Inter', sans-serif">{t.toFixed(2)}&#215;</text>
+          <line x1={xOf(t)} y1={87} x2={xOf(t)} y2={97} stroke={T.gaugeTick} strokeWidth={1.5} />
+          <text x={clampLabel(xOf(t))} y={112} textAnchor="middle" fill={T.textMute} fontSize={10.5} fontFamily="'Inter', sans-serif">{t.toFixed(2)}&#215;</text>
         </g>
       ))}
 
@@ -468,10 +581,11 @@ function ThresholdGauge({ verdict, zoneColor }: { verdict: SbaVerdict; zoneColor
 }
 
 function ReasonList({ title, reasons }: { title: string; reasons: string[] }) {
+  const T = useT();
   return (
     <div>
-      <div style={{ fontSize: 11, color: COLORS.textDim, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 5 }}>{title}</div>
-      <ul style={{ margin: 0, paddingLeft: 16, color: COLORS.textMute, fontSize: 12.5, lineHeight: 1.5 }}>
+      <div style={{ fontSize: 11, color: T.textDim, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 5 }}>{title}</div>
+      <ul style={{ margin: 0, paddingLeft: 16, color: T.textMute, fontSize: 12.5, lineHeight: 1.5 }}>
         {reasons.map((r, i) => (
           <li key={i}>{r}</li>
         ))}
@@ -481,11 +595,12 @@ function ReasonList({ title, reasons }: { title: string; reasons: string[] }) {
 }
 
 function Metric({ label, value, hint }: { label: string; value: string; hint: string }) {
+  const T = useT();
   return (
     <div>
-      <div style={{ fontSize: 11, color: COLORS.textDim, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4 }}>{label}</div>
-      <div style={{ fontSize: 18, fontWeight: 600, color: "#F1F5F9", fontFamily: "'Inter Tight', sans-serif" }}>{value}</div>
-      <div style={{ fontSize: 11.5, color: COLORS.textMute, marginTop: 2 }}>{hint}</div>
+      <div style={{ fontSize: 11, color: T.textDim, textTransform: "uppercase", letterSpacing: "0.05em", marginBottom: 4 }}>{label}</div>
+      <div style={{ fontSize: 18, fontWeight: 600, color: T.heading, fontFamily: "'Inter Tight', sans-serif" }}>{value}</div>
+      <div style={{ fontSize: 11.5, color: T.textMute, marginTop: 2 }}>{hint}</div>
     </div>
   );
 }
@@ -511,26 +626,6 @@ type GateState =
   | { kind: "gateError"; message: string }
   | { kind: "revealed"; breakdown: SbaBreakdown };
 
-const BASIS_META: Record<BreakdownLineItem["basis"], { label: string; color: string }> = {
-  input: { label: "INPUT", color: "#94A3B8" },
-  benchmark: { label: "BENCHMARK", color: "#38BDF8" },
-  derived: { label: "DERIVED", color: COLORS.amber },
-  policy: { label: "POLICY", color: "#A78BFA" },
-};
-
-function formatLineValue(li: BreakdownLineItem): string {
-  switch (li.kind) {
-    case "money":
-      return li.value !== undefined ? money(li.value) : "\u2014";
-    case "moneyRange":
-      return li.low !== undefined && li.high !== undefined ? `${money(li.low)} \u2013 ${money(li.high)}` : "\u2014";
-    case "ratio":
-      return li.value !== undefined ? `${li.value}\u00d7` : "\u2014";
-    case "ratioRange":
-      return li.low !== undefined && li.high !== undefined ? `${li.low} \u2013 ${li.high}\u00d7` : "\u2014";
-  }
-}
-
 function buildLeadSource(): string {
   try {
     const params = new URLSearchParams(window.location.search);
@@ -554,6 +649,7 @@ function buildLeadSource(): string {
 }
 
 function BreakdownGate({ token, sample, partner }: { token: string | null; sample?: boolean; partner?: SbaPartnerConfig }) {
+  const T = useT();
   const [gate, setGate] = useState<GateState>({ kind: "locked" });
   const [email, setEmail] = useState("");
 
@@ -620,31 +716,31 @@ function BreakdownGate({ token, sample, partner }: { token: string | null; sampl
   // Partner mode UI: no email form. Loading, error with retry, or the sample note.
   if (partnerBypass) {
     return (
-      <div style={{ marginTop: 14, background: COLORS.panel, border: `1px solid ${COLORS.panelBorder}`, borderRadius: 16, padding: "20px 22px" }}>
+      <div style={{ marginTop: 14, background: T.panel, border: `1px solid ${T.panelBorder}`, borderRadius: 16, padding: "20px 22px" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
-          <span style={{ fontSize: 15, fontWeight: 600, color: "#F1F5F9" }}>Line-by-line add-back breakdown</span>
-          <span style={{ padding: "3px 9px", borderRadius: 6, background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.25)", color: "#34D399", fontSize: 10.5, fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase" }}>
+          <span style={{ fontSize: 15, fontWeight: 600, color: T.heading }}>Line-by-line add-back breakdown</span>
+          <span style={{ padding: "3px 9px", borderRadius: 6, background: "rgba(16,185,129,0.1)", border: "1px solid rgba(16,185,129,0.25)", color: T.successText, fontSize: 10.5, fontWeight: 600, letterSpacing: "0.05em", textTransform: "uppercase" }}>
             Member access
           </span>
         </div>
         {sample ? (
-          <p style={{ margin: 0, fontSize: 13, color: COLORS.textMute, lineHeight: 1.6 }}>
+          <p style={{ margin: 0, fontSize: 13, color: T.textMute, lineHeight: 1.6 }}>
             Run the screen with your own numbers and the full breakdown appears here automatically.
           </p>
         ) : gate.kind === "sending" ? (
-          <p style={{ margin: 0, fontSize: 13, color: COLORS.textDim, lineHeight: 1.6 }}>Loading the member breakdown&hellip;</p>
+          <p style={{ margin: 0, fontSize: 13, color: T.textDim, lineHeight: 1.6 }}>Loading the member breakdown&hellip;</p>
         ) : gate.kind === "gateError" ? (
           <div>
-            <p style={{ margin: "0 0 10px", fontSize: 13, color: "#FCA5A5", lineHeight: 1.6 }}>{gate.message}</p>
+            <p style={{ margin: "0 0 10px", fontSize: 13, color: T.dangerText, lineHeight: 1.6 }}>{gate.message}</p>
             <button
               onClick={() => void partnerUnlock()}
-              style={{ padding: "9px 18px", borderRadius: 8, border: "none", background: COLORS.amber, color: "#0B0F17", fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "'Inter', sans-serif" }}
+              style={{ padding: "9px 18px", borderRadius: 8, border: "none", background: T.amber, color: T.onAmber, fontSize: 13, fontWeight: 700, cursor: "pointer", fontFamily: "'Inter', sans-serif" }}
             >
               Try again
             </button>
           </div>
         ) : (
-          <p style={{ margin: 0, fontSize: 13, color: COLORS.textDim, lineHeight: 1.6 }}>Preparing the breakdown&hellip;</p>
+          <p style={{ margin: 0, fontSize: 13, color: T.textDim, lineHeight: 1.6 }}>Preparing the breakdown&hellip;</p>
         )}
       </div>
     );
@@ -653,17 +749,17 @@ function BreakdownGate({ token, sample, partner }: { token: string | null; sampl
   const disabled = sample || !token;
 
   return (
-    <div style={{ marginTop: 14, background: COLORS.panel, border: `1px solid ${COLORS.panelBorder}`, borderRadius: 16, padding: "20px 22px" }}>
+    <div style={{ marginTop: 14, background: T.panel, border: `1px solid ${T.panelBorder}`, borderRadius: 16, padding: "20px 22px" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 6 }}>
         <span aria-hidden style={{ fontSize: 15 }}>{"\u{1F512}"}</span>
-        <span style={{ fontSize: 15, fontWeight: 600, color: "#F1F5F9" }}>See the line-by-line add-back breakdown</span>
+        <span style={{ fontSize: 15, fontWeight: 600, color: T.heading }}>See the line-by-line add-back breakdown</span>
       </div>
-      <p style={{ margin: "0 0 14px", fontSize: 13, color: COLORS.textDim, lineHeight: 1.6 }}>
+      <p style={{ margin: "0 0 14px", fontSize: 13, color: T.textDim, lineHeight: 1.6 }}>
         The full derivation behind this verdict: the owner-comp haircut, the add-back band a lender may credit,
         the lender-view SDE range, debt service, and a plain-English read of what decides this screen.
       </p>
       {disabled ? (
-        <div style={{ padding: "12px 14px", borderRadius: 10, background: "rgba(255,255,255,0.03)", border: `1px dashed ${COLORS.panelBorder}`, fontSize: 13, color: COLORS.textMute }}>
+        <div style={{ padding: "12px 14px", borderRadius: 10, background: T.insetBg, border: `1px dashed ${T.panelBorder}`, fontSize: 13, color: T.textMute }}>
           {sample
             ? "Run the screen with your own numbers first \u2014 then unlock the breakdown with your email."
             : "The breakdown is unavailable right now. Re-run the screen and try again."}
@@ -677,21 +773,21 @@ function BreakdownGate({ token, sample, partner }: { token: string | null; sampl
               onChange={(e) => setEmail(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Enter") unlock(); }}
               placeholder="you@company.com"
-              style={{ ...inputStyle, flex: "1 1 220px" }}
+              style={{ ...inputStyle(T), flex: "1 1 220px" }}
               disabled={gate.kind === "sending"}
             />
             <button
               onClick={unlock}
               disabled={gate.kind === "sending"}
-              style={{ padding: "11px 20px", borderRadius: 8, border: "none", background: COLORS.amber, color: "#0B0F17", fontSize: 14, fontWeight: 700, cursor: gate.kind === "sending" ? "wait" : "pointer", fontFamily: "'Inter', sans-serif" }}
+              style={{ padding: "11px 20px", borderRadius: 8, border: "none", background: T.amber, color: T.onAmber, fontSize: 14, fontWeight: 700, cursor: gate.kind === "sending" ? "wait" : "pointer", fontFamily: "'Inter', sans-serif" }}
             >
               {gate.kind === "sending" ? "Unlocking\u2026" : "Unlock breakdown"}
             </button>
           </div>
           {gate.kind === "gateError" && (
-            <div style={{ marginTop: 10, fontSize: 12.5, color: "#FCA5A5" }}>{gate.message}</div>
+            <div style={{ marginTop: 10, fontSize: 12.5, color: T.dangerText }}>{gate.message}</div>
           )}
-          <p style={{ margin: "10px 0 0", fontSize: 11.5, color: COLORS.textMute }}>
+          <p style={{ margin: "10px 0 0", fontSize: 11.5, color: T.textMute }}>
             Free. We&rsquo;ll send occasional SBA-buyer underwriting notes &mdash; no spam, unsubscribe anytime.
           </p>
         </>
@@ -701,40 +797,60 @@ function BreakdownGate({ token, sample, partner }: { token: string | null; sampl
 }
 
 function BreakdownCard({ breakdown }: { breakdown: SbaBreakdown }) {
+  const T = useT();
+  const basisMeta: Record<BreakdownLineItem["basis"], { label: string; color: string }> = {
+    input: { label: "INPUT", color: T.basisInput },
+    benchmark: { label: "BENCHMARK", color: T.basisBenchmark },
+    derived: { label: "DERIVED", color: T.amberText },
+    policy: { label: "POLICY", color: T.basisPolicy },
+  };
   return (
-    <div style={{ marginTop: 14, background: COLORS.panel, border: `1px solid ${COLORS.panelBorder}`, borderRadius: 16, overflow: "hidden" }}>
-      <div style={{ padding: "16px 22px", borderBottom: `1px solid ${COLORS.panelBorder}` }}>
-        <div style={{ fontSize: 11, letterSpacing: "0.08em", textTransform: "uppercase", color: COLORS.textMute, fontWeight: 700, marginBottom: 8 }}>
+    <div style={{ marginTop: 14, background: T.panel, border: `1px solid ${T.panelBorder}`, borderRadius: 16, overflow: "hidden" }}>
+      <div style={{ padding: "16px 22px", borderBottom: `1px solid ${T.panelBorder}` }}>
+        <div style={{ fontSize: 11, letterSpacing: "0.08em", textTransform: "uppercase", color: T.textMute, fontWeight: 700, marginBottom: 8 }}>
           What decides this screen
         </div>
-        <p style={{ margin: 0, fontSize: 14.5, color: "#F1F5F9", lineHeight: 1.65 }}>{breakdown.interpretation.killLine}</p>
+        <p style={{ margin: 0, fontSize: 14.5, color: T.heading, lineHeight: 1.65 }}>{breakdown.interpretation.killLine}</p>
       </div>
 
       <div style={{ padding: "10px 22px 16px" }}>
         {breakdown.lineItems.map((li) => {
-          const basis = BASIS_META[li.basis];
+          const basis = basisMeta[li.basis];
           return (
-            <div key={li.id} style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 14, padding: "10px 0", borderBottom: `1px solid rgba(255,255,255,0.05)` }}>
+            <div key={li.id} style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 14, padding: "10px 0", borderBottom: `1px solid ${T.rowBorder}` }}>
               <div style={{ minWidth: 0 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                  <span style={{ fontSize: 13.5, color: "#E2E8F0" }}>{li.label}</span>
+                  <span style={{ fontSize: 13.5, color: T.text }}>{li.label}</span>
                   <span style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: "0.06em", color: basis.color, border: `1px solid ${basis.color}44`, background: `${basis.color}14`, borderRadius: 5, padding: "2px 6px" }}>
                     {basis.label}
                   </span>
                 </div>
-                {li.note && <div style={{ fontSize: 11.5, color: COLORS.textMute, marginTop: 3 }}>{li.note}</div>}
+                {li.note && <div style={{ fontSize: 11.5, color: T.textMute, marginTop: 3 }}>{li.note}</div>}
               </div>
-              <span style={{ fontSize: 14, fontWeight: 600, color: "#F1F5F9", whiteSpace: "nowrap" }}>{formatLineValue(li)}</span>
+              <span style={{ fontSize: 14, fontWeight: 600, color: T.heading, whiteSpace: "nowrap" }}>{formatLineValue(li)}</span>
             </div>
           );
         })}
       </div>
 
-      <div style={{ padding: "12px 22px 16px", background: "rgba(255,255,255,0.015)", borderTop: `1px solid ${COLORS.panelBorder}` }}>
-        <p style={{ margin: 0, fontSize: 11.5, color: COLORS.textMute, lineHeight: 1.55 }}>{breakdown.disclaimer}</p>
+      <div style={{ padding: "12px 22px 16px", background: T.insetBg, borderTop: `1px solid ${T.panelBorder}` }}>
+        <p style={{ margin: 0, fontSize: 11.5, color: T.textMute, lineHeight: 1.55 }}>{breakdown.disclaimer}</p>
       </div>
     </div>
   );
+}
+
+function formatLineValue(li: BreakdownLineItem): string {
+  switch (li.kind) {
+    case "money":
+      return li.value !== undefined ? money(li.value) : "\u2014";
+    case "moneyRange":
+      return li.low !== undefined && li.high !== undefined ? `${money(li.low)} \u2013 ${money(li.high)}` : "\u2014";
+    case "ratio":
+      return li.value !== undefined ? `${li.value}\u00d7` : "\u2014";
+    case "ratioRange":
+      return li.low !== undefined && li.high !== undefined ? `${li.low} \u2013 ${li.high}\u00d7` : "\u2014";
+  }
 }
 
 const CTA_COPY: Record<SbaVerdict["zone"], { lead: string; link: string }> = {
@@ -753,36 +869,39 @@ const CTA_COPY: Record<SbaVerdict["zone"], { lead: string; link: string }> = {
 };
 
 function ResultCta({ zone, onAcquiflowClick }: { zone: SbaVerdict["zone"]; onAcquiflowClick: () => void }) {
+  const T = useT();
   const copy = CTA_COPY[zone];
   return (
     <a
       href={ACQUIFLOW_URL}
       onClick={onAcquiflowClick}
-      style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginTop: 14, padding: "16px 20px", borderRadius: 14, background: "rgba(245,158,11,0.07)", border: "1px solid rgba(245,158,11,0.22)", textDecoration: "none" }}
+      style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 12, marginTop: 14, padding: "16px 20px", borderRadius: 14, background: "rgba(245,158,11,0.07)", border: "1px solid rgba(245,158,11,0.25)", textDecoration: "none" }}
     >
-      <span style={{ fontSize: 14, color: "#F1F5F9", lineHeight: 1.5 }}>
-        {copy.lead} <span style={{ color: COLORS.amber, fontWeight: 600 }}>{copy.link}</span>
+      <span style={{ fontSize: 14, color: T.heading, lineHeight: 1.5 }}>
+        {copy.lead} <span style={{ color: T.amberText, fontWeight: 600 }}>{copy.link}</span>
       </span>
-      <span style={{ color: COLORS.amber, fontSize: 18, fontWeight: 600 }}>&rarr;</span>
+      <span style={{ color: T.amberText, fontSize: 18, fontWeight: 600 }}>&rarr;</span>
     </a>
   );
 }
 
 function VerdictCard({ data, sample }: { data: Extract<ApiResponse, { ok: true }>; sample?: boolean }) {
+  const T = useT();
   const { verdict, meta } = data;
   const zone = ZONE_META[verdict.zone];
+  const tagColor = T.mode === "light" && verdict.zone === "PASS" ? "#0F6E56" : zone.color;
 
   return (
-    <div style={{ marginTop: 20, background: COLORS.panel, border: `1px solid ${COLORS.panelBorder}`, borderRadius: 16, overflow: "hidden" }}>
-      <div style={{ padding: "18px 22px", borderBottom: `1px solid ${COLORS.panelBorder}`, borderTop: `3px solid ${zone.color}` }}>
+    <div style={{ marginTop: 20, background: T.panel, border: `1px solid ${T.panelBorder}`, borderRadius: 16, overflow: "hidden" }}>
+      <div style={{ padding: "18px 22px", borderBottom: `1px solid ${T.panelBorder}`, borderTop: `3px solid ${zone.color}` }}>
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 12 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12, flexWrap: "wrap" }}>
-            <span style={{ padding: "5px 12px", borderRadius: 8, background: `${zone.color}1A`, border: `1px solid ${zone.color}55`, color: zone.color, fontSize: 13, fontWeight: 700, letterSpacing: "0.04em" }}>
+            <span style={{ padding: "5px 12px", borderRadius: 8, background: `${zone.color}1A`, border: `1px solid ${zone.color}55`, color: tagColor, fontSize: 13, fontWeight: 700, letterSpacing: "0.04em" }}>
               {zone.tag}
             </span>
-            <span style={{ fontSize: 16, fontWeight: 600, color: "#F1F5F9" }}>{zone.headline}</span>
+            <span style={{ fontSize: 16, fontWeight: 600, color: T.heading }}>{zone.headline}</span>
             {sample && (
-              <span style={{ padding: "3px 9px", borderRadius: 6, background: "rgba(255,255,255,0.06)", border: `1px solid ${COLORS.panelBorder}`, color: COLORS.textDim, fontSize: 10.5, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase" }}>
+              <span style={{ padding: "3px 9px", borderRadius: 6, background: T.chipBg, border: `1px solid ${T.panelBorder}`, color: T.textDim, fontSize: 10.5, fontWeight: 600, letterSpacing: "0.06em", textTransform: "uppercase" }}>
                 Sample
               </span>
             )}
@@ -795,7 +914,7 @@ function VerdictCard({ data, sample }: { data: Extract<ApiResponse, { ok: true }
       </div>
 
       {sample && (
-        <div style={{ padding: "8px 22px", fontSize: 12, color: COLORS.textDim, background: "rgba(255,255,255,0.015)", borderBottom: `1px solid ${COLORS.panelBorder}` }}>
+        <div style={{ padding: "8px 22px", fontSize: 12, color: T.textDim, background: T.insetBg, borderBottom: `1px solid ${T.panelBorder}` }}>
           Example deal &mdash; edit the numbers above and re-run for your own.
         </div>
       )}
@@ -814,9 +933,9 @@ function VerdictCard({ data, sample }: { data: Extract<ApiResponse, { ok: true }
         <ReasonList title="Why this input confidence" reasons={verdict.inputConfidence.reasons} />
       </div>
 
-      <div style={{ padding: "14px 22px", borderTop: `1px solid ${COLORS.panelBorder}`, background: "rgba(255,255,255,0.015)" }}>
-        <p style={{ margin: 0, fontSize: 12, color: COLORS.textMute, lineHeight: 1.55 }}>{meta.disclaimer}</p>
-        <p style={{ margin: "8px 0 0", fontSize: 12, color: COLORS.textDim, lineHeight: 1.55 }}>
+      <div style={{ padding: "14px 22px", borderTop: `1px solid ${T.panelBorder}`, background: T.insetBg }}>
+        <p style={{ margin: 0, fontSize: 12, color: T.textMute, lineHeight: 1.55 }}>{meta.disclaimer}</p>
+        <p style={{ margin: "8px 0 0", fontSize: 12, color: T.textDim, lineHeight: 1.55 }}>
           This is the same underwriting engine used inside AcquiFlow&rsquo;s full acquisition analysis.
         </p>
       </div>
