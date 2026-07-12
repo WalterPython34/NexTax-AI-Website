@@ -228,9 +228,11 @@ export async function POST(req: NextRequest) {
     let divergencePayload: Record<string, unknown> = {};
     let divergenceStatus: "ok" | "failed" | "skipped" = "skipped";
     let divergenceError: unknown = undefined;
+    let marginRefsForDisplay: Awaited<ReturnType<typeof loadMarginReferences>> = []; // [E4 P2]
     if (normInputsPresent && industry) {
       try {
         const marginRefs = await loadMarginReferences(supabaseAdmin, industry);
+        marginRefsForDisplay = marginRefs; // [E4 P2] reused for the response display payload
         const observation = computeDivergenceObservation(
           { revenue: revNum, sde: sdeNum, industry },
           marginRefs
@@ -583,6 +585,27 @@ export async function POST(req: NextRequest) {
       gap_pct > 10  ? "overpriced" :
       gap_pct < -5  ? "opportunity" :
       "fair";
+    // ── [E4 P2] Divergence display payload — server-computed reference figures
+    // for the modal's chip, quality label, Verification Case, and the
+    // lens-disagreement range rule (D3: no single number during disagreement).
+    let divergenceDisplay: Record<string, unknown> | null = null;
+    if (divergenceStatus === "ok") {
+      const closedRow = marginRefsForDisplay.find(
+        (r) => r.source === "closed" && r.industry_key === industry
+      );
+      divergenceDisplay = {
+        band:                   obs.divergence_band ?? null,
+        quality:                obs.reference_source_quality ?? null,
+        closed_lens_band:       obs.closed_lens_band ?? null,
+        peer_margin_percentile: (divergencePayload as { peer_margin_percentile?: number }).peer_margin_percentile ?? null,
+        low_margin_flag:        (divergencePayload as { low_margin_flag?: boolean }).low_margin_flag ?? false,
+        reference_n:            (divergencePayload as { reference_n?: number }).reference_n ?? null,
+        industry_reference_sde: (divergencePayload as { industry_reference_sde?: number }).industry_reference_sde ?? null,
+        closed_reference_sde:
+          closedRow?.p50 != null ? Math.round(revNum * closedRow.p50) : null,
+      };
+    }
+
     return NextResponse.json({
       success: true,
       cluster_id,
@@ -598,6 +621,8 @@ export async function POST(req: NextRequest) {
         ceiling:              cap.ceiling,
         verificationRequired: cap.verificationRequired,
       },
+      // [E4 P2] Divergence display payload (null when observation skipped/failed)
+      divergence: divergenceDisplay,
       deal: inserted ? { ...inserted, gap_pct, signal } : null,
     });
   } catch (error) {
