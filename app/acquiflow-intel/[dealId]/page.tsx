@@ -795,6 +795,10 @@ function NarrativeBlock({ narrative }: { narrative: any }) {
   const sections = [
     { key: "posture", label: "Posture" },
     { key: "market_context", label: "Market context" },
+    // [E4 P3] Verification — present only for v2.0 rows with an observed
+    // divergence (the narrative layer omits the key otherwise, and missing
+    // keys render nothing below — no header, no empty shell).
+    { key: "verification", label: "Verification" },
     { key: "evidence", label: "Evidence & diligence focus" },
   ];
   return (

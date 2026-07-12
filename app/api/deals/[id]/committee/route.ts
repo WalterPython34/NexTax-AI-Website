@@ -92,7 +92,7 @@ export async function GET(
   // the explicit ownership check is load-bearing.
   const { data: deal, error: dealErr } = await supabaseAdmin
     .from("deal_runs")
-    .select("id, user_id, industry, revenue, sde, asking_price, city, state")
+    .select("id, user_id, industry, revenue, sde, asking_price, city, state, score_version, confidence_grade, divergence_band, closed_lens_band, reference_source_quality, reference_n, generated_investigation_items_json")
     .eq("id", dealId)
     .maybeSingle();
 
@@ -192,6 +192,27 @@ export async function GET(
     console.warn(`[committee] tax structure section failed for ${dealId}:`, e instanceof Error ? e.message : String(e));
   }
 
+  // ── [E4 P3] Verification inputs — deterministic, v2.0-gated ──
+  // Passed to the narrative layer ONLY for v2.0 rows with an observed
+  // divergence. Pre-v2 rows (score_version null / legacy) and rows where the
+  // observation was skipped (divergence_band null) get NO verification section.
+  // Only priority-1 checklist items travel to the prompt ("highest-priority
+  // evidence gaps"); the full snapshot stays on the workbench surface.
+  type InvestigationItem = { item_key: string; trigger: string; template_version: string; priority: 1 | 2 | 3; text: string };
+  const verificationInputs =
+    deal.score_version === "v2.0" && deal.divergence_band != null
+      ? {
+          confidence_grade: deal.confidence_grade ?? null,
+          divergence_band: deal.divergence_band as string,
+          closed_lens_band: (deal.closed_lens_band ?? null) as string | null,
+          reference_source_quality: (deal.reference_source_quality ?? null) as string | null,
+          reference_n: (deal.reference_n ?? null) as number | null,
+          priority_one_items: Array.isArray(deal.generated_investigation_items_json)
+            ? (deal.generated_investigation_items_json as InvestigationItem[]).filter((i) => i.priority === 1)
+            : [],
+        }
+      : null;
+
   // ── Stream 3: committee narrative — presentation-layer synthesis ──
   // Best-effort: reads streams 1 + 2 to write institutional prose. Returns null
   // on any failure (missing key, API error, guard rejection) so the committee
@@ -204,7 +225,7 @@ export async function GET(
       revenue: deal.revenue ?? null,
       sde: deal.sde ?? null,
       asking_price: deal.asking_price ?? null,
-    });
+    }, verificationInputs);
   } catch (e) {
     narrative = null;
     console.warn(`[committee] narrative generation failed for ${dealId}:`, e instanceof Error ? e.message : String(e));

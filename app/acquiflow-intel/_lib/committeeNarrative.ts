@@ -38,8 +38,21 @@ const ANTHROPIC_API_KEY =
 export interface CommitteeNarrative {
   posture: string;        // the binding question, in committee voice
   market_context: string; // factual placement vs closed comps + listings + DOM
+  verification?: string;  // [E4 P3] verification posture + evidence gaps (v2.0 rows only)
   evidence: string;       // what the read rests on; the diligence path framing
   model: string;          // which model produced it (provenance)
+}
+
+// [E4 P3] Deterministic verification inputs — supplied by the committee route
+// ONLY for v2.0 rows with an observed divergence. When null, no verification
+// section is requested and the output shape is unchanged.
+export interface VerificationInputs {
+  confidence_grade: string | null;
+  divergence_band: string;
+  closed_lens_band: string | null;
+  reference_source_quality: string | null;
+  reference_n: number | null;
+  priority_one_items: { item_key: string; trigger: string; template_version: string; priority: 1 | 2 | 3; text: string }[];
 }
 
 // Position phrasing — factual, never a verdict.
@@ -99,6 +112,23 @@ function buildFactBrief(cp: any, mf: any, deal: any): string {
   return lines.join("\n");
 }
 
+// [E4 P3] Verification brief — deterministic fields only, no derived figures.
+function buildVerificationBrief(v: VerificationInputs): string {
+  const lines: string[] = [];
+  lines.push("");
+  lines.push("VERIFICATION POSTURE (deterministic v2.0 observation — narrate, do not reinterpret):");
+  lines.push(`- Confidence grade: ${v.confidence_grade ?? "not recorded"}`);
+  lines.push(`- Divergence band: ${v.divergence_band}; closed-lens band: ${v.closed_lens_band ?? "not recorded"}`);
+  lines.push(`- Reference source quality: ${v.reference_source_quality ?? "not recorded"}; peer reference count: ${v.reference_n ?? "not recorded"}`);
+  if (v.priority_one_items.length > 0) {
+    lines.push("- Highest-priority evidence gaps:");
+    v.priority_one_items.forEach((it, i) => lines.push(`  ${i + 1}. ${it.text}`));
+  } else {
+    lines.push("- Highest-priority evidence gaps: none recorded");
+  }
+  return lines.join("\n");
+}
+
 function money(n: any): string {
   if (typeof n !== "number" || !Number.isFinite(n)) return "n/a";
   return "$" + (n >= 1e6 ? (n / 1e6).toFixed(2) + "M" : (n / 1e3).toFixed(0) + "K");
@@ -128,6 +158,15 @@ OUTPUT FORMAT — return ONLY valid JSON, no preamble, no markdown:
   "evidence": "2-3 sentences: what the read rests on — the capital-structure posture spread and the evidence the engine flags as needing strengthening, framed as what a committee would examine before commitment. No recommendations."
 }`;
 
+// [E4 P3] Appended to the system prompt ONLY when verification inputs are
+// provided. The middle paragraph is the design-locked instruction, verbatim.
+const VERIFICATION_PROMPT_ADDENDUM = `
+
+VERIFICATION SECTION — the inputs include a VERIFICATION POSTURE block. Add a fourth key to the JSON output, between "market_context" and "evidence":
+  "verification": "2-4 sentences narrating the verification posture and the highest-priority evidence gaps."
+
+Narrate the verification posture and the listed evidence gaps in committee language. You may not add, remove, reword the substance of, or re-prioritize any item. State the confidence grade and, where the grade is UNVERIFIED, render it as Earnings Verification Required. Do not use the words implied, corrected, adjusted, or lender. Do not present the industry reference as an earnings conclusion.`;
+
 /**
  * Generate the committee narrative. Best-effort: returns null on any failure
  * (missing key, API error, malformed output, or guard rejection) so the
@@ -137,11 +176,14 @@ export async function generateCommitteeNarrative(
   cp: any,
   marketFacts: any,
   dealFacts: any,
+  verification: VerificationInputs | null = null,
 ): Promise<CommitteeNarrative | null> {
   if (!ANTHROPIC_API_KEY) return null;
   if (!cp?.readiness) return null;
 
-  const brief = buildFactBrief(cp, marketFacts, dealFacts);
+  const brief = buildFactBrief(cp, marketFacts, dealFacts)
+    + (verification ? "\n" + buildVerificationBrief(verification) : "");
+  const systemPrompt = SYSTEM_PROMPT + (verification ? VERIFICATION_PROMPT_ADDENDUM : "");
 
   try {
     const res = await fetch("https://api.anthropic.com/v1/messages", {
@@ -153,8 +195,8 @@ export async function generateCommitteeNarrative(
       },
       body: JSON.stringify({
         model: COMMITTEE_NARRATIVE_MODEL,
-        max_tokens: 900,
-        system: SYSTEM_PROMPT,
+        max_tokens: 1200,
+        system: systemPrompt,
         messages: [{ role: "user", content: `Draft the committee memo sections from these inputs:\n\n${brief}` }],
       }),
     });
@@ -182,7 +224,13 @@ export async function generateCommitteeNarrative(
     }
     if (!parsed.posture || !parsed.market_context || !parsed.evidence) return null;
 
-    const combined = `${parsed.posture}\n${parsed.market_context}\n${parsed.evidence}`;
+    // [E4 P3] Verification section — only honored when it was requested.
+    // Best-effort: if the model omitted it, the memo renders without the
+    // section (same graceful-degradation posture as the narrative itself).
+    let verificationText: string | null =
+      verification && parsed.verification ? String(parsed.verification).trim() : null;
+
+    const combined = `${parsed.posture}\n${parsed.market_context}\n${verificationText ?? ""}\n${parsed.evidence}`;
 
     // ── POST-GENERATION GUARD — reject prohibited language ──
     if (violatesProhibitions(combined)) {
@@ -190,9 +238,18 @@ export async function generateCommitteeNarrative(
       return null;
     }
 
+    // [E4 P3] Copy-constraint guard, verification section only: these words are
+    // banned in verification prose but may legitimately appear elsewhere in the
+    // memo, so a violation drops the section, not the whole narrative.
+    if (verificationText && /\b(implied|corrected|adjusted|lender)\b/i.test(verificationText)) {
+      console.warn("[committee-narrative] verification section rejected (banned verification language)");
+      verificationText = null;
+    }
+
     return {
       posture: String(parsed.posture).trim(),
       market_context: String(parsed.market_context).trim(),
+      ...(verificationText ? { verification: verificationText } : {}),
       evidence: String(parsed.evidence).trim(),
       model: COMMITTEE_NARRATIVE_MODEL,
     };

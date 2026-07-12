@@ -86,6 +86,20 @@ interface DealRun {
   manual_review_required?:        boolean | null;
   benchmark_is_proxy?:            boolean | null;
   earnings_basis?:                "reported" | "blended" | "benchmark_implied" | null;
+  // ── E4 v2.0 verification layer (null on pre-v2 rows) ─────────────────────
+  score_version?:            string | null;
+  verdict_pre_cap?:          string | null;
+  divergence_band?:          "LOW" | "MODERATE" | "HIGH" | "EXTREME" | null;
+  closed_lens_band?:         "LOW" | "MODERATE" | "HIGH" | "EXTREME" | null;
+  reference_source_quality?: "A" | "B" | "C" | null;
+  reference_n?:              number | null;
+  peer_margin_percentile?:   number | null;
+  industry_reference_sde?:   number | null;
+  low_margin_flag?:          boolean | null;
+  generated_investigation_items_json?: {
+    item_key: string; trigger: string; template_version: string;
+    priority: 1 | 2 | 3; text: string;
+  }[] | null;
   scoreExplanation?: string[];         // from generateScoreExplanation()
   rmaBenchmarks?: {
     ebitdaMarginPct:    number | null;
@@ -5810,6 +5824,169 @@ function StatCards({ deals, loading }: { deals: DealRun[]; loading: boolean }) {
 
 // ─── PRO COMMAND MODULE ───────────────────────────────────────────────────────
 
+// ─── E4 P3: VERIFICATION & INVESTIGATION PANEL ───────────────────────────────
+// Workbench read surface for v2.0 rows. Renders the persisted divergence
+// observation and the immutable investigation checklist snapshot. Read-only:
+// no checkboxes, no state, no writes — the interactive checklist is a future,
+// separate feature. Callers gate on score_version === "v2.0" && divergence_band.
+function VerificationInvestigationPanel({ deal }: { deal: DealRun }) {
+  const BAND_COL: Record<string, string> = { LOW: "#10B981", MODERATE: "#F59E0B", HIGH: "#F97316", EXTREME: "#EF4444" };
+  const BAND_BG:  Record<string, string> = { LOW: "rgba(16,185,129,0.12)", MODERATE: "rgba(245,158,11,0.12)", HIGH: "rgba(249,115,22,0.12)", EXTREME: "rgba(239,68,68,0.12)" };
+  const GRADE_COL: Record<string, string> = { HIGH: "#10B981", MODERATE: "#F59E0B", LOW: "#F97316", UNVERIFIED: "#EF4444" };
+  const GRADE_BG:  Record<string, string> = { HIGH: "rgba(16,185,129,0.12)", MODERATE: "rgba(245,158,11,0.12)", LOW: "rgba(249,115,22,0.12)", UNVERIFIED: "rgba(239,68,68,0.12)" };
+  const PRIORITY: Record<number, { label: string; color: string }> = {
+    1: { label: "Critical",   color: "#EF4444" },
+    2: { label: "Important",  color: "#F59E0B" },
+    3: { label: "Contextual", color: "#6B7280" },
+  };
+
+  const band = deal.divergence_band!;
+  const grade = deal.confidence_grade ?? null;
+  const gradeLabel = grade === "UNVERIFIED" ? "EARNINGS VERIFICATION REQUIRED" : grade;
+  const items = Array.isArray(deal.generated_investigation_items_json) ? deal.generated_investigation_items_json : [];
+
+  const chipStyle = (color: string, bg: string): React.CSSProperties => ({
+    display: "inline-flex", alignItems: "center", padding: "4px 10px", borderRadius: 999,
+    background: bg, fontSize: 10, fontWeight: 700, color, letterSpacing: "0.06em",
+    textTransform: "uppercase" as any,
+  });
+
+  // ── 1b: Verification Case math (pure ratios from persisted values) ────────
+  const sde = deal.sde ?? 0;
+  const refSde = deal.industry_reference_sde ?? null;
+  const showCase = refSde != null && sde > 0;
+  const ratio = showCase ? refSde / sde : 0;
+  const refFV = showCase ? Math.round((deal.fair_value ?? 0) * ratio) : 0;
+  const refDSCR = showCase ? +((deal.dscr ?? 0) * ratio).toFixed(2) : 0;
+  const ORDER: Record<string, number> = { LOW: 0, MODERATE: 1, HIGH: 2, EXTREME: 3 };
+  const lensesDisagree =
+    deal.closed_lens_band != null &&
+    Math.abs(ORDER[deal.closed_lens_band] - ORDER[band]) > 1;
+
+  const colStyle: React.CSSProperties = {
+    flex: 1, padding: "12px 14px", borderRadius: 10,
+    background: "rgba(255,255,255,0.02)", border: "1px solid rgba(255,255,255,0.06)",
+  };
+  const colHeader: React.CSSProperties = {
+    fontSize: 10, fontWeight: 700, textTransform: "uppercase" as any,
+    letterSpacing: "0.07em", marginBottom: 8,
+  };
+  const metricLabel: React.CSSProperties = { fontSize: 9, color: "#7C8593" };
+  const metricValue: React.CSSProperties = {
+    fontSize: 14, fontWeight: 700, color: "#E2E8F0", fontFamily: "'JetBrains Mono',monospace",
+  };
+
+  return (
+    <div style={{
+      padding: "14px 16px", borderRadius: 10, marginBottom: 14,
+      background: "rgba(0,0,0,0.25)", border: "1px solid rgba(255,255,255,0.06)",
+    }}>
+      <div style={{ fontSize: 11, fontWeight: 700, color: "#94A3B8", textTransform: "uppercase" as any, letterSpacing: "0.08em", marginBottom: 10 }}>
+        Verification &amp; Investigation
+      </div>
+
+      {/* 1a — header row: divergence chip + grade chip + reference quality */}
+      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" as const, marginBottom: 12 }}>
+        <span style={chipStyle(BAND_COL[band] ?? "#94A3B8", BAND_BG[band] ?? "rgba(148,163,184,0.12)")}>
+          DIVERGENCE: {band}
+        </span>
+        {gradeLabel && (
+          <span style={chipStyle(GRADE_COL[grade ?? ""] ?? "#94A3B8", GRADE_BG[grade ?? ""] ?? "rgba(148,163,184,0.12)")}>
+            {gradeLabel}
+          </span>
+        )}
+        {deal.reference_source_quality != null && (
+          <span style={{ fontSize: 11, color: "#7C8593" }}>
+            Reference {deal.reference_source_quality}
+            {deal.reference_n != null && <> · {deal.reference_n} peers</>}
+            {deal.peer_margin_percentile != null && <> · {Math.round(deal.peer_margin_percentile * 100)}th percentile margin</>}
+          </span>
+        )}
+      </div>
+
+      {/* 1b — Seller Case / Verification Case (suppressed without a reference SDE) */}
+      {showCase && (
+        <div style={{ display: "flex", gap: 10, marginBottom: 12 }}>
+          <div style={colStyle}>
+            <div style={{ ...colHeader, color: "#60A5FA" }}>Seller Case</div>
+            <div style={{ display: "flex", flexDirection: "column" as any, gap: 6 }}>
+              <div>
+                <div style={metricLabel}>Reported SDE</div>
+                <div style={metricValue}>${sde.toLocaleString()}</div>
+              </div>
+              <div>
+                <div style={metricLabel}>Fair Value</div>
+                <div style={metricValue}>${Math.round(deal.fair_value ?? 0).toLocaleString()}</div>
+              </div>
+              <div>
+                <div style={metricLabel}>DSCR</div>
+                <div style={metricValue}>{(deal.dscr ?? 0).toFixed(2)}x</div>
+              </div>
+            </div>
+          </div>
+          <div style={colStyle}>
+            <div style={{ ...colHeader, color: "#A5B4FC" }}>Verification Case</div>
+            {lensesDisagree ? (
+              <div style={{ fontSize: 11, color: "#94A3B8", lineHeight: 1.6 }}>
+                The available reference lenses disagree materially for this category. No single industry-reference scenario is presented until the reference basis is resolved.
+              </div>
+            ) : (
+              <>
+                <div style={{ display: "flex", flexDirection: "column" as any, gap: 6 }}>
+                  <div>
+                    <div style={metricLabel}>Reference SDE</div>
+                    <div style={metricValue}>${Math.round(refSde).toLocaleString()}</div>
+                  </div>
+                  <div>
+                    <div style={metricLabel}>Fair Value</div>
+                    <div style={metricValue}>${refFV.toLocaleString()}</div>
+                  </div>
+                  <div>
+                    <div style={metricLabel}>DSCR</div>
+                    <div style={metricValue}>{refDSCR.toFixed(2)}x</div>
+                  </div>
+                </div>
+                <div style={{ fontSize: 10, color: "#64748B", fontStyle: "italic", marginTop: 8 }}>
+                  Reference sensitivity, not an estimate of verified earnings.
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* 1c — investigation checklist (read-only snapshot, stored order) */}
+      {items.length > 0 && (
+        <div>
+          <div style={{ fontSize: 10, fontWeight: 700, color: "#7C8593", textTransform: "uppercase" as any, letterSpacing: "0.07em", marginBottom: 8 }}>
+            Investigation Checklist
+          </div>
+          {items.map((it, i) => {
+            const p = PRIORITY[it.priority] ?? PRIORITY[3];
+            return (
+              <div key={it.item_key ?? i} style={{ display: "flex", gap: 8, alignItems: "flex-start", marginBottom: 6 }}>
+                <span style={{
+                  flexShrink: 0, padding: "2px 8px", borderRadius: 999, marginTop: 1,
+                  background: `${p.color}1F`, color: p.color, fontSize: 9, fontWeight: 700,
+                  textTransform: "uppercase" as any, letterSpacing: "0.06em",
+                }}>
+                  {p.label}
+                </span>
+                <span style={{ fontSize: 11, color: "#94A3B8", lineHeight: 1.55 }}>{it.text}</span>
+              </div>
+            );
+          })}
+        </div>
+      )}
+      {deal.low_margin_flag === true && (
+        <div style={{ fontSize: 11, color: "#64748B", lineHeight: 1.55, marginTop: 8 }}>
+          Margin unusually low for this category. This does not affect the confidence grade.
+        </div>
+      )}
+    </div>
+  );
+}
+
 function ProCommandModule({
   deals, onOpenUnderwriting, isPro, downloadingDealId, onDownloadReport,
   selectedDeal, onSelectDeal, onOpenUnderwritingTab,
@@ -5933,6 +6110,11 @@ function ProCommandModule({
             </button>
           </div>
         </div>
+      )}
+
+      {/* E4 P3: Verification & Investigation — v2.0 rows with an observed divergence only */}
+      {lastAnalysis && lastAnalysis.score_version === "v2.0" && lastAnalysis.divergence_band != null && (
+        <VerificationInvestigationPanel deal={lastAnalysis} />
       )}
 
       {/* Action grid */}
@@ -9634,7 +9816,7 @@ const dealHasFullAccess = (dealId: string): boolean => {
     // Try the full SELECT first — includes evidence_profile for post-migration deals
     let { data, error } = await supabase
       .from("deal_runs")
-      .select("id,tool_used,industry,asking_price,fair_value,valuation_multiple,dscr,overall_score,risk_level,city,state,created_at,confidence_grade,revenue,sde,benchmark_family,rma_naics_code,classification_confidence,reported_sde,usable_sde,benchmark_implied_sde,earnings_source,normalization_trust_score,normalization_confidence_level,normalization_flags_json,manual_review_required,benchmark_is_proxy,evidence_profile,red_flags,green_flags")
+      .select("id,tool_used,industry,asking_price,fair_value,valuation_multiple,dscr,overall_score,risk_level,city,state,created_at,confidence_grade,revenue,sde,benchmark_family,rma_naics_code,classification_confidence,reported_sde,usable_sde,benchmark_implied_sde,earnings_source,normalization_trust_score,normalization_confidence_level,normalization_flags_json,manual_review_required,benchmark_is_proxy,evidence_profile,red_flags,green_flags,score_version,verdict,verdict_pre_cap,divergence_band,closed_lens_band,reference_source_quality,reference_n,peer_margin_percentile,industry_reference_sde,low_margin_flag,generated_investigation_items_json")
       .eq("user_id", uid)
       .order("created_at", { ascending: false })
       .limit(100);
@@ -9645,7 +9827,7 @@ const dealHasFullAccess = (dealId: string): boolean => {
       console.warn("fetchDeals full-select failed, retrying minimal:", error.message);
       const fallback = await supabase
         .from("deal_runs")
-        .select("id,tool_used,industry,asking_price,fair_value,valuation_multiple,dscr,overall_score,risk_level,city,state,created_at,confidence_grade,revenue,sde,benchmark_family,rma_naics_code,classification_confidence,reported_sde,usable_sde,benchmark_implied_sde,earnings_source,normalization_trust_score,normalization_confidence_level,normalization_flags_json,manual_review_required,benchmark_is_proxy")
+        .select("id,tool_used,industry,asking_price,fair_value,valuation_multiple,dscr,overall_score,risk_level,city,state,created_at,confidence_grade,revenue,sde,benchmark_family,rma_naics_code,classification_confidence,reported_sde,usable_sde,benchmark_implied_sde,earnings_source,normalization_trust_score,normalization_confidence_level,normalization_flags_json,manual_review_required,benchmark_is_proxy,score_version,verdict,verdict_pre_cap,divergence_band,closed_lens_band,reference_source_quality,reference_n,peer_margin_percentile,industry_reference_sde,low_margin_flag,generated_investigation_items_json")
         .eq("user_id", uid)
         .order("created_at", { ascending: false })
         .limit(100);
