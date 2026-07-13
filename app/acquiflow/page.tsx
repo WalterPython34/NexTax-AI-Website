@@ -4,7 +4,7 @@ import "./acquiflow.css";
 import { AcquiflowVideo } from "@/components/acquiflow-video";
 import { StripeCheckoutButton } from "@/components/stripe-checkout-button"
 
-const PRO_PRICE_ID = "price_1TPbTTGA3ir6ndSx14wKWA27"
+const PRO_PRICE_ID = "price_1TsamtGA3ir6ndSx3alTZQ3z"
 
 export const metadata: Metadata = {
   title: "AcquiFlow — Pre-LOI Deal Intelligence | NexTax.AI",
@@ -370,7 +370,7 @@ export default function AcquiFlowPage() {
 
             <div className="price-card pro">
               <div className="price-tier">Pro</div>
-              <div className="price-amount"><span className="num">$39</span><span className="denom">/ month</span></div>
+              <div className="price-amount"><span className="num">$49</span><span className="denom">/ month</span></div>
               <div style={{ width: "100%", marginBottom: "32px" }}>
                 <StripeCheckoutButton priceId={PRO_PRICE_ID} className="w-full h-12 text-base font-semibold">
                  Upgrade to Pro →
