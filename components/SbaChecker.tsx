@@ -24,6 +24,7 @@ import { SBA_INDUSTRIES, SBA_INDUSTRY_BY_KEY } from "@/lib/sba/industries";
 import type { SbaVerdict } from "@/lib/sba/sba-engine";
 import type { OwnerRole } from "@/lib/sba/owner-comp-provider";
 import type { SbaBreakdown, BreakdownLineItem } from "@/lib/sba/breakdown";
+import { PARTNER_COMMERCE } from "@/lib/partners";
 
 // ─── Theme ────────────────────────────────────────────────────────────────────
 
@@ -137,7 +138,9 @@ export interface SbaPartnerConfig {
 export const SBA_PARTNERS: Record<string, SbaPartnerConfig> = {
   smbdealhunter: {
     slug: "smbdealhunter",
-    displayName: "SMB Deal Hunter",
+    // Single source: identity comes from lib/partners so the checker, the
+    // signin strip, and the checkout can never disagree.
+    displayName: PARTNER_COMMERCE.smbdealhunter.displayName,
     gateBypass: true,
     theme: "light",
   },
@@ -914,7 +917,7 @@ function ResultCta({ zone, partner, onAcquiflowClick }: { zone: SbaVerdict["zone
   if (partner) {
     return (
       <a
-        href={ACQUIFLOW_URL}
+        href="/buyer-dashboard"
         onClick={onAcquiflowClick}
         style={{ display: "block", marginTop: 14, padding: "20px 22px", borderRadius: 14, background: "rgba(245,158,11,0.07)", border: "1px solid rgba(245,158,11,0.25)", textDecoration: "none", textAlign: "center" as const }}
       >
