@@ -195,7 +195,7 @@ const SAMPLE_RESULT: Extract<ApiResponse, { ok: true }> = {
     zone: "BUBBLE",
     verdictConfidence: {
       level: "Low",
-      reasons: ["The range straddles the 1.25x lender minimum — the verdict depends on how add-backs are documented."],
+      reasons: ["The range straddles the 1.25\u00d7 lender minimum: the verdict depends on how add-backs are documented."],
     },
     inputConfidence: {
       level: "High",
@@ -246,6 +246,12 @@ function parseMoney(raw: string): number | null {
 
 function money(n: number): string {
   return n.toLocaleString("en-US", { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+}
+
+/** Normalize a money input on blur: "550000" -> "$550,000". Invalid input is left as typed. */
+function formatMoneyInput(raw: string): string {
+  const n = parseMoney(raw);
+  return n !== null ? `$${n.toLocaleString("en-US")}` : raw;
 }
 
 function ownerCompHint(oc: SbaVerdict["ownerComp"]): string {
@@ -316,9 +322,11 @@ export default function SbaChecker({ partner }: { partner?: SbaPartnerConfig }) 
   // On mobile the verdict renders below the fold; bring it into view on a live run.
   const resultRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    if (view.kind === "verdict") {
+    if (view.kind !== "verdict") return;
+    const t = setTimeout(() => {
       resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }
+    }, 80);
+    return () => clearTimeout(t);
   }, [view.kind]);
 
   // AcquiFlow handoff: stash the typed deal so the buyer dashboard can
@@ -397,16 +405,24 @@ export default function SbaChecker({ partner }: { partner?: SbaPartnerConfig }) 
   return (
     <ThemeContext.Provider value={T}>
     <div style={{ minHeight: "100vh", background: T.bg, color: T.text, fontFamily: "'Inter', sans-serif" }}>
+      {/* Slim co-brand header. The global site nav and footer hide on partner
+           routes via SiteChromeGate, so this page is a self-contained surface. */}
+      {partner && (
+        <header style={{
+          position: "sticky", top: 0, zIndex: 40,
+          display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
+          padding: "13px 24px",
+          background: T.bg,
+          borderBottom: `1px solid ${T.panelBorder}`,
+        }}>
+          <span style={{ fontSize: 15, fontWeight: 700, color: T.heading, fontFamily: "'Inter Tight', sans-serif" }}>AcquiFlow</span>
+          <span style={{ color: T.textMute, fontSize: 13 }}>&times;</span>
+          <span style={{ display: "inline-flex", alignItems: "center", padding: "5px 16px", border: `1.5px dashed ${T.inputBorder}`, borderRadius: 8, fontSize: 11, color: T.textMute }}>
+            partner logo slot
+          </span>
+        </header>
+      )}
       <div style={{ padding: "44px 24px 28px", textAlign: "center", background: `radial-gradient(ellipse at center top, ${T.heroGlow} 0%, transparent 60%)` }}>
-        {partner && (
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "center", gap: 10, marginBottom: 16 }}>
-            <span style={{ fontSize: 14, fontWeight: 700, color: T.heading, fontFamily: "'Inter Tight', sans-serif" }}>AcquiFlow</span>
-            <span style={{ color: T.textMute, fontSize: 13 }}>&times;</span>
-            <span style={{ display: "inline-flex", alignItems: "center", padding: "5px 16px", border: `1.5px dashed ${T.inputBorder}`, borderRadius: 8, fontSize: 11, color: T.textMute }}>
-              partner logo slot
-            </span>
-          </div>
-        )}
         <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "5px 14px", borderRadius: 20, background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.22)", fontSize: 11, color: T.amberText, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 18 }}>
           SBA Deal Check
         </div>
@@ -438,15 +454,15 @@ export default function SbaChecker({ partner }: { partner?: SbaPartnerConfig }) 
             </div>
             <div>
               <label style={labelStyle(T)}>Annual revenue</label>
-              <input value={revenue} onChange={(e) => setRevenue(e.target.value)} placeholder="$2,400,000" inputMode="numeric" style={inputStyle(T)} />
+              <input value={revenue} onChange={(e) => setRevenue(e.target.value)} onBlur={() => setRevenue(formatMoneyInput(revenue))} placeholder="$2,400,000" inputMode="numeric" style={inputStyle(T)} />
             </div>
             <div>
               <label style={labelStyle(T)}>Seller-reported SDE</label>
-              <input value={sde} onChange={(e) => setSde(e.target.value)} placeholder="$600,000" inputMode="numeric" style={inputStyle(T)} />
+              <input value={sde} onChange={(e) => setSde(e.target.value)} onBlur={() => setSde(formatMoneyInput(sde))} placeholder="$600,000" inputMode="numeric" style={inputStyle(T)} />
             </div>
             <div>
               <label style={labelStyle(T)}>Asking price</label>
-              <input value={askingPrice} onChange={(e) => setAskingPrice(e.target.value)} placeholder="$1,200,000" inputMode="numeric" style={inputStyle(T)} />
+              <input value={askingPrice} onChange={(e) => setAskingPrice(e.target.value)} onBlur={() => setAskingPrice(formatMoneyInput(askingPrice))} placeholder="$1,200,000" inputMode="numeric" style={inputStyle(T)} />
             </div>
             <div>
               <label style={labelStyle(T)}>Owner&rsquo;s role</label>
@@ -458,7 +474,8 @@ export default function SbaChecker({ partner }: { partner?: SbaPartnerConfig }) 
             </div>
           </div>
 
-          <button onClick={() => setShowFinancing((s) => !s)} style={{ marginTop: 16, background: "none", border: "none", color: T.textDim, fontSize: 12, cursor: "pointer", padding: 0, fontFamily: "'Inter', sans-serif" }}>
+          <button onClick={() => setShowFinancing((s) => !s)} style={{ marginTop: 16, background: "none", border: "none", color: T.amberText, fontSize: 12, cursor: "pointer", padding: 0, fontFamily: "'Inter', sans-serif", textDecoration: "underline", textUnderlineOffset: 3 }}>
+            <span style={{ display: "inline-block", marginRight: 6, transform: showFinancing ? "rotate(90deg)" : "none", transition: "transform 0.15s" }}>&#9656;</span>
             {showFinancing ? "Hide" : "Adjust"} financing assumptions ({downPayment}% down &middot; {rate}% &middot; {term}yr)
           </button>
 
@@ -529,53 +546,57 @@ function ThresholdGauge({ verdict, zoneColor }: { verdict: SbaVerdict; zoneColor
   const hi = verdict.lenderDscrHigh;
   const buyer = verdict.buyerCaseDscr;
 
-  const dMin = Math.min(lo, buyer, 1.0);
-  const dMax = Math.max(hi, buyer, 1.5);
-  const span = dMax - dMin;
-  const pad = Math.max(span * 0.12, 0.1);
-  const domainMin = Math.max(0, dMin - pad);
-  const domainMax = dMax + pad;
+  // Coherent scale: even ticks spanning everything on screen, snapped outward
+  // to the tick step so the axis always starts and ends on a labeled value.
+  const rawMin = Math.min(lo, buyer, 1.0);
+  const rawMax = Math.max(hi, buyer, 1.5);
+  const step = rawMax - rawMin > 3 ? 1 : 0.5;
+  const domainMin = Math.max(0, Math.floor(rawMin / step) * step);
+  const domainMax = Math.ceil(rawMax / step) * step;
 
-  const X0 = 30;
-  const X1 = 610;
+  const X0 = 40;
+  const X1 = 600;
   const W = X1 - X0;
-  const xOf = (v: number) => {
-    const t = (v - domainMin) / (domainMax - domainMin);
-    return X0 + Math.max(0, Math.min(1, t)) * W;
-  };
-  const clampLabel = (x: number) => Math.max(X0 + 10, Math.min(X1 - 10, x));
+  const xOf = (v: number) => X0 + ((v - domainMin) / (domainMax - domainMin)) * W;
+  const clampLabel = (x: number) => Math.max(X0 + 14, Math.min(X1 - 14, x));
+
+  const AXIS_Y = 96;
+  const ticks: number[] = [];
+  for (let t = domainMin; t <= domainMax + 1e-9; t += step) ticks.push(Number(t.toFixed(2)));
 
   const bandX0 = xOf(lo);
-  const bandX1 = xOf(hi);
-  const bandW = Math.max(bandX1 - bandX0, 6);
+  const bandW = Math.max(xOf(hi) - bandX0, 6);
   const bandMid = bandX0 + bandW / 2;
   const x125 = xOf(1.25);
   const bx = xOf(buyer);
 
-  const refTicks = [1.0, 1.5].filter((t) => t >= domainMin && t <= domainMax);
-
   return (
-    <svg viewBox="0 0 640 150" style={{ width: "100%", height: "auto", display: "block" }} xmlns="http://www.w3.org/2000/svg">
-      <text x={clampLabel(x125)} y={22} textAnchor="middle" fill={T.gaugeText} fontSize={11} fontWeight={600} fontFamily="'Inter', sans-serif">1.25&#215; lender min</text>
-      <line x1={x125} y1={30} x2={x125} y2={104} stroke={T.gaugeText} strokeOpacity={0.45} strokeWidth={1.5} strokeDasharray="3 3" />
+    <svg viewBox="0 0 640 156" style={{ width: "100%", height: "auto", display: "block" }} xmlns="http://www.w3.org/2000/svg">
+      {/* 1.25x lender minimum: labeled vertical line anchored to the axis */}
+      <text x={clampLabel(x125)} y={20} textAnchor="middle" fill={T.gaugeText} fontSize={11} fontWeight={600} fontFamily="'Inter', sans-serif">1.25&#215; lender min</text>
+      <line x1={x125} y1={26} x2={x125} y2={AXIS_Y + 10} stroke={T.gaugeText} strokeOpacity={0.5} strokeWidth={1.5} strokeDasharray="3 3" />
 
-      <text x={clampLabel(bx)} y={52} textAnchor="middle" fill={T.buyer} fontSize={11.5} fontWeight={600} fontFamily="'Inter', sans-serif">Buyer-case {buyer.toFixed(2)}&#215;</text>
-      <path d={`M ${bx - 5} 60 L ${bx + 5} 60 L ${bx} 67 Z`} fill={T.buyer} />
-      <line x1={bx} y1={67} x2={bx} y2={84} stroke={T.buyer} strokeWidth={1.5} />
+      {/* Buyer-case marker: dot ON the axis, callout above with a leader line */}
+      <text x={clampLabel(bx)} y={48} textAnchor="middle" fill={T.buyer} fontSize={11.5} fontWeight={600} fontFamily="'Inter', sans-serif">Buyer-case {buyer.toFixed(2)}&#215;</text>
+      <line x1={bx} y1={54} x2={bx} y2={AXIS_Y - 7} stroke={T.buyer} strokeWidth={1.2} strokeDasharray="2 3" />
 
-      <line x1={X0} y1={92} x2={X1} y2={92} stroke={T.gaugeTrack} strokeWidth={2} strokeLinecap="round" />
-
-      {refTicks.map((t) => (
+      {/* Axis with even ticks */}
+      <line x1={X0} y1={AXIS_Y} x2={X1} y2={AXIS_Y} stroke={T.gaugeTrack} strokeWidth={2} strokeLinecap="round" />
+      {ticks.map((t) => (
         <g key={t}>
-          <line x1={xOf(t)} y1={87} x2={xOf(t)} y2={97} stroke={T.gaugeTick} strokeWidth={1.5} />
-          <text x={clampLabel(xOf(t))} y={112} textAnchor="middle" fill={T.textMute} fontSize={10.5} fontFamily="'Inter', sans-serif">{t.toFixed(2)}&#215;</text>
+          <line x1={xOf(t)} y1={AXIS_Y - 5} x2={xOf(t)} y2={AXIS_Y + 5} stroke={T.gaugeTick} strokeWidth={1.5} />
+          <text x={xOf(t)} y={AXIS_Y + 22} textAnchor="middle" fill={T.textMute} fontSize={10.5} fontFamily="'Inter', sans-serif">{t.toFixed(step < 1 ? 1 : 0)}&#215;</text>
         </g>
       ))}
 
-      <rect x={bandX0} y={84} width={bandW} height={16} rx={4} fill={zoneColor} fillOpacity={0.85} stroke={zoneColor} strokeWidth={1} />
-      <text x={clampLabel(bandMid)} y={128} textAnchor="middle" fill={zoneColor} fontSize={12} fontWeight={600} fontFamily="'Inter', sans-serif">
+      {/* Lender-view range: band straddling the axis */}
+      <rect x={bandX0} y={AXIS_Y - 7} width={bandW} height={14} rx={4} fill={zoneColor} fillOpacity={0.85} stroke={zoneColor} strokeWidth={1} />
+      <text x={clampLabel(bandMid)} y={AXIS_Y + 42} textAnchor="middle" fill={zoneColor} fontSize={12} fontWeight={600} fontFamily="'Inter', sans-serif">
         Lender range: {lo.toFixed(2)}&#8211;{hi.toFixed(2)}&#215;
       </text>
+
+      {/* Buyer dot drawn last so it sits above the band when they overlap */}
+      <circle cx={bx} cy={AXIS_Y} r={5.5} fill={T.buyer} stroke={T.bg} strokeWidth={2} />
     </svg>
   );
 }
@@ -610,7 +631,7 @@ function ResultBlock({ data, sample, partner, onAcquiflowClick }: { data: Extrac
     <>
       <VerdictCard data={data} sample={sample} />
       <BreakdownGate token={data.replayToken} sample={sample} partner={partner} />
-      <ResultCta zone={data.verdict.zone} onAcquiflowClick={onAcquiflowClick} />
+      <ResultCta zone={data.verdict.zone} partner={partner} onAcquiflowClick={onAcquiflowClick} />
     </>
   );
 }
@@ -814,27 +835,43 @@ function BreakdownCard({ breakdown }: { breakdown: SbaBreakdown }) {
       </div>
 
       <div style={{ padding: "10px 22px 16px" }}>
-        {breakdown.lineItems.map((li) => {
+        {breakdown.lineItems.map((li, idx) => {
           const basis = basisMeta[li.basis];
+          const isFinal = idx === breakdown.lineItems.length - 1;
           return (
-            <div key={li.id} style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 14, padding: "10px 0", borderBottom: `1px solid ${T.rowBorder}` }}>
+            <div
+              key={li.id}
+              style={{
+                display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 14,
+                padding: isFinal ? "12px 10px" : "10px 0",
+                borderBottom: isFinal ? "none" : `1px solid ${T.rowBorder}`,
+                borderTop: isFinal ? `2px solid ${T.panelBorder}` : "none",
+                background: isFinal ? T.insetBg : "transparent",
+                borderRadius: isFinal ? 8 : 0,
+                marginTop: isFinal ? 6 : 0,
+              }}
+            >
               <div style={{ minWidth: 0 }}>
                 <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap" }}>
-                  <span style={{ fontSize: 13.5, color: T.text }}>{li.label}</span>
+                  <span style={{ fontSize: isFinal ? 14.5 : 13.5, fontWeight: isFinal ? 700 : 400, color: isFinal ? T.heading : T.text }}>{li.label}</span>
                   <span style={{ fontSize: 9.5, fontWeight: 700, letterSpacing: "0.06em", color: basis.color, border: `1px solid ${basis.color}44`, background: `${basis.color}14`, borderRadius: 5, padding: "2px 6px" }}>
                     {basis.label}
                   </span>
                 </div>
                 {li.note && <div style={{ fontSize: 11.5, color: T.textMute, marginTop: 3 }}>{li.note}</div>}
               </div>
-              <span style={{ fontSize: 14, fontWeight: 600, color: T.heading, whiteSpace: "nowrap" }}>{formatLineValue(li)}</span>
+              <span style={{ fontSize: isFinal ? 16 : 14, fontWeight: isFinal ? 700 : 600, color: T.heading, whiteSpace: "nowrap" as const, fontFamily: "'JetBrains Mono', monospace", fontVariantNumeric: "tabular-nums" }}>
+                {formatLineValue(li)}
+              </span>
             </div>
           );
         })}
       </div>
 
       <div style={{ padding: "12px 22px 16px", background: T.insetBg, borderTop: `1px solid ${T.panelBorder}` }}>
-        <p style={{ margin: 0, fontSize: 11.5, color: T.textMute, lineHeight: 1.55 }}>{breakdown.disclaimer}</p>
+        <p style={{ margin: 0, fontSize: 11.5, color: T.textMute, lineHeight: 1.55 }}>
+          An underwriting screen, not a lender credit decision.
+        </p>
       </div>
     </div>
   );
@@ -855,7 +892,7 @@ function formatLineValue(li: BreakdownLineItem): string {
 
 const CTA_COPY: Record<SbaVerdict["zone"], { lead: string; link: string }> = {
   PASS: {
-    lead: "Clears the screen \u2014 the next question is whether the price is right.",
+    lead: "Clears the screen. The next question is whether the price is right.",
     link: "AcquiFlow runs that analysis.",
   },
   BUBBLE: {
@@ -868,9 +905,27 @@ const CTA_COPY: Record<SbaVerdict["zone"], { lead: string; link: string }> = {
   },
 };
 
-function ResultCta({ zone, onAcquiflowClick }: { zone: SbaVerdict["zone"]; onAcquiflowClick: () => void }) {
+function ResultCta({ zone, partner, onAcquiflowClick }: { zone: SbaVerdict["zone"]; partner?: SbaPartnerConfig; onAcquiflowClick: () => void }) {
   const T = useT();
   const copy = CTA_COPY[zone];
+
+  // Partner close: the page's ending. Collects on the member-pricing promise
+  // made in the hero pill and turns the demo into a funnel.
+  if (partner) {
+    return (
+      <a
+        href={ACQUIFLOW_URL}
+        onClick={onAcquiflowClick}
+        style={{ display: "block", marginTop: 14, padding: "20px 22px", borderRadius: 14, background: "rgba(245,158,11,0.07)", border: "1px solid rgba(245,158,11,0.25)", textDecoration: "none", textAlign: "center" as const }}
+      >
+        <div style={{ fontSize: 14, color: T.heading, lineHeight: 1.5, marginBottom: 12 }}>{copy.lead}</div>
+        <div style={{ display: "inline-block", padding: "13px 26px", borderRadius: 10, background: T.amber, color: T.onAmber, fontSize: 15, fontWeight: 700 }}>
+          Run the full AcquiFlow analysis with {partner.displayName} member pricing &rarr;
+        </div>
+      </a>
+    );
+  }
+
   return (
     <a
       href={ACQUIFLOW_URL}
