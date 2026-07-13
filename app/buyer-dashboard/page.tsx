@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback, useMemo } from "react";
+import { PARTNER_COMMERCE, memberMonthlyPrice } from "@/lib/partners";
 import { createClient } from "@supabase/supabase-js";
 import { CATEGORIES } from "@/lib/marketview/categories";
 import { normalizeDealFinancials } from "@/lib/normalizationEngine";
@@ -5648,12 +5649,36 @@ function SignInRequired() {
   const [sent, setSent]       = useState(false);
   const [loading, setLoading] = useState(false);
 
+  // ── Partner recognition (B2/B3) ────────────────────────────────────────────
+  // A partner checker stamps nxtax_partner_ref before the user arrives; a
+  // ?ref= param re-stamps it as a fallback. Validated against the shared
+  // commerce config so this strip can never advertise a price the checkout
+  // does not honor.
+  const [partnerRef, setPartnerRef] = useState<string | null>(null);
+  useEffect(() => {
+    try {
+      const fromParam = new URLSearchParams(window.location.search).get("ref");
+      if (fromParam && PARTNER_COMMERCE[fromParam]) {
+        localStorage.setItem("nxtax_partner_ref", fromParam);
+      }
+      const ref = localStorage.getItem("nxtax_partner_ref");
+      if (ref && PARTNER_COMMERCE[ref]) setPartnerRef(ref);
+    } catch { /* recognition is cosmetic; auth works without it */ }
+  }, []);
+  const partnerCommerce = partnerRef ? PARTNER_COMMERCE[partnerRef] : null;
+
   async function handleMagicLink() {
     if (!email.includes("@")) return;
     setLoading(true);
+    // partner_ref rides in auth metadata so attribution and pricing survive
+    // the magic link opening on a different device (localStorage does not).
+    // Slug only; pricing terms never enter metadata.
     const { error } = await supabase.auth.signInWithOtp({
       email: email.trim().toLowerCase(),
-      options: { emailRedirectTo: `${window.location.origin}/auth/callback?next=/buyer-dashboard` },
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback?next=/buyer-dashboard`,
+        ...(partnerRef ? { data: { partner_ref: partnerRef } } : {}),
+      },
     });
     if (!error) setSent(true);
     setLoading(false);
@@ -5678,6 +5703,19 @@ function SignInRequired() {
         <p style={{ fontSize: 14, color: "#6B7280", margin: "0 0 28px", lineHeight: 1.6 }}>
           Enter your email address below to access the AcquiFlow beta platform and start analyzing live acquisition opportunities.
         </p>
+
+        {partnerCommerce && (
+          <div style={{ marginBottom: 14 }}>
+            <span style={{
+              display: "inline-flex", alignItems: "center", gap: 8,
+              padding: "6px 14px", borderRadius: 20,
+              background: "rgba(16,185,129,0.09)", border: "1px solid rgba(16,185,129,0.25)",
+              fontSize: 12, color: "#34D399", fontWeight: 600,
+            }}>
+              {partnerCommerce.displayName} member access · ${memberMonthlyPrice(partnerCommerce)}/mo Pro pricing
+            </span>
+          </div>
+        )}
 
         {!sent ? (
           <div style={{
@@ -10026,7 +10064,11 @@ const dealHasFullAccess = (dealId: string): boolean => {
     partnerRefSavedRef.current = true;
     (async () => {
       try {
-        const ref = localStorage.getItem("nxtax_partner_ref");
+        // localStorage first (same-device), auth metadata as the device-proof
+        // fallback stamped by signInWithOtp on the partner signin screen.
+        const ref =
+          localStorage.getItem("nxtax_partner_ref") ??
+          ((user.user_metadata?.partner_ref as string | undefined) || null);
         if (!ref) return;
         const { error } = await supabase
           .from("partner_attributions")
