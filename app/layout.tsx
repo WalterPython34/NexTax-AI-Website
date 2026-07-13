@@ -4,6 +4,7 @@ import { Inter, Plus_Jakarta_Sans, Space_Grotesk } from "next/font/google"
 import "./globals.css"
 import Navigation from "@/components/navigation"
 import { Footer } from "@/components/footer"
+import SiteChromeGate from "@/components/site-chrome-gate"
 import Script from "next/script"
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter", display: "swap", })
@@ -34,9 +35,14 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className} suppressHydrationWarning>
-        <Navigation />
+        {/* Site chrome (nav + footer) hides on self-contained partner routes */}
+        <SiteChromeGate>
+          <Navigation />
+        </SiteChromeGate>
         <main>{children}</main>
-        <Footer />
+        <SiteChromeGate>
+          <Footer />
+        </SiteChromeGate>
         <Script src="https://js.stripe.com/v3/" strategy="afterInteractive" />
         {/* Add Google Analytics */}
         <Script src="https://www.googletagmanager.com/gtag/js?id=G-5VHGTSGCCN" strategy="afterInteractive" />
