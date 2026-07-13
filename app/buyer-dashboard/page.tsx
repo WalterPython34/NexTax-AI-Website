@@ -6220,7 +6220,7 @@ function ProUpsellCard({ deals, onOpenUnderwriting }: { deals: DealRun[]; onOpen
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          priceId:   "price_1TPbTTGA3ir6ndSx14wKWA27",
+          priceId:   "price_1TsamtGA3ir6ndSx3alTZQ3z",
           userId:    authUser?.id,
           userEmail: authUser?.email,
         }),
