@@ -410,21 +410,13 @@ export default function SbaChecker({ partner }: { partner?: SbaPartnerConfig }) 
     <div style={{ minHeight: "100vh", background: T.bg, color: T.text, fontFamily: "'Inter', sans-serif" }}>
       {/* Slim co-brand header. The global site nav and footer hide on partner
            routes via SiteChromeGate, so this page is a self-contained surface. */}
-      {partner && (
-        <header style={{
-          position: "sticky", top: 0, zIndex: 40,
-          display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
-          padding: "13px 24px",
-          background: T.bg,
-          borderBottom: `1px solid ${T.panelBorder}`,
-        }}>
-          <span style={{ fontSize: 15, fontWeight: 700, color: T.heading, fontFamily: "'Inter Tight', sans-serif" }}>AcquiFlow</span>
-          <span style={{ color: T.textMute, fontSize: 13 }}>&times;</span>
-          <span style={{ display: "inline-flex", alignItems: "center", padding: "5px 16px", border: `1.5px dashed ${T.inputBorder}`, borderRadius: 8, fontSize: 11, color: T.textMute }}>
-            partner logo slot
-          </span>
-        </header>
-      )}
+     {partner && (
+          <div style={{ marginBottom: 14 }}>
+            <span style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "5px 14px", borderRadius: 20, background: "rgba(16,185,129,0.09)", border: "1px solid rgba(16,185,129,0.25)", fontSize: 11.5, color: T.successText, fontWeight: 600 }}>
+              For {partner.displayName} members · full breakdown unlocked · member pricing at signup
+            </span>
+          </div>
+        )}
       <div style={{ padding: "44px 24px 28px", textAlign: "center", background: `radial-gradient(ellipse at center top, ${T.heroGlow} 0%, transparent 60%)` }}>
         <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "5px 14px", borderRadius: 20, background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.22)", fontSize: 11, color: T.amberText, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 18 }}>
           SBA Deal Check
