@@ -3186,6 +3186,7 @@ function DealDetailPanel({
                 </>
               )}
             </button>
+            <QoeHandoffButton dealId={deal.id} variant="block" />
           </div>
         </div>
       </div>
@@ -6024,6 +6025,145 @@ function VerificationInvestigationPanel({ deal }: { deal: DealRun }) {
   );
 }
 
+// ─── QOE HANDOFF BUTTON ──────────────────────────────────────────────────────
+// Shared across the Deal Workbench and the report download drawer. Fetches the
+// user's provider list (server-resolved; emails never reach the client); when
+// the list is empty the button renders nothing at all. Click → picker →
+// confirm → POST /api/deals/[dealId]/qoe-handoff.
+function QoeHandoffButton({ dealId, variant }: { dealId: string; variant: "row" | "block" }) {
+  const [providers, setProviders] = useState<{ key: string; name: string; blurb: string }[]>([]);
+  const [open, setOpen]         = useState(false);
+  const [selected, setSelected] = useState<string | null>(null);
+  const [phase, setPhase]       = useState<"pick" | "sending" | "sent" | "error">("pick");
+  const [sentTo, setSentTo]     = useState("");
+  const [sendError, setSendError] = useState("");
+
+  const authedHeaders = async (): Promise<Record<string, string> | null> => {
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token;
+    return token ? { Authorization: `Bearer ${token}`, "Content-Type": "application/json" } : null;
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const headers = await authedHeaders();
+        if (!headers) return;
+        const res = await fetch(`/api/deals/${dealId}/qoe-handoff`, { headers });
+        const json = await res.json();
+        if (!cancelled && json?.success && Array.isArray(json.providers)) setProviders(json.providers);
+      } catch { /* list stays empty — button stays hidden */ }
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dealId]);
+
+  if (providers.length === 0) return null;
+
+  async function send(providerKey: string) {
+    setPhase("sending");
+    setSendError("");
+    try {
+      const headers = await authedHeaders();
+      if (!headers) throw new Error("Please sign in again.");
+      const res = await fetch(`/api/deals/${dealId}/qoe-handoff`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ providerKey }),
+      });
+      const json = await res.json();
+      if (!json?.success) throw new Error(json?.error || `Request failed: ${res.status}`);
+      setSentTo(json.provider ?? "the provider");
+      setPhase("sent");
+    } catch (err) {
+      setSendError((err as Error).message);
+      setPhase("error");
+    }
+  }
+
+  const openPicker = () => { setOpen(true); setPhase("pick"); setSelected(providers.length === 1 ? providers[0].key : null); };
+
+  const trigger = variant === "block" ? (
+    <button
+      onClick={openPicker}
+      style={{ width: "100%", padding: "10px 14px", borderRadius: 9, border: "1px solid rgba(99,102,241,0.25)", background: "rgba(99,102,241,0.06)", color: "#818CF8", fontSize: 13, fontWeight: 600, cursor: "pointer", textAlign: "left" as any, display: "flex", alignItems: "center", gap: 8 }}
+    >
+      <span>📤</span> Send to QoE Provider
+    </button>
+  ) : (
+    <button
+      onClick={openPicker}
+      style={{ padding: "6px 12px", borderRadius: 7, border: "1px solid rgba(99,102,241,0.25)", background: "rgba(99,102,241,0.08)", color: "#818CF8", fontSize: 11, fontWeight: 500, cursor: "pointer", whiteSpace: "nowrap" as any }}
+    >
+      Send to QoE Provider
+    </button>
+  );
+
+  return (
+    <>
+      {trigger}
+      {open && (
+        <>
+          <div onClick={() => phase !== "sending" && setOpen(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,0.6)", zIndex: 300, backdropFilter: "blur(2px)" }} />
+          <div style={{
+            position: "fixed", top: "50%", left: "50%", transform: "translate(-50%,-50%)",
+            width: "min(420px, 94vw)", background: "#0D1117", border: "1px solid rgba(255,255,255,0.1)",
+            borderRadius: 14, zIndex: 301, padding: "18px 20px",
+          }}>
+            <div style={{ fontSize: 14, fontWeight: 700, color: "#F1F5F9", marginBottom: 4 }}>Send to QoE Provider</div>
+            {phase === "sent" ? (
+              <>
+                <div style={{ fontSize: 12, color: "#10B981", margin: "12px 0", padding: "10px 12px", borderRadius: 8, background: "rgba(16,185,129,0.08)", border: "1px solid rgba(16,185,129,0.2)" }}>
+                  Sent to {sentTo}. You are copied.
+                </div>
+                <button onClick={() => setOpen(false)} style={{ width: "100%", padding: "9px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.03)", color: "#E2E8F0", fontSize: 12, cursor: "pointer" }}>Close</button>
+              </>
+            ) : (
+              <>
+                <div style={{ fontSize: 11, color: "#7C8593", marginBottom: 12 }}>
+                  The underwriting screen PDF goes to the provider. You are copied and replies come to you.
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 6, marginBottom: 12 }}>
+                  {providers.map(p => (
+                    <div
+                      key={p.key}
+                      onClick={() => phase !== "sending" && setSelected(p.key)}
+                      style={{
+                        padding: "10px 12px", borderRadius: 9, cursor: "pointer",
+                        border: `1px solid ${selected === p.key ? "rgba(99,102,241,0.4)" : "rgba(255,255,255,0.08)"}`,
+                        background: selected === p.key ? "rgba(99,102,241,0.08)" : "rgba(255,255,255,0.02)",
+                      }}
+                    >
+                      <div style={{ fontSize: 12, fontWeight: 600, color: "#E2E8F0" }}>{p.name}</div>
+                      <div style={{ fontSize: 10, color: "#7C8593", marginTop: 2 }}>{p.blurb}</div>
+                    </div>
+                  ))}
+                </div>
+                {phase === "error" && (
+                  <div style={{ fontSize: 11, color: "#FCA5A5", marginBottom: 10, padding: "8px 10px", borderRadius: 8, background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)" }}>
+                    {sendError}
+                  </div>
+                )}
+                <div style={{ display: "flex", gap: 8 }}>
+                  <button onClick={() => setOpen(false)} disabled={phase === "sending"} style={{ flex: 1, padding: "9px", borderRadius: 8, border: "1px solid rgba(255,255,255,0.1)", background: "rgba(255,255,255,0.03)", color: "#6B7280", fontSize: 12, cursor: "pointer" }}>Cancel</button>
+                  <button
+                    onClick={() => selected && send(selected)}
+                    disabled={!selected || phase === "sending"}
+                    style={{ flex: 2, padding: "9px", borderRadius: 8, border: "none", background: !selected || phase === "sending" ? "rgba(99,102,241,0.3)" : "linear-gradient(135deg,#3B82F6,#6366F1)", color: "#fff", fontSize: 12, fontWeight: 600, cursor: !selected || phase === "sending" ? "not-allowed" : "pointer" }}
+                  >
+                    {phase === "sending" ? "Sending..." : phase === "error" ? "Retry" : "Confirm & Send"}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        </>
+      )}
+    </>
+  );
+}
+
 function ProCommandModule({
   deals, onOpenUnderwriting, isPro, downloadingDealId, onDownloadReport,
   selectedDeal, onSelectDeal, onOpenUnderwritingTab,
@@ -6134,6 +6274,7 @@ function ProCommandModule({
               onDownload={onDownloadReport}
               size="sm"
             />
+            <QoeHandoffButton dealId={lastAnalysis.id} variant="row" />
             <button
               onClick={() => onOpenUnderwriting(lastAnalysis)}
               style={{
