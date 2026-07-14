@@ -21,6 +21,7 @@ export interface PartnerConfig {
   displayName: string;
   proPriceLabel: string;            // display only — checkout truth is the promotion below
   stripePromotionId: string | null; // promo_... (applied server-side by ID; no typeable code)
+  brandColor: string | null;        // partner's brand hex for co-brand lockups; null → default ink
   qoeProviders: QoeProvider[];
 }
 
@@ -40,6 +41,7 @@ export const PARTNERS: Record<string, PartnerConfig> = {
     displayName: "SMB Deal Hunter",
     proPriceLabel: "$34/mo",
     stripePromotionId: process.env.STRIPE_PROMO_SMBDEALHUNTER ?? null,
+    brandColor: "#1B7FF2",
     qoeProviders: [
       // SMB Deal Hunter's preferred QoE providers — fill from Bill's list.
       {
