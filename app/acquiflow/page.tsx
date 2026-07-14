@@ -155,7 +155,7 @@ export default function AcquiFlowPage() {
         <div className="container">
           <div className="trust-grid">
             <div className="trust-item"><div className="num">17,000+</div><div className="desc">Closed Transactions</div></div>
-            <div className="trust-item"><div className="num">19,250+</div><div className="desc">Financial Statement Sets</div></div>
+            <div className="trust-item"><div className="num">20,000+</div><div className="desc">Financial Statement Sets</div></div>
             <div className="trust-item"><div className="num">41</div><div className="desc">Industries Covered</div></div>
             <div className="trust-item"><div className="num">RMA</div><div className="desc">Backed by ProSight Data</div></div>
             <div className="trust-item"><div className="num">Big 4</div><div className="desc">+ PE Underwriting Logic</div></div>
@@ -480,7 +480,7 @@ export default function AcquiFlowPage() {
                 </summary>
                 <div className="faq-answer">
                   Multiple licensed sources including <strong>RMA / ProSight</strong>, <strong>DealStats</strong>, and <strong>BizBuySell</strong>. We don&apos;t display raw licensed data — figures are surfaced as blended NexTax Intelligence so you get directional accuracy without sourcing constraints.
-                  <div className="data-callout">17,000+ closed transactions · 19,250+ financial statement sets · 41 industries</div>
+                  <div className="data-callout">17,000+ closed transactions · 20,000+ financial statement sets · 41 industries</div>
                 </div>
               </details>
 
