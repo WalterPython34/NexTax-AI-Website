@@ -9,11 +9,11 @@ const PRO_PRICE_ID = "price_1TsamtGA3ir6ndSx3alTZQ3z"
 export const metadata: Metadata = {
   title: "AcquiFlow — Pre-LOI Deal Intelligence | NexTax.AI",
   description:
-    "Know if a deal is worth an LOI before you spend a dollar finding out. AcquiFlow scores deals against 15,750+ closed transactions, stress-tests DSCR, and gives you a clear verdict in under 60 seconds.",
+    "Know if a deal is worth an LOI before you spend a dollar finding out. AcquiFlow scores deals against 17,000+ closed transactions, stress-tests DSCR, and gives you a clear verdict in under 60 seconds.",
   openGraph: {
     title: "AcquiFlow — Pre-LOI Deal Intelligence",
     description:
-      "Score any SMB acquisition against 15,750+ closed comps. Get a verdict, negotiation anchor, and lender readiness — before you sign an LOI.",
+      "Score any SMB acquisition against 17,000+ closed comps. Get a verdict, negotiation anchor, and lender readiness — before you sign an LOI.",
     type: "website",
   },
 };
@@ -63,7 +63,7 @@ export default function AcquiFlowPage() {
               finding out.
             </h1>
             <p className="hero-sub">
-              AcquiFlow scores deals against <strong>15,750+ closed transactions</strong>,
+              AcquiFlow scores deals against <strong>17,000+ closed transactions</strong>,
               stress-tests DSCR, and gives you a clear verdict — in under 60 seconds.
             </p>
             <div className="hero-ctas">
@@ -75,7 +75,7 @@ export default function AcquiFlowPage() {
               <span className="stars">★★★★★</span>
               <span>Backed by RMA / ProSight</span>
               <span className="sep">·</span>
-              <span>15,750+ closed comps</span>
+              <span>17,000+ closed comps</span>
               <span className="sep">·</span>
               <span>41 industries</span>
             </div>
@@ -154,7 +154,7 @@ export default function AcquiFlowPage() {
       <section className="trust-bar">
         <div className="container">
           <div className="trust-grid">
-            <div className="trust-item"><div className="num">15,750+</div><div className="desc">Closed Transactions</div></div>
+            <div className="trust-item"><div className="num">17,000+</div><div className="desc">Closed Transactions</div></div>
             <div className="trust-item"><div className="num">19,250+</div><div className="desc">Financial Statement Sets</div></div>
             <div className="trust-item"><div className="num">41</div><div className="desc">Industries Covered</div></div>
             <div className="trust-item"><div className="num">RMA</div><div className="desc">Backed by ProSight Data</div></div>
@@ -196,7 +196,7 @@ export default function AcquiFlowPage() {
             <div className="step-card">
               <div className="step-num">Analyze</div>
               <h3 className="step-title">Get your verdict</h3>
-              <p className="step-desc">Earnings normalized, benchmarked against 15,750+ comps, DSCR stress-tested, scored 0–100.</p>
+              <p className="step-desc">Earnings normalized, benchmarked against 17,000+ comps, DSCR stress-tested, scored 0–100.</p>
               <div className="step-visual">
                 <div className="verdict-pills">
                   <span className="pill active">High Conviction</span>
@@ -325,7 +325,7 @@ export default function AcquiFlowPage() {
                 </svg>
               </div>
               <h3 className="feature-title">Benchmarked Against Real Closed Transactions</h3>
-              <p className="feature-desc">15,750+ closed deals across 41 industries. Not broker estimates — actual transaction data from DealStats, RMA, and BizBuySell.</p>
+              <p className="feature-desc">17,000+ closed deals across 41 industries. Not broker estimates — actual transaction data from DealStats, RMA, and BizBuySell.</p>
             </div>
 
             <div className="feature-card">
@@ -469,7 +469,7 @@ export default function AcquiFlowPage() {
                   <span className="faq-toggle"></span>
                 </summary>
                 <div className="faq-answer">
-                  A spreadsheet tells you numbers. <strong>AcquiFlow tells you what to do with them</strong> — a verdict, a negotiation anchor, a walk-away price, and lender readiness based on 15,750+ closed comps. The platform also stress-tests your DSCR under downside scenarios that most buyers skip until it&apos;s too late.
+                  A spreadsheet tells you numbers. <strong>AcquiFlow tells you what to do with them</strong> — a verdict, a negotiation anchor, a walk-away price, and lender readiness based on 17,000+ closed comps. The platform also stress-tests your DSCR under downside scenarios that most buyers skip until it&apos;s too late.
                 </div>
               </details>
 
@@ -480,7 +480,7 @@ export default function AcquiFlowPage() {
                 </summary>
                 <div className="faq-answer">
                   Multiple licensed sources including <strong>RMA / ProSight</strong>, <strong>DealStats</strong>, and <strong>BizBuySell</strong>. We don&apos;t display raw licensed data — figures are surfaced as blended NexTax Intelligence so you get directional accuracy without sourcing constraints.
-                  <div className="data-callout">15,750+ closed transactions · 19,250+ financial statement sets · 41 industries</div>
+                  <div className="data-callout">17,000+ closed transactions · 19,250+ financial statement sets · 41 industries</div>
                 </div>
               </details>
 
