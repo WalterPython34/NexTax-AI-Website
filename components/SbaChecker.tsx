@@ -429,13 +429,25 @@ export default function SbaChecker({ partner }: { partner?: SbaPartnerConfig }) 
         <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "5px 14px", borderRadius: 20, background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.22)", fontSize: 11, color: T.amberText, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 18 }}>
           SBA Deal Check
         </div>
-        {partner && (
-          <div style={{ marginBottom: 14 }}>
-            <span style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "5px 14px", borderRadius: 20, background: "rgba(16,185,129,0.09)", border: "1px solid rgba(16,185,129,0.25)", fontSize: 11.5, color: T.successText, fontWeight: 600 }}>
-              For {partner.displayName} members · full breakdown unlocked · member pricing at signup
-            </span>
-          </div>
-        )}
+       {partner && (
+        <header style={{
+          position: "sticky", top: 0, zIndex: 40,
+          display: "flex", alignItems: "center", justifyContent: "center", gap: 10,
+          padding: "13px 24px",
+          background: T.bg,
+          borderBottom: `1px solid ${T.panelBorder}`,
+        }}>
+          <span style={{ fontSize: 15, fontWeight: 700, color: T.heading, fontFamily: "'Inter Tight', sans-serif" }}>AcquiFlow</span>
+          <span style={{ color: T.textMute, fontSize: 13 }}>&times;</span>
+          <span style={{
+            fontSize: 15, fontWeight: 800, letterSpacing: "-0.01em", whiteSpace: "nowrap",
+            fontFamily: "'Inter Tight', sans-serif",
+            color: (partner as { brandColor?: string | null }).brandColor ?? T.heading,
+          }}>
+            {partner.displayName}
+          </span>
+        </header>
+      )}
         <h1 style={{ fontSize: "clamp(28px, 5vw, 42px)", fontWeight: 600, margin: "0 0 10px", fontFamily: "'Inter Tight', sans-serif", letterSpacing: "-0.02em", color: T.heading, lineHeight: 1.1 }}>
           Will your deal survive SBA underwriting?
         </h1>
