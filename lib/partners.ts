@@ -26,7 +26,7 @@ export const PARTNER_COMMERCE: Record<string, PartnerCommerce> = {
     displayName: "SMB Deal Hunter",
     baseMonthlyPrice: 49,
     amountOffMonthly: 15,
-    stripeCouponId: null,
+    stripeCouponId: "smbdh-member-15",
   },
 };
 
