@@ -24,7 +24,7 @@ import { SBA_INDUSTRIES, SBA_INDUSTRY_BY_KEY } from "@/lib/sba/industries";
 import type { SbaVerdict } from "@/lib/sba/sba-engine";
 import type { OwnerRole } from "@/lib/sba/owner-comp-provider";
 import type { SbaBreakdown, BreakdownLineItem } from "@/lib/sba/breakdown";
-import { PARTNER_COMMERCE } from "@/lib/partners";
+import { PARTNERS, PARTNER_COMMERCE } from "@/lib/partners";
 
 // ─── Theme ────────────────────────────────────────────────────────────────────
 
@@ -132,6 +132,7 @@ export interface SbaPartnerConfig {
   slug: string;         // stable id, also the whitelist key server-side
   displayName: string;  // shown in the co-brand strip
   gateBypass: boolean;  // breakdown renders without the email gate
+  brandColor: string | null;
   theme: "dark" | "light";
 }
 
@@ -141,6 +142,7 @@ export const SBA_PARTNERS: Record<string, SbaPartnerConfig> = {
     // Single source: identity comes from lib/partners so the checker, the
     // signin strip, and the checkout can never disagree.
     displayName: PARTNER_COMMERCE.smbdealhunter.displayName,
+    brandColor: PARTNERS.smbdealhunter.brandColor,
     gateBypass: true,
     theme: "light",
   },
