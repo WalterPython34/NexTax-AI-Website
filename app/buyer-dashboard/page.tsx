@@ -5699,10 +5699,10 @@ function SignInRequired() {
           fontSize: 22, fontWeight: 700, color: "#F1F5F9", margin: "0 0 8px",
           fontFamily: "'Inter Tight',sans-serif", letterSpacing: "-0.02em",
         }}>
-          AcquiFlow Beta Access
+          Access AcquiFlow
         </h2>
         <p style={{ fontSize: 14, color: "#6B7280", margin: "0 0 28px", lineHeight: 1.6 }}>
-          Enter your email address below to access the AcquiFlow beta platform and start analyzing live acquisition opportunities.
+          Enter your email below and we'll send you a secure access link. New here? The same link sets up your account and takes you straight to your first analysis.
         </p>
 
         {partnerCommerce && (
