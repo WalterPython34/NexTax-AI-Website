@@ -12,6 +12,12 @@
 // by ID for attributed users only. No human-typeable promotion code exists,
 // so there is nothing to leak.
 
+// Single billing source for the AcquiFlow Pro subscription price. The
+// marketing page and dashboard upgrade path should adopt this constant so a
+// future price change is a one-line edit (the $39->$49 change touched two
+// hardcoded copies; that is the incident this prevents).
+export const ACQUIFLOW_PRO_PRICE_ID = "price_1TsamtGA3ir6ndSx3alTZQ3z";
+
 export interface PartnerCommerce {
   slug: string;
   displayName: string;
