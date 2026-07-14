@@ -690,6 +690,13 @@ function drawPage1(doc: jsPDF, data: DealReportData, decision: DecisionLayerResu
     ["Risk level",     inputs.risk_level,                                                    riskLevelColor(inputs.risk_level)],
   ];
   renderMetricRow(row2, y);
+  // Fair value basis disclosure — single caption line drawn inside the
+  // existing row gap (no y-flow change; layout untouched).
+  if (inputs.fair_value_basis_caption) {
+    setType(doc, "L5");
+    setHex(doc, COLOR.textDim, "text");
+    doc.text(inputs.fair_value_basis_caption, M, y + 30);
+  }
   y += SP.xl;
 
   // ─── HAIRLINE DIVIDER ────────────────────────────────────────────────
@@ -1751,7 +1758,11 @@ function buildInvestmentTake(d: DecisionLayerResult, inputs: DealReportInputs): 
     thesis = "Coverage holds under reported numbers, but the asking multiple sits above peer transactions and depends on continued earnings strength to justify the premium.";
   } else if (askAboveFair) {
     thesis = "Pricing exceeds comparable transactions and coverage is thin — the deal underwrites only under optimistic assumptions.";
-  } else if (!lenderClears) {
+  } else if (inputs.dscr < 1.25) {
+    // Keyed on BASE DSCR only. This previously keyed on !lenderClears, which
+    // is a stress-scenario tier: any thin-margin business fails the margin
+    // compression scenario and gets CONDITIONAL even at base DSCR 2x+, making
+    // the sentence claim base coverage falls short when it does not.
     thesis = "Coverage falls short of standard lender thresholds at the proposed structure; financing requires either stronger earnings validation or different terms.";
   } else {
     thesis = "Pricing aligns with comparable transactions and coverage holds, leaving the underwriting case dependent on validating the assumptions behind reported earnings.";

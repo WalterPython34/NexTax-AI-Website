@@ -200,6 +200,60 @@ export async function GET(
     });
   }
 
+  // ─── 5b. Band-aware fair value anchor ──────────────────────────────────
+  // REGRESSION GUARD — ONE ANCHOR PER DOCUMENT
+  // The Executive Snapshot fair value, walk-away threshold, negotiation
+  // posture, and the Market Benchmarking percentile/median must ALL derive
+  // from the SAME comp basis. The stored deal_runs fair_value is anchored to
+  // the national blended multiple at save time; the benchmarking section is
+  // anchored to the readMarketFacts closed-comp row (size-band preferred).
+  // Rendering both in one document produces two contradictory pricing anchors.
+  // This has regressed twice. The rule: when readMarketFacts selects a
+  // closed-comp row (benchMid non-null), fair value and everything downstream
+  // of it (fair value range, recommended offers, walk-away, target prices,
+  // pricing insight) recompute from THAT row's median/p25/p75. Only when no
+  // comp row qualifies do the stored values pass through, with the caption
+  // disclosing a modeled estimate. Do not reintroduce stored fair_value
+  // alongside comp-based benchmarking. Do not fetch a second benchmark row
+  // with different thresholds than readMarketFacts — one selection, one basis.
+  const anchorSde  = deal.sde ?? 0;
+  const bandAnchored = benchMid !== null && anchorSde > 0;
+
+  const fairValue: number = bandAnchored
+    ? Math.round(anchorSde * benchMid)
+    : deal.fair_value;
+  const fairValueLow: number | null = bandAnchored && benchLow !== null
+    ? Math.round(anchorSde * benchLow)
+    : (deal.fair_value_low ?? null);
+  const fairValueHigh: number | null = bandAnchored && benchHigh !== null
+    ? Math.round(anchorSde * benchHigh)
+    : (deal.fair_value_high ?? null);
+  // Recomputed from the anchored fair value using the decision layer's own
+  // ratio conventions (target low 0.80x, target high 0.92x) — never the
+  // stored offers, which carry the save-time basis.
+  const recommendedOfferLow: number | null = bandAnchored
+    ? Math.round(fairValue * 0.80)
+    : (deal.recommended_offer_low ?? null);
+  const recommendedOfferHigh: number | null = bandAnchored
+    ? Math.round(fairValue * 0.92)
+    : (deal.recommended_offer_high ?? null);
+
+  // Basis disclosure caption for the Executive Snapshot (single line).
+  const bandLabel = (rev: number): string => {
+    if (rev < 500_000)    return "under $500K revenue band";
+    if (rev < 1_000_000)  return "$500K to $1M revenue band";
+    if (rev < 3_000_000)  return "$1M to $3M revenue band";
+    if (rev < 10_000_000) return "$3M to $10M revenue band";
+    return "over $10M revenue band";
+  };
+  const fairValueBasisCaption = bandAnchored
+    ? `Fair value basis: closed transactions, ${
+        marketFacts?.closed_comp_basis === "industry_size_matched"
+          ? bandLabel(deal.revenue ?? 0)
+          : "national"
+      }, n=${sampleSize ?? 0}`
+    : "Fair value basis: modeled estimate";
+
   // ─── 6. Build DealReportInputs and decision layer ─────────────────────
   const inputs: DealReportInputs = {
     industry:        deal.industry,
@@ -219,11 +273,12 @@ export async function GET(
     dscr:            deal.dscr,
 
     valuation_multiple:     deal.valuation_multiple,
-    fair_value:             deal.fair_value,
-    fair_value_low:         deal.fair_value_low  ?? null,
-    fair_value_high:        deal.fair_value_high ?? null,
-    recommended_offer_low:  deal.recommended_offer_low  ?? null,
-    recommended_offer_high: deal.recommended_offer_high ?? null,
+    fair_value:             fairValue,
+    fair_value_low:         fairValueLow,
+    fair_value_high:        fairValueHigh,
+    recommended_offer_low:  recommendedOfferLow,
+    recommended_offer_high: recommendedOfferHigh,
+    fair_value_basis_caption: fairValueBasisCaption,
 
     overall_score: deal.overall_score,
     risk_level:    deal.risk_level,

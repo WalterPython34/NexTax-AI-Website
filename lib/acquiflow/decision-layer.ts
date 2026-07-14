@@ -40,6 +40,9 @@ export interface DealReportInputs {
   fair_value_high?:   number | null;   // P75 if available
   recommended_offer_low?:  number | null;
   recommended_offer_high?: number | null;
+  // Basis disclosure for the Executive Snapshot fair value (one caption line;
+  // assembled at the call site by the band-aware anchor selection).
+  fair_value_basis_caption?: string | null;
 
   // Scoring
   overall_score: number;
