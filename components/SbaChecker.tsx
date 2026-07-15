@@ -422,11 +422,7 @@ export default function SbaChecker({ partner }: { partner?: SbaPartnerConfig }) 
           background: T.bg,
           borderBottom: `1px solid ${T.panelBorder}`,
         }}>
-          <img
-            src="/AcquiFlow-White-Background.png"
-            alt="AcquiFlow"
-            style={{ height: 28, width: "auto", display: "block" }}
-          />
+          <span style={{ fontSize: 15, fontWeight: 700, color: T.heading, fontFamily: "'Inter Tight', sans-serif" }}>AcquiFlow</span>
           <span style={{ color: T.textMute, fontSize: 13 }}>&times;</span>
           <span style={{
             fontSize: 15, fontWeight: 800, letterSpacing: "-0.01em", whiteSpace: "nowrap",
