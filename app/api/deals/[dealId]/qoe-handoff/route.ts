@@ -188,7 +188,7 @@ export async function POST(
     ? deal.industry.charAt(0).toUpperCase() + deal.industry.slice(1).replace(/_/g, " ")
     : "Business";
   const place = [deal.city, deal.state].filter(Boolean).join(", ");
-  const subject = `AcquiFlow underwriting screen: ${industryLabel} acquisition${place ? `, ${place}` : ""}`;
+  const subject = `AcquiFlow Deal Referral: ${industryLabel} Acquisition${place ? `, ${place}` : ""}`;
 
   let bodyText: string, bodyHtml: string;
   try {
