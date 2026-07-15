@@ -22,7 +22,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { Resend } from "resend";
 import { buildQoeEmailHtml, buildQoeEmailText } from "@/lib/qoeEmailTemplate";
-import { getQoeProviders } from "@/lib/partnerConfig";
+import { getPartner, getQoeProviders } from "@/lib/partnerConfig";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -190,18 +190,26 @@ export async function POST(
   const place = [deal.city, deal.state].filter(Boolean).join(", ");
   const subject = `AcquiFlow underwriting screen: ${industryLabel} acquisition${place ? `, ${place}` : ""}`;
 
-  const emailParams = {
-    industryLabel,
-    revenue: deal.revenue ?? 0,
-    sde: deal.sde ?? 0,
-    askingPrice: deal.asking_price ?? 0,
-    city: deal.city,
-    state: deal.state,
-    buyerEmail: auth.userEmail,
-    partnerDisplayName: getPartner(auth.partnerRef)?.displayName ?? null,
-  };
-  const bodyText = buildQoeEmailText(emailParams);
-  const bodyHtml = buildQoeEmailHtml(emailParams);
+  let bodyText: string, bodyHtml: string;
+  try {
+    const emailParams = {
+      industryLabel,
+      revenue: deal.revenue ?? 0,
+      sde: deal.sde ?? 0,
+      askingPrice: deal.asking_price ?? 0,
+      city: deal.city,
+      state: deal.state,
+      buyerEmail: auth.userEmail,
+      partnerDisplayName: getPartner(auth.partnerRef)?.displayName ?? null,
+    };
+    bodyText = buildQoeEmailText(emailParams);
+    bodyHtml = buildQoeEmailHtml(emailParams);
+  } catch (e) {
+    const msg = e instanceof Error ? e.message : String(e);
+    await logReferral("send_failed", null, { stage: "template", error: msg });
+    return NextResponse.json({ success: false, error: `Email template failed: ${msg}` }, { status: 502 });
+  }
+  
   try {
     const resend = new Resend(process.env.RESEND_API_KEY);
     const { data, error } = await resend.emails.send({
