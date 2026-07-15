@@ -62,7 +62,7 @@ export function buildQoeEmailHtml(p: QoeEmailParams): string {
 
         <!-- Header -->
         <tr><td style="padding:22px 32px;border-bottom:1px solid #e5e0d5;">
-          <span style="font-size:19px;font-weight:bold;color:#3d5443;font-family:Georgia,serif;">AcquiFlow</span>
+          <img src="https://nextax.ai/AcquiFlow-White-Background.png" alt="AcquiFlow" height="30" style="height:30px;width:auto;display:inline-block;vertical-align:middle;border:0;" />
           <span style="font-size:11px;letter-spacing:1.5px;text-transform:uppercase;color:#a06940;font-family:Arial,Helvetica,sans-serif;padding-left:10px;">Underwriting Referral</span>
         </td></tr>
 
