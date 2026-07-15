@@ -21,6 +21,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 import { Resend } from "resend";
+import { buildQoeEmailHtml, buildQoeEmailText } from "@/lib/qoeEmailTemplate";
 import { getQoeProviders } from "@/lib/partnerConfig";
 
 export const runtime = "nodejs";
@@ -189,17 +190,18 @@ export async function POST(
   const place = [deal.city, deal.state].filter(Boolean).join(", ");
   const subject = `AcquiFlow underwriting screen: ${industryLabel} acquisition${place ? `, ${place}` : ""}`;
 
-  const usd = (n: number | null | undefined) =>
-    typeof n === "number" && Number.isFinite(n) ? `$${Math.round(n).toLocaleString()}` : "not stated";
-  const bodyText =
-    `Attached is AcquiFlow's pre-LOI underwriting screen for a deal one of our users is evaluating. ` +
-    `Deal facts: ${industryLabel}, revenue ${usd(deal.revenue)}, reported SDE ${usd(deal.sde)}, asking ${usd(deal.asking_price)}. ` +
-    `This screen is underwriting context only. Quality of earnings scope is yours. ` +
-    `The buyer is copied and can share source documents directly.`;
-  const bodyHtml =
-    `<p style="font-family:Helvetica,Arial,sans-serif;font-size:14px;line-height:1.6;color:#1a1d23;">${bodyText}</p>` +
-    `<p style="font-family:Helvetica,Arial,sans-serif;font-size:12px;color:#6b7280;">AcquiFlow by NexTax.AI</p>`;
-
+  const emailParams = {
+    industryLabel,
+    revenue: deal.revenue ?? 0,
+    sde: deal.sde ?? 0,
+    askingPrice: deal.asking_price ?? 0,
+    city: deal.city,
+    state: deal.state,
+    buyerEmail: auth.userEmail,
+    partnerDisplayName: getPartner(auth.partnerRef)?.displayName ?? null,
+  };
+  const bodyText = buildQoeEmailText(emailParams);
+  const bodyHtml = buildQoeEmailHtml(emailParams);
   try {
     const resend = new Resend(process.env.RESEND_API_KEY);
     const { data, error } = await resend.emails.send({
