@@ -172,7 +172,7 @@ export async function POST(request: Request) {
               subject: 'Your Business Idea Validation Report',
             }],
             from: {
-              email: 'hello@nextax.ai',
+              email: 'support@nextax.ai',
               name: 'NexTax.AI',
             },
             content: [{
