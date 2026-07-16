@@ -213,7 +213,7 @@ export async function POST(
   try {
     const resend = new Resend(process.env.RESEND_API_KEY);
     const { data, error } = await resend.emails.send({
-      from: "AcquiFlow <hello@nextax.ai>",
+      from: "AcquiFlow <support@nextax.ai>",
       to: provider.email,
       cc: auth.userEmail,
       replyTo: auth.userEmail,
