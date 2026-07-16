@@ -17,7 +17,7 @@ type SendEmailOptions = {
 
 export async function sendEmail({ to, subject, html, from, attachments }: SendEmailOptions) {
   // Use your verified nextax.ai domain
-  const defaultFrom = "hello@nextax.ai"
+  const defaultFrom = "support@nextax.ai"
   const fromEmail = from || `NexTax.AI <${defaultFrom}>`
 
   console.log("📧 Attempting to send email...")
