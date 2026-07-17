@@ -440,7 +440,7 @@ export default function SbaChecker({ partner }: { partner?: SbaPartnerConfig }) 
         {partner && (
           <div style={{ marginBottom: 14 }}>
             <span style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "5px 14px", borderRadius: 20, background: "rgba(16,185,129,0.09)", border: "1px solid rgba(16,185,129,0.25)", fontSize: 11.5, color: T.successText, fontWeight: 600 }}>
-              For {partner.displayName} members · full breakdown unlocked · member pricing at signup
+              For {partner.displayName} members · Full breakdown unlocked · Member pricing at signup
             </span>
           </div>
         )}
@@ -448,7 +448,7 @@ export default function SbaChecker({ partner }: { partner?: SbaPartnerConfig }) 
           Will your deal survive SBA underwriting?
         </h1>
         <p style={{ fontSize: 15, color: T.textDim, maxWidth: 540, margin: "0 auto", lineHeight: 1.65 }}>
-          A 60-second screen against the 1.25&times; debt-service coverage a lender looks for &mdash; after a benchmark owner replacement cost and a conservative add-back haircut.
+          A 60-second screen against the 1.25&times; debt-service coverage a lender looks for &mdash; after a benchmarked owner replacement cost and a conservative add-back haircut.
         </p>
       </div>
 
