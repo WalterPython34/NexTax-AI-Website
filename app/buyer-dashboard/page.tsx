@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback, useMemo } from "react";
 import { PARTNER_COMMERCE, memberMonthlyPrice } from "@/lib/partners";
 import { createClient } from "@supabase/supabase-js";
 import { CATEGORIES } from "@/lib/marketview/categories";
+import { SCORE_INDUSTRIES } from "@/lib/scoreIndustries";
 import { normalizeDealFinancials } from "@/lib/normalizationEngine";
 import { BlurGateSection, ProLockedBanner } from "@/components/BlurGateSection";
 import { getDscrRange } from "@/lib/dscrRanges";
@@ -1335,55 +1336,6 @@ function PriorityDeals({
 
 // ─── SCORING ENGINE (shared by AnalyzeDealModal) ─────────────────────────────
 
-const SCORE_INDUSTRIES: Record<string, {
-  label: string; benchmarkLow: number; benchmarkMid: number; benchmarkHigh: number;
-  marginRange: [number, number]; growth: string; riskFactor: number;
-  demandScore: number; buyerInterestRank: number; competitionLevel: string;
-}> = {
-  laundromat:     { label:"Laundromat",           benchmarkLow:2.65,benchmarkMid:3.48, benchmarkHigh:4.48,  marginRange:[25,40], growth:"Stable",   riskFactor:0.85, demandScore:82, buyerInterestRank:3,  competitionLevel:"Moderate"      },
-  hvac:           { label:"HVAC",                 benchmarkLow:1.96, benchmarkMid:2.68, benchmarkHigh:3.65,  marginRange:[15,30], growth:"Growing",  riskFactor:0.75, demandScore:88, buyerInterestRank:2,  competitionLevel:"Low-Moderate"  },
-  landscaping:    { label:"Landscaping",          benchmarkLow:1.71, benchmarkMid:2.22, benchmarkHigh:3.00,  marginRange:[10,25], growth:"Stable",   riskFactor:0.90, demandScore:70, buyerInterestRank:7,  competitionLevel:"High"          },
-  carwash:        { label:"Car Wash",             benchmarkLow:1.85, benchmarkMid:2.74, benchmarkHigh:4.88, marginRange:[25,45], growth:"Growing",  riskFactor:0.80, demandScore:79, buyerInterestRank:5,  competitionLevel:"Moderate"      },
-  dental:         { label:"Dental Practice",      benchmarkLow:1.10, benchmarkMid:1.30, benchmarkHigh:1.67,  marginRange:[20,40], growth:"Growing",  riskFactor:0.65, demandScore:74, buyerInterestRank:8,  competitionLevel:"Low"           },
-  gym:            { label:"Gym / Fitness",        benchmarkLow:1.79, benchmarkMid:2.32, benchmarkHigh:2.97,  marginRange:[15,35], growth:"Stable",   riskFactor:0.95, demandScore:71, buyerInterestRank:9,  competitionLevel:"Moderate-High" },
-  restaurant:     { label:"Restaurant",           benchmarkLow:1.4, benchmarkMid:1.85, benchmarkHigh:2.4,  marginRange:[5,15],  growth:"Volatile", riskFactor:1.10, demandScore:65, buyerInterestRank:11, competitionLevel:"Very High"     },
-  autorepair:     { label:"Auto Repair",          benchmarkLow:1.58, benchmarkMid:2.11, benchmarkHigh:2.74,  marginRange:[15,30], growth:"Stable",   riskFactor:0.85, demandScore:73, buyerInterestRank:6,  competitionLevel:"Moderate"      },
-  cleaning:       { label:"Cleaning Service",     benchmarkLow:1.70, benchmarkMid:2.22, benchmarkHigh:2.67,  marginRange:[15,30], growth:"Growing",  riskFactor:0.80, demandScore:76, buyerInterestRank:4,  competitionLevel:"High"          },
-  ecommerce:      { label:"Ecommerce Brand",      benchmarkLow:1.82, benchmarkMid:2.41, benchmarkHigh:3.27,  marginRange:[15,35], growth:"Variable", riskFactor:0.95, demandScore:83, buyerInterestRank:1,  competitionLevel:"Very High"     },
-  saas:           { label:"SaaS Product",         benchmarkLow:1.78, benchmarkMid:2.60, benchmarkHigh:3.64,  marginRange:[60,85], growth:"Growing",  riskFactor:0.70, demandScore:91, buyerInterestRank:1,  competitionLevel:"High"          },
-  insurance:      { label:"Insurance Agency",     benchmarkLow:2.53, benchmarkMid:3.40, benchmarkHigh:5.06,  marginRange:[20,40], growth:"Stable",   riskFactor:0.70, demandScore:68, buyerInterestRank:10, competitionLevel:"Low"           },
-  plumbing:       { label:"Plumbing",             benchmarkLow:1.96, benchmarkMid:2.68, benchmarkHigh:3.65,  marginRange:[15,30], growth:"Growing",  riskFactor:0.75, demandScore:85, buyerInterestRank:3,  competitionLevel:"Low-Moderate"  },
-  roofing:        { label:"Roofing",              benchmarkLow:1.65, benchmarkMid:2.21, benchmarkHigh:2.88,  marginRange:[15,30], growth:"Stable",   riskFactor:0.90, demandScore:72, buyerInterestRank:6,  competitionLevel:"Moderate"      },
-  petcare:        { label:"Pet Care / Grooming",  benchmarkLow:1.84, benchmarkMid:2.46, benchmarkHigh:3.32,  marginRange:[20,40], growth:"Growing",  riskFactor:0.80, demandScore:77, buyerInterestRank:5,  competitionLevel:"Moderate"      },
-  pharmacy:       { label:"Pharmacy",             benchmarkLow:1.99, benchmarkMid:2.89, benchmarkHigh:3.87,  marginRange:[8,20], growth:"Stable",   riskFactor:0.75, demandScore:62, buyerInterestRank:14, competitionLevel:"Low"           },
-  daycare:        { label:"Daycare / Childcare",  benchmarkLow:1.68, benchmarkMid:2.41, benchmarkHigh:3.23,  marginRange:[15,30], growth:"Growing",  riskFactor:0.80, demandScore:74, buyerInterestRank:10, competitionLevel:"Moderate"      },
-  medspa:         { label:"Med Spa",              benchmarkLow:2.0, benchmarkMid:2.75, benchmarkHigh:3.6,  marginRange:[25,45], growth:"Growing",  riskFactor:0.75, demandScore:80, buyerInterestRank:7,  competitionLevel:"Moderate"      },
-  accounting:     { label:"Accounting / Tax",     benchmarkLow:1.72, benchmarkMid:2.18, benchmarkHigh:2.92,  marginRange:[30,55], growth:"Stable",   riskFactor:0.60, demandScore:86, buyerInterestRank:3,  competitionLevel:"Low-Moderate"  },
-  electrical:     { label:"Electrical",           benchmarkLow:1.78, benchmarkMid:2.41, benchmarkHigh:3.19,  marginRange:[15,30], growth:"Growing",  riskFactor:0.75, demandScore:84, buyerInterestRank:3,  competitionLevel:"Low-Moderate"  },
-  healthcare:     { label:"Healthcare",           benchmarkLow:1.05, benchmarkMid:1.72, benchmarkHigh:2.62,  marginRange:[10,25], growth:"Growing",  riskFactor:0.70, demandScore:80, buyerInterestRank:4,  competitionLevel:"Moderate"      },
-  transportation: { label:"Transportation",       benchmarkLow:1.98, benchmarkMid:2.65, benchmarkHigh:3.51,  marginRange:[10,20], growth:"Stable",   riskFactor:0.90, demandScore:68, buyerInterestRank:8,  competitionLevel:"Moderate"      },
-  printing:       { label:"Printing / Signage",   benchmarkLow:2.10, benchmarkMid:2.62, benchmarkHigh:3.32,  marginRange:[15,30], growth:"Stable",   riskFactor:0.85, demandScore:60, buyerInterestRank:12, competitionLevel:"Moderate"      },
-  storage:        { label:"Self-Storage",         benchmarkLow:2.72, benchmarkMid:3.61, benchmarkHigh:5.46,  marginRange:[35,55], growth:"Growing",  riskFactor:0.70, demandScore:85, buyerInterestRank:2,  competitionLevel:"Low-Moderate"  },
-  painting:       { label:"Painting",             benchmarkLow:1.60, benchmarkMid:2.05, benchmarkHigh:2.49,  marginRange:[15,30], growth:"Stable",   riskFactor:0.85, demandScore:68, buyerInterestRank:8,  competitionLevel:"High"          },
-  security:       { label:"Security Services",    benchmarkLow:1.52, benchmarkMid:1.94, benchmarkHigh:2.54,  marginRange:[15,30], growth:"Growing",  riskFactor:0.75, demandScore:74, buyerInterestRank:6,  competitionLevel:"Moderate"      },
-  construction:   { label:"Construction",         benchmarkLow:1.81, benchmarkMid:2.41, benchmarkHigh:3.17,  marginRange:[10,20], growth:"Growing",  riskFactor:0.90, demandScore:75, buyerInterestRank:5,  competitionLevel:"High"          },
-  engineering:    { label:"Engineering",          benchmarkLow:1.83, benchmarkMid:2.43, benchmarkHigh:3.34,  marginRange:[20,40], growth:"Stable",   riskFactor:0.65, demandScore:72, buyerInterestRank:7,  competitionLevel:"Low"           },
-  grocery:        { label:"Grocery",              benchmarkLow:1.57, benchmarkMid:2.27, benchmarkHigh:3.30,  marginRange:[2,8],   growth:"Stable",   riskFactor:0.90, demandScore:60, buyerInterestRank:13, competitionLevel:"Very High"     },
-  propertymanage: { label:"Property Management",  benchmarkLow:1.86, benchmarkMid:2.38, benchmarkHigh:3.09,  marginRange:[20,40], growth:"Growing",  riskFactor:0.70, demandScore:78, buyerInterestRank:4,  competitionLevel:"Moderate"      },
-  realestatebrok: { label:"Real Estate Brok.",    benchmarkLow:1.66, benchmarkMid:2.08, benchmarkHigh:2.58,  marginRange:[20,40], growth:"Growing",  riskFactor:0.75, demandScore:72, buyerInterestRank:6,  competitionLevel:"Moderate"      },
-  remodeling:     { label:"Remodeling",           benchmarkLow:1.42, benchmarkMid:2.08, benchmarkHigh:2.74,  marginRange:[12,25], growth:"Growing",  riskFactor:0.85, demandScore:74, buyerInterestRank:5,  competitionLevel:"High"          },
-  clothing:       { label:"Clothing Retail",      benchmarkLow:1.69, benchmarkMid:2.39, benchmarkHigh:3.50,  marginRange:[11,23], growth:"Stable",   riskFactor:0.90, demandScore:58, buyerInterestRank:13, competitionLevel:"High"          },
-  seniorcare:     { label:"Senior Care",          benchmarkLow:2.03, benchmarkMid:2.90, benchmarkHigh:3.80,  marginRange:[15,30], growth:"Growing",  riskFactor:0.70, demandScore:82, buyerInterestRank:3,  competitionLevel:"Moderate"      },
-  staffing:       { label:"Staffing Agency",      benchmarkLow:1.54, benchmarkMid:2.33, benchmarkHigh:2.98,  marginRange:[5,15],  growth:"Stable",   riskFactor:0.80, demandScore:70, buyerInterestRank:7,  competitionLevel:"Moderate-High" },
-  veterinary:     { label:"Veterinary Practice",  benchmarkLow:2.39, benchmarkMid:3.01, benchmarkHigh:4.10,  marginRange:[15,30], growth:"Growing",  riskFactor:0.70, demandScore:78, buyerInterestRank:5,  competitionLevel:"Moderate"      },
-  marketing:      { label:"Marketing Agency",     benchmarkLow:1.80, benchmarkMid:2.27, benchmarkHigh:3.15,  marginRange:[20,40], growth:"Growing",  riskFactor:0.80, demandScore:72, buyerInterestRank:6,  competitionLevel:"High"          },
-  pestcontrol:    { label:"Pest Control",         benchmarkLow:2.02, benchmarkMid:3.19, benchmarkHigh:4.24,  marginRange:[20,35], growth:"Stable",   riskFactor:0.75, demandScore:76, buyerInterestRank:5,  competitionLevel:"Moderate"      },
-  physicaltherapy:{ label:"Physical Therapy",     benchmarkLow:1.60, benchmarkMid:2.16, benchmarkHigh:2.90,  marginRange:[15,30], growth:"Stable",   riskFactor:0.70, demandScore:74, buyerInterestRank:6,  competitionLevel:"Low-Moderate"  },
-  gasstation:     { label:"Gas Station / C-Store", benchmarkLow:2.5, benchmarkMid:3.20, benchmarkHigh:4.5,  marginRange:[3,8],   growth:"Stable",   riskFactor:0.85, demandScore:58, buyerInterestRank:13, competitionLevel:"Moderate"      },
-  signmaking:     { label:"Sign Mfg.",            benchmarkLow:1.94, benchmarkMid:2.45, benchmarkHigh:3.27,  marginRange:[15,30], growth:"Stable",   riskFactor:0.85, demandScore:60, buyerInterestRank:12, competitionLevel:"Moderate"      },
-  manufacturing:  { label:"Manufacturing (Other)", benchmarkLow:2.05, benchmarkMid:2.82, benchmarkHigh:4.45, marginRange:[9,18], growth:"Stable", riskFactor:0.78, demandScore:62, buyerInterestRank:9, competitionLevel:"Moderate" },
-  hairsalon:      { label:"Hair Salon",           benchmarkLow:1.11, benchmarkMid:1.61, benchmarkHigh:2.33,  marginRange:[15,35], growth:"Stable",   riskFactor:0.90, demandScore:65, buyerInterestRank:10, competitionLevel:"High"          },
-};
 
 interface ModalDealInputs {
   industry: string;
@@ -1405,6 +1357,11 @@ interface ModalScore {
   fairValueLow: number;
   fairValueHigh: number;
   multiple: number;
+  // [v2.1] Fair-value basis selection (band → national_closed → map_fallback)
+  fvBasis: "band" | "national_closed" | "map_fallback";
+  fvBasisMedian: number;
+  fvBasisN: number | null;
+  fvBasisBand: string | null;
   dscr: number;
   monthlyPayment: number;
   normalizationTrustScore: number | null;
@@ -1539,9 +1496,26 @@ function buildEvidenceProfile(params: {
   };
 }
 
+// [v2.1] Revenue-band label for the fair value basis caption.
+function bandLabelForCaption(revenueStr: string): string {
+  const rev = parseFloat((revenueStr || "").replace(/,/g, "")) || 0;
+  if (rev < 500_000)    return "under $500K revenue band";
+  if (rev < 1_000_000)  return "$500K to $1M revenue band";
+  if (rev < 3_000_000)  return "$1M to $3M revenue band";
+  if (rev < 10_000_000) return "$3M to $10M revenue band";
+  return "over $10M revenue band";
+}
+
 function computeModalScore(
   inputs: ModalDealInputs,
   resolvedBenchmark?: { ebitdaMarginPct: number; isProxy: boolean; basis: "direct" | "proxy" | "fallback" } | null,
+  // [v2.1] Selected closed-comp trio (band → national_closed), fetched by
+  // handleScore before scoring. Null → map fallback exactly as before.
+  selectedComps?: {
+    basis: "band" | "national_closed";
+    p25: number | null; median: number; p75: number | null;
+    n: number | null; band: string | null;
+  } | null,
 ): ModalScore | null {
   const revenue = parseFloat(inputs.revenue.replace(/,/g, ""));
   const sdeRaw  = parseFloat(inputs.sde.replace(/,/g, ""));
@@ -1609,7 +1583,13 @@ function computeModalScore(
   const redFlags: string[]   = [];
   const greenFlags: string[] = [];
   const multiple             = price / sde;
-  const { benchmarkLow, benchmarkMid, benchmarkHigh } = ind;
+  // [v2.1 Amendment 1] Basis substitution ONLY: when a closed-comp row was
+  // selected (band or national_closed), its p25/median/p75 replace the map
+  // trio for fair value AND the valuation pillar. Formula, thresholds, and
+  // weights are unchanged — the trio is the only thing that moves.
+  const benchmarkLow  = selectedComps?.p25    ?? ind.benchmarkLow;
+  const benchmarkMid  = selectedComps?.median ?? ind.benchmarkMid;
+  const benchmarkHigh = selectedComps?.p75    ?? ind.benchmarkHigh;
 
   const fairValueLow  = Math.round(sde * benchmarkLow);
   const fairValue     = Math.round(sde * benchmarkMid);
@@ -1694,6 +1674,12 @@ function computeModalScore(
   return {
     overall, riskLevel, fairValue, fairValueLow, fairValueHigh, multiple,
     dscr, monthlyPayment, gap_pct, signal,
+    // [v2.1] Selected fair-value basis — consumers derive usable SDE by
+    // dividing fairValue by fvBasisMedian (never the raw map benchmarkMid).
+    fvBasis: (selectedComps?.basis ?? "map_fallback") as ModalScore["fvBasis"],
+    fvBasisMedian: benchmarkMid,
+    fvBasisN: selectedComps?.n ?? null,
+    fvBasisBand: selectedComps?.band ?? null,
     recommendedOfferLow, recommendedOfferHigh,
     redFlags, greenFlags,
     valuationScore, debtScore, marketScore, industryScore,
@@ -1895,8 +1881,39 @@ function AnalyzeDealModal({
       }
     } catch { /* network failure — fall back to SCORE_INDUSTRIES midpoint */ }
 
+    // ── [v2.1] Step 1b: Select the closed-comp fair-value basis ──────────────
+    // Same rule as the server: band row (n >= 5) → national row (n >= 10) →
+    // null (map fallback inside computeModalScore, exactly as before).
+    let selectedComps: Parameters<typeof computeModalScore>[2] = null;
+    try {
+      const revN = parseFloat(inputs.revenue.replace(/,/g, ""));
+      const bandKey =
+        revN < 500_000    ? "under_500k" :
+        revN < 1_000_000  ? "500k_1m"    :
+        revN < 3_000_000  ? "1m_3m"      :
+        revN < 10_000_000 ? "3m_10m"     : "10m_plus";
+      const { data: dsRows } = await supabase
+        .from("dealstats_benchmarks")
+        .select("size_band,sample_size,median_mvic_to_sde,p25_mvic_to_sde,p75_mvic_to_sde")
+        .eq("industry_key", inputs.industry);
+      const fin = (v: unknown): number | null => typeof v === "number" && isFinite(v) ? v : null;
+      const bandRow = (dsRows ?? []).find(r => r.size_band === bandKey && (fin(r.sample_size) ?? 0) >= 5  && fin(r.median_mvic_to_sde) !== null);
+      const natRow  = (dsRows ?? []).find(r => !r.size_band            && (fin(r.sample_size) ?? 0) >= 10 && fin(r.median_mvic_to_sde) !== null);
+      const row = bandRow ?? natRow;
+      if (row) {
+        selectedComps = {
+          basis:  bandRow ? "band" : "national_closed",
+          p25:    fin(row.p25_mvic_to_sde),
+          median: row.median_mvic_to_sde as number,
+          p75:    fin(row.p75_mvic_to_sde),
+          n:      fin(row.sample_size),
+          band:   bandRow ? bandKey : null,
+        };
+      }
+    } catch { /* selection unavailable — map fallback, labeled */ }
+
     // ── Step 2: Compute score using resolved benchmark ───────────────────────
-    const result = computeModalScore(inputs, resolvedBenchmark);
+    const result = computeModalScore(inputs, resolvedBenchmark, selectedComps);
     // D9: fresh scoring run — clear any prior server verdict before showing results
     setServerVerdict(null);
     setVerdictStatus("pending");
@@ -1924,17 +1941,17 @@ function AnalyzeDealModal({
           revenue:              rev,
           sde,                                    // displayed SDE (stated)
           reported_sde:         sde,              // audit: original stated SDE
-          usable_sde:           score ? Math.round(score.fairValue / ((SCORE_INDUSTRIES[inputs.industry]?.benchmarkMid) ?? 2.75)) : sde,
+          usable_sde:           score ? Math.round(score.fairValue / (score.fvBasisMedian ?? (SCORE_INDUSTRIES[inputs.industry]?.benchmarkMid) ?? 2.75)) : sde,
           normalization_trust_score: score?.normalizationTrustScore ?? null,
           benchmark_family:     inputs.industry,
           benchmark_source:     score?.benchmarkBasis ?? "fallback",
           benchmark_is_proxy:   score?.benchmarkBasis === "proxy",
           raw_multiple:         sde > 0 ? +(price / sde).toFixed(3) : null,
           normalized_multiple:  score && score.fairValue > 0
-            ? +(price / Math.round(score.fairValue / ((SCORE_INDUSTRIES[inputs.industry]?.benchmarkMid) ?? 2.75))).toFixed(3)
+            ? +(price / Math.round(score.fairValue / (score.fvBasisMedian ?? (SCORE_INDUSTRIES[inputs.industry]?.benchmarkMid) ?? 2.75))).toFixed(3)
             : null,
           normalized_margin:    rev > 0 && score
-            ? +(Math.round(score.fairValue / ((SCORE_INDUSTRIES[inputs.industry]?.benchmarkMid) ?? 2.75)) / rev).toFixed(4)
+            ? +(Math.round(score.fairValue / (score.fvBasisMedian ?? (SCORE_INDUSTRIES[inputs.industry]?.benchmarkMid) ?? 2.75)) / rev).toFixed(4)
             : null,
           asking_price:         price,
           city:                 inputs.city || null,
@@ -1970,6 +1987,15 @@ function AnalyzeDealModal({
         });
         setDivergence(json.divergence ?? null);
         setVerdictStatus("ready");
+        // [v2.1] Server is authoritative on fair value — reconcile the
+        // displayed FV/gap to fair_value_used when they differ.
+        if (typeof json.fair_value_used === "number" && isFinite(json.fair_value_used) && json.fair_value_used > 0) {
+          setScore(prev => {
+            if (!prev || prev.fairValue === json.fair_value_used) return prev;
+            const g = typeof json.gap_pct === "number" ? Math.round(json.gap_pct) : prev.gap_pct;
+            return { ...prev, fairValue: json.fair_value_used, gap_pct: g };
+          });
+        }
       } else {
         setVerdictStatus("error");
       }
@@ -2291,11 +2317,19 @@ function AnalyzeDealModal({
                     </div>
                   ))}
                 </div>
+                {/* [v2.1] Fair value basis disclosure */}
+                <div style={{ fontSize: 10, color: "#64748B", marginTop: 6 }}>
+                  {score.fvBasis === "band"
+                    ? `Fair value basis: closed transactions, ${bandLabelForCaption(inputs.revenue)}, n=${score.fvBasisN ?? 0}`
+                    : score.fvBasis === "national_closed"
+                    ? `Fair value basis: national closed transactions, n=${score.fvBasisN ?? 0}`
+                    : "Fair value basis: modeled national estimate"}
+                </div>
               </div>
 
               {/* ── Earnings basis debug banner ─────────────────────────────────────── */}
               {(() => {
-                const usedSDE = Math.round(score.fairValue / ((SCORE_INDUSTRIES[inputs.industry]?.benchmarkMid) ?? 2.75));
+                const usedSDE = Math.round(score.fairValue / (score.fvBasisMedian ?? (SCORE_INDUSTRIES[inputs.industry]?.benchmarkMid) ?? 2.75));
                 const rawSDE  = parseFloat(inputs.sde.replace(/,/g, "")) || 0;
                 const isAdj   = Math.abs(usedSDE - rawSDE) > 100;
                 const nts     = score.normalizationTrustScore;
@@ -2407,7 +2441,7 @@ function AnalyzeDealModal({
                         SDE Normalization Applied
                       </span>
                       <span style={{ fontSize: 11, color: "#F59E0B", fontFamily: "'JetBrains Mono',monospace", fontWeight: 600 }}>
-                        -${(parseFloat(inputs.sde.replace(/,/g, "")) - Math.round(score.fairValue / ((SCORE_INDUSTRIES[inputs.industry]?.benchmarkMid) ?? 2.75))).toLocaleString()}
+                        -${(parseFloat(inputs.sde.replace(/,/g, "")) - Math.round(score.fairValue / (score.fvBasisMedian ?? (SCORE_INDUSTRIES[inputs.industry]?.benchmarkMid) ?? 2.75))).toLocaleString()}
                       </span>
                     </div>
                     <span style={{ fontSize: 11, color: "#7C8593" }}>{showBreakdown ? "\u25B2 Hide" : "\u25BC Details"}</span>
@@ -2418,9 +2452,9 @@ function AnalyzeDealModal({
                         <span style={{ fontSize: 10, color: "#7C8593", textTransform: "uppercase", letterSpacing: "0.07em", fontWeight: 600 }}>Reported SDE</span>
                         <span style={{ fontSize: 12, color: "#E2E8F0", fontFamily: "'JetBrains Mono',monospace", fontWeight: 600, textAlign: "right" }}>${(parseFloat(inputs.sde.replace(/,/g, "")) || 0).toLocaleString()}</span>
                         <span style={{ fontSize: 10, color: "#7C8593", textTransform: "uppercase", letterSpacing: "0.07em", fontWeight: 600 }}>Usable SDE (adjusted)</span>
-                        <span style={{ fontSize: 12, color: "#818CF8", fontFamily: "'JetBrains Mono',monospace", fontWeight: 600, textAlign: "right" }}>${Math.round(score.fairValue / ((SCORE_INDUSTRIES[inputs.industry]?.benchmarkMid) ?? 2.75)).toLocaleString()}</span>
+                        <span style={{ fontSize: 12, color: "#818CF8", fontFamily: "'JetBrains Mono',monospace", fontWeight: 600, textAlign: "right" }}>${Math.round(score.fairValue / (score.fvBasisMedian ?? (SCORE_INDUSTRIES[inputs.industry]?.benchmarkMid) ?? 2.75)).toLocaleString()}</span>
                         <span style={{ fontSize: 10, color: "#7C8593", textTransform: "uppercase", letterSpacing: "0.07em", fontWeight: 600 }}>Total Adjustment</span>
-                        <span style={{ fontSize: 12, color: "#F59E0B", fontFamily: "'JetBrains Mono',monospace", fontWeight: 600, textAlign: "right" }}>-${(parseFloat(inputs.sde.replace(/,/g, "")) - Math.round(score.fairValue / ((SCORE_INDUSTRIES[inputs.industry]?.benchmarkMid) ?? 2.75))).toLocaleString()}</span>
+                        <span style={{ fontSize: 12, color: "#F59E0B", fontFamily: "'JetBrains Mono',monospace", fontWeight: 600, textAlign: "right" }}>-${(parseFloat(inputs.sde.replace(/,/g, "")) - Math.round(score.fairValue / (score.fvBasisMedian ?? (SCORE_INDUSTRIES[inputs.industry]?.benchmarkMid) ?? 2.75))).toLocaleString()}</span>
                       </div>
                       <div style={{ fontSize: 10, color: "#7C8593", textTransform: "uppercase", letterSpacing: "0.07em", fontWeight: 600, marginBottom: 6 }}>
                         Adjustment Factors
@@ -2569,7 +2603,7 @@ function AnalyzeDealModal({
               {/* Verification Case — reference sensitivity (E4 Phase 2) */}
               {verdictStatus === "ready" && serverVerdict && divergence && divergence.industry_reference_sde != null &&
                 (serverVerdict.verificationRequired === true || serverVerdict.confidence_grade === "LOW") && (() => {
-                const usedSde = Math.round(score.fairValue / ((SCORE_INDUSTRIES[inputs.industry]?.benchmarkMid) ?? 2.75));
+                const usedSde = Math.round(score.fairValue / (score.fvBasisMedian ?? (SCORE_INDUSTRIES[inputs.industry]?.benchmarkMid) ?? 2.75));
                 if (!(usedSde > 0)) return null;
                 const refSde = divergence.industry_reference_sde;
                 const ratio   = refSde / usedSde;

@@ -22,6 +22,9 @@ import { loadMarginReferences, computeDivergenceObservation } from "@/lib/diverg
 import { deriveConfidenceGrade, applyConvictionCap } from "@/lib/investigationEngine";
 import type { DivergenceBand, ReferenceQuality, ConfidenceGrade } from "@/lib/investigationEngine";
 import { deriveVerdict } from "@/lib/dealVerdict";
+// [v2.1] Shared industry map — the map_fallback branch of the fair-value basis
+// selection reads the SAME map the dashboard scores with (Amendment 2).
+import { SCORE_INDUSTRIES } from "@/lib/scoreIndustries";
 // [E4 P3] Deterministic investigation checklist (D4) — snapshot persisted per save.
 import { generateInvestigationItems } from "@/lib/investigationChecklist";
 // ── CP Shadow Mode (Phase 0) — additive snapshot generation ──────────────────
@@ -297,6 +300,112 @@ export async function POST(req: NextRequest) {
       });
     }
 
+    // ── [v2.1] Band-aware fair value basis (METHODOLOGY EVENT) ──────────────
+    // ONE selected basis feeds fair_value_used, gap_pct, and the verdict.
+    // Selection: band row (sample_size >= 5) → national row (>= 10) → shared
+    // SCORE_INDUSTRIES map. FAIL-CLOSED rules:
+    //   - map_fallback fires ONLY on positively established absence (queries
+    //     succeeded, nothing qualified) AND a valid map entry for the key.
+    //   - A dealstats query FAILURE aborts the save. Infrastructure state is
+    //     not proof of absence; methodology never switches silently on it.
+    //   - fair_value_used never persists as NaN/null/<=0 — the save fails.
+    // The client-sent fair_value persists only as a diagnostic column; it is
+    // never the basis of the persisted gap or verdict.
+    type FvBasis = "band" | "national_closed" | "map_fallback";
+    const sizeBandOf = (rev: number): string => {
+      if (rev < 500_000)    return "under_500k";
+      if (rev < 1_000_000)  return "500k_1m";
+      if (rev < 3_000_000)  return "1m_3m";
+      if (rev < 10_000_000) return "3m_10m";
+      return "10m_plus";
+    };
+    const numOrNull = (v: unknown): number | null =>
+      typeof v === "number" && Number.isFinite(v) ? v : null;
+    const dealSizeBand = sizeBandOf(safe(revNum));
+
+    let fvBasis: FvBasis;
+    let fvTrio: { p25: number | null; median: number; p75: number | null };
+    let fvSampleSize: number | null = null;
+
+    try {
+      const { data: dsRows, error: dsErr } = await supabaseAdmin
+        .from("dealstats_benchmarks")
+        .select("size_band, sample_size, median_mvic_to_sde, p25_mvic_to_sde, p75_mvic_to_sde")
+        .eq("industry_key", industry);
+      if (dsErr) throw dsErr;
+
+      const qualifies = (r: { sample_size: unknown; median_mvic_to_sde: unknown }, minN: number) =>
+        numOrNull(r.sample_size) !== null && (r.sample_size as number) >= minN &&
+        numOrNull(r.median_mvic_to_sde) !== null && (r.median_mvic_to_sde as number) > 0;
+      const bandRow     = (dsRows ?? []).find(r => r.size_band === dealSizeBand && qualifies(r, 5));
+      const nationalRow = (dsRows ?? []).find(r => !r.size_band && qualifies(r, 10));
+
+      if (bandRow) {
+        fvBasis = "band";
+        fvTrio = { p25: numOrNull(bandRow.p25_mvic_to_sde), median: bandRow.median_mvic_to_sde, p75: numOrNull(bandRow.p75_mvic_to_sde) };
+        fvSampleSize = numOrNull(bandRow.sample_size);
+      } else if (nationalRow) {
+        fvBasis = "national_closed";
+        fvTrio = { p25: numOrNull(nationalRow.p25_mvic_to_sde), median: nationalRow.median_mvic_to_sde, p75: numOrNull(nationalRow.p75_mvic_to_sde) };
+        fvSampleSize = numOrNull(nationalRow.sample_size);
+      } else {
+        // Positively established absence — queries succeeded, nothing qualified.
+        const mapEntry = SCORE_INDUSTRIES[industry];
+        if (!mapEntry || !Number.isFinite(mapEntry.benchmarkMid) || mapEntry.benchmarkMid <= 0) {
+          await logPipelineEvent(supabaseAdmin, {
+            stage: "fair_value_basis", status: "failed", fingerprint,
+            detail: { reason: "no_qualifying_row_and_no_map_entry", industry },
+          });
+          return NextResponse.json(
+            { success: false, error: "Benchmark unavailable for this industry" },
+            { status: 422 },
+          );
+        }
+        fvBasis = "map_fallback";
+        fvTrio = { p25: mapEntry.benchmarkLow, median: mapEntry.benchmarkMid, p75: mapEntry.benchmarkHigh };
+        fvSampleSize = null;
+      }
+    } catch (fvErr) {
+      await logPipelineEvent(supabaseAdmin, {
+        stage: "fair_value_basis", status: "failed", fingerprint, error: fvErr,
+        detail: { reason: "dealstats_query_failed", industry },
+      });
+      return NextResponse.json(
+        { success: false, error: "Benchmark lookup failed; deal not saved" },
+        { status: 503 },
+      );
+    }
+
+    const fairValueUsed = Math.round(safe(sdeNum) * fvTrio.median);
+    if (!Number.isFinite(fairValueUsed) || fairValueUsed <= 0) {
+      await logPipelineEvent(supabaseAdmin, {
+        stage: "fair_value_basis", status: "failed", fingerprint,
+        detail: { reason: "fair_value_not_computable", industry, basis: fvBasis, sde: sdeNum },
+      });
+      return NextResponse.json(
+        { success: false, error: "Fair value could not be computed from the provided SDE" },
+        { status: 422 },
+      );
+    }
+    const gapPctServer = ((priceNum - fairValueUsed) / fairValueUsed) * 100;
+    const fairValueBasisDetail = {
+      industry_key:    industry,
+      size_band:       fvBasis === "band" ? dealSizeBand : null,
+      median_multiple: fvTrio.median,
+      p25:             fvTrio.p25,
+      p75:             fvTrio.p75,
+      sample_size:     fvSampleSize,
+      // dealstats_benchmarks carries NO data-vintage field (verified:
+      // updated_at / created_at / as_of_date / snapshot_date all absent).
+      // Null, per the no-manufactured-provenance rule — never the save date.
+      benchmark_as_of:       null as string | null,
+      benchmark_selected_at: new Date().toISOString(),  // selection time, labeled as exactly that
+    };
+    await logPipelineEvent(supabaseAdmin, {
+      stage: "fair_value_basis", status: "ok", fingerprint,
+      detail: { basis: fvBasis, fv_used: fairValueUsed, gap: Math.round(gapPctServer * 10) / 10 },
+    });
+
     // ── [E4 P1] Confidence grade → conviction cap → server verdict (D1/D2) ──
     // THE single channel. The cap consumes only the grade; the grade consumes
     // only divergence observations. verdict_pre_cap persists for audit recovery.
@@ -313,11 +422,11 @@ export async function POST(req: NextRequest) {
 
     const manualReviewRequired =
       Boolean((normPayload as { manual_review_required?: boolean }).manual_review_required);
-    const fairValueNum = typeof fair_value === "number" && isFinite(fair_value) ? fair_value : 0;
-    const gapPctPre = fairValueNum > 0 ? ((priceNum - fairValueNum) / fairValueNum) * 100 : 0;
 
+    // [v2.1] The verdict gap comes from the server-selected basis — never from
+    // the client-sent fair_value.
     const preCapVerdict = deriveVerdict({
-      gap_pct:                gapPctPre,
+      gap_pct:                gapPctServer,
       dscr:                   safe(dscr),
       overall_score:          safe(overall_score),
       risk_level:             risk_level ?? null,
@@ -395,10 +504,16 @@ export async function POST(req: NextRequest) {
       // divergence observation itself was skipped (columns stay null and the
       // pipeline event says why). Historical rows remain null = v1 era.
       normalization_version: "v2",
-      // [E4 P1] v2.0: server-authoritative verdict + single-channel grade.
+      // [E4 P1] Server-authoritative verdict + single-channel grade.
       // Null grade (observation skipped) persists as null; verdict still
       // derives and persists (uncapped) so v2 rows are self-describing.
-      score_version:           "v2.0",
+      // [v2.1] METHODOLOGY EVENT: fair value, gap, and verdict all derive
+      // from ONE server-selected basis, recorded below. Stored rows keep
+      // their original score_version — no backfill, ever.
+      score_version:           "v2.1",
+      fair_value_basis:        fvBasis,
+      fair_value_used:         fairValueUsed,
+      fair_value_basis_detail: fairValueBasisDetail,
       verdict:                 cap.finalVerdict,
       verdict_pre_cap:         preCapVerdict,
       confidence_grade:        confidenceGrade,
@@ -591,10 +706,10 @@ export async function POST(req: NextRequest) {
       }
     }
     
-    // Derive gap_pct and signal for immediate UI use
-    const gap_pct = inserted?.fair_value && inserted.fair_value > 0
-      ? Math.round(((inserted.asking_price - inserted.fair_value) / inserted.fair_value) * 100)
-      : 0;
+    // Derive gap_pct and signal for immediate UI use.
+    // [v2.1] Both come from the server-selected basis (fair_value_used), not
+    // the stored client-diagnostic fair_value.
+    const gap_pct = Math.round(gapPctServer);
     const signal =
       gap_pct > 10  ? "overpriced" :
       gap_pct < -5  ? "opportunity" :
@@ -635,6 +750,11 @@ export async function POST(req: NextRequest) {
         ceiling:              cap.ceiling,
         verificationRequired: cap.verificationRequired,
       },
+      // [v2.1] Server-authoritative fair value — the client reconciles its
+      // displayed FV/gap to these on receipt.
+      fair_value_used:  fairValueUsed,
+      fair_value_basis: fvBasis,
+      gap_pct:          Math.round(gapPctServer * 10) / 10,
       // [E4 P2] Divergence display payload (null when observation skipped/failed)
       divergence: divergenceDisplay,
       // [E4 P3] Checklist snapshot (empty array when nothing triggered)
