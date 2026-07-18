@@ -25,6 +25,7 @@ import { deriveVerdict } from "@/lib/dealVerdict";
 // [v2.1] Shared industry map — the map_fallback branch of the fair-value basis
 // selection reads the SAME map the dashboard scores with (Amendment 2).
 import { SCORE_INDUSTRIES } from "@/lib/scoreIndustries";
+import { postToSlack, isWatchedUser, fmtFounderDeal, fmtBenchmarkFallback } from "@/lib/slack";
 // [E4 P3] Deterministic investigation checklist (D4) — snapshot persisted per save.
 import { generateInvestigationItems } from "@/lib/investigationChecklist";
 // ── CP Shadow Mode (Phase 0) — additive snapshot generation ──────────────────
@@ -298,6 +299,7 @@ export async function POST(req: NextRequest) {
       await logPipelineEvent(supabaseAdmin, {
         stage: "benchmark_fallback", status: "ok", fingerprint, detail: { industry },
       });
+      await postToSlack("errors", fmtBenchmarkFallback(industry));
     }
 
     // ── [v2.1] Band-aware fair value basis (METHODOLOGY EVENT) ──────────────
@@ -538,6 +540,10 @@ export async function POST(req: NextRequest) {
         detail: { normalization_status: normalizationStatus },
       });
       return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+    }
+    // ── Founder/VIP watch — insert succeeded, verdict + grade known ────────────
+    if (isWatchedUser(user_id)) {
+      await postToSlack("signals", fmtFounderDeal(null, industry, cap.finalVerdict, confidenceGrade));
     }
     // ── Classification — fire-and-forget after successful insert ───────────────
     // Runs async so it never blocks the response.

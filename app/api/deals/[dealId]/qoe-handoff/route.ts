@@ -23,6 +23,7 @@ import { createClient } from "@supabase/supabase-js";
 import { Resend } from "resend";
 import { buildQoeEmailHtml, buildQoeEmailText } from "@/lib/qoeEmailTemplate";
 import { getPartner, getQoeProviders } from "@/lib/partnerConfig";
+import { postToSlack, fmtQoeReferral, fmtSendFailed } from "@/lib/slack";
 
 export const runtime = "nodejs";
 export const maxDuration = 60;
@@ -174,12 +175,14 @@ export async function POST(
       const errBody = await pdfRes.json().catch(() => ({}));
       const reason = (errBody as { error?: string })?.error ?? `reports route ${pdfRes.status}`;
       await logReferral("send_failed", null, { stage: "pdf_generation", error: reason });
+      await postToSlack("errors", fmtSendFailed("qoe-handoff", reason));
       return NextResponse.json({ success: false, error: `Report generation failed: ${reason}` }, { status: 502 });
     }
     pdfBytes = Buffer.from(await pdfRes.arrayBuffer());
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     await logReferral("send_failed", null, { stage: "pdf_generation", error: msg });
+    await postToSlack("errors", fmtSendFailed("qoe-handoff", msg));
     return NextResponse.json({ success: false, error: `Report generation failed: ${msg}` }, { status: 502 });
   }
 
@@ -207,6 +210,7 @@ export async function POST(
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     await logReferral("send_failed", null, { stage: "template", error: msg });
+    await postToSlack("errors", fmtSendFailed("qoe-handoff", msg));
     return NextResponse.json({ success: false, error: `Email template failed: ${msg}` }, { status: 502 });
   }
   
@@ -229,13 +233,16 @@ export async function POST(
     });
     if (error) {
       await logReferral("send_failed", null, { stage: "resend", error: JSON.stringify(error) });
+      await postToSlack("errors", fmtSendFailed("qoe-handoff", JSON.stringify(error)));
       return NextResponse.json({ success: false, error: `Email send failed: ${JSON.stringify(error)}` }, { status: 502 });
     }
     await logReferral("sent", data?.id ?? null, null);
+    await postToSlack("signals", fmtQoeReferral(provider.name, deal.industry, deal.revenue, deal.sde, deal.asking_price, auth.partnerRef));
     return NextResponse.json({ success: true, provider: provider.name });
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e);
     await logReferral("send_failed", null, { stage: "resend", error: msg });
+    await postToSlack("errors", fmtSendFailed("qoe-handoff", msg));
     return NextResponse.json({ success: false, error: `Email send failed: ${msg}` }, { status: 502 });
   }
 }

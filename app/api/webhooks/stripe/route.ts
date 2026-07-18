@@ -26,6 +26,7 @@ import { type NextRequest, NextResponse } from "next/server"
 import { headers } from "next/headers"
 import Stripe from "stripe"
 import { createClient } from "@supabase/supabase-js"
+import { postToSlack, fmtNewPro, fmtPaymentFailed, fmtSubscriptionCanceled } from "@/lib/slack"
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: "2024-11-20.acacia",
@@ -270,6 +271,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
 
   await upsertSubscription({ user_id: userId, subscription })
   await setProfilePlan(userId, "premium")
+  await postToSlack("signals", fmtNewPro(session.customer_email ?? session.customer_details?.email ?? null, session.metadata?.partner_ref ?? null))
 }
 
 async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
@@ -352,6 +354,7 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
       await setProfilePlan(data.user_id, "free")
     }
   }
+  await postToSlack("signals", fmtSubscriptionCanceled((subscription as any).customer_email ?? null, subscription.metadata?.partner_ref ?? null))
 }
 
 async function handleInvoicePaymentSucceeded(invoice: Stripe.Invoice) {
@@ -380,4 +383,5 @@ async function handleInvoicePaymentFailed(invoice: Stripe.Invoice) {
   if (!invoice.subscription) return
 
   console.warn("[webhook] payment failed for subscription:", invoice.subscription, "(will rely on subscription.updated to act)")
+  await postToSlack("errors", fmtPaymentFailed(invoice.customer_email ?? null, invoice.amount_due != null ? invoice.amount_due / 100 : null))
 }
