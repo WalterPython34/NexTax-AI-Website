@@ -568,7 +568,10 @@ export async function POST(req: NextRequest) {
         "revenue, sde, red_flags, green_flags, recommended_offer_low, recommended_offer_high, " +
         "valuation_score, debt_score, market_score, industry_score, monthly_payment, " +
         "interest_rate, term_years, debt_percent, " +
-        "evidence_profile, normalization_trust_score"
+        "evidence_profile, normalization_trust_score, " +
+        // [v2.1] Without these, the modal/dashboard receive a fresh row that
+        // looks pre-v2.1 and mis-gates version-aware UI (legacy disclosure).
+        "score_version, verdict, fair_value_basis, fair_value_used, fair_value_basis_detail"
       )
       .eq("fingerprint", fingerprint)
       .eq("industry", industry)
