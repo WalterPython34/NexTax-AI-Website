@@ -4488,6 +4488,29 @@ function UnderwritingPanel({
                 <div style={{ fontSize: 12, color: "#B8C1CC", lineHeight: 1.6 }}>
                   {plainExplain}
                 </div>
+                {(() => {
+                  // [v2.1 2b] Legacy pricing disclosure — a GAP comparison, not a
+                  // verdict comparison. Shown only on pre-v2.1 rows where the
+                  // stored broad-market gap reads >= 15% but the current
+                  // qualified size-band basis reads within range. Stored verdict
+                  // text is never altered.
+                  if (deal.score_version === "v2.1") return null;
+                  const ccM = marketFacts?.closed_comp_median;
+                  const qualifiedBand =
+                    marketFacts?.closed_comp_basis === "industry_size_matched" && ccM != null && ccM > 0;
+                  const sdeForGap = deal.sde ?? 0;
+                  if (!qualifiedBand || !(sdeForGap > 0)) return null;
+                  const storedFv  = deal.fair_value ?? 0;
+                  const storedGap = storedFv > 0 ? ((deal.asking_price - storedFv) / storedFv) * 100 : 0;
+                  const bandFv    = sdeForGap * ccM;
+                  const bandGap   = ((deal.asking_price - bandFv) / bandFv) * 100;
+                  if (!(storedGap >= 15 && bandGap < 15)) return null;
+                  return (
+                    <div style={{ fontSize: 10, color: "#64748B", marginTop: 8, lineHeight: 1.5 }}>
+                      Pricing was evaluated under the prior broad-market basis. Size-matched closed transactions currently read within range; see Market Comps.
+                    </div>
+                  );
+                })()}
               </div>
 
             <BlurGateSection
@@ -5372,7 +5395,6 @@ function UnderwritingPanel({
             // Migrated from SCORE_INDUSTRIES.benchmarkLow/High (non-canonical, hardcoded)
             // to canonical closed_comp_p25/p75 from /api/deals/[id]/market-facts.
             // Per Decision 3b: underwriting range is closed-comp anchored.
-            const compsMarketPosition = buildMarketPosition(deal); // ← restore: still referenced by downstream Pro sections
             const mult        = deal.valuation_multiple ?? 0;
             const ccBasis     = marketFacts?.closed_comp_basis ?? "unavailable";
             const ccP25       = marketFacts?.closed_comp_p25;
@@ -5381,6 +5403,33 @@ function UnderwritingPanel({
             const ccPosition  = marketFacts?.deal_vs_closed_position ?? null;
             const ccSampleN   = marketFacts?.closed_comp_sample_size ?? null;
             const hasRange    = ccBasis !== "unavailable" && ccP25 != null && ccP75 != null;
+
+            // [v2.1 2a] REGRESSION GUARD: One basis per screen. All comp
+            // sections read the same selected row as the Market Position block
+            // and the report route. Do not reintroduce a second basis.
+            const selectedTrio = hasRange && ccMedian != null
+              ? { low: ccP25!, median: ccMedian, high: ccP75! }
+              : null;
+            const compsBasisCaption = selectedTrio
+              ? (ccBasis === "industry_size_matched"
+                  ? `Fair value basis: closed transactions, ${bandLabelForCaption(String(deal.revenue ?? 0))}, n=${ccSampleN ?? 0}`
+                  : `Fair value basis: national closed transactions, n=${ccSampleN ?? 0}`)
+              : "Fair value basis: modeled national estimate";
+            // Badges recomputed against the selected trio (same thresholds as
+            // buildMarketPosition — basis substitution only).
+            const compsMarketPosition = (() => {
+              const base = buildMarketPosition(deal);
+              if (!selectedTrio) return base;
+              const { low, median, high } = selectedTrio;
+              let pricingLabel: PricingLabel;
+              if      (mult <= low * 0.75)   pricingLabel = "Well Below Market";
+              else if (mult <= low)          pricingLabel = "Below Market";
+              else if (mult <= median * 1.1) pricingLabel = "At Market";
+              else if (mult <= high)         pricingLabel = "Above Market";
+              else if (mult <= high * 1.35)  pricingLabel = "Significantly Above Market";
+              else                           pricingLabel = "Extreme Outlier";
+              return { ...base, pricingLabel };
+            })();
 
             // Position label and color — derived from canonical deal_vs_closed_position
             // when available; otherwise neutral. Per Decision 4a, no ad-hoc gap math.
@@ -5608,14 +5657,24 @@ function UnderwritingPanel({
               )}
 
               <CompsTab
-                benchmarkContext={buildBenchmarkContext(deal)}
+                benchmarkContext={{
+                  ...buildBenchmarkContext(deal),
+                  // [v2.1 2a] Bottom sections read the SAME selected row as the
+                  // Market Position block above — never a second basis.
+                  ...(selectedTrio ? {
+                    lowMultiple:    selectedTrio.low,
+                    medianMultiple: selectedTrio.median,
+                    highMultiple:   selectedTrio.high,
+                  } : {}),
+                }}
+                basisCaption={compsBasisCaption}
                 marketPosition={compsMarketPosition}
                 normalization={buildNormalizationContext(deal)}
                 compsData={compsData}
                 insights={(() => {
                   const ind     = SCORE_INDUSTRIES[deal.industry];
-                  const low     = ind?.benchmarkLow  ?? 2.0;
-                  const high    = ind?.benchmarkHigh ?? 3.5;
+                  const low     = selectedTrio?.low  ?? ind?.benchmarkLow  ?? 2.0;
+                  const high    = selectedTrio?.high ?? ind?.benchmarkHigh ?? 3.5;
                   const mult    = deal.valuation_multiple ?? 0;
                   const gp      = deal.gap_pct ?? 0;
                   const dscr    = deal.dscr ?? 0;
@@ -10256,12 +10315,48 @@ const dealHasFullAccess = (dealId: string): boolean => {
           return; // keep the flag so a later session can retry
         }
         localStorage.removeItem("nxtax_partner_ref");
+        // Capture landed — the DB row now exists; reflect it immediately so
+        // recognition does not wait for the next session.
+        setResolvedPartnerRef(ref);
       } catch (e) {
         console.error("[committee-diag] partner_attribution capture error:", e);
       }
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
+
+  // ── [v2.1 2c] Partner recognition resolution — DB authoritative ───────────
+  // STANDING RULE: Partner UI gates on the visitor's resolved ref; for
+  // authenticated users the DB row is authoritative; never gate on config
+  // existence. "pending" (lookup in flight or failed) renders NO partner UI —
+  // brief absence beats a flash of wrong recognition. A COMPLETED lookup with
+  // no row resolves to null: no partner UI, even when localStorage still
+  // carries a stale stamp. ?ref= visits affect attribution only through the
+  // capture flow above.
+  const [resolvedPartnerRef, setResolvedPartnerRef] =
+    useState<string | null | "pending">("pending");
+  useEffect(() => {
+    if (!user) { setResolvedPartnerRef("pending"); return; }
+    let cancelled = false;
+    (async () => {
+      try {
+        const { data, error } = await supabase
+          .from("partner_attributions")
+          .select("partner_ref")
+          .eq("user_id", user.id)
+          .maybeSingle();
+        if (cancelled) return;
+        if (error) { setResolvedPartnerRef("pending"); return; } // lookup did NOT complete
+        setResolvedPartnerRef(data?.partner_ref ?? null);        // completed: row or authoritative absence
+      } catch {
+        if (!cancelled) setResolvedPartnerRef("pending");
+      }
+    })();
+    return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
+  // Reserved for authenticated partner surfaces; resolution is the single gate.
+  void resolvedPartnerRef;
 
   // ── Auto-open underwriting on first login if deals exist ──────────────────
   // Fires once after deals load — opens the most recent deal so the user

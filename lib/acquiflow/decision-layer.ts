@@ -43,6 +43,9 @@ export interface DealReportInputs {
   // Basis disclosure for the Executive Snapshot fair value (one caption line;
   // assembled at the call site by the band-aware anchor selection).
   fair_value_basis_caption?: string | null;
+  // [v2.1 2b-report] Legacy pricing disclosure for pre-v2.1 rows (one line;
+  // null on v2.1 rows and whenever the gap condition does not hold).
+  legacy_pricing_disclosure?: string | null;
 
   // Scoring
   overall_score: number;

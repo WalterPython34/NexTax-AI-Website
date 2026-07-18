@@ -254,6 +254,24 @@ export async function GET(
       }, n=${sampleSize ?? 0}`
     : "Fair value basis: modeled estimate";
 
+  // ── [v2.1 2b-report] Legacy pricing disclosure ─────────────────────────
+  // Gap comparison, not verdict comparison: shown only on pre-v2.1 rows
+  // where the STORED broad-market gap reads >= 15% but the current
+  // qualified size-band basis reads within range. Stored data untouched.
+  const legacyPricingDisclosure: string | null = (() => {
+    if (deal.score_version === "v2.1") return null;
+    if (marketFacts?.closed_comp_basis !== "industry_size_matched") return null;
+    const ccM      = marketFacts.closed_comp_median;
+    const sdeN     = deal.sde ?? 0;
+    const storedFv = deal.fair_value ?? 0;
+    if (!ccM || ccM <= 0 || !(sdeN > 0) || !(storedFv > 0)) return null;
+    const storedGap = ((deal.asking_price - storedFv) / storedFv) * 100;
+    const bandGap   = ((deal.asking_price - sdeN * ccM) / (sdeN * ccM)) * 100;
+    return storedGap >= 15 && bandGap < 15
+      ? "Pricing was evaluated under the prior broad-market basis. Size-matched closed transactions currently read within range; see Market Comps."
+      : null;
+  })();
+
   // ─── 6. Build DealReportInputs and decision layer ─────────────────────
   const inputs: DealReportInputs = {
     industry:        deal.industry,
@@ -279,6 +297,7 @@ export async function GET(
     recommended_offer_low:  recommendedOfferLow,
     recommended_offer_high: recommendedOfferHigh,
     fair_value_basis_caption: fairValueBasisCaption,
+    legacy_pricing_disclosure: legacyPricingDisclosure,
 
     overall_score: deal.overall_score,
     risk_level:    deal.risk_level,

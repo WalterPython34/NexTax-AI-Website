@@ -746,6 +746,14 @@ function drawPage1(doc: jsPDF, data: DealReportData, decision: DecisionLayerResu
   takeLines.forEach((line: string, i: number) => {
     doc.text(line, M, y + i * 13);
   });
+
+  // [v2.1 2b-report] Legacy pricing disclosure — one caption line after the
+  // valuation conclusion (last element on the page; no layout shift).
+  if (inputs.legacy_pricing_disclosure) {
+    setType(doc, "L5");
+    setHex(doc, COLOR.textDim, "text");
+    doc.text(inputs.legacy_pricing_disclosure, M, y + takeLines.length * 13 + 14, { maxWidth: CW });
+  }
 }
 
 // ─── PAGE 2 — FINANCIAL UNDERWRITING ────────────────────────────────────

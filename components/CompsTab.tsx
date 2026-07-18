@@ -233,6 +233,9 @@ export interface CompsTabProps {
   compsData:        CompsData;
   insights:         string[];
   decision:         DecisionContext;
+  /** [v2.1 2a] Basis disclosure rendered on the Benchmark Range Comparison
+   *  section — states which selected row every comp section reads. */
+  basisCaption?:    string | null;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -466,10 +469,13 @@ export function RangeBar({ label, currentValue, low, median, high, format, note,
   );
 }
 
-export function RangeBarsSection({ bars }: RangeBarsSectionProps) {
+export function RangeBarsSection({ bars, basisCaption }: RangeBarsSectionProps & { basisCaption?: string | null }) {
   return (
     <SectionCard style={{ marginBottom: 10 }}>
       <SectionLabel>Benchmark Range Comparison</SectionLabel>
+      {basisCaption && (
+        <div style={{ fontSize: 10, color: T.textMuted, marginBottom: 8 }}>{basisCaption}</div>
+      )}
       <div>
         {bars.map((bar, i) => (
           <div key={bar.label} style={{ borderTop: i > 0 ? `1px solid ${T.borderLight}` : "none", paddingTop: i > 0 ? 12 : 0 }}>
@@ -724,7 +730,7 @@ export function DecisionSummarySection({ verdict, summary, actions }: DecisionSu
 // ROOT — CompsTab
 // ═══════════════════════════════════════════════════════════════════════════════
 
-export function CompsTab({ benchmarkContext, marketPosition, normalization, compsData, insights, decision }: CompsTabProps) {
+export function CompsTab({ benchmarkContext, marketPosition, normalization, compsData, insights, decision, basisCaption }: CompsTabProps) {
   const { benchmarkLabel, benchmarkIsProxy, benchmarkSource, lowMultiple, medianMultiple, highMultiple, marginLow, marginMedian, marginHigh, dscrLow, dscrMedian, dscrHigh } = benchmarkContext;
   const { pricingLabel, percentile, currentMultiple } = marketPosition;
 
@@ -786,7 +792,7 @@ export function CompsTab({ benchmarkContext, marketPosition, normalization, comp
         highMultiple={highMultiple}
       />
 
-      <RangeBarsSection bars={bars} />
+      <RangeBarsSection bars={bars} basisCaption={basisCaption} />
 
       <ReportedVsAdjustedSection
         reportedSDE={normalization.reportedSDE}
