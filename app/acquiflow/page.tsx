@@ -380,8 +380,10 @@ export default function AcquiFlowPage() {
                 <li className="included">Unlimited deal analyses</li>
                 <li className="included">Full underwriting tabs</li>
                 <li className="included">Closed transaction comps</li>
-                <li className="included">5-page PDF deal report</li>
-                <li className="included">Deal comparison + flip signal</li>
+                <li className="included">5-9 page PDF deal underwriting report</li>
+                <li className="included">4 page institutional read</li>
+                <li className="included">Deal comparison + benchmarking</li>
+                <li className="included">Asset vs stock sale + tax structuring</li>
                 <li className="included">LOI Builder</li>
                 <li className="included">Unlimited market saturation</li>
               </ul>
