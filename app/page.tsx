@@ -1053,7 +1053,7 @@ export default function HomePage() {
                   Most buyers use this to evaluate 10–50 deals/month
                 </p>
                 <div className="mb-6">
-                  <span className="text-3xl font-bold text-white">Starting at $39</span>
+                  <span className="text-3xl font-bold text-white">Starting at $49</span>
                   <span className="text-slate-400 ml-2 text-base">/ month</span>
                 </div>
                 <ul className="space-y-3 mb-8 flex-1">
