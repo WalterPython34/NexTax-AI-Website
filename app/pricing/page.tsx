@@ -335,9 +335,9 @@ function FormationPricingContent() {
     {
       name: "Enterprise Accounting",
       icon: Building2,
-      price: "$39",
+      price: "$49",
       period: "/month",
-      priceId: "price_1SmcCaGA3ir6ndSxwLCcchIF",
+      priceId: "price_1TsamtGA3ir6ndSx3alTZQ3z",
       description: "Advanced accounting for complex businesses",
       features: [
         "Multi-entity accounting",
