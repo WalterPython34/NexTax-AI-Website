@@ -117,7 +117,7 @@ const ACQ_PACKAGES = [
   {
     name:        "Pro",
     icon:         Crown,
-    price:       "$39",
+    price:       "$49",
     priceNote:   "/month",
     description: "For serious acquisition decisions",
     features: [
