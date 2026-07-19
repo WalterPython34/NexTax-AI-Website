@@ -28,7 +28,7 @@ import {
   MapPin,
 } from "lucide-react"
 
-const PRO_PRICE_ID = "price_1TPbTTGA3ir6ndSx14wKWA27"
+const PRO_PRICE_ID = "price_1TsamtGA3ir6ndSx3alTZQ3z"
 
 // ─── 6 outcome boxes — added "Local market saturation insight" ──────────────
 const OUTCOMES = [
