@@ -122,10 +122,11 @@ const ACQ_PACKAGES = [
     description: "For serious acquisition decisions",
     features: [
       "Full underwriting across all tabs",
-      "Full comps + percentile positioning",
-      "Deal memo (PDF export)",
+      "Full benchmarking + percentile positioning",
+      "Deal memo & (PDF export)",
       "LOI Builder + negotiation ranges",
       "Compare deals side-by-side",
+      "Asset vs stock sale + tax structuring",
       "Market saturation + competitor analysis",
       "Unlimited deal analysis",
     ],
