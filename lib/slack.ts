@@ -51,7 +51,7 @@ export async function postToSlack(channel: SlackChannel, text: string): Promise<
 // Supabase auth user_ids whose deal activity should ping #signals. Fill with
 // Bill's and Helen's user_ids once their founder accounts exist.
 export const WATCHED_USER_IDS: ReadonlySet<string> = new Set<string>([
-  // "bill-user-id-here",
+  // "bill@smbdealhunter.xyz",
   // "helen-user-id-here",
 ]);
 
