@@ -48,15 +48,16 @@ export async function postToSlack(channel: SlackChannel, text: string): Promise<
 }
 
 // ── Founder / VIP watch list ─────────────────────────────────────────────────
-// Supabase auth user_ids whose deal activity should ping #signals. Fill with
-// Bill's and Helen's user_ids once their founder accounts exist.
+// Entries may be Supabase auth user_ids OR email addresses (lowercase).
+// Emails are resolved by the caller (record-deal looks up the saver's email
+// via the auth admin API when the list contains any entry).
 export const WATCHED_USER_IDS: ReadonlySet<string> = new Set<string>([
-  // "bill@smbdealhunter.xyz",
+  "bill@smbdealhunter.xyz",
   // "helen-user-id-here",
 ]);
 
-export function isWatchedUser(userId: string | null | undefined): boolean {
-  return userId != null && WATCHED_USER_IDS.has(userId);
+export function isWatchedUser(idOrEmail: string | null | undefined): boolean {
+  return idOrEmail != null && WATCHED_USER_IDS.has(idOrEmail.toLowerCase());
 }
 
 // ── Formatting helpers (keep messages readable and consistent) ───────────────

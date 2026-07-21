@@ -542,8 +542,21 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: error.message }, { status: 500 });
     }
     // ── Founder/VIP watch — insert succeeded, verdict + grade known ────────────
-    if (isWatchedUser(user_id)) {
-      await postToSlack("signals", fmtFounderDeal(null, industry, cap.finalVerdict, confidenceGrade));
+    // Watch list entries may be user_ids or emails; resolve the saver's email
+    // via the auth admin API when needed. Best-effort — never blocks the save.
+    if (user_id && WATCHED_USER_IDS.size > 0) {
+      let watchedEmail: string | null = null;
+      let watched = isWatchedUser(user_id);
+      if (!watched) {
+        try {
+          const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(user_id);
+          watchedEmail = authUser?.user?.email ?? null;
+          watched = isWatchedUser(watchedEmail);
+        } catch { /* lookup failure → no ping */ }
+      }
+      if (watched) {
+        await postToSlack("signals", fmtFounderDeal(watchedEmail, industry, cap.finalVerdict, confidenceGrade));
+      }
     }
     // ── Classification — fire-and-forget after successful insert ───────────────
     // Runs async so it never blocks the response.
