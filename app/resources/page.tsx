@@ -22,7 +22,31 @@ import Link from "next/link"
 import SimpleQuiz from "@/components/simple-quiz" // Added SimpleQuiz import
 
 export default function ResourcesPage() {
-  const featuredResources = [
+ const featuredResources = [
+    {
+      icon: TrendingUp,
+      title: "SBA Deal Check",
+      description:
+        "Screen any acquisition against the debt-service coverage a lender looks for. Benchmark owner replacement cost, a conservative add-back haircut, and a verdict in about a minute.",
+      type: "Free Tool",
+      color: "emerald",
+      featured: true,
+      link: "/sba-checker",
+      cta: "Run Free SBA Check",
+      download: false,
+    },
+    {
+      icon: ClipboardList,
+      title: "Deal Reality Check",
+      description:
+        "Score an acquisition on pricing, debt coverage, and risk, benchmarked against real closed transactions. Free, no signup required.",
+      type: "Free Analysis",
+      color: "blue",
+      featured: true,
+      link: "/deal-reality-check",
+      cta: "Run Free Analysis",
+      download: false,
+    },
     {
       icon: FileText,
       title: "The Tax-First Launch Guide: Choosing Your Optimal Entity",
@@ -31,6 +55,8 @@ export default function ResourcesPage() {
       color: "emerald",
       featured: true,
       link: "/resources/tax-first-launch-guide",
+      cta: "Download Free",
+      download: true,
     },
     {
       icon: CheckSquare,
@@ -40,6 +66,8 @@ export default function ResourcesPage() {
       color: "blue",
       featured: true,
       link: "/resources/tax-planning-checklist",
+      cta: "Download Free",
+      download: true,
     },
     {
       icon: Calculator,
@@ -49,6 +77,8 @@ export default function ResourcesPage() {
       color: "violet",
       featured: true,
       link: "/resources/startup-calculator",
+      cta: "Calculate Free",
+      download: true,
     },
   ]
 
