@@ -24,6 +24,12 @@ export const DEFAULT_QOE_PROVIDERS: QoeProvider[] = [
     email: process.env.QOE_RAPID_DILIGENCE_EMAIL ?? null,
     blurb: "Quality of earnings and financial due diligence for SMB acquisitions.",
   },
+  {
+    key: "tonnesen_accounting",
+    name: "Tonnesen Accounting",
+    email: process.env.QOE_TONNESEN_EMAIL ?? null,
+    blurb: "Quality of earnings and transaction accounting for small business buyers.",
+  },
 ];
 
 // ── Partner definition ───────────────────────────────────────────────────────
