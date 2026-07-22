@@ -48,6 +48,19 @@ export default function ResourcesPage() {
       download: false,
     },
     {
+      icon: CheckSquare,
+      title:
+        "The Complete Pre-LOI SMB Acquisition Checklist (2026): How Professional Buyers Pressure-Test Small Business Deals Before Making an Offer",
+      description:
+        "The full pre-LOI framework: financial documents to request, customer concentration tiers, the ratios lenders check, SBA loan readiness, and the red flags that kill deals after the LOI.",
+      type: "Free Guide",
+      color: "violet",
+      featured: true,
+      link: "/resources/pre-loi-smb-acquisition-checklist",
+      cta: "Read the Guide",
+      download: false,
+    },
+    {
       icon: FileText,
       title: "The Tax-First Launch Guide: Choosing Your Optimal Entity",
       description: "Complete guide to choosing the right business structure for your needs.",
