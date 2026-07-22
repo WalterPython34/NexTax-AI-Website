@@ -297,8 +297,12 @@ function inputStyle(T: SbaTheme): React.CSSProperties {
   };
 }
 
-export default function SbaChecker({ partner }: { partner?: SbaPartnerConfig }) {
-  const T = partner?.theme === "light" ? LIGHT_THEME : DARK_THEME;
+export default function SbaChecker({
+  partner,
+  theme,
+}: { partner?: SbaPartnerConfig; theme?: "dark" | "light" }) {
+  const resolved = partner?.theme ?? theme ?? "dark";
+  const T = resolved === "light" ? LIGHT_THEME : DARK_THEME;
 
   const [industryKey, setIndustryKey] = useState("hvac");
   const [role, setRole] = useState<OwnerRole>("operator");
