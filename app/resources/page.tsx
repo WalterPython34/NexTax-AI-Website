@@ -447,20 +447,20 @@ export default function ResourcesPage() {
                     </Badge>
                   </div>
                   <CardTitle className="text-white text-xl">{resource.title}</CardTitle>
-                </CardHeader>
+               </CardHeader>
                 <CardContent className="space-y-6">
                   <p className="text-slate-300">{resource.description}</p>
                    {resource.link ? (
                     <Link href={resource.link}>
                       <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white">
-                        <Download className="w-4 h-4 mr-2" />
-                        {resource.color === "violet" ? "Calculate Free" : "Download Free"}
+                        {resource.download && <Download className="w-4 h-4 mr-2" />}
+                        {resource.cta}
                       </Button>
                     </Link>
                   ) : (
                     <Button className="w-full bg-emerald-600 hover:bg-emerald-700 text-white">
-                      <Download className="w-4 h-4 mr-2" />
-                      Download Free
+                      {resource.download && <Download className="w-4 h-4 mr-2" />}
+                      {resource.cta}
                     </Button>
                   )}
                 </CardContent>
