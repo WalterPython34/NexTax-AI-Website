@@ -81,7 +81,7 @@ export default function AboutPage() {
       icon: TrendingUp,
       name: "AcquiFlow",
       badge: "Flagship Platform",
-      badgeClass: "bg-emerald-500 text-emerald-300 border-emerald-500/30",
+      badgeClass: "bg-emerald-500 text-emerald-950 border-emerald-500/30",
       description:
         "Pre-LOI deal intelligence for serious buyers. Scores deals against thousands of closed transactions, stress-tests DSCR, verifies earnings quality, and produces a clear verdict with a lender-ready package — before you spend a dollar on formal diligence.",
       href: "/acquiflow",
