@@ -45,7 +45,6 @@ const HARDCODED: Record<string, { multipleRange: [number, number]; marginRange: 
   storage: { multipleRange: [4.0, 8.0], marginRange: [40, 65] },
   painting: { multipleRange: [1.5, 3.0], marginRange: [15, 30] },
   security: { multipleRange: [2.5, 4.5], marginRange: [15, 30] },
-  security: { multipleRange: [2.5, 4.5], marginRange: [15, 30] },
   // ── New 14 industries (DealStats-derived) ──────────────────────────────
   signmaking:      { multipleRange: [1.9, 3.3], marginRange: [15, 30] },
   hairsalon:       { multipleRange: [1.1, 2.3], marginRange: [15, 30] },
@@ -376,7 +375,9 @@ export async function POST(req: NextRequest) {
 
     const multiple = +(asking_price / sde).toFixed(2);
     const sdeMargin = +((sde / revenue) * 100).toFixed(1);
-    const hardcoded = HARDCODED[industry] || HARDCODED.cleaning;
+    // Fail closed: an unknown industry key must never resolve to another
+    // industry's numbers. No cleaning-services fallback.
+    const hardcoded = HARDCODED[industry] ?? null;
 
     // ── Fetch all three lenses in parallel
     const [listingResult, transactionResult, financialResult] = await Promise.all([
@@ -388,6 +389,15 @@ export async function POST(req: NextRequest) {
     const listing = listingResult.data;
     const txn = transactionResult.data;
     const fin = financialResult.data;
+
+    // No hardcoded entry and no benchmark row that can support a multiple
+    // range or fair value: refuse rather than fabricate.
+    if (!hardcoded && !txn && !listing) {
+      return NextResponse.json(
+        { success: false, error: "Benchmark unavailable for this industry" },
+        { status: 422 }
+      );
+    }
 
     // ── Build confidence for each lens
     // Transaction confidence now reflects DealStats sample size when DealStats provided the multiple.
@@ -407,7 +417,7 @@ export async function POST(req: NextRequest) {
       ? `${txnSampleSize} closed transactions (size-matched)`
       : txn?.multiple_source === "dstats_national"
       ? `${txnSampleSize} closed transactions (national)`
-      : `${txnSampleSize.toLocaleString()} closed ${txn?.subsector || industry} sales (BizBuySell 2025)`;
+      : `${txnSampleSize.toLocaleString()} closed ${txn?.subsector || industry} sales`;
 
     const transactionConfidence: LensConfidence = {
       ...computeConfidence(txnSampleSize, transactionResult.matchLevel, txn?.multiple_source?.startsWith("dstats") ? 6 : 3),
@@ -425,7 +435,7 @@ export async function POST(req: NextRequest) {
       description: financialResult.data
         ? `RMA ${financialResult.data.company_size_band} revenue band`
         : txn?.median_sde_margin
-        ? `DealStats margin benchmark: ${(txn.median_sde_margin * 100).toFixed(1)}% SDE margin`
+        ? `Closed-transaction margin benchmark: ${(txn.median_sde_margin * 100).toFixed(1)}% SDE margin`
         : "RMA data not yet loaded",
     };
 
@@ -445,8 +455,8 @@ export async function POST(req: NextRequest) {
       : txn
       ? [+(txn.cashflow_multiple_avg * 0.75).toFixed(2), +(txn.cashflow_multiple_avg * 1.25).toFixed(2)]
       : listing
-      ? [+(listing.p25_multiple || hardcoded.multipleRange[0]).toFixed(2), +(listing.p75_multiple || hardcoded.multipleRange[1]).toFixed(2)]
-      : hardcoded.multipleRange;
+      ? [+(listing.p25_multiple || hardcoded?.multipleRange[0] || listing.median_multiple * 0.75).toFixed(2), +(listing.p75_multiple || hardcoded?.multipleRange[1] || listing.median_multiple * 1.25).toFixed(2)]
+      : hardcoded!.multipleRange;  // reachable only when !txn && !listing, so the 422 gate guarantees hardcoded here
 
     // ── Effective fair value
     // Prefers DealStats median MVIC → SDE × DealStats multiple → BizBuySell sale price
@@ -458,7 +468,7 @@ export async function POST(req: NextRequest) {
       ? Math.round(sde * txn.cashflow_multiple_avg)
       : listing
       ? Math.round(sde * listing.median_multiple)
-      : Math.round(sde * (hardcoded.multipleRange[0] + hardcoded.multipleRange[1]) / 2);
+      : Math.round(sde * (hardcoded!.multipleRange[0] + hardcoded!.multipleRange[1]) / 2);
 
     // ── Seller-buyer gap (listing median vs sold median)
     const sellerBuyerGap = listing && txn
@@ -489,12 +499,14 @@ export async function POST(req: NextRequest) {
       ? fin.median_sde_margin
       : txn?.median_sde_margin
       ? txn.median_sde_margin * 100  // DealStats stores as decimal
-      : (hardcoded.marginRange[0] + hardcoded.marginRange[1]) / 2;
+      : hardcoded
+      ? (hardcoded.marginRange[0] + hardcoded.marginRange[1]) / 2
+      : null;
 
     const financialQuality = {
       dealMargin: sdeMargin,
       industryMedian: industryMedianMargin,
-      aboveAverage: sdeMargin > industryMedianMargin,
+      aboveAverage: industryMedianMargin != null ? sdeMargin > industryMedianMargin : null,
     };
 
     return NextResponse.json({
@@ -576,11 +588,12 @@ export async function POST(req: NextRequest) {
         weights,
       },
 
-      // ── Hardcoded fallback (preserved for backward compat)
-      hardcoded: {
+      // ── Hardcoded fallback (preserved for backward compat; null when the
+      // industry has no hardcoded entry and live rows carried the analysis)
+      hardcoded: hardcoded ? {
         multipleRange: hardcoded.multipleRange,
         marginRange: hardcoded.marginRange,
-      },
+      } : null,
     });
   } catch (error) {
     console.error("Benchmark lookup error:", error);
