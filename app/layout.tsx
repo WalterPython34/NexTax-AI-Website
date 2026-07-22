@@ -43,6 +43,30 @@ export default function RootLayout({
         <SiteChromeGate>
           <Footer />
         </SiteChromeGate>
+        {/* Sitewide Organization entity: every page carries the same
+            NexTax.AI -> AcquiFlow -> acquisition-intelligence identity that
+            page-level SoftwareApplication/Article schema references by @id */}
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Organization",
+              "@id": "https://www.nextax.ai/#organization",
+              name: "NexTax.AI",
+              url: "https://www.nextax.ai/",
+              description:
+                "NexTax.AI develops deal-intelligence tools for SMB acquisition buyers, including AcquiFlow, a buyer deal-intelligence platform for pre-LOI screening, SBA loan readiness, and financial analysis.",
+              knowsAbout: [
+                "SMB Acquisition Intelligence",
+                "Pre-LOI Due Diligence",
+                "SBA Loan Readiness",
+                "Financial Ratio Analysis",
+                "Business Acquisition",
+              ],
+            }),
+          }}
+        />
         <Script src="https://js.stripe.com/v3/" strategy="afterInteractive" />
         {/* Add Google Analytics */}
         <Script src="https://www.googletagmanager.com/gtag/js?id=G-5VHGTSGCCN" strategy="afterInteractive" />

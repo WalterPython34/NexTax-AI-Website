@@ -737,6 +737,13 @@ export default function PreLoiChecklistPage() {
                     "A practical framework for evaluating financial quality, SBA loan readiness, customer concentration, operational risk, and lender documentation before submitting a Letter of Intent.",
                   datePublished: "2026-07-22",
                   dateModified: "2026-07-22",
+                  about: [
+                    "Business Acquisition",
+                    "SMB Acquisition Intelligence",
+                    "Pre-LOI Due Diligence",
+                    "SBA Loan Readiness",
+                    "Financial Ratio Analysis",
+                  ],
                   author: {
                     "@type": "Organization",
                     "@id": "https://www.nextax.ai/#organization",

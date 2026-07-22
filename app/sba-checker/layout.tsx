@@ -8,6 +8,7 @@ const DESCRIPTION =
 export const metadata: Metadata = {
   title: TITLE,
   description: DESCRIPTION,
+  alternates: { canonical: "https://www.nextax.ai/sba-checker" },
   openGraph: {
     title: TITLE,
     description: DESCRIPTION,

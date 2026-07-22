@@ -10,6 +10,7 @@ export const metadata: Metadata = {
   title: "AcquiFlow — Pre-LOI Deal Intelligence | NexTax.AI",
   description:
     "Know if a deal is worth an LOI before you spend a dollar finding out. AcquiFlow scores deals against 17,000+ closed transactions, stress-tests DSCR, and gives you a clear verdict in under 60 seconds.",
+  alternates: { canonical: "https://www.nextax.ai/acquiflow" },
   openGraph: {
     title: "AcquiFlow — Pre-LOI Deal Intelligence",
     description:
@@ -552,6 +553,39 @@ export default function AcquiFlowPage() {
           <div>© 2026 NexTax.AI · Pre-LOI Deal Intelligence</div>
         </div>
       </footer>
+
+      {/* AcquiFlow entity schema: ties the product to NexTax.AI and the
+          concepts it owns (acquisition intelligence, pre-LOI diligence,
+          SBA readiness, financial analysis) */}
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "SoftwareApplication",
+            "@id": "https://www.nextax.ai/acquiflow/#software",
+            name: "AcquiFlow",
+            url: "https://www.nextax.ai/acquiflow",
+            applicationCategory: "BusinessApplication",
+            applicationSubCategory: "Acquisition Deal Intelligence",
+            operatingSystem: "Web",
+            description:
+              "Buyer deal intelligence platform for SMB acquisitions. AcquiFlow helps acquirers pressure-test target companies before submitting an LOI by analyzing financial performance, acquisition risk, SBA loan readiness, industry benchmarks, and lender-document preparation.",
+            publisher: {
+              "@type": "Organization",
+              "@id": "https://www.nextax.ai/#organization",
+              name: "NexTax.AI",
+            },
+            about: [
+              "Business Acquisition",
+              "SMB Acquisition Intelligence",
+              "SBA Loan Readiness",
+              "Financial Ratio Analysis",
+              "Pre-LOI Due Diligence",
+            ],
+          }),
+        }}
+      />
     </div>
   );
 }
