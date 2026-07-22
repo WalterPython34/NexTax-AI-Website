@@ -5795,7 +5795,7 @@ function SignInRequired() {
           Access AcquiFlow
         </h2>
         <p style={{ fontSize: 14, color: "#6B7280", margin: "0 0 28px", lineHeight: 1.6 }}>
-          Enter your email below and we'll send you a secure access link. New here? The same link sets up your account and takes you straight to your first analysis.
+          Enter your email below and we'll send you a secure access link. New here? The same link sets up your account and takes you straight to your first analysis. Free to start, no credit card required.
         </p>
 
         {partnerCommerce && (
@@ -5867,11 +5867,10 @@ function SignInRequired() {
           </div>
         )}
 
-        <div style={{ marginTop: 20, fontSize: 12, color: "#6B7280", lineHeight: 1.8 }}>
-          No account?{" "}
-          <a href="/deal-reality-check" style={{ color: "#6366F1", textDecoration: "none" }}>
-            Run a free deal analysis →
-          </a>
+       <div style={{ marginTop: 20, fontSize: 12, color: "#6B7280", lineHeight: 1.8 }}>
+          <span style={{ color: "#9CA3AF" }}>
+            Free to start. 10 deal analyses a month, no credit card required.
+          </span>
           <br />
           <span style={{ color: "#6B7280" }}>Prefer a password?{" "}</span>
           <a href="/account/security" style={{ color: "#7C8593", textDecoration: "none" }}>
