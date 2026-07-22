@@ -25,7 +25,7 @@ interface ScoreBreakdown {
     fairValue: number; fairValueLow: number; fairValueHigh: number;
     rangePosition: "Below Range" | "Within Range" | "Above Range";
     recommendedOffer: [number, number]; verdict: string;
-    benchmarkSource: string; sampleSize: number;
+    benchmarkSource: string;
   };
   debtRisk: { score: number; dscr: number; annualPayment: number; monthlyPayment: number; verdict: string };
   marketRisk: { score: number; industryGrowth: string; verdict: string };
@@ -86,48 +86,54 @@ const INDUSTRIES: Record<string, {
   benchmarkLow: number; benchmarkMid: number; benchmarkHigh: number;
   marginRange: [number, number]; growth: string; riskFactor: number;
   demandScore: number; buyerInterestRank: number; competitionLevel: string;
-  sampleSize: number; benchmarkSource: string;
+  benchmarkSource: string;
 }> = {
-  laundromat:     { label:"Laundromat",             typicalMultiple:[2.5,4.0], benchmarkLow:2.8, benchmarkMid:3.48, benchmarkHigh:4.4,  marginRange:[25,40], growth:"Stable",   riskFactor:0.85, demandScore:82, buyerInterestRank:3,  competitionLevel:"Moderate",       sampleSize:112, benchmarkSource:"proprietary closed-transaction database" },
-  hvac:           { label:"HVAC",                   typicalMultiple:[2.5,4.5], benchmarkLow:1.8, benchmarkMid:2.45, benchmarkHigh:3.2,  marginRange:[15,30], growth:"Growing",  riskFactor:0.75, demandScore:88, buyerInterestRank:2,  competitionLevel:"Low-Moderate",   sampleSize:312, benchmarkSource:"proprietary closed-transaction database" },
-  landscaping:    { label:"Landscaping",            typicalMultiple:[1.5,3.0], benchmarkLow:1.7, benchmarkMid:2.21, benchmarkHigh:2.9,  marginRange:[10,25], growth:"Stable",   riskFactor:0.90, demandScore:70, buyerInterestRank:7,  competitionLevel:"High",           sampleSize:189, benchmarkSource:"proprietary closed-transaction database" },
-  carwash:        { label:"Car Wash",               typicalMultiple:[3.0,5.0], benchmarkLow:2.0, benchmarkMid:2.74, benchmarkHigh:3.6,  marginRange:[25,45], growth:"Growing",  riskFactor:0.80, demandScore:79, buyerInterestRank:5,  competitionLevel:"Moderate",       sampleSize:98,  benchmarkSource:"proprietary closed-transaction database" },
-  dental:         { label:"Dental Practice",        typicalMultiple:[3.0,5.5], benchmarkLow:0.8, benchmarkMid:1.30, benchmarkHigh:1.9,  marginRange:[20,40], growth:"Growing",  riskFactor:0.65, demandScore:74, buyerInterestRank:8,  competitionLevel:"Low",            sampleSize:167, benchmarkSource:"proprietary closed-transaction database" },
-  gym:            { label:"Gym / Fitness Center",   typicalMultiple:[2.0,4.0], benchmarkLow:1.8, benchmarkMid:2.32, benchmarkHigh:3.0,  marginRange:[15,35], growth:"Stable",   riskFactor:0.95, demandScore:71, buyerInterestRank:9,  competitionLevel:"Moderate-High",  sampleSize:178, benchmarkSource:"proprietary closed-transaction database" },
-  restaurant:     { label:"Restaurant",             typicalMultiple:[1.5,3.0], benchmarkLow:1.4, benchmarkMid:1.85, benchmarkHigh:2.4,  marginRange:[5,15],  growth:"Volatile", riskFactor:1.10, demandScore:65, buyerInterestRank:11, competitionLevel:"Very High",      sampleSize:892, benchmarkSource:"proprietary closed-transaction database" },
-  autorepair:     { label:"Auto Repair",            typicalMultiple:[2.0,3.5], benchmarkLow:1.6, benchmarkMid:2.11, benchmarkHigh:2.8,  marginRange:[15,30], growth:"Stable",   riskFactor:0.85, demandScore:73, buyerInterestRank:6,  competitionLevel:"Moderate",       sampleSize:445, benchmarkSource:"proprietary closed-transaction database" },
-  cleaning:       { label:"Cleaning Service",       typicalMultiple:[1.5,3.0], benchmarkLow:1.8, benchmarkMid:2.22, benchmarkHigh:2.9,  marginRange:[15,30], growth:"Growing",  riskFactor:0.80, demandScore:76, buyerInterestRank:4,  competitionLevel:"High",           sampleSize:267, benchmarkSource:"proprietary closed-transaction database" },
-  ecommerce:      { label:"Ecommerce Brand",        typicalMultiple:[2.5,4.5], benchmarkLow:1.9, benchmarkMid:2.41, benchmarkHigh:3.1,  marginRange:[15,35], growth:"Variable", riskFactor:0.95, demandScore:83, buyerInterestRank:1,  competitionLevel:"Very High",      sampleSize:345, benchmarkSource:"proprietary closed-transaction database" },
-  saas:           { label:"SaaS Product",           typicalMultiple:[3.0,6.0], benchmarkLow:2.1, benchmarkMid:2.60, benchmarkHigh:3.4,  marginRange:[60,85], growth:"Growing",  riskFactor:0.70, demandScore:91, buyerInterestRank:1,  competitionLevel:"High",           sampleSize:156, benchmarkSource:"proprietary closed-transaction database" },
-  insurance:      { label:"Insurance Agency",       typicalMultiple:[2.0,3.5], benchmarkLow:1.4, benchmarkMid:1.82, benchmarkHigh:2.4,  marginRange:[20,40], growth:"Stable",   riskFactor:0.70, demandScore:68, buyerInterestRank:10, competitionLevel:"Low",            sampleSize:89,  benchmarkSource:"proprietary closed-transaction database" },
-  plumbing:       { label:"Plumbing",               typicalMultiple:[2.0,4.0], benchmarkLow:1.7, benchmarkMid:2.30, benchmarkHigh:3.0,  marginRange:[15,30], growth:"Growing",  riskFactor:0.75, demandScore:85, buyerInterestRank:3,  competitionLevel:"Low-Moderate",   sampleSize:198, benchmarkSource:"proprietary closed-transaction database" },
-  roofing:        { label:"Roofing",                typicalMultiple:[1.5,3.5], benchmarkLow:1.7, benchmarkMid:2.21, benchmarkHigh:2.9,  marginRange:[15,30], growth:"Stable",   riskFactor:0.90, demandScore:72, buyerInterestRank:6,  competitionLevel:"Moderate",       sampleSize:134, benchmarkSource:"proprietary closed-transaction database" },
-  petcare:        { label:"Pet Care / Grooming",    typicalMultiple:[2.0,4.0], benchmarkLow:2.0, benchmarkMid:2.46, benchmarkHigh:3.2,  marginRange:[20,40], growth:"Growing",  riskFactor:0.80, demandScore:77, buyerInterestRank:5,  competitionLevel:"Moderate",       sampleSize:223, benchmarkSource:"proprietary closed-transaction database" },
-  pharmacy:       { label:"Pharmacy",               typicalMultiple:[2.5,4.0], benchmarkLow:0.5, benchmarkMid:0.66, benchmarkHigh:0.9,  marginRange:[18,30], growth:"Stable",   riskFactor:0.75, demandScore:62, buyerInterestRank:14, competitionLevel:"Low",            sampleSize:67,  benchmarkSource:"proprietary closed-transaction database" },
-  daycare:        { label:"Daycare / Childcare",    typicalMultiple:[2.0,4.0], benchmarkLow:1.9, benchmarkMid:2.29, benchmarkHigh:3.0,  marginRange:[15,30], growth:"Growing",  riskFactor:0.80, demandScore:74, buyerInterestRank:10, competitionLevel:"Moderate",       sampleSize:134, benchmarkSource:"proprietary closed-transaction database" },
-  medspa:         { label:"Med Spa / Aesthetics",   typicalMultiple:[3.0,5.0], benchmarkLow:2.0, benchmarkMid:2.75, benchmarkHigh:3.6,  marginRange:[25,45], growth:"Growing",  riskFactor:0.75, demandScore:80, buyerInterestRank:7,  competitionLevel:"Moderate",       sampleSize:89,  benchmarkSource:"proprietary closed-transaction database" },
-  accounting:     { label:"Accounting / Tax Firm",  typicalMultiple:[1.5,3.5], benchmarkLow:1.0, benchmarkMid:1.30, benchmarkHigh:1.7,  marginRange:[30,55], growth:"Stable",   riskFactor:0.60, demandScore:86, buyerInterestRank:3,  competitionLevel:"Low-Moderate",   sampleSize:134, benchmarkSource:"proprietary closed-transaction database" },
-  electrical:     { label:"Electrical Contractor",  typicalMultiple:[2.0,4.0], benchmarkLow:1.8, benchmarkMid:2.40, benchmarkHigh:3.1,  marginRange:[15,30], growth:"Growing",  riskFactor:0.75, demandScore:82, buyerInterestRank:5,  competitionLevel:"Low-Moderate",   sampleSize:156, benchmarkSource:"proprietary closed-transaction database" },
-  healthcare:     { label:"Healthcare / Home Health",typicalMultiple:[3.0,6.0], benchmarkLow:1.1, benchmarkMid:1.72, benchmarkHigh:2.3,  marginRange:[15,35], growth:"Growing",  riskFactor:0.70, demandScore:79, buyerInterestRank:6,  competitionLevel:"Moderate",       sampleSize:145, benchmarkSource:"proprietary closed-transaction database" },
-  transportation: { label:"Transportation / Trucking",typicalMultiple:[2.0,4.0],benchmarkLow:2.0, benchmarkMid:2.65, benchmarkHigh:3.4,  marginRange:[10,25], growth:"Stable",   riskFactor:0.85, demandScore:68, buyerInterestRank:11, competitionLevel:"Moderate",       sampleSize:112, benchmarkSource:"proprietary closed-transaction database" },
-  printing:       { label:"Printing / Marketing",   typicalMultiple:[1.5,3.0], benchmarkLow:1.4, benchmarkMid:1.90, benchmarkHigh:2.5,  marginRange:[15,30], growth:"Variable", riskFactor:0.90, demandScore:55, buyerInterestRank:18, competitionLevel:"High",           sampleSize:78,  benchmarkSource:"proprietary closed-transaction database" },
-  storage:        { label:"Self-Storage",           typicalMultiple:[4.0,8.0], benchmarkLow:4.0, benchmarkMid:5.50, benchmarkHigh:7.2,  marginRange:[40,65], growth:"Growing",  riskFactor:0.60, demandScore:84, buyerInterestRank:4,  competitionLevel:"Moderate",       sampleSize:56,  benchmarkSource:"proprietary closed-transaction database" },
-  painting:       { label:"Painting Contractor",    typicalMultiple:[1.5,3.0], benchmarkLow:1.6, benchmarkMid:2.05, benchmarkHigh:2.7,  marginRange:[15,30], growth:"Stable",   riskFactor:0.90, demandScore:64, buyerInterestRank:15, competitionLevel:"High",           sampleSize:112, benchmarkSource:"proprietary closed-transaction database" },
-  security:       { label:"Security Services",      typicalMultiple:[2.5,4.5], benchmarkLow:1.4, benchmarkMid:1.94, benchmarkHigh:2.6,  marginRange:[15,30], growth:"Growing",  riskFactor:0.75, demandScore:72, buyerInterestRank:9,  competitionLevel:"Low-Moderate",   sampleSize:89,  benchmarkSource:"proprietary closed-transaction database" },
-  construction:    { label:"Other Construction",              typicalMultiple:[1.8,3.2], benchmarkLow:1.81, benchmarkMid:2.4,  benchmarkHigh:3.17, marginRange:[15,30], growth:"Stable",   riskFactor:0.88, demandScore:72, buyerInterestRank:8,  competitionLevel:"Moderate",      sampleSize:323, benchmarkSource:"proprietary closed-transaction database" },
-  engineering:     { label:"Engineering Services",            typicalMultiple:[1.8,3.3], benchmarkLow:1.82, benchmarkMid:2.43, benchmarkHigh:3.34, marginRange:[20,40], growth:"Growing",  riskFactor:0.70, demandScore:78, buyerInterestRank:6,  competitionLevel:"Low-Moderate",  sampleSize:165, benchmarkSource:"proprietary closed-transaction database" },
-  grocery:         { label:"Grocery Store",                   typicalMultiple:[1.6,3.3], benchmarkLow:1.57, benchmarkMid:2.27, benchmarkHigh:3.3,  marginRange:[10,15], growth:"Stable",   riskFactor:0.95, demandScore:60, buyerInterestRank:14, competitionLevel:"High",          sampleSize:97,  benchmarkSource:"proprietary closed-transaction database" },
-  hairsalon:       { label:"Hair Salon",                      typicalMultiple:[1.1,2.3], benchmarkLow:1.11, benchmarkMid:1.61, benchmarkHigh:2.33, marginRange:[15,30], growth:"Stable",   riskFactor:0.92, demandScore:65, buyerInterestRank:12, competitionLevel:"Very High",     sampleSize:420, benchmarkSource:"proprietary closed-transaction database" },
-  marketing:       { label:"Marketing Agency",                typicalMultiple:[1.8,3.1], benchmarkLow:1.8,  benchmarkMid:2.27, benchmarkHigh:3.15, marginRange:[20,35], growth:"Growing",  riskFactor:0.80, demandScore:75, buyerInterestRank:7,  competitionLevel:"High",          sampleSize:93,  benchmarkSource:"proprietary closed-transaction database" },
-  pestcontrol:     { label:"Pest Control",                    typicalMultiple:[2.0,4.2], benchmarkLow:2.02, benchmarkMid:3.19, benchmarkHigh:4.24, marginRange:[20,35], growth:"Growing",  riskFactor:0.75, demandScore:80, buyerInterestRank:5,  competitionLevel:"Moderate",      sampleSize:128, benchmarkSource:"proprietary closed-transaction database" },
-  physicaltherapy: { label:"Physical Therapy / Chiropractic", typicalMultiple:[1.6,2.9], benchmarkLow:1.59, benchmarkMid:2.16, benchmarkHigh:2.9,  marginRange:[20,35], growth:"Growing",  riskFactor:0.72, demandScore:76, buyerInterestRank:7,  competitionLevel:"Moderate",      sampleSize:107, benchmarkSource:"proprietary closed-transaction database" },
-  propertymanage:  { label:"Property Management",             typicalMultiple:[1.9,3.1], benchmarkLow:1.86, benchmarkMid:2.38, benchmarkHigh:3.08, marginRange:[20,40], growth:"Growing",  riskFactor:0.72, demandScore:79, buyerInterestRank:5,  competitionLevel:"Moderate",      sampleSize:365, benchmarkSource:"proprietary closed-transaction database" },
-  realestatebrok:  { label:"Real Estate Brokerage",           typicalMultiple:[1.7,2.6], benchmarkLow:1.66, benchmarkMid:2.08, benchmarkHigh:2.58, marginRange:[15,30], growth:"Variable", riskFactor:0.90, demandScore:62, buyerInterestRank:13, competitionLevel:"High",          sampleSize:39,  benchmarkSource:"proprietary closed-transaction database" },
-  remodeling:      { label:"Home Remodeling & Restoration",   typicalMultiple:[1.4,2.7], benchmarkLow:1.42, benchmarkMid:2.08, benchmarkHigh:2.74, marginRange:[15,25], growth:"Stable",   riskFactor:0.88, demandScore:70, buyerInterestRank:9,  competitionLevel:"Moderate-High", sampleSize:226, benchmarkSource:"proprietary closed-transaction database" },
-  seniorcare:      { label:"Senior Care / Home Health",        typicalMultiple:[2.0,3.8], benchmarkLow:2.03, benchmarkMid:2.9,  benchmarkHigh:3.8,  marginRange:[10,20], growth:"Growing",  riskFactor:0.78, demandScore:82, buyerInterestRank:4,  competitionLevel:"Moderate",      sampleSize:223, benchmarkSource:"proprietary closed-transaction database" },
-  signmaking:      { label:"Sign Manufacturing",               typicalMultiple:[1.9,3.3], benchmarkLow:1.94, benchmarkMid:2.45, benchmarkHigh:3.27, marginRange:[15,30], growth:"Stable",   riskFactor:0.85, demandScore:63, buyerInterestRank:13, competitionLevel:"Moderate",      sampleSize:378, benchmarkSource:"proprietary closed-transaction database" },
-  staffing:        { label:"Staffing / Recruiting",            typicalMultiple:[1.5,3.0], benchmarkLow:1.54, benchmarkMid:2.33, benchmarkHigh:2.98, marginRange:[15,25], growth:"Variable", riskFactor:0.88, demandScore:68, buyerInterestRank:11, competitionLevel:"High",          sampleSize:138, benchmarkSource:"proprietary closed-transaction database" },
-  veterinary:      { label:"Veterinary Practice",              typicalMultiple:[2.4,4.1], benchmarkLow:2.39, benchmarkMid:3.01, benchmarkHigh:4.1,  marginRange:[15,30], growth:"Growing",  riskFactor:0.70, demandScore:81, buyerInterestRank:4,  competitionLevel:"Low-Moderate",  sampleSize:45,  benchmarkSource:"proprietary closed-transaction database" },
+  laundromat:     { label:"Laundromat",             typicalMultiple:[2.5,4.0], benchmarkLow:2.8, benchmarkMid:3.48, benchmarkHigh:4.4,  marginRange:[25,40], growth:"Stable",   riskFactor:0.85, demandScore:82, buyerInterestRank:3,  competitionLevel:"Moderate",       benchmarkSource:"proprietary closed-transaction database" },
+  hvac:           { label:"HVAC",                   typicalMultiple:[2.5,4.5], benchmarkLow:1.8, benchmarkMid:2.45, benchmarkHigh:3.2,  marginRange:[15,30], growth:"Growing",  riskFactor:0.75, demandScore:88, buyerInterestRank:2,  competitionLevel:"Low-Moderate",   benchmarkSource:"proprietary closed-transaction database" },
+  landscaping:    { label:"Landscaping",            typicalMultiple:[1.5,3.0], benchmarkLow:1.7, benchmarkMid:2.21, benchmarkHigh:2.9,  marginRange:[10,25], growth:"Stable",   riskFactor:0.90, demandScore:70, buyerInterestRank:7,  competitionLevel:"High",           benchmarkSource:"proprietary closed-transaction database" },
+  carwash:        { label:"Car Wash",               typicalMultiple:[3.0,5.0], benchmarkLow:2.0, benchmarkMid:2.74, benchmarkHigh:3.6,  marginRange:[25,45], growth:"Growing",  riskFactor:0.80, demandScore:79, buyerInterestRank:5,  competitionLevel:"Moderate",       benchmarkSource:"proprietary closed-transaction database" },
+  dental:         { label:"Dental Practice",        typicalMultiple:[3.0,5.5], benchmarkLow:0.8, benchmarkMid:1.30, benchmarkHigh:1.9,  marginRange:[20,40], growth:"Growing",  riskFactor:0.65, demandScore:74, buyerInterestRank:8,  competitionLevel:"Low",            benchmarkSource:"proprietary closed-transaction database" },
+  gym:            { label:"Gym / Fitness Center",   typicalMultiple:[2.0,4.0], benchmarkLow:1.8, benchmarkMid:2.32, benchmarkHigh:3.0,  marginRange:[15,35], growth:"Stable",   riskFactor:0.95, demandScore:71, buyerInterestRank:9,  competitionLevel:"Moderate-High",  benchmarkSource:"proprietary closed-transaction database" },
+  restaurant:     { label:"Restaurant",             typicalMultiple:[1.5,3.0], benchmarkLow:1.4, benchmarkMid:1.85, benchmarkHigh:2.4,  marginRange:[5,15],  growth:"Volatile", riskFactor:1.10, demandScore:65, buyerInterestRank:11, competitionLevel:"Very High",      benchmarkSource:"proprietary closed-transaction database" },
+  autorepair:     { label:"Auto Repair",            typicalMultiple:[2.0,3.5], benchmarkLow:1.6, benchmarkMid:2.11, benchmarkHigh:2.8,  marginRange:[15,30], growth:"Stable",   riskFactor:0.85, demandScore:73, buyerInterestRank:6,  competitionLevel:"Moderate",       benchmarkSource:"proprietary closed-transaction database" },
+  cleaning:       { label:"Cleaning Service",       typicalMultiple:[1.5,3.0], benchmarkLow:1.8, benchmarkMid:2.22, benchmarkHigh:2.9,  marginRange:[15,30], growth:"Growing",  riskFactor:0.80, demandScore:76, buyerInterestRank:4,  competitionLevel:"High",           benchmarkSource:"proprietary closed-transaction database" },
+  ecommerce:      { label:"Ecommerce Brand",        typicalMultiple:[2.5,4.5], benchmarkLow:1.9, benchmarkMid:2.41, benchmarkHigh:3.1,  marginRange:[15,35], growth:"Variable", riskFactor:0.95, demandScore:83, buyerInterestRank:1,  competitionLevel:"Very High",      benchmarkSource:"proprietary closed-transaction database" },
+  saas:           { label:"SaaS Product",           typicalMultiple:[3.0,6.0], benchmarkLow:2.1, benchmarkMid:2.60, benchmarkHigh:3.4,  marginRange:[60,85], growth:"Growing",  riskFactor:0.70, demandScore:91, buyerInterestRank:1,  competitionLevel:"High",           benchmarkSource:"proprietary closed-transaction database" },
+  insurance:      { label:"Insurance Agency",       typicalMultiple:[2.0,3.5], benchmarkLow:1.4, benchmarkMid:1.82, benchmarkHigh:2.4,  marginRange:[20,40], growth:"Stable",   riskFactor:0.70, demandScore:68, buyerInterestRank:10, competitionLevel:"Low",            benchmarkSource:"proprietary closed-transaction database" },
+  plumbing:       { label:"Plumbing",               typicalMultiple:[2.0,4.0], benchmarkLow:1.7, benchmarkMid:2.30, benchmarkHigh:3.0,  marginRange:[15,30], growth:"Growing",  riskFactor:0.75, demandScore:85, buyerInterestRank:3,  competitionLevel:"Low-Moderate",   benchmarkSource:"proprietary closed-transaction database" },
+  roofing:        { label:"Roofing",                typicalMultiple:[1.5,3.5], benchmarkLow:1.7, benchmarkMid:2.21, benchmarkHigh:2.9,  marginRange:[15,30], growth:"Stable",   riskFactor:0.90, demandScore:72, buyerInterestRank:6,  competitionLevel:"Moderate",       benchmarkSource:"proprietary closed-transaction database" },
+  petcare:        { label:"Pet Care / Grooming",    typicalMultiple:[2.0,4.0], benchmarkLow:2.0, benchmarkMid:2.46, benchmarkHigh:3.2,  marginRange:[20,40], growth:"Growing",  riskFactor:0.80, demandScore:77, buyerInterestRank:5,  competitionLevel:"Moderate",       benchmarkSource:"proprietary closed-transaction database" },
+  pharmacy:       { label:"Pharmacy",               typicalMultiple:[2.5,4.0], benchmarkLow:0.5, benchmarkMid:0.66, benchmarkHigh:0.9,  marginRange:[18,30], growth:"Stable",   riskFactor:0.75, demandScore:62, buyerInterestRank:14, competitionLevel:"Low",            benchmarkSource:"proprietary closed-transaction database" },
+  daycare:        { label:"Daycare / Childcare",    typicalMultiple:[2.0,4.0], benchmarkLow:1.9, benchmarkMid:2.29, benchmarkHigh:3.0,  marginRange:[15,30], growth:"Growing",  riskFactor:0.80, demandScore:74, buyerInterestRank:10, competitionLevel:"Moderate",       benchmarkSource:"proprietary closed-transaction database" },
+  medspa:         { label:"Med Spa / Aesthetics",   typicalMultiple:[3.0,5.0], benchmarkLow:2.0, benchmarkMid:2.75, benchmarkHigh:3.6,  marginRange:[25,45], growth:"Growing",  riskFactor:0.75, demandScore:80, buyerInterestRank:7,  competitionLevel:"Moderate",       benchmarkSource:"proprietary closed-transaction database" },
+  accounting:     { label:"Accounting / Tax Firm",  typicalMultiple:[1.5,3.5], benchmarkLow:1.0, benchmarkMid:1.30, benchmarkHigh:1.7,  marginRange:[30,55], growth:"Stable",   riskFactor:0.60, demandScore:86, buyerInterestRank:3,  competitionLevel:"Low-Moderate",   benchmarkSource:"proprietary closed-transaction database" },
+  electrical:     { label:"Electrical Contractor",  typicalMultiple:[2.0,4.0], benchmarkLow:1.8, benchmarkMid:2.40, benchmarkHigh:3.1,  marginRange:[15,30], growth:"Growing",  riskFactor:0.75, demandScore:82, buyerInterestRank:5,  competitionLevel:"Low-Moderate",   benchmarkSource:"proprietary closed-transaction database" },
+  healthcare:     { label:"Healthcare / Home Health",typicalMultiple:[3.0,6.0], benchmarkLow:1.1, benchmarkMid:1.72, benchmarkHigh:2.3,  marginRange:[15,35], growth:"Growing",  riskFactor:0.70, demandScore:79, buyerInterestRank:6,  competitionLevel:"Moderate",       benchmarkSource:"proprietary closed-transaction database" },
+  transportation: { label:"Transportation / Trucking",typicalMultiple:[2.0,4.0],benchmarkLow:2.0, benchmarkMid:2.65, benchmarkHigh:3.4,  marginRange:[10,25], growth:"Stable",   riskFactor:0.85, demandScore:68, buyerInterestRank:11, competitionLevel:"Moderate",       benchmarkSource:"proprietary closed-transaction database" },
+  printing:       { label:"Printing / Marketing",   typicalMultiple:[1.5,3.0], benchmarkLow:1.4, benchmarkMid:1.90, benchmarkHigh:2.5,  marginRange:[15,30], growth:"Variable", riskFactor:0.90, demandScore:55, buyerInterestRank:18, competitionLevel:"High",           benchmarkSource:"proprietary closed-transaction database" },
+  storage:        { label:"Self-Storage",           typicalMultiple:[4.0,8.0], benchmarkLow:4.0, benchmarkMid:5.50, benchmarkHigh:7.2,  marginRange:[40,65], growth:"Growing",  riskFactor:0.60, demandScore:84, buyerInterestRank:4,  competitionLevel:"Moderate",       benchmarkSource:"proprietary closed-transaction database" },
+  painting:       { label:"Painting Contractor",    typicalMultiple:[1.5,3.0], benchmarkLow:1.6, benchmarkMid:2.05, benchmarkHigh:2.7,  marginRange:[15,30], growth:"Stable",   riskFactor:0.90, demandScore:64, buyerInterestRank:15, competitionLevel:"High",           benchmarkSource:"proprietary closed-transaction database" },
+  security:       { label:"Security Services",      typicalMultiple:[2.5,4.5], benchmarkLow:1.4, benchmarkMid:1.94, benchmarkHigh:2.6,  marginRange:[15,30], growth:"Growing",  riskFactor:0.75, demandScore:72, buyerInterestRank:9,  competitionLevel:"Low-Moderate",   benchmarkSource:"proprietary closed-transaction database" },
+  construction:    { label:"Other Construction",              typicalMultiple:[1.8,3.2], benchmarkLow:1.81, benchmarkMid:2.4,  benchmarkHigh:3.17, marginRange:[15,30], growth:"Stable",   riskFactor:0.88, demandScore:72, buyerInterestRank:8,  competitionLevel:"Moderate",      benchmarkSource:"proprietary closed-transaction database" },
+  engineering:     { label:"Engineering Services",            typicalMultiple:[1.8,3.3], benchmarkLow:1.82, benchmarkMid:2.43, benchmarkHigh:3.34, marginRange:[20,40], growth:"Growing",  riskFactor:0.70, demandScore:78, buyerInterestRank:6,  competitionLevel:"Low-Moderate",  benchmarkSource:"proprietary closed-transaction database" },
+  grocery:         { label:"Grocery Store",                   typicalMultiple:[1.6,3.3], benchmarkLow:1.57, benchmarkMid:2.27, benchmarkHigh:3.3,  marginRange:[10,15], growth:"Stable",   riskFactor:0.95, demandScore:60, buyerInterestRank:14, competitionLevel:"High",          benchmarkSource:"proprietary closed-transaction database" },
+  hairsalon:       { label:"Hair Salon",                      typicalMultiple:[1.1,2.3], benchmarkLow:1.11, benchmarkMid:1.61, benchmarkHigh:2.33, marginRange:[15,30], growth:"Stable",   riskFactor:0.92, demandScore:65, buyerInterestRank:12, competitionLevel:"Very High",     benchmarkSource:"proprietary closed-transaction database" },
+  marketing:       { label:"Marketing Agency",                typicalMultiple:[1.8,3.1], benchmarkLow:1.8,  benchmarkMid:2.27, benchmarkHigh:3.15, marginRange:[20,35], growth:"Growing",  riskFactor:0.80, demandScore:75, buyerInterestRank:7,  competitionLevel:"High",          benchmarkSource:"proprietary closed-transaction database" },
+  pestcontrol:     { label:"Pest Control",                    typicalMultiple:[2.0,4.2], benchmarkLow:2.02, benchmarkMid:3.19, benchmarkHigh:4.24, marginRange:[20,35], growth:"Growing",  riskFactor:0.75, demandScore:80, buyerInterestRank:5,  competitionLevel:"Moderate",      benchmarkSource:"proprietary closed-transaction database" },
+  physicaltherapy: { label:"Physical Therapy / Chiropractic", typicalMultiple:[1.6,2.9], benchmarkLow:1.59, benchmarkMid:2.16, benchmarkHigh:2.9,  marginRange:[20,35], growth:"Growing",  riskFactor:0.72, demandScore:76, buyerInterestRank:7,  competitionLevel:"Moderate",      benchmarkSource:"proprietary closed-transaction database" },
+  propertymanage:  { label:"Property Management",             typicalMultiple:[1.9,3.1], benchmarkLow:1.86, benchmarkMid:2.38, benchmarkHigh:3.08, marginRange:[20,40], growth:"Growing",  riskFactor:0.72, demandScore:79, buyerInterestRank:5,  competitionLevel:"Moderate",      benchmarkSource:"proprietary closed-transaction database" },
+  realestatebrok:  { label:"Real Estate Brokerage",           typicalMultiple:[1.7,2.6], benchmarkLow:1.66, benchmarkMid:2.08, benchmarkHigh:2.58, marginRange:[15,30], growth:"Variable", riskFactor:0.90, demandScore:62, buyerInterestRank:13, competitionLevel:"High",          benchmarkSource:"proprietary closed-transaction database" },
+  remodeling:      { label:"Home Remodeling & Restoration",   typicalMultiple:[1.4,2.7], benchmarkLow:1.42, benchmarkMid:2.08, benchmarkHigh:2.74, marginRange:[15,25], growth:"Stable",   riskFactor:0.88, demandScore:70, buyerInterestRank:9,  competitionLevel:"Moderate-High", benchmarkSource:"proprietary closed-transaction database" },
+  seniorcare:      { label:"Senior Care / Home Health",        typicalMultiple:[2.0,3.8], benchmarkLow:2.03, benchmarkMid:2.9,  benchmarkHigh:3.8,  marginRange:[10,20], growth:"Growing",  riskFactor:0.78, demandScore:82, buyerInterestRank:4,  competitionLevel:"Moderate",      benchmarkSource:"proprietary closed-transaction database" },
+  signmaking:      { label:"Sign Manufacturing",               typicalMultiple:[1.9,3.3], benchmarkLow:1.94, benchmarkMid:2.45, benchmarkHigh:3.27, marginRange:[15,30], growth:"Stable",   riskFactor:0.85, demandScore:63, buyerInterestRank:13, competitionLevel:"Moderate",      benchmarkSource:"proprietary closed-transaction database" },
+  staffing:        { label:"Staffing / Recruiting",            typicalMultiple:[1.5,3.0], benchmarkLow:1.54, benchmarkMid:2.33, benchmarkHigh:2.98, marginRange:[15,25], growth:"Variable", riskFactor:0.88, demandScore:68, buyerInterestRank:11, competitionLevel:"High",          benchmarkSource:"proprietary closed-transaction database" },
+  veterinary:      { label:"Veterinary Practice",              typicalMultiple:[2.4,4.1], benchmarkLow:2.39, benchmarkMid:3.01, benchmarkHigh:4.1,  marginRange:[15,30], growth:"Growing",  riskFactor:0.70, demandScore:81, buyerInterestRank:4,  competitionLevel:"Low-Moderate",  benchmarkSource:"proprietary closed-transaction database" },
+  // ── Added to match deal_runs + scoring engine coverage; all figures from
+  //    lib/scoreIndustries.ts (SCORE_INDUSTRIES) so free tool and paid engine
+  //    share one national basis ─────────────────────────────────────────────
+  clothing:        { label:"Clothing Retail",                  typicalMultiple:[1.7,3.5], benchmarkLow:1.69, benchmarkMid:2.39, benchmarkHigh:3.5,  marginRange:[11,23], growth:"Stable",   riskFactor:0.90, demandScore:58, buyerInterestRank:13, competitionLevel:"High",          benchmarkSource:"proprietary closed-transaction database" },
+  gasstation:      { label:"Gas Station / C-Store",            typicalMultiple:[2.5,4.5], benchmarkLow:2.5,  benchmarkMid:3.2,  benchmarkHigh:4.5,  marginRange:[3,8],   growth:"Stable",   riskFactor:0.85, demandScore:58, buyerInterestRank:13, competitionLevel:"Moderate",      benchmarkSource:"proprietary closed-transaction database" },
+  manufacturing:   { label:"Manufacturing (Other)",            typicalMultiple:[2.1,4.5], benchmarkLow:2.05, benchmarkMid:2.82, benchmarkHigh:4.45, marginRange:[9,18],  growth:"Stable",   riskFactor:0.78, demandScore:62, buyerInterestRank:9,  competitionLevel:"Moderate",      benchmarkSource:"proprietary closed-transaction database" },
 };
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
@@ -144,6 +150,30 @@ function generateCommunityData(industry: string, userScore: number) {
   return { avgScore: Math.round(scores.reduce((a, b) => a + b, 0) / scores.length), topScore: Math.max(...scores), lowestScore: Math.min(...scores), percentile: Math.round((rank / scores.length) * 100), totalDeals: scores.length };
 }
 
+// Valuation flags are built by one helper from whichever basis is on screen,
+// so they can be regenerated when the benchmark API returns. sampleSize null
+// means omit the count (only real API counts are ever printed).
+const VALUATION_FLAG_PREFIXES = ["Asking multiple of", "Pricing is consistent with the", "Pricing in the upper portion of the"];
+const isValuationFlag = (f: string) => VALUATION_FLAG_PREFIXES.some((p) => f.startsWith(p));
+
+function buildValuationFlags(multiple: number, low: number, mid: number, high: number, label: string, sampleSize: number | null): { red: string[]; green: string[] } {
+  const red: string[] = [];
+  const green: string[] = [];
+  if (multiple > high) {
+    const pctAbove = Math.round(((multiple / high) - 1) * 100);
+    red.push(`Asking multiple of ${multiple.toFixed(2)}x appears ${pctAbove}% above the ${high.toFixed(2)}x high end of observed ${label} transactions`);
+  } else if (multiple > mid * 1.05) {
+    red.push(`Pricing in the upper portion of the ${low.toFixed(2)}–${high.toFixed(2)}x observed range — may require justification through earnings quality or growth trajectory`);
+  } else if (multiple < low) {
+    green.push(`Asking multiple of ${multiple.toFixed(2)}x is below the ${low.toFixed(2)}x low end of observed transactions — warrants investigation of seller motivation`);
+  } else {
+    green.push(sampleSize
+      ? `Pricing is consistent with the ${low.toFixed(2)}–${high.toFixed(2)}x range observed across ${sampleSize.toLocaleString()} comparable ${label} transactions`
+      : `Pricing is consistent with the ${low.toFixed(2)}–${high.toFixed(2)}x range observed across comparable ${label} transactions`);
+  }
+  return { red, green };
+}
+
 function calculateScores(inputs: DealInputs): ScoreBreakdown | null {
   const revenue = parseFloat(inputs.revenue.replace(/,/g, ""));
   const sde = parseFloat(inputs.sde.replace(/,/g, ""));
@@ -158,7 +188,7 @@ function calculateScores(inputs: DealInputs): ScoreBreakdown | null {
   const greenFlags: string[] = [];
   const multiple = price / sde;
 
-  const { benchmarkLow, benchmarkMid, benchmarkHigh, sampleSize, benchmarkSource } = industry;
+  const { benchmarkLow, benchmarkMid, benchmarkHigh, benchmarkSource } = industry;
   const fairValueLow  = Math.round(sde * benchmarkLow);
   const fairValue     = Math.round(sde * benchmarkMid);
   const fairValueHigh = Math.round(sde * benchmarkHigh);
@@ -188,16 +218,11 @@ function calculateScores(inputs: DealInputs): ScoreBreakdown | null {
 
   const sdeMargin = (sde / revenue) * 100;
 
-  if (rangePosition === "Above Range") {
-    const pctAbove = Math.round(((multiple / benchmarkHigh) - 1) * 100);
-    redFlags.push(`Asking multiple of ${multiple.toFixed(2)}x appears ${pctAbove}% above the ${benchmarkHigh.toFixed(2)}x high end of observed ${industry.label} transactions`);
-  } else if (multiple > benchmarkMid * 1.05 && multiple <= benchmarkHigh) {
-    redFlags.push(`Pricing in the upper portion of the ${benchmarkLow.toFixed(2)}–${benchmarkHigh.toFixed(2)}x observed range — may require justification through earnings quality or growth trajectory`);
-  } else if (rangePosition === "Below Range") {
-    greenFlags.push(`Asking multiple of ${multiple.toFixed(2)}x is below the ${benchmarkLow.toFixed(2)}x low end of observed transactions — warrants investigation of seller motivation`);
-  } else {
-    greenFlags.push(`Pricing is consistent with the ${benchmarkLow.toFixed(2)}–${benchmarkHigh.toFixed(2)}x range observed across ${sampleSize.toLocaleString()} comparable ${industry.label} transactions`);
-  }
+  // Initial flags are modeled from the static table, so no sample count is
+  // printed; real counts only appear after the benchmark API responds.
+  const initialValuationFlags = buildValuationFlags(multiple, benchmarkLow, benchmarkMid, benchmarkHigh, industry.label, null);
+  redFlags.push(...initialValuationFlags.red);
+  greenFlags.push(...initialValuationFlags.green);
 
   if (sdeMargin < industry.marginRange[0] * 0.75) {
     redFlags.push(`SDE margin of ${sdeMargin.toFixed(0)}% is below the ${industry.marginRange[0]}–${industry.marginRange[1]}% observed range — buyers should evaluate cost structure and add-back sustainability`);
@@ -268,7 +293,7 @@ function calculateScores(inputs: DealInputs): ScoreBreakdown | null {
   return {
     overall, riskLevel, redFlags, greenFlags, nextStep,
     aiInsight: null, dealMemo: null,
-    valuation: { score: valuationScore, multiple, marketRange: [benchmarkLow, benchmarkHigh], fairValue, fairValueLow, fairValueHigh, rangePosition, recommendedOffer, verdict: valuationVerdict, benchmarkSource, sampleSize },
+    valuation: { score: valuationScore, multiple, marketRange: [benchmarkLow, benchmarkHigh], fairValue, fairValueLow, fairValueHigh, rangePosition, recommendedOffer, verdict: valuationVerdict, benchmarkSource },
     debtRisk: { score: debtScore, dscr, annualPayment, monthlyPayment, verdict: debtVerdict },
     marketRisk: { score: marketScore, industryGrowth: industry.growth, verdict: marketVerdict },
     industryRisk: { score: industryScore, marginRange: industry.marginRange, verdict: industryVerdict },
@@ -400,6 +425,9 @@ export default function DealRealityCheck() {
   const [extractConfidence, setExtractConfidence] = useState("");
   const [pdfFile, setPdfFile] = useState<File | null>(null);
   const [extractNotice, setExtractNotice] = useState("");
+  // Non-null when the benchmark lookup failed or is unavailable: the numbers
+  // on screen are modeled estimates and the user must be told so.
+  const [benchmarkNotice, setBenchmarkNotice] = useState<string | null>(null);
   const [results, setResults] = useState<ScoreBreakdown | null>(null);
   const [loading, setLoading] = useState(false);
   const [aiLoading, setAiLoading] = useState(false);
@@ -462,6 +490,7 @@ export default function DealRealityCheck() {
 
   const handleSubmit = async () => {
     setLoading(true);
+    setBenchmarkNotice(null);
     await new Promise((r) => setTimeout(r, 700));
     const scores = calculateScores(inputs);
     if (scores) { setPendingResults(scores); setShowGate(true); }
@@ -582,21 +611,40 @@ const handleGateSubmit = async () => {
         method: "POST", headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ industry: inputs.industry, state: null, revenue, sde, asking_price: price }),
       });
-      if (!res.ok) return;
+      if (!res.ok) {
+        setBenchmarkNotice(res.status === 422
+          ? "Benchmark data is not available for this industry, so this screening could not be run against market transactions. All figures shown are modeled estimates only."
+          : "Benchmark data unavailable for this industry. Pricing analysis is a modeled estimate.");
+        return;
+      }
       const data = await res.json();
-      if (!data.success) return;
+      if (!data.success) {
+        setBenchmarkNotice("Benchmark data unavailable for this industry. Pricing analysis is a modeled estimate.");
+        return;
+      }
+      setBenchmarkNotice(null);
       const b = data.benchmarks, a = data.analysis, c = data.confidence;
       setResults((prev) => {
         if (!prev) return prev;
         let newValScore = prev.valuation.score;
         let newMarketRange = prev.valuation.marketRange;
         let newFairValue = prev.valuation.fairValue;
+        let newFairValueLow = prev.valuation.fairValueLow;
+        let newFairValueHigh = prev.valuation.fairValueHigh;
+        let newRangePosition = prev.valuation.rangePosition;
         let newOverall = prev.overall;
+        let newRedFlags = [...prev.redFlags];
+        let newGreenFlags = [...prev.greenFlags];
         if (b.transaction) {
           const txnMult = b.transaction.cashflowMultiple;
           newMarketRange = a.effectiveMultipleRange;
           newFairValue = a.effectiveFairValue;
+          // Keep the whole screen on the API basis: comps grid dollars must
+          // come from the same range the multiples cite.
+          newFairValueLow = Math.round(sde * newMarketRange[0]);
+          newFairValueHigh = Math.round(sde * newMarketRange[1]);
           const dealMult = a.dealMultiple;
+          newRangePosition = dealMult < newMarketRange[0] ? "Below Range" : dealMult > newMarketRange[1] ? "Above Range" : "Within Range";
           if (dealMult <= txnMult * 0.85) newValScore = Math.min(95, 85 + (txnMult - dealMult) / txnMult * 20);
           else if (dealMult <= txnMult) newValScore = Math.min(90, 70 + (txnMult - dealMult) / txnMult * 40);
           else if (dealMult <= txnMult * 1.15) newValScore = 70 - ((dealMult - txnMult) / txnMult) * 50;
@@ -609,10 +657,16 @@ const handleGateSubmit = async () => {
             prev.marketRisk.score * ((w.financial + w.liquidity) / 200) +
             prev.industryRisk.score * ((w.financial + w.liquidity) / 200)
           )));
+          // Regenerate valuation flags on the API basis so the flags cite the
+          // same range and sample the rest of the screen shows. Real count
+          // only; omit when the API did not return one.
+          const apiSampleSize: number | null = c.transaction?.sampleSize > 0 ? c.transaction.sampleSize : null;
+          const rangeMid = (newMarketRange[0] + newMarketRange[1]) / 2;
+          const regenerated = buildValuationFlags(dealMult, newMarketRange[0], rangeMid, newMarketRange[1], INDUSTRIES[inputs.industry]?.label || inputs.industry, apiSampleSize);
+          newRedFlags = [...regenerated.red, ...newRedFlags.filter((f) => !isValuationFlag(f))];
+          newGreenFlags = [...regenerated.green, ...newGreenFlags.filter((f) => !isValuationFlag(f))];
         }
         const newRiskLevel: ScoreBreakdown["riskLevel"] = newOverall >= 70 ? "Low" : newOverall >= 50 ? "Moderate" : newOverall >= 30 ? "High" : "Critical";
-        const newRedFlags = [...prev.redFlags];
-        const newGreenFlags = [...prev.greenFlags];
         if (b.transaction && a.sellerBuyerGap && a.sellerBuyerGap > 20) {
           newRedFlags.push(`Sellers in this industry have historically listed ${a.sellerBuyerGap.toFixed(0)}% above closed transaction prices — buyers should factor typical negotiation discount into offer strategy`);
         }
@@ -624,7 +678,7 @@ const handleGateSubmit = async () => {
         }
         return {
           ...prev, overall: newOverall, riskLevel: newRiskLevel,
-          valuation: { ...prev.valuation, score: newValScore, marketRange: newMarketRange, fairValue: newFairValue, recommendedOffer: a.smartOfferRange },
+          valuation: { ...prev.valuation, score: newValScore, marketRange: newMarketRange, fairValue: newFairValue, fairValueLow: newFairValueLow, fairValueHigh: newFairValueHigh, rangePosition: newRangePosition, recommendedOffer: a.smartOfferRange },
           redFlags: newRedFlags, greenFlags: newGreenFlags,
           threeLens: {
             listing: b.listing ? { medianMultiple: b.listing.medianMultiple, sampleSize: b.listing.sampleSize } : null,
@@ -636,7 +690,10 @@ const handleGateSubmit = async () => {
           },
         };
       });
-    } catch (err) { console.error("Benchmark fetch error:", err); }
+    } catch (err) {
+      console.error("Benchmark fetch error:", err);
+      setBenchmarkNotice("Benchmark data unavailable for this industry. Pricing analysis is a modeled estimate.");
+    }
   };
 
  // ── PATCH 4: Update recordDeal to accept user_id and pending_email ────────────
@@ -701,7 +758,7 @@ const recordDeal = async (
     const mktHigh  = scores.valuation.marketRange[1].toFixed(2);
     const mktMid   = ((scores.valuation.marketRange[0] + scores.valuation.marketRange[1]) / 2).toFixed(2);
     const systemPrompt = `You are a senior M&A advisor producing a pre-LOI deal screening memo. Your output must be a single valid JSON object — no markdown, no backticks, no text before or after the JSON. Be analytical, conditional, and institutional. Never use absolute language. Use ranges and conditional statements. Keep every field concise.`;
-    const userPrompt = `Produce a deal screening memo for this ${ind?.label} acquisition.\n\nDEAL METRICS:\n- Asking: $${askPrice.toLocaleString()} (${scores.valuation.multiple.toFixed(2)}x SDE)\n- Fair Value Range: $${fairLow.toLocaleString()}–$${fairHigh.toLocaleString()} (median $${fairMid.toLocaleString()})\n- Market Range: ${mktLow}–${mktHigh}x median ${mktMid}x — ${scores.valuation.sampleSize.toLocaleString()} transactions (${scores.valuation.benchmarkSource})\n- Range Position: ${scores.valuation.rangePosition} (${Number(gapPct)>0?"+":""}${gapPct}% vs median)\n- SDE Margin: ${sdeMargin}% (industry: ${ind?.marginRange[0]}–${ind?.marginRange[1]}%)\n- DSCR: ${scores.debtRisk.dscr.toFixed(2)}x\n- Score: ${scores.overall}/100 (${scores.riskLevel} Risk)\n\nReturn ONLY this JSON:\n{"positioning":{"marketPosition":"Above Market or Inline with Market or Below Market","buyerFit":"best fit buyer type","executionDifficulty":"Low or Moderate or High","negotiationLeverage":"Low or Moderate or High"},"whatMustBeTrue":["assumption 1","assumption 2","assumption 3","assumption 4"],"decisionPath":{"steps":["Step 1","Step 2","Step 3"],"ifValidated":"next action if validated","ifNot":"recourse if not"},"negotiationPlaybook":{"anchorRange":"opening offer range","structureIdeas":["idea 1","idea 2"],"walkAway":"walk-away condition"},"dealBreakers":["risk 1","risk 2","risk 3"],"confidenceNote":"data note","pricingContext":"2-3 sentences","businessQuality":"2-3 sentences","buyerInterpretation":"2-3 sentences"}`;
+    const userPrompt = `Produce a deal screening memo for this ${ind?.label} acquisition.\n\nDEAL METRICS:\n- Asking: $${askPrice.toLocaleString()} (${scores.valuation.multiple.toFixed(2)}x SDE)\n- Fair Value Range: $${fairLow.toLocaleString()}–$${fairHigh.toLocaleString()} (median $${fairMid.toLocaleString()})\n- Market Range: ${mktLow}–${mktHigh}x median ${mktMid}x (${scores.valuation.benchmarkSource})\n- Range Position: ${scores.valuation.rangePosition} (${Number(gapPct)>0?"+":""}${gapPct}% vs median)\n- SDE Margin: ${sdeMargin}% (industry: ${ind?.marginRange[0]}–${ind?.marginRange[1]}%)\n- DSCR: ${scores.debtRisk.dscr.toFixed(2)}x\n- Score: ${scores.overall}/100 (${scores.riskLevel} Risk)\n\nReturn ONLY this JSON:\n{"positioning":{"marketPosition":"Above Market or Inline with Market or Below Market","buyerFit":"best fit buyer type","executionDifficulty":"Low or Moderate or High","negotiationLeverage":"Low or Moderate or High"},"whatMustBeTrue":["assumption 1","assumption 2","assumption 3","assumption 4"],"decisionPath":{"steps":["Step 1","Step 2","Step 3"],"ifValidated":"next action if validated","ifNot":"recourse if not"},"negotiationPlaybook":{"anchorRange":"opening offer range","structureIdeas":["idea 1","idea 2"],"walkAway":"walk-away condition"},"dealBreakers":["risk 1","risk 2","risk 3"],"confidenceNote":"data note","pricingContext":"2-3 sentences","businessQuality":"2-3 sentences","buyerInterpretation":"2-3 sentences"}`;
     try {
       const res = await fetch("/api/deal-reality-check", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ system: systemPrompt, messages: [{ role: "user", content: userPrompt }] }) });
       const data = await res.json();
@@ -731,10 +788,10 @@ const recordDeal = async (
       positioning: { marketPosition: isAbove ? "Above Market" : isBelow ? "Below Market" : "Inline with Market", buyerFit: scores.overall >= 65 ? "Operator / Strategic" : scores.overall >= 45 ? "Operator" : "First-Time Buyer", executionDifficulty: isAbove || !dscrOk ? "High" : scores.overall >= 65 ? "Low" : "Moderate", negotiationLeverage: isAbove ? "High" : isBelow ? "Low" : "Moderate" },
       whatMustBeTrue: [`Revenue and SDE must remain at or above reported levels — if SDE declines 10%, implied fair value falls to approximately $${Math.round(fairLow * 0.9).toLocaleString()}`, `All seller add-backs must be documented and non-recurring — unsupported add-backs would reduce effective SDE and compress the justified multiple`, `DSCR of ${scores.debtRisk.dscr.toFixed(2)}x must hold under stress — a 15% revenue decline would pressure coverage toward the 1.0x threshold at current debt terms`, `Customer concentration must be within acceptable limits — revenue from any single account above 25% introduces meaningful volatility risk`],
       decisionPath: { steps: ["Execute NDA and request 3 years of tax returns, P&L statements, and owner compensation detail", "Validate all reported add-backs with supporting documentation", "Confirm customer concentration and split between recurring and project-based revenue"], ifValidated: `If financials confirm reported SDE and add-backs are documented → proceed to LOI targeting ${fmt(Math.round(fairMid * 0.95))}–${fmt(fairMid)}`, ifNot: `If SDE is lower than reported or add-backs are unsupported → renegotiate toward ${fmt(fairLow)}–${fmt(Math.round(fairMid * 0.9))} or restructure with a seller note covering the valuation gap` },
-      negotiationPlaybook: { anchorRange: `Open at ${fmt(Math.round(fairLow * (gapN > 20 ? 0.95 : 1.0)))}–${fmt(fairMid)}, anchored to ${scores.valuation.sampleSize.toLocaleString()} comparable closed transactions (${scores.valuation.benchmarkSource})`, structureIdeas: [gapN > 15 ? `Seller note covering ${Math.min(30, Math.round(gapN / 2))}% of the gap above median fair value` : "Standard SBA structure with 90-day seller transition", `Earn-out tied to Year 1 SDE at or above $${Math.round(sdeNum * 0.95).toLocaleString()} — limits downside if performance lags representations`], walkAway: `If seller will not move below ${fmt(Math.round(fairHigh * 1.15))} and financials do not support the represented SDE, return assumptions become difficult to underwrite on standard terms` },
+      negotiationPlaybook: { anchorRange: `Open at ${fmt(Math.round(fairLow * (gapN > 20 ? 0.95 : 1.0)))}–${fmt(fairMid)}, anchored to comparable closed transactions (${scores.valuation.benchmarkSource})`, structureIdeas: [gapN > 15 ? `Seller note covering ${Math.min(30, Math.round(gapN / 2))}% of the gap above median fair value` : "Standard SBA structure with 90-day seller transition", `Earn-out tied to Year 1 SDE at or above $${Math.round(sdeNum * 0.95).toLocaleString()} — limits downside if performance lags representations`], walkAway: `If seller will not move below ${fmt(Math.round(fairHigh * 1.15))} and financials do not support the represented SDE, return assumptions become difficult to underwrite on standard terms` },
       dealBreakers: ["SDE materially lower than represented after owner compensation normalization and add-back review", `DSCR falls below 1.0x under a 15% revenue stress scenario at current debt terms`, "Customer concentration above 30% in a single account without a binding multi-year contract", "Owner performing non-transferable technical or relationship functions with no identified successor"],
-      confidenceNote: `Analysis benchmarked against ${scores.valuation.sampleSize.toLocaleString()} comparable ${ind?.label || ""} transactions (${scores.valuation.benchmarkSource}). Limitations: add-backs, customer concentration, and operational risk factors are not verified at this stage — this is a screening analysis only.`,
-      pricingContext: `The ${ind?.label} asking price of ${scores.valuation.multiple.toFixed(2)}x SDE is ${scores.valuation.rangePosition.toLowerCase()} the ${mktLow}–${mktHigh}x range observed across ${scores.valuation.sampleSize.toLocaleString()} comparable transactions, with the ask ${Math.abs(gapN).toFixed(1)}% ${gapN > 0 ? "above" : "below"} the ${mktMid}x median. ${isAbove ? "The premium may require justification through demonstrable earnings quality or identifiable growth trajectory." : isBelow ? "Below-range pricing warrants investigation of seller motivation before assuming it represents upside." : "Pricing appears broadly consistent with market norms for this industry."}`,
+      confidenceNote: `Analysis benchmarked against comparable ${ind?.label || ""} closed transactions (${scores.valuation.benchmarkSource}). Limitations: add-backs, customer concentration, and operational risk factors are not verified at this stage — this is a screening analysis only.`,
+      pricingContext: `The ${ind?.label} asking price of ${scores.valuation.multiple.toFixed(2)}x SDE is ${scores.valuation.rangePosition.toLowerCase()} the ${mktLow}–${mktHigh}x range observed across comparable transactions, with the ask ${Math.abs(gapN).toFixed(1)}% ${gapN > 0 ? "above" : "below"} the ${mktMid}x median. ${isAbove ? "The premium may require justification through demonstrable earnings quality or identifiable growth trajectory." : isBelow ? "Below-range pricing warrants investigation of seller motivation before assuming it represents upside." : "Pricing appears broadly consistent with market norms for this industry."}`,
       businessQuality: `Operating margin of ${sdeMargin}% ${marginOk ? "is within" : "falls below"} the ${ind?.marginRange[0]}–${ind?.marginRange[1]}% industry range${marginOk ? ", supporting the quality of reported earnings" : " — buyers should evaluate cost structure and add-back reliability"}. Projected DSCR of ${scores.debtRisk.dscr.toFixed(2)}x ${dscrOk ? "meets standard lender thresholds, supporting SBA financing eligibility" : "falls below the 1.25x lender minimum and may require additional equity or revised debt structure"}.`,
       buyerInterpretation: `For the deal to underwrite at the asking price, reported SDE must be confirmed as normalized and sustainable, and debt coverage must hold under at least a 10–15% revenue stress scenario. ${isAbove ? "The primary risk concentrates in valuation — the ask requires above-median earnings quality to support the implied multiple." : "The primary risk concentrates in operational reliability — buyers should validate revenue predictability and owner dependency before advancing."} Priority diligence action: obtain 3 years of tax returns and normalize owner compensation before submitting an LOI.`,
     };
@@ -988,6 +1045,16 @@ const recordDeal = async (
     </button>
   </div>
 )}
+
+          {/* ── Benchmark availability disclosure (2a): shown whenever the
+                 lookup failed, so hardcoded numbers are never presented as
+                 benchmark-derived without disclosure ── */}
+          {benchmarkNotice && (
+            <div className="fu" style={{ marginBottom: 14, padding: "12px 16px", borderRadius: 12, background: "rgba(245,158,11,0.07)", border: "1px solid rgba(245,158,11,0.2)", display: "flex", alignItems: "flex-start", gap: 10 }}>
+              <span style={{ fontSize: 16, flexShrink: 0 }}>⚠️</span>
+              <div style={{ fontSize: 12, color: "#FBBF24", lineHeight: 1.6, fontFamily: "'Inter', sans-serif" }}>{benchmarkNotice}</div>
+            </div>
+          )}
 
           {/* ── SECTION 1: HERO DECISION BLOCK ── */}
           <div className="fu" style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.07)", borderLeft: `3px solid ${heroColor}`, borderRadius: 16, padding: "28px 24px", marginBottom: 14 }}>

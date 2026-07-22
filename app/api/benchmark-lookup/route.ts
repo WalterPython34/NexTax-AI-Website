@@ -60,6 +60,11 @@ const HARDCODED: Record<string, { multipleRange: [number, number]; marginRange: 
   physicaltherapy: { multipleRange: [1.6, 2.9], marginRange: [20, 35] },
   remodeling:      { multipleRange: [1.4, 2.7], marginRange: [15, 25] },
   staffing:        { multipleRange: [1.5, 3.0], marginRange: [15, 25] },
+  // ── Added to match deal_runs + scoring engine coverage; ranges from
+  //    lib/scoreIndustries.ts (SCORE_INDUSTRIES) benchmarkLow/High ─────────
+  clothing:        { multipleRange: [1.69, 3.5],  marginRange: [11, 23] },
+  gasstation:      { multipleRange: [2.5, 4.5],   marginRange: [3, 8] },
+  manufacturing:   { multipleRange: [2.05, 4.45], marginRange: [9, 18] },
 };
 
 
