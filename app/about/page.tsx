@@ -269,7 +269,7 @@ export default function AboutPage() {
                   key={p.name}
                   className={`border-slate-700 hover:border-emerald-500/50 transition-colors ${
                     p.flagship
-                      ? "md:col-span-2 bg-gradient-to-br from-emerald-500/10 to-cyan-500/5 border-emerald-500/40"
+                      ? "md:col-span-2 bg-slate-800/80 bg-gradient-to-br from-emerald-500/10 to-cyan-500/5 border-emerald-500/40"
                       : "bg-slate-800/50"
                   }`}
                 >
