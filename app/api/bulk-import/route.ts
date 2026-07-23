@@ -64,225 +64,320 @@ async function fetchBenchmarksForIndustry(
 }
 
 // ─── INDUSTRY CLASSIFIER ────────────────────────────────────────────────────
-
+// ORDERING MATTERS: classifyIndustry() returns on FIRST substring match,
+// iterating in insertion order. Specific multi-word phrases must appear
+// BEFORE generic single words, or the generic key steals the listing.
+// Bare single words that appear in ordinary prose (consulting, platform,
+// franchise, laser) are deliberately excluded — they misclassified more
+// than they caught.
 const INDUSTRY_MAP: Record<string, string> = {
-  // ── Laundromat
-  laundromat: "laundromat", laundry: "laundromat", "coin laundry": "laundromat",
-  "wash and fold": "laundromat", "dry clean": "laundromat", "dry cleaning": "laundromat",
+  // ══ SPECIFIC MULTI-WORD PHRASES FIRST ══════════════════════════════════
 
-  // ── HVAC
-  hvac: "hvac", heating: "hvac", "air conditioning": "hvac", "heating and cooling": "hvac",
-  "hvac/r": "hvac", refrigeration: "hvac",
+  // ── Manufacturing (was entirely missing — every listing failed to classify)
+  "contract manufacturing": "manufacturing", "custom manufacturing": "manufacturing",
+  "precision machining": "manufacturing", "machine shop": "manufacturing",
+  "cnc machining": "manufacturing", "metal fabrication": "manufacturing",
+  "sheet metal": "manufacturing", "steel fabrication": "manufacturing",
+  "plastics manufacturing": "manufacturing", "injection molding": "manufacturing",
+  "food manufacturing": "manufacturing", "industrial manufacturing": "manufacturing",
+  "product manufacturing": "manufacturing", "manufacturing company": "manufacturing",
+  "manufacturing business": "manufacturing", "tool and die": "manufacturing",
+  "powder coating": "manufacturing", "wood products": "manufacturing",
+  "cabinet manufacturing": "manufacturing", "furniture manufacturing": "manufacturing",
+  fabrication: "manufacturing", machining: "manufacturing", manufacturer: "manufacturing",
+  manufacturing: "manufacturing", foundry: "manufacturing",
 
-  // ── Landscaping
-  landscaping: "landscaping", "lawn care": "landscaping", "lawn service": "landscaping",
-  "lawn maintenance": "landscaping", "tree service": "landscaping", "tree care": "landscaping",
-  irrigation: "landscaping", "pool service": "landscaping", "pool and spa": "landscaping",
-  "pool cleaning": "landscaping", "pool maintenance": "landscaping", "pool & spa": "landscaping",
-
-  // ── Car Wash
-  "car wash": "carwash", carwash: "carwash", "auto wash": "carwash",
-  "car detailing": "carwash", detailing: "carwash",
-
-  // ── Dental
-  dental: "dental", dentist: "dental", "dental practice": "dental",
-  "dental office": "dental", orthodont: "dental",
-
-  // ── Gym
-  gym: "gym", fitness: "gym", "fitness center": "gym", "health club": "gym",
-  crossfit: "gym", "yoga studio": "gym", pilates: "gym", "martial arts": "gym", boxing: "gym",
-
-  // ── Restaurant
-  restaurant: "restaurant", "food service": "restaurant", "bar and grill": "restaurant",
-  cafe: "restaurant", "coffee shop": "restaurant", bakery: "restaurant", pizzeria: "restaurant",
-  "fast food": "restaurant", catering: "restaurant", "food truck": "restaurant",
-  brewery: "restaurant", "ice cream": "restaurant", "juice bar": "restaurant",
-  "food route": "restaurant", "food distribution": "restaurant",
-  "beverage distribution": "restaurant", beverage: "restaurant",
-  franchise: "restaurant", vending: "restaurant",
-
-  // ── Clothing Retail
-  clothing: "clothing", apparel: "clothing", boutique: "clothing",
-  "retail clothing": "clothing", "clothing store": "clothing",
-  "women's apparel": "clothing", "menswear": "clothing",
-  sneaker: "clothing", "shoe store": "clothing", fashion: "clothing",
-
-  // ── Auto Repair
-  "auto repair": "autorepair", "auto body": "autorepair", automotive: "autorepair",
-  mechanic: "autorepair", "tire shop": "autorepair", transmission: "autorepair",
-  "oil change": "autorepair", "auto glass": "autorepair",
-  "garage improvement": "autorepair", "auto dealership": "autorepair", "auto salvage": "autorepair",
-
-  // ── Cleaning
-  cleaning: "cleaning", janitorial: "cleaning", "maid service": "cleaning",
-  "carpet cleaning": "cleaning", "pressure washing": "cleaning",
-  "commercial cleaning": "cleaning", "window cleaning": "cleaning",
-  "waste management": "cleaning", "junk removal": "cleaning", "dumpster": "cleaning",
-  "hospitality maintenance": "cleaning",
-
-  // ── Ecommerce
-  ecommerce: "ecommerce", "e-commerce": "ecommerce", "online store": "ecommerce",
-  amazon: "ecommerce", shopify: "ecommerce", fba: "ecommerce",
-  dropship: "ecommerce", "online retail": "ecommerce",
-
-  // ── SaaS
-  saas: "saas", software: "saas", "software platform": "saas",
-  app: "saas", platform: "saas", subscription: "saas",
-
-  // ── Insurance
-  insurance: "insurance", "insurance agency": "insurance", "insurance broker": "insurance",
-
-  // ── Plumbing
-  plumbing: "plumbing", plumber: "plumbing", drain: "plumbing", "water heater": "plumbing",
-  septic: "plumbing", "septic service": "plumbing", "water service": "plumbing",
-  "water treatment": "plumbing", "well service": "plumbing",
-
-  // ── Roofing
-  roofing: "roofing", roofer: "roofing", roof: "roofing", siding: "roofing",
-
-  // ── Pet Care
-  "pet care": "petcare", "pet grooming": "petcare", "dog grooming": "petcare",
-  "pet sitting": "petcare", kennel: "petcare", "doggy daycare": "petcare",
-  "pet supply": "petcare", "pet store": "petcare",
-
-  // ── Pharmacy
-  pharmacy: "pharmacy", "drug store": "pharmacy", compounding: "pharmacy",
-
-  // ── Daycare
-  daycare: "daycare", childcare: "daycare", preschool: "daycare", "child care": "daycare",
-  "learning center": "daycare", montessori: "daycare", "after school": "daycare",
-
-  // ── Med Spa
-  "med spa": "medspa", medspa: "medspa", aesthetics: "medspa", "medical spa": "medspa",
-  botox: "medspa", laser: "medspa", cosmetic: "medspa", dermatology: "medspa",
-  spa: "medspa", tanning: "medspa",
-
-  // ── Accounting
-  accounting: "accounting", "accounting firm": "accounting", "tax firm": "accounting",
-  "tax preparation": "accounting", "tax service": "accounting", bookkeeping: "accounting",
-  cpa: "accounting", "cpa firm": "accounting", "financial services": "accounting",
-  "tax accounting": "accounting", "tax & accounting": "accounting",
-  "accounting & consulting": "accounting", "accounting & tax": "accounting",
-  "tax return": "accounting", consulting: "accounting",
-
-  // ── Electrical
-  electrical: "electrical", electrician: "electrical", "electrical contractor": "electrical",
-  "electrical service": "electrical", "electrical company": "electrical", wiring: "electrical",
-
-  // ── Healthcare (generic — kept for truly unclassifiable medical)
-  "medical practice": "healthcare", "medical clinic": "healthcare", "urgent care": "healthcare",
-  clinic: "healthcare", "mental health": "healthcare", counseling: "healthcare",
-  "behavioral health": "healthcare", "healthcare staffing": "healthcare",
-  "medical staffing": "healthcare", "nurse staffing": "healthcare",
-
-  // ── Transportation
-  transportation: "transportation", trucking: "transportation", logistics: "transportation",
-  freight: "transportation", "moving company": "transportation", moving: "transportation",
-  courier: "transportation", delivery: "transportation", "freight broker": "transportation",
-  hauling: "transportation", "dump truck": "transportation", towing: "transportation",
-  limo: "transportation", limousine: "transportation", shuttle: "transportation",
-  charter: "transportation",
-
-  // ── Printing
-  printing: "printing", "print shop": "printing", "print & marketing": "printing",
-  "b2b print": "printing", "print/marketing": "printing",
-
-  // ── Self-Storage
-  "self storage": "storage", "self-storage": "storage", storage: "storage",
-  "storage facility": "storage", "mini storage": "storage", "storage solutions": "storage",
-  "rv storage": "storage", "boat storage": "storage", warehouse: "storage",
-
-  // ── Painting
-  painting: "painting", painter: "painting", "painting company": "painting",
-  "painting contractor": "painting", "residential painting": "painting",
-  "commercial painting": "painting", "paint contractor": "painting",
-
-  // ── Security
-  "security services": "security", security: "security", "alarm company": "security",
-  "alarm system": "security", "security guard": "security", "security company": "security",
-  surveillance: "security", "fire protection": "security", "fire alarm": "security",
-
-  // ── NEW: Sign Making
-  "sign making": "signmaking", "sign manufacturer": "signmaking", "sign company": "signmaking",
-  "sign shop": "signmaking", signage: "signmaking", "screen printing": "signmaking",
-  "promotional products": "signmaking",
-
-  // ── NEW: Hair Salon
-  "hair salon": "hairsalon", "beauty salon": "hairsalon", barbershop: "hairsalon",
-  "barber shop": "hairsalon", "hair care": "hairsalon", "hair studio": "hairsalon",
-  "nail salon": "hairsalon", "hair and nail": "hairsalon", salon: "hairsalon",
-
-  // ── NEW: Construction
-  "general contractor": "construction", "home improvement": "construction",
-  handyman: "construction", "handyman services": "construction",
-  construction: "construction",
-
-  // ── NEW: Grocery
-  grocery: "grocery", "grocery store": "grocery", supermarket: "grocery",
-  "food market": "grocery", "convenience store": "grocery",
-
-  // ── NEW: Pest Control
-  "pest control": "pestcontrol", exterminator: "pestcontrol",
-  "pest management": "pestcontrol", termite: "pestcontrol", "bug control": "pestcontrol",
-
-  // ── NEW: Marketing Agency
-  "marketing agency": "marketing", "digital marketing": "marketing",
-  "marketing services": "marketing", "advertising agency": "marketing",
-  "seo agency": "marketing", "social media agency": "marketing",
-
-  // ── NEW: Engineering
-  engineering: "engineering", "engineering firm": "engineering", "engineering services": "engineering",
+  // ── Engineering (before "consulting" and generic terms)
   "civil engineering": "engineering", "mechanical engineering": "engineering",
   "environmental engineering": "engineering", "structural engineering": "engineering",
   "electrical engineering": "engineering", "industrial engineering": "engineering",
-  "consulting engineer": "engineering", "engineering & consulting": "engineering",
+  "geotechnical engineering": "engineering", "consulting engineer": "engineering",
+  "engineering & consulting": "engineering", "engineering consulting": "engineering",
+  "engineering firm": "engineering", "engineering services": "engineering",
+  "land surveying": "engineering", "surveying firm": "engineering",
+  engineering: "engineering",
 
-  // ── NEW: Veterinary
-  veterinary: "veterinary", vet: "veterinary", "veterinary practice": "veterinary",
-  "animal hospital": "veterinary", "animal clinic": "veterinary", "vet clinic": "veterinary",
+  // ── Marketing (before generic "agency" / "consulting")
+  "marketing agency": "marketing", "digital marketing": "marketing",
+  "marketing services": "marketing", "advertising agency": "marketing",
+  "seo agency": "marketing", "social media agency": "marketing",
+  "marketing consulting": "marketing", "creative agency": "marketing",
+  "branding agency": "marketing", "media agency": "marketing",
+  "public relations": "marketing", "pr agency": "marketing",
 
-  // ── NEW: Real Estate Brokerage
+  // ── Veterinary (before medspa's "laser" and healthcare's "clinic")
+  "veterinary practice": "veterinary", "veterinary clinic": "veterinary",
+  "veterinary hospital": "veterinary", "animal hospital": "veterinary",
+  "animal clinic": "veterinary", "vet clinic": "veterinary",
+  "vet practice": "veterinary", "equine practice": "veterinary",
+  "small animal": "veterinary", veterinarian: "veterinary", veterinary: "veterinary",
+
+  // ── Real Estate Brokerage
   "real estate brokerage": "realestatebrok", "real estate agency": "realestatebrok",
   "real estate office": "realestatebrok", "real estate broker": "realestatebrok",
+  "realty group": "realestatebrok", "realty company": "realestatebrok",
+  "title agency": "realestatebrok", "title company": "realestatebrok",
   realty: "realestatebrok",
 
-  // ── NEW: Property Management
+  // ── Property Management (before "management" anywhere else)
   "property management": "propertymanage", "property manager": "propertymanage",
-  "property management company": "propertymanage", "hoa management": "propertymanage",
-  "rental management": "propertymanage",
+  "hoa management": "propertymanage", "rental management": "propertymanage",
+  "apartment management": "propertymanage", "community association management": "propertymanage",
+  "airbnb management": "propertymanage", "short term rental management": "propertymanage",
+  "vacation rental management": "propertymanage",
 
-  // ── NEW: Senior Care
-  "senior care": "seniorcare", "elder care": "seniorcare", "home health": "seniorcare",
-  "home healthcare": "seniorcare", "assisted living": "seniorcare", hospice: "seniorcare",
-  "senior living": "seniorcare", "home care": "seniorcare",
+  // ── Grocery (before "convenience store" which belongs to gasstation)
+  "grocery store": "grocery", "specialty grocery": "grocery",
+  "ethnic grocery": "grocery", "food market": "grocery", "farmers market": "grocery",
+  "health food store": "grocery", "butcher shop": "grocery", "meat market": "grocery",
+  "liquor store": "grocery", "wine shop": "grocery", "package store": "grocery",
+  supermarket: "grocery", grocery: "grocery", deli: "grocery",
 
-  // ── NEW: Physical Therapy / Chiropractic
-  "physical therapy": "physicaltherapy", chiropractic: "physicaltherapy",
-  chiropractor: "physicaltherapy", "physical therapist": "physicaltherapy",
+  // ── Sign Making
+  "sign making": "signmaking", "sign manufacturer": "signmaking", "sign company": "signmaking",
+  "sign shop": "signmaking", "custom signs": "signmaking", "vehicle wrap": "signmaking",
+  "screen printing": "signmaking", "embroidery shop": "signmaking",
+  "promotional products": "signmaking", "awards and engraving": "signmaking",
+  signage: "signmaking",
+
+  // ── Remodeling (before "restoration" and construction's generic keys)
+  "home remodeling": "remodeling", "home renovation": "remodeling",
+  "kitchen remodel": "remodeling", "bathroom remodel": "remodeling",
+  "kitchen and bath": "remodeling", "basement finishing": "remodeling",
+  "disaster restoration": "remodeling", "water restoration": "remodeling",
+  "fire restoration": "remodeling", "water damage": "remodeling",
+  "restoration company": "remodeling", "remodeling contractor": "remodeling",
+  remodeling: "remodeling", renovation: "remodeling", restoration: "remodeling",
+
+  // ── Gas Station (before grocery's and cleaning's generics)
+  "gas station and convenience": "gasstation", "gas station & convenience": "gasstation",
+  "gas station/c-store": "gasstation", "convenience store & gas": "gasstation",
+  "gas station": "gasstation", "fuel station": "gasstation", "service station": "gasstation",
+  "gasoline station": "gasstation", "petrol station": "gasstation",
+  "truck stop": "gasstation", "c-store": "gasstation", "convenience store": "gasstation",
+
+  // ── Physical Therapy (before healthcare's "clinic")
+  "physical therapy": "physicaltherapy", "physical therapist": "physicaltherapy",
   "occupational therapy": "physicaltherapy", "speech therapy": "physicaltherapy",
   "therapy practice": "physicaltherapy", "rehab clinic": "physicaltherapy",
-  "sports medicine": "physicaltherapy",
+  "sports medicine": "physicaltherapy", "chiropractic clinic": "physicaltherapy",
+  chiropractic: "physicaltherapy", chiropractor: "physicaltherapy",
 
-  // ── NEW: Remodeling
-  remodeling: "remodeling", "home remodeling": "remodeling", "home renovation": "remodeling",
-  renovation: "remodeling", "kitchen remodel": "remodeling", "bathroom remodel": "remodeling",
-  "disaster restoration": "remodeling", "water restoration": "remodeling",
-  "fire restoration": "remodeling", restoration: "remodeling",
+  // ── Senior Care (before healthcare)
+  "senior care": "seniorcare", "elder care": "seniorcare", "home health": "seniorcare",
+  "home healthcare": "seniorcare", "assisted living": "seniorcare",
+  "senior living": "seniorcare", "home care": "seniorcare",
+  "in home care": "seniorcare", "non medical home care": "seniorcare",
+  "adult day care": "seniorcare", "memory care": "seniorcare", hospice: "seniorcare",
 
-  // ── NEW: Staffing
-  "staffing agency": "staffing",
-
-  // ── Gas Station / Convenience
-  "gas station": "gasstation", "gas station and convenience": "gasstation",
-  "gas station/c-store": "gasstation", "gas station & convenience": "gasstation",
-  "convenience store & gas": "gasstation", "fuel station": "gasstation",
-  "c-store": "gasstation", "service station": "gasstation",
-  "gasoline station": "gasstation", "petrol station": "gasstation",
-
-  // ── NEW: Staffing (continued)
-  "staffing firm": "staffing", recruiting: "staffing",
+  // ── Staffing (before healthcare's staffing entries)
+  "staffing agency": "staffing", "staffing firm": "staffing", "staffing company": "staffing",
   "recruiting firm": "staffing", "temp agency": "staffing", "employment agency": "staffing",
   "workforce solutions": "staffing", "hr staffing": "staffing",
+  "executive search": "staffing", "professional employer": "staffing",
+  recruiting: "staffing",
+
+  // ── Pest Control
+  "pest control": "pestcontrol", "pest management": "pestcontrol",
+  "termite control": "pestcontrol", "wildlife removal": "pestcontrol",
+  "mosquito control": "pestcontrol", exterminator: "pestcontrol", termite: "pestcontrol",
+
+  // ── Med Spa (specific first; bare "laser" and "cosmetic" removed)
+  "med spa": "medspa", "medical spa": "medspa", "medical aesthetics": "medspa",
+  "laser hair removal": "medspa", "laser clinic": "medspa", "cosmetic clinic": "medspa",
+  "aesthetics clinic": "medspa", "wellness spa": "medspa", "day spa": "medspa",
+  "iv therapy": "medspa", "weight loss clinic": "medspa",
+  medspa: "medspa", botox: "medspa", dermatology: "medspa", aesthetics: "medspa",
+  tanning: "medspa", "massage therapy": "medspa",
+
+  // ── Accounting (bare "consulting" REMOVED — it stole engineering/marketing)
+  "accounting firm": "accounting", "accounting & consulting": "accounting",
+  "accounting & tax": "accounting", "tax accounting": "accounting",
+  "tax & accounting": "accounting", "tax preparation": "accounting",
+  "tax service": "accounting", "tax firm": "accounting", "tax return": "accounting",
+  "cpa firm": "accounting", "cpa practice": "accounting",
+  "bookkeeping service": "accounting", "payroll service": "accounting",
+  "financial services": "accounting", "wealth management": "accounting",
+  "financial planning": "accounting", "registered investment advisor": "accounting",
+  accounting: "accounting", bookkeeping: "accounting", cpa: "accounting",
+
+  // ══ ESTABLISHED INDUSTRIES ═════════════════════════════════════════════
+
+  // ── Laundromat
+  "coin laundry": "laundromat", "wash and fold": "laundromat",
+  "dry cleaning": "laundromat", "dry clean": "laundromat",
+  "commercial laundry": "laundromat", "linen service": "laundromat",
+  laundromat: "laundromat", laundry: "laundromat",
+
+  // ── HVAC
+  "heating and cooling": "hvac", "air conditioning": "hvac", "hvac/r": "hvac",
+  "heating & air": "hvac", "climate control": "hvac", "duct cleaning": "hvac",
+  hvac: "hvac", refrigeration: "hvac", heating: "hvac",
+
+  // ── Landscaping
+  "lawn care": "landscaping", "lawn service": "landscaping", "lawn maintenance": "landscaping",
+  "tree service": "landscaping", "tree care": "landscaping", "tree removal": "landscaping",
+  "pool service": "landscaping", "pool and spa": "landscaping", "pool & spa": "landscaping",
+  "pool cleaning": "landscaping", "pool maintenance": "landscaping",
+  "snow removal": "landscaping", "hardscape": "landscaping", "grounds maintenance": "landscaping",
+  landscaping: "landscaping", landscape: "landscaping", irrigation: "landscaping",
+
+  // ── Car Wash (bare "detailing" REMOVED — it stole remodeling listings)
+  "car wash": "carwash", "auto wash": "carwash", "car detailing": "carwash",
+  "auto detailing": "carwash", "mobile detailing": "carwash", "express wash": "carwash",
+  carwash: "carwash",
+
+  // ── Dental
+  "dental practice": "dental", "dental office": "dental", "dental clinic": "dental",
+  "oral surgery": "dental", "pediatric dentistry": "dental",
+  dental: "dental", dentist: "dental", orthodont: "dental", endodont: "dental",
+
+  // ── Gym
+  "fitness center": "gym", "health club": "gym", "yoga studio": "gym",
+  "martial arts": "gym", "personal training": "gym", "fitness studio": "gym",
+  gym: "gym", crossfit: "gym", pilates: "gym", boxing: "gym", fitness: "gym",
+
+  // ── Restaurant (bare "franchise" and "vending" removed as ambiguous)
+  "bar and grill": "restaurant", "coffee shop": "restaurant", "fast food": "restaurant",
+  "food truck": "restaurant", "ice cream": "restaurant", "juice bar": "restaurant",
+  "food service": "restaurant", "food route": "restaurant", "food distribution": "restaurant",
+  "beverage distribution": "restaurant", "sports bar": "restaurant",
+  "fine dining": "restaurant", "quick service": "restaurant",
+  restaurant: "restaurant", pizzeria: "restaurant", brewery: "restaurant",
+  cafe: "restaurant", bakery: "restaurant", catering: "restaurant",
+
+  // ── Clothing Retail
+  "retail clothing": "clothing", "clothing store": "clothing",
+  "women's apparel": "clothing", "mens apparel": "clothing", "shoe store": "clothing",
+  "bridal shop": "clothing", "consignment shop": "clothing", "resale boutique": "clothing",
+  clothing: "clothing", apparel: "clothing", menswear: "clothing",
+  boutique: "clothing", sneaker: "clothing",
+
+  // ── Auto Repair
+  "auto repair": "autorepair", "auto body": "autorepair", "tire shop": "autorepair",
+  "oil change": "autorepair", "auto glass": "autorepair", "auto dealership": "autorepair",
+  "auto salvage": "autorepair", "collision center": "autorepair",
+  "truck repair": "autorepair", "fleet maintenance": "autorepair",
+  "muffler shop": "autorepair", "smog check": "autorepair",
+  automotive: "autorepair", mechanic: "autorepair", transmission: "autorepair",
+
+  // ── Cleaning
+  "commercial cleaning": "cleaning", "carpet cleaning": "cleaning",
+  "window cleaning": "cleaning", "pressure washing": "cleaning",
+  "maid service": "cleaning", "house cleaning": "cleaning",
+  "waste management": "cleaning", "junk removal": "cleaning",
+  "portable toilet": "cleaning", "dumpster rental": "cleaning",
+  janitorial: "cleaning", dumpster: "cleaning", cleaning: "cleaning",
+
+  // ── Ecommerce
+  "e-commerce": "ecommerce", "online store": "ecommerce", "online retail": "ecommerce",
+  "amazon fba": "ecommerce", "amazon business": "ecommerce", "shopify store": "ecommerce",
+  ecommerce: "ecommerce", dropship: "ecommerce", fba: "ecommerce",
+
+  // ── SaaS (bare "app", "platform", "subscription", "software" removed)
+  "software company": "saas", "software platform": "saas", "saas platform": "saas",
+  "software as a service": "saas", "mobile app": "saas", "web application": "saas",
+  "managed services provider": "saas", "it services": "saas", "msp": "saas",
+  saas: "saas",
+
+  // ── Insurance
+  "insurance agency": "insurance", "insurance broker": "insurance",
+  "insurance brokerage": "insurance", "benefits agency": "insurance",
+  insurance: "insurance",
+
+  // ── Plumbing
+  "water heater": "plumbing", "septic service": "plumbing", "water treatment": "plumbing",
+  "well service": "plumbing", "drain cleaning": "plumbing", "sewer service": "plumbing",
+  "backflow testing": "plumbing",
+  plumbing: "plumbing", plumber: "plumbing", septic: "plumbing", drain: "plumbing",
+
+  // ── Roofing
+  "roofing company": "roofing", "roofing contractor": "roofing",
+  "commercial roofing": "roofing", "residential roofing": "roofing",
+  "gutter installation": "roofing",
+  roofing: "roofing", roofer: "roofing", roof: "roofing", siding: "roofing",
+
+  // ── Pet Care
+  "pet grooming": "petcare", "dog grooming": "petcare", "pet sitting": "petcare",
+  "doggy daycare": "petcare", "dog daycare": "petcare", "pet boarding": "petcare",
+  "pet supply": "petcare", "pet store": "petcare", "dog training": "petcare",
+  "pet care": "petcare", kennel: "petcare",
+
+  // ── Pharmacy
+  "independent pharmacy": "pharmacy", "retail pharmacy": "pharmacy",
+  "compounding pharmacy": "pharmacy", "drug store": "pharmacy",
+  pharmacy: "pharmacy", compounding: "pharmacy",
+
+  // ── Daycare
+  "child care": "daycare", "learning center": "daycare", "after school": "daycare",
+  "early learning": "daycare", "day care center": "daycare",
+  daycare: "daycare", childcare: "daycare", preschool: "daycare", montessori: "daycare",
+
+  // ── Electrical
+  "electrical contractor": "electrical", "electrical service": "electrical",
+  "electrical company": "electrical", "low voltage": "electrical",
+  "solar installation": "electrical", "generator installation": "electrical",
+  electrical: "electrical", electrician: "electrical", wiring: "electrical",
+
+  // ── Healthcare (generic — last among medical so specific practices win)
+  "medical practice": "healthcare", "medical clinic": "healthcare",
+  "urgent care": "healthcare", "primary care": "healthcare",
+  "mental health": "healthcare", "behavioral health": "healthcare",
+  "healthcare staffing": "healthcare", "medical staffing": "healthcare",
+  "nurse staffing": "healthcare", "medical billing": "healthcare",
+  "optometry practice": "healthcare", "audiology practice": "healthcare",
+  "imaging center": "healthcare", "dialysis center": "healthcare",
+  counseling: "healthcare", clinic: "healthcare",
+
+  // ── Transportation
+  "moving company": "transportation", "freight broker": "transportation",
+  "dump truck": "transportation", "last mile delivery": "transportation",
+  "medical transport": "transportation", "non emergency medical transport": "transportation",
+  "school bus": "transportation", "bus company": "transportation",
+  transportation: "transportation", trucking: "transportation", logistics: "transportation",
+  freight: "transportation", courier: "transportation", hauling: "transportation",
+  towing: "transportation", limousine: "transportation", limo: "transportation",
+  shuttle: "transportation", moving: "transportation", delivery: "transportation",
+
+  // ── Printing
+  "print shop": "printing", "print & marketing": "printing", "b2b print": "printing",
+  "print/marketing": "printing", "commercial printing": "printing",
+  "digital printing": "printing", "label printing": "printing",
+  printing: "printing",
+
+  // ── Self-Storage
+  "self storage": "storage", "self-storage": "storage", "storage facility": "storage",
+  "mini storage": "storage", "storage solutions": "storage",
+  "rv storage": "storage", "boat storage": "storage", "climate controlled storage": "storage",
+  storage: "storage", warehouse: "storage",
+
+  // ── Painting
+  "painting contractor": "painting", "painting company": "painting",
+  "residential painting": "painting", "commercial painting": "painting",
+  "paint contractor": "painting", "drywall and painting": "painting",
+  painting: "painting", painter: "painting",
+
+  // ── Security
+  "security services": "security", "security company": "security",
+  "security guard": "security", "alarm company": "security", "alarm system": "security",
+  "fire protection": "security", "fire alarm": "security", "access control": "security",
+  "camera installation": "security",
+  surveillance: "security", security: "security",
+
+  // ── Hair Salon
+  "hair salon": "hairsalon", "beauty salon": "hairsalon", "barber shop": "hairsalon",
+  "hair care": "hairsalon", "hair studio": "hairsalon", "nail salon": "hairsalon",
+  "hair and nail": "hairsalon", "blow dry bar": "hairsalon", "lash studio": "hairsalon",
+  barbershop: "hairsalon", salon: "hairsalon",
+
+  // ── Construction (LAST — most generic contractor terms)
+  "general contractor": "construction", "home improvement": "construction",
+  "handyman services": "construction", "concrete contractor": "construction",
+  "paving contractor": "construction", "fencing contractor": "construction",
+  "flooring contractor": "construction", "excavation": "construction",
+  "utility contractor": "construction", "commercial construction": "construction",
+  "residential construction": "construction", "home builder": "construction",
+  construction: "construction", handyman: "construction",
 };
 
 // INDUSTRY_MARGINS moved to @/lib/scoringEngine
