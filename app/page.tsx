@@ -744,7 +744,7 @@ export default function HomePage() {
               <div className="grid grid-cols-3 gap-3">
                 <div className="bg-slate-900/60 border border-slate-800 rounded-lg p-4">
                   <div className="text-2xl font-bold font-mono text-emerald-400">2,000+</div>
-                  <div className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold mt-1">Live Deals Analyzed</div>
+                  <div className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold mt-1">Live Deals</div>
                 </div>
                 <div className="bg-slate-900/60 border border-slate-800 rounded-lg p-4">
                   <div className="text-2xl font-bold font-mono text-cyan-400">17,000+</div>
