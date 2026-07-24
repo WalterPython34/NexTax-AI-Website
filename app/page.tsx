@@ -765,7 +765,7 @@ export default function HomePage() {
                   { icon: Activity, title: "Live listings, refreshed continuously", body: "Track current SMB deals on the market across every major industry." },
                   { icon: Database, title: "Closed transactions, 17,000+ deep", body: "Real sold prices, multiples, and structures — not asking-price averages." },
                   { icon: BarChart3, title: "Blended industry benchmarks", body: "Proprietary intelligence layered on top of closed transactions from licensed foundations." },
-                  { icon: Zap, title: "Lender-grade Financials, 20,000+ sets", body: "Compare your deal with benchmarked sets of financial staements by industry." },
+                  { icon: Zap, title: "Lender-grade financials, 20,000+ sets", body: "Compare your deal with benchmarked sets of financial staements by industry." },
                 ].map((row, i) => {
                   const Icon = row.icon
                   return (
