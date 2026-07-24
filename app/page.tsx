@@ -743,15 +743,15 @@ export default function HomePage() {
             <div className="space-y-7">
               <div className="grid grid-cols-3 gap-3">
                 <div className="bg-slate-900/60 border border-slate-800 rounded-lg p-4">
-                  <div className="text-2xl font-bold font-mono text-emerald-400">1,500+</div>
+                  <div className="text-2xl font-bold font-mono text-emerald-400">2,000+</div>
                   <div className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold mt-1">Deals Analyzed</div>
                 </div>
                 <div className="bg-slate-900/60 border border-slate-800 rounded-lg p-4">
-                  <div className="text-2xl font-bold font-mono text-cyan-400">15,750+</div>
+                  <div className="text-2xl font-bold font-mono text-cyan-400">17,000+</div>
                   <div className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold mt-1">Closed Comps</div>
                 </div>
                 <div className="bg-slate-900/60 border border-slate-800 rounded-lg p-4">
-                  <div className="text-2xl font-bold font-mono text-blue-400">40+</div>
+                  <div className="text-2xl font-bold font-mono text-blue-400">45+</div>
                   <div className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold mt-1">Industries</div>
                 </div>
               </div>
@@ -763,9 +763,9 @@ export default function HomePage() {
               <ul className="space-y-4">
                 {[
                   { icon: Activity, title: "Live listings, refreshed continuously", body: "Track current SMB deals on the market across every major industry." },
-                  { icon: Database, title: "Closed transactions, 15,000+ deep", body: "Real sold prices, multiples, and structures — not asking-price averages." },
-                  { icon: BarChart3, title: "Blended industry benchmarks", body: "Proprietary intelligence layered on top of IBISWorld and DealStats foundations." },
-                  { icon: Zap, title: "Community signal feed", body: "208+ live buyer signals surface what searchers and acquirers are actually saying." },
+                  { icon: Database, title: "Closed transactions, 17,000+ deep", body: "Real sold prices, multiples, and structures — not asking-price averages." },
+                  { icon: BarChart3, title: "Blended industry benchmarks", body: "Proprietary intelligence layered on top of closed transactions from licensed foundations." },
+                  { icon: Zap, title: "Lender-grade Financials, 20,000+ sets, body: "Compare your deal with benchmarked sets of financial staements by industry." },
                 ].map((row, i) => {
                   const Icon = row.icon
                   return (
