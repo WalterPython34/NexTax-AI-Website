@@ -25,7 +25,7 @@ import { deriveVerdict } from "@/lib/dealVerdict";
 // [v2.1] Shared industry map — the map_fallback branch of the fair-value basis
 // selection reads the SAME map the dashboard scores with (Amendment 2).
 import { SCORE_INDUSTRIES } from "@/lib/scoreIndustries";
-import { postToSlack, isWatchedUser, fmtFounderDeal, fmtBenchmarkFallback } from "@/lib/slack";
+import { postToSlack, isWatchedUser, WATCHED_USER_IDS, fmtFounderDeal, fmtBenchmarkFallback } from "@/lib/slack";
 // [E4 P3] Deterministic investigation checklist (D4) — snapshot persisted per save.
 import { generateInvestigationItems } from "@/lib/investigationChecklist";
 // ── CP Shadow Mode (Phase 0) — additive snapshot generation ──────────────────
