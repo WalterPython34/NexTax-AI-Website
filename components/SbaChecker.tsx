@@ -71,7 +71,7 @@ const DARK_THEME: SbaTheme = {
   text: "#E2E8F0",
   textDim: "#8896A6",
   textMute: "#6B7280",
-  amber: "#22D3EE",
+  amber: "#0891B2",
   amberText: "#22D3EE",
   onAmber: "#FFFFFF",
   buyer: "#94A3B8",
@@ -438,7 +438,7 @@ export default function SbaChecker({
         </header>
       )}
       <div style={{ padding: "44px 24px 28px", textAlign: "center", background: `radial-gradient(ellipse at center top, ${T.heroGlow} 0%, transparent 60%)` }}>
-        <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "5px 14px", borderRadius: 20, background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.22)", fontSize: 11, color: T.amberText, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 18 }}>
+        <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "5px 14px", borderRadius: 20, background: "rgba(6,182,212,0.08)", border: "1px solid rgba(6,182,212,0.22)", fontSize: 11, color: T.amberText, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 18 }}>
           SBA Deal Check
         </div>
         {partner && (
