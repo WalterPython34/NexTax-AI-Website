@@ -72,7 +72,7 @@ const DARK_THEME: SbaTheme = {
   textDim: "#8896A6",
   textMute: "#6B7280",
   amber: "#1fbdd2",
-  amberText: "#22D3EE",
+  amberText: "#1fbdd2",
   onAmber: "#FFFFFF",
   buyer: "#94A3B8",
   gaugeText: "#E2E8F0",
