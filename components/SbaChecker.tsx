@@ -452,7 +452,7 @@ export default function SbaChecker({
           Will your deal survive SBA underwriting?
         </h1>
         <p style={{ fontSize: 15, color: T.textDim, maxWidth: 540, margin: "0 auto", lineHeight: 1.65 }}>
-          A 60-second screen against the 1.25&times; debt-service coverage a lender looks for, incuding a benchmarked owner replacement cost and a conservative add-back haircut.
+          A 60-second screen against the 1.25&times; debt-service coverage a lender looks for, with a benchmarked owner replacement cost and a conservative add-back haircut.
         </p>
       </div>
 
