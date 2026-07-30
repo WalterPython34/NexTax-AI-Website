@@ -815,7 +815,7 @@ function BreakdownGate({ token, sample, partner }: { token: string | null; sampl
             <button
               onClick={unlock}
               disabled={gate.kind === "sending"}
-              style={{ padding: "11px 20px", borderRadius: 8, border: "none", background: T.emerald, color: T.onAmber, fontSize: 14, fontWeight: 700, cursor: gate.kind === "sending" ? "wait" : "pointer", fontFamily: "'Inter', sans-serif" }}
+              style={{ padding: "11px 20px", borderRadius: 8, border: "none", background: T.amber, color: T.onAmber, fontSize: 14, fontWeight: 700, cursor: gate.kind === "sending" ? "wait" : "pointer", fontFamily: "'Inter', sans-serif" }}
             >
               {gate.kind === "sending" ? "Unlocking\u2026" : "Unlock breakdown"}
             </button>
