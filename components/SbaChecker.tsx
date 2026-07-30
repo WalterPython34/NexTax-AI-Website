@@ -438,7 +438,7 @@ export default function SbaChecker({
         </header>
       )}
       <div style={{ padding: "44px 24px 28px", textAlign: "center", background: `radial-gradient(ellipse at center top, ${T.heroGlow} 0%, transparent 60%)` }}>
-        <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "5px 14px", borderRadius: 20, background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.22)", fontSize: 11, color: T.amberText, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 18 }}>
+        <div style={{ display: "inline-flex", alignItems: "center", gap: 8, padding: "5px 14px", borderRadius: 20, background: "rgba(245,158,11,0.08)", border: "1px solid rgba(245,158,11,0.22)", fontSize: 11, color: T.cyanText, fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: 18 }}>
           SBA Deal Check
         </div>
         {partner && (
@@ -815,7 +815,7 @@ function BreakdownGate({ token, sample, partner }: { token: string | null; sampl
             <button
               onClick={unlock}
               disabled={gate.kind === "sending"}
-              style={{ padding: "11px 20px", borderRadius: 8, border: "none", background: T.amber, color: T.onAmber, fontSize: 14, fontWeight: 700, cursor: gate.kind === "sending" ? "wait" : "pointer", fontFamily: "'Inter', sans-serif" }}
+              style={{ padding: "11px 20px", borderRadius: 8, border: "none", background: T.emerald, color: T.onAmber, fontSize: 14, fontWeight: 700, cursor: gate.kind === "sending" ? "wait" : "pointer", fontFamily: "'Inter', sans-serif" }}
             >
               {gate.kind === "sending" ? "Unlocking\u2026" : "Unlock breakdown"}
             </button>
