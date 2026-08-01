@@ -140,7 +140,18 @@ export async function generateDraft(args: {
     return { draft: null, error: `API request failed: ${e instanceof Error ? e.message : String(e)}` };
   }
 
-  if (!res.ok) return { draft: null, error: `API error: HTTP ${res.status}` };
+  if (!res.ok) {
+    // Anthropic error bodies are JSON: {type:"error", error:{type, message}}.
+    // Surface the message — a bare status code is undiagnosable from the UI.
+    let detail = "";
+    try {
+      const errBody = (await res.json()) as { error?: { type?: string; message?: string } };
+      detail = errBody?.error?.message
+        ? ` — ${errBody.error.type ?? "error"}: ${errBody.error.message.slice(0, 300)}`
+        : "";
+    } catch { /* body unavailable — status alone will have to do */ }
+    return { draft: null, error: `API error: HTTP ${res.status}${detail}` };
+  }
 
   const data = (await res.json()) as { content?: Array<{ type: string; text?: string }> };
   const text = (data.content ?? [])
