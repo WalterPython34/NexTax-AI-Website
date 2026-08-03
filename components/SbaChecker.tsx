@@ -716,6 +716,15 @@ function BreakdownGate({ token, sample, partner }: { token: string | null; sampl
         setGate({ kind: "gateError", message: data.reason });
         return;
       }
+      // ── success: email captured, breakdown revealed ──
+if (typeof window !== "undefined" && window.gtag) {
+  window.gtag("event", "generate_lead", {
+    event_category: "SBA Checker",
+    event_label: "Line-by-Line Breakdown Unlock",
+    value: 1,
+  });
+}
+setGate({ kind: "revealed", breakdown: data.breakdown });
       setGate({ kind: "revealed", breakdown: data.breakdown });
     } catch {
       setGate({ kind: "gateError", message: "Could not load the breakdown. Try again." });
