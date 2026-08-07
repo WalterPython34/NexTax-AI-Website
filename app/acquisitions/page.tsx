@@ -394,7 +394,7 @@ export default function AcquisitionsPage() {
             <Card className="bg-slate-800/30 border-slate-700/50">
               <CardContent className="p-8">
                 <p className="text-emerald-400 text-sm font-medium mb-2">Starting at</p>
-                <p className="text-4xl font-bold text-white mb-1">$1,995</p>
+                <p className="text-4xl font-bold text-white mb-1">$1,500</p>
                 <h3 className="text-xl font-semibold text-white mt-4 mb-2">Pre-LOI Risk Assessment</h3>
                 <p className="text-slate-400 text-sm mb-6">
                   High-level financial review to help determine whether a deal makes sense before moving forward.
@@ -420,7 +420,7 @@ export default function AcquisitionsPage() {
                   </Button>
                 </Link>
                 <a
-                  href="https://buy.stripe.com/7sY14ndtwbA0cIY7asbMQ0a"
+                  href="https://buy.stripe.com/cNi7sLexAeMc24kgL2bMQ06"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="block mt-3"
@@ -440,7 +440,7 @@ export default function AcquisitionsPage() {
               </div>
               <CardContent className="p-8">
                 <p className="text-emerald-300 text-sm font-medium mb-2">Starting at</p>
-                <p className="text-4xl font-bold text-white mb-1">$4,500</p>
+                <p className="text-4xl font-bold text-white mb-1">$3,500</p>
                 <h3 className="text-xl font-semibold text-white mt-4 mb-2">Full Pre-LOI Underwriting &amp; Structural Modeling</h3>
                 <p className="text-slate-800 text-sm mb-6">
                   Comprehensive financial modeling to support offer structure, pricing decisions, and negotiation.
@@ -471,7 +471,7 @@ export default function AcquisitionsPage() {
                   </Button>
                 </Link>
                 <a
-                  href="https://buy.stripe.com/4gMfZh1KO0Vm7oE9iAbMQ08"
+                  href="https://buy.stripe.com/8x2aEX1KO5bC9wMamEbMQ09"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="block mt-3"
@@ -491,7 +491,7 @@ export default function AcquisitionsPage() {
               </div>
               <CardContent className="p-8">
                 <p className="text-cyan-400 text-sm font-medium mb-2">Starting at</p>
-                <p className="text-4xl font-bold text-white mb-1">$6,250</p>
+                <p className="text-4xl font-bold text-white mb-1">$5,500</p>
                 <h3 className="text-xl font-semibold text-white mt-4 mb-2">QoE-Lite Earnings Analysis</h3>
                 <p className="text-slate-400 text-sm mb-6">
                   A focused quality-of-earnings analysis for deals that need real earnings validation — without the $15K–$25K cost of a full QoE.
@@ -522,7 +522,7 @@ export default function AcquisitionsPage() {
                 </Link>
                 {/* TODO: Replace href="#" with the Stripe payment link for the $5,000 QoE-Lite product */}
                 <a
-                  href="https://buy.stripe.com/fZubJ1614cE46kA52kbMQ0b"
+                  href="https://buy.stripe.com/8x25kD3SW6fG9wM52kbMQ0d"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="block mt-3"
