@@ -74,7 +74,7 @@ export default function AcquiFlowPage() {
             </div>
             <div className="micro-proof">
               <span className="stars">★★★★★</span>
-              <span>Backed by RMA / ProSight</span>
+              <span>20,000+ financial statements</span>
               <span className="sep">·</span>
               <span>17,000+ closed comps</span>
               <span className="sep">·</span>
@@ -158,7 +158,7 @@ export default function AcquiFlowPage() {
             <div className="trust-item"><div className="num">17,000+</div><div className="desc">Closed Transactions</div></div>
             <div className="trust-item"><div className="num">20,000+</div><div className="desc">Financial Statement Sets</div></div>
             <div className="trust-item"><div className="num">41</div><div className="desc">Industries Covered</div></div>
-            <div className="trust-item"><div className="num">RMA</div><div className="desc">Backed by ProSight Data</div></div>
+            <div className="trust-item"><div className="num">2,000+</div><div className="desc">Live On & Off-Market Deals</div></div>
             <div className="trust-item"><div className="num">Big 4</div><div className="desc">+ PE Underwriting Logic</div></div>
           </div>
         </div>
@@ -326,7 +326,7 @@ export default function AcquiFlowPage() {
                 </svg>
               </div>
               <h3 className="feature-title">Benchmarked Against Real Closed Transactions</h3>
-              <p className="feature-desc">17,000+ closed deals across 41 industries. Not broker estimates — actual transaction data from DealStats, RMA, and BizBuySell.</p>
+              <p className="feature-desc">17,000+ closed deals across 41 industries. Not broker estimates — actual transaction data from licensed & proprietary sources.</p>
             </div>
 
             <div className="feature-card">
@@ -482,7 +482,7 @@ export default function AcquiFlowPage() {
                   <span className="faq-toggle"></span>
                 </summary>
                 <div className="faq-answer">
-                  Multiple licensed sources including <strong>RMA / ProSight</strong>, <strong>DealStats</strong>, and <strong>BizBuySell</strong>. We don&apos;t display raw licensed data — figures are surfaced as blended NexTax Intelligence so you get directional accuracy without sourcing constraints.
+                  Multiple licensed sources. We don&apos;t display raw licensed data — figures are surfaced as blended NexTax Intelligence so you get directional accuracy without sourcing constraints.
                   <div className="data-callout">17,000+ closed transactions · 20,000+ financial statement sets · 41 industries</div>
                 </div>
               </details>
@@ -503,7 +503,7 @@ export default function AcquiFlowPage() {
                   <span className="faq-toggle"></span>
                 </summary>
                 <div className="faq-answer">
-                  The normalization engine applies <strong>industry-specific haircuts</strong> based on add-back benchmarks, owner compensation norms, and RMA margin comparisons. Every adjustment is explained in the deal output so you can validate it during diligence — no black-box numbers.
+                  The normalization engine applies <strong>industry-specific haircuts</strong> based on add-back benchmarks, owner compensation norms, and margin comparisons. Every adjustment is explained in the deal output so you can validate it during diligence — no black-box numbers.
                 </div>
               </details>
 
