@@ -52,7 +52,7 @@ const SERVICES = [
       "Structured decision memo + strategy call",
     ],
     priceLabel: "Fixed-fee tiers",
-    price:      "$495–$2,500",
+    price:      "$1,500–$5,500",
     priceNote:  "Deal Snapshot → Full Underwriting & Negotiation Support · 3–5 day turnaround",
     cta:        "Explore Buy-Side Services",
     href:       "/acquisitions",
