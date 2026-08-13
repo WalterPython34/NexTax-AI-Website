@@ -51,7 +51,7 @@ const SERVICES = [
       "Structured decision memo + strategy call",
     ],
     priceLabel: "Fixed-fee tiers",
-    price:      "$1,500–$5,500",
+    price:      "$495–$2,500",
     priceNote:  "Deal Snapshot → Full Underwriting & Negotiation Support · 3–5 day turnaround",
     cta:        "Explore Buy-Side Services",
     href:       "/acquisitions",
@@ -248,7 +248,7 @@ function FractionalCfoSection() {
   return (
     <section className="py-8 scroll-mt-24" id="fractional-cfo">
       <div className="container mx-auto px-4">
-        <Card className="max-w-6xl mx-auto border-emerald-500/30 bg-gradient-to-br from-emerald-950/40 via-slate-900/60 to-emerald-950/30">
+        <Card className="max-w-6xl mx-auto bg-slate-900 border-emerald-500/30 bg-gradient-to-br from-emerald-950 via-slate-900 to-emerald-950">
           <CardContent className="py-10 px-8 md:px-12 flex flex-col md:flex-row gap-10">
             {/* Text side */}
             <div className="flex-[1.25]">
