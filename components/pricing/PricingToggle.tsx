@@ -1,15 +1,19 @@
 "use client"
-
 // components/pricing/PricingToggle.tsx
 //
-// Segmented pill control for switching between Acquisitions and Formation
-// pricing views. URL-persisted (?view=formation) for deep-linking + back button.
-// Brand-matched emerald for active state.
-
+// Segmented pill control for switching between the Services overview and
+// Formation pricing views. URL-persisted (?view=formation) for deep-linking +
+// back button. Brand-matched emerald for active state.
+//
+// CHANGED vs. previous version:
+//  · "acquisitions" view renamed to "services" — the default tab is now the
+//    all-services overview (ServicesPricing), not the AcquiFlow SaaS page.
+//  · Old deep links to /pricing?view=acquisitions still resolve to the default
+//    view (any non-"formation" value falls through to services).
 import { useRouter, useSearchParams, usePathname } from "next/navigation"
-import { Building2, Briefcase } from "lucide-react"
+import { Building2, LayoutGrid } from "lucide-react"
 
-export type PricingView = "acquisitions" | "formation"
+export type PricingView = "services" | "formation"
 
 export function PricingToggle({
   view,
@@ -22,7 +26,7 @@ export function PricingToggle({
 
   const setView = (next: PricingView) => {
     const params = new URLSearchParams(searchParams?.toString() ?? "")
-    if (next === "acquisitions") {
+    if (next === "services") {
       params.delete("view")
     } else {
       params.set("view", next)
@@ -40,18 +44,18 @@ export function PricingToggle({
       >
         <button
           role="tab"
-          aria-selected={view === "acquisitions"}
-          onClick={() => setView("acquisitions")}
+          aria-selected={view === "services"}
+          onClick={() => setView("services")}
           className={`
             flex items-center gap-2 px-6 py-2.5 rounded-full text-sm font-semibold transition-all
-            ${view === "acquisitions"
+            ${view === "services"
               ? "bg-emerald-500 text-white shadow-lg shadow-emerald-500/20"
               : "text-slate-400 hover:text-slate-200"
             }
           `}
         >
-          <Briefcase className="w-4 h-4" />
-          Acquisitions
+          <LayoutGrid className="w-4 h-4" />
+          Services
         </button>
         <button
           role="tab"
