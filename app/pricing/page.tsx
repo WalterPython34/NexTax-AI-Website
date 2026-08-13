@@ -20,7 +20,7 @@ import {
   Calculator,
 } from "lucide-react"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
-import { AcquisitionsPricing } from "@/components/pricing/AcquisitionsPricing"
+import { PricingPageClient } from "@/components/pricing/PricingPageClient"
 import { PricingToggle, type PricingView } from "@/components/pricing/PricingToggle"
 import { useSearchParams } from "next/navigation"
 import { Suspense } from "react"
