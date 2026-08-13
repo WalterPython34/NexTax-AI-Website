@@ -8,8 +8,7 @@
 //
 // ── CONFIG — edit these before shipping ────────────────────────────────────
 //  · CFO_PRICE / CFO_PRICE_NOTE   ← placeholder; set your real number/tiers
-//  · CFO_CTA_HREF                 ← /fractional-cfo once that page exists;
-//                                   points at /contact until then
+//                                   (keep in sync with FractionalCfoPage.tsx)
 //  · Price ranges on each service ← confirm against current tier pricing
 // ───────────────────────────────────────────────────────────────────────────
 import Link from "next/link"
@@ -27,7 +26,7 @@ import {
 
 const CFO_PRICE = "$1,500"          // TODO: set real starting price
 const CFO_PRICE_NOTE = "/month"
-const CFO_CTA_HREF = "/contact"     // TODO: swap to /fractional-cfo when built
+const CFO_CTA_HREF = "/fractional-cfo"   // detail page (app/fractional-cfo/page.tsx)
 
 // ─── Audience router chips (anchor-scroll to sections) ─────────────────────
 const ROUTES = [
@@ -158,7 +157,7 @@ function HeroSection() {
                     <CardContent className="py-5 px-5 text-left">
                       <div className="flex items-center gap-3 mb-1.5">
                         <div className="w-9 h-9 rounded-full bg-emerald-500/15 flex items-center justify-center flex-shrink-0">
-                          <Icon className="w-4.5 h-4.5 text-emerald-400" />
+                          <Icon className="w-[18px] h-[18px] text-emerald-400" />
                         </div>
                         <span className="text-sm font-semibold text-white leading-snug">{r.label}</span>
                       </div>
@@ -201,7 +200,7 @@ function ServiceSection({ svc }: { svc: (typeof SERVICES)[number] }) {
               <div className="space-y-2.5 mb-7">
                 {svc.features.map((f) => (
                   <div key={f} className="flex items-start gap-3">
-                    <CheckCircle className="w-4.5 h-4.5 text-emerald-400 flex-shrink-0 mt-0.5" />
+                    <CheckCircle className="w-[18px] h-[18px] text-emerald-400 flex-shrink-0 mt-0.5" />
                     <span className="text-sm text-slate-300">{f}</span>
                   </div>
                 ))}
@@ -270,15 +269,21 @@ function FractionalCfoSection() {
               <div className="space-y-2.5 mb-6">
                 {CFO_FEATURES_LEFT.map((f) => (
                   <div key={f} className="flex items-start gap-3">
-                    <CheckCircle className="w-4.5 h-4.5 text-emerald-400 flex-shrink-0 mt-0.5" />
+                    <CheckCircle className="w-[18px] h-[18px] text-emerald-400 flex-shrink-0 mt-0.5" />
                     <span className="text-sm text-slate-300">{f}</span>
                   </div>
                 ))}
               </div>
-              <p className="text-xs text-slate-500 italic">
+              <p className="text-xs text-slate-500 italic mb-6">
                 Books that are always diligence-ready are worth real money at exit — financial
                 record quality is a multiple driver in every valuation we run.
               </p>
+              <Link href="/fractional-cfo">
+                <Button className="bg-emerald-500 hover:bg-emerald-600 text-white font-semibold px-7 h-11">
+                  Explore Fractional CFO
+                  <ArrowRight className="w-4 h-4 ml-2" />
+                </Button>
+              </Link>
             </div>
 
             {/* Pricing card side */}
@@ -312,12 +317,12 @@ function FractionalCfoSection() {
                   </div>
                   <Link href={CFO_CTA_HREF} className="block">
                     <Button className="w-full bg-emerald-500 hover:bg-emerald-600 text-white font-semibold h-12 text-base">
-                      Book an Intro Call
+                      See Plans &amp; Book a Call
                       <ArrowRight className="w-5 h-5 ml-2" />
                     </Button>
                   </Link>
                   <p className="text-[10px] text-slate-600 font-mono text-center mt-3">
-                    → suggest: /fractional-cfo (page not built yet)
+                    → /fractional-cfo
                   </p>
                 </CardContent>
               </Card>
